@@ -1,0 +1,68 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pyright/
+
+# uv
+.uv-cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Secrets / config
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+secrets/
+
+# Upstream source checkouts (tracked separately, read-only by default)
+freqtrade/
+nautilus_trader/
+
+# Data (keep dir, ignore contents)
+data/*
+!data/.gitkeep
+
+# Local DBs / Parquet
+*.parquet
+*.sqlite
+*.sqlite3
+*.db
+*.duckdb
+
+# Logs
+*.log
+logs/
+
+# Jupyter
+.ipynb_checkpoints/
+notebooks/*.html
+
+# freqtrade user_data outputs（保留目录结构，忽略生成物）
+apps/strategies_freqtrade/user_data/backtest_results/
+apps/strategies_freqtrade/user_data/hyperopt_results/
+apps/strategies_freqtrade/user_data/models/
+apps/strategies_freqtrade/user_data/logs/
+
+# nautilus catalog cache
+nautilus_cache/
+
+# OS
+.DS_Store
+Thumbs.db
+*:Zone.Identifier

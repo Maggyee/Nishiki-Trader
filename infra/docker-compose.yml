@@ -1,0 +1,78 @@
+# Phase 0：暂无长驻服务。
+# 此文件是占位 + 后续 Phase 的预期入口模板。
+# 启用时机参考 docs/decisions/001-tech-stack.md §6 和 infra/README.md。
+
+services: {}
+
+# ============================================================
+# Phase 2 启用：信号桥升级到 Redis Stream + 持久化迁到 PG
+# ============================================================
+#   postgres:
+#     image: timescale/timescaledb-ha:pg16
+#     restart: unless-stopped
+#     environment:
+#       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+#       POSTGRES_DB: trader
+#     volumes:
+#       - postgres_data:/var/lib/postgresql/data
+#       - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+#     ports:
+#       - "127.0.0.1:5432:5432"
+#
+#   redis:
+#     image: redis:7-alpine
+#     restart: unless-stopped
+#     command: ["redis-server", "--appendonly", "yes"]
+#     volumes:
+#       - redis_data:/data
+#     ports:
+#       - "127.0.0.1:6379:6379"
+
+# ============================================================
+# Phase 4 启用：agent 编排 + 定时任务
+# ============================================================
+#   n8n:
+#     image: n8nio/n8n
+#     restart: unless-stopped
+#     environment:
+#       N8N_BASIC_AUTH_ACTIVE: "true"
+#       N8N_BASIC_AUTH_USER: ${N8N_USER}
+#       N8N_BASIC_AUTH_PASSWORD: ${N8N_PASSWORD}
+#     volumes:
+#       - n8n_data:/home/node/.n8n
+#       - ./n8n/workflows:/workflows:ro
+#     ports:
+#       - "127.0.0.1:5678:5678"
+
+# ============================================================
+# Phase 5 启用：监控 + 前端
+# ============================================================
+#   prometheus:
+#     image: prom/prometheus
+#     restart: unless-stopped
+#     volumes:
+#       - prometheus_data:/prometheus
+#       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+#
+#   grafana:
+#     image: grafana/grafana
+#     restart: unless-stopped
+#     volumes:
+#       - grafana_data:/var/lib/grafana
+#       - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+#     ports:
+#       - "127.0.0.1:3000:3000"
+#
+#   loki:
+#     image: grafana/loki
+#     restart: unless-stopped
+#     volumes:
+#       - loki_data:/loki
+
+# volumes:
+#   postgres_data:
+#   redis_data:
+#   n8n_data:
+#   prometheus_data:
+#   grafana_data:
+#   loki_data:
