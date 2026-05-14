@@ -49,6 +49,7 @@ Do not use this file as a detailed changelog. Use it for current project state a
 - Configured `origin` as `git@github.com:Maggyee/Nishiki-Trader.git`.
 - Pushed the initial project framework to GitHub.
 - Added `docs/upstream-versions.md` to record pinned upstream checkout commits.
+- Added ADR-003 for Phase 0/1 project skeleton, `apps/bridge` package layout, SQLite-only Phase 1 persistence, and test mirror conventions.
 
 ---
 
@@ -58,21 +59,21 @@ Phase 0/1: turn the documented architecture into a minimal, testable research/ba
 
 Immediate focus:
 
-1. Add ADR-003 for project skeleton and Phase 0 directory ownership.
-2. Implement `SignalEvent v1` model and validation in `apps/bridge`.
-3. Add local Phase 1 signal storage using SQLite or JSONL.
-4. Add tests for valid, expired, duplicate, and unauthorized signals.
-5. Add a minimal CLI for writing, validating, and replaying signals.
+1. Implement `SignalEvent v1` Pydantic model in `apps/bridge/signal_event.py` (ADR-002 §3, ADR-003 §2.2).
+2. Implement `apps/bridge/time_utils.py` for ms / μs → ns conversion (ADR-002 §7).
+3. Implement `apps/bridge/validators.py` for missing / expired / unauthorized / duplicate rejection (ADR-002 §4.1).
+4. Implement `apps/bridge/store.py` over SQLite at `data/bridge/signals.db` with WAL + `signals` table (ADR-002 §5, ADR-003 §2.3).
+5. Implement `apps/bridge/cli.py` for `bridge write|validate|replay` (ADR-003 §2.2).
 
 ---
 
 ## Next Steps
 
-1. Create `docs/decisions/003-project-skeleton.md`.
-2. Define `apps/bridge` package layout for `SignalEvent v1`.
-3. Implement signal schema, validator, and serialization helpers.
-4. Add pytest coverage mirroring ADR-002 testing standards.
-5. Decide whether Phase 1 storage starts with SQLite, JSONL, or both.
+1. Land `apps/bridge/signal_event.py` + `time_utils.py` + `validators.py` with pytest coverage of the 8 cases in ADR-002 §7.
+2. Land `apps/bridge/store.py` with SQLite WAL + dedupe by `signal_id` + status transitions.
+3. Land `apps/bridge/cli.py` (`argparse`, no click/typer) for write / validate / replay.
+4. Add a minimal `apps/strategies_nautilus/` consumer that reads `SignalEvent` from SQLite without calling any trading API.
+5. Confirm Phase 0/1 "graduation" criteria in ADR-003 §2.7 are all met, then update this file for Phase 2 entry.
 
 ---
 
