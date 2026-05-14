@@ -13,8 +13,9 @@ Agents must read this file first. Then read the documents listed below according
 Read these before any non-trivial work:
 
 1. `docs/agent-operating-contract.md`
-2. `docs/decisions/001-tech-stack.md`
-3. `docs/decisions/002-signal-bridge-protocol.md`
+2. `docs/project-status.md`
+3. `docs/decisions/001-tech-stack.md`
+4. `docs/decisions/002-signal-bridge-protocol.md`
 
 ---
 
@@ -22,6 +23,7 @@ Read these before any non-trivial work:
 
 | Task area | Read |
 |---|---|
+| Project status, next step, or handoff | `docs/project-status.md`, `git status --short --branch`, `git log --oneline --decorate -5` |
 | Architecture, boundaries, or phase planning | `docs/agent-operating-contract.md`, `docs/decisions/001-tech-stack.md` |
 | Signal bridge, ML output, FreqAI integration | `docs/decisions/002-signal-bridge-protocol.md` |
 | Upstream source updates or dependency drift | `docs/upstream-versions.md` |
@@ -36,6 +38,6 @@ Read these before any non-trivial work:
 
 ## Update Rule
 
-When a new ADR, runbook, or phase document becomes required context for agents, update this file instead of expanding `AGENTS.md` or `CLAUDE.md`.
+When a new ADR, runbook, status file, or phase document becomes required context for agents, update this file instead of expanding `AGENTS.md` or `CLAUDE.md`.
 
 `AGENTS.md` and `CLAUDE.md` are stable entrypoints. This file is the expandable reading index.

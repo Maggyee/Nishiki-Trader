@@ -28,9 +28,15 @@ The first goal is a repeatable research and backtesting loop. Live trading comes
 Every agent must read these files before making non-trivial changes:
 
 1. `docs/agent-operating-contract.md`
-2. `docs/decisions/001-tech-stack.md`
-3. `docs/decisions/002-signal-bridge-protocol.md`
-4. The files directly relevant to the current task
+2. `docs/project-status.md`
+3. `docs/decisions/001-tech-stack.md`
+4. `docs/decisions/002-signal-bridge-protocol.md`
+5. The files directly relevant to the current task
+
+For progress handoff, also run:
+
+- `git status --short --branch`
+- `git log --oneline --decorate -5`
 
 If these documents conflict with a user request, follow the newest explicit user request, but state the conflict clearly before making risky changes.
 
@@ -146,6 +152,7 @@ Every agent should close work with:
 - How the work was verified.
 - Whether the live trading path is affected.
 - Any follow-up ADR or runbook that should be created.
+- Whether `docs/project-status.md` was updated, and if not, why progress state did not change.
 - The git commit created for the change, unless the user explicitly asked not to commit.
 
 For review tasks, findings come first and should focus on bugs, behavioral risk, missing tests, and architecture violations.
@@ -153,6 +160,7 @@ For review tasks, findings come first and should focus on bugs, behavioral risk,
 Commit discipline:
 
 - After implementing code or documentation changes, commit them with a concise message describing the intent.
+- Update `docs/project-status.md` before committing when the task changes current phase, completed work, blockers, or next steps.
 - Do not commit generated data, secrets, local databases, logs, virtual environments, or upstream source checkouts.
 - If verification fails, either fix the issue before committing or state the failure clearly in the final report.
 

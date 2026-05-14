@@ -24,4 +24,4 @@ When creating a new project-owned directory, add a `README.md` explaining its pu
 
 Agents are research and development assistants. They must not place trades, bypass NautilusTrader risk controls, or turn signals into orders directly.
 
-After implementing code or documentation changes, create a git commit unless the user explicitly says not to. Use a concise, descriptive commit message, and never commit ignored data, secrets, local databases, or upstream source checkouts.
+After implementing code or documentation changes, update `docs/project-status.md` if current progress, next steps, blockers, or phase status changed. Then create a git commit unless the user explicitly says not to. Use a concise, descriptive commit message, and never commit ignored data, secrets, local databases, or upstream source checkouts.

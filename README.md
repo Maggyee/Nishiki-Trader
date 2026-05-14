@@ -6,9 +6,10 @@
 
 1. [`AGENTS.md`](AGENTS.md) / [`CLAUDE.md`](CLAUDE.md) — agent 入口约束
 2. [`PLAN.md`](PLAN.md) — 长期路线
-3. [`docs/agent-operating-contract.md`](docs/agent-operating-contract.md) — 操作契约
-4. [`docs/decisions/001-tech-stack.md`](docs/decisions/001-tech-stack.md) — 技术栈与五条铁律
-5. [`docs/decisions/002-signal-bridge-protocol.md`](docs/decisions/002-signal-bridge-protocol.md) — SignalEvent v1
+3. [`docs/project-status.md`](docs/project-status.md) — 当前进度和下一步
+4. [`docs/agent-operating-contract.md`](docs/agent-operating-contract.md) — 操作契约
+5. [`docs/decisions/001-tech-stack.md`](docs/decisions/001-tech-stack.md) — 技术栈与五条铁律
+6. [`docs/decisions/002-signal-bridge-protocol.md`](docs/decisions/002-signal-bridge-protocol.md) — SignalEvent v1
 
 ## 目录
 

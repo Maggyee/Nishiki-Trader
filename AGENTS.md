@@ -18,9 +18,11 @@ When finishing a task, report:
 - Whether upstream code was touched.
 - How the work was verified.
 - Whether the change affects the live trading path.
+- Whether `docs/project-status.md` was updated, and if not, why.
 
 Commit rule:
 
 - After implementing code or documentation changes, create a git commit unless the user explicitly says not to.
+- Update `docs/project-status.md` before committing when the task changes current progress, next steps, blockers, or phase status.
 - Use a concise, descriptive commit message that explains the intent of the change.
 - Do not include ignored data, secrets, local databases, or upstream source checkouts in commits.
