@@ -23,7 +23,7 @@ Read these before any non-trivial work:
 
 | Task area | Read |
 |---|---|
-| Project status, next step, or handoff | `docs/project-status.md`, `git status --short --branch`, `git log --oneline --decorate -5` |
+| Project status, next step, or handoff | `docs/project-status.md`, `git status --short --branch`, `git fetch origin`, `git pull --ff-only`, `git log --oneline --decorate -5` |
 | Architecture, boundaries, or phase planning | `docs/agent-operating-contract.md`, `docs/decisions/001-tech-stack.md` |
 | Signal bridge, ML output, FreqAI integration | `docs/decisions/002-signal-bridge-protocol.md` |
 | Upstream source updates or dependency drift | `docs/upstream-versions.md` |

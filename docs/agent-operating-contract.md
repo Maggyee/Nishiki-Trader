@@ -36,7 +36,11 @@ Every agent must read these files before making non-trivial changes:
 For progress handoff, also run:
 
 - `git status --short --branch`
+- `git fetch origin`
+- `git pull --ff-only` when the working tree is clean
 - `git log --oneline --decorate -5`
+
+Do not pull over a dirty working tree. Inspect local changes first and ask before overwriting, rebasing, stashing, or resetting anything.
 
 If these documents conflict with a user request, follow the newest explicit user request, but state the conflict clearly before making risky changes.
 

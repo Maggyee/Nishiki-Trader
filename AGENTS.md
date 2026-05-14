@@ -2,6 +2,8 @@
 
 Before changing anything in this repository, read `docs/agent-reading-list.md` first.
 
+At task start, check `git status --short --branch`. If the working tree is clean, run `git fetch origin` and `git pull --ff-only` before editing. If it is dirty, inspect local changes first and do not overwrite them.
+
 Hard rules:
 
 - Do not modify `freqtrade/` or `nautilus_trader/` upstream source unless the user explicitly asks for it.

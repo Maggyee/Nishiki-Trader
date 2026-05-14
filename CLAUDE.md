@@ -2,6 +2,8 @@
 
 Start every task by reading `docs/agent-reading-list.md`.
 
+At task start, check `git status --short --branch`. If the working tree is clean, run `git fetch origin` and `git pull --ff-only` before editing. If it is dirty, inspect local changes first and do not overwrite them.
+
 This repository follows two accepted ADRs:
 
 - ADR-001 defines the long-term technology boundaries and five hard rules.

@@ -19,8 +19,10 @@ At task start:
 1. Read `docs/agent-reading-list.md`.
 2. Read this file.
 3. Run `git status --short --branch`.
-4. Run `git log --oneline --decorate -5`.
-5. Inspect only the files relevant to the task.
+4. If the working tree is clean, run `git fetch origin` and fast-forward the current branch with `git pull --ff-only`.
+5. If the working tree is not clean, do not pull; inspect the local changes first and ask before overwriting or rebasing anything.
+6. Run `git log --oneline --decorate -5`.
+7. Inspect only the files relevant to the task.
 
 At task finish:
 
@@ -102,6 +104,7 @@ The project is on track when a new agent can:
 - Read `AGENTS.md` or `CLAUDE.md`.
 - Follow `docs/agent-reading-list.md`.
 - Understand current progress from this file.
+- Sync from `origin` safely before editing.
 - Avoid upstream edits by default.
 - Make a scoped Phase 0/1 change.
 - Update this file if project state changed.
