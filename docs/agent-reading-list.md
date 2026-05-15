@@ -28,7 +28,7 @@ Read these before any non-trivial work:
 | Signal bridge, ML output, FreqAI integration | `docs/decisions/002-signal-bridge-protocol.md` |
 | Upstream source updates or dependency drift | `docs/upstream-versions.md` |
 | Project skeleton or directory layout | `docs/decisions/003-project-skeleton.md` |
-| Backtest result format or reports | Future `docs/decisions/004-backtest-result-format.md` |
+| Backtest result format or reports | `docs/decisions/004-backtest-result-format.md` |
 | Risk rules, testnet, or live trading | Future `docs/decisions/005-risk-and-emergency-rules.md` |
 | Operations, restart, emergency handling | `docs/runbook.md` |
 | Project skeleton, directory ownership, dev environment | `README.md`, `apps/README.md`, `infra/README.md` |

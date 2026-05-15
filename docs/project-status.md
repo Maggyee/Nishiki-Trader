@@ -55,6 +55,7 @@ Do not use this file as a detailed changelog. Use it for current project state a
 - Added `tests/bridge/` covering ADR-002 §7: valid round-trip, all required-field rejections, expired-by-ttl, unauthorized source / model_version, duplicate `signal_id`, deterministic replay, AgentAdvice cannot enter `signals` table, ts_event ns boundaries (ms/μs/ns), WAL pragma. 51 tests pass; `ruff` clean on bridge code.
 - Implemented `apps/strategies_nautilus/signal_consumer.py`: minimal `SignalConsumer` placeholder that reads `pending` rows from `SignalStore`, runs ADR-002 §4.1 strategy-side checks (schema / venue / authorization / freshness / `min_confidence`), and marks rows `consumed | rejected | expired`. No `nautilus_trader` / `freqtrade` / HTTP imports — Phase 1 requires only a placeholder.
 - Added `tests/strategies_nautilus/test_signal_consumer.py` (17 cases): accept path, venue mismatch, unauthorized source / model, expired, low-confidence boundary, store-status transitions, idempotency on re-run, and static asserts that the consumer file does not reference any trading or HTTP module.
+- Added ADR-004 (`docs/decisions/004-backtest-result-format.md`): Phase 2 backtest result bundle under `data/backtests/<run_id>/` — `run_manifest.json` (`schema_version=backtest.v1`, git/Nautilus/Python provenance, signal-store SHA-256, NautilusTrader `BacktestResult` stats) + Parquet sidecars (`orders / fills / positions / account_balances / signal_lineage`); reproducibility rule = same git + same signal-store sha + same data catalog + same params → bit-for-bit equal stats / fills.
 
 ### Phase 0/1 graduation checklist (ADR-003 §2.7)
 
@@ -76,19 +77,18 @@ Phase 2 entry — switch the consumer from "decision logging placeholder" to a r
 
 Immediate focus:
 
-1. Draft **ADR-004** (NautilusTrader backtest result format) before adding real `nautilus_trader` imports.
-2. Add `apps/strategies_nautilus/baseline_strategy.py` + `runners/backtest_runner.py` (per `strategies_nautilus/README.md` Phase 1 plan) on top of the existing placeholder consumer.
-3. Build a small reproducible backtest harness that consumes `data/bridge/signals.db`, calls into NautilusTrader Strategy / RiskEngine, and writes a backtest result file matching ADR-004.
+1. Add a Pydantic schema for `run_manifest.json` (ADR-004 §2.2) under `apps/strategies_nautilus/result_schema.py` so the runner can validate before writing.
+2. Implement `apps/strategies_nautilus/baseline_strategy.py`: translate `SignalEvent.side` into Nautilus order intents through the real RiskEngine; no real exchange API.
+3. Implement `apps/strategies_nautilus/runners/backtest_runner.py`: load `data/catalog/` Parquet K-lines, feed signals from `SignalStore.replay`, write the ADR-004 result bundle to `data/backtests/<run_id>/`.
 
 ---
 
 ## Next Steps
 
-1. Write ADR-004 — NautilusTrader backtest result format (fields, file layout, persistence path under `data/`).
-2. Implement `baseline_strategy.py` (translates `SignalEvent.side` into Nautilus order intents through the real RiskEngine; no real exchange API).
-3. Implement `runners/backtest_runner.py` (load Parquet K-lines from `data/catalog/`, feed signals from `SignalStore.replay`, emit ADR-004 result).
-4. Add `tests/strategies_nautilus/` coverage for the real Strategy + 5%-day-loss risk rule (ADR-002 §4.2).
-5. Decide Phase 2 SQLite → Postgres / Redis Stream readiness (defer to ADR-006 / ADR-007 once backtest volume exposes the bottleneck).
+1. Land `apps/strategies_nautilus/result_schema.py` + tests (manifest round-trip, version guard, required-field rejection).
+2. Land `baseline_strategy.py` with ADR-002 §4.1/§4.2 checks delegated to RiskEngine; cover with `tests/strategies_nautilus/test_baseline_strategy.py` (long/short/flat → order intent; expired signal skipped; 5%-day-loss kill-switch).
+3. Land `runners/backtest_runner.py` writing `data/backtests/<run_id>/` (manifest + 5 Parquet files); reproducibility test in `tests/strategies_nautilus/test_backtest_reproducibility.py` (two runs → identical `fills.parquet` + identical `stats_pnls`).
+4. Decide Phase 2 SQLite → Postgres / Redis Stream readiness — defer until backtest volume exposes the bottleneck (ADR-006 / ADR-007 placeholders kept).
 
 ---
 
