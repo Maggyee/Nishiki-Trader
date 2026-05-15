@@ -58,6 +58,8 @@ Do not use this file as a detailed changelog. Use it for current project state a
 - Added ADR-004 (`docs/decisions/004-backtest-result-format.md`): Phase 2 backtest result bundle under `data/backtests/<run_id>/` — `run_manifest.json` (`schema_version=backtest.v1`, git/Nautilus/Python provenance, signal-store SHA-256, NautilusTrader `BacktestResult` stats) + Parquet sidecars (`orders / fills / positions / account_balances / signal_lineage`); reproducibility rule = same git + same signal-store sha + same data catalog + same params → bit-for-bit equal stats / fills.
 - Implemented `apps/strategies_nautilus/result_schema.py`: Pydantic `BacktestManifest` (frozen, `extra="ignore"` per ADR-004 §2.6 append-only) with nested `StrategySpec / RiskRuleSpec / SignalSource / DataCatalog / CatalogInstrument / Totals / PnlStats / ReturnsStats`; validators enforce `run_id` regex, lowercase-hex `git_commit`, ISO 8601 ms-UTC timestamps, monotonic `finished_at ≥ started_at` and `backtest_end ≥ backtest_start`, SHA-256 shape on `signal_source.store_sha256`, `win_rate ∈ [0, 1]`, `max_drawdown_* ≤ 0`.
 - Added `tests/strategies_nautilus/test_result_schema.py` (52 cases): manifest round-trip via `model_dump_json`, schema-version guard, parametrized required-field check (23 top-level keys), format validators on `run_id` / `git_commit` / ISO timestamps, range checks on counts and win_rate, ADR-004 §2.6 forward-compat (top-level + nested extras tolerated), `frozen=True` enforcement.
+- Implemented `apps/strategies_nautilus/baseline_strategy.py`: pure-Python decision layer that composes `signal_consumer.evaluate()` for ADR-002 §4.1 gating, adds the §4.2 first risk rule (5%-day-loss kill-switch — engages at `daily_pnl ≤ -daily_drawdown_stop_pct`, blocks `target_long` / `target_short` but lets `flat` through, sticks after intra-day recovery, clears via `on_day_start()`), and emits `OrderIntent(signal_id, instrument_id="SYMBOL.VENUE", action, target_position_pct)` with signed `target_position_pct` (`+max_position_pct` long, `-max_position_pct` short, `0` flat/skip). Does NOT touch `nautilus_trader` / `freqtrade` / HTTP / `submit_order`; the Phase 2 runner will wrap it in a `nautilus_trader.Strategy` subclass and route intents through the real `RiskEngine`.
+- Added `tests/strategies_nautilus/test_baseline_strategy.py` (35 cases): per-side intent mapping (`buy/sell/flat → target_long/target_short/target_flat`), all §4.1 rejection paths return `action="skip"` with descriptive reason, kill-switch boundary (-5.00%, -4.99%, -6.00%) and stickiness, `flat` allowed during kill-switch, `on_day_start()` clears, parametrized config range guards, AST-aware forbidden-token check (`tokenize`-strips docstrings/comments so the decision layer's documentation of the future wrapper does not trip the gate).
 
 ### Phase 0/1 graduation checklist (ADR-003 §2.7)
 
@@ -69,7 +71,7 @@ Do not use this file as a detailed changelog. Use it for current project state a
 | 4 | Minimal `apps/strategies_nautilus/` consumer reads `SignalEvent` from SQLite; no real trading API | ✅ `SignalConsumer` + 17 tests |
 | 5 | `docs/project-status.md` records Phase 1 graduation + Phase 2 entry | ✅ this update |
 
-Aggregate test result on 2026-05-15: `uv run pytest` → 120 passed in 0.16s; `ruff check apps tests` → clean.
+Aggregate test result on 2026-05-15: `uv run pytest` → 155 passed in 0.20s; `ruff check apps tests` → clean.
 
 ---
 
@@ -80,15 +82,15 @@ Phase 2 entry — switch the consumer from "decision logging placeholder" to a r
 Immediate focus:
 
 1. ~~Add a Pydantic schema for `run_manifest.json` (ADR-004 §2.2) under `apps/strategies_nautilus/result_schema.py`.~~ ✅ done (52 tests).
-2. Implement `apps/strategies_nautilus/baseline_strategy.py`: translate `SignalEvent.side` into Nautilus order intents through the real RiskEngine; no real exchange API.
-3. Implement `apps/strategies_nautilus/runners/backtest_runner.py`: load `data/catalog/` Parquet K-lines, feed signals from `SignalStore.replay`, write the ADR-004 result bundle to `data/backtests/<run_id>/` (manifest validated by `BacktestManifest`).
+2. ~~Implement `apps/strategies_nautilus/baseline_strategy.py`: pure decision layer producing `OrderIntent` with §4.1 gating + §4.2 5%-day-loss kill-switch.~~ ✅ done (35 tests).
+3. Implement `apps/strategies_nautilus/runners/backtest_runner.py`: load `data/catalog/` Parquet K-lines, feed signals from `SignalStore.replay`, wrap `BaselineSignalStrategy` inside a `nautilus_trader.Strategy` subclass that routes each `OrderIntent` through the real `RiskEngine` via `self.submit_order(...)`, and write the ADR-004 result bundle to `data/backtests/<run_id>/` (manifest validated by `BacktestManifest`).
 
 ---
 
 ## Next Steps
 
-1. Land `baseline_strategy.py` with ADR-002 §4.1/§4.2 checks delegated to RiskEngine; cover with `tests/strategies_nautilus/test_baseline_strategy.py` (long/short/flat → order intent; expired signal skipped; 5%-day-loss kill-switch).
-2. Land `runners/backtest_runner.py` writing `data/backtests/<run_id>/` (manifest validated by `BacktestManifest` + 5 Parquet files); reproducibility test in `tests/strategies_nautilus/test_backtest_reproducibility.py` (two runs → identical `fills.parquet` + identical `stats_pnls`).
+1. Land `apps/strategies_nautilus/runners/backtest_runner.py`: thin `nautilus_trader.Strategy` subclass wraps `BaselineSignalStrategy`, drives `BacktestNode` against `data/catalog/`, captures `Trader.generate_*_report()` + signal-lineage, writes `data/backtests/<run_id>/` (manifest via `BacktestManifest.model_validate` + 5 Parquet sidecars).
+2. Land `tests/strategies_nautilus/test_backtest_reproducibility.py` (ADR-004 §2.4): two runs with identical inputs → bit-for-bit equal `fills.parquet` + identical `stats_pnls`.
 3. Decide Phase 2 SQLite → Postgres / Redis Stream readiness — defer until backtest volume exposes the bottleneck (ADR-006 / ADR-007 placeholders kept).
 
 ---
