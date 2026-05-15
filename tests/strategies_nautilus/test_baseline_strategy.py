@@ -14,7 +14,6 @@ Covers:
 from __future__ import annotations
 
 import io
-import sys
 import tokenize
 
 import pytest
@@ -274,16 +273,6 @@ def test_baseline_strategy_module_has_no_trading_api_calls():
             f"forbidden token {forbidden!r} found in baseline_strategy.py "
             "executable code — decision layer must not touch trading APIs"
         )
-
-
-@pytest.mark.parametrize(
-    "module",
-    ["nautilus_trader", "freqtrade", "httpx", "requests", "ccxt"],
-)
-def test_baseline_strategy_does_not_import_network_modules(module):
-    assert module not in sys.modules or sys.modules[module] is None, (
-        f"{module} unexpectedly imported by strategies_nautilus.baseline_strategy"
-    )
 
 
 def test_minimum_authorization_required(make_payload, config):

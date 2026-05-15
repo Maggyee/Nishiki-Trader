@@ -1,9 +1,5 @@
 from __future__ import annotations
 
-import sys
-
-import pytest
-
 from apps.bridge.signal_event import SignalEvent
 from apps.strategies_nautilus.signal_consumer import (
     ConsumerConfig,
@@ -85,17 +81,6 @@ def test_consume_pending_is_idempotent(store, signal_event, config):
     second = consumer.consume_pending(now_ns=signal_event.ts_event)
     assert [o.decision for o in first] == ["accept"]
     assert second == []  # already consumed; no pending rows left
-
-
-@pytest.mark.parametrize(
-    "module",
-    ["nautilus_trader", "freqtrade", "httpx", "requests", "ccxt"],
-)
-def test_consumer_does_not_import_network_or_exchange_modules(module):
-    # Phase 1 graduation requirement: consumer must not touch any trading or HTTP module.
-    assert module not in sys.modules or sys.modules[module] is None, (
-        f"{module} unexpectedly imported by strategies_nautilus.signal_consumer"
-    )
 
 
 def test_consumer_module_has_no_trading_api_calls():

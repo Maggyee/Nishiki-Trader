@@ -83,27 +83,15 @@ class Totals(_Base):
     fills: int = Field(ge=0)
 
 
-class PnlStats(_Base):
-    """Per-settlement-currency PnL aggregates.
-
-    Required keys mirror ADR-004 §2.2: pnl_total, win_rate, sharpe,
-    max_drawdown_pct, max_drawdown_abs. sortino and pnl_per_trade_avg are
-    accepted when produced by NautilusTrader but not mandatory.
-    """
-
-    pnl_total: float
-    pnl_per_trade_avg: float | None = None
-    win_rate: float = Field(ge=0.0, le=1.0)
-    sharpe: float
-    sortino: float | None = None
-    max_drawdown_pct: float = Field(le=0.0)
-    max_drawdown_abs: float = Field(le=0.0)
-
-
-class ReturnsStats(_Base):
-    annualized_return: float
-    annualized_vol: float = Field(ge=0.0)
-    max_drawdown: float = Field(le=0.0)
+# Per-currency PnL stats are passed through verbatim from
+# `nautilus_trader.portfolio.analyzer.PortfolioAnalyzer.get_performance_stats_pnls`,
+# whose keys are human-readable strings such as "PnL (total)",
+# "Sharpe Ratio (252 days)", "Max Drawdown (Pct)" — names that depend on the
+# active Statistic registry. ADR-004 §2.2 mandates that we transmit those
+# values without renaming, so the schema cannot pin individual keys.
+StatScalar = float | int | str | bool | None
+PnlStats = dict[str, StatScalar]
+ReturnsStats = dict[str, StatScalar]
 
 
 class BacktestManifest(_Base):
@@ -176,10 +164,21 @@ class BacktestManifest(_Base):
             )
         return v
 
+    @field_validator("stats_pnls")
+    @classmethod
+    def _stats_pnls_has_metrics(cls, v: dict[str, PnlStats]) -> dict[str, PnlStats]:
+        for currency, stats in v.items():
+            if not currency:
+                raise ValueError("stats_pnls currency key must be non-empty")
+            if not stats:
+                raise ValueError(f"stats_pnls[{currency!r}] must contain metrics")
+        return v
+
 
 __all__ = [
     "SCHEMA_VERSION",
     "Kind",
+    "StatScalar",
     "StrategySpec",
     "RiskRuleSpec",
     "SignalSource",

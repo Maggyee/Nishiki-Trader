@@ -71,19 +71,19 @@ VALID_MANIFEST: dict = {
     },
     "stats_pnls": {
         "USDT": {
-            "pnl_total": 3142.18,
-            "pnl_per_trade_avg": 1.71,
-            "win_rate": 0.546,
-            "sharpe": 1.82,
-            "sortino": 2.41,
-            "max_drawdown_pct": -0.082,
-            "max_drawdown_abs": -812.55,
+            "PnL (total)": 3142.18,
+            "PnL% (total)": 31.4218,
+            "Win Rate": 0.546,
+            "Sharpe Ratio (252 days)": 1.82,
+            "Sortino Ratio (252 days)": 2.41,
+            "Profit Factor": 1.71,
+            "Risk Return Ratio": 0.32,
         }
     },
     "stats_returns": {
-        "annualized_return": 0.241,
-        "annualized_vol": 0.132,
-        "max_drawdown": -0.082,
+        "Returns Volatility (252 days)": 0.132,
+        "Average (Return)": 0.0007,
+        "Sharpe Ratio (252 days)": 1.82,
     },
 }
 
@@ -97,6 +97,17 @@ def test_round_trip_via_json(payload: dict) -> None:
     manifest = BacktestManifest.model_validate(payload)
     again = BacktestManifest.model_validate_json(manifest.model_dump_json())
     assert again == manifest
+
+
+def test_stats_pnls_keys_passed_through_verbatim(payload: dict) -> None:
+    # ADR-004 §2.2: stats_pnls values are forwarded from NautilusTrader's
+    # PortfolioAnalyzer.get_performance_stats_pnls() unchanged. Schema must
+    # not pin individual key names — they depend on the active Statistic
+    # registry on the Nautilus side.
+    manifest = BacktestManifest.model_validate(payload)
+    assert "PnL (total)" in manifest.stats_pnls["USDT"]
+    assert "Sharpe Ratio (252 days)" in manifest.stats_pnls["USDT"]
+    assert manifest.stats_pnls["USDT"]["PnL (total)"] == 3142.18
 
 
 def test_round_trip_preserves_iso_timestamp_text(payload: dict) -> None:
@@ -220,30 +231,24 @@ def test_stats_pnls_empty_dict_rejected(payload: dict) -> None:
         BacktestManifest.model_validate(payload)
 
 
-def test_win_rate_above_one_rejected(payload: dict) -> None:
-    payload["stats_pnls"]["USDT"]["win_rate"] = 1.5
+def test_stats_pnls_empty_currency_metrics_rejected(payload: dict) -> None:
+    payload["stats_pnls"]["USDT"] = {}
     with pytest.raises(ValidationError):
         BacktestManifest.model_validate(payload)
 
 
-def test_win_rate_negative_rejected(payload: dict) -> None:
-    payload["stats_pnls"]["USDT"]["win_rate"] = -0.01
-    with pytest.raises(ValidationError):
-        BacktestManifest.model_validate(payload)
-
-
-def test_pnl_stats_max_drawdown_must_be_non_positive(payload: dict) -> None:
-    payload["stats_pnls"]["USDT"]["max_drawdown_pct"] = 0.01
-    with pytest.raises(ValidationError):
-        BacktestManifest.model_validate(payload)
-
-
-def test_pnl_stats_sortino_optional(payload: dict) -> None:
-    payload["stats_pnls"]["USDT"].pop("sortino")
-    payload["stats_pnls"]["USDT"].pop("pnl_per_trade_avg")
+def test_stats_pnls_currency_can_have_arbitrary_metric_keys(payload: dict) -> None:
+    # New Statistic plugins on the Nautilus side must round-trip through.
+    payload["stats_pnls"]["USDT"]["Custom Metric (v2)"] = 0.42
     manifest = BacktestManifest.model_validate(payload)
-    assert manifest.stats_pnls["USDT"].sortino is None
-    assert manifest.stats_pnls["USDT"].pnl_per_trade_avg is None
+    assert manifest.stats_pnls["USDT"]["Custom Metric (v2)"] == 0.42
+
+
+def test_stats_returns_can_be_empty_when_no_trades(payload: dict) -> None:
+    # Backtests with no fills produce an empty returns dict from the analyzer.
+    payload["stats_returns"] = {}
+    manifest = BacktestManifest.model_validate(payload)
+    assert manifest.stats_returns == {}
 
 
 def test_negative_count_rejected(payload: dict) -> None:
@@ -290,10 +295,12 @@ def test_extra_top_level_field_ignored_for_forward_compat(payload: dict) -> None
     assert "future_field_added_in_v1_3" not in dumped
 
 
-def test_extra_nested_field_ignored(payload: dict) -> None:
+def test_extra_nested_field_passed_through_in_stats_pnls(payload: dict) -> None:
+    # stats_pnls is a free-form dict; new Nautilus metric keys are preserved
+    # rather than dropped (in contrast to typed nested models which use ignore).
     payload["stats_pnls"]["USDT"]["future_metric"] = 0.42
     manifest = BacktestManifest.model_validate(payload)
-    assert not hasattr(manifest.stats_pnls["USDT"], "future_metric")
+    assert manifest.stats_pnls["USDT"]["future_metric"] == 0.42
 
 
 def test_kind_paper_and_live_accepted(payload: dict) -> None:
