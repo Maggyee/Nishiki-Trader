@@ -1,7 +1,7 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-05-14
+- **Last updated**: 2026-05-15
 - **Current phase**: Phase 0/1
 - **Current objective**: Establish a stable project skeleton, agent operating rules, git workflow, and the first implementation boundary around `SignalEvent v1`.
 - **Source of truth**: This file, git history, and ADRs under `docs/decisions/`.
@@ -50,30 +50,27 @@ Do not use this file as a detailed changelog. Use it for current project state a
 - Pushed the initial project framework to GitHub.
 - Added `docs/upstream-versions.md` to record pinned upstream checkout commits.
 - Added ADR-003 for Phase 0/1 project skeleton, `apps/bridge` package layout, SQLite-only Phase 1 persistence, and test mirror conventions.
+- Implemented `apps/bridge/` Phase 1 package: `signal_event.py` (Pydantic v1 schema, `extra="forbid"`, frozen), `time_utils.py` (ms/μs/ns conversion + ns-range guard), `validators.py` (schema / authorization / freshness checks), `store.py` (SQLite WAL store at `data/bridge/signals.db`, dedupe by `signal_id`, status transitions, deterministic replay), `cli.py` (`bridge write|validate|replay` via `argparse`).
+- Added `pydantic>=2.6` to project dependencies in `pyproject.toml`.
+- Added `tests/bridge/` covering ADR-002 §7: valid round-trip, all required-field rejections, expired-by-ttl, unauthorized source / model_version, duplicate `signal_id`, deterministic replay, AgentAdvice cannot enter `signals` table, ts_event ns boundaries (ms/μs/ns), WAL pragma. 51 tests pass; `ruff` clean on bridge code.
 
 ---
 
 ## Current Focus
 
-Phase 0/1: turn the documented architecture into a minimal, testable research/backtest loop.
+Phase 0/1: bridge package and tests are in. Remaining work to graduate Phase 0/1 per ADR-003 §2.7:
 
-Immediate focus:
-
-1. Implement `SignalEvent v1` Pydantic model in `apps/bridge/signal_event.py` (ADR-002 §3, ADR-003 §2.2).
-2. Implement `apps/bridge/time_utils.py` for ms / μs → ns conversion (ADR-002 §7).
-3. Implement `apps/bridge/validators.py` for missing / expired / unauthorized / duplicate rejection (ADR-002 §4.1).
-4. Implement `apps/bridge/store.py` over SQLite at `data/bridge/signals.db` with WAL + `signals` table (ADR-002 §5, ADR-003 §2.3).
-5. Implement `apps/bridge/cli.py` for `bridge write|validate|replay` (ADR-003 §2.2).
+1. Add a minimal `apps/strategies_nautilus/` consumer that reads `SignalEvent` from SQLite and prints decisions; no real trading API.
+2. Verify ADR-003 §2.7 graduation conditions, then update this file to record Phase 1 → Phase 2 transition.
 
 ---
 
 ## Next Steps
 
-1. Land `apps/bridge/signal_event.py` + `time_utils.py` + `validators.py` with pytest coverage of the 8 cases in ADR-002 §7.
-2. Land `apps/bridge/store.py` with SQLite WAL + dedupe by `signal_id` + status transitions.
-3. Land `apps/bridge/cli.py` (`argparse`, no click/typer) for write / validate / replay.
-4. Add a minimal `apps/strategies_nautilus/` consumer that reads `SignalEvent` from SQLite without calling any trading API.
-5. Confirm Phase 0/1 "graduation" criteria in ADR-003 §2.7 are all met, then update this file for Phase 2 entry.
+1. Land `apps/strategies_nautilus/` minimal consumer (read SQLite via `SignalStore.replay`, log decisions, no orders).
+2. Add `tests/strategies_nautilus/` for the consumer (signal expiry skip, status transitions, no network/API calls).
+3. Confirm Phase 0/1 graduation criteria in ADR-003 §2.7, update this file for Phase 2 entry.
+4. Begin ADR-004 (NautilusTrader backtest result format) when consumer is in place.
 
 ---
 

@@ -4,7 +4,9 @@ version = "0.0.0"
 description = "Personal quantitative trading system: LLM agents + freqtrade + nautilus_trader"
 requires-python = ">=3.12"
 readme = "README.md"
-dependencies = []
+dependencies = [
+    "pydantic>=2.6",
+]
 
 [dependency-groups]
 dev = [
