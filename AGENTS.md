@@ -29,5 +29,5 @@ Commit and push rule:
 - Use a concise, descriptive commit message that explains the intent of the change.
 - Do not include ignored data, secrets, local databases, or upstream source checkouts in commits.
 - After committing, push to `origin` (default branch `main`) unless the user explicitly says not to. The sole maintainer needs `origin` kept in sync so multiple checkouts and agent sessions stay aligned; this standing authorization overrides the generic "ask before pushing" default.
-- Pushes go from the canonical checkout only (the home machine / home-frp copy). If a mirror checkout has a parallel commit with a different SHA, align it after push with `git fetch && git reset --hard origin/main`.
+- Push from the checkout where the commit was created. Do not re-create the same commit on a second checkout — bring other checkouts up to date with `git fetch && git reset --hard origin/main` after the push.
 - Never force-push, never push with `--no-verify`, never push to a branch other than the user's current working branch without asking.
