@@ -2,7 +2,7 @@
 
 NautilusTrader 上的自定义 Strategy / Actor / 风控扩展。
 
-**当前 Phase**：0（骨架）。代码 Phase 1 开始写。
+**当前 Phase**：2（ML signal layer / catalog-driven Nautilus backtests）。
 
 ## 职责
 
@@ -12,14 +12,35 @@ NautilusTrader 上的自定义 Strategy / Actor / 风控扩展。
 - 实现 ADR-002 §4.2 风控侧规则（单日 5% 亏损停机、连续亏损暂停、信号过期拦截）
 - 实现 ADR-002 §4.3 降级行为（信号源挂掉 / Redis 挂掉 / 信号格式错误）
 
-## 阶段 1 计划文件
+## 当前入口
+
+Phase 2 baseline backtest runner:
+
+```bash
+uv run python -m apps.strategies_nautilus.runners.backtest_runner \
+  --catalog-path data/catalog \
+  --instrument-id BTCUSDT.BINANCE \
+  --bar-type BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL \
+  --signal-store-path data/bridge/signals.db \
+  --signal-source freqai_v1 \
+  --signal-model-version 2026-05-14 \
+  --trade-size 0.001 \
+  --starting-balance 100000
+```
+
+The runner loads bars and instruments through NautilusTrader
+`ParquetDataCatalog`, loads signals through `SignalStore.replay(**filter)`,
+and writes the ADR-004 bundle under `data/backtests/<run_id>/`.
+
+## 文件布局
 
 ```text
 strategies_nautilus/
 ├── __init__.py
 ├── signal_consumer.py    # 从 bridge.store 读 SignalEvent
-├── baseline_strategy.py  # 最简策略：直接按 SignalEvent.side 开仓
-├── risk_rules.py         # 自定义 risk rules（叠加在 nautilus RiskEngine 上）
+├── baseline_strategy.py  # 纯 Python signal -> order intent 决策层
+├── baseline_nautilus_strategy.py
+├── result_schema.py
 └── runners/
     └── backtest_runner.py
 ```

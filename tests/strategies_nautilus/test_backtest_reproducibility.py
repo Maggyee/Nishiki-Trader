@@ -17,10 +17,12 @@ from decimal import Decimal
 from pathlib import Path
 
 import pandas as pd
+import pyarrow as pa
 import pytest
 from nautilus_trader.model.currencies import USDT
 from nautilus_trader.model.data import BarType
 from nautilus_trader.model.objects import Money
+from nautilus_trader.persistence.catalog.parquet import ParquetDataCatalog
 from nautilus_trader.persistence.wranglers import BarDataWrangler
 from nautilus_trader.test_kit.providers import TestInstrumentProvider
 
@@ -34,7 +36,11 @@ from apps.strategies_nautilus.baseline_nautilus_strategy import (
 from apps.strategies_nautilus.baseline_strategy import BaselineStrategyConfig
 from apps.strategies_nautilus.runners.backtest_runner import (
     BacktestRunnerConfig,
+    SidecarSchemaError,
+    main,
     run_backtest,
+    validate_sidecar,
+    validate_sidecar_bundle,
 )
 
 BASE_TS_NS = 1_767_225_600_000_000_000  # 2026-01-01T00:00:00Z
@@ -112,21 +118,30 @@ def signal_store_path(tmp_path, signals):
     return tmp_path / "signals.db"
 
 
+@pytest.fixture
+def catalog_path(tmp_path, btcusdt_instrument, bar_type):
+    path = tmp_path / "catalog"
+    path.mkdir()
+    catalog = ParquetDataCatalog(str(path.resolve()))
+    catalog.write_data([btcusdt_instrument])
+    catalog.write_data(_make_bars(btcusdt_instrument, bar_type))
+    return path
+
+
 def _build_config(
     *,
     output_root: Path,
-    instrument,
+    catalog_path: Path,
+    instrument_id: str,
     bar_type,
-    bars,
-    signals,
     signal_store_path: Path,
 ) -> BacktestRunnerConfig:
     return BacktestRunnerConfig(
         output_root=output_root,
-        instrument=instrument,
-        bars=bars,
+        catalog_path=catalog_path,
+        instrument_id=instrument_id,
         bar_type=bar_type,
-        signals=signals,
+        signal_store_path=signal_store_path,
         baseline_config=BaselineStrategyConfig(
             venue="BINANCE",
             auth=Authorization(
@@ -140,7 +155,6 @@ def _build_config(
         trade_size=Decimal("0.001"),
         starting_balance=Money(100_000, USDT),
         base_currency=USDT,
-        signal_store_path=signal_store_path,
         signal_filter={"source": "freqai_v1"},
         machine_id="pytest",
         git_commit="0" * 40,
@@ -149,15 +163,13 @@ def _build_config(
 
 
 def test_run_backtest_writes_manifest_and_parquet(
-    tmp_path, btcusdt_instrument, bar_type, signals, signal_store_path
+    tmp_path, btcusdt_instrument, bar_type, signals, signal_store_path, catalog_path
 ):
-    bars = _make_bars(btcusdt_instrument, bar_type)
     config = _build_config(
         output_root=tmp_path / "backtests",
-        instrument=btcusdt_instrument,
+        catalog_path=catalog_path,
+        instrument_id=btcusdt_instrument.id.value,
         bar_type=bar_type,
-        bars=bars,
-        signals=signals,
         signal_store_path=signal_store_path,
     )
     result = run_backtest(config)
@@ -179,18 +191,19 @@ def test_run_backtest_writes_manifest_and_parquet(
     assert result.manifest.totals.iterations >= 0
     assert "BINANCE" in result.manifest.venues
     assert "BTCUSDT.BINANCE" in result.manifest.instruments
+    assert result.manifest.data_catalog.path == str(catalog_path)
+    assert result.manifest.data_catalog.instruments[0].rows == 10
+    validate_sidecar_bundle(result.output_dir)
 
 
 def test_signal_lineage_records_every_signal(
-    tmp_path, btcusdt_instrument, bar_type, signals, signal_store_path
+    tmp_path, btcusdt_instrument, bar_type, signals, signal_store_path, catalog_path
 ):
-    bars = _make_bars(btcusdt_instrument, bar_type)
     config = _build_config(
         output_root=tmp_path / "backtests",
-        instrument=btcusdt_instrument,
+        catalog_path=catalog_path,
+        instrument_id=btcusdt_instrument.id.value,
         bar_type=bar_type,
-        bars=bars,
-        signals=signals,
         signal_store_path=signal_store_path,
     )
     result = run_backtest(config)
@@ -198,16 +211,49 @@ def test_signal_lineage_records_every_signal(
     assert sorted(lineage_df["signal_id"].tolist()) == sorted(s.signal_id for s in signals)
 
 
-def test_signal_ids_round_trip_to_reports(
-    tmp_path, btcusdt_instrument, bar_type, signals, signal_store_path
+def test_runner_replays_filtered_signals_from_store(
+    tmp_path,
+    btcusdt_instrument,
+    bar_type,
+    signals,
+    signal_store_path,
+    catalog_path,
+    make_payload,
 ):
-    bars = _make_bars(btcusdt_instrument, bar_type)
+    store = SignalStore(signal_store_path)
+    store.write(
+        SignalEvent.model_validate(
+            make_payload(
+                signal_id="manual-extra",
+                source="manual_research",
+                model_version="2026-05-14",
+                ts_event=BASE_TS_NS + 3 * ONE_MIN_NS,
+            )
+        )
+    )
     config = _build_config(
         output_root=tmp_path / "backtests",
-        instrument=btcusdt_instrument,
+        catalog_path=catalog_path,
+        instrument_id=btcusdt_instrument.id.value,
         bar_type=bar_type,
-        bars=bars,
-        signals=signals,
+        signal_store_path=signal_store_path,
+    )
+    result = run_backtest(config)
+
+    lineage_df = pd.read_parquet(result.output_dir / "signal_lineage.parquet")
+    assert sorted(lineage_df["signal_id"].tolist()) == sorted(s.signal_id for s in signals)
+    assert result.manifest.signal_source.row_count == len(signals)
+    assert result.manifest.signal_source.filter == {"source": "freqai_v1"}
+
+
+def test_signal_ids_round_trip_to_reports(
+    tmp_path, btcusdt_instrument, bar_type, signals, signal_store_path, catalog_path
+):
+    config = _build_config(
+        output_root=tmp_path / "backtests",
+        catalog_path=catalog_path,
+        instrument_id=btcusdt_instrument.id.value,
+        bar_type=bar_type,
         signal_store_path=signal_store_path,
     )
     result = run_backtest(config)
@@ -236,26 +282,20 @@ def test_signal_ids_round_trip_to_reports(
 
 
 def test_backtest_reproducibility(
-    tmp_path, btcusdt_instrument, bar_type, signals, signal_store_path
+    tmp_path, btcusdt_instrument, bar_type, signals, signal_store_path, catalog_path
 ):
-    # Build two configs with identical inputs and run independently.
-    bars1 = _make_bars(btcusdt_instrument, bar_type)
-    bars2 = _make_bars(btcusdt_instrument, bar_type)
-
     cfg1 = _build_config(
         output_root=tmp_path / "run1",
-        instrument=btcusdt_instrument,
+        catalog_path=catalog_path,
+        instrument_id=btcusdt_instrument.id.value,
         bar_type=bar_type,
-        bars=bars1,
-        signals=signals,
         signal_store_path=signal_store_path,
     )
     cfg2 = _build_config(
         output_root=tmp_path / "run2",
-        instrument=btcusdt_instrument,
+        catalog_path=catalog_path,
+        instrument_id=btcusdt_instrument.id.value,
         bar_type=bar_type,
-        bars=bars2,
-        signals=signals,
         signal_store_path=signal_store_path,
     )
 
@@ -289,6 +329,49 @@ def test_backtest_reproducibility(
     # The run_id, started_at, finished_at are expected to differ; the ADR
     # explicitly excludes those four fields from the reproducibility set.
     assert r1.run_id != r2.run_id
+
+
+def test_sidecar_schema_validation_rejects_missing_column(tmp_path):
+    path = tmp_path / "bad.parquet"
+    pd.DataFrame({"other": ["x"]}).to_parquet(path, engine="pyarrow", index=False)
+
+    with pytest.raises(SidecarSchemaError, match="missing required column"):
+        validate_sidecar(path, pa.schema([pa.field("required", pa.string())]))
+
+
+def test_cli_entrypoint_runs_catalog_backtest(
+    tmp_path, btcusdt_instrument, bar_type, signal_store_path, catalog_path, capsys
+):
+    output_root = tmp_path / "cli-backtests"
+    rc = main(
+        [
+            "--output-root",
+            str(output_root),
+            "--catalog-path",
+            str(catalog_path),
+            "--instrument-id",
+            btcusdt_instrument.id.value,
+            "--bar-type",
+            str(bar_type),
+            "--signal-store-path",
+            str(signal_store_path),
+            "--signal-source",
+            "freqai_v1",
+            "--signal-model-version",
+            "2026-05-14",
+            "--trade-size",
+            "0.001",
+            "--starting-balance",
+            "100000",
+            "--machine-id",
+            "pytest",
+        ]
+    )
+
+    assert rc == 0
+    output_dir = Path(capsys.readouterr().out.strip())
+    assert output_dir.parent == output_root
+    assert (output_dir / "run_manifest.json").exists()
 
 
 def test_nautilus_wrapper_updates_daily_kill_switch(

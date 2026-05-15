@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-05-15
 - **Current phase**: Phase 2 entry
-- **Current objective**: Turn the initial in-memory Nautilus backtest runner into a catalog-driven, CLI-invokable research loop while preserving the `SignalEvent v1 -> NautilusTrader Strategy -> RiskEngine` boundary.
+- **Current objective**: Exercise the catalog-driven Nautilus backtest loop against real local Binance data and add replay comparison tooling while preserving the `SignalEvent v1 -> NautilusTrader Strategy -> RiskEngine` boundary.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -50,7 +50,7 @@ At task finish:
 - Phase 1 bridge is implemented: `apps/bridge/` validates, persists, and replays `SignalEvent v1` through SQLite/WAL with CLI coverage.
 - Placeholder strategy-side consumer is implemented: `apps/strategies_nautilus/signal_consumer.py` applies ADR-002 §4.1 checks without touching trading APIs.
 - Baseline decision layer is implemented: `apps/strategies_nautilus/baseline_strategy.py` maps accepted signals to `OrderIntent` and enforces the 5%-day-loss kill-switch.
-- First Phase 2 Nautilus backtest path is implemented: `BaselineNautilusStrategy` wraps the decision layer, submits through Nautilus, writes signal lineage, and `backtest_runner.py` writes ADR-004 bundles for synthetic/in-memory bars.
+- Phase 2 Nautilus backtest path is catalog-driven: `backtest_runner.py` loads one instrument/bar type from `ParquetDataCatalog`, replays signals from `SignalStore.replay(**filter)`, validates ADR-004 sidecars, and exposes a `python -m` CLI entrypoint.
 - Upstream runtime is pinned: `nautilus-trader==1.226.0`; local `nautilus_trader/` source checkout is aligned to tag `v1.226.0`.
 
 ## Current Focus
@@ -59,17 +59,15 @@ Phase 2 entry: stabilize the real NautilusTrader backtest path and make it usabl
 
 Immediate focus:
 
-1. Replace the runner's inline `bars` input with `ParquetDataCatalog` loading from `data/catalog/`, while keeping the current synthetic-bar fixture for fast tests.
-2. Add a CLI/config entrypoint for `apps/strategies_nautilus/runners/backtest_runner.py`.
-3. Load signals through `SignalStore.replay(**filter)` instead of requiring callers to pass an in-memory signal list.
-4. Preserve reproducibility: same git commit, signal-store SHA, catalog content, strategy params, risk params, and Nautilus version must produce identical stats and `fills.parquet`.
+1. Run the CLI against a real local `data/catalog/` Binance fixture once historical data is available.
+2. Preserve reproducibility as catalog data grows: same git commit, signal-store SHA, catalog content, strategy params, risk params, and Nautilus version must produce identical stats and `fills.parquet`.
+3. Keep LLM agents out of the live order path; Phase 2 remains research/backtest only.
 
 ## Next Steps
 
-1. Implement catalog loading for one instrument/bar type and cover it with a small deterministic fixture or documented local-data prerequisite.
-2. Add `python -m apps.strategies_nautilus.runners.backtest_runner` or equivalent CLI entrypoint with explicit config fields.
-3. Extend result validation around sidecar schemas (`orders`, `fills`, `positions`, `account_balances`, `signal_lineage`) once catalog-backed output is available.
-4. Decide Phase 2 SQLite -> Postgres / Redis Stream readiness only after backtest volume exposes an actual bottleneck.
+1. Backfill or import a small real Binance catalog sample under local `data/catalog/` and document the expected instrument/bar type naming.
+2. Add a replay comparison helper for catalog-backed runs so `fills.parquet` / manifest stats can be compared while ignoring run timestamps.
+3. Decide Phase 2 SQLite -> Postgres / Redis Stream readiness only after backtest volume exposes an actual bottleneck.
 
 ## Blocked / Deferred
 
@@ -84,10 +82,10 @@ Immediate focus:
 
 ## Latest Verification
 
-On 2026-05-15, after `aadf355`:
+On 2026-05-15, after the catalog-driven backtest runner update:
 
-- `uv run pytest` on home-frp -> 150 passed.
-- `uv run ruff check apps tests` on home-frp -> clean.
+- `UV_CACHE_DIR=/tmp/uv-cache uv run pytest -q` -> 153 passed.
+- `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check apps tests` -> clean.
 
 ## Recent Git Baseline
 
