@@ -5,6 +5,7 @@ description = "Personal quantitative trading system: LLM agents + freqtrade + na
 requires-python = ">=3.12"
 readme = "README.md"
 dependencies = [
+    "nautilus-trader==1.226.0",
     "pydantic>=2.6",
 ]
 
