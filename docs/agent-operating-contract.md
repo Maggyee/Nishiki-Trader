@@ -57,6 +57,7 @@ If these documents conflict with a user request, follow the newest explicit user
 - Do not introduce new frameworks because they are fashionable.
 - Every trading-related decision must be auditable, replayable, and explainable.
 - The capital ladder (testnet → 100–500 USDT → 1,000 USDT → doubling only after 3 consecutive profitable months) and the 5% single-day-loss auto-kill switch defined in ADR-001 §2 Iron Rule 5 are binding at every phase that touches real money. Never bypass them.
+- `docs/project-status.md` is a short current-state dashboard, not a changelog. Archive detailed history under `docs/progress/` and keep permanent decisions under `docs/decisions/`.
 
 ---
 
@@ -157,6 +158,7 @@ Every agent should close work with:
 - Whether the live trading path is affected.
 - Any follow-up ADR or runbook that should be created.
 - Whether `docs/project-status.md` was updated, and if not, why progress state did not change.
+- Whether detailed history was archived in `docs/progress/` when the status update would otherwise become too long.
 - The git commit created for the change, unless the user explicitly asked not to commit.
 
 For review tasks, findings come first and should focus on bugs, behavioral risk, missing tests, and architecture violations.
@@ -164,7 +166,8 @@ For review tasks, findings come first and should focus on bugs, behavioral risk,
 Commit discipline:
 
 - After implementing code or documentation changes, commit them with a concise message describing the intent.
-- Update `docs/project-status.md` before committing when the task changes current phase, completed work, blockers, or next steps.
+- Update `docs/project-status.md` before committing when the task changes current phase, blockers, current focus, next steps, or latest verification.
+- Do not append long completed-work histories to `docs/project-status.md`; summarize the current state there and move details to `docs/progress/`.
 - Do not commit generated data, secrets, local databases, logs, virtual environments, or upstream source checkouts.
 - If verification fails, either fix the issue before committing or state the failure clearly in the final report.
 

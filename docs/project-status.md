@@ -2,15 +2,27 @@
 
 - **Status file**: Active
 - **Last updated**: 2026-05-15
-- **Current phase**: Phase 1 → Phase 2 transition (graduation complete per ADR-003 §2.7)
-- **Current objective**: Phase 0/1 has graduated. Next focus is Phase 2 entry: stabilize the bridge with a real NautilusTrader-driven consumer in backtest mode and lock down the backtest result format (ADR-004 draft).
-- **Source of truth**: This file, git history, and ADRs under `docs/decisions/`.
+- **Current phase**: Phase 2 entry
+- **Current objective**: Turn the initial in-memory Nautilus backtest runner into a catalog-driven, CLI-invokable research loop while preserving the `SignalEvent v1 -> NautilusTrader Strategy -> RiskEngine` boundary.
+- **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
 
-Agents must read this file at the start of each non-trivial task and update it at the end whenever the task changes project progress, current focus, blockers, or next steps.
+## Status File Discipline
 
----
+`docs/project-status.md` is a current-state dashboard, not a changelog. Keep it short enough to read at every task start.
+
+Rules for future agents:
+
+- Keep only current phase, current objective, active focus, next steps, blockers, latest verification, and short milestone summaries here.
+- Do not append long completed-work lists, command transcripts, or implementation narratives here.
+- Move detailed historical progress to `docs/progress/` and link the archive if it remains useful.
+- Put permanent architecture decisions in `docs/decisions/`, not this file.
+- When updating this file, prefer replacing stale detail with current facts over adding more lines.
+
+Detailed history archived so far:
+
+- `docs/progress/phase-0-1-to-phase-2-entry.md`
 
 ## Progress Sync Protocol
 
@@ -19,85 +31,45 @@ At task start:
 1. Read `docs/agent-reading-list.md`.
 2. Read this file.
 3. Run `git status --short --branch`.
-4. If the working tree is clean, run `git fetch origin` and fast-forward the current branch with `git pull --ff-only`.
-5. If the working tree is not clean, do not pull; inspect the local changes first and ask before overwriting or rebasing anything.
+4. If the working tree is clean, run `git fetch origin` and `git pull --ff-only`.
+5. If the working tree is not clean, inspect local changes first; do not overwrite, rebase, stash, or reset without explicit user direction.
 6. Run `git log --oneline --decorate -5`.
-7. Inspect only the files relevant to the task.
+7. Inspect only files relevant to the task.
 
 At task finish:
 
-1. Update this file if the task changes progress, next steps, blockers, or phase status.
-2. Commit code and documentation changes unless the user explicitly says not to.
-3. Report the commit hash, verification, and whether upstream or live trading paths were touched.
+1. Update this file only if current phase, focus, blockers, next steps, or verification changed.
+2. Archive detail in `docs/progress/` when the update would turn this file into a changelog.
+3. Commit code and documentation changes unless the user explicitly says not to.
+4. Report the commit hash, verification, upstream-source status, and live-path impact.
 
-Do not use this file as a detailed changelog. Use it for current project state and next action.
+## Milestones
 
----
-
-## Completed
-
-- Cloned upstream `freqtrade` into `freqtrade/` as a local read-only source checkout.
-- Cloned upstream `nautilus_trader` into `nautilus_trader/` as a local read-only source checkout.
-- Added ADR-001 for technology stack, five hard rules, service limits, and explicit non-goals.
-- Added ADR-002 for `SignalEvent v1`, the only allowed bridge from research signals into NautilusTrader.
-- Added shared agent entrypoints: `AGENTS.md` and `CLAUDE.md`.
-- Added `docs/agent-operating-contract.md` to define agent boundaries.
-- Added `docs/agent-reading-list.md` as the expandable reading index for all agents.
-- Added Phase 0 project skeleton under `apps/`, `infra/`, `docs/`, `notebooks/`, `data/`, and `tests/`.
-- Added README files for project-owned directories created so far.
-- Initialized the root git repository on `main`.
-- Configured `origin` as `git@github.com:Maggyee/Nishiki-Trader.git`.
-- Pushed the initial project framework to GitHub.
-- Added `docs/upstream-versions.md` to record pinned upstream checkout commits.
-- Added ADR-003 for Phase 0/1 project skeleton, `apps/bridge` package layout, SQLite-only Phase 1 persistence, and test mirror conventions.
-- Implemented `apps/bridge/` Phase 1 package: `signal_event.py` (Pydantic v1 schema, `extra="forbid"`, frozen), `time_utils.py` (ms/μs/ns conversion + ns-range guard), `validators.py` (schema / authorization / freshness checks), `store.py` (SQLite WAL store at `data/bridge/signals.db`, dedupe by `signal_id`, status transitions, deterministic replay), `cli.py` (`bridge write|validate|replay` via `argparse`).
-- Added `pydantic>=2.6` to project dependencies in `pyproject.toml`.
-- Added `tests/bridge/` covering ADR-002 §7: valid round-trip, all required-field rejections, expired-by-ttl, unauthorized source / model_version, duplicate `signal_id`, deterministic replay, AgentAdvice cannot enter `signals` table, ts_event ns boundaries (ms/μs/ns), WAL pragma. 51 tests pass; `ruff` clean on bridge code.
-- Implemented `apps/strategies_nautilus/signal_consumer.py`: minimal `SignalConsumer` placeholder that reads `pending` rows from `SignalStore`, runs ADR-002 §4.1 strategy-side checks (schema / venue / authorization / freshness / `min_confidence`), and marks rows `consumed | rejected | expired`. No `nautilus_trader` / `freqtrade` / HTTP imports — Phase 1 requires only a placeholder.
-- Added `tests/strategies_nautilus/test_signal_consumer.py` (17 cases): accept path, venue mismatch, unauthorized source / model, expired, low-confidence boundary, store-status transitions, idempotency on re-run, and static asserts that the consumer file does not reference any trading or HTTP module.
-- Added ADR-004 (`docs/decisions/004-backtest-result-format.md`): Phase 2 backtest result bundle under `data/backtests/<run_id>/` — `run_manifest.json` (`schema_version=backtest.v1`, git/Nautilus/Python provenance, signal-store SHA-256, NautilusTrader `BacktestResult` stats) + Parquet sidecars (`orders / fills / positions / account_balances / signal_lineage`); reproducibility rule = same git + same signal-store sha + same data catalog + same params → bit-for-bit equal stats / fills.
-- Implemented `apps/strategies_nautilus/result_schema.py`: Pydantic `BacktestManifest` (frozen, `extra="ignore"` per ADR-004 §2.6 append-only) with nested `StrategySpec / RiskRuleSpec / SignalSource / DataCatalog / CatalogInstrument / Totals / PnlStats / ReturnsStats`; validators enforce `run_id` regex, lowercase-hex `git_commit`, ISO 8601 ms-UTC timestamps, monotonic `finished_at ≥ started_at` and `backtest_end ≥ backtest_start`, SHA-256 shape on `signal_source.store_sha256`, `win_rate ∈ [0, 1]`, `max_drawdown_* ≤ 0`.
-- Added `tests/strategies_nautilus/test_result_schema.py` (52 cases): manifest round-trip via `model_dump_json`, schema-version guard, parametrized required-field check (23 top-level keys), format validators on `run_id` / `git_commit` / ISO timestamps, range checks on counts and win_rate, ADR-004 §2.6 forward-compat (top-level + nested extras tolerated), `frozen=True` enforcement.
-- Implemented `apps/strategies_nautilus/baseline_strategy.py`: pure-Python decision layer that composes `signal_consumer.evaluate()` for ADR-002 §4.1 gating, adds the §4.2 first risk rule (5%-day-loss kill-switch — engages at `daily_pnl ≤ -daily_drawdown_stop_pct`, blocks `target_long` / `target_short` but lets `flat` through, sticks after intra-day recovery, clears via `on_day_start()`), and emits `OrderIntent(signal_id, instrument_id="SYMBOL.VENUE", action, target_position_pct)` with signed `target_position_pct` (`+max_position_pct` long, `-max_position_pct` short, `0` flat/skip). Does NOT touch `nautilus_trader` / `freqtrade` / HTTP / `submit_order`; the Phase 2 runner will wrap it in a `nautilus_trader.Strategy` subclass and route intents through the real `RiskEngine`.
-- Added `tests/strategies_nautilus/test_baseline_strategy.py` (35 cases): per-side intent mapping (`buy/sell/flat → target_long/target_short/target_flat`), all §4.1 rejection paths return `action="skip"` with descriptive reason, kill-switch boundary (-5.00%, -4.99%, -6.00%) and stickiness, `flat` allowed during kill-switch, `on_day_start()` clears, parametrized config range guards, AST-aware forbidden-token check (`tokenize`-strips docstrings/comments so the decision layer's documentation of the future wrapper does not trip the gate).
-- Pinned `nautilus-trader==1.226.0` in `pyproject.toml` (PyPI wheel, no local build) and re-checked out `nautilus_trader/` upstream to tag `v1.226.0` (`38b912a8b0`) so runtime / source-reference / `git_commit` are all aligned (ADR-004 §2.4). `docs/upstream-versions.md` records the pin policy + previous develop snapshot.
-- Implemented the first Phase 2 Nautilus backtest path: `apps/strategies_nautilus/baseline_nautilus_strategy.py` wraps `BaselineSignalStrategy` in a real `nautilus_trader.Strategy`, submits market orders through `self.submit_order(...)`, tags signal-driven orders with `signal_id`, updates the 5%-day-loss kill-switch from Nautilus portfolio equity, and records per-signal lineage.
-- Implemented `apps/strategies_nautilus/runners/backtest_runner.py`: in-memory `BacktestEngine` runner for synthetic/loaded bars, deterministic `run_id` bundle writer under `data/backtests/<run_id>/`, ADR-004 manifest validation, Parquet sidecars, deterministic fill IDs, and `signal_id` propagation into orders/fills/positions/lineage. Remaining production gap: replace inline bars with `ParquetDataCatalog` loading and a CLI/config entrypoint.
-- Added `tests/strategies_nautilus/test_backtest_reproducibility.py` (5 cases): bundle files written, lineage contains every processed signal, `signal_id` round-trips into reports, identical inputs produce bit-for-bit identical `fills.parquet`, and the Nautilus wrapper updates the daily kill-switch. Updated schema/isolation tests to match Nautilus raw stat names and avoid test-order-dependent `sys.modules` checks.
-
-### Phase 0/1 graduation checklist (ADR-003 §2.7)
-
-| # | Criterion | Status |
-|---|---|---|
-| 1 | §2.1 directories present; Phase 2+ kept as empty skeletons (README + `__init__.py` only) | ✅ verified |
-| 2 | All five files in `apps/bridge/` (§2.2) implemented; ADR-002 §7 tests pass | ✅ 51 / 51 |
-| 3 | `bridge write / validate / replay` CLI works against `data/bridge/signals.db` (SQLite WAL) | ✅ via `tests/bridge/test_cli.py` |
-| 4 | Minimal `apps/strategies_nautilus/` consumer reads `SignalEvent` from SQLite; no real trading API | ✅ `SignalConsumer` + 17 tests |
-| 5 | `docs/project-status.md` records Phase 1 graduation + Phase 2 entry | ✅ this update |
-
-Aggregate test result on 2026-05-15: `uv run pytest` → 150 passed in 2.08s on home-frp; `ruff check apps tests` → clean.
-
----
+- Phase 0 skeleton and agent contracts are in place.
+- ADR-001 through ADR-004 define the core tech stack, `SignalEvent v1`, project skeleton, and backtest result format.
+- Phase 1 bridge is implemented: `apps/bridge/` validates, persists, and replays `SignalEvent v1` through SQLite/WAL with CLI coverage.
+- Placeholder strategy-side consumer is implemented: `apps/strategies_nautilus/signal_consumer.py` applies ADR-002 §4.1 checks without touching trading APIs.
+- Baseline decision layer is implemented: `apps/strategies_nautilus/baseline_strategy.py` maps accepted signals to `OrderIntent` and enforces the 5%-day-loss kill-switch.
+- First Phase 2 Nautilus backtest path is implemented: `BaselineNautilusStrategy` wraps the decision layer, submits through Nautilus, writes signal lineage, and `backtest_runner.py` writes ADR-004 bundles for synthetic/in-memory bars.
+- Upstream runtime is pinned: `nautilus-trader==1.226.0`; local `nautilus_trader/` source checkout is aligned to tag `v1.226.0`.
 
 ## Current Focus
 
-Phase 2 entry — switch the consumer from "decision logging placeholder" to a real NautilusTrader backtest path while preserving the SignalEvent → Strategy → RiskEngine boundary from ADR-002.
+Phase 2 entry: stabilize the real NautilusTrader backtest path and make it usable against project data.
 
 Immediate focus:
 
-1. ~~Add a Pydantic schema for `run_manifest.json` (ADR-004 §2.2) under `apps/strategies_nautilus/result_schema.py`.~~ ✅ done (52 tests).
-2. ~~Implement `apps/strategies_nautilus/baseline_strategy.py`: pure decision layer producing `OrderIntent` with §4.1 gating + §4.2 5%-day-loss kill-switch.~~ ✅ done (35 tests).
-3. ~~Implement the first `apps/strategies_nautilus/runners/backtest_runner.py` path: wrap `BaselineSignalStrategy` inside a `nautilus_trader.Strategy`, route each `OrderIntent` through `self.submit_order(...)`, and write the ADR-004 result bundle to `data/backtests/<run_id>/` with a reproducibility test.~~ ✅ initial in-memory runner done; catalog/CLI integration remains.
-
----
+1. Replace the runner's inline `bars` input with `ParquetDataCatalog` loading from `data/catalog/`, while keeping the current synthetic-bar fixture for fast tests.
+2. Add a CLI/config entrypoint for `apps/strategies_nautilus/runners/backtest_runner.py`.
+3. Load signals through `SignalStore.replay(**filter)` instead of requiring callers to pass an in-memory signal list.
+4. Preserve reproducibility: same git commit, signal-store SHA, catalog content, strategy params, risk params, and Nautilus version must produce identical stats and `fills.parquet`.
 
 ## Next Steps
 
-1. Replace the runner's inline `bars` input with `ParquetDataCatalog` loading from `data/catalog/`, keeping the current synthetic-bar test path as a fast unit/integration fixture.
-2. Add a CLI/config entrypoint for `backtest_runner.py`: load signals through `SignalStore.replay(**filter)`, select catalog instruments/bar type, and write a real `data/backtests/<run_id>/` bundle.
-3. Decide Phase 2 SQLite → Postgres / Redis Stream readiness — defer until backtest volume exposes the bottleneck (ADR-006 / ADR-007 placeholders kept).
-
----
+1. Implement catalog loading for one instrument/bar type and cover it with a small deterministic fixture or documented local-data prerequisite.
+2. Add `python -m apps.strategies_nautilus.runners.backtest_runner` or equivalent CLI entrypoint with explicit config fields.
+3. Extend result validation around sidecar schemas (`orders`, `fills`, `positions`, `account_balances`, `signal_lineage`) once catalog-backed output is available.
+4. Decide Phase 2 SQLite -> Postgres / Redis Stream readiness only after backtest volume exposes an actual bottleneck.
 
 ## Blocked / Deferred
 
@@ -105,30 +77,20 @@ Immediate focus:
 - No real exchange API keys in the repository.
 - No Redis until cross-process signal transport is required.
 - No Postgres/TimescaleDB/pgvector until schemas stabilize.
-- No frontend implementation until backtest and risk result schemas exist.
+- No frontend implementation until backtest and risk result schemas are stable.
 - No n8n workflows until Phase 3/4.
 - No autonomous Agent trading. Agents may only research, review, summarize, and suggest.
 - No edits to `freqtrade/` or `nautilus_trader/` unless explicitly requested.
 
----
+## Latest Verification
+
+On 2026-05-15, after `aadf355`:
+
+- `uv run pytest` on home-frp -> 150 passed.
+- `uv run ruff check apps tests` on home-frp -> clean.
 
 ## Recent Git Baseline
 
-- `2f9ec32 chore: initialize trader project framework`
+- `aadf355 feat(strategies_nautilus): add reproducible backtest runner`
 
 Agents should run `git log --oneline --decorate -5` for the latest commits instead of assuming this section is exhaustive.
-
----
-
-## Definition Of Current Success
-
-The project is on track when a new agent can:
-
-- Read `AGENTS.md` or `CLAUDE.md`.
-- Follow `docs/agent-reading-list.md`.
-- Understand current progress from this file.
-- Sync from `origin` safely before editing.
-- Avoid upstream edits by default.
-- Make a scoped Phase 0/1 change.
-- Update this file if project state changed.
-- Commit the change with a clear message.

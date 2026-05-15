@@ -1,0 +1,13 @@
+# Progress Archives
+
+- **Purpose**: Archive detailed implementation history that is too long for `docs/project-status.md`.
+- **Current phase**: Phase 2 entry.
+- **Boundaries**: This directory is for historical progress snapshots, handoff notes, and phase summaries. It is not the source of truth for current next steps; use `docs/project-status.md` for that.
+- **Next implementation entrypoint**: When `docs/project-status.md` starts accumulating changelog detail, summarize the durable facts there and move the detailed history into a dated or phase-scoped file in this directory.
+
+Rules:
+
+- Keep `docs/project-status.md` short enough to read at task start.
+- Put detailed completed-work lists, long verification transcripts, and implementation narratives here.
+- Put permanent architecture decisions in `docs/decisions/`, not here.
+- Link archive files from `docs/project-status.md` only when they remain useful context.
