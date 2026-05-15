@@ -42,6 +42,12 @@ from apps.strategies_nautilus.runners.backtest_runner import (
     validate_sidecar,
     validate_sidecar_bundle,
 )
+from apps.strategies_nautilus.runners.compare_backtests import (
+    compare_backtest_runs,
+)
+from apps.strategies_nautilus.runners.compare_backtests import (
+    main as compare_main,
+)
 
 BASE_TS_NS = 1_767_225_600_000_000_000  # 2026-01-01T00:00:00Z
 ONE_MIN_NS = 60_000_000_000
@@ -329,6 +335,71 @@ def test_backtest_reproducibility(
     # The run_id, started_at, finished_at are expected to differ; the ADR
     # explicitly excludes those four fields from the reproducibility set.
     assert r1.run_id != r2.run_id
+
+
+def test_compare_backtests_accepts_replayed_runs(
+    tmp_path,
+    btcusdt_instrument,
+    bar_type,
+    signal_store_path,
+    catalog_path,
+):
+    cfg1 = _build_config(
+        output_root=tmp_path / "run1",
+        catalog_path=catalog_path,
+        instrument_id=btcusdt_instrument.id.value,
+        bar_type=bar_type,
+        signal_store_path=signal_store_path,
+    )
+    cfg2 = _build_config(
+        output_root=tmp_path / "run2",
+        catalog_path=catalog_path,
+        instrument_id=btcusdt_instrument.id.value,
+        bar_type=bar_type,
+        signal_store_path=signal_store_path,
+    )
+
+    r1 = run_backtest(cfg1)
+    r2 = run_backtest(cfg2)
+
+    result = compare_backtest_runs(r1.output_dir, r2.output_dir)
+    assert result.ok, result.differences
+
+
+def test_compare_backtests_cli_reports_drift(
+    tmp_path,
+    btcusdt_instrument,
+    bar_type,
+    signal_store_path,
+    catalog_path,
+    capsys,
+):
+    cfg1 = _build_config(
+        output_root=tmp_path / "run1",
+        catalog_path=catalog_path,
+        instrument_id=btcusdt_instrument.id.value,
+        bar_type=bar_type,
+        signal_store_path=signal_store_path,
+    )
+    cfg2 = _build_config(
+        output_root=tmp_path / "run2",
+        catalog_path=catalog_path,
+        instrument_id=btcusdt_instrument.id.value,
+        bar_type=bar_type,
+        signal_store_path=signal_store_path,
+    )
+
+    r1 = run_backtest(cfg1)
+    r2 = run_backtest(cfg2)
+    manifest_path = r2.output_dir / "run_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["totals"]["fills"] += 1
+    manifest_path.write_text(json.dumps(manifest) + "\n", encoding="utf-8")
+
+    rc = compare_main([str(r1.output_dir), str(r2.output_dir)])
+
+    assert rc == 1
+    assert "run_manifest.json totals differs" in capsys.readouterr().out
 
 
 def test_sidecar_schema_validation_rejects_missing_column(tmp_path):

@@ -22,8 +22,8 @@ uv run python -m apps.strategies_nautilus.runners.backtest_runner \
   --instrument-id BTCUSDT.BINANCE \
   --bar-type BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL \
   --signal-store-path data/bridge/signals.db \
-  --signal-source freqai_v1 \
-  --signal-model-version 2026-05-14 \
+  --signal-source manual_research \
+  --signal-model-version binance-fixture-v1 \
   --trade-size 0.001 \
   --starting-balance 100000
 ```
@@ -31,6 +31,31 @@ uv run python -m apps.strategies_nautilus.runners.backtest_runner \
 The runner loads bars and instruments through NautilusTrader
 `ParquetDataCatalog`, loads signals through `SignalStore.replay(**filter)`,
 and writes the ADR-004 bundle under `data/backtests/<run_id>/`.
+
+For the local BTCUSDT fixture, build `data/catalog/` first with:
+
+```bash
+uv run python -m apps.ops.backfill_bars \
+  --download \
+  --symbol BTCUSDT \
+  --interval 1m \
+  --date 2024-01-01 \
+  --catalog-path data/catalog \
+  --seed-demo-signals \
+  --signal-store-path data/bridge/signals.db
+```
+
+Replay comparison:
+
+```bash
+uv run python -m apps.strategies_nautilus.runners.compare_backtests \
+  data/backtests/<run-a> \
+  data/backtests/<run-b>
+```
+
+The comparison ignores `run_id`, `started_at`, `finished_at`, and
+`elapsed_seconds`, then compares the normalized manifest plus `fills.parquet`
+byte-for-byte.
 
 ## 文件布局
 
@@ -42,7 +67,8 @@ strategies_nautilus/
 ├── baseline_nautilus_strategy.py
 ├── result_schema.py
 └── runners/
-    └── backtest_runner.py
+    ├── backtest_runner.py
+    └── compare_backtests.py
 ```
 
 测试：`tests/strategies_nautilus/`
