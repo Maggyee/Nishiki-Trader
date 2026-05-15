@@ -2,8 +2,8 @@
 
 - **Status file**: Active
 - **Last updated**: 2026-05-15
-- **Current phase**: Phase 0/1
-- **Current objective**: Establish a stable project skeleton, agent operating rules, git workflow, and the first implementation boundary around `SignalEvent v1`.
+- **Current phase**: Phase 1 → Phase 2 transition (graduation complete per ADR-003 §2.7)
+- **Current objective**: Phase 0/1 has graduated. Next focus is Phase 2 entry: stabilize the bridge with a real NautilusTrader-driven consumer in backtest mode and lock down the backtest result format (ADR-004 draft).
 - **Source of truth**: This file, git history, and ADRs under `docs/decisions/`.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -53,24 +53,42 @@ Do not use this file as a detailed changelog. Use it for current project state a
 - Implemented `apps/bridge/` Phase 1 package: `signal_event.py` (Pydantic v1 schema, `extra="forbid"`, frozen), `time_utils.py` (ms/μs/ns conversion + ns-range guard), `validators.py` (schema / authorization / freshness checks), `store.py` (SQLite WAL store at `data/bridge/signals.db`, dedupe by `signal_id`, status transitions, deterministic replay), `cli.py` (`bridge write|validate|replay` via `argparse`).
 - Added `pydantic>=2.6` to project dependencies in `pyproject.toml`.
 - Added `tests/bridge/` covering ADR-002 §7: valid round-trip, all required-field rejections, expired-by-ttl, unauthorized source / model_version, duplicate `signal_id`, deterministic replay, AgentAdvice cannot enter `signals` table, ts_event ns boundaries (ms/μs/ns), WAL pragma. 51 tests pass; `ruff` clean on bridge code.
+- Implemented `apps/strategies_nautilus/signal_consumer.py`: minimal `SignalConsumer` placeholder that reads `pending` rows from `SignalStore`, runs ADR-002 §4.1 strategy-side checks (schema / venue / authorization / freshness / `min_confidence`), and marks rows `consumed | rejected | expired`. No `nautilus_trader` / `freqtrade` / HTTP imports — Phase 1 requires only a placeholder.
+- Added `tests/strategies_nautilus/test_signal_consumer.py` (17 cases): accept path, venue mismatch, unauthorized source / model, expired, low-confidence boundary, store-status transitions, idempotency on re-run, and static asserts that the consumer file does not reference any trading or HTTP module.
+
+### Phase 0/1 graduation checklist (ADR-003 §2.7)
+
+| # | Criterion | Status |
+|---|---|---|
+| 1 | §2.1 directories present; Phase 2+ kept as empty skeletons (README + `__init__.py` only) | ✅ verified |
+| 2 | All five files in `apps/bridge/` (§2.2) implemented; ADR-002 §7 tests pass | ✅ 51 / 51 |
+| 3 | `bridge write / validate / replay` CLI works against `data/bridge/signals.db` (SQLite WAL) | ✅ via `tests/bridge/test_cli.py` |
+| 4 | Minimal `apps/strategies_nautilus/` consumer reads `SignalEvent` from SQLite; no real trading API | ✅ `SignalConsumer` + 17 tests |
+| 5 | `docs/project-status.md` records Phase 1 graduation + Phase 2 entry | ✅ this update |
+
+Aggregate test result on 2026-05-15: `uv run pytest` → 68 passed in 0.14s; `ruff check apps tests` → clean.
 
 ---
 
 ## Current Focus
 
-Phase 0/1: bridge package and tests are in. Remaining work to graduate Phase 0/1 per ADR-003 §2.7:
+Phase 2 entry — switch the consumer from "decision logging placeholder" to a real NautilusTrader backtest path while preserving the SignalEvent → Strategy → RiskEngine boundary from ADR-002.
 
-1. Add a minimal `apps/strategies_nautilus/` consumer that reads `SignalEvent` from SQLite and prints decisions; no real trading API.
-2. Verify ADR-003 §2.7 graduation conditions, then update this file to record Phase 1 → Phase 2 transition.
+Immediate focus:
+
+1. Draft **ADR-004** (NautilusTrader backtest result format) before adding real `nautilus_trader` imports.
+2. Add `apps/strategies_nautilus/baseline_strategy.py` + `runners/backtest_runner.py` (per `strategies_nautilus/README.md` Phase 1 plan) on top of the existing placeholder consumer.
+3. Build a small reproducible backtest harness that consumes `data/bridge/signals.db`, calls into NautilusTrader Strategy / RiskEngine, and writes a backtest result file matching ADR-004.
 
 ---
 
 ## Next Steps
 
-1. Land `apps/strategies_nautilus/` minimal consumer (read SQLite via `SignalStore.replay`, log decisions, no orders).
-2. Add `tests/strategies_nautilus/` for the consumer (signal expiry skip, status transitions, no network/API calls).
-3. Confirm Phase 0/1 graduation criteria in ADR-003 §2.7, update this file for Phase 2 entry.
-4. Begin ADR-004 (NautilusTrader backtest result format) when consumer is in place.
+1. Write ADR-004 — NautilusTrader backtest result format (fields, file layout, persistence path under `data/`).
+2. Implement `baseline_strategy.py` (translates `SignalEvent.side` into Nautilus order intents through the real RiskEngine; no real exchange API).
+3. Implement `runners/backtest_runner.py` (load Parquet K-lines from `data/catalog/`, feed signals from `SignalStore.replay`, emit ADR-004 result).
+4. Add `tests/strategies_nautilus/` coverage for the real Strategy + 5%-day-loss risk rule (ADR-002 §4.2).
+5. Decide Phase 2 SQLite → Postgres / Redis Stream readiness (defer to ADR-006 / ADR-007 once backtest volume exposes the bottleneck).
 
 ---
 
