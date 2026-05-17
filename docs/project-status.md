@@ -23,6 +23,7 @@ Rules for future agents:
 Detailed history archived so far:
 
 - `docs/progress/phase-0-1-to-phase-2-entry.md`
+- `docs/progress/phase-2-signal-source-baselines.md` — demo vs rule signal-source bundle fingerprints for BTCUSDT 2024-01-01.
 
 ## Progress Sync Protocol
 
@@ -68,10 +69,9 @@ Immediate focus:
 
 ## Next Steps
 
-1. Add a comparison note or test expectation for `manual_research/binance-fixture-v1` (demo) vs `rule_baseline_v1/ema5-20+rsi14` (rule) bundle outputs so strategy changes have a stable baseline.
-2. Extend backfill beyond one BTCUSDT day only after the single-day signal path is stable.
-3. Plan ADR-005 (research-layer signal source taxonomy: how FreqAI / model-driven sources slot beside the rule baseline) before adding a second source family.
-4. Decide Phase 2 SQLite -> Postgres / Redis Stream readiness only after backtest volume exposes an actual bottleneck.
+1. Extend backfill beyond one BTCUSDT day; append a new dated section to `docs/progress/phase-2-signal-source-baselines.md` when the catalog window changes.
+2. Plan ADR-005 (research-layer signal source taxonomy: how FreqAI / model-driven sources slot beside the rule baseline) before adding a second source family.
+3. Decide Phase 2 SQLite -> Postgres / Redis Stream readiness only after backtest volume exposes an actual bottleneck.
 
 ## Blocked / Deferred
 
@@ -92,9 +92,10 @@ On 2026-05-17, after the rule-based baseline signal generator landed:
 - `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check apps tests` -> clean.
 - `UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_freqtrade.research.baseline_rule_signals --catalog-path data/catalog --signal-store-path data/bridge/signals.db --symbol BTCUSDT --venue BINANCE --bar-type 'BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL'` -> 71 SignalEvents written for BTCUSDT 2024-01-01.
 - `UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.backtest_runner --instrument-id BTCUSDT.BINANCE --bar-type 'BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL' --signal-source rule_baseline_v1 --signal-model-version 'ema5-20+rsi14' --allowed-source rule_baseline_v1 --allowed-model-version 'ema5-20+rsi14' --trade-size 0.001 --starting-balance 100000 --min-confidence 0.5` -> 1 bundle, totals fills=142, PnL (total)=-$4.74, Win Rate=12.7% (placeholder strategy, no alpha expected).
+- Same CLI swapped to `--signal-source manual_research --signal-model-version binance-fixture-v1` (demo) -> 1 bundle, totals fills=4, PnL (total)=-$1.02, Win Rate=50%. Both fingerprints frozen in `docs/progress/phase-2-signal-source-baselines.md`.
 
 ## Recent Git Baseline
 
-- `df4e712 feat(strategies_nautilus): add real catalog fixture tooling`
+- `83b0910 feat(strategies_freqtrade): add rule-based baseline SignalEvent generator`
 
 Agents should run `git log --oneline --decorate -5` for the latest commits instead of assuming this section is exhaustive.

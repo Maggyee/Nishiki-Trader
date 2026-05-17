@@ -29,6 +29,7 @@ Read these before any non-trivial work:
 | Upstream source updates or dependency drift | `docs/upstream-versions.md` |
 | Project skeleton or directory layout | `docs/decisions/003-project-skeleton.md` |
 | Backtest result format or reports | `docs/decisions/004-backtest-result-format.md` |
+| Adding or comparing a signal source | `docs/progress/phase-2-signal-source-baselines.md` — current demo / rule fingerprints to diff against |
 | Detailed historical progress | Relevant file under `docs/progress/` only when current status links it or history is needed |
 | Risk rules, testnet, or live trading | Future `docs/decisions/005-risk-and-emergency-rules.md` |
 | Operations, restart, emergency handling | `docs/runbook.md` |
