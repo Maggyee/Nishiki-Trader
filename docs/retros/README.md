@@ -114,3 +114,20 @@ Use the literal `decision` value from the CLI (`promote`, `hold`, `demote`,
   evidence (Win Rate, expectancy, max drawdown). The recommended next
   human action — handled in its own future retro — is to flip
   `dry_run=False` to enter `paper_simulated` and collect those numbers.
+- [`2026-05-17-freqai-linear-v1-promote-paper-simulated.md`](2026-05-17-freqai-linear-v1-promote-paper-simulated.md)
+  — first ever `promote` retro for any source in this project.
+  Authorizes `freqai_linear_v1` to flip
+  `SourcePolicy(dry_run=False, position_pct_multiplier=0.2)` based on
+  the 60-day, 595-signal v8 paper-shadow bundle. All ADR-007 §2.5
+  gates pass: signal-side hold-out is stable Jan vs Feb, runtime
+  hygiene is clean, multiplier stays at the paper_simulated cap, and
+  no review blockers exist.
+- [`2026-05-17-freqai-linear-v1-hold-paper-simulated.md`](2026-05-17-freqai-linear-v1-hold-paper-simulated.md)
+  — first record of the same source operating at `paper_simulated`.
+  Bundle `data/paper/20260517-053502Z-37b99b3f` (manifest fa344a55…)
+  produced 545 orders, 545 fills (every one carrying `signal_id`),
+  273 positions, no kill-switch fires, no data gaps, PnL +5.0076 USDT
+  (+0.005%) over 60 days, Win Rate 55.5%, expectancy +0.019 USDT/trade,
+  max drawdown -0.001%. Decision is `hold` because the next stage
+  `testnet_canary` is hard-blocked by `phase_3_not_ready`; ADR-007 §2.5
+  also requires a Phase 3 testnet runbook that does not yet exist.

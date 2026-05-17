@@ -833,3 +833,146 @@ on `signal_id` and grouping on `ts_event < 2024-02-01T00:00Z`. The
 script is one-shot and intentionally not committed; rerunning it on
 the v8 fingerprint above must produce the numbers in the table above
 or the v8 fingerprint is no longer reproducible.
+
+
+---
+
+## 2026-05-17 v9 — first deliberate promote: paper_shadow → paper_simulated
+
+- **Catalog input**: same 60-day catalog as v8 (2024-01-01..2024-02-29,
+  86400 1m bars, 0 ts gaps).
+- **Signal store**: same as v8, sha256
+  `6c30373984f7e565c855adb3f946722c43c9253038956895b34233a386d02dfe`
+  (595 freqai rows: 308 Jan + 287 Feb).
+- **Code baseline**: git `a9a35d4`
+  (`docs(progress): extend catalog to 60 days; first hold-out month evidence for freqai_linear_v1`).
+- **Change vs v8**: this is the first time `freqai_linear_v1` is run
+  with `SourcePolicy(dry_run=False, position_pct_multiplier=0.2)`. The
+  flip is authorized by an explicit `promote` retro before the run; the
+  resulting bundle is the first paper_simulated evidence for the
+  source.
+
+### What landed
+
+1. **`promote` retro** (first ever for any source in this project):
+   [`docs/retros/2026-05-17-freqai-linear-v1-promote-paper-simulated.md`](../retros/2026-05-17-freqai-linear-v1-promote-paper-simulated.md).
+   Evidence bundle: v8 paper-shadow (`data/paper/20260517-052512Z-36feef84`).
+   `decision_allowed=True`; `policy_diff={"dry_run": {"current": true, "target": false}}`;
+   `bundle_policy_matches_current=True`; no review or promotion gate
+   blockers. `decision_reasons=["promote_gates_passed"]`.
+2. **v9 simulated bundle**: produced by re-running `paper_runner` with
+   `--policy-position-pct-multiplier 0.2` and **without** `--policy-dry-run`.
+3. **`hold @ paper_simulated` retro**:
+   [`docs/retros/2026-05-17-freqai-linear-v1-hold-paper-simulated.md`](../retros/2026-05-17-freqai-linear-v1-hold-paper-simulated.md).
+   Records the first paper_simulated state for this source. Decision
+   is `hold` because the next stage (testnet_canary) is hard-blocked
+   by `promotion_review`'s `phase_3_not_ready` gate and ADR-007 §2.5
+   also requires a Phase 3 testnet runbook that does not exist yet.
+
+### v9 simulated bundle fingerprint
+
+| metric | freqai paper simulated (v9) | reference (v8 shadow) |
+|---|---:|---:|
+| bundle | `data/paper/20260517-053502Z-37b99b3f` | `data/paper/20260517-052512Z-36feef84` |
+| manifest sha256 | `fa344a5534c220a0a0547f58f069394921399fd21def505faaf3c978d04e6efb` | `9d813db2a77adf39cb974f5e6b7b3e04b2f701f930757edf132d97fd3ddb13c0` |
+| source / model | `freqai_linear_v1 / linear-mom-train20240105` | same |
+| `git_dirty` | false | same |
+| runtime mode / data_mode / order_mode | `paper` / `catalog_polling` / `simulated` | same |
+| backtest_start | 2024-01-01T00:00:00.000Z | same |
+| backtest_end | 2024-02-29T23:59:00.000Z | same |
+| session_days_inclusive | 60 | same |
+| iterations | 86400 | same |
+| signal rows | 595 | same |
+| applied policy | **`dry_run=False`**, multiplier `0.2` | `dry_run=True`, multiplier `0.2` |
+| heartbeat_count | 86400 | same |
+| poll_count | 86400 | same |
+| processed_until_ns | 1709251140000000000 | same |
+| restart_sequence | 0 | same |
+| data_gap_count | 0 | same |
+| **orders** | **545** | 0 (dry-run) |
+| **fills** | **545** | 0 (dry-run) |
+| **positions** | **273** | 0 (dry-run) |
+| account_balances rows | 86400 | same |
+| lineage decisions | `target_long×436`, `target_short×159` | same totals; reasons differ |
+| lineage reasons (top) | empty×273 (first-fill openings), `already_target_long×299`, `already_target_short×23` | `dry_run×595` |
+| every order has signal_id | yes (0 missing) | n/a |
+| every fill has signal_id | yes (0 missing) | n/a |
+| positions.signal_ids set | yes | n/a |
+| kill-switch fires | 0 | 0 |
+| **PnL (total, USDT)** | **+5.0076** | 0 (dry-run) |
+| PnL% (total) | +0.005008% | 0 |
+| **Win Rate** | 0.5551 | null |
+| **Expectancy (USDT/trade)** | **+0.01858** | null |
+| **Max Drawdown (Pct)** | **-1.0035e-05 (-0.001003%)** | 0 |
+| **Max Drawdown (Abs, USDT)** | **-1.0035** | 0 |
+| review blockers | none | none |
+| promotion gate blockers (target=paper_simulated, decision=hold) | none | n/a |
+
+### Reading v9
+
+- **First real return-side numbers for `freqai_linear_v1`.** v3..v8
+  were dry-run; v9 is the first time orders/fills/positions are
+  produced and the strategy and `RiskEngine` are exercised end to
+  end. Win Rate 55.5%, expectancy +0.019 USDT/trade, max drawdown
+  -0.001% on the 60-day window. Numerically the source is positive,
+  but the magnitude is tiny relative to fees / slippage modelling —
+  this is "consistent enough to keep running on paper_simulated", not
+  "alpha".
+- **ADR-002 §4.1 traceability holds.** 545 orders and 545 fills carry
+  signal_id (0 missing); 273 positions reference signal_ids. The
+  number of unique `signal_id`s in fills (273) matches positions
+  exactly because each position is opened by the first fill of a
+  signal-driven order; subsequent same-signal fills inside the same
+  position reuse the position record.
+- **Strategy "already-on-side" logic shows.** 595 signals → 273
+  position openings + 299 already_target_long + 23 already_target_short
+  = 595 lineage rows. The strategy correctly does not double-open
+  when a long signal arrives while already long, and the lineage
+  reason explicitly names this behaviour.
+- **Phase 2 ceiling reached for this source.** paper_simulated is the
+  highest stage allowed in Phase 2 by `promotion_review`'s
+  `phase_3_not_ready` gate. Any further promote requires Phase 3
+  ADRs to define testnet runtime, exchange credentials management,
+  emergency flatten, restart recovery, and alerting.
+
+### v9 reproduction
+
+Starting from the v8 catalog (60 days) and signal store (595 freqai rows):
+
+```bash
+# 1. Authorize the promote with the v8 shadow bundle as evidence.
+UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.promotion_review \
+  data/paper/<v8_run_id> \
+  --current-stage paper_shadow --target-stage paper_simulated \
+  --current-dry-run --current-position-pct-multiplier 0.2 \
+  --target-no-dry-run --target-position-pct-multiplier 0.2 \
+  --decision promote --operator nishiki \
+  --rationale "<§2.5 / §2.6 evidence summary>" \
+  --output-markdown docs/retros/<UTC>-freqai-linear-v1-promote-paper-simulated.md
+
+# 2. Run the simulated bundle WITHOUT --policy-dry-run.
+UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.paper_runner \
+  --instrument-id BTCUSDT.BINANCE \
+  --bar-type 'BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL' \
+  --signal-source freqai_linear_v1 \
+  --signal-model-version linear-mom-train20240105 \
+  --allowed-source freqai_linear_v1 \
+  --allowed-model-version linear-mom-train20240105 \
+  --trade-size 0.001 --starting-balance 100000 --min-confidence 0.5 \
+  --policy-position-pct-multiplier 0.2
+
+# 3. Record the simulated state with a hold retro.
+UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.promotion_review \
+  data/paper/<v9_run_id> \
+  --current-stage paper_simulated --target-stage paper_simulated \
+  --current-no-dry-run --current-position-pct-multiplier 0.2 \
+  --target-no-dry-run --target-position-pct-multiplier 0.2 \
+  --decision hold --operator nishiki \
+  --rationale "<v9 sanity + return-side metrics + Phase 3 gating>" \
+  --output-markdown docs/retros/<UTC>-freqai-linear-v1-hold-paper-simulated.md
+```
+
+Re-running v9 from v8 produces a deterministic bundle: same model
+fingerprint + same signal store sha256 + same catalog content + same
+git commit must yield the same orders/fills/positions/PnL down to the
+floating-point noise level recorded above.
