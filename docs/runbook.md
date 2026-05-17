@@ -31,6 +31,43 @@ ls -la data/nautilus_cache/
 cd apps/strategies_nautilus && uv run python runners/backtest_runner.py
 ```
 
+### paper session（Phase 2+）
+
+Paper session 只允许模拟账户，不读取真实交易所 API key，不提交真实订单。输出目录：
+`data/paper/<run_id>/`。
+
+启动本地模拟 paper session：
+
+```bash
+uv run python -m apps.strategies_nautilus.runners.paper_runner \
+  --catalog-path data/catalog \
+  --signal-store-path data/bridge/signals.db \
+  --instrument-id BTCUSDT.BINANCE \
+  --bar-type 'BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL' \
+  --signal-source freqai_linear_v1 \
+  --signal-model-version linear-mom-train20240105 \
+  --allowed-source freqai_linear_v1 \
+  --allowed-model-version linear-mom-train20240105 \
+  --trade-size 0.001 \
+  --starting-balance 100000 \
+  --policy-position-pct-multiplier 0.2 \
+  --policy-dry-run
+```
+
+检查：
+
+```bash
+jq '.kind, .runtime, .totals, .strategies[0].params.policies' \
+  data/paper/<run_id>/run_manifest.json
+```
+
+降档规则：
+
+- `signal_lineage.parquet` 出现批量 `expired`、`unauthorized`、`signal_lag`：保持或切回 `dry_run=True`。
+- `risk.log` 出现 `kill_switch`：停用该 `(source, model_version)`，人工复盘后才能恢复。
+- 任何 session 的 `git_dirty=true`：不得作为升档依据。
+- Paper 通过前禁止添加真实 exchange credentials；testnet 通过前禁止 live。
+
 ### freqtrade（Phase 2+）
 
 ```bash

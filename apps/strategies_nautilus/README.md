@@ -32,6 +32,26 @@ The runner loads bars and instruments through NautilusTrader
 `ParquetDataCatalog`, loads signals through `SignalStore.replay(**filter)`,
 and writes the ADR-004 bundle under `data/backtests/<run_id>/`.
 
+Phase 2 simulated paper runner:
+
+```bash
+uv run python -m apps.strategies_nautilus.runners.paper_runner \
+  --catalog-path data/catalog \
+  --instrument-id BTCUSDT.BINANCE \
+  --bar-type BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL \
+  --signal-store-path data/bridge/signals.db \
+  --signal-source freqai_linear_v1 \
+  --signal-model-version linear-mom-train20240105 \
+  --trade-size 0.001 \
+  --starting-balance 100000 \
+  --policy-position-pct-multiplier 0.2 \
+  --policy-dry-run
+```
+
+The paper runner writes a `kind="paper"` bundle under `data/paper/<run_id>/`.
+It is local simulation only: no exchange keys, no exchange adapter, no live
+orders.
+
 For the local BTCUSDT fixture, build `data/catalog/` first with:
 
 ```bash
@@ -68,6 +88,7 @@ strategies_nautilus/
 ├── result_schema.py
 └── runners/
     ├── backtest_runner.py
+    ├── paper_runner.py
     └── compare_backtests.py
 ```
 

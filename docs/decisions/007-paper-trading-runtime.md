@@ -53,9 +53,12 @@ SignalEvent v1
 - 不允许使用真实交易账户。
 - 不允许提交真实订单。
 - 不允许读取 gitignored secrets 或真实 exchange API keys。
-- 可以使用本地 catalog replay 作为第一版实现；只要它不是墙钟前向运行，manifest
-  仍应标为 `kind="backtest"`。真正 `kind="paper"` 必须是持续进程，按墙钟消费新
-  market events / signals。
+- Phase 2 允许第一版 `kind="paper"` 使用本地 catalog polling / replay 做
+  **simulated paper session**，前提是 `runtime.data_mode="catalog_polling"`、
+  `runtime.order_mode="simulated"` 且不接真实交易所。它只能验证 bundle、lineage、
+  policy、risk gate 和模拟撮合链路；不能单独作为升 testnet/live 的证据。
+- 真正可用于升 testnet 的 paper 必须是持续进程，按墙钟消费新 market events /
+  signals，并在 manifest 的 `runtime.data_mode` 中与 catalog polling 区分开。
 - 初期数据源继续优先 SQLite `SignalStore` + 本地/public market data。Redis Stream
   只有在 SQLite polling 暴露实际瓶颈后再引入。
 
@@ -64,12 +67,12 @@ SignalEvent v1
 | kind | 数据时间 | 订单去向 | 允许资金 | 目的 |
 |---|---|---|---:|---|
 | `backtest` | 历史 catalog，加速或离线 | Nautilus backtest engine | 0 | 可重放策略评估 |
-| `paper` | 前向墙钟 | 模拟账户 / 模拟撮合 | 0 | 观察运行稳定性、信号新鲜度、risk gate 行为 |
+| `paper` | catalog polling 或前向墙钟 | 模拟账户 / 模拟撮合 | 0 | 观察运行稳定性、信号新鲜度、risk gate 行为 |
 | `testnet` | 前向墙钟 | Binance testnet adapter | 0 | 验证交易所连接、API 限流、重启恢复 |
 | `live` | 前向墙钟 | Binance live adapter | ADR-001 资金阶梯 | 小钱实盘，严格风控 |
 
-`paper` 不是 `testnet`。Paper 通过之前，禁止添加真实 exchange credentials；
-testnet 通过之前，禁止 live。
+`paper` 不是 `testnet`。Paper simulated bundle 通过只说明本地链路可审计；墙钟
+paper 通过之前，禁止添加真实 exchange credentials；testnet 通过之前，禁止 live。
 
 ### 2.3 Paper bundle 格式
 
