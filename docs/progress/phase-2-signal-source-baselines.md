@@ -430,3 +430,100 @@ UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.pap
 UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.report_paper_bundle \
   --json data/paper/<rule_run_id>
 ```
+
+
+---
+
+## 2026-05-17 v6 — first ADR-007 §2.6 promotion review (`hold` on freqai_linear_v1)
+
+- **Catalog input**: same 7-day `BTCUSDT.BINANCE` 1m catalog as v2 .. v5
+  (10080 bars).
+- **Signal store**: `data/bridge/signals.db` sha256
+  `55e5a218d1d9213d145a4db1148f07e6a62b0a7676e6b8ce4eaf26d09420323a`.
+- **Code baseline**: git `3ee958c`
+  (`feat(strategies_nautilus): add incremental paper runtime evidence`)
+  plus `apps.strategies_nautilus.runners.promotion_review` (this entry).
+- **Change vs v5**: `paper_runner.py` now records the incremental paper
+  session metadata (heartbeat / poll cursor / restart sequence / data-gap
+  events). The first ADR-007 §2.6 promotion review uses these fields to
+  evidence "no manual intervention, no restart, no data gap" before a
+  `hold` decision.
+
+| metric | freqai paper shadow (v6) | Δ vs v5 |
+|---|---:|---|
+| bundle | `data/paper/20260517-050320Z-f5e13cda` | new |
+| manifest sha256 | `88164be1024d96f706f27d53e22933a7cbab6eedd576bb0a7274307ccc95eebe` | new |
+| source / model | `freqai_linear_v1 / linear-mom-train20240105` | unchanged |
+| `git_dirty` | false | unchanged |
+| runtime mode / data_mode / order_mode | `paper` / `catalog_polling` / `simulated` | unchanged |
+| signal rows | 7 | unchanged |
+| account balance rows | 10080 | unchanged |
+| heartbeat_count | 10080 | new (was unset) |
+| poll_count | 10080 | new (was unset) |
+| processed_until_ns | 1704671940000000000 | new (was unset) |
+| polling_mode | incremental | new (was unset) |
+| restart_sequence | 0 | new (was unset) |
+| data_gap_count | 0 | new (was unset) |
+| policy | `dry_run=True`, multiplier `0.2` | unchanged |
+| lineage decisions | `target_long×7` | unchanged |
+| orders / fills / positions | 0 / 0 / 0 | unchanged |
+| PnL total (USDT) | 0 | unchanged |
+| Max Drawdown (Pct) | 0 | unchanged |
+| Max Drawdown (Abs, USDT) | 0 | unchanged |
+| review blockers | none | unchanged |
+| promotion gate blockers (review tool) | none | new |
+| review record | [`docs/retros/2026-05-17-freqai-linear-v1-hold-paper-shadow.md`](../retros/2026-05-17-freqai-linear-v1-hold-paper-shadow.md) | new |
+| review decision | `hold @ paper_shadow` | new |
+| review decision allowed | yes | new |
+
+### Reading v6
+
+- **The promotion-review tool is the new gate.** v4 introduced
+  `report_paper_bundle` (passive evidence summary). v6 layers
+  `promotion_review` on top: the operator must declare `current_stage`,
+  `target_stage`, `current_policy`, `target_policy`, and a written
+  rationale; the tool checks the ADR-007 §2.5 stage table, the
+  `paper_shadow → paper_simulated` evidence threshold (≥ 50 signals
+  OR ≥ 7 days), bundle/policy match, `git_dirty`, review blockers,
+  Phase-2 stage cap, and decision-specific rules. A `hold` is now a
+  signed audit record, not an implicit assumption.
+- **freqai_linear_v1 remains at `paper_shadow`.** The bundle satisfies
+  the days-half of the ADR-007 OR-gate (7 inclusive days) but is far
+  below the signals-half (7 vs 50). The retro records this reasoning
+  so future agents do not silently re-attempt promotion without first
+  expanding the catalog or signal rate.
+- **Incremental session evidence is now visible to the review.**
+  `runtime.heartbeat_count=10080`, `poll_count=10080`,
+  `processed_until_ns` set, `restart_sequence=0`, `data_gap_count=0`
+  give the operator concrete numbers to weigh, instead of reading
+  "no restart was reported" as "no restart happened".
+
+### v6 reproduction
+
+Starting from the v3 catalog and signal store:
+
+```bash
+UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.paper_runner \
+  --instrument-id BTCUSDT.BINANCE \
+  --bar-type 'BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL' \
+  --signal-source freqai_linear_v1 \
+  --signal-model-version linear-mom-train20240105 \
+  --allowed-source freqai_linear_v1 \
+  --allowed-model-version linear-mom-train20240105 \
+  --trade-size 0.001 \
+  --starting-balance 100000 \
+  --min-confidence 0.5 \
+  --policy-position-pct-multiplier 0.2 \
+  --policy-dry-run
+
+UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.promotion_review \
+  data/paper/<freqai_run_id> \
+  --current-stage paper_shadow \
+  --target-stage paper_shadow \
+  --current-dry-run --current-position-pct-multiplier 0.2 \
+  --target-dry-run --target-position-pct-multiplier 0.2 \
+  --decision hold \
+  --operator nishiki \
+  --rationale "<evidence-grounded reason>" \
+  --output-markdown docs/retros/<UTC>-freqai-linear-v1-hold-paper-shadow.md
+```

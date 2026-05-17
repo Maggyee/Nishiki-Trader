@@ -59,6 +59,7 @@ At task finish:
 - First ADR-007 simulated paper bundle writer is live: `apps/strategies_nautilus/runners/paper_runner.py` writes `kind="paper"` bundles under `data/paper/<run_id>/` in `runtime.data_mode="catalog_polling"` / `runtime.order_mode="simulated"` mode only, including per-bar account equity and max drawdown; it does not read exchange keys or submit live/testnet orders.
 - Paper bundle review reader is live: `apps/strategies_nautilus/runners/report_paper_bundle.py` summarizes `kind="paper"` manifest + sidecars into ADR-007 review evidence without mutating `SourcePolicy` or touching exchange paths.
 - Incremental paper-session mechanics are live: catalog polling now records event-time poll cursors, heartbeat/runtime logs, restart metadata from `previous_run_id`, and market-data gap blockers while keeping orders simulated and exchange credentials out of the path.
+- ADR-007 §2.6 promotion-review tooling is live: `apps/strategies_nautilus/runners/promotion_review.py` packages a paper bundle, a declared `current_policy`/`target_policy`, and an operator decision (`promote|hold|demote|disable`) into the seven §2.6 sections plus a `decision_allowed` gate that enforces the §2.5 stage table, the `paper_shadow → paper_simulated` evidence threshold, bundle/policy match, `git_dirty`, review blockers, and the Phase-2 stage cap. Records land in `docs/retros/`.
 
 ## Current Focus
 
@@ -73,8 +74,8 @@ Immediate focus:
 
 ## Next Steps
 
-1. Use `report_paper_bundle.py` as the required ADR-007 evidence summary before any `SourcePolicy` promotion review.
-2. Keep `freqai_linear_v1` in dry-run/shadow; the latest report has no review blockers but still requires manual review before disabling dry-run.
+1. Use `promotion_review.py` (not just `report_paper_bundle.py`) as the required ADR-007 §2.6 audit artifact for any `SourcePolicy` change. Records land in `docs/retros/<UTC>-<source>-<decision>-<target_stage>.md`.
+2. Keep `freqai_linear_v1` in dry-run/shadow. The 2026-05-17 `hold` retro records that the source has 7 signals over 7 days — meets the days half of the ADR-007 §2.5 OR-gate but fails the ≥50 signals half. Next review needs ≥30-day catalog expansion or a higher-rate model variant.
 3. Use the new incremental paper-session evidence (`processed_until_ns`, heartbeat log, restart metadata, and data-gap blockers) as the Phase 2 rehearsal before any persistent wall-clock service or testnet work.
 4. Decide Phase 2 SQLite -> Postgres / Redis Stream readiness only after backtest or paper volume exposes an actual bottleneck.
 
@@ -91,16 +92,15 @@ Immediate focus:
 
 ## Latest Verification
 
-On 2026-05-17, after incremental paper-session mechanics landed:
+On 2026-05-17, after ADR-007 §2.6 promotion-review tooling and the first `hold` retro landed:
 
-- `UV_CACHE_DIR=/tmp/uv-cache uv run pytest -q` -> 277 passed.
+- `UV_CACHE_DIR=/tmp/uv-cache uv run pytest -q` -> 295 passed.
 - `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check apps tests docs` -> clean.
-- `tests/strategies_nautilus/test_paper_runner.py` covers per-bar paper account equity and max drawdown, dry-run no-order behavior, simulated orders/fills/positions carrying `signal_id`, signal lag, expired signals, unauthorized sources, kill-switch blocking, CLI entrypoint, and source-level guards against reading secret env vars or submitting live orders.
-- `tests/strategies_nautilus/test_report_paper_bundle.py` covers paper bundle summary output, drawdown metric reporting, dry-run policy reporting, review blockers, sidecar count mismatches, CLI JSON/text output, and non-paper rejection.
-- New coverage includes incremental poll cursor metadata, heartbeat/runtime logs, `previous_run_id` restart cursor handling, and market-data gap blockers.
-- ADR-007 now explicitly allows Phase 2 `catalog_polling` simulated paper bundles while keeping true wall-clock paper/testnet/live gated; no runtime service was started and no real trading credentials were introduced.
-- `docs/progress/phase-2-signal-source-baselines.md` v5 records two drawdown-aware paper smoke bundles: `freqai_linear_v1` dry-run shadow (`account_balances` rows=10080, max drawdown=0, no orders/fills, manual review required before disabling dry-run) and `rule_baseline_v1` simulated control (635 signals, 1265 fills, max drawdown=-1.4153560695447201e-05, PnL=-0.31674399999610614 USDT). Both bundles have `git_dirty=false`, no missing metrics, and no review blockers.
-- v1/v2 demo and rule fingerprints, v3 `freqai_linear_v1` dry-run backtest fingerprint, and v4 first paper report evidence remain archived in `docs/progress/phase-2-signal-source-baselines.md`.
+- `tests/strategies_nautilus/test_promotion_review.py` covers: hold passes on a clean dry-run bundle; hold rejects mismatched target policy; promote passes with ≥7-day evidence and explicit policy diff; promote rejects when evidence is below the ADR-007 §2.5 threshold; promote rejects empty policy diff, bundle/current_policy mismatch, stage-skipping, Phase-3 stages, `git_dirty`, and review blockers (kill-switch); demote passes when target is stricter; disable is always allowed; CLI returns nonzero on disallowed decisions; CLI rejects invalid decision names.
+- `apps/strategies_nautilus/runners/promotion_review.py` integrates with `report_paper_bundle.load_paper_bundle_report` and never mutates `SourcePolicy`, starts a runtime, or talks to an exchange.
+- First retro: `docs/retros/2026-05-17-freqai-linear-v1-hold-paper-shadow.md` records `freqai_linear_v1 / linear-mom-train20240105` held at `paper_shadow`. Bundle `data/paper/20260517-050320Z-f5e13cda` (manifest sha256 `88164be1024d96f706f27d53e22933a7cbab6eedd576bb0a7274307ccc95eebe`) is the v6 paper-shadow fingerprint with `heartbeat_count=10080`, `poll_count=10080`, `processed_until_ns=1704671940000000000`, `restart_sequence=0`, `data_gap_count=0`, `git_dirty=false`, no review blockers, no promotion gate blockers.
+- `tests/strategies_nautilus/test_paper_runner.py`, `test_report_paper_bundle.py` continue to cover paper drawdown, dry-run / simulated paths, lineage `signal_id` carry-through, lag / expiry / unauthorized / kill-switch rejection, incremental cursor metadata, restart cursor handling, market-data gap blockers, and source-level guards against reading secret env vars or submitting live orders.
+- `docs/progress/phase-2-signal-source-baselines.md` v6 records the freqai paper-shadow fingerprint and links to the first retro; v1..v5 (demo, rule, freqai dry-run backtest, paper bundle reports, paper drawdown) remain archived.
 
 ## Recent Git Baseline
 
