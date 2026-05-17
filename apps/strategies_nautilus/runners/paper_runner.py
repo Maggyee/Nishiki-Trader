@@ -193,6 +193,7 @@ def _simulate_paper(
     orders: list[dict[str, Any]] = []
     fills: list[dict[str, Any]] = []
     positions: list[dict[str, Any]] = []
+    account_rows: list[dict[str, Any]] = []
     lineage: list[dict[str, Any]] = []
     strategy_log_lines: list[str] = []
     risk_log_lines: list[str] = [
@@ -296,6 +297,22 @@ def _simulate_paper(
                     )
                 )
 
+        equity_after_bar = _equity(
+            starting_equity=starting_equity,
+            realized_pnl=realized_pnl,
+            open_position=open_position,
+            mark_price=price,
+        )
+        locked = abs(open_position.signed_qty * price) if open_position else 0.0
+        account_rows.append(
+            _account_balance_row(
+                config=config,
+                ts_event=bar_ts,
+                total=equity_after_bar,
+                locked=locked,
+            )
+        )
+
     if open_position is not None:
         positions.append(
             _position_row(
@@ -309,26 +326,18 @@ def _simulate_paper(
             )
         )
 
-    final_equity = _equity(
-        starting_equity=starting_equity,
-        realized_pnl=realized_pnl,
-        open_position=open_position,
-        mark_price=last_price,
-    )
-    locked = abs(open_position.signed_qty * last_price) if open_position else 0.0
-    account_balances = pd.DataFrame(
-        [
-            {
-                "ts_event": last_ts,
-                "venue": config.venue_name,
-                "account_id": f"{config.venue_name}-PAPER",
-                "currency": str(config.base_currency),
-                "total": final_equity,
-                "free": final_equity - locked,
-                "locked": locked,
-            }
-        ]
-    )
+    if not account_rows:
+        account_rows.append(
+            _account_balance_row(
+                config=config,
+                ts_event=last_ts,
+                total=starting_equity,
+                locked=0.0,
+            )
+        )
+    account_balances = pd.DataFrame(account_rows)
+    final_equity = float(account_rows[-1]["total"])
+    drawdown = _max_drawdown(account_rows)
     pnl_total = final_equity - starting_equity
     closed_pnls = [float(row["realized_pnl"]) for row in positions if row["closed_ts"]]
     wins = [p for p in closed_pnls if p > 0.0]
@@ -342,6 +351,8 @@ def _simulate_paper(
             "Expectancy": (sum(closed_pnls) / len(closed_pnls))
             if closed_pnls
             else None,
+            "Max Drawdown (Pct)": drawdown["max_drawdown_pct"],
+            "Max Drawdown (Abs)": drawdown["max_drawdown_abs"],
         }
     }
     return _PaperSimulation(
@@ -351,7 +362,10 @@ def _simulate_paper(
         account_balances=account_balances,
         signal_lineage=pd.DataFrame(lineage),
         stats_pnls=stats_pnls,
-        stats_returns={},
+        stats_returns={
+            "max_drawdown": drawdown["max_drawdown_pct"],
+            "max_drawdown_abs": drawdown["max_drawdown_abs"],
+        },
         strategy_log_lines=strategy_log_lines or ["no signals consumed"],
         risk_log_lines=risk_log_lines,
     )
@@ -689,6 +703,46 @@ def _paper_quantity(config: PaperRunnerConfig, target_position_pct: float) -> fl
         return 0.0
     scale = target_position_pct / config.baseline_config.max_position_pct
     return float(config.trade_size) * scale
+
+
+def _account_balance_row(
+    *,
+    config: PaperRunnerConfig,
+    ts_event: int,
+    total: float,
+    locked: float,
+) -> dict[str, Any]:
+    return {
+        "ts_event": ts_event,
+        "venue": config.venue_name,
+        "account_id": f"{config.venue_name}-PAPER",
+        "currency": str(config.base_currency),
+        "total": total,
+        "free": total - locked,
+        "locked": locked,
+    }
+
+
+def _max_drawdown(account_rows: list[dict[str, Any]]) -> dict[str, float]:
+    peak = 0.0
+    max_drawdown_abs = 0.0
+    max_drawdown_pct = 0.0
+    for row in account_rows:
+        equity = float(row["total"])
+        if peak <= 0.0 or equity > peak:
+            peak = equity
+        if peak <= 0.0:
+            continue
+        drawdown_abs = equity - peak
+        drawdown_pct = drawdown_abs / peak
+        if drawdown_abs < max_drawdown_abs:
+            max_drawdown_abs = drawdown_abs
+        if drawdown_pct < max_drawdown_pct:
+            max_drawdown_pct = drawdown_pct
+    return {
+        "max_drawdown_abs": max_drawdown_abs,
+        "max_drawdown_pct": max_drawdown_pct,
+    }
 
 
 def _update_daily_risk_state(

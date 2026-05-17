@@ -32,6 +32,10 @@ DRAWDOWN_KEYS = (
     "max_drawdown",
     "Max Drawdown",
 )
+DRAWDOWN_ABS_KEYS = (
+    "Max Drawdown (Abs)",
+    "max_drawdown_abs",
+)
 SIDECAR_FILES = {
     "orders": "orders.parquet",
     "fills": "fills.parquet",
@@ -73,6 +77,7 @@ class PaperBundleReport:
     data_gap_signals: int
     pnl_total_by_currency: dict[str, float | int | None]
     max_drawdown_pct_by_currency: dict[str, float | int | None]
+    max_drawdown_abs_by_currency: dict[str, float | int | None]
     missing_metrics: list[str]
     eligible_for_review: bool
     review_blockers: list[str]
@@ -122,6 +127,10 @@ def load_paper_bundle_report(bundle_dir: Path) -> PaperBundleReport:
 
     pnl_total_by_currency = _stats_by_currency(manifest_payload, PNL_KEYS)
     max_drawdown_by_currency = _stats_by_currency(manifest_payload, DRAWDOWN_KEYS)
+    max_drawdown_abs_by_currency = _stats_by_currency(
+        manifest_payload,
+        DRAWDOWN_ABS_KEYS,
+    )
     missing_metrics: list[str] = []
     if not max_drawdown_by_currency or all(
         value is None for value in max_drawdown_by_currency.values()
@@ -181,6 +190,7 @@ def load_paper_bundle_report(bundle_dir: Path) -> PaperBundleReport:
         data_gap_signals=data_gap,
         pnl_total_by_currency=pnl_total_by_currency,
         max_drawdown_pct_by_currency=max_drawdown_by_currency,
+        max_drawdown_abs_by_currency=max_drawdown_abs_by_currency,
         missing_metrics=missing_metrics,
         eligible_for_review=eligible,
         review_blockers=review_blockers,
@@ -225,6 +235,8 @@ def render_text_report(report: PaperBundleReport) -> str:
                 f"pnl={json.dumps(report.pnl_total_by_currency, sort_keys=True)} "
                 "max_drawdown_pct="
                 f"{json.dumps(report.max_drawdown_pct_by_currency, sort_keys=True)}"
+                " max_drawdown_abs="
+                f"{json.dumps(report.max_drawdown_abs_by_currency, sort_keys=True)}"
             ),
             f"eligible_for_review: {report.eligible_for_review}",
             f"review_blockers: {blockers}",

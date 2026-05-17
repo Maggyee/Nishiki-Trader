@@ -134,9 +134,14 @@ def _write_bundle(
                 "PnL% (total)": 0.0,
                 "Win Rate": None,
                 "Expectancy": None,
+                "Max Drawdown (Pct)": -0.01,
+                "Max Drawdown (Abs)": -10.0,
             }
         },
-        "stats_returns": {},
+        "stats_returns": {
+            "max_drawdown": -0.01,
+            "max_drawdown_abs": -10.0,
+        },
         "runtime": runtime,
     }
     if manifest_overrides:
@@ -185,8 +190,9 @@ def test_load_paper_bundle_report_summarizes_dry_run_bundle(tmp_path):
     assert report.dry_run_signals == 2
     assert report.totals["orders"] == 0
     assert report.pnl_total_by_currency == {"USDT": 0.0}
-    assert report.max_drawdown_pct_by_currency == {"USDT": None}
-    assert report.missing_metrics == ["max_drawdown_pct"]
+    assert report.max_drawdown_pct_by_currency == {"USDT": -0.01}
+    assert report.max_drawdown_abs_by_currency == {"USDT": -10.0}
+    assert report.missing_metrics == []
     assert report.eligible_for_review is True
     assert report.review_blockers == []
     assert "manual_review_required_before_disabling_dry_run" in report.promotion_blockers
@@ -239,6 +245,29 @@ def test_load_paper_bundle_report_flags_sidecar_count_mismatch(tmp_path):
     assert report.eligible_for_review is False
 
 
+def test_load_paper_bundle_report_flags_missing_drawdown_metric(tmp_path):
+    bundle_dir = _write_bundle(
+        tmp_path,
+        manifest_overrides={
+            "stats_pnls": {
+                "USDT": {
+                    "PnL (total)": 0.0,
+                    "PnL% (total)": 0.0,
+                    "Win Rate": None,
+                    "Expectancy": None,
+                }
+            },
+            "stats_returns": {},
+        },
+    )
+
+    report = load_paper_bundle_report(bundle_dir)
+
+    assert report.max_drawdown_pct_by_currency == {"USDT": None}
+    assert report.max_drawdown_abs_by_currency == {"USDT": None}
+    assert report.missing_metrics == ["max_drawdown_pct"]
+
+
 def test_report_cli_outputs_json(tmp_path, capsys):
     bundle_dir = _write_bundle(tmp_path)
 
@@ -281,4 +310,6 @@ def test_render_text_report_contains_blocker_summary(tmp_path):
     text = render_text_report(report)
 
     assert "review_blockers: expired_signals=1" in text
+    assert 'max_drawdown_pct={"USDT": -0.01}' in text
+    assert 'max_drawdown_abs={"USDT": -10.0}' in text
     assert "recommendation: hold_until_review_blockers_clear" in text

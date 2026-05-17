@@ -222,6 +222,39 @@ def test_simulated_policy_writes_orders_fills_positions_with_signal_ids(
     assert positions.loc[0, "signal_ids"] == "paper-buy,paper-flat"
 
 
+def test_account_balances_track_equity_curve_and_drawdown(
+    tmp_path, btcusdt_instrument, bar_type
+):
+    catalog_path = _write_catalog(
+        tmp_path,
+        btcusdt_instrument,
+        bar_type,
+        [100, 90, 80, 120],
+    )
+    signal_store_path = _write_signals(
+        tmp_path,
+        [_signal(signal_id="paper-buy", ts_event=BASE_TS_NS, side="buy")],
+    )
+
+    result = run_paper_session(
+        _config(
+            tmp_path=tmp_path,
+            catalog_path=catalog_path,
+            bar_type=bar_type,
+            signal_store_path=signal_store_path,
+        )
+    )
+
+    account = pd.read_parquet(result.output_dir / "account_balances.parquet")
+    assert account["total"].tolist() == [1000.0, 990.0, 980.0, 1020.0]
+    assert account["locked"].tolist() == [100.0, 90.0, 80.0, 120.0]
+    stats = result.manifest.stats_pnls["USDT"]
+    assert stats["PnL (total)"] == 20.0
+    assert stats["Max Drawdown (Abs)"] == -20.0
+    assert stats["Max Drawdown (Pct)"] == -0.02
+    assert result.manifest.stats_returns["max_drawdown"] == -0.02
+
+
 def test_signal_lag_blocks_new_paper_open(tmp_path, btcusdt_instrument, bar_type):
     first_bar_ns = BASE_TS_NS + 10 * ONE_MIN_NS
     catalog_path = _write_catalog(
