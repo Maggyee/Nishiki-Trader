@@ -1,7 +1,7 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-05-15
+- **Last updated**: 2026-05-17
 - **Current phase**: Phase 2 entry
 - **Current objective**: Replace the demo fixture signals with real FreqAI/research signal exports on the catalog-backed Nautilus backtest path while preserving the `SignalEvent v1 -> NautilusTrader Strategy -> RiskEngine` boundary.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
@@ -52,6 +52,7 @@ At task finish:
 - Baseline decision layer is implemented: `apps/strategies_nautilus/baseline_strategy.py` maps accepted signals to `OrderIntent` and enforces the 5%-day-loss kill-switch.
 - Phase 2 Nautilus backtest path is catalog-driven: `backtest_runner.py` loads one instrument/bar type from `ParquetDataCatalog`, replays signals from `SignalStore.replay(**filter)`, validates ADR-004 sidecars, and exposes a `python -m` CLI entrypoint.
 - Local real-data smoke path is in place: `apps.ops.backfill_bars` imports a BTCUSDT Binance public kline ZIP into `data/catalog/`, can seed demo `SignalEvent v1` rows, and `compare_backtests.py` compares replayed ADR-004 bundles while ignoring wall-clock run fields.
+- Rule-based baseline signal generator is live: `apps/strategies_freqtrade/research/baseline_rule_signals.py` produces EMA(5)/EMA(20) + RSI(14) `SignalEvent v1` via CLI; the BTCUSDT 2024-01-01 fixture round-trips through `SignalStore` → `backtest_runner` end-to-end and writes a full ADR-004 bundle with `signal_id` traced through orders / fills / positions / signal_lineage.
 - Upstream runtime is pinned: `nautilus-trader==1.226.0`; local `nautilus_trader/` source checkout is aligned to tag `v1.226.0`.
 
 ## Current Focus
@@ -61,15 +62,15 @@ Phase 2 entry: stabilize the real NautilusTrader backtest path and make it usabl
 Immediate focus:
 
 1. Use the local `BTCUSDT.BINANCE` 1m fixture path as the required smoke test before changing runner behavior.
-2. Replace `manual_research/binance-fixture-v1` demo signals with real FreqAI or research-generated `SignalEvent v1` exports for the same catalog period.
+2. Treat the rule-based baseline (`rule_baseline_v1/ema5-20+rsi14`) as the reproducibility anchor; FreqAI/model-driven signals are a separate stream that must round-trip the same bridge.
 3. Preserve reproducibility as catalog data grows: same git commit, signal-store SHA, catalog content, strategy params, risk params, and Nautilus version must produce identical stats and `fills.parquet`.
 4. Keep LLM agents out of the live order path; Phase 2 remains research/backtest only.
 
 ## Next Steps
 
-1. Generate the first non-demo FreqAI/research signal batch for the BTCUSDT 2024-01-01 fixture and write it through the `SignalEvent v1` bridge.
-2. Add a small comparison note or test expectation for demo-signal vs real-signal bundle outputs so strategy changes have a stable baseline.
-3. Extend backfill beyond one BTCUSDT day only after the single-day signal path is stable.
+1. Add a comparison note or test expectation for `manual_research/binance-fixture-v1` (demo) vs `rule_baseline_v1/ema5-20+rsi14` (rule) bundle outputs so strategy changes have a stable baseline.
+2. Extend backfill beyond one BTCUSDT day only after the single-day signal path is stable.
+3. Plan ADR-005 (research-layer signal source taxonomy: how FreqAI / model-driven sources slot beside the rule baseline) before adding a second source family.
 4. Decide Phase 2 SQLite -> Postgres / Redis Stream readiness only after backtest volume exposes an actual bottleneck.
 
 ## Blocked / Deferred
@@ -85,15 +86,15 @@ Immediate focus:
 
 ## Latest Verification
 
-On 2026-05-15, after the local Binance fixture and replay comparison update:
+On 2026-05-17, after the rule-based baseline signal generator landed:
 
-- `UV_CACHE_DIR=/tmp/uv-cache uv run pytest -q` -> 156 passed.
+- `UV_CACHE_DIR=/tmp/uv-cache uv run pytest -q` -> 183 passed.
 - `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check apps tests` -> clean.
-- `UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.ops.backfill_bars --download --symbol BTCUSDT --interval 1m --date 2024-01-01 --catalog-path data/catalog --seed-demo-signals --signal-store-path data/bridge/signals.db` -> 1440 real Binance bars imported, 3 demo signals written.
-- Two `backtest_runner` CLI runs over `BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL` produced ADR-004 bundles; `compare_backtests` returned `MATCH`.
+- `UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_freqtrade.research.baseline_rule_signals --catalog-path data/catalog --signal-store-path data/bridge/signals.db --symbol BTCUSDT --venue BINANCE --bar-type 'BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL'` -> 71 SignalEvents written for BTCUSDT 2024-01-01.
+- `UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.backtest_runner --instrument-id BTCUSDT.BINANCE --bar-type 'BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL' --signal-source rule_baseline_v1 --signal-model-version 'ema5-20+rsi14' --allowed-source rule_baseline_v1 --allowed-model-version 'ema5-20+rsi14' --trade-size 0.001 --starting-balance 100000 --min-confidence 0.5` -> 1 bundle, totals fills=142, PnL (total)=-$4.74, Win Rate=12.7% (placeholder strategy, no alpha expected).
 
 ## Recent Git Baseline
 
-- `aadf355 feat(strategies_nautilus): add reproducible backtest runner`
+- `df4e712 feat(strategies_nautilus): add real catalog fixture tooling`
 
 Agents should run `git log --oneline --decorate -5` for the latest commits instead of assuming this section is exhaustive.
