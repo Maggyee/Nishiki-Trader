@@ -527,3 +527,147 @@ UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.pro
   --rationale "<evidence-grounded reason>" \
   --output-markdown docs/retros/<UTC>-freqai-linear-v1-hold-paper-shadow.md
 ```
+
+
+---
+
+## 2026-05-17 v7 — catalog extended to 31 days, freqai_linear_v1 crosses ≥50 signal gate
+
+- **Catalog input**: `data/catalog/data/bar/BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL/`
+  covering **2024-01-01 through 2024-01-31** (44640 1m bars, 0 ts gaps,
+  backfilled day-by-day via `apps.ops.backfill_bars`).
+- **Signal store**: `data/bridge/signals.db` sha256
+  `48ec184b4f6e8d0472672bdea8da3abb9cda4f7ff00d55208828eb2364e89fd7`
+  (= v6 store + 301 new `freqai_linear_v1` rows; old 7 rows from v3..v6
+  were preserved via `DuplicateSignalError` dedupe).
+- **Code baseline**: git `52a01ba`
+  (`feat(strategies_nautilus): add ADR-007 §2.6 promotion-review tooling`).
+- **Goal of v7**: cross the ADR-007 §2.5 paper_shadow → paper_simulated
+  evidence threshold (≥ 50 signals OR ≥ 7 days) on the **signals half**,
+  not just the days half. v6 satisfied days only; v7 satisfies both.
+
+### Reproducibility anchor (must hold for any future v8+)
+
+| field | v3 (7-day) | v6 (7-day) | v7 (31-day) |
+|---|---|---|---|
+| `signal_source.model_version` | `linear-mom-train20240105` | `linear-mom-train20240105` | `linear-mom-train20240105` |
+| `features_hash` (in raw_json) | `sha256:885207ac…` | `sha256:885207ac…` | `sha256:885207ac…` |
+| `metadata.train_rows` | 7181 | 7181 | 7181 |
+| `metadata.train_start` | 2024-01-01T00:19:00+00:00 | 2024-01-01T00:19:00+00:00 | 2024-01-01T00:19:00+00:00 |
+| `metadata.train_until` | 2024-01-05T23:59:00+00:00 | 2024-01-05T23:59:00+00:00 | 2024-01-05T23:59:00+00:00 |
+
+The model fit is **identical across v3, v6, v7** because `train_until_ns`
+did not change. Extending the catalog only enlarges the out-of-sample
+prediction region; the existing 7 v3..v6 signals are unchanged and
+deduped by `signal_id`. This is the ADR-002 §5 traceability contract
+working: same `(source, model_version, features_hash)` ⇒ same model ⇒
+deterministic predictions.
+
+### v7 bundle fingerprint
+
+| metric | freqai paper shadow (v7) | Δ vs v6 (7-day) |
+|---|---:|---|
+| bundle | `data/paper/20260517-051417Z-9afb2cd1` | new |
+| manifest sha256 | `218e3b0c75db85b5c6a90f692ee270d9d1de5b1aed58bab0e2fbc8015b541035` | new |
+| source / model | `freqai_linear_v1 / linear-mom-train20240105` | unchanged |
+| `git_dirty` | false | unchanged |
+| runtime mode / data_mode / order_mode | `paper` / `catalog_polling` / `simulated` | unchanged |
+| backtest_start | 2024-01-01T00:00:00.000Z | unchanged |
+| backtest_end | 2024-01-31T23:59:00.000Z | +24 days |
+| session_days_inclusive | 31 | +24 |
+| iterations | 44640 | +34560 |
+| signal rows | **308** | **+301** |
+| account balance rows | 44640 | +34560 |
+| heartbeat_count | 44640 | +34560 |
+| poll_count | 44640 | +34560 |
+| processed_until_ns | 1706745540000000000 | extended through 2024-01-31 |
+| restart_sequence | 0 | unchanged |
+| data_gap_count | 0 | unchanged |
+| policy | `dry_run=True`, multiplier `0.2` | unchanged |
+| lineage decisions | `target_long×225`, `target_short×83` (new bias) | new |
+| orders / fills / positions | 0 / 0 / 0 | unchanged (dry-run) |
+| PnL total (USDT) | 0 | unchanged (dry-run) |
+| Max Drawdown (Pct / Abs USDT) | 0 / 0 | unchanged (dry-run) |
+| review blockers | none | unchanged |
+| promotion gate blockers | none | unchanged |
+| second retro | [`docs/retros/2026-05-17-freqai-linear-v1-hold-paper-shadow-31d.md`](../retros/2026-05-17-freqai-linear-v1-hold-paper-shadow-31d.md) | new |
+| review decision | `hold @ paper_shadow` | unchanged decision; new rationale |
+| review decision allowed | yes | unchanged |
+
+### Reading v7
+
+- **The signals half of the ADR-007 §2.5 OR-gate is now cleared.** v6
+  passed only on days (7 days, 7 signals). v7 passes on both halves
+  (31 days, 308 signals ≥ 50). The promotion-review tool now reports
+  `promotion_gate_blockers=[]` for the paper-shadow → paper-simulated
+  transition, which v6 also did, but v6 was satisfied trivially on
+  days. v7 is the first bundle where freqai_linear_v1 has enough
+  shadow signals to argue from.
+- **The decision is still `hold`, on a different reason.** v6 held
+  because the absolute sample size was tiny (7). v7 holds because the
+  308-signal evidence is **in-sample on January 2024** — the model
+  was trained on 2024-01-01 .. 2024-01-05, predictions on 2024-01-06
+  .. 2024-01-31 are out-of-sample relative to *training* but still
+  inside the *January regime*. ADR-007 §2.6 manual review is the place
+  where this distinction must be argued, and the v7 retro records it
+  explicitly.
+- **Lineage now shows mixed long/short bias.** v6 emitted `target_long×7`
+  only; v7 emits `target_long×225` and `target_short×83`. This is
+  the first time both sides of the model are exercised through the
+  paper bridge end to end.
+- **Reproducibility is preserved.** Same model, same `features_hash`,
+  same `train_*` metadata across v3 / v6 / v7; the only change is the
+  size of the OOS region. Anyone reproducing the run from a clean
+  signal store and a 31-day catalog must land on the same 308 signals
+  and the same `model_version` / `features_hash`.
+
+### v7 reproduction
+
+Starting from the v3 catalog (7 days) and signal store:
+
+```bash
+# Backfill the additional 24 days (2024-01-08 .. 2024-01-31). Idempotent —
+# already-downloaded zips are skipped. Use a small sleep for politeness.
+for d in $(seq -w 8 31); do
+  UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.ops.backfill_bars \
+    --download --symbol BTCUSDT --interval 1m --date 2024-01-$d \
+    --catalog-path data/catalog
+  sleep 0.5
+done
+
+# Re-run the freqai linear exporter. Old 7 signals are deduped via
+# DuplicateSignalError; ~301 new ones are written for 2024-01-08 .. 31.
+UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_freqtrade.research.freqai_linear_signals \
+  --catalog-path data/catalog \
+  --signal-store-path data/bridge/signals.db \
+  --symbol BTCUSDT \
+  --venue BINANCE \
+  --bar-type 'BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL' \
+  --train-until '2024-01-05T23:59:00Z'
+
+# Generate the 31-day paper-shadow bundle.
+UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.paper_runner \
+  --instrument-id BTCUSDT.BINANCE \
+  --bar-type 'BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL' \
+  --signal-source freqai_linear_v1 \
+  --signal-model-version linear-mom-train20240105 \
+  --allowed-source freqai_linear_v1 \
+  --allowed-model-version linear-mom-train20240105 \
+  --trade-size 0.001 \
+  --starting-balance 100000 \
+  --min-confidence 0.5 \
+  --policy-position-pct-multiplier 0.2 \
+  --policy-dry-run
+
+# Run the promotion review against the new bundle.
+UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.promotion_review \
+  data/paper/<freqai_31d_run_id> \
+  --current-stage paper_shadow \
+  --target-stage paper_shadow \
+  --current-dry-run --current-position-pct-multiplier 0.2 \
+  --target-dry-run --target-position-pct-multiplier 0.2 \
+  --decision hold \
+  --operator nishiki \
+  --rationale "<in-sample-vs-hold-out reasoning>" \
+  --output-markdown docs/retros/<UTC>-freqai-linear-v1-hold-paper-shadow-31d.md
+```

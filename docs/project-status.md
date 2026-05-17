@@ -60,6 +60,7 @@ At task finish:
 - Paper bundle review reader is live: `apps/strategies_nautilus/runners/report_paper_bundle.py` summarizes `kind="paper"` manifest + sidecars into ADR-007 review evidence without mutating `SourcePolicy` or touching exchange paths.
 - Incremental paper-session mechanics are live: catalog polling now records event-time poll cursors, heartbeat/runtime logs, restart metadata from `previous_run_id`, and market-data gap blockers while keeping orders simulated and exchange credentials out of the path.
 - ADR-007 §2.6 promotion-review tooling is live: `apps/strategies_nautilus/runners/promotion_review.py` packages a paper bundle, a declared `current_policy`/`target_policy`, and an operator decision (`promote|hold|demote|disable`) into the seven §2.6 sections plus a `decision_allowed` gate that enforces the §2.5 stage table, the `paper_shadow → paper_simulated` evidence threshold, bundle/policy match, `git_dirty`, review blockers, and the Phase-2 stage cap. Records land in `docs/retros/`.
+- Catalog is now 31 days of BTCUSDT 1m (2024-01-01..2024-01-31, 44640 bars, 0 ts gaps). With `train_until=2024-01-05T23:59`, `freqai_linear_v1 / linear-mom-train20240105` now produces 308 deterministic out-of-sample shadow `SignalEvent v1` rows. `features_hash` and training metadata are unchanged from v3/v6, so the model fingerprint remains stable while the paper-shadow evidence base grows from 7 to 308.
 
 ## Current Focus
 
@@ -75,7 +76,7 @@ Immediate focus:
 ## Next Steps
 
 1. Use `promotion_review.py` (not just `report_paper_bundle.py`) as the required ADR-007 §2.6 audit artifact for any `SourcePolicy` change. Records land in `docs/retros/<UTC>-<source>-<decision>-<target_stage>.md`.
-2. Keep `freqai_linear_v1` in dry-run/shadow. The 2026-05-17 `hold` retro records that the source has 7 signals over 7 days — meets the days half of the ADR-007 §2.5 OR-gate but fails the ≥50 signals half. Next review needs ≥30-day catalog expansion or a higher-rate model variant.
+2. Keep `freqai_linear_v1` in dry-run/shadow. The 2026-05-17 31-day retro records that the source now has 308 shadow signals over 31 days — both halves of the ADR-007 §2.5 OR-gate cleared — but the evidence is in-sample on January 2024 (model was trained on 2024-01-01..05). Next review needs a held-out month (2024-02 forward) under the same `train_until=2024-01-05T23:59` boundary; only then is a `promote` decision worth considering.
 3. Use the new incremental paper-session evidence (`processed_until_ns`, heartbeat log, restart metadata, and data-gap blockers) as the Phase 2 rehearsal before any persistent wall-clock service or testnet work.
 4. Decide Phase 2 SQLite -> Postgres / Redis Stream readiness only after backtest or paper volume exposes an actual bottleneck.
 
@@ -92,15 +93,16 @@ Immediate focus:
 
 ## Latest Verification
 
-On 2026-05-17, after ADR-007 §2.6 promotion-review tooling and the first `hold` retro landed:
+On 2026-05-17, after extending the catalog to 31 days and crossing the ADR-007 §2.5 ≥50-signal evidence half:
 
 - `UV_CACHE_DIR=/tmp/uv-cache uv run pytest -q` -> 295 passed.
 - `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check apps tests docs` -> clean.
-- `tests/strategies_nautilus/test_promotion_review.py` covers: hold passes on a clean dry-run bundle; hold rejects mismatched target policy; promote passes with ≥7-day evidence and explicit policy diff; promote rejects when evidence is below the ADR-007 §2.5 threshold; promote rejects empty policy diff, bundle/current_policy mismatch, stage-skipping, Phase-3 stages, `git_dirty`, and review blockers (kill-switch); demote passes when target is stricter; disable is always allowed; CLI returns nonzero on disallowed decisions; CLI rejects invalid decision names.
+- BTCUSDT 1m catalog now spans 2024-01-01..2024-01-31 (44640 bars, 0 ts gaps); `data/bridge/signals.db` sha256 `48ec184b4f6e8d0472672bdea8da3abb9cda4f7ff00d55208828eb2364e89fd7`; `freqai_linear_v1` row count went from 7 to 308 with old rows deduped via `DuplicateSignalError` and `model_version` / `features_hash` (`sha256:885207ac…`) / `train_rows` (7181) unchanged.
 - `apps/strategies_nautilus/runners/promotion_review.py` integrates with `report_paper_bundle.load_paper_bundle_report` and never mutates `SourcePolicy`, starts a runtime, or talks to an exchange.
-- First retro: `docs/retros/2026-05-17-freqai-linear-v1-hold-paper-shadow.md` records `freqai_linear_v1 / linear-mom-train20240105` held at `paper_shadow`. Bundle `data/paper/20260517-050320Z-f5e13cda` (manifest sha256 `88164be1024d96f706f27d53e22933a7cbab6eedd576bb0a7274307ccc95eebe`) is the v6 paper-shadow fingerprint with `heartbeat_count=10080`, `poll_count=10080`, `processed_until_ns=1704671940000000000`, `restart_sequence=0`, `data_gap_count=0`, `git_dirty=false`, no review blockers, no promotion gate blockers.
-- `tests/strategies_nautilus/test_paper_runner.py`, `test_report_paper_bundle.py` continue to cover paper drawdown, dry-run / simulated paths, lineage `signal_id` carry-through, lag / expiry / unauthorized / kill-switch rejection, incremental cursor metadata, restart cursor handling, market-data gap blockers, and source-level guards against reading secret env vars or submitting live orders.
-- `docs/progress/phase-2-signal-source-baselines.md` v6 records the freqai paper-shadow fingerprint and links to the first retro; v1..v5 (demo, rule, freqai dry-run backtest, paper bundle reports, paper drawdown) remain archived.
+- First retro: `docs/retros/2026-05-17-freqai-linear-v1-hold-paper-shadow.md` records `freqai_linear_v1 / linear-mom-train20240105` held at `paper_shadow` (7 signals over 7 days; days half of §2.5 OR-gate met, signals half not). Bundle `data/paper/20260517-050320Z-f5e13cda` (manifest sha256 `88164be1024d96f706f27d53e22933a7cbab6eedd576bb0a7274307ccc95eebe`) is the v6 paper-shadow fingerprint.
+- Second retro: `docs/retros/2026-05-17-freqai-linear-v1-hold-paper-shadow-31d.md` records the same source held at `paper_shadow` after the catalog expansion. Bundle `data/paper/20260517-051417Z-9afb2cd1` (manifest sha256 `218e3b0c75db85b5c6a90f692ee270d9d1de5b1aed58bab0e2fbc8015b541035`) is the v7 paper-shadow fingerprint: 44640 iterations, 308 dry-run signals, lineage `target_long×225 + target_short×83`, `heartbeat_count=44640`, `poll_count=44640`, `processed_until_ns=1706745540000000000`, `restart_sequence=0`, `data_gap_count=0`, `git_dirty=false`, no review blockers, no promotion gate blockers. Decision is still `hold` — the ≥50-signal gate is now cleared on quantity, but the evidence is in-sample on January 2024; ADR-007 §2.6 manual review now requires hold-out month evidence before any `promote` decision.
+- `tests/strategies_nautilus/test_promotion_review.py` (18 cases) and the rest of the paper / report / runner suites continue to enforce dry-run vs simulated invariants, lineage `signal_id` carry-through, lag / expiry / unauthorized / kill-switch rejection, incremental cursor metadata, restart cursor handling, market-data gap blockers, and source-level guards against reading secret env vars or submitting live orders.
+- `docs/progress/phase-2-signal-source-baselines.md` v7 records the 31-day fingerprint, the same-`features_hash` reproducibility table across v3/v6/v7, and links to both retros; v1..v6 remain archived.
 
 ## Recent Git Baseline
 

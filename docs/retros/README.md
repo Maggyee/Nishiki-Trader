@@ -96,3 +96,10 @@ Use the literal `decision` value from the CLI (`promote`, `hold`, `demote`,
   — first retro. `freqai_linear_v1 / linear-mom-train20240105` held at
   `paper_shadow` because the source emits only 7 signals across 7 days
   (below the ≥ 50 threshold) even though the shadow bundle is clean.
+- [`2026-05-17-freqai-linear-v1-hold-paper-shadow-31d.md`](2026-05-17-freqai-linear-v1-hold-paper-shadow-31d.md)
+  — second retro on the same `(source, model_version)` after the
+  catalog was extended to 31 days. 308 shadow signals over 31 inclusive
+  days clear both halves of the ADR-007 §2.5 OR-gate. Decision is still
+  `hold` because the 308-signal evidence is in-sample on January 2024
+  — the model was trained on the same month, so a hold-out window
+  (e.g., 2024-02 forward) is needed before any `promote` decision.
