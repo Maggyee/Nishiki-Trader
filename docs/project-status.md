@@ -47,7 +47,7 @@ At task finish:
 ## Milestones
 
 - Phase 0 skeleton and agent contracts are in place.
-- ADR-001 through ADR-006 define the core tech stack, `SignalEvent v1`, project skeleton, backtest result format, signal-source taxonomy (`<family>_<variant>` with families = {manual, rule, freqai, llm}), and gray-rollout / dry-run mechanics (per-`(source, model_version)` `SourcePolicy` with `position_pct_multiplier`, tighter-only `min_confidence_override`, `dry_run` flag).
+- ADR-001 through ADR-007 define the core tech stack, `SignalEvent v1`, project skeleton, backtest result format, signal-source taxonomy (`<family>_<variant>` with families = {manual, rule, freqai, llm}), gray-rollout / dry-run mechanics, and paper trading runtime / SourcePolicy promotion gates.
 - Phase 1 bridge is implemented: `apps/bridge/` validates, persists, and replays `SignalEvent v1` through SQLite/WAL with CLI coverage.
 - Placeholder strategy-side consumer is implemented: `apps/strategies_nautilus/signal_consumer.py` applies ADR-002 §4.1 checks without touching trading APIs.
 - Baseline decision layer is implemented: `apps/strategies_nautilus/baseline_strategy.py` maps accepted signals to `OrderIntent` and enforces the 5%-day-loss kill-switch.
@@ -71,7 +71,7 @@ Immediate focus:
 ## Next Steps
 
 1. Use `freqai_linear_v1 / linear-mom-train20240105` as the first model-driven reproducibility anchor, and compare future full FreqAI exports against its dry-run fingerprint before replacing it.
-2. Plan ADR-007 (paper-trading runtime: `kind="paper"` flow, how `SourcePolicy` multipliers escalate across backtest → paper → live).
+2. Implement `kind="paper"` only as a simulated runtime with no real exchange keys, after adding runbook coverage and tests that prove dry-run / paper simulated sessions cannot submit live orders.
 3. Decide Phase 2 SQLite -> Postgres / Redis Stream readiness only after backtest volume exposes an actual bottleneck.
 
 ## Blocked / Deferred
@@ -91,6 +91,7 @@ On 2026-05-17, after the first `freqai_*` dry-run source landed:
 
 - `UV_CACHE_DIR=/tmp/uv-cache uv run pytest -q` -> 256 passed.
 - `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check apps tests docs` -> clean.
+- ADR-007 accepted the paper runtime semantics and SourcePolicy promotion gates; no runtime service was started and no real trading credentials were introduced.
 - `UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_freqtrade.research.freqai_linear_signals --catalog-path data/catalog --signal-store-path data/bridge/signals.db --symbol BTCUSDT --venue BINANCE --bar-type 'BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL' --train-until '2024-01-05T23:59:00Z'` -> 7 `freqai_linear_v1` SignalEvents written.
 - `UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.backtest_runner --instrument-id BTCUSDT.BINANCE --bar-type 'BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL' --signal-source freqai_linear_v1 --signal-model-version linear-mom-train20240105 --allowed-source freqai_linear_v1 --allowed-model-version linear-mom-train20240105 --trade-size 0.001 --starting-balance 100000 --min-confidence 0.5 --policy-position-pct-multiplier 0.2 --policy-dry-run` -> 1 dry-run bundle, signal rows=7, lineage=`target_long×7`, orders=0, fills=0, PnL=0; policy recorded in the manifest.
 - v1/v2 demo and rule fingerprints remain archived in `docs/progress/phase-2-signal-source-baselines.md`; v3 records the first `freqai_linear_v1` fingerprint.

@@ -58,14 +58,15 @@ freqtrade / FreqAI / research code -> SignalEvent -> NautilusTrader Strategy -> 
 
 阶段 1 使用本地文件或 SQLite 表落地 `SignalEvent`，便于回测、复盘和调试。
 
-阶段 2 引入 Redis Stream 做近实时桥接：
+阶段 2 继续优先使用本地 SQLite / 文件桥接；只有当 paper/testnet 前向运行证明
+SQLite polling 不够用，才引入 Redis Stream 做近实时桥接：
 
 ```text
 stream: signals.v1
 consumer group: nautilus_signal_consumers
 ```
 
-阶段 3 后若 Redis Stream 被证明确实不够，再评估 NATS；不直接上 Kafka。
+Redis Stream 被证明确实不够后，才评估 NATS；不直接上 Kafka。
 
 ---
 
@@ -182,7 +183,7 @@ signals(signal_id, schema_version, symbol, venue, ts_event, horizon, side, score
         created_at, consumed_at)
 ```
 
-阶段 2 可同步写 Postgres，并把 Redis Stream 作为传输层，不作为唯一历史存储。
+未来可同步写 Postgres，并把 Redis Stream 作为传输层，不作为唯一历史存储。
 
 ---
 
@@ -214,11 +215,14 @@ signals(signal_id, schema_version, symbol, venue, ts_event, horizon, side, score
 
 ## 8. 后续 ADR
 
-下一份 ADR 建议记录：
+后续 ADR 已按阶段拆分为：
 
 - ADR-003：阶段 0/1 的最小项目骨架和目录落地。
 - ADR-004：NautilusTrader 回测结果标准格式。
-- ADR-005：实盘前硬风控和应急停机规则。
+- ADR-005：研究层信号源分类与命名。
+- ADR-006：信号源灰度策略与 dry-run。
+- ADR-007：paper trading runtime 与 SourcePolicy 升档。
+- Future：实盘前硬风控和应急停机规则。
 
 ---
 

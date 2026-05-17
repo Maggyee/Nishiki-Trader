@@ -170,9 +170,12 @@ Phase 0/1 视为完成，当且仅当：
 本 ADR 推迟到对应阶段的决策：
 
 - ADR-004：NautilusTrader 回测结果标准格式（Phase 1 末或 Phase 2 初）。
-- ADR-005：实盘前硬风控与应急停机规则（Phase 3 前）。
-- ADR-006：SQLite → Postgres/TimescaleDB 数据迁移与 schema migration 工具（Phase 2 启动时）。
-- ADR-007：Redis Stream 桥接通道（Phase 2 中段，确认 SQLite 桥不够用之后）。
+- ADR-005：研究层信号源分类与命名（已落地）。
+- ADR-006：信号源灰度策略与 dry-run（已落地）。
+- ADR-007：paper trading runtime 与 SourcePolicy 升档（已落地）。
+- Future：实盘前硬风控与应急停机规则（Phase 3 前）。
+- Future：SQLite → Postgres/TimescaleDB 数据迁移与 schema migration 工具（确认 SQLite 暴露瓶颈之后）。
+- Future：Redis Stream 桥接通道（确认 SQLite 桥不够用之后）。
 
 ---
 

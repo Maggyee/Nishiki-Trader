@@ -90,7 +90,7 @@ class Authorization:
 灰度（canary）语义本 ADR **只定义概念**、不立即写代码：
 
 - **灰度白名单**：一个 model_version 进 `allowed_model_versions` 后，仍可被消费侧（baseline_strategy / 未来的 risk_rules）按"灰度"对待，例如减半 `max_position_pct`、强制 dry-run、强制更低 `min_confidence`。
-- 实施方案保留给 ADR-006 或 ADR-007；当前 baseline_strategy 只识别 in / out（全有 / 全无）。
+- 实施方案由 ADR-006 的 `SourcePolicy` 落地；跨 backtest / paper / live 的升档规则见 ADR-007。
 - 现阶段操作建议：新模型先用 `manual_` 或 `rule_` 命名 backtest 验证再升 freqai/llm，避免 Authorization 列表跑前直接对实盘风格的源放行。
 
 ### 2.4 新信号源接入流程
@@ -140,7 +140,7 @@ PR / commit 检查（人工）：
 ## 5. 后续 ADR
 
 - **ADR-006**：实盘前硬风控与灰度实施（包括 Authorization canary 字段、per-source `max_position_pct` 覆盖、强制 dry-run 模式）。
-- **ADR-007**：Redis Stream 桥接（与本 ADR 命名无关，但 Redis Stream 的 stream key 应当沿用 `signals.v1.<family>` 的命名，本 ADR 暂留）。
+- **Future**：Redis Stream 桥接（与本 ADR 命名无关，但 Redis Stream 的 stream key 应当沿用 `signals.v1.<family>` 的命名，本 ADR 暂留）。
 - **ADR-008**：LLM Agent 输出的额外审计与"双签"要求（如有真实落库到 `signals` 表的 LLM 信号）。
 
 ---

@@ -226,10 +226,11 @@ backtest_runner.py
 
 ## 5. 后续 ADR
 
-- **ADR-005**：实盘前硬风控与应急停机规则（Phase 3 启动前必须落）。
-- **ADR-006**：SQLite → Postgres / TimescaleDB 迁移与 schema migration 工具（与 Phase 3 持久化目标同步定）。
-- **ADR-007**：Redis Stream 桥接通道（Phase 2 中段，确认 SQLite 桥不够用之后）。
-- **ADR-008**：回测结果对比 / 索引 / Web 展示（与 Phase 3 前端启动同步定）。
+- **ADR-005**：研究层信号源分类与命名（已落地）。
+- **ADR-006**：信号源灰度策略与 dry-run（已落地）。
+- **ADR-007**：paper trading runtime 与 SourcePolicy 升档（已落地）。
+- **Future**：Redis Stream 桥接通道（确认 SQLite 桥不够用之后）。
+- **Future**：回测结果对比 / 索引 / Web 展示（与 Phase 3 前端启动同步定）。
 
 ---
 
