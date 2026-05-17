@@ -103,3 +103,14 @@ Use the literal `decision` value from the CLI (`promote`, `hold`, `demote`,
   `hold` because the 308-signal evidence is in-sample on January 2024
   — the model was trained on the same month, so a hold-out window
   (e.g., 2024-02 forward) is needed before any `promote` decision.
+- [`2026-05-17-freqai-linear-v1-hold-paper-shadow-60d-holdout.md`](2026-05-17-freqai-linear-v1-hold-paper-shadow-60d-holdout.md)
+  — third retro after the catalog was extended to 60 days. 595 shadow
+  signals (308 January + 287 February). February is the first fully
+  held-out month for this `(source, model_version)`. Signal-side
+  distributional comparison Jan vs Feb is near-identical (density,
+  long-share, score/confidence quantiles), so the model survives the
+  one-month regime shift on signal generation. Decision is still
+  `hold` because dry-run paper-shadow cannot produce return-side
+  evidence (Win Rate, expectancy, max drawdown). The recommended next
+  human action — handled in its own future retro — is to flip
+  `dry_run=False` to enter `paper_simulated` and collect those numbers.

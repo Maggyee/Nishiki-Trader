@@ -671,3 +671,165 @@ UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.pro
   --rationale "<in-sample-vs-hold-out reasoning>" \
   --output-markdown docs/retros/<UTC>-freqai-linear-v1-hold-paper-shadow-31d.md
 ```
+
+
+---
+
+## 2026-05-17 v8 — catalog extended to 60 days; first hold-out month evidence
+
+- **Catalog input**: `data/catalog/data/bar/BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL/`
+  covering **2024-01-01 through 2024-02-29** (86400 1m bars, 0 ts gaps,
+  60 days; February is a leap-year 29-day month and is fully covered).
+- **Signal store**: `data/bridge/signals.db` sha256
+  `6c30373984f7e565c855adb3f946722c43c9253038956895b34233a386d02dfe`
+  (= v7 store + 287 new `freqai_linear_v1` rows in February;
+  308 January rows from v7 were preserved via `DuplicateSignalError`).
+- **Code baseline**: git `35a35c2`
+  (`docs(progress): extend catalog to 31 days; freqai_linear_v1 crosses ≥50 signal gate`).
+- **Goal of v8**: produce a **held-out month** (February) where the
+  trainer has never seen any data, then compare January-vs-February
+  signal-side distributions to test whether the model survives a
+  regime change. The trainer boundary `train_until=2024-01-05T23:59`
+  is unchanged, so January `signal_id`s are unchanged from v7 and only
+  February is new.
+
+### Reproducibility anchor (still holds)
+
+| field | v3 (7-day) | v6 (7-day) | v7 (31-day) | v8 (60-day) |
+|---|---|---|---|---|
+| `signal_source.model_version` | `linear-mom-train20240105` | same | same | same |
+| `features_hash` (in raw_json) | `sha256:885207ac…` | same | same | same |
+| `metadata.train_rows` | 7181 | 7181 | 7181 | 7181 |
+| `metadata.train_start` | 2024-01-01T00:19:00+00:00 | same | same | same |
+| `metadata.train_until` | 2024-01-05T23:59:00+00:00 | same | same | same |
+| `freqai_linear_v1` rows in store | 7 | 7 | 308 | 595 |
+
+### v8 bundle fingerprint
+
+| metric | freqai paper shadow (v8) | Δ vs v7 (31-day) |
+|---|---:|---|
+| bundle | `data/paper/20260517-052512Z-36feef84` | new |
+| manifest sha256 | `9d813db2a77adf39cb974f5e6b7b3e04b2f701f930757edf132d97fd3ddb13c0` | new |
+| source / model | `freqai_linear_v1 / linear-mom-train20240105` | unchanged |
+| `git_dirty` | false | unchanged |
+| runtime mode / data_mode / order_mode | `paper` / `catalog_polling` / `simulated` | unchanged |
+| backtest_start | 2024-01-01T00:00:00.000Z | unchanged |
+| backtest_end | 2024-02-29T23:59:00.000Z | +29 days |
+| session_days_inclusive | 60 | +29 |
+| iterations | 86400 | +41760 |
+| signal rows | **595** (308 Jan + 287 Feb) | **+287 (Feb hold-out)** |
+| account balance rows | 86400 | +41760 |
+| heartbeat_count | 86400 | +41760 |
+| poll_count | 86400 | +41760 |
+| processed_until_ns | 1709251140000000000 | extended through 2024-02-29 |
+| restart_sequence | 0 | unchanged |
+| data_gap_count | 0 | unchanged |
+| policy | `dry_run=True`, multiplier `0.2` | unchanged |
+| lineage decisions | `target_long×436`, `target_short×159` | new |
+| orders / fills / positions | 0 / 0 / 0 | unchanged (dry-run) |
+| PnL total (USDT) | 0 | unchanged (dry-run) |
+| Max Drawdown (Pct / Abs USDT) | 0 / 0 | unchanged (dry-run) |
+| review blockers | none | unchanged |
+| promotion gate blockers | none | unchanged |
+| third retro | [`docs/retros/2026-05-17-freqai-linear-v1-hold-paper-shadow-60d-holdout.md`](../retros/2026-05-17-freqai-linear-v1-hold-paper-shadow-60d-holdout.md) | new |
+| review decision | `hold @ paper_shadow` | unchanged decision; new rationale |
+| review decision allowed | yes | unchanged |
+
+### Jan-vs-Feb hold-out distributional comparison
+
+Computed ad-hoc by joining `signal_lineage.parquet` (from the v8 paper
+bundle) with `signals.db` rows on `signal_id`, splitting on
+`ts_event < 2024-02-01T00:00Z`. The script is intentionally not
+committed to the repo; it is a one-shot research aid. The numbers
+below are the contract.
+
+| metric | Jan (in-sample month) | Feb (hold-out month) | drift |
+|---|---:|---:|---|
+| signal count | 308 | 287 | -6.8% (within fewer-days budget) |
+| inclusive days | 31 | 29 | leap year |
+| signals per day | 9.94 | 9.90 | -0.4% |
+| `target_long` lineage | 225 | 211 | -6.2% |
+| `target_short` lineage | 83 | 76 | -8.4% |
+| long_share | 0.7305 | 0.7352 | +0.6% |
+| score p50 (`buy`) | +0.2342 | +0.2342 | 0 |
+| score p50 (`sell`) | -0.2438 | -0.2332 | +4.3% |
+| score abs_mean (`buy`) | 0.2817 | 0.2785 | -1.1% |
+| score abs_mean (`sell`) | 0.2967 | 0.2736 | -7.8% |
+| confidence mean (`buy`) | 0.5647 | 0.5627 | -0.4% |
+| confidence mean (`sell`) | 0.5737 | 0.5597 | -2.4% |
+
+### Reading v8
+
+- **Signal-side hold-out passes.** Density (9.94 vs 9.90 / day),
+  long-share (0.7305 vs 0.7352), and score / confidence quantiles are
+  near-identical between January (in-sample month) and February
+  (held-out month). The model does not collapse under a one-month
+  regime shift. This is the first piece of out-of-training evidence
+  that `freqai_linear_v1 / linear-mom-train20240105` is at least
+  *consistent* outside its training month.
+- **Return-side hold-out is still missing.** Dry-run paper-shadow
+  produces no fills, so Win Rate / Expectancy / max drawdown are not
+  computable from the v8 bundle. ADR-007 §2.5 is explicit that this
+  is exactly what the `paper_simulated` stage exists for: turn off
+  `dry_run`, keep the multiplier at 0.2, and run the bundle to
+  collect those numbers. The v8 retro records "promote to
+  paper_simulated" as the next deliberate human action; this v8 retro
+  itself is still `hold` because flipping `dry_run` is the kind of
+  state change ADR-007 §2.6 reserves for an explicit, dedicated
+  promote retro.
+- **Reproducibility chain is intact across v3 → v6 → v7 → v8.** Same
+  `model_version`, same `features_hash`, same `train_rows`, same
+  `train_start` / `train_until`. Only the OOS region grows; only new
+  `signal_id`s are added. Anyone reproducing v8 from v7 just adds
+  February days to the catalog and reruns the exporter.
+
+### v8 reproduction
+
+Starting from the v7 catalog (31 days) and signal store (308 freqai rows):
+
+```bash
+# Backfill February 2024 (leap-year 29 days). Idempotent.
+for d in $(seq -w 1 29); do
+  UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.ops.backfill_bars \
+    --download --symbol BTCUSDT --interval 1m --date 2024-02-$d \
+    --catalog-path data/catalog
+  sleep 0.5
+done
+
+# Re-run the freqai linear exporter. Old 308 January rows are deduped
+# via DuplicateSignalError; ~287 new February rows are written.
+UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_freqtrade.research.freqai_linear_signals \
+  --catalog-path data/catalog \
+  --signal-store-path data/bridge/signals.db \
+  --symbol BTCUSDT --venue BINANCE \
+  --bar-type 'BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL' \
+  --train-until '2024-01-05T23:59:00Z'
+
+# Generate the 60-day paper-shadow bundle.
+UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.paper_runner \
+  --instrument-id BTCUSDT.BINANCE \
+  --bar-type 'BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL' \
+  --signal-source freqai_linear_v1 \
+  --signal-model-version linear-mom-train20240105 \
+  --allowed-source freqai_linear_v1 \
+  --allowed-model-version linear-mom-train20240105 \
+  --trade-size 0.001 --starting-balance 100000 --min-confidence 0.5 \
+  --policy-position-pct-multiplier 0.2 --policy-dry-run
+
+# Run the third promotion review.
+UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.promotion_review \
+  data/paper/<v8_run_id> \
+  --current-stage paper_shadow --target-stage paper_shadow \
+  --current-dry-run --current-position-pct-multiplier 0.2 \
+  --target-dry-run --target-position-pct-multiplier 0.2 \
+  --decision hold --operator nishiki \
+  --rationale "<hold-out distributional evidence summary>" \
+  --output-markdown docs/retros/<UTC>-freqai-linear-v1-hold-paper-shadow-60d-holdout.md
+```
+
+The Jan-vs-Feb distributional comparison itself is reproducible by
+joining `signal_lineage.parquet` from the v8 bundle with `signals.db`
+on `signal_id` and grouping on `ts_event < 2024-02-01T00:00Z`. The
+script is one-shot and intentionally not committed; rerunning it on
+the v8 fingerprint above must produce the numbers in the table above
+or the v8 fingerprint is no longer reproducible.
