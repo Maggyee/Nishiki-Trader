@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-05-17
 - **Current phase**: Phase 2 entry
-- **Current objective**: Replace the demo fixture signals with real FreqAI/research signal exports on the catalog-backed Nautilus backtest path while preserving the `SignalEvent v1 -> NautilusTrader Strategy -> RiskEngine` boundary.
+- **Current objective**: Stabilize model-driven `freqai_*` signal exports on the catalog-backed Nautilus backtest path while preserving the `SignalEvent v1 -> NautilusTrader Strategy -> RiskEngine` boundary.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -55,6 +55,7 @@ At task finish:
 - Local real-data smoke path is in place: `apps.ops.backfill_bars` imports a BTCUSDT Binance public kline ZIP into `data/catalog/`, can seed demo `SignalEvent v1` rows, and `compare_backtests.py` compares replayed ADR-004 bundles while ignoring wall-clock run fields.
 - Rule-based baseline signal generator is live: `apps/strategies_freqtrade/research/baseline_rule_signals.py` produces EMA(5)/EMA(20) + RSI(14) `SignalEvent v1` via CLI; the BTCUSDT 2024-01-01 fixture round-trips through `SignalStore` → `backtest_runner` end-to-end and writes a full ADR-004 bundle with `signal_id` traced through orders / fills / positions / signal_lineage.
 - Upstream runtime is pinned: `nautilus-trader==1.226.0`; local `nautilus_trader/` source checkout is aligned to tag `v1.226.0`.
+- First `freqai_*` source-family smoke is live: `apps/strategies_freqtrade/research/freqai_linear_signals.py` exports deterministic ridge-linear momentum predictions as `freqai_linear_v1 / linear-mom-train20240105`; the first baseline is dry-run only via `SourcePolicy(position_pct_multiplier=0.2, dry_run=True)`.
 
 ## Current Focus
 
@@ -69,7 +70,7 @@ Immediate focus:
 
 ## Next Steps
 
-1. Land the first `freqai_*` signal source against the existing 7-day BTCUSDT catalog; default it to `SourcePolicy(position_pct_multiplier=0.2, dry_run=True)` and record its fingerprint in the baselines note as a 2026-... v3 section.
+1. Use `freqai_linear_v1 / linear-mom-train20240105` as the first model-driven reproducibility anchor, and compare future full FreqAI exports against its dry-run fingerprint before replacing it.
 2. Plan ADR-007 (paper-trading runtime: `kind="paper"` flow, how `SourcePolicy` multipliers escalate across backtest → paper → live).
 3. Decide Phase 2 SQLite -> Postgres / Redis Stream readiness only after backtest volume exposes an actual bottleneck.
 
@@ -86,17 +87,16 @@ Immediate focus:
 
 ## Latest Verification
 
-On 2026-05-17, after ADR-005 source-family validation, the rule-based baseline signal generator, and ADR-006 gray-rollout / dry-run mechanics landed:
+On 2026-05-17, after the first `freqai_*` dry-run source landed:
 
-- `UV_CACHE_DIR=/tmp/uv-cache uv run pytest -q` -> 231 passed (ADR-005 source-prefix gate added 24 cases; ADR-006 SourcePolicy / dry-run / manifest integration added 24 more).
-- `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check apps tests` -> clean.
-- `UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_freqtrade.research.baseline_rule_signals --catalog-path data/catalog --signal-store-path data/bridge/signals.db --symbol BTCUSDT --venue BINANCE --bar-type 'BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL'` -> 71 SignalEvents written for BTCUSDT 2024-01-01.
-- `UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.backtest_runner --instrument-id BTCUSDT.BINANCE --bar-type 'BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL' --signal-source rule_baseline_v1 --signal-model-version 'ema5-20+rsi14' --allowed-source rule_baseline_v1 --allowed-model-version 'ema5-20+rsi14' --trade-size 0.001 --starting-balance 100000 --min-confidence 0.5` -> 1 bundle, totals fills=142, PnL (total)=-$4.74, Win Rate=12.7% (placeholder strategy, no alpha expected).
-- Same CLI swapped to `--signal-source manual_research --signal-model-version binance-fixture-v1` (demo) -> 1 bundle, totals fills=4, PnL (total)=-$1.02, Win Rate=50%. Both fingerprints frozen in `docs/progress/phase-2-signal-source-baselines.md`.
-- Catalog extended to 7 days (2024-01-01 .. 2024-01-07 BTCUSDT 1m, 10080 bars) via 6× `apps.ops.backfill_bars --date 2024-01-0{2..7}`; `baseline_rule_signals` rerun produced 564 new rows (71 existing 01-01 signals skipped as duplicates). 7-day rule bundle: fills=1266, PnL=-$57.15, Win Rate=10.6%, Expectancy=-$0.09/trade. v2 section appended to baselines note.
+- `UV_CACHE_DIR=/tmp/uv-cache uv run pytest -q` -> 256 passed.
+- `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check apps tests docs` -> clean.
+- `UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_freqtrade.research.freqai_linear_signals --catalog-path data/catalog --signal-store-path data/bridge/signals.db --symbol BTCUSDT --venue BINANCE --bar-type 'BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL' --train-until '2024-01-05T23:59:00Z'` -> 7 `freqai_linear_v1` SignalEvents written.
+- `UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.backtest_runner --instrument-id BTCUSDT.BINANCE --bar-type 'BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL' --signal-source freqai_linear_v1 --signal-model-version linear-mom-train20240105 --allowed-source freqai_linear_v1 --allowed-model-version linear-mom-train20240105 --trade-size 0.001 --starting-balance 100000 --min-confidence 0.5 --policy-position-pct-multiplier 0.2 --policy-dry-run` -> 1 dry-run bundle, signal rows=7, lineage=`target_long×7`, orders=0, fills=0, PnL=0; policy recorded in the manifest.
+- v1/v2 demo and rule fingerprints remain archived in `docs/progress/phase-2-signal-source-baselines.md`; v3 records the first `freqai_linear_v1` fingerprint.
 
 ## Recent Git Baseline
 
-- `fc6ec4f docs(progress): extend Phase 2 baselines to 7-day BTCUSDT window`
+- Current baseline includes the first `freqai_linear_v1` dry-run source; run `git log --oneline --decorate -5` for the exact latest commit hash.
 
 Agents should run `git log --oneline --decorate -5` for the latest commits instead of assuming this section is exhaustive.

@@ -46,7 +46,7 @@ from nautilus_trader.persistence.catalog.parquet import ParquetDataCatalog
 import nautilus_trader
 from apps.bridge.signal_event import SignalEvent
 from apps.bridge.store import SignalStore
-from apps.bridge.validators import Authorization
+from apps.bridge.validators import Authorization, SourcePolicy
 from apps.strategies_nautilus.baseline_nautilus_strategy import (
     SIGNAL_TAG_PREFIX,
     BaselineNautilusStrategy,
@@ -974,6 +974,29 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--signal-until-ns", type=int)
     parser.add_argument("--allowed-source", action="append", default=[])
     parser.add_argument("--allowed-model-version", action="append", default=[])
+    parser.add_argument(
+        "--policy-source",
+        help="Source for a single ADR-006 policy; defaults to --signal-source.",
+    )
+    parser.add_argument(
+        "--policy-model-version",
+        help="Model version for a single ADR-006 policy; defaults to --signal-model-version.",
+    )
+    parser.add_argument(
+        "--policy-position-pct-multiplier",
+        type=float,
+        help="ADR-006 SourcePolicy.position_pct_multiplier for the policy.",
+    )
+    parser.add_argument(
+        "--policy-min-confidence-override",
+        type=float,
+        help="ADR-006 SourcePolicy.min_confidence_override for the policy.",
+    )
+    parser.add_argument(
+        "--policy-dry-run",
+        action="store_true",
+        help="Mark the policy as dry-run: lineage only, no order submission.",
+    )
     parser.add_argument("--venue", default="BINANCE")
     parser.add_argument("--trade-size", type=Decimal, required=True)
     parser.add_argument("--starting-balance", type=Decimal, required=True)
@@ -1022,6 +1045,7 @@ def _config_from_args(args: argparse.Namespace) -> BacktestRunnerConfig:
             auth=Authorization(
                 allowed_sources=allowed_sources,
                 allowed_model_versions=allowed_models,
+                policies=_policies_from_args(args),
             ),
             min_confidence=args.min_confidence,
             max_position_pct=args.max_position_pct,
@@ -1038,6 +1062,40 @@ def _config_from_args(args: argparse.Namespace) -> BacktestRunnerConfig:
         machine_id=args.machine_id,
         seed=args.seed,
     )
+
+
+def _policies_from_args(args: argparse.Namespace) -> dict[tuple[str, str], SourcePolicy]:
+    requested = (
+        args.policy_source is not None
+        or args.policy_model_version is not None
+        or args.policy_position_pct_multiplier is not None
+        or args.policy_min_confidence_override is not None
+        or args.policy_dry_run
+    )
+    if not requested:
+        return {}
+
+    source = args.policy_source or args.signal_source
+    model_version = args.policy_model_version or args.signal_model_version
+    if not source:
+        raise ValueError("provide --policy-source or --signal-source for SourcePolicy")
+    if not model_version:
+        raise ValueError(
+            "provide --policy-model-version or --signal-model-version for SourcePolicy"
+        )
+
+    multiplier = (
+        1.0
+        if args.policy_position_pct_multiplier is None
+        else args.policy_position_pct_multiplier
+    )
+    return {
+        (source, model_version): SourcePolicy(
+            position_pct_multiplier=multiplier,
+            min_confidence_override=args.policy_min_confidence_override,
+            dry_run=args.policy_dry_run,
+        )
+    }
 
 
 def main(argv: list[str] | None = None) -> int:

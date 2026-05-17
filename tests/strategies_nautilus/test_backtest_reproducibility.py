@@ -447,6 +447,54 @@ def test_cli_entrypoint_runs_catalog_backtest(
     assert (output_dir / "run_manifest.json").exists()
 
 
+def test_cli_entrypoint_accepts_source_policy(
+    tmp_path, btcusdt_instrument, bar_type, signal_store_path, catalog_path, capsys
+):
+    output_root = tmp_path / "cli-policy-backtests"
+    rc = main(
+        [
+            "--output-root",
+            str(output_root),
+            "--catalog-path",
+            str(catalog_path),
+            "--instrument-id",
+            btcusdt_instrument.id.value,
+            "--bar-type",
+            str(bar_type),
+            "--signal-store-path",
+            str(signal_store_path),
+            "--signal-source",
+            "freqai_v1",
+            "--signal-model-version",
+            "2026-05-14",
+            "--trade-size",
+            "0.001",
+            "--starting-balance",
+            "100000",
+            "--machine-id",
+            "pytest",
+            "--policy-position-pct-multiplier",
+            "0.2",
+            "--policy-dry-run",
+        ]
+    )
+
+    assert rc == 0
+    output_dir = Path(capsys.readouterr().out.strip())
+    manifest = json.loads((output_dir / "run_manifest.json").read_text(encoding="utf-8"))
+    assert manifest["strategies"][0]["params"]["policies"] == [
+        {
+            "source": "freqai_v1",
+            "model_version": "2026-05-14",
+            "position_pct_multiplier": 0.2,
+            "min_confidence_override": None,
+            "dry_run": True,
+        }
+    ]
+    assert manifest["totals"]["orders"] == 0
+    assert manifest["totals"]["fills"] == 0
+
+
 def test_nautilus_wrapper_updates_daily_kill_switch(
     btcusdt_instrument, bar_type, signals
 ):
@@ -596,4 +644,3 @@ def test_empty_policies_omitted_or_empty_list(
     result = run_backtest(config)
     policies = result.manifest.strategies[0].params.get("policies", [])
     assert policies == []
-

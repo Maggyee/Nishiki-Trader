@@ -183,3 +183,80 @@ UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_freqtrade.research.b
 To extend to v2, append the 2024-01-02 .. 2024-01-07 backfills, then rerun
 `baseline_rule_signals` once more (duplicate rule signals from 01-01 will
 be skipped by `DuplicateSignalError`).
+
+---
+
+## 2026-05-17 v3 — first `freqai_*` source, dry-run policy
+
+- **Catalog input**: same 7-day `BTCUSDT.BINANCE` 1m catalog as v2, covering
+  2024-01-01 through 2024-01-07 (10080 bars).
+- **Signal source**: `freqai_linear_v1` /
+  `linear-mom-train20240105`.
+- **Signal store**: `data/bridge/signals.db` sha256
+  `55e5a218d1d9213d145a4db1148f07e6a62b0a7676e6b8ce4eaf26d09420323a`
+  (= existing v2 demo + rule rows plus 7 `freqai_linear_v1` rows).
+- **Feature hash**:
+  `sha256:885207acda6e307c4ac19a20c40e36b09619e3ed80f92f7c328a8dc36cff9b58`.
+- **Policy**: `SourcePolicy(position_pct_multiplier=0.2, dry_run=True)`.
+- **Code baseline**: this commit, which adds the first lightweight
+  classic-ML export under the ADR-005 `freqai` family.
+
+`freqai_linear_v1` is a Phase 2 bridge smoke source, not alpha. It fits a
+deterministic ridge-linear momentum model on pre-2024-01-06 bars and exports
+post-train predictions as `SignalEvent v1`. It does not import the freqtrade
+runtime, touch upstream source, or submit orders.
+
+| metric | freqai linear v3 |
+|---|---:|
+| signal rows in run | 7 |
+| signal side split | `buy×7` |
+| iterations | 10080 |
+| total events | 0 |
+| total orders | 0 |
+| total positions | 0 |
+| total fills | 0 |
+| PnL (total, USDT) | 0 |
+| PnL% (total) | 0 |
+| Win Rate | null |
+| Expectancy (USDT) | null |
+| Lineage decisions | `target_long×7` |
+
+### Reading v3
+
+- **Dry-run is working.** The strategy produced 7 `target_long` lineage
+  decisions, but `_apply_intent` submitted no orders because the applied
+  policy has `dry_run=True`.
+- **The 0.2 multiplier is still recorded.** Because dry-run suppresses order
+  submission, the multiplier does not affect fills yet, but it is present in
+  `run_manifest.json` under `strategies[0].params.policies` for ADR-004
+  reproducibility.
+- **This is out-of-sample relative to the configured train boundary.**
+  Training rows end at `2024-01-05T23:59:00Z`; all emitted signals are on
+  2024-01-06 or 2024-01-07.
+
+### v3 reproduction
+
+Starting from the v2 catalog and signal store:
+
+```bash
+UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_freqtrade.research.freqai_linear_signals \
+  --catalog-path data/catalog \
+  --signal-store-path data/bridge/signals.db \
+  --symbol BTCUSDT \
+  --venue BINANCE \
+  --bar-type 'BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL' \
+  --train-until '2024-01-05T23:59:00Z'
+
+UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.backtest_runner \
+  --instrument-id BTCUSDT.BINANCE \
+  --bar-type 'BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL' \
+  --signal-source freqai_linear_v1 \
+  --signal-model-version linear-mom-train20240105 \
+  --allowed-source freqai_linear_v1 \
+  --allowed-model-version linear-mom-train20240105 \
+  --trade-size 0.001 \
+  --starting-balance 100000 \
+  --min-confidence 0.5 \
+  --policy-position-pct-multiplier 0.2 \
+  --policy-dry-run
+```

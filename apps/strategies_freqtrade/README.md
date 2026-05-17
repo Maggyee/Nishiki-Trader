@@ -2,7 +2,8 @@
 
 freqtrade / FreqAI 上的自定义策略和 ML 模型。
 
-**当前 Phase**：0（骨架）。代码 Phase 2 开始写（ML 信号层）。
+**当前 Phase**：2（ML 信号层）。轻量 research exporters 已开始输出
+`SignalEvent v1`；完整 freqtrade/FreqAI runtime 仍未接入。
 
 ## 约定：使用独立 user_data
 
