@@ -976,3 +976,79 @@ Re-running v9 from v8 produces a deterministic bundle: same model
 fingerprint + same signal store sha256 + same catalog content + same
 git commit must yield the same orders/fills/positions/PnL down to the
 floating-point noise level recorded above.
+
+
+---
+
+## 2026-05-17 v10 — 121-day paper_simulated extension through April
+
+- **Catalog input**: `data/catalog/data/bar/BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL/`
+  covering **2024-01-01 through 2024-04-30** (174240 1m bars, 121
+  calendar days). March and April were appended after v9 as additional
+  out-of-sample market regimes while keeping the original
+  `train_until=2024-01-05T23:59:00Z` boundary.
+- **Signal store**: `data/bridge/signals.db` sha256
+  `8c2176c2a67d6d9fdb2fc70ec6c0cf72ea14c04dbf272baf1519a7c49935ca4e`.
+  The exporter generated 1750 total `freqai_linear_v1` rows and wrote
+  1155 new rows; the prior 595 Jan/Feb rows were skipped as duplicates.
+- **Code baseline recorded in bundle**: git `bfbb7e6`
+  (`feat(strategies_nautilus): land ADR-008 §6.1 Phase 3a wall-clock paper`).
+- **Bundle**: `data/paper/20260517-090217Z-c1214e6d`, manifest sha256
+  `966fc8ac6010592b4f2af5b10d6deb3c63109083f2cfa7e70c83b175b26763a3`.
+- **Review record**:
+  [`docs/retros/2026-05-17-freqai-linear-v1-hold-paper-simulated-121d.md`](../retros/2026-05-17-freqai-linear-v1-hold-paper-simulated-121d.md).
+
+### v10 simulated bundle fingerprint
+
+| metric | freqai paper simulated (v10) | reference (v9, 60d) |
+|---|---:|---:|
+| source / model | `freqai_linear_v1 / linear-mom-train20240105` | same |
+| `git_dirty` | false | false |
+| runtime mode / data_mode / order_mode | `paper` / `catalog_polling` / `simulated` | same |
+| backtest_start | 2024-01-01T00:00:00.000Z | same |
+| backtest_end | 2024-04-30T23:59:00.000Z | 2024-02-29T23:59:00.000Z |
+| session_days_inclusive | 121 | 60 |
+| iterations | 174240 | 86400 |
+| signal rows | 1750 | 595 |
+| applied policy | `dry_run=False`, multiplier `0.2` | same |
+| heartbeat_count / poll_count | 174240 / 174240 | 86400 / 86400 |
+| data_gap_count / restart_sequence | 0 / 0 | 0 / 0 |
+| orders / fills / positions | 1649 / 1649 / 825 | 545 / 545 / 273 |
+| lineage decisions | `target_long×1265`, `target_short×485` | `target_long×436`, `target_short×159` |
+| lineage reasons | empty×825, `already_target_long×852`, `already_target_short×73` | empty×273, `already_target_long×299`, `already_target_short×23` |
+| kill-switch / expired / unauthorized / signal_lag | 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 |
+| PnL (total, USDT) | +4.4126 | +5.0076 |
+| PnL% (total) | +0.004413% | +0.005008% |
+| Win Rate | 0.5291 | 0.5551 |
+| Expectancy (USDT/trade) | +0.00524 | +0.01858 |
+| Max Drawdown (Pct) | -3.8779e-05 (-0.003878%) | -1.0035e-05 (-0.001003%) |
+| Max Drawdown (Abs, USDT) | -3.8782 | -1.0035 |
+| review blockers / promotion blockers | none / none | none / none |
+
+### Month split
+
+The table below joins `signal_lineage.parquet` to `signals.db` on
+`signal_id`, then splits by signal event month. PnL split uses closed
+positions by `closed_ts`; the small gap between monthly closed PnL and total
+PnL is the final open position's unrealized mark.
+
+| month | signals | target_long | target_short | score_abs_mean | confidence_mean | closed positions | closed PnL USDT | win rate | expectancy |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 2024-01 | 308 | 225 | 83 | 0.2857 | 0.5671 | 135 | +0.6463 | 0.5556 | +0.00479 |
+| 2024-02 | 287 | 211 | 76 | 0.2772 | 0.5619 | 137 | +4.4086 | 0.5547 | +0.03218 |
+| 2024-03 | 621 | 445 | 176 | 0.3168 | 0.5860 | 302 | +1.3731 | 0.5265 | +0.00455 |
+| 2024-04 | 534 | 384 | 150 | 0.2845 | 0.5664 | 250 | -2.1081 | 0.5040 | -0.00843 |
+
+### Reading v10
+
+- **The source survives a longer replay mechanically.** Every signal is
+  accepted, sidecars match manifest totals, every order/fill path remains
+  simulated, `git_dirty=false`, and no data-gap, expiry, authorization,
+  signal-lag, or kill-switch blocker appears.
+- **The return-side evidence weakens as the window grows.** Total PnL stays
+  slightly positive, but expectancy compresses from +0.01858 to +0.00524
+  USDT/trade and April is negative. This is still monitoring evidence, not
+  alpha evidence.
+- **No promotion implication.** `paper_simulated` remains the ceiling for
+  this source until ADR-008 Phase 3a's 24h wall-clock soak is recorded and
+  Phase 3b-3e testnet credential, emergency, restart, and alert gates exist.

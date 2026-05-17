@@ -24,11 +24,14 @@ env/
 
 # Secrets / config
 .env
+.envrc
+*.env
 .env.local
 .env.*.local
 *.key
 *.pem
 secrets/
+infra/secrets/
 
 # Upstream source checkouts (tracked separately, read-only by default)
 freqtrade/
@@ -37,6 +40,7 @@ nautilus_trader/
 # Data (keep dir, ignore contents)
 data/*
 !data/.gitkeep
+data/testnet/
 
 # Local DBs / Parquet
 *.parquet
