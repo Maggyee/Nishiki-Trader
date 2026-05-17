@@ -122,6 +122,12 @@ class BaselineNautilusStrategy(Strategy):
         if action == "skip":
             return []
 
+        # ADR-006 §2.5: dry-run intents must produce no orders. The lineage
+        # row still records the action + target_position_pct via the caller,
+        # so audits can reconstruct what the strategy would have submitted.
+        if intent.dry_run:
+            return []
+
         instrument = self.cache.instrument(self._params.instrument_id)
         if instrument is None:
             return []

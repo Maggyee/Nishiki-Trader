@@ -28,7 +28,7 @@ from nautilus_trader.test_kit.providers import TestInstrumentProvider
 
 from apps.bridge.signal_event import SignalEvent
 from apps.bridge.store import SignalStore
-from apps.bridge.validators import Authorization
+from apps.bridge.validators import Authorization, SourcePolicy
 from apps.strategies_nautilus.baseline_nautilus_strategy import (
     BaselineNautilusStrategy,
     BaselineNautilusStrategyParams,
@@ -141,6 +141,7 @@ def _build_config(
     instrument_id: str,
     bar_type,
     signal_store_path: Path,
+    policies: dict[tuple[str, str], SourcePolicy] | None = None,
 ) -> BacktestRunnerConfig:
     return BacktestRunnerConfig(
         output_root=output_root,
@@ -153,6 +154,7 @@ def _build_config(
             auth=Authorization(
                 allowed_sources=frozenset({"freqai_v1"}),
                 allowed_model_versions=frozenset({"2026-05-14"}),
+                policies=policies or {},
             ),
             min_confidence=0.5,
             max_position_pct=0.05,
@@ -479,3 +481,119 @@ def test_nautilus_wrapper_updates_daily_kill_switch(
 
     strategy._update_daily_risk_state(BASE_TS_NS + 24 * 60 * ONE_MIN_NS)
     assert strategy._baseline.kill_switch_engaged is False
+
+
+# ----- ADR-006 dry-run + policy integration -----------------------------
+
+
+def test_dry_run_policy_writes_lineage_but_no_orders(
+    tmp_path, btcusdt_instrument, bar_type, signals, signal_store_path, catalog_path
+):
+    config = _build_config(
+        output_root=tmp_path / "backtests",
+        catalog_path=catalog_path,
+        instrument_id=btcusdt_instrument.id.value,
+        bar_type=bar_type,
+        signal_store_path=signal_store_path,
+        policies={("freqai_v1", "2026-05-14"): SourcePolicy(dry_run=True)},
+    )
+    result = run_backtest(config)
+
+    # No order or fill was submitted, yet every signal is still in lineage.
+    assert result.manifest.totals.fills == 0
+    assert result.manifest.totals.orders == 0
+    lineage = pd.read_parquet(result.output_dir / "signal_lineage.parquet")
+    assert sorted(lineage["signal_id"].tolist()) == sorted(s.signal_id for s in signals)
+    # No order_ids / fill_ids should be populated for dry-run decisions.
+    for col in ("order_ids", "fill_ids"):
+        assert (lineage[col] == "").all(), (
+            f"{col} expected empty under dry-run, got {lineage[col].tolist()}"
+        )
+
+    # Manifest carries the policy back out for ADR-004 §2.4 replay diffing.
+    policies = result.manifest.strategies[0].params["policies"]
+    assert policies == [
+        {
+            "source": "freqai_v1",
+            "model_version": "2026-05-14",
+            "position_pct_multiplier": 1.0,
+            "min_confidence_override": None,
+            "dry_run": True,
+        }
+    ]
+
+
+def test_dry_run_replay_is_bit_for_bit_identical(
+    tmp_path, btcusdt_instrument, bar_type, signal_store_path, catalog_path
+):
+    policies = {("freqai_v1", "2026-05-14"): SourcePolicy(dry_run=True)}
+    cfg1 = _build_config(
+        output_root=tmp_path / "run1",
+        catalog_path=catalog_path,
+        instrument_id=btcusdt_instrument.id.value,
+        bar_type=bar_type,
+        signal_store_path=signal_store_path,
+        policies=policies,
+    )
+    cfg2 = _build_config(
+        output_root=tmp_path / "run2",
+        catalog_path=catalog_path,
+        instrument_id=btcusdt_instrument.id.value,
+        bar_type=bar_type,
+        signal_store_path=signal_store_path,
+        policies=policies,
+    )
+    r1 = run_backtest(cfg1)
+    r2 = run_backtest(cfg2)
+
+    assert filecmp.cmp(
+        r1.output_dir / "fills.parquet",
+        r2.output_dir / "fills.parquet",
+        shallow=False,
+    )
+    assert filecmp.cmp(
+        r1.output_dir / "signal_lineage.parquet",
+        r2.output_dir / "signal_lineage.parquet",
+        shallow=False,
+    )
+    assert r1.manifest.totals == r2.manifest.totals
+    assert (
+        r1.manifest.strategies[0].params["policies"]
+        == r2.manifest.strategies[0].params["policies"]
+    )
+
+
+def test_multiplier_policy_still_produces_orders(
+    tmp_path, btcusdt_instrument, bar_type, signal_store_path, catalog_path
+):
+    # multiplier=0.5 halves the target but still emits live orders.
+    config = _build_config(
+        output_root=tmp_path / "backtests",
+        catalog_path=catalog_path,
+        instrument_id=btcusdt_instrument.id.value,
+        bar_type=bar_type,
+        signal_store_path=signal_store_path,
+        policies={("freqai_v1", "2026-05-14"): SourcePolicy(position_pct_multiplier=0.5)},
+    )
+    result = run_backtest(config)
+    assert result.manifest.totals.fills > 0
+    # Manifest preserves the policy multiplier for replay.
+    pol = result.manifest.strategies[0].params["policies"][0]
+    assert pol["position_pct_multiplier"] == 0.5
+    assert pol["dry_run"] is False
+
+
+def test_empty_policies_omitted_or_empty_list(
+    tmp_path, btcusdt_instrument, bar_type, signal_store_path, catalog_path
+):
+    config = _build_config(
+        output_root=tmp_path / "backtests",
+        catalog_path=catalog_path,
+        instrument_id=btcusdt_instrument.id.value,
+        bar_type=bar_type,
+        signal_store_path=signal_store_path,
+    )
+    result = run_backtest(config)
+    policies = result.manifest.strategies[0].params.get("policies", [])
+    assert policies == []
+

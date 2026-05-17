@@ -6,6 +6,7 @@ from apps.bridge.signal_event import SignalEvent
 from apps.bridge.validators import (
     Authorization,
     ExpiredError,
+    SourcePolicy,
     UnauthorizedModelError,
     UnauthorizedSourceError,
     is_expired,
@@ -46,3 +47,101 @@ def test_empty_allowlist_rejects_all(signal_event):
     auth = Authorization(allowed_sources=frozenset(), allowed_model_versions=frozenset())
     with pytest.raises(UnauthorizedSourceError):
         validate(signal_event, auth, now_ns=signal_event.ts_event)
+
+
+# ----- ADR-006 SourcePolicy + Authorization.policies ----------------------
+
+
+def test_default_source_policy_is_pass_through():
+    pol = SourcePolicy()
+    assert pol.position_pct_multiplier == 1.0
+    assert pol.min_confidence_override is None
+    assert pol.dry_run is False
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"position_pct_multiplier": -0.01},
+        {"position_pct_multiplier": 1.5},
+        {"min_confidence_override": -0.1},
+        {"min_confidence_override": 1.1},
+    ],
+)
+def test_source_policy_rejects_out_of_range(kwargs):
+    with pytest.raises(ValueError):
+        SourcePolicy(**kwargs)
+
+
+def test_authorization_default_policies_empty(auth):
+    # The ConsumerConfig / Authorization fixtures still work without policies.
+    assert auth.policies == {}
+
+
+def test_authorization_rejects_policy_keys_with_unknown_source_family():
+    with pytest.raises(ValueError):
+        Authorization(
+            allowed_sources=frozenset({"rule_baseline_v1"}),
+            allowed_model_versions=frozenset({"ema5-20+rsi14"}),
+            policies={("rogue_x", "v1"): SourcePolicy(dry_run=True)},
+        )
+
+
+def test_authorization_accepts_wildcard_policy_keys():
+    auth = Authorization(
+        allowed_sources=frozenset({"rule_baseline_v1"}),
+        allowed_model_versions=frozenset({"ema5-20+rsi14"}),
+        policies={
+            ("*", "*"): SourcePolicy(position_pct_multiplier=0.5),
+        },
+    )
+    assert auth.policy_for("rule_baseline_v1", "ema5-20+rsi14").position_pct_multiplier == 0.5
+
+
+def test_policy_for_exact_match_wins_over_wildcards():
+    exact = SourcePolicy(position_pct_multiplier=0.1)
+    source_wild = SourcePolicy(position_pct_multiplier=0.4)
+    model_wild = SourcePolicy(position_pct_multiplier=0.7)
+    global_wild = SourcePolicy(position_pct_multiplier=0.9)
+    auth = Authorization(
+        allowed_sources=frozenset({"rule_baseline_v1"}),
+        allowed_model_versions=frozenset({"ema5-20+rsi14"}),
+        policies={
+            ("rule_baseline_v1", "ema5-20+rsi14"): exact,
+            ("rule_baseline_v1", "*"): source_wild,
+            ("*", "ema5-20+rsi14"): model_wild,
+            ("*", "*"): global_wild,
+        },
+    )
+    assert auth.policy_for("rule_baseline_v1", "ema5-20+rsi14") is exact
+
+
+def test_policy_for_falls_back_through_source_then_model_then_global():
+    source_wild = SourcePolicy(position_pct_multiplier=0.4)
+    model_wild = SourcePolicy(position_pct_multiplier=0.7)
+    global_wild = SourcePolicy(position_pct_multiplier=0.9)
+    auth = Authorization(
+        allowed_sources=frozenset({"rule_baseline_v1"}),
+        allowed_model_versions=frozenset({"ema5-20+rsi14"}),
+        policies={
+            ("rule_baseline_v1", "*"): source_wild,
+            ("*", "ema5-20+rsi14"): model_wild,
+            ("*", "*"): global_wild,
+        },
+    )
+    # source matches → source_wild wins, even though model_wild also matches.
+    assert auth.policy_for("rule_baseline_v1", "other-model") is source_wild
+    # source does NOT match but model does → model_wild.
+    assert auth.policy_for("freqai_other", "ema5-20+rsi14") is model_wild
+    # neither matches → global_wild.
+    assert auth.policy_for("freqai_other", "other-model") is global_wild
+
+
+def test_policy_for_returns_default_when_no_match():
+    auth = Authorization(
+        allowed_sources=frozenset({"rule_baseline_v1"}),
+        allowed_model_versions=frozenset({"ema5-20+rsi14"}),
+        policies={},
+    )
+    pol = auth.policy_for("rule_baseline_v1", "ema5-20+rsi14")
+    assert pol == SourcePolicy()  # default values

@@ -876,6 +876,9 @@ def _build_manifest(
                         "daily_drawdown_stop_pct": config.baseline_config.daily_drawdown_stop_pct,
                         "trade_size": str(config.trade_size),
                         "seed": config.seed,
+                        "policies": _serialize_policies(
+                            config.baseline_config.auth.policies
+                        ),
                     },
                 }
             ],
@@ -921,6 +924,33 @@ def _build_manifest(
 def _ns_to_iso_ms(ns: int) -> str:
     dt = datetime.fromtimestamp(ns / 1_000_000_000, tz=UTC)
     return _iso_ms_utc(dt)
+
+
+def _serialize_policies(
+    policies: dict[tuple[str, str], Any],
+) -> list[dict[str, Any]]:
+    """Flatten Authorization.policies into a deterministic manifest list.
+
+    ADR-006 §2.6: applied policies must round-trip through the manifest so
+    ADR-004 §2.4 reproducibility extends across policy state. Sorted by
+    `(source, model_version)` for stable diffs.
+    """
+    out: list[dict[str, Any]] = []
+    for (source, model_version), policy in sorted(policies.items()):
+        out.append(
+            {
+                "source": source,
+                "model_version": model_version,
+                "position_pct_multiplier": float(policy.position_pct_multiplier),
+                "min_confidence_override": (
+                    None
+                    if policy.min_confidence_override is None
+                    else float(policy.min_confidence_override)
+                ),
+                "dry_run": bool(policy.dry_run),
+            }
+        )
+    return out
 
 
 def _build_arg_parser() -> argparse.ArgumentParser:

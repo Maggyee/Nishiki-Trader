@@ -68,6 +68,7 @@ class OrderIntent:
     action: Action
     target_position_pct: float
     reason: str | None = None
+    dry_run: bool = False
 
 
 @dataclass
@@ -128,8 +129,32 @@ class BaselineSignalStrategy:
                 reason=f"{outcome.decision}: {outcome.reason or ''}".rstrip(": "),
             )
 
+        # ADR-006 §2.3 step 3: resolve policy after ADR-002 §4.1 admits the
+        # signal. Policy can tighten min_confidence, scale the target size,
+        # or flip the intent to dry-run.
+        policy = self.config.auth.policy_for(event.source, event.model_version)
+
+        # ADR-006 §2.3 step 4: policy may only RAISE the confidence floor.
+        if policy.min_confidence_override is not None:
+            effective = max(
+                self.config.min_confidence, policy.min_confidence_override
+            )
+            if event.confidence < effective:
+                return OrderIntent(
+                    event.signal_id,
+                    instrument_id,
+                    "skip",
+                    0.0,
+                    reason=(
+                        f"reject_low_confidence_policy: "
+                        f"confidence={event.confidence:.3f} < {effective:.3f}"
+                    ),
+                )
+
         # §4.2 risk-side gate: kill-switch blocks new opens and flips but
         # never blocks a `flat` signal (closing reduces risk).
+        # ADR-006: kill-switch outranks dry-run — if we are in kill-switch
+        # state we emit skip, never dry_run.
         if self._kill_switch.engaged and event.side != "flat":
             return OrderIntent(
                 event.signal_id,
@@ -139,19 +164,22 @@ class BaselineSignalStrategy:
                 reason=f"kill_switch: {self._kill_switch.reason}",
             )
 
+        multiplier = policy.position_pct_multiplier
         if event.side == "buy":
             return OrderIntent(
                 event.signal_id,
                 instrument_id,
                 "target_long",
-                +self.config.max_position_pct,
+                +self.config.max_position_pct * multiplier,
+                dry_run=policy.dry_run,
             )
         if event.side == "sell":
             return OrderIntent(
                 event.signal_id,
                 instrument_id,
                 "target_short",
-                -self.config.max_position_pct,
+                -self.config.max_position_pct * multiplier,
+                dry_run=policy.dry_run,
             )
         if event.side == "flat":
             return OrderIntent(
@@ -159,6 +187,7 @@ class BaselineSignalStrategy:
                 instrument_id,
                 "target_flat",
                 0.0,
+                dry_run=policy.dry_run,
             )
 
         # Pydantic Literal["buy","sell","flat"] makes this unreachable.

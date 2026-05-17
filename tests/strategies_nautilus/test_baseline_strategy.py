@@ -19,7 +19,7 @@ import tokenize
 import pytest
 
 from apps.bridge.signal_event import SignalEvent
-from apps.bridge.validators import Authorization
+from apps.bridge.validators import Authorization, SourcePolicy
 from apps.strategies_nautilus.baseline_strategy import (
     BaselineSignalStrategy,
     BaselineStrategyConfig,
@@ -292,3 +292,131 @@ def test_minimum_authorization_required(make_payload, config):
     assert intent.action == "skip"
     assert intent.reason is not None
     assert intent.reason.startswith("reject_unauthorized_source")
+
+
+# ----- ADR-006 source policy --------------------------------------------
+
+
+def _auth_with_policy(config, policy: SourcePolicy) -> Authorization:
+    return Authorization(
+        allowed_sources=config.auth.allowed_sources,
+        allowed_model_versions=config.auth.allowed_model_versions,
+        policies={("freqai_v1", "2026-05-14"): policy},
+    )
+
+
+def _strategy_with_policy(config, policy: SourcePolicy) -> BaselineSignalStrategy:
+    cfg = BaselineStrategyConfig(
+        venue=config.venue,
+        auth=_auth_with_policy(config, policy),
+        min_confidence=0.55,
+        max_position_pct=0.05,
+        daily_drawdown_stop_pct=0.05,
+    )
+    return BaselineSignalStrategy(config=cfg)
+
+
+def test_policy_multiplier_scales_target_position_pct(config, signal_event):
+    strategy = _strategy_with_policy(config, SourcePolicy(position_pct_multiplier=0.2))
+    intent = strategy.decide(signal_event, now_ns=signal_event.ts_event)
+    assert intent.action == "target_long"
+    assert intent.target_position_pct == pytest.approx(0.05 * 0.2)
+    assert intent.dry_run is False
+
+
+def test_policy_multiplier_zero_zeroes_target_but_keeps_action(config, signal_event):
+    strategy = _strategy_with_policy(config, SourcePolicy(position_pct_multiplier=0.0))
+    intent = strategy.decide(signal_event, now_ns=signal_event.ts_event)
+    assert intent.action == "target_long"
+    assert intent.target_position_pct == 0.0
+    assert intent.dry_run is False
+
+
+def test_policy_min_confidence_override_can_only_tighten(config, make_payload):
+    # Override is *less* strict than strategy floor (0.55) — must NOT relax.
+    strategy = _strategy_with_policy(
+        config, SourcePolicy(min_confidence_override=0.30)
+    )
+    event = SignalEvent.model_validate(
+        make_payload(confidence=0.50, signal_id="conf-relax")
+    )
+    intent = strategy.decide(event, now_ns=event.ts_event)
+    # Strategy floor 0.55 still wins → consumer.evaluate rejected first.
+    assert intent.action == "skip"
+    assert intent.reason is not None
+    assert intent.reason.startswith("reject_low_confidence")
+
+
+def test_policy_min_confidence_override_tighter_than_strategy_floor(config, make_payload):
+    strategy = _strategy_with_policy(
+        config, SourcePolicy(min_confidence_override=0.80)
+    )
+    # confidence > strategy floor (0.55) but < override (0.80).
+    event = SignalEvent.model_validate(
+        make_payload(confidence=0.70, signal_id="conf-policy")
+    )
+    intent = strategy.decide(event, now_ns=event.ts_event)
+    assert intent.action == "skip"
+    assert intent.reason is not None
+    assert intent.reason.startswith("reject_low_confidence_policy")
+    assert "0.700" in intent.reason
+    assert "0.800" in intent.reason
+
+
+def test_policy_dry_run_marks_intent_but_keeps_action(config, signal_event):
+    strategy = _strategy_with_policy(
+        config, SourcePolicy(position_pct_multiplier=0.5, dry_run=True)
+    )
+    intent = strategy.decide(signal_event, now_ns=signal_event.ts_event)
+    assert intent.action == "target_long"
+    assert intent.target_position_pct == pytest.approx(0.025)
+    assert intent.dry_run is True
+    # Reason is None — dry_run is a flag, not a rejection reason.
+    assert intent.reason is None
+
+
+def test_policy_dry_run_flat_also_marked(config, make_payload):
+    strategy = _strategy_with_policy(config, SourcePolicy(dry_run=True))
+    event = SignalEvent.model_validate(make_payload(side="flat", signal_id="flat-dry"))
+    intent = strategy.decide(event, now_ns=event.ts_event)
+    assert intent.action == "target_flat"
+    assert intent.dry_run is True
+
+
+def test_kill_switch_outranks_dry_run(config, signal_event):
+    strategy = _strategy_with_policy(config, SourcePolicy(dry_run=True))
+    # Engage kill-switch first.
+    strategy.on_account_update(equity_open=10_000.0, equity_now=9_500.0)
+    intent = strategy.decide(signal_event, now_ns=signal_event.ts_event)
+    # Kill-switch wins; dry_run never applied because we took the skip path.
+    assert intent.action == "skip"
+    assert intent.dry_run is False
+    assert intent.reason is not None
+    assert intent.reason.startswith("kill_switch")
+
+
+def test_policy_wildcard_applies_when_exact_missing(config, signal_event):
+    auth = Authorization(
+        allowed_sources=config.auth.allowed_sources,
+        allowed_model_versions=config.auth.allowed_model_versions,
+        policies={("freqai_v1", "*"): SourcePolicy(position_pct_multiplier=0.1)},
+    )
+    cfg = BaselineStrategyConfig(
+        venue=config.venue,
+        auth=auth,
+        min_confidence=0.55,
+        max_position_pct=0.05,
+    )
+    strategy = BaselineSignalStrategy(config=cfg)
+    intent = strategy.decide(signal_event, now_ns=signal_event.ts_event)
+    assert intent.action == "target_long"
+    assert intent.target_position_pct == pytest.approx(0.005)
+
+
+def test_no_policy_means_full_position(config, signal_event):
+    # Sanity: ADR-006 must not change behaviour when policies is empty.
+    strategy = _strategy_with_policy(config, SourcePolicy())
+    intent = strategy.decide(signal_event, now_ns=signal_event.ts_event)
+    assert intent.action == "target_long"
+    assert intent.target_position_pct == pytest.approx(0.05)
+    assert intent.dry_run is False
