@@ -72,9 +72,9 @@ Immediate focus:
 
 ## Next Steps
 
-1. Use `freqai_linear_v1 / linear-mom-train20240105` as the first model-driven reproducibility anchor, and compare future full FreqAI exports against its dry-run fingerprint before replacing it.
-2. Keep `freqai_linear_v1` in dry-run/shadow while collecting more model-source evidence; do not promote to paper simulated orders until there is a promotion review with bundle fingerprints.
-3. Add true wall-clock paper session mechanics only after the local simulated bundle path is stable; no testnet/live credentials before that.
+1. Use `report_paper_bundle.py` as the required ADR-007 evidence summary before any `SourcePolicy` promotion review.
+2. Keep `freqai_linear_v1` in dry-run/shadow; the latest report has no review blockers but still requires manual review before disabling dry-run.
+3. Add true wall-clock paper session mechanics only after the local simulated bundle report path is stable; no testnet/live credentials before that.
 4. Decide Phase 2 SQLite -> Postgres / Redis Stream readiness only after backtest or paper volume exposes an actual bottleneck.
 
 ## Blocked / Deferred
@@ -90,17 +90,14 @@ Immediate focus:
 
 ## Latest Verification
 
-On 2026-05-17, after the simulated paper runner landed:
+On 2026-05-17, after the paper bundle report reader landed:
 
-- `UV_CACHE_DIR=/tmp/uv-cache uv run pytest -q` -> 264 passed.
+- `UV_CACHE_DIR=/tmp/uv-cache uv run pytest -q` -> 271 passed.
 - `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check apps tests docs` -> clean.
 - `tests/strategies_nautilus/test_report_paper_bundle.py` covers paper bundle summary output, dry-run policy reporting, review blockers, sidecar count mismatches, CLI JSON/text output, and non-paper rejection.
 - ADR-007 now explicitly allows Phase 2 `catalog_polling` simulated paper bundles while keeping true wall-clock paper/testnet/live gated; no runtime service was started and no real trading credentials were introduced.
-- `tests/strategies_nautilus/test_paper_runner.py` covers dry-run no-order behavior, simulated orders/fills/positions carrying `signal_id`, signal lag, expired signals, unauthorized sources, kill-switch blocking, CLI entrypoint, and source-level guards against reading secret env vars or submitting live orders.
-- `UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.paper_runner --instrument-id BTCUSDT.BINANCE --bar-type 'BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL' --signal-source freqai_linear_v1 --signal-model-version linear-mom-train20240105 --allowed-source freqai_linear_v1 --allowed-model-version linear-mom-train20240105 --trade-size 0.001 --starting-balance 100000 --min-confidence 0.5 --policy-position-pct-multiplier 0.2 --policy-dry-run` -> 1 `data/paper/` bundle, signal rows=7, lineage=`target_long×7` with `reason=dry_run`, orders=0, fills=0, PnL=0.
-- `UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_freqtrade.research.freqai_linear_signals --catalog-path data/catalog --signal-store-path data/bridge/signals.db --symbol BTCUSDT --venue BINANCE --bar-type 'BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL' --train-until '2024-01-05T23:59:00Z'` -> 7 `freqai_linear_v1` SignalEvents written.
-- `UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.backtest_runner --instrument-id BTCUSDT.BINANCE --bar-type 'BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL' --signal-source freqai_linear_v1 --signal-model-version linear-mom-train20240105 --allowed-source freqai_linear_v1 --allowed-model-version linear-mom-train20240105 --trade-size 0.001 --starting-balance 100000 --min-confidence 0.5 --policy-position-pct-multiplier 0.2 --policy-dry-run` -> 1 dry-run bundle, signal rows=7, lineage=`target_long×7`, orders=0, fills=0, PnL=0; policy recorded in the manifest.
-- v1/v2 demo and rule fingerprints remain archived in `docs/progress/phase-2-signal-source-baselines.md`; v3 records the first `freqai_linear_v1` fingerprint.
+- `docs/progress/phase-2-signal-source-baselines.md` v4 records two report-reader paper smoke bundles: `freqai_linear_v1` dry-run shadow (`target_long×7`, no orders/fills, manual review required before disabling dry-run) and `rule_baseline_v1` simulated control (635 signals, 1265 fills, PnL=-0.31674399999610614 USDT). Both bundles have `git_dirty=false` and no review blockers.
+- v1/v2 demo and rule fingerprints plus v3 `freqai_linear_v1` dry-run backtest fingerprint remain archived in `docs/progress/phase-2-signal-source-baselines.md`.
 
 ## Recent Git Baseline
 

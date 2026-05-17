@@ -260,3 +260,87 @@ UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.bac
   --policy-position-pct-multiplier 0.2 \
   --policy-dry-run
 ```
+
+---
+
+## 2026-05-17 v4 — simulated paper bundle report evidence
+
+- **Catalog input**: same 7-day `BTCUSDT.BINANCE` 1m catalog as v2/v3
+  (10080 bars).
+- **Signal store**: `data/bridge/signals.db` sha256
+  `55e5a218d1d9213d145a4db1148f07e6a62b0a7676e6b8ce4eaf26d09420323a`.
+- **Code baseline**: git `7e92564`
+  (`feat(strategies_nautilus): add paper bundle report`).
+- **Report reader**:
+  `apps.strategies_nautilus.runners.report_paper_bundle`.
+
+| metric | freqai paper shadow | rule paper simulated |
+|---|---:|---:|
+| bundle | `data/paper/20260517-034251Z-02c7d57d` | `data/paper/20260517-034308Z-feb4fcc4` |
+| manifest sha256 | `251fc2a9d586a04892f10cd36893bdae9124d277c95949d775d3236f46133c90` | `5bab3411db34fa2b6d25601a6cd19883722d7ed4d14701a116676f91bb1d5bda` |
+| source / model | `freqai_linear_v1 / linear-mom-train20240105` | `rule_baseline_v1 / ema5-20+rsi14` |
+| `git_dirty` | false | false |
+| runtime | `catalog_polling` / `simulated` | `catalog_polling` / `simulated` |
+| signal rows | 7 | 635 |
+| session days inclusive | 7 | 7 |
+| policy | `dry_run=True`, multiplier `0.2` | `dry_run=False`, multiplier `0.2` |
+| lineage decisions | `target_long×7` | `target_long×318`, `target_short×317` |
+| lineage reasons | `dry_run×7` | empty reason×633, `already_target_long×1`, `already_target_short×1` |
+| orders / fills / positions | 0 / 0 / 0 | 1265 / 1265 / 633 |
+| PnL total (USDT) | 0 | -0.31674399999610614 |
+| Win Rate | null | 0.27689873417721517 |
+| Expectancy (USDT) | null | -0.0005475727848101619 |
+| max drawdown pct | null (not yet emitted by paper runner) | null (not yet emitted by paper runner) |
+| review blockers | none | none |
+| promotion blockers | `manual_review_required_before_disabling_dry_run` | none |
+| report recommendation | `manual_review_required_before_paper_simulated` | `review_simulated_paper_evidence` |
+
+### Reading v4
+
+- **The report reader is useful as a promotion-review gate.** Both paper
+  bundles have no review blockers and no sidecar row-count mismatches. The
+  dry-run FreqAI source still reports a promotion blocker because disabling
+  dry-run requires a manual ADR-007 review.
+- **Rule simulated is only a local execution-path control.** It proves that
+  simulated orders/fills/positions carry `signal_id` under `kind="paper"`;
+  it is not alpha evidence and does not justify testnet/live.
+- **Max drawdown remains a missing metric.** The current paper runner writes a
+  final account balance row, not a full equity curve. The report surfaces this
+  as `missing_metrics=["max_drawdown_pct"]` instead of fabricating a value.
+
+### v4 reproduction
+
+Starting from the v3 catalog and signal store:
+
+```bash
+UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.paper_runner \
+  --instrument-id BTCUSDT.BINANCE \
+  --bar-type 'BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL' \
+  --signal-source freqai_linear_v1 \
+  --signal-model-version linear-mom-train20240105 \
+  --allowed-source freqai_linear_v1 \
+  --allowed-model-version linear-mom-train20240105 \
+  --trade-size 0.001 \
+  --starting-balance 100000 \
+  --min-confidence 0.5 \
+  --policy-position-pct-multiplier 0.2 \
+  --policy-dry-run
+
+UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.report_paper_bundle \
+  --json data/paper/<freqai_run_id>
+
+UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.paper_runner \
+  --instrument-id BTCUSDT.BINANCE \
+  --bar-type 'BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL' \
+  --signal-source rule_baseline_v1 \
+  --signal-model-version 'ema5-20+rsi14' \
+  --allowed-source rule_baseline_v1 \
+  --allowed-model-version 'ema5-20+rsi14' \
+  --trade-size 0.001 \
+  --starting-balance 100000 \
+  --min-confidence 0.5 \
+  --policy-position-pct-multiplier 0.2
+
+UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.report_paper_bundle \
+  --json data/paper/<rule_run_id>
+```
