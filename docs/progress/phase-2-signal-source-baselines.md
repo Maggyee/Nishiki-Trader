@@ -344,3 +344,89 @@ UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.pap
 UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.report_paper_bundle \
   --json data/paper/<rule_run_id>
 ```
+
+---
+
+## 2026-05-17 v5 — paper equity curve and max drawdown
+
+- **Catalog input**: same 7-day `BTCUSDT.BINANCE` 1m catalog as v2/v3/v4
+  (10080 bars).
+- **Signal store**: `data/bridge/signals.db` sha256
+  `55e5a218d1d9213d145a4db1148f07e6a62b0a7676e6b8ce4eaf26d09420323a`.
+- **Code baseline**: git `e4007ab`
+  (`feat(strategies_nautilus): add paper drawdown metrics`).
+- **Change vs v4**: `paper_runner.py` now writes one `account_balances.parquet`
+  row per bar and records `Max Drawdown (Pct)` / `Max Drawdown (Abs)` in the
+  paper manifest. The report reader no longer flags max drawdown as missing.
+
+| metric | freqai paper shadow | rule paper simulated |
+|---|---:|---:|
+| bundle | `data/paper/20260517-035247Z-bea9a949` | `data/paper/20260517-035302Z-947fc297` |
+| manifest sha256 | `fa580017c4ac86c3fb2af11178c292e023a923862a120ad70b032451218bfe0e` | `852df0355c3e55e8ac3896f7dbb69879202eac417b8ba58d126896012e4e1c31` |
+| source / model | `freqai_linear_v1 / linear-mom-train20240105` | `rule_baseline_v1 / ema5-20+rsi14` |
+| `git_dirty` | false | false |
+| runtime | `catalog_polling` / `simulated` | `catalog_polling` / `simulated` |
+| signal rows | 7 | 635 |
+| account balance rows | 10080 | 10080 |
+| policy | `dry_run=True`, multiplier `0.2` | `dry_run=False`, multiplier `0.2` |
+| lineage decisions | `target_long×7` | `target_long×318`, `target_short×317` |
+| orders / fills / positions | 0 / 0 / 0 | 1265 / 1265 / 633 |
+| PnL total (USDT) | 0 | -0.31674399999610614 |
+| Max Drawdown (Pct) | 0 | -1.4153560695447201e-05 |
+| Max Drawdown (Abs, USDT) | 0 | -1.415370000016992 |
+| Win Rate | null | 0.27689873417721517 |
+| Expectancy (USDT) | null | -0.0005475727848101619 |
+| report `missing_metrics` | none | none |
+| review blockers | none | none |
+| promotion blockers | `manual_review_required_before_disabling_dry_run` | none |
+| report recommendation | `manual_review_required_before_paper_simulated` | `review_simulated_paper_evidence` |
+
+### Reading v5
+
+- **Paper drawdown evidence is now complete for local simulated bundles.**
+  `account_balances.parquet` has one equity snapshot per catalog bar, so max
+  drawdown is computed from the same event-time curve that drives the paper
+  risk checks.
+- **FreqAI remains shadow-only.** Its dry-run bundle has complete metrics and
+  no review blockers, but ADR-007 still requires manual promotion review
+  before disabling `dry_run`.
+- **Rule simulated remains a control, not alpha.** It proves simulated
+  fills/positions/equity/lineage are auditable; the negative PnL still says
+  nothing has been promoted toward testnet/live.
+
+### v5 reproduction
+
+Starting from the v3 catalog and signal store:
+
+```bash
+UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.paper_runner \
+  --instrument-id BTCUSDT.BINANCE \
+  --bar-type 'BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL' \
+  --signal-source freqai_linear_v1 \
+  --signal-model-version linear-mom-train20240105 \
+  --allowed-source freqai_linear_v1 \
+  --allowed-model-version linear-mom-train20240105 \
+  --trade-size 0.001 \
+  --starting-balance 100000 \
+  --min-confidence 0.5 \
+  --policy-position-pct-multiplier 0.2 \
+  --policy-dry-run
+
+UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.report_paper_bundle \
+  --json data/paper/<freqai_run_id>
+
+UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.paper_runner \
+  --instrument-id BTCUSDT.BINANCE \
+  --bar-type 'BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL' \
+  --signal-source rule_baseline_v1 \
+  --signal-model-version 'ema5-20+rsi14' \
+  --allowed-source rule_baseline_v1 \
+  --allowed-model-version 'ema5-20+rsi14' \
+  --trade-size 0.001 \
+  --starting-balance 100000 \
+  --min-confidence 0.5 \
+  --policy-position-pct-multiplier 0.2
+
+UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.report_paper_bundle \
+  --json data/paper/<rule_run_id>
+```

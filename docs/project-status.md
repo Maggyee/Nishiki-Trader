@@ -56,7 +56,7 @@ At task finish:
 - Rule-based baseline signal generator is live: `apps/strategies_freqtrade/research/baseline_rule_signals.py` produces EMA(5)/EMA(20) + RSI(14) `SignalEvent v1` via CLI; the BTCUSDT 2024-01-01 fixture round-trips through `SignalStore` → `backtest_runner` end-to-end and writes a full ADR-004 bundle with `signal_id` traced through orders / fills / positions / signal_lineage.
 - Upstream runtime is pinned: `nautilus-trader==1.226.0`; local `nautilus_trader/` source checkout is aligned to tag `v1.226.0`.
 - First `freqai_*` source-family smoke is live: `apps/strategies_freqtrade/research/freqai_linear_signals.py` exports deterministic ridge-linear momentum predictions as `freqai_linear_v1 / linear-mom-train20240105`; the first baseline is dry-run only via `SourcePolicy(position_pct_multiplier=0.2, dry_run=True)`.
-- First ADR-007 simulated paper bundle writer is live: `apps/strategies_nautilus/runners/paper_runner.py` writes `kind="paper"` bundles under `data/paper/<run_id>/` in `runtime.data_mode="catalog_polling"` / `runtime.order_mode="simulated"` mode only; it does not read exchange keys or submit live/testnet orders.
+- First ADR-007 simulated paper bundle writer is live: `apps/strategies_nautilus/runners/paper_runner.py` writes `kind="paper"` bundles under `data/paper/<run_id>/` in `runtime.data_mode="catalog_polling"` / `runtime.order_mode="simulated"` mode only, including per-bar account equity and max drawdown; it does not read exchange keys or submit live/testnet orders.
 - Paper bundle review reader is live: `apps/strategies_nautilus/runners/report_paper_bundle.py` summarizes `kind="paper"` manifest + sidecars into ADR-007 review evidence without mutating `SourcePolicy` or touching exchange paths.
 
 ## Current Focus
@@ -74,7 +74,7 @@ Immediate focus:
 
 1. Use `report_paper_bundle.py` as the required ADR-007 evidence summary before any `SourcePolicy` promotion review.
 2. Keep `freqai_linear_v1` in dry-run/shadow; the latest report has no review blockers but still requires manual review before disabling dry-run.
-3. Add true wall-clock paper session mechanics only after the local simulated bundle report path is stable; no testnet/live credentials before that.
+3. Start true wall-clock paper session mechanics next: incremental polling, heartbeat, restart metadata, and data-gap reporting, still with simulated orders and no exchange credentials.
 4. Decide Phase 2 SQLite -> Postgres / Redis Stream readiness only after backtest or paper volume exposes an actual bottleneck.
 
 ## Blocked / Deferred
@@ -90,14 +90,15 @@ Immediate focus:
 
 ## Latest Verification
 
-On 2026-05-17, after the paper bundle report reader landed:
+On 2026-05-17, after paper drawdown metrics landed:
 
-- `UV_CACHE_DIR=/tmp/uv-cache uv run pytest -q` -> 271 passed.
+- `UV_CACHE_DIR=/tmp/uv-cache uv run pytest -q` -> 273 passed.
 - `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check apps tests docs` -> clean.
-- `tests/strategies_nautilus/test_report_paper_bundle.py` covers paper bundle summary output, dry-run policy reporting, review blockers, sidecar count mismatches, CLI JSON/text output, and non-paper rejection.
+- `tests/strategies_nautilus/test_paper_runner.py` covers per-bar paper account equity and max drawdown, dry-run no-order behavior, simulated orders/fills/positions carrying `signal_id`, signal lag, expired signals, unauthorized sources, kill-switch blocking, CLI entrypoint, and source-level guards against reading secret env vars or submitting live orders.
+- `tests/strategies_nautilus/test_report_paper_bundle.py` covers paper bundle summary output, drawdown metric reporting, dry-run policy reporting, review blockers, sidecar count mismatches, CLI JSON/text output, and non-paper rejection.
 - ADR-007 now explicitly allows Phase 2 `catalog_polling` simulated paper bundles while keeping true wall-clock paper/testnet/live gated; no runtime service was started and no real trading credentials were introduced.
-- `docs/progress/phase-2-signal-source-baselines.md` v4 records two report-reader paper smoke bundles: `freqai_linear_v1` dry-run shadow (`target_long×7`, no orders/fills, manual review required before disabling dry-run) and `rule_baseline_v1` simulated control (635 signals, 1265 fills, PnL=-0.31674399999610614 USDT). Both bundles have `git_dirty=false` and no review blockers.
-- v1/v2 demo and rule fingerprints plus v3 `freqai_linear_v1` dry-run backtest fingerprint remain archived in `docs/progress/phase-2-signal-source-baselines.md`.
+- `docs/progress/phase-2-signal-source-baselines.md` v5 records two drawdown-aware paper smoke bundles: `freqai_linear_v1` dry-run shadow (`account_balances` rows=10080, max drawdown=0, no orders/fills, manual review required before disabling dry-run) and `rule_baseline_v1` simulated control (635 signals, 1265 fills, max drawdown=-1.4153560695447201e-05, PnL=-0.31674399999610614 USDT). Both bundles have `git_dirty=false`, no missing metrics, and no review blockers.
+- v1/v2 demo and rule fingerprints, v3 `freqai_linear_v1` dry-run backtest fingerprint, and v4 first paper report evidence remain archived in `docs/progress/phase-2-signal-source-baselines.md`.
 
 ## Recent Git Baseline
 
