@@ -31,7 +31,7 @@ Read these before any non-trivial work:
 | Backtest result format or reports | `docs/decisions/004-backtest-result-format.md` |
 | Adding or comparing a signal source | `docs/progress/phase-2-signal-source-baselines.md` — current demo / rule fingerprints to diff against |
 | Detailed historical progress | Relevant file under `docs/progress/` only when current status links it or history is needed |
-| Paper trading, risk rules, testnet, or live trading | `docs/decisions/007-paper-trading-runtime.md`; future hard-risk / emergency ADR before Phase 3 testnet |
+| Paper trading, risk rules, testnet, or live trading | `docs/decisions/007-paper-trading-runtime.md`; `docs/decisions/008-phase3-risk-runbook.md` (Draft, gates Phase 3 / testnet) |
 | Operations, restart, emergency handling | `docs/runbook.md` |
 | Project skeleton, directory ownership, dev environment | `README.md`, `apps/README.md`, `infra/README.md` |
 | Recent project context | Latest file under `docs/retros/` |

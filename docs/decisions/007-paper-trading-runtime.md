@@ -227,12 +227,17 @@ Paper/runtime 层的默认降级：
 
 ## 4. 后续 ADR
 
-- **ADR-008**：LLM Agent 输出审计与双签。定义 `llm_*` 是否能从 paper shadow
-  升到 simulated，以及 AgentAdvice 与 SignalEvent 的隔离表。
-- **ADR-009**：Redis Stream 桥接通道。只有当 SQLite polling 在 paper/testnet
-  暴露实际瓶颈后再写。
-- **Phase 3 risk/runbook ADR**：testnet runtime、真实 exchange credentials 管理、
-  emergency flatten、重启恢复和报警。
+- **ADR-008**：Phase 3 风控、testnet runtime 与运行手册。已起草（Draft），
+  规定 `paper_simulated → testnet_canary` 升档前的 testnet runtime、真实
+  exchange credentials 管理、emergency flatten、重启恢复和报警。
+  运行时实现按其 §6 路线分子阶段进行，
+  `promotion_review` 的 `phase_3_not_ready` gate 不放开直到 §6 子阶段全部
+  完成。
+- **ADR-009**：LLM Agent 输出审计与双签。定义 `llm_*` 是否能从 paper shadow
+  升到 simulated，以及 AgentAdvice 与 SignalEvent 的隔离表。（编号从原
+  ADR-007 §4 中的 ADR-008 顺延，因为 Phase 3 risk/runbook 先落地。）
+- **ADR-010**：Redis Stream 桥接通道。只有当 SQLite polling 在 paper/testnet
+  暴露实际瓶颈后再写。（编号从原 ADR-009 顺延。）
 
 ---
 
