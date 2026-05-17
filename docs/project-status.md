@@ -57,6 +57,7 @@ At task finish:
 - Upstream runtime is pinned: `nautilus-trader==1.226.0`; local `nautilus_trader/` source checkout is aligned to tag `v1.226.0`.
 - First `freqai_*` source-family smoke is live: `apps/strategies_freqtrade/research/freqai_linear_signals.py` exports deterministic ridge-linear momentum predictions as `freqai_linear_v1 / linear-mom-train20240105`; the first baseline is dry-run only via `SourcePolicy(position_pct_multiplier=0.2, dry_run=True)`.
 - First ADR-007 simulated paper bundle writer is live: `apps/strategies_nautilus/runners/paper_runner.py` writes `kind="paper"` bundles under `data/paper/<run_id>/` in `runtime.data_mode="catalog_polling"` / `runtime.order_mode="simulated"` mode only; it does not read exchange keys or submit live/testnet orders.
+- Paper bundle review reader is live: `apps/strategies_nautilus/runners/report_paper_bundle.py` summarizes `kind="paper"` manifest + sidecars into ADR-007 review evidence without mutating `SourcePolicy` or touching exchange paths.
 
 ## Current Focus
 
@@ -93,6 +94,7 @@ On 2026-05-17, after the simulated paper runner landed:
 
 - `UV_CACHE_DIR=/tmp/uv-cache uv run pytest -q` -> 264 passed.
 - `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check apps tests docs` -> clean.
+- `tests/strategies_nautilus/test_report_paper_bundle.py` covers paper bundle summary output, dry-run policy reporting, review blockers, sidecar count mismatches, CLI JSON/text output, and non-paper rejection.
 - ADR-007 now explicitly allows Phase 2 `catalog_polling` simulated paper bundles while keeping true wall-clock paper/testnet/live gated; no runtime service was started and no real trading credentials were introduced.
 - `tests/strategies_nautilus/test_paper_runner.py` covers dry-run no-order behavior, simulated orders/fills/positions carrying `signal_id`, signal lag, expired signals, unauthorized sources, kill-switch blocking, CLI entrypoint, and source-level guards against reading secret env vars or submitting live orders.
 - `UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.paper_runner --instrument-id BTCUSDT.BINANCE --bar-type 'BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL' --signal-source freqai_linear_v1 --signal-model-version linear-mom-train20240105 --allowed-source freqai_linear_v1 --allowed-model-version linear-mom-train20240105 --trade-size 0.001 --starting-balance 100000 --min-confidence 0.5 --policy-position-pct-multiplier 0.2 --policy-dry-run` -> 1 `data/paper/` bundle, signal rows=7, lineage=`target_long×7` with `reason=dry_run`, orders=0, fills=0, PnL=0.

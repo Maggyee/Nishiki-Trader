@@ -59,6 +59,10 @@ uv run python -m apps.strategies_nautilus.runners.paper_runner \
 ```bash
 jq '.kind, .runtime, .totals, .strategies[0].params.policies' \
   data/paper/<run_id>/run_manifest.json
+
+uv run python -m apps.strategies_nautilus.runners.report_paper_bundle \
+  --json \
+  data/paper/<run_id>
 ```
 
 降档规则：

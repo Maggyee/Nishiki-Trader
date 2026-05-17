@@ -52,6 +52,19 @@ The paper runner writes a `kind="paper"` bundle under `data/paper/<run_id>/`.
 It is local simulation only: no exchange keys, no exchange adapter, no live
 orders.
 
+Paper bundle review summary:
+
+```bash
+uv run python -m apps.strategies_nautilus.runners.report_paper_bundle \
+  --json \
+  data/paper/<run_id>
+```
+
+The report CLI reads the manifest and sidecar Parquet files, summarizes
+lineage decisions, risk blockers, policy state, PnL, and missing promotion
+metrics, and prints whether the bundle is reviewable. It does not promote
+sources or mutate policy.
+
 For the local BTCUSDT fixture, build `data/catalog/` first with:
 
 ```bash
@@ -89,6 +102,7 @@ strategies_nautilus/
 └── runners/
     ├── backtest_runner.py
     ├── paper_runner.py
+    ├── report_paper_bundle.py
     └── compare_backtests.py
 ```
 
