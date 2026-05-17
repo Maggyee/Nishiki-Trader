@@ -15,6 +15,7 @@ import argparse
 import hashlib
 import json
 import sys
+import threading
 from dataclasses import dataclass, field, replace
 from datetime import UTC, date, datetime
 from decimal import Decimal
@@ -24,9 +25,11 @@ from typing import Any
 import pandas as pd
 from nautilus_trader.model.data import BarType
 from nautilus_trader.model.objects import Currency, Money
+from nautilus_trader.persistence.catalog.parquet import ParquetDataCatalog
 
 import nautilus_trader
 from apps.bridge.signal_event import SignalEvent
+from apps.bridge.store import SignalStore
 from apps.bridge.validators import Authorization
 from apps.strategies_nautilus.baseline_strategy import (
     BaselineSignalStrategy,
@@ -40,9 +43,11 @@ from apps.strategies_nautilus.runners.backtest_runner import (
     _hash_signal_store,
     _iso_ms_utc,
     _load_inputs,
+    _load_signals,
     _make_run_id,
     _ns_to_iso_ms,
     _policies_from_args,
+    _select_instrument,
     _serialize_policies,
     _stable_id,
     _write_parquet,
@@ -51,8 +56,18 @@ from apps.strategies_nautilus.runners.backtest_runner import (
 from apps.strategies_nautilus.runners.backtest_runner import (
     _config_from_args as _backtest_config_from_args,
 )
+from apps.strategies_nautilus.runners.wall_clock_bar_feed import (
+    DEFAULT_BINANCE_PUBLIC_WS_URL,
+    BarFeed,
+    BinancePublicBarFeed,
+)
 
 NANOSECONDS_PER_SECOND = 1_000_000_000
+_ALLOWED_DATA_MODES = ("catalog_polling", "wall_clock")
+SHUTDOWN_REASON_COMPLETED = "completed"
+SHUTDOWN_REASON_MAX_BARS = "max_bars"
+SHUTDOWN_REASON_MAX_DURATION = "max_duration"
+SHUTDOWN_REASON_SIGTERM = "sigterm"
 _EPOCH = datetime(1970, 1, 1, tzinfo=UTC)
 _BAR_INTERVAL_NANOS: dict[str, int] = {
     "NANOSECOND": 1,
@@ -97,12 +112,20 @@ class PaperRunnerConfig:
     operator: str = "nishiki"
     previous_run_id: str | None = None
     restart_reason: str | None = None
+    max_duration_seconds: int | None = None
+    max_bars: int | None = None
+    ws_base_url: str = DEFAULT_BINANCE_PUBLIC_WS_URL
+    ws_symbol: str | None = None
+    ws_interval: str = "1m"
+    signal_poll_interval_seconds: int = 5
 
     def __post_init__(self) -> None:
         if self.order_mode != "simulated":
             raise ValueError("paper runner only supports order_mode='simulated'")
-        if self.data_mode != "catalog_polling":
-            raise ValueError("paper runner only supports data_mode='catalog_polling'")
+        if self.data_mode not in _ALLOWED_DATA_MODES:
+            raise ValueError(
+                f"paper runner only supports data_mode in {_ALLOWED_DATA_MODES}"
+            )
         if self.heartbeat_interval_seconds <= 0:
             raise ValueError("heartbeat_interval_seconds must be positive")
         if self.poll_interval_seconds <= 0:
@@ -113,6 +136,21 @@ class PaperRunnerConfig:
             raise ValueError("max_signal_lag_seconds must be positive")
         if self.data_gap_tolerance_intervals <= 0:
             raise ValueError("data_gap_tolerance_intervals must be positive")
+        if self.signal_poll_interval_seconds <= 0:
+            raise ValueError("signal_poll_interval_seconds must be positive")
+        if self.data_mode == "wall_clock":
+            if self.max_duration_seconds is None and self.max_bars is None:
+                raise ValueError(
+                    "wall_clock data_mode requires max_duration_seconds or max_bars"
+                )
+            if self.max_duration_seconds is not None and self.max_duration_seconds <= 0:
+                raise ValueError("max_duration_seconds must be positive")
+            if self.max_bars is not None and self.max_bars <= 0:
+                raise ValueError("max_bars must be positive")
+            if not self.ws_symbol:
+                raise ValueError("wall_clock data_mode requires ws_symbol")
+            if not self.ws_base_url:
+                raise ValueError("wall_clock data_mode requires ws_base_url")
 
 
 @dataclass
@@ -151,6 +189,13 @@ class _PaperSimulation:
     first_processed_ns: int
     processed_until_ns: int
     expected_bar_interval_ns: int | None
+    bar_count: int = 0
+    shutdown_reason: str = SHUTDOWN_REASON_COMPLETED
+    ws_reconnect_count: int = 0
+    duplicate_bars_dropped: int = 0
+    ws_endpoint: str | None = None
+    ws_stream: str | None = None
+    bar_source: str = "catalog"
 
 
 @dataclass(frozen=True)
@@ -164,14 +209,25 @@ class _RuntimeContext:
     catalog_start_overridden: bool = False
 
 
-def run_paper_session(config: PaperRunnerConfig) -> PaperRunResult:
-    """Run a local simulated paper session and write an ADR-007 bundle."""
+def run_paper_session(
+    config: PaperRunnerConfig,
+    *,
+    bar_feed: BarFeed | None = None,
+    stop_event: Any = None,
+) -> PaperRunResult:
+    """Run a local simulated paper session and write an ADR-007 bundle.
+
+    ``bar_feed`` and ``stop_event`` are injection points for tests of the
+    wall_clock data mode; in catalog_polling mode they must not be passed.
+    """
+    if config.data_mode == "catalog_polling" and bar_feed is not None:
+        raise ValueError("bar_feed is only used with data_mode='wall_clock'")
     started = datetime.now(UTC)
     run_id = _make_run_id(started)
     runtime_context = _resolve_runtime_context(config)
     config = runtime_context.config
     output_dir = config.output_root / run_id
-    inputs = _load_inputs(config)
+    inputs = _load_inputs_for_paper(config)
     output_dir.mkdir(parents=True, exist_ok=False)
 
     git_commit, git_dirty = _git_provenance(config)
@@ -180,7 +236,15 @@ def run_paper_session(config: PaperRunnerConfig) -> PaperRunResult:
         f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
     )
 
-    simulation = _simulate_paper(config, inputs)
+    if config.data_mode == "wall_clock":
+        simulation = _simulate_paper_wall_clock(
+            config=config,
+            inputs=inputs,
+            bar_feed=bar_feed,
+            stop_event=stop_event,
+        )
+    else:
+        simulation = _simulate_paper(config, inputs)
     finished = datetime.now(UTC)
 
     _write_parquet(simulation.orders, output_dir / "orders.parquet")
@@ -236,23 +300,69 @@ def run_paper_session(config: PaperRunnerConfig) -> PaperRunResult:
     return PaperRunResult(run_id=run_id, output_dir=output_dir, manifest=manifest)
 
 
-def _simulate_paper(
-    config: PaperRunnerConfig,
-    inputs: BacktestInputs,
-) -> _PaperSimulation:
+def _load_inputs_for_paper(config: PaperRunnerConfig) -> BacktestInputs:
+    """Load inputs honoring data_mode.
+
+    catalog_polling delegates to :func:`_load_inputs` (instrument + bars +
+    signals). wall_clock loads only the instrument and a snapshot of signals;
+    bars stream in live from the bar feed during the run.
+    """
+    if config.data_mode != "wall_clock":
+        return _load_inputs(config)
+    catalog = ParquetDataCatalog(str(config.catalog_path.resolve()))
+    instruments = catalog.instruments(instrument_ids=[config.instrument_id])
+    instrument = _select_instrument(instruments, config.instrument_id)
+    if str(config.bar_type.instrument_id) != config.instrument_id:
+        raise ValueError(
+            f"bar_type instrument {config.bar_type.instrument_id} does not match "
+            f"instrument_id {config.instrument_id}"
+        )
+    signals = _load_signals(config.signal_store_path, config.signal_filter)
+    return BacktestInputs(instrument=instrument, bars=[], signals=signals)
+
+
+@dataclass
+class _StepState:
+    config: PaperRunnerConfig
+    baseline: BaselineSignalStrategy
+    starting_equity: float
+    realized_pnl: float = 0.0
+    open_position: _OpenPosition | None = None
+    current_day: date | None = None
+    day_open_equity: float | None = None
+    last_price: float = 0.0
+    last_ts: int = 0
+    first_processed_ns: int = 0
+    processed_until_ns: int = 0
+    expected_interval_ns: int | None = None
+    previous_bar_ts: int | None = None
+    last_heartbeat_ns: int | None = None
+    poll_count: int = 0
+    bar_count: int = 0
+    orders: list[dict[str, Any]] = field(default_factory=list)
+    fills: list[dict[str, Any]] = field(default_factory=list)
+    positions: list[dict[str, Any]] = field(default_factory=list)
+    account_rows: list[dict[str, Any]] = field(default_factory=list)
+    lineage: list[dict[str, Any]] = field(default_factory=list)
+    strategy_log_lines: list[str] = field(default_factory=list)
+    risk_log_lines: list[str] = field(default_factory=list)
+    runtime_log_lines: list[str] = field(default_factory=list)
+    heartbeat_rows: list[dict[str, Any]] = field(default_factory=list)
+    data_gaps: list[dict[str, Any]] = field(default_factory=list)
+
+
+def _make_step_state(config: PaperRunnerConfig) -> _StepState:
     baseline = BaselineSignalStrategy(config=config.baseline_config)
-    signals = sorted(inputs.signals, key=lambda s: (int(s.ts_event), s.signal_id))
-    signal_idx = 0
-    orders: list[dict[str, Any]] = []
-    fills: list[dict[str, Any]] = []
-    positions: list[dict[str, Any]] = []
-    account_rows: list[dict[str, Any]] = []
-    lineage: list[dict[str, Any]] = []
-    strategy_log_lines: list[str] = []
-    risk_log_lines: list[str] = [
+    state = _StepState(
+        config=config,
+        baseline=baseline,
+        starting_equity=float(config.starting_balance.as_double()),
+        expected_interval_ns=_expected_bar_interval_ns(config.bar_type),
+    )
+    state.risk_log_lines.append(
         "paper runtime mode=simulated no_exchange_adapter=true no_live_orders=true"
-    ]
-    runtime_log_lines: list[str] = [
+    )
+    state.runtime_log_lines.append(
         json.dumps(
             {
                 "event": "runtime_start",
@@ -263,29 +373,286 @@ def _simulate_paper(
             },
             sort_keys=True,
         )
-    ]
-    heartbeat_rows: list[dict[str, Any]] = []
-    data_gaps: list[dict[str, Any]] = []
+    )
+    return state
 
-    starting_equity = float(config.starting_balance.as_double())
-    realized_pnl = 0.0
-    open_position: _OpenPosition | None = None
-    current_day: date | None = None
-    day_open_equity: float | None = None
-    last_price = 0.0
-    last_ts = 0
-    first_processed_ns = int(inputs.bars[0].ts_event)
-    processed_until_ns = first_processed_ns
-    expected_interval_ns = _expected_bar_interval_ns(config.bar_type)
-    previous_bar_ts: int | None = None
-    last_heartbeat_ns: int | None = None
-    poll_count = 0
+
+def _step_one_bar(
+    *,
+    state: _StepState,
+    bar: Any,
+    signals: list[SignalEvent],
+    signal_idx: int,
+) -> int:
+    """Process one bar and consume signals with ts_event <= bar.ts_event.
+
+    Returns the new signal_idx after consumption. Mutates state in place.
+    """
+    config = state.config
+    bar_ts = int(bar.ts_event)
+    price = float(bar.close)
+    state.last_price = price
+    state.last_ts = bar_ts
+    state.processed_until_ns = bar_ts
+    state.bar_count += 1
+    if state.first_processed_ns == 0:
+        state.first_processed_ns = bar_ts
+    if state.previous_bar_ts is not None and state.expected_interval_ns is not None:
+        gap = _market_data_gap(
+            previous_ts=state.previous_bar_ts,
+            current_ts=bar_ts,
+            expected_interval_ns=state.expected_interval_ns,
+            tolerance_intervals=config.data_gap_tolerance_intervals,
+        )
+        if gap is not None:
+            state.data_gaps.append(gap)
+            state.runtime_log_lines.append(
+                json.dumps({"event": "data_gap", **gap}, sort_keys=True)
+            )
+            state.risk_log_lines.append(
+                json.dumps({"reason": "data_gap", **gap}, sort_keys=True)
+            )
+    state.previous_bar_ts = bar_ts
+
+    equity_now = _equity(
+        starting_equity=state.starting_equity,
+        realized_pnl=state.realized_pnl,
+        open_position=state.open_position,
+        mark_price=price,
+    )
+    state.current_day, state.day_open_equity = _update_daily_risk_state(
+        baseline=state.baseline,
+        current_day=state.current_day,
+        day_open_equity=state.day_open_equity,
+        now_ns=bar_ts,
+        equity_now=equity_now,
+    )
+
+    while (
+        signal_idx < len(signals)
+        and int(signals[signal_idx].ts_event) <= bar_ts
+    ):
+        event = signals[signal_idx]
+        signal_idx += 1
+        intent = _decide_with_paper_guards(
+            baseline=state.baseline,
+            event=event,
+            now_ns=bar_ts,
+            max_signal_lag_seconds=config.max_signal_lag_seconds,
+            data_gap_reason=_data_gap_reason_for_signal(
+                int(event.ts_event),
+                state.data_gaps,
+            ),
+        )
+        apply_result = _apply_paper_intent(
+            config=config,
+            event=event,
+            intent=intent,
+            price=price,
+            now_ns=bar_ts,
+            open_position=state.open_position,
+            realized_pnl=state.realized_pnl,
+            orders=state.orders,
+            fills=state.fills,
+            positions=state.positions,
+        )
+        state.open_position = apply_result["open_position"]
+        state.realized_pnl = apply_result["realized_pnl"]
+        reason = apply_result["reason"]
+        order_ids = apply_result["order_ids"]
+        fill_ids = apply_result["fill_ids"]
+        position_ids = apply_result["position_ids"]
+        state.lineage.append(
+            {
+                "signal_id": event.signal_id,
+                "source": event.source,
+                "model_version": event.model_version,
+                "ts_event": int(event.ts_event),
+                "decision": intent.action,
+                "reason": reason,
+                "order_ids": ",".join(order_ids),
+                "fill_ids": ",".join(fill_ids),
+                "position_id": ",".join(position_ids),
+                "ts_decision": bar_ts,
+            }
+        )
+        state.strategy_log_lines.append(
+            json.dumps(
+                {
+                    "ts_decision": bar_ts,
+                    "signal_id": event.signal_id,
+                    "decision": intent.action,
+                    "dry_run": intent.dry_run,
+                    "reason": reason,
+                    "order_ids": order_ids,
+                },
+                sort_keys=True,
+            )
+        )
+        if reason and (
+            reason.startswith("reject_")
+            or reason.startswith("kill_switch")
+            or reason.startswith("signal_lag")
+            or reason.startswith("data_gap")
+        ):
+            state.risk_log_lines.append(
+                json.dumps(
+                    {
+                        "ts_decision": bar_ts,
+                        "signal_id": event.signal_id,
+                        "reason": reason,
+                    },
+                    sort_keys=True,
+                )
+            )
+
+    equity_after_bar = _equity(
+        starting_equity=state.starting_equity,
+        realized_pnl=state.realized_pnl,
+        open_position=state.open_position,
+        mark_price=price,
+    )
+    locked = abs(state.open_position.signed_qty * price) if state.open_position else 0.0
+    state.account_rows.append(
+        _account_balance_row(
+            config=config,
+            ts_event=bar_ts,
+            total=equity_after_bar,
+            locked=locked,
+        )
+    )
+    if _should_emit_heartbeat(
+        last_heartbeat_ns=state.last_heartbeat_ns,
+        now_ns=bar_ts,
+        heartbeat_interval_seconds=config.heartbeat_interval_seconds,
+    ):
+        state.last_heartbeat_ns = bar_ts
+        heartbeat = _heartbeat_row(
+            poll_number=state.poll_count,
+            ts_event=bar_ts,
+            equity=equity_after_bar,
+            last_price=price,
+            open_position=state.open_position,
+            signal_idx=signal_idx,
+            order_count=len(state.orders),
+            fill_count=len(state.fills),
+            data_gap_count=len(state.data_gaps),
+        )
+        state.heartbeat_rows.append(heartbeat)
+        state.runtime_log_lines.append(
+            json.dumps({"event": "heartbeat", **heartbeat}, sort_keys=True)
+        )
+    return signal_idx
+
+
+def _close_open_position_as_unrealized(state: _StepState) -> None:
+    if state.open_position is None:
+        return
+    state.positions.append(
+        _position_row(
+            config=state.config,
+            position=state.open_position,
+            avg_px_close=0.0,
+            realized_pnl=0.0,
+            unrealized_pnl=_unrealized_pnl(state.open_position, state.last_price),
+            closed_ts=0,
+            closing_signal_id=None,
+        )
+    )
+
+
+def _ensure_at_least_one_account_row(state: _StepState) -> None:
+    if state.account_rows:
+        return
+    state.account_rows.append(
+        _account_balance_row(
+            config=state.config,
+            ts_event=state.last_ts,
+            total=state.starting_equity,
+            locked=0.0,
+        )
+    )
+
+
+def _finalize_step_state(
+    *,
+    state: _StepState,
+    shutdown_reason: str = SHUTDOWN_REASON_COMPLETED,
+    bar_source: str = "catalog",
+    ws_reconnect_count: int = 0,
+    duplicate_bars_dropped: int = 0,
+    ws_endpoint: str | None = None,
+    ws_stream: str | None = None,
+) -> _PaperSimulation:
+    config = state.config
+    _close_open_position_as_unrealized(state)
+    _ensure_at_least_one_account_row(state)
+    account_balances = pd.DataFrame(state.account_rows)
+    final_equity = float(state.account_rows[-1]["total"])
+    drawdown = _max_drawdown(state.account_rows)
+    pnl_total = final_equity - state.starting_equity
+    closed_pnls = [
+        float(row["realized_pnl"]) for row in state.positions if row["closed_ts"]
+    ]
+    wins = [p for p in closed_pnls if p > 0.0]
+    stats_pnls = {
+        str(config.base_currency): {
+            "PnL (total)": pnl_total,
+            "PnL% (total)": (pnl_total / state.starting_equity * 100.0)
+            if state.starting_equity
+            else 0.0,
+            "Win Rate": (len(wins) / len(closed_pnls)) if closed_pnls else None,
+            "Expectancy": (sum(closed_pnls) / len(closed_pnls))
+            if closed_pnls
+            else None,
+            "Max Drawdown (Pct)": drawdown["max_drawdown_pct"],
+            "Max Drawdown (Abs)": drawdown["max_drawdown_abs"],
+        }
+    }
+    return _PaperSimulation(
+        orders=pd.DataFrame(state.orders),
+        fills=pd.DataFrame(state.fills),
+        positions=pd.DataFrame(state.positions),
+        account_balances=account_balances,
+        signal_lineage=pd.DataFrame(state.lineage),
+        stats_pnls=stats_pnls,
+        stats_returns={
+            "max_drawdown": drawdown["max_drawdown_pct"],
+            "max_drawdown_abs": drawdown["max_drawdown_abs"],
+        },
+        strategy_log_lines=state.strategy_log_lines or ["no signals consumed"],
+        risk_log_lines=state.risk_log_lines,
+        runtime_log_lines=state.runtime_log_lines,
+        heartbeat_rows=state.heartbeat_rows,
+        data_gaps=state.data_gaps,
+        poll_count=state.poll_count,
+        first_processed_ns=state.first_processed_ns,
+        processed_until_ns=state.processed_until_ns,
+        expected_bar_interval_ns=state.expected_interval_ns,
+        bar_count=state.bar_count,
+        shutdown_reason=shutdown_reason,
+        ws_reconnect_count=ws_reconnect_count,
+        duplicate_bars_dropped=duplicate_bars_dropped,
+        ws_endpoint=ws_endpoint,
+        ws_stream=ws_stream,
+        bar_source=bar_source,
+    )
+
+
+def _simulate_paper(
+    config: PaperRunnerConfig,
+    inputs: BacktestInputs,
+) -> _PaperSimulation:
+    state = _make_step_state(config)
+    signals = sorted(inputs.signals, key=lambda s: (int(s.ts_event), s.signal_id))
+    signal_idx = 0
 
     for poll_count, batch in enumerate(
         _iter_poll_batches(inputs.bars, config.poll_batch_size),
         start=1,
     ):
-        runtime_log_lines.append(
+        state.poll_count = poll_count
+        state.runtime_log_lines.append(
             json.dumps(
                 {
                     "event": "poll",
@@ -297,222 +664,165 @@ def _simulate_paper(
                 sort_keys=True,
             )
         )
-
         for bar in batch:
-            bar_ts = int(bar.ts_event)
-            price = float(bar.close)
-            last_price = price
-            last_ts = bar_ts
-            processed_until_ns = bar_ts
-            if previous_bar_ts is not None and expected_interval_ns is not None:
-                gap = _market_data_gap(
-                    previous_ts=previous_bar_ts,
-                    current_ts=bar_ts,
-                    expected_interval_ns=expected_interval_ns,
-                    tolerance_intervals=config.data_gap_tolerance_intervals,
-                )
-                if gap is not None:
-                    data_gaps.append(gap)
-                    runtime_log_lines.append(
-                        json.dumps({"event": "data_gap", **gap}, sort_keys=True)
-                    )
-                    risk_log_lines.append(
-                        json.dumps({"reason": "data_gap", **gap}, sort_keys=True)
-                    )
-            previous_bar_ts = bar_ts
-
-            equity_now = _equity(
-                starting_equity=starting_equity,
-                realized_pnl=realized_pnl,
-                open_position=open_position,
-                mark_price=price,
-            )
-            current_day, day_open_equity = _update_daily_risk_state(
-                baseline=baseline,
-                current_day=current_day,
-                day_open_equity=day_open_equity,
-                now_ns=bar_ts,
-                equity_now=equity_now,
+            signal_idx = _step_one_bar(
+                state=state,
+                bar=bar,
+                signals=signals,
+                signal_idx=signal_idx,
             )
 
-            while (
-                signal_idx < len(signals)
-                and int(signals[signal_idx].ts_event) <= bar_ts
-            ):
-                event = signals[signal_idx]
-                signal_idx += 1
-                intent = _decide_with_paper_guards(
-                    baseline=baseline,
-                    event=event,
-                    now_ns=bar_ts,
-                    max_signal_lag_seconds=config.max_signal_lag_seconds,
-                    data_gap_reason=_data_gap_reason_for_signal(
-                        int(event.ts_event),
-                        data_gaps,
-                    ),
-                )
-                apply_result = _apply_paper_intent(
-                    config=config,
-                    event=event,
-                    intent=intent,
-                    price=price,
-                    now_ns=bar_ts,
-                    open_position=open_position,
-                    realized_pnl=realized_pnl,
-                    orders=orders,
-                    fills=fills,
-                    positions=positions,
-                )
-                open_position = apply_result["open_position"]
-                realized_pnl = apply_result["realized_pnl"]
-                reason = apply_result["reason"]
-                order_ids = apply_result["order_ids"]
-                fill_ids = apply_result["fill_ids"]
-                position_ids = apply_result["position_ids"]
-                lineage.append(
-                    {
-                        "signal_id": event.signal_id,
-                        "source": event.source,
-                        "model_version": event.model_version,
-                        "ts_event": int(event.ts_event),
-                        "decision": intent.action,
-                        "reason": reason,
-                        "order_ids": ",".join(order_ids),
-                        "fill_ids": ",".join(fill_ids),
-                        "position_id": ",".join(position_ids),
-                        "ts_decision": bar_ts,
-                    }
-                )
-                strategy_log_lines.append(
-                    json.dumps(
-                        {
-                            "ts_decision": bar_ts,
-                            "signal_id": event.signal_id,
-                            "decision": intent.action,
-                            "dry_run": intent.dry_run,
-                            "reason": reason,
-                            "order_ids": order_ids,
-                        },
-                        sort_keys=True,
-                    )
-                )
-                if reason and (
-                    reason.startswith("reject_")
-                    or reason.startswith("kill_switch")
-                    or reason.startswith("signal_lag")
-                    or reason.startswith("data_gap")
-                ):
-                    risk_log_lines.append(
-                        json.dumps(
-                            {
-                                "ts_decision": bar_ts,
-                                "signal_id": event.signal_id,
-                                "reason": reason,
-                            },
-                            sort_keys=True,
-                        )
-                    )
+    return _finalize_step_state(state=state, bar_source="catalog")
 
-            equity_after_bar = _equity(
-                starting_equity=starting_equity,
-                realized_pnl=realized_pnl,
-                open_position=open_position,
-                mark_price=price,
-            )
-            locked = abs(open_position.signed_qty * price) if open_position else 0.0
-            account_rows.append(
-                _account_balance_row(
-                    config=config,
-                    ts_event=bar_ts,
-                    total=equity_after_bar,
-                    locked=locked,
-                )
-            )
-            if _should_emit_heartbeat(
-                last_heartbeat_ns=last_heartbeat_ns,
-                now_ns=bar_ts,
-                heartbeat_interval_seconds=config.heartbeat_interval_seconds,
-            ):
-                last_heartbeat_ns = bar_ts
-                heartbeat = _heartbeat_row(
-                    poll_number=poll_count,
-                    ts_event=bar_ts,
-                    equity=equity_after_bar,
-                    last_price=price,
-                    open_position=open_position,
-                    signal_idx=signal_idx,
-                    order_count=len(orders),
-                    fill_count=len(fills),
-                    data_gap_count=len(data_gaps),
-                )
-                heartbeat_rows.append(heartbeat)
-                runtime_log_lines.append(
-                    json.dumps({"event": "heartbeat", **heartbeat}, sort_keys=True)
-                )
 
-    if open_position is not None:
-        positions.append(
-            _position_row(
-                config=config,
-                position=open_position,
-                avg_px_close=0.0,
-                realized_pnl=0.0,
-                unrealized_pnl=_unrealized_pnl(open_position, last_price),
-                closed_ts=0,
-                closing_signal_id=None,
-            )
-        )
-
-    if not account_rows:
-        account_rows.append(
-            _account_balance_row(
-                config=config,
-                ts_event=last_ts,
-                total=starting_equity,
-                locked=0.0,
-            )
-        )
-    account_balances = pd.DataFrame(account_rows)
-    final_equity = float(account_rows[-1]["total"])
-    drawdown = _max_drawdown(account_rows)
-    pnl_total = final_equity - starting_equity
-    closed_pnls = [float(row["realized_pnl"]) for row in positions if row["closed_ts"]]
-    wins = [p for p in closed_pnls if p > 0.0]
-    stats_pnls = {
-        str(config.base_currency): {
-            "PnL (total)": pnl_total,
-            "PnL% (total)": (pnl_total / starting_equity * 100.0)
-            if starting_equity
-            else 0.0,
-            "Win Rate": (len(wins) / len(closed_pnls)) if closed_pnls else None,
-            "Expectancy": (sum(closed_pnls) / len(closed_pnls))
-            if closed_pnls
-            else None,
-            "Max Drawdown (Pct)": drawdown["max_drawdown_pct"],
-            "Max Drawdown (Abs)": drawdown["max_drawdown_abs"],
-        }
-    }
-    return _PaperSimulation(
-        orders=pd.DataFrame(orders),
-        fills=pd.DataFrame(fills),
-        positions=pd.DataFrame(positions),
-        account_balances=account_balances,
-        signal_lineage=pd.DataFrame(lineage),
-        stats_pnls=stats_pnls,
-        stats_returns={
-            "max_drawdown": drawdown["max_drawdown_pct"],
-            "max_drawdown_abs": drawdown["max_drawdown_abs"],
+def _make_wall_clock_runtime_start_log(config: PaperRunnerConfig) -> str:
+    return json.dumps(
+        {
+            "event": "wall_clock_runtime_start",
+            "ws_base_url": config.ws_base_url,
+            "ws_symbol": config.ws_symbol,
+            "ws_interval": config.ws_interval,
+            "max_duration_seconds": config.max_duration_seconds,
+            "max_bars": config.max_bars,
+            "signal_poll_interval_seconds": config.signal_poll_interval_seconds,
         },
-        strategy_log_lines=strategy_log_lines or ["no signals consumed"],
-        risk_log_lines=risk_log_lines,
-        runtime_log_lines=runtime_log_lines,
-        heartbeat_rows=heartbeat_rows,
-        data_gaps=data_gaps,
-        poll_count=poll_count,
-        first_processed_ns=first_processed_ns,
-        processed_until_ns=processed_until_ns,
-        expected_bar_interval_ns=expected_interval_ns,
+        sort_keys=True,
     )
+
+
+def _simulate_paper_wall_clock(
+    *,
+    config: PaperRunnerConfig,
+    inputs: BacktestInputs,
+    bar_feed: BarFeed | None,
+    stop_event: Any,
+) -> _PaperSimulation:
+    import time as _time
+
+    feed = bar_feed
+    owns_feed = False
+    if feed is None:
+        feed = BinancePublicBarFeed(
+            symbol=config.ws_symbol or "",
+            interval=config.ws_interval,
+            base_url=config.ws_base_url,
+        )
+        owns_feed = True
+
+    state = _make_step_state(config)
+    state.runtime_log_lines.append(_make_wall_clock_runtime_start_log(config))
+    signal_store = SignalStore(config.signal_store_path)
+    signals = sorted(inputs.signals, key=lambda s: (int(s.ts_event), s.signal_id))
+    signal_idx = 0
+    last_signal_ts = signals[-1].ts_event if signals else None
+    deadline_monotonic: float | None = None
+    if config.max_duration_seconds is not None:
+        deadline_monotonic = _time.monotonic() + config.max_duration_seconds
+    last_signal_repoll_monotonic = _time.monotonic()
+    shutdown_reason = SHUTDOWN_REASON_COMPLETED
+
+    if owns_feed:
+        feed.start()
+    try:
+        while True:
+            if stop_event is not None and stop_event.is_set():
+                shutdown_reason = SHUTDOWN_REASON_SIGTERM
+                break
+            if config.max_bars is not None and state.bar_count >= config.max_bars:
+                shutdown_reason = SHUTDOWN_REASON_MAX_BARS
+                break
+            if (
+                deadline_monotonic is not None
+                and _time.monotonic() >= deadline_monotonic
+            ):
+                shutdown_reason = SHUTDOWN_REASON_MAX_DURATION
+                break
+
+            wait = float(config.signal_poll_interval_seconds)
+            if deadline_monotonic is not None:
+                wait = max(0.0, min(wait, deadline_monotonic - _time.monotonic()))
+            bar = feed.next_bar(timeout=wait) if wait > 0 else None
+            now_monotonic = _time.monotonic()
+
+            if (
+                now_monotonic - last_signal_repoll_monotonic
+                >= config.signal_poll_interval_seconds
+            ):
+                signals, signal_idx, last_signal_ts = _wall_clock_refresh_signals(
+                    signal_store=signal_store,
+                    base_filter=config.signal_filter,
+                    last_signal_ts=last_signal_ts,
+                    signals=signals,
+                    signal_idx=signal_idx,
+                )
+                last_signal_repoll_monotonic = now_monotonic
+
+            if bar is None:
+                continue
+
+            state.poll_count += 1
+            state.runtime_log_lines.append(
+                json.dumps(
+                    {
+                        "event": "poll",
+                        "poll_number": state.poll_count,
+                        "batch_rows": 1,
+                        "from_ts_event": int(bar.ts_event),
+                        "until_ts_event": int(bar.ts_event),
+                    },
+                    sort_keys=True,
+                )
+            )
+            signal_idx = _step_one_bar(
+                state=state,
+                bar=bar,
+                signals=signals,
+                signal_idx=signal_idx,
+            )
+    finally:
+        if owns_feed:
+            feed.stop()
+
+    return _finalize_step_state(
+        state=state,
+        shutdown_reason=shutdown_reason,
+        bar_source=feed.source_name,
+        ws_reconnect_count=feed.reconnect_count,
+        duplicate_bars_dropped=feed.duplicate_bars_dropped,
+        ws_endpoint=feed.endpoint,
+        ws_stream=feed.stream_name,
+    )
+
+
+def _wall_clock_refresh_signals(
+    *,
+    signal_store: SignalStore,
+    base_filter: dict[str, Any],
+    last_signal_ts: int | None,
+    signals: list[SignalEvent],
+    signal_idx: int,
+) -> tuple[list[SignalEvent], int, int | None]:
+    """Incrementally pull newly-written signals from the SignalStore.
+
+    Bars and signals can arrive interleaved during a wall-clock run; this lets
+    an upstream research process feed signals into the store while the runner
+    is alive. Returns the (possibly-extended) signals list and an updated
+    last_signal_ts cursor.
+    """
+    incremental_filter = dict(base_filter)
+    if last_signal_ts is not None:
+        existing_since = incremental_filter.get("since_ns")
+        cursor = int(last_signal_ts) + 1
+        if existing_since is None or int(existing_since) < cursor:
+            incremental_filter["since_ns"] = cursor
+    new_signals = signal_store.replay(**incremental_filter)
+    if not new_signals:
+        return signals, signal_idx, last_signal_ts
+    appended = sorted(new_signals, key=lambda s: (int(s.ts_event), s.signal_id))
+    signals.extend(appended)
+    signals.sort(key=lambda s: (int(s.ts_event), s.signal_id))
+    last_signal_ts = max(int(s.ts_event) for s in signals)
+    return signals, signal_idx, last_signal_ts
 
 
 def _decide_with_paper_guards(
@@ -1016,7 +1326,10 @@ def _resolve_runtime_context(config: PaperRunnerConfig) -> _RuntimeContext:
         current_since = signal_filter.get("since_ns")
         if current_since is None or int(current_since) < resume_from_ns:
             signal_filter["since_ns"] = resume_from_ns
-    if resume_from_ns is not None and config.catalog_start is None:
+    can_override_catalog_start = (
+        config.data_mode != "wall_clock" and config.catalog_start is None
+    )
+    if resume_from_ns is not None and can_override_catalog_start:
         effective_config = replace(
             config,
             catalog_start=resume_from_ns,
@@ -1108,24 +1421,37 @@ def _build_paper_manifest_payload(
     finished: datetime,
     simulation: _PaperSimulation,
 ) -> dict[str, Any]:
-    min_bar_ns = min(int(b.ts_event) for b in inputs.bars)
-    max_bar_ns = max(int(b.ts_event) for b in inputs.bars)
-    min_signal_ns = (
-        min(int(s.ts_event) for s in inputs.signals) if inputs.signals else 0
-    )
-    max_signal_ns = (
-        max(int(s.ts_event) for s in inputs.signals) if inputs.signals else 0
-    )
+    if inputs.bars:
+        min_bar_ns = min(int(b.ts_event) for b in inputs.bars)
+        max_bar_ns = max(int(b.ts_event) for b in inputs.bars)
+    else:
+        min_bar_ns = simulation.first_processed_ns
+        max_bar_ns = simulation.processed_until_ns
+    if config.data_mode == "wall_clock":
+        lineage_ts = [int(row["ts_event"]) for row in simulation.signal_lineage.to_dict("records")]
+        signal_row_count = len(lineage_ts)
+        min_signal_ns = min(lineage_ts) if lineage_ts else 0
+        max_signal_ns = max(lineage_ts) if lineage_ts else 0
+    else:
+        signal_row_count = len(inputs.signals)
+        min_signal_ns = (
+            min(int(s.ts_event) for s in inputs.signals) if inputs.signals else 0
+        )
+        max_signal_ns = (
+            max(int(s.ts_event) for s in inputs.signals) if inputs.signals else 0
+        )
     runtime: dict[str, Any] = {
         "mode": "paper",
         "data_mode": config.data_mode,
         "order_mode": config.order_mode,
+        "bar_source": simulation.bar_source,
         "heartbeat_interval_seconds": config.heartbeat_interval_seconds,
         "heartbeat_count": len(simulation.heartbeat_rows),
         "polling_mode": "incremental",
         "poll_interval_seconds": config.poll_interval_seconds,
         "poll_batch_size": config.poll_batch_size,
         "poll_count": simulation.poll_count,
+        "bar_count": simulation.bar_count,
         "first_processed_ns": simulation.first_processed_ns,
         "processed_until_ns": simulation.processed_until_ns,
         "expected_bar_interval_ns": simulation.expected_bar_interval_ns,
@@ -1135,7 +1461,17 @@ def _build_paper_manifest_payload(
         "data_gaps": simulation.data_gaps,
         "operator": config.operator,
         "restart_sequence": runtime_context.restart_sequence,
+        "shutdown_reason": simulation.shutdown_reason,
     }
+    if config.data_mode == "wall_clock":
+        runtime["ws_endpoint"] = simulation.ws_endpoint
+        runtime["ws_stream"] = simulation.ws_stream
+        runtime["ws_reconnect_count"] = simulation.ws_reconnect_count
+        runtime["duplicate_bars_dropped"] = simulation.duplicate_bars_dropped
+        runtime["max_duration_seconds"] = config.max_duration_seconds
+        runtime["max_bars"] = config.max_bars
+        runtime["signal_poll_interval_seconds"] = config.signal_poll_interval_seconds
+        runtime["credentials_loaded"] = False
     if config.previous_run_id is not None:
         runtime["previous_run_id"] = config.previous_run_id
         runtime["previous_manifest_found"] = runtime_context.previous_manifest_found
@@ -1200,7 +1536,7 @@ def _build_paper_manifest_payload(
             "store_path": str(config.signal_store_path),
             "store_sha256": _hash_signal_store(config.signal_store_path),
             "filter": config.signal_filter,
-            "row_count": len(inputs.signals),
+            "row_count": signal_row_count,
             "min_ts_event_ns": min_signal_ns,
             "max_ts_event_ns": max_signal_ns,
         },
@@ -1215,7 +1551,7 @@ def _build_paper_manifest_payload(
             ],
         },
         "totals": {
-            "iterations": len(inputs.bars),
+            "iterations": simulation.bar_count,
             "events": len(simulation.signal_lineage),
             "orders": len(simulation.orders),
             "positions": len(simulation.positions),
@@ -1271,11 +1607,26 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--operator", default="nishiki")
     parser.add_argument("--previous-run-id")
     parser.add_argument("--restart-reason")
+    parser.add_argument(
+        "--data-mode",
+        choices=_ALLOWED_DATA_MODES,
+        default="catalog_polling",
+    )
+    parser.add_argument("--max-duration-seconds", type=int)
+    parser.add_argument("--max-bars", type=int)
+    parser.add_argument("--ws-base-url", default=DEFAULT_BINANCE_PUBLIC_WS_URL)
+    parser.add_argument("--ws-symbol")
+    parser.add_argument("--ws-interval", default="1m")
+    parser.add_argument("--signal-poll-interval-seconds", type=int, default=5)
     return parser
 
 
 def _config_from_args(args: argparse.Namespace) -> PaperRunnerConfig:
     base = _backtest_config_from_args(args)
+    ws_symbol = args.ws_symbol
+    if args.data_mode == "wall_clock" and not ws_symbol:
+        instrument_id = base.instrument_id
+        ws_symbol = instrument_id.split(".", 1)[0] if "." in instrument_id else instrument_id
     return PaperRunnerConfig(
         output_root=args.output_root,
         catalog_path=base.catalog_path,
@@ -1311,7 +1662,42 @@ def _config_from_args(args: argparse.Namespace) -> PaperRunnerConfig:
         operator=args.operator,
         previous_run_id=args.previous_run_id,
         restart_reason=args.restart_reason,
+        data_mode=args.data_mode,
+        max_duration_seconds=args.max_duration_seconds,
+        max_bars=args.max_bars,
+        ws_base_url=args.ws_base_url,
+        ws_symbol=ws_symbol,
+        ws_interval=args.ws_interval,
+        signal_poll_interval_seconds=args.signal_poll_interval_seconds,
     )
+
+
+def _install_sigterm_handler(stop_event: Any) -> Any:
+    import contextlib
+    import signal as _signal
+
+    if threading.current_thread() is not threading.main_thread():
+        return None
+    previous = {}
+
+    def _handler(_signum: int, _frame: Any) -> None:
+        stop_event.set()
+
+    for sig in (_signal.SIGTERM, _signal.SIGINT):
+        with contextlib.suppress(OSError, ValueError):
+            previous[sig] = _signal.signal(sig, _handler)
+    return previous
+
+
+def _restore_signal_handlers(previous: Any) -> None:
+    if not previous:
+        return
+    import contextlib
+    import signal as _signal
+
+    for sig, handler in previous.items():
+        with contextlib.suppress(OSError, ValueError):
+            _signal.signal(sig, handler)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -1319,9 +1705,22 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         config = _config_from_args(args)
-        result = run_paper_session(config)
     except Exception as exc:
         parser.exit(2, f"{parser.prog}: error: {exc}\n")
+    if config.data_mode == "wall_clock":
+        stop_event = threading.Event()
+        previous = _install_sigterm_handler(stop_event)
+        try:
+            result = run_paper_session(config, stop_event=stop_event)
+        except Exception as exc:
+            parser.exit(2, f"{parser.prog}: error: {exc}\n")
+        finally:
+            _restore_signal_handlers(previous)
+    else:
+        try:
+            result = run_paper_session(config)
+        except Exception as exc:
+            parser.exit(2, f"{parser.prog}: error: {exc}\n")
     print(result.output_dir)
     return 0
 

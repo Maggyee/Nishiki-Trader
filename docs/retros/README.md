@@ -131,3 +131,19 @@ Use the literal `decision` value from the CLI (`promote`, `hold`, `demote`,
   max drawdown -0.001%. Decision is `hold` because the next stage
   `testnet_canary` is hard-blocked by `phase_3_not_ready`; ADR-007 §2.5
   also requires a Phase 3 testnet runbook that does not yet exist.
+
+## Implementation-milestone retros
+
+These retros do **not** change a `SourcePolicy`. They record a Phase
+3 / 4 runtime-implementation step that gates future `promote` decisions.
+
+- [`2026-05-17-phase-3a-wall-clock-smoke.md`](2026-05-17-phase-3a-wall-clock-smoke.md)
+  — first ADR-008 §6.1 milestone. Adds `--data-mode wall_clock` to
+  the paper runner, streaming closed 1m klines from
+  `wss://data-stream.binance.vision:9443` via NautilusTrader's
+  credential-free public WS client. 5-minute live smoke: 5 bars,
+  5 heartbeats, 0 data gaps, 0 reconnects, 0 duplicate drops,
+  `credentials_loaded=false`. Bundle `data/paper/20260517-075403Z-b76dcdb1`,
+  manifest `f80bd450…`. ADR-008 §7.2 items 1 & 3 pass; items 2 & 4
+  are structurally wired and remain pending a real 24h soak.
+  `promotion_review`'s `phase_3_not_ready` gate stays closed.
