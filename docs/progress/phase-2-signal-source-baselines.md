@@ -118,3 +118,68 @@ baseline below.
 When the baseline must move (intentional strategy / runner change), append a
 new dated section below rather than rewriting this one. Older fingerprints
 stay useful as forensic anchors.
+
+Note that `signal_source.store_sha256` shifts every time `signals.db` gains
+or drops rows — `signals.db` itself is gitignored, so reproducing an older
+fingerprint exactly requires walking the same `backfill_bars` /
+`baseline_rule_signals` sequence from an empty store. The numerical
+fingerprints below are still the contract; the SHA is a fast staleness
+detector, not a primary key.
+
+---
+
+## 2026-05-17 v2 — BTCUSDT 2024-01-01 ~ 2024-01-07 (7-day window)
+
+- **Catalog input**: `data/catalog/data/bar/BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL/` covering 2024-01-01 through 2024-01-07 (10080 1m bars, backfilled day-by-day via `apps.ops.backfill_bars`).
+- **Signal store**: `data/bridge/signals.db` sha256 `993b4689db35ced308718bc3ba2e55fca9b145439ffd1c36c9fe0fa206bd9155` (= original 3 demo + 71 rule@2024-01-01 from v1 + 564 new rule rows@2024-01-02..07).
+- **Code baseline**: git `5fd5be9` (`feat(bridge): enforce ADR-005 source-family prefix on SignalEvent`).
+
+| metric | demo (7d) | rule (7d) | demo Δ vs v1 | rule Δ vs v1 |
+|---|---:|---:|---|---|
+| signal rows in run | 3 | 635 | 0 | +564 |
+| iterations | 10080 | 10080 | +8640 | +8640 |
+| total events | 8 | 2532 | 0 | +2248 |
+| total orders | 4 | 1266 | 0 | +1124 |
+| total positions | 2 | 633 | 0 | +562 |
+| total fills | 4 | 1266 | 0 | +1124 |
+| PnL (total, USDT) | -0.76826176 | -57.153288 | +0.25078053 (BacktestEngine `on_stop` closes the demo short at 01-07 close, not 01-01 close — different mark) | -52.41582943 (linear-ish with fill count: ~6.4× more fills, ~12× more loss, ratio dominated by fee drag) |
+| Win Rate | 0.500 | 0.10584518167456557 | 0 | -0.02091538 |
+| Expectancy (USDT) | -0.38413088 | -0.0902895545023697 | +0.12538910 | -0.02356478 |
+| Sharpe Ratio (252d) | null | null | — | — |
+| Sortino Ratio (252d) | null | null | — | — |
+| Profit Factor | null | null | — | — |
+| Lineage decisions | `target_long×1`, `target_flat×1`, `target_short×1` | `target_long×318`, `target_short×317` | unchanged | +282 / +282 |
+
+### Reading v2
+
+- **Demo lineage unchanged.** Same 3 signals → same 4 fills decisions —
+  demo signals only fire on 2024-01-01 and the engine's `on_stop` flat
+  closes the leftover short. The PnL difference vs v1 is the close-mark
+  drift, not strategy behaviour.
+- **Rule scales close to linear.** 7-day rule signals = 635 vs 71 ≈ 8.9×;
+  fills 1266 vs 142 ≈ 8.9×. Win Rate drops slightly (10.6% vs 12.7%) and
+  Expectancy worsens slightly (-0.090 vs -0.067 USDT/trade) — fee drag
+  dominates as fills accumulate, exactly what a no-alpha rule predicts.
+- **`signal_source.store_sha256` matches across the demo and rule bundles**
+  (`993b4689...`) because both filtered runs scan the same `signals.db`.
+  The runner's `signal_filter` is the only thing that differs between the
+  two bundles. ADR-002 §5 traceability holds.
+
+### v1 → v2 reproduction note
+
+To reproduce v1 from a clean state:
+
+```bash
+rm data/bridge/signals.db
+UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.ops.backfill_bars \
+  --download --symbol BTCUSDT --interval 1m --date 2024-01-01 \
+  --catalog-path data/catalog --seed-demo-signals \
+  --signal-store-path data/bridge/signals.db
+UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_freqtrade.research.baseline_rule_signals \
+  --catalog-path data/catalog --signal-store-path data/bridge/signals.db \
+  --symbol BTCUSDT --venue BINANCE --bar-type 'BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL'
+```
+
+To extend to v2, append the 2024-01-02 .. 2024-01-07 backfills, then rerun
+`baseline_rule_signals` once more (duplicate rule signals from 01-01 will
+be skipped by `DuplicateSignalError`).

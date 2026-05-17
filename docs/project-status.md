@@ -69,10 +69,9 @@ Immediate focus:
 
 ## Next Steps
 
-1. Extend backfill beyond one BTCUSDT day; append a new dated section to `docs/progress/phase-2-signal-source-baselines.md` when the catalog window changes.
-2. Plan ADR-006 (gray-rollout / canary mechanics: per-source `max_position_pct` overrides, dry-run forcing, position-size haircuts for new `model_version`s on the live path). ADR-005 §2.3 only sketched the concept.
-3. Land the first `freqai_*` signal source against the existing catalog; record its fingerprint in the baselines note.
-4. Decide Phase 2 SQLite -> Postgres / Redis Stream readiness only after backtest volume exposes an actual bottleneck.
+1. Plan ADR-006 (gray-rollout / canary mechanics: per-source `max_position_pct` overrides, dry-run forcing, position-size haircuts for new `model_version`s on the live path). ADR-005 §2.3 only sketched the concept.
+2. Land the first `freqai_*` signal source against the existing 7-day BTCUSDT catalog; record its fingerprint in the baselines note as a 2026-... v3 section.
+3. Decide Phase 2 SQLite -> Postgres / Redis Stream readiness only after backtest volume exposes an actual bottleneck.
 
 ## Blocked / Deferred
 
@@ -94,9 +93,10 @@ On 2026-05-17, after ADR-005 source-family validation and the rule-based baselin
 - `UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_freqtrade.research.baseline_rule_signals --catalog-path data/catalog --signal-store-path data/bridge/signals.db --symbol BTCUSDT --venue BINANCE --bar-type 'BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL'` -> 71 SignalEvents written for BTCUSDT 2024-01-01.
 - `UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.backtest_runner --instrument-id BTCUSDT.BINANCE --bar-type 'BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL' --signal-source rule_baseline_v1 --signal-model-version 'ema5-20+rsi14' --allowed-source rule_baseline_v1 --allowed-model-version 'ema5-20+rsi14' --trade-size 0.001 --starting-balance 100000 --min-confidence 0.5` -> 1 bundle, totals fills=142, PnL (total)=-$4.74, Win Rate=12.7% (placeholder strategy, no alpha expected).
 - Same CLI swapped to `--signal-source manual_research --signal-model-version binance-fixture-v1` (demo) -> 1 bundle, totals fills=4, PnL (total)=-$1.02, Win Rate=50%. Both fingerprints frozen in `docs/progress/phase-2-signal-source-baselines.md`.
+- Catalog extended to 7 days (2024-01-01 .. 2024-01-07 BTCUSDT 1m, 10080 bars) via 6× `apps.ops.backfill_bars --date 2024-01-0{2..7}`; `baseline_rule_signals` rerun produced 564 new rows (71 existing 01-01 signals skipped as duplicates). 7-day rule bundle: fills=1266, PnL=-$57.15, Win Rate=10.6%, Expectancy=-$0.09/trade. v2 section appended to baselines note.
 
 ## Recent Git Baseline
 
-- `83b0910 feat(strategies_freqtrade): add rule-based baseline SignalEvent generator`
+- `5fd5be9 feat(bridge): enforce ADR-005 source-family prefix on SignalEvent`
 
 Agents should run `git log --oneline --decorate -5` for the latest commits instead of assuming this section is exhaustive.
