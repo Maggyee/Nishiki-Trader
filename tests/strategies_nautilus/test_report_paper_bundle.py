@@ -245,6 +245,37 @@ def test_load_paper_bundle_report_flags_sidecar_count_mismatch(tmp_path):
     assert report.eligible_for_review is False
 
 
+def test_load_paper_bundle_report_flags_runtime_data_gaps(tmp_path):
+    bundle_dir = _write_bundle(
+        tmp_path,
+        runtime_overrides={
+            "heartbeat_count": 2,
+            "restart_sequence": 1,
+            "previous_run_id": "20260101-000000Z-00000000",
+            "data_gap_count": 1,
+            "data_gaps": [
+                {
+                    "previous_ts_event": 1,
+                    "current_ts_event": 3,
+                    "expected_interval_ns": 1,
+                    "missing_start_ns": 2,
+                    "missing_end_ns": 2,
+                    "missing_intervals": 1,
+                }
+            ],
+        },
+    )
+
+    report = load_paper_bundle_report(bundle_dir)
+
+    assert report.runtime_data_gaps == 1
+    assert report.heartbeat_count == 2
+    assert report.restart_sequence == 1
+    assert report.previous_run_id == "20260101-000000Z-00000000"
+    assert "runtime_data_gaps=1" in report.review_blockers
+    assert report.eligible_for_review is False
+
+
 def test_load_paper_bundle_report_flags_missing_drawdown_metric(tmp_path):
     bundle_dir = _write_bundle(
         tmp_path,

@@ -105,7 +105,17 @@ Paper manifest 允许追加一个 `runtime` 对象：
     "data_mode": "catalog_polling",
     "order_mode": "simulated",
     "heartbeat_interval_seconds": 30,
+    "heartbeat_count": 10080,
+    "polling_mode": "incremental",
+    "poll_interval_seconds": 60,
+    "poll_batch_size": 1,
+    "poll_count": 10080,
+    "processed_until_ns": 1704671940000000000,
     "max_signal_lag_seconds": 120,
+    "data_gap_tolerance_intervals": 1,
+    "data_gap_count": 0,
+    "data_gaps": [],
+    "restart_sequence": 0,
     "operator": "nishiki"
   }
 }
@@ -129,6 +139,14 @@ Paper session 是运行中的目录，结束后才视为不可变。
 - 日志必须能区分 strategy decision、risk rejection、runtime heartbeat。
 - 运行中断重启不能复用同一个 `<run_id>` 追加覆盖；要新建 session，并在日志或
   manifest runtime 字段记录 `previous_run_id`。
+- Catalog polling paper runtime 必须按 event-time cursor 增量处理 bars/signals，
+  在 `logs/heartbeat.jsonl` 和 `logs/runtime.log` 写 heartbeat / poll 记录，并在
+  manifest runtime 字段记录 `processed_until_ns`，用于下一次 session 续跑。
+- 使用 `previous_run_id` 续跑时，如果上次 manifest 可读，runner 必须从上次
+  `processed_until_ns + 1` 自动设置 catalog / signal cursor，并记录
+  `previous_manifest_sha256`、`restart_sequence`、`restart_reason` 等审计字段。
+- 检测到 market-data gap 时必须记录 `data_gap` runtime 事件；gap 内的开仓/翻仓
+  signal 必须跳过并进入 review blocker，不能作为升档依据。
 
 ### 2.5 SourcePolicy 升档表
 

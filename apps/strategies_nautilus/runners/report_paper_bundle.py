@@ -75,6 +75,10 @@ class PaperBundleReport:
     signal_lag_signals: int
     kill_switch_signals: int
     data_gap_signals: int
+    runtime_data_gaps: int
+    heartbeat_count: int
+    restart_sequence: int
+    previous_run_id: str | None
     pnl_total_by_currency: dict[str, float | int | None]
     max_drawdown_pct_by_currency: dict[str, float | int | None]
     max_drawdown_abs_by_currency: dict[str, float | int | None]
@@ -137,9 +141,11 @@ def load_paper_bundle_report(bundle_dir: Path) -> PaperBundleReport:
     ):
         missing_metrics.append("max_drawdown_pct")
 
+    runtime = dict(manifest_payload.get("runtime") or {})
+    runtime_data_gaps = _runtime_data_gap_count(runtime)
     review_blockers = _review_blockers(
         manifest=manifest,
-        runtime=dict(manifest_payload.get("runtime") or {}),
+        runtime=runtime,
         sidecar_mismatches=sidecar_mismatches,
         source=source,
         model_version=model_version,
@@ -149,6 +155,7 @@ def load_paper_bundle_report(bundle_dir: Path) -> PaperBundleReport:
         signal_lag=signal_lag,
         kill_switch=kill_switch,
         data_gap=data_gap,
+        runtime_data_gaps=runtime_data_gaps,
     )
     promotion_blockers = _promotion_blockers(
         review_blockers=review_blockers,
@@ -166,7 +173,7 @@ def load_paper_bundle_report(bundle_dir: Path) -> PaperBundleReport:
         kind=manifest.kind,
         git_commit=manifest.git_commit,
         git_dirty=manifest.git_dirty,
-        runtime=dict(manifest_payload.get("runtime") or {}),
+        runtime=runtime,
         source=source,
         model_version=model_version,
         signal_rows=manifest.signal_source.row_count,
@@ -188,6 +195,10 @@ def load_paper_bundle_report(bundle_dir: Path) -> PaperBundleReport:
         signal_lag_signals=signal_lag,
         kill_switch_signals=kill_switch,
         data_gap_signals=data_gap,
+        runtime_data_gaps=runtime_data_gaps,
+        heartbeat_count=_heartbeat_count(bundle_dir, runtime),
+        restart_sequence=_int_from_runtime(runtime, "restart_sequence"),
+        previous_run_id=_str_from_runtime(runtime, "previous_run_id"),
         pnl_total_by_currency=pnl_total_by_currency,
         max_drawdown_pct_by_currency=max_drawdown_by_currency,
         max_drawdown_abs_by_currency=max_drawdown_abs_by_currency,
@@ -226,7 +237,15 @@ def render_text_report(report: PaperBundleReport) -> str:
                 f"expired={report.expired_signals} "
                 f"unauthorized={report.unauthorized_signals} "
                 f"signal_lag={report.signal_lag_signals} "
-                f"kill_switch={report.kill_switch_signals}"
+                f"kill_switch={report.kill_switch_signals} "
+                f"data_gap_signals={report.data_gap_signals}"
+            ),
+            (
+                "runtime: "
+                f"heartbeats={report.heartbeat_count} "
+                f"data_gaps={report.runtime_data_gaps} "
+                f"restart_sequence={report.restart_sequence} "
+                f"previous_run_id={report.previous_run_id or 'none'}"
             ),
             (
                 "totals: "
@@ -266,6 +285,38 @@ def _prefix_reason_count(
         for reason, count in reason_counts.items()
         if reason.startswith(prefixes)
     )
+
+
+def _runtime_data_gap_count(runtime: dict[str, Any]) -> int:
+    raw_count = runtime.get("data_gap_count")
+    if isinstance(raw_count, int):
+        return raw_count
+    gaps = runtime.get("data_gaps")
+    if isinstance(gaps, list):
+        return len(gaps)
+    return 0
+
+
+def _heartbeat_count(bundle_dir: Path, runtime: dict[str, Any]) -> int:
+    heartbeat_path = bundle_dir / "logs" / "heartbeat.jsonl"
+    if heartbeat_path.exists():
+        return sum(1 for line in heartbeat_path.read_text(encoding="utf-8").splitlines() if line.strip())
+    raw_count = runtime.get("heartbeat_count")
+    return raw_count if isinstance(raw_count, int) else 0
+
+
+def _int_from_runtime(runtime: dict[str, Any], key: str) -> int:
+    value = runtime.get(key)
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str) and value.isdigit():
+        return int(value)
+    return 0
+
+
+def _str_from_runtime(runtime: dict[str, Any], key: str) -> str | None:
+    value = runtime.get(key)
+    return value if isinstance(value, str) and value else None
 
 
 def _sidecar_mismatches(
@@ -389,6 +440,7 @@ def _review_blockers(
     signal_lag: int,
     kill_switch: int,
     data_gap: int,
+    runtime_data_gaps: int,
 ) -> list[str]:
     blockers: list[str] = []
     if manifest.git_dirty:
@@ -416,6 +468,8 @@ def _review_blockers(
         blockers.append(f"kill_switch_signals={kill_switch}")
     if data_gap:
         blockers.append(f"data_gap_signals={data_gap}")
+    if runtime_data_gaps:
+        blockers.append(f"runtime_data_gaps={runtime_data_gaps}")
     return blockers
 
 

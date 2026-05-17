@@ -45,12 +45,19 @@ uv run python -m apps.strategies_nautilus.runners.paper_runner \
   --trade-size 0.001 \
   --starting-balance 100000 \
   --policy-position-pct-multiplier 0.2 \
-  --policy-dry-run
+  --policy-dry-run \
+  --heartbeat-interval-seconds 30 \
+  --poll-interval-seconds 60 \
+  --poll-batch-size 1
 ```
 
 The paper runner writes a `kind="paper"` bundle under `data/paper/<run_id>/`.
 It is local simulation only: no exchange keys, no exchange adapter, no live
-orders.
+orders. Catalog polling is processed through an event-time cursor, with
+runtime heartbeats in `logs/heartbeat.jsonl`, poll/data-gap records in
+`logs/runtime.log`, and restart metadata in `run_manifest.json.runtime`.
+Use `--previous-run-id <run_id> --restart-reason <reason>` to start a new
+session from the previous bundle's processed cursor.
 
 Paper bundle review summary:
 

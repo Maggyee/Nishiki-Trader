@@ -42,6 +42,15 @@ def bar_type(btcusdt_instrument):
 
 
 def _make_bars(btcusdt_instrument, bar_type, closes: list[float], *, start_ns: int):
+    index = pd.date_range(
+        pd.Timestamp(start_ns, unit="ns", tz="UTC"),
+        periods=len(closes),
+        freq="1min",
+    )
+    return _make_bars_at_index(btcusdt_instrument, bar_type, closes, index)
+
+
+def _make_bars_at_index(btcusdt_instrument, bar_type, closes: list[float], index):
     df = pd.DataFrame(
         {
             "open": closes,
@@ -50,11 +59,7 @@ def _make_bars(btcusdt_instrument, bar_type, closes: list[float], *, start_ns: i
             "close": closes,
             "volume": [10.0] * len(closes),
         },
-        index=pd.date_range(
-            pd.Timestamp(start_ns, unit="ns", tz="UTC"),
-            periods=len(closes),
-            freq="1min",
-        ),
+        index=index,
     )
     df.index.name = "timestamp"
     return BarDataWrangler(bar_type, btcusdt_instrument).process(df)
@@ -67,6 +72,27 @@ def _write_catalog(tmp_path: Path, btcusdt_instrument, bar_type, closes, *, star
     catalog.write_data([btcusdt_instrument])
     catalog.write_data(
         _make_bars(btcusdt_instrument, bar_type, closes, start_ns=start_ns)
+    )
+    return path
+
+
+def _write_catalog_at_times(
+    tmp_path: Path,
+    btcusdt_instrument,
+    bar_type,
+    closes,
+    ts_events: list[int],
+):
+    path = tmp_path / "catalog"
+    path.mkdir()
+    catalog = ParquetDataCatalog(str(path.resolve()))
+    catalog.write_data([btcusdt_instrument])
+    index = pd.DatetimeIndex(
+        [pd.Timestamp(ts, unit="ns", tz="UTC") for ts in ts_events],
+        name="timestamp",
+    )
+    catalog.write_data(
+        _make_bars_at_index(btcusdt_instrument, bar_type, closes, index)
     )
     return path
 
@@ -120,6 +146,9 @@ def _config(
     allowed_model_versions: frozenset[str] = frozenset({"2026-05-14"}),
     daily_drawdown_stop_pct: float = 0.05,
     max_signal_lag_seconds: int = 900,
+    heartbeat_interval_seconds: int = 60,
+    previous_run_id: str | None = None,
+    restart_reason: str | None = None,
 ) -> PaperRunnerConfig:
     return PaperRunnerConfig(
         output_root=tmp_path / "paper",
@@ -145,8 +174,11 @@ def _config(
         git_commit="0" * 40,
         git_dirty=False,
         machine_id="pytest",
+        heartbeat_interval_seconds=heartbeat_interval_seconds,
         max_signal_lag_seconds=max_signal_lag_seconds,
         operator="pytest",
+        previous_run_id=previous_run_id,
+        restart_reason=restart_reason,
     )
 
 
@@ -253,6 +285,143 @@ def test_account_balances_track_equity_curve_and_drawdown(
     assert stats["Max Drawdown (Abs)"] == -20.0
     assert stats["Max Drawdown (Pct)"] == -0.02
     assert result.manifest.stats_returns["max_drawdown"] == -0.02
+
+
+def test_incremental_polling_writes_runtime_heartbeats_and_cursor_metadata(
+    tmp_path, btcusdt_instrument, bar_type
+):
+    catalog_path = _write_catalog(
+        tmp_path,
+        btcusdt_instrument,
+        bar_type,
+        [100, 101, 102],
+    )
+    signal_store_path = _write_signals(
+        tmp_path,
+        [_signal(signal_id="paper-buy", ts_event=BASE_TS_NS + ONE_MIN_NS)],
+    )
+
+    result = run_paper_session(
+        _config(
+            tmp_path=tmp_path,
+            catalog_path=catalog_path,
+            bar_type=bar_type,
+            signal_store_path=signal_store_path,
+            heartbeat_interval_seconds=60,
+        )
+    )
+
+    manifest = json.loads((result.output_dir / "run_manifest.json").read_text())
+    runtime = manifest["runtime"]
+    assert runtime["polling_mode"] == "incremental"
+    assert runtime["poll_count"] == 3
+    assert runtime["first_processed_ns"] == BASE_TS_NS
+    assert runtime["processed_until_ns"] == BASE_TS_NS + 2 * ONE_MIN_NS
+    assert runtime["expected_bar_interval_ns"] == ONE_MIN_NS
+    assert runtime["heartbeat_count"] == 3
+    heartbeat_lines = (
+        result.output_dir / "logs" / "heartbeat.jsonl"
+    ).read_text().splitlines()
+    assert len(heartbeat_lines) == runtime["heartbeat_count"]
+    assert '"event": "poll"' in (result.output_dir / "logs" / "runtime.log").read_text()
+
+
+def test_previous_run_id_resumes_from_previous_processed_cursor(
+    tmp_path, btcusdt_instrument, bar_type
+):
+    catalog_path = _write_catalog(
+        tmp_path,
+        btcusdt_instrument,
+        bar_type,
+        [100, 101, 102, 103],
+    )
+    signal_store_path = _write_signals(
+        tmp_path,
+        [
+            _signal(signal_id="paper-old", ts_event=BASE_TS_NS + ONE_MIN_NS),
+            _signal(signal_id="paper-resumed", ts_event=BASE_TS_NS + 2 * ONE_MIN_NS),
+        ],
+    )
+    previous_run_id = "20260101-000000Z-00000000"
+    previous_dir = tmp_path / "paper" / previous_run_id
+    previous_dir.mkdir(parents=True)
+    previous_processed_until = BASE_TS_NS + ONE_MIN_NS
+    (previous_dir / "run_manifest.json").write_text(
+        json.dumps(
+            {
+                "backtest_end": "2026-01-01T00:01:00.000Z",
+                "runtime": {
+                    "processed_until_ns": previous_processed_until,
+                    "restart_sequence": 2,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = run_paper_session(
+        _config(
+            tmp_path=tmp_path,
+            catalog_path=catalog_path,
+            bar_type=bar_type,
+            signal_store_path=signal_store_path,
+            previous_run_id=previous_run_id,
+            restart_reason="pytest_restart",
+        )
+    )
+
+    manifest = json.loads((result.output_dir / "run_manifest.json").read_text())
+    runtime = manifest["runtime"]
+    assert manifest["backtest_start"] == "2026-01-01T00:02:00.000Z"
+    assert runtime["previous_run_id"] == previous_run_id
+    assert runtime["previous_manifest_found"] is True
+    assert runtime["previous_processed_until_ns"] == previous_processed_until
+    assert runtime["resume_from_ns"] == previous_processed_until + 1
+    assert runtime["catalog_start_overridden"] is True
+    assert runtime["restart_sequence"] == 3
+    assert runtime["restart_reason"] == "pytest_restart"
+
+
+def test_market_data_gap_blocks_signals_inside_missing_interval(
+    tmp_path, btcusdt_instrument, bar_type
+):
+    catalog_path = _write_catalog_at_times(
+        tmp_path,
+        btcusdt_instrument,
+        bar_type,
+        [100, 102],
+        [BASE_TS_NS, BASE_TS_NS + 2 * ONE_MIN_NS],
+    )
+    signal_store_path = _write_signals(
+        tmp_path,
+        [
+            _signal(
+                signal_id="paper-gap-buy",
+                ts_event=BASE_TS_NS + ONE_MIN_NS,
+                ttl_seconds=3600,
+            )
+        ],
+    )
+
+    result = run_paper_session(
+        _config(
+            tmp_path=tmp_path,
+            catalog_path=catalog_path,
+            bar_type=bar_type,
+            signal_store_path=signal_store_path,
+            max_signal_lag_seconds=3600,
+        )
+    )
+
+    manifest = json.loads((result.output_dir / "run_manifest.json").read_text())
+    assert manifest["runtime"]["data_gap_count"] == 1
+    assert manifest["totals"]["orders"] == 0
+    lineage = pd.read_parquet(result.output_dir / "signal_lineage.parquet")
+    assert lineage.loc[0, "decision"] == "skip"
+    assert lineage.loc[0, "reason"].startswith("data_gap:")
+    assert '"event": "data_gap"' in (
+        result.output_dir / "logs" / "runtime.log"
+    ).read_text()
 
 
 def test_signal_lag_blocks_new_paper_open(tmp_path, btcusdt_instrument, bar_type):

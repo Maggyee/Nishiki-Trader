@@ -12,9 +12,10 @@ credentials, or instantiate exchange adapters.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from pathlib import Path
@@ -52,6 +53,16 @@ from apps.strategies_nautilus.runners.backtest_runner import (
 )
 
 NANOSECONDS_PER_SECOND = 1_000_000_000
+_EPOCH = datetime(1970, 1, 1, tzinfo=UTC)
+_BAR_INTERVAL_NANOS: dict[str, int] = {
+    "NANOSECOND": 1,
+    "MICROSECOND": 1_000,
+    "MILLISECOND": 1_000_000,
+    "SECOND": NANOSECONDS_PER_SECOND,
+    "MINUTE": 60 * NANOSECONDS_PER_SECOND,
+    "HOUR": 60 * 60 * NANOSECONDS_PER_SECOND,
+    "DAY": 24 * 60 * 60 * NANOSECONDS_PER_SECOND,
+}
 
 
 @dataclass
@@ -79,9 +90,13 @@ class PaperRunnerConfig:
     data_mode: str = "catalog_polling"
     order_mode: str = "simulated"
     heartbeat_interval_seconds: int = 30
+    poll_interval_seconds: int = 60
+    poll_batch_size: int = 1
     max_signal_lag_seconds: int = 120
+    data_gap_tolerance_intervals: int = 1
     operator: str = "nishiki"
     previous_run_id: str | None = None
+    restart_reason: str | None = None
 
     def __post_init__(self) -> None:
         if self.order_mode != "simulated":
@@ -90,8 +105,14 @@ class PaperRunnerConfig:
             raise ValueError("paper runner only supports data_mode='catalog_polling'")
         if self.heartbeat_interval_seconds <= 0:
             raise ValueError("heartbeat_interval_seconds must be positive")
+        if self.poll_interval_seconds <= 0:
+            raise ValueError("poll_interval_seconds must be positive")
+        if self.poll_batch_size <= 0:
+            raise ValueError("poll_batch_size must be positive")
         if self.max_signal_lag_seconds <= 0:
             raise ValueError("max_signal_lag_seconds must be positive")
+        if self.data_gap_tolerance_intervals <= 0:
+            raise ValueError("data_gap_tolerance_intervals must be positive")
 
 
 @dataclass
@@ -123,12 +144,32 @@ class _PaperSimulation:
     stats_returns: dict[str, float | int | str | bool | None]
     strategy_log_lines: list[str]
     risk_log_lines: list[str]
+    runtime_log_lines: list[str]
+    heartbeat_rows: list[dict[str, Any]]
+    data_gaps: list[dict[str, Any]]
+    poll_count: int
+    first_processed_ns: int
+    processed_until_ns: int
+    expected_bar_interval_ns: int | None
+
+
+@dataclass(frozen=True)
+class _RuntimeContext:
+    config: PaperRunnerConfig
+    previous_manifest_found: bool = False
+    previous_manifest_sha256: str | None = None
+    previous_processed_until_ns: int | None = None
+    resume_from_ns: int | None = None
+    restart_sequence: int = 0
+    catalog_start_overridden: bool = False
 
 
 def run_paper_session(config: PaperRunnerConfig) -> PaperRunResult:
     """Run a local simulated paper session and write an ADR-007 bundle."""
     started = datetime.now(UTC)
     run_id = _make_run_id(started)
+    runtime_context = _resolve_runtime_context(config)
+    config = runtime_context.config
     output_dir = config.output_root / run_id
     inputs = _load_inputs(config)
     output_dir.mkdir(parents=True, exist_ok=False)
@@ -162,9 +203,21 @@ def run_paper_session(config: PaperRunnerConfig) -> PaperRunResult:
         "\n".join(simulation.risk_log_lines) + "\n",
         encoding="utf-8",
     )
+    (logs_dir / "runtime.log").write_text(
+        "\n".join(simulation.runtime_log_lines) + "\n",
+        encoding="utf-8",
+    )
+    (logs_dir / "heartbeat.jsonl").write_text(
+        "".join(
+            json.dumps(row, sort_keys=True) + "\n"
+            for row in simulation.heartbeat_rows
+        ),
+        encoding="utf-8",
+    )
 
     manifest_payload = _build_paper_manifest_payload(
         config=config,
+        runtime_context=runtime_context,
         inputs=inputs,
         run_id=run_id,
         git_commit=git_commit,
@@ -199,6 +252,20 @@ def _simulate_paper(
     risk_log_lines: list[str] = [
         "paper runtime mode=simulated no_exchange_adapter=true no_live_orders=true"
     ]
+    runtime_log_lines: list[str] = [
+        json.dumps(
+            {
+                "event": "runtime_start",
+                "data_mode": config.data_mode,
+                "order_mode": config.order_mode,
+                "poll_interval_seconds": config.poll_interval_seconds,
+                "poll_batch_size": config.poll_batch_size,
+            },
+            sort_keys=True,
+        )
+    ]
+    heartbeat_rows: list[dict[str, Any]] = []
+    data_gaps: list[dict[str, Any]] = []
 
     starting_equity = float(config.starting_balance.as_double())
     realized_pnl = 0.0
@@ -207,111 +274,181 @@ def _simulate_paper(
     day_open_equity: float | None = None
     last_price = 0.0
     last_ts = 0
+    first_processed_ns = int(inputs.bars[0].ts_event)
+    processed_until_ns = first_processed_ns
+    expected_interval_ns = _expected_bar_interval_ns(config.bar_type)
+    previous_bar_ts: int | None = None
+    last_heartbeat_ns: int | None = None
+    poll_count = 0
 
-    for bar in inputs.bars:
-        bar_ts = int(bar.ts_event)
-        price = float(bar.close)
-        last_price = price
-        last_ts = bar_ts
-        equity_now = _equity(
-            starting_equity=starting_equity,
-            realized_pnl=realized_pnl,
-            open_position=open_position,
-            mark_price=price,
-        )
-        current_day, day_open_equity = _update_daily_risk_state(
-            baseline=baseline,
-            current_day=current_day,
-            day_open_equity=day_open_equity,
-            now_ns=bar_ts,
-            equity_now=equity_now,
-        )
-
-        while signal_idx < len(signals) and int(signals[signal_idx].ts_event) <= bar_ts:
-            event = signals[signal_idx]
-            signal_idx += 1
-            intent = _decide_with_paper_guards(
-                baseline=baseline,
-                event=event,
-                now_ns=bar_ts,
-                max_signal_lag_seconds=config.max_signal_lag_seconds,
-            )
-            apply_result = _apply_paper_intent(
-                config=config,
-                event=event,
-                intent=intent,
-                price=price,
-                now_ns=bar_ts,
-                open_position=open_position,
-                realized_pnl=realized_pnl,
-                orders=orders,
-                fills=fills,
-                positions=positions,
-            )
-            open_position = apply_result["open_position"]
-            realized_pnl = apply_result["realized_pnl"]
-            reason = apply_result["reason"]
-            order_ids = apply_result["order_ids"]
-            fill_ids = apply_result["fill_ids"]
-            position_ids = apply_result["position_ids"]
-            lineage.append(
+    for poll_count, batch in enumerate(
+        _iter_poll_batches(inputs.bars, config.poll_batch_size),
+        start=1,
+    ):
+        runtime_log_lines.append(
+            json.dumps(
                 {
-                    "signal_id": event.signal_id,
-                    "source": event.source,
-                    "model_version": event.model_version,
-                    "ts_event": int(event.ts_event),
-                    "decision": intent.action,
-                    "reason": reason,
-                    "order_ids": ",".join(order_ids),
-                    "fill_ids": ",".join(fill_ids),
-                    "position_id": ",".join(position_ids),
-                    "ts_decision": bar_ts,
-                }
+                    "event": "poll",
+                    "poll_number": poll_count,
+                    "batch_rows": len(batch),
+                    "from_ts_event": int(batch[0].ts_event),
+                    "until_ts_event": int(batch[-1].ts_event),
+                },
+                sort_keys=True,
             )
-            strategy_log_lines.append(
-                json.dumps(
-                    {
-                        "ts_decision": bar_ts,
-                        "signal_id": event.signal_id,
-                        "decision": intent.action,
-                        "dry_run": intent.dry_run,
-                        "reason": reason,
-                        "order_ids": order_ids,
-                    },
-                    sort_keys=True,
+        )
+
+        for bar in batch:
+            bar_ts = int(bar.ts_event)
+            price = float(bar.close)
+            last_price = price
+            last_ts = bar_ts
+            processed_until_ns = bar_ts
+            if previous_bar_ts is not None and expected_interval_ns is not None:
+                gap = _market_data_gap(
+                    previous_ts=previous_bar_ts,
+                    current_ts=bar_ts,
+                    expected_interval_ns=expected_interval_ns,
+                    tolerance_intervals=config.data_gap_tolerance_intervals,
                 )
+                if gap is not None:
+                    data_gaps.append(gap)
+                    runtime_log_lines.append(
+                        json.dumps({"event": "data_gap", **gap}, sort_keys=True)
+                    )
+                    risk_log_lines.append(
+                        json.dumps({"reason": "data_gap", **gap}, sort_keys=True)
+                    )
+            previous_bar_ts = bar_ts
+
+            equity_now = _equity(
+                starting_equity=starting_equity,
+                realized_pnl=realized_pnl,
+                open_position=open_position,
+                mark_price=price,
             )
-            if reason and (
-                reason.startswith("reject_")
-                or reason.startswith("kill_switch")
-                or reason.startswith("signal_lag")
+            current_day, day_open_equity = _update_daily_risk_state(
+                baseline=baseline,
+                current_day=current_day,
+                day_open_equity=day_open_equity,
+                now_ns=bar_ts,
+                equity_now=equity_now,
+            )
+
+            while (
+                signal_idx < len(signals)
+                and int(signals[signal_idx].ts_event) <= bar_ts
             ):
-                risk_log_lines.append(
+                event = signals[signal_idx]
+                signal_idx += 1
+                intent = _decide_with_paper_guards(
+                    baseline=baseline,
+                    event=event,
+                    now_ns=bar_ts,
+                    max_signal_lag_seconds=config.max_signal_lag_seconds,
+                    data_gap_reason=_data_gap_reason_for_signal(
+                        int(event.ts_event),
+                        data_gaps,
+                    ),
+                )
+                apply_result = _apply_paper_intent(
+                    config=config,
+                    event=event,
+                    intent=intent,
+                    price=price,
+                    now_ns=bar_ts,
+                    open_position=open_position,
+                    realized_pnl=realized_pnl,
+                    orders=orders,
+                    fills=fills,
+                    positions=positions,
+                )
+                open_position = apply_result["open_position"]
+                realized_pnl = apply_result["realized_pnl"]
+                reason = apply_result["reason"]
+                order_ids = apply_result["order_ids"]
+                fill_ids = apply_result["fill_ids"]
+                position_ids = apply_result["position_ids"]
+                lineage.append(
+                    {
+                        "signal_id": event.signal_id,
+                        "source": event.source,
+                        "model_version": event.model_version,
+                        "ts_event": int(event.ts_event),
+                        "decision": intent.action,
+                        "reason": reason,
+                        "order_ids": ",".join(order_ids),
+                        "fill_ids": ",".join(fill_ids),
+                        "position_id": ",".join(position_ids),
+                        "ts_decision": bar_ts,
+                    }
+                )
+                strategy_log_lines.append(
                     json.dumps(
                         {
                             "ts_decision": bar_ts,
                             "signal_id": event.signal_id,
+                            "decision": intent.action,
+                            "dry_run": intent.dry_run,
                             "reason": reason,
+                            "order_ids": order_ids,
                         },
                         sort_keys=True,
                     )
                 )
+                if reason and (
+                    reason.startswith("reject_")
+                    or reason.startswith("kill_switch")
+                    or reason.startswith("signal_lag")
+                    or reason.startswith("data_gap")
+                ):
+                    risk_log_lines.append(
+                        json.dumps(
+                            {
+                                "ts_decision": bar_ts,
+                                "signal_id": event.signal_id,
+                                "reason": reason,
+                            },
+                            sort_keys=True,
+                        )
+                    )
 
-        equity_after_bar = _equity(
-            starting_equity=starting_equity,
-            realized_pnl=realized_pnl,
-            open_position=open_position,
-            mark_price=price,
-        )
-        locked = abs(open_position.signed_qty * price) if open_position else 0.0
-        account_rows.append(
-            _account_balance_row(
-                config=config,
-                ts_event=bar_ts,
-                total=equity_after_bar,
-                locked=locked,
+            equity_after_bar = _equity(
+                starting_equity=starting_equity,
+                realized_pnl=realized_pnl,
+                open_position=open_position,
+                mark_price=price,
             )
-        )
+            locked = abs(open_position.signed_qty * price) if open_position else 0.0
+            account_rows.append(
+                _account_balance_row(
+                    config=config,
+                    ts_event=bar_ts,
+                    total=equity_after_bar,
+                    locked=locked,
+                )
+            )
+            if _should_emit_heartbeat(
+                last_heartbeat_ns=last_heartbeat_ns,
+                now_ns=bar_ts,
+                heartbeat_interval_seconds=config.heartbeat_interval_seconds,
+            ):
+                last_heartbeat_ns = bar_ts
+                heartbeat = _heartbeat_row(
+                    poll_number=poll_count,
+                    ts_event=bar_ts,
+                    equity=equity_after_bar,
+                    last_price=price,
+                    open_position=open_position,
+                    signal_idx=signal_idx,
+                    order_count=len(orders),
+                    fill_count=len(fills),
+                    data_gap_count=len(data_gaps),
+                )
+                heartbeat_rows.append(heartbeat)
+                runtime_log_lines.append(
+                    json.dumps({"event": "heartbeat", **heartbeat}, sort_keys=True)
+                )
 
     if open_position is not None:
         positions.append(
@@ -368,6 +505,13 @@ def _simulate_paper(
         },
         strategy_log_lines=strategy_log_lines or ["no signals consumed"],
         risk_log_lines=risk_log_lines,
+        runtime_log_lines=runtime_log_lines,
+        heartbeat_rows=heartbeat_rows,
+        data_gaps=data_gaps,
+        poll_count=poll_count,
+        first_processed_ns=first_processed_ns,
+        processed_until_ns=processed_until_ns,
+        expected_bar_interval_ns=expected_interval_ns,
     )
 
 
@@ -377,10 +521,19 @@ def _decide_with_paper_guards(
     event: SignalEvent,
     now_ns: int,
     max_signal_lag_seconds: int,
+    data_gap_reason: str | None = None,
 ) -> OrderIntent:
     intent = baseline.decide(event, now_ns=now_ns)
     if intent.action == "skip" or event.side == "flat":
         return intent
+    if data_gap_reason is not None:
+        return OrderIntent(
+            signal_id=event.signal_id,
+            instrument_id=f"{event.symbol}.{event.venue}",
+            action="skip",
+            target_position_pct=0.0,
+            reason=data_gap_reason,
+        )
     lag_ns = now_ns - int(event.ts_event)
     max_lag_ns = max_signal_lag_seconds * NANOSECONDS_PER_SECOND
     if lag_ns > max_lag_ns:
@@ -745,6 +898,166 @@ def _max_drawdown(account_rows: list[dict[str, Any]]) -> dict[str, float]:
     }
 
 
+def _iter_poll_batches(items: list[Any], batch_size: int) -> list[list[Any]]:
+    return [items[i : i + batch_size] for i in range(0, len(items), batch_size)]
+
+
+def _expected_bar_interval_ns(bar_type: BarType) -> int | None:
+    parts = str(bar_type).rsplit("-", 4)
+    if len(parts) != 5:
+        return None
+    _, step_text, aggregation, _, _ = parts
+    try:
+        step = int(step_text)
+    except ValueError:
+        return None
+    nanos = _BAR_INTERVAL_NANOS.get(aggregation.upper())
+    return step * nanos if nanos is not None else None
+
+
+def _market_data_gap(
+    *,
+    previous_ts: int,
+    current_ts: int,
+    expected_interval_ns: int,
+    tolerance_intervals: int,
+) -> dict[str, Any] | None:
+    elapsed = current_ts - previous_ts
+    if elapsed <= expected_interval_ns * tolerance_intervals:
+        return None
+    missing_intervals = max((elapsed // expected_interval_ns) - 1, 1)
+    missing_start_ns = previous_ts + expected_interval_ns
+    missing_end_ns = current_ts - expected_interval_ns
+    return {
+        "previous_ts_event": previous_ts,
+        "current_ts_event": current_ts,
+        "expected_interval_ns": expected_interval_ns,
+        "missing_start_ns": missing_start_ns,
+        "missing_end_ns": missing_end_ns,
+        "missing_intervals": missing_intervals,
+    }
+
+
+def _data_gap_reason_for_signal(
+    signal_ts_event: int,
+    data_gaps: list[dict[str, Any]],
+) -> str | None:
+    for gap in data_gaps:
+        if int(gap["missing_start_ns"]) <= signal_ts_event <= int(gap["missing_end_ns"]):
+            return (
+                "data_gap: signal_ts_event inside missing market data interval "
+                f"{gap['missing_start_ns']}..{gap['missing_end_ns']}"
+            )
+    return None
+
+
+def _should_emit_heartbeat(
+    *,
+    last_heartbeat_ns: int | None,
+    now_ns: int,
+    heartbeat_interval_seconds: int,
+) -> bool:
+    if last_heartbeat_ns is None:
+        return True
+    return now_ns - last_heartbeat_ns >= (
+        heartbeat_interval_seconds * NANOSECONDS_PER_SECOND
+    )
+
+
+def _heartbeat_row(
+    *,
+    poll_number: int,
+    ts_event: int,
+    equity: float,
+    last_price: float,
+    open_position: _OpenPosition | None,
+    signal_idx: int,
+    order_count: int,
+    fill_count: int,
+    data_gap_count: int,
+) -> dict[str, Any]:
+    return {
+        "ts_wall_clock": _iso_ms_utc(datetime.now(UTC)),
+        "ts_event": ts_event,
+        "poll_number": poll_number,
+        "processed_until_ns": ts_event,
+        "signals_seen": signal_idx,
+        "orders": order_count,
+        "fills": fill_count,
+        "equity": equity,
+        "last_price": last_price,
+        "open_position_id": open_position.position_id if open_position else "",
+        "data_gap_count": data_gap_count,
+    }
+
+
+def _resolve_runtime_context(config: PaperRunnerConfig) -> _RuntimeContext:
+    if config.previous_run_id is None:
+        return _RuntimeContext(config=config)
+
+    manifest_path = config.output_root / config.previous_run_id / "run_manifest.json"
+    if not manifest_path.exists():
+        return _RuntimeContext(config=config)
+
+    manifest_bytes = manifest_path.read_bytes()
+    previous_payload = json.loads(manifest_bytes.decode("utf-8"))
+    previous_runtime = previous_payload.get("runtime") or {}
+    previous_processed_until_ns = _runtime_processed_until_ns(previous_payload)
+    resume_from_ns = (
+        previous_processed_until_ns + 1
+        if previous_processed_until_ns is not None
+        else None
+    )
+    restart_sequence = int(previous_runtime.get("restart_sequence") or 0) + 1
+    effective_config = config
+    catalog_start_overridden = False
+    signal_filter = dict(config.signal_filter)
+    if resume_from_ns is not None:
+        current_since = signal_filter.get("since_ns")
+        if current_since is None or int(current_since) < resume_from_ns:
+            signal_filter["since_ns"] = resume_from_ns
+    if resume_from_ns is not None and config.catalog_start is None:
+        effective_config = replace(
+            config,
+            catalog_start=resume_from_ns,
+            signal_filter=signal_filter,
+        )
+        catalog_start_overridden = True
+    elif signal_filter != config.signal_filter:
+        effective_config = replace(config, signal_filter=signal_filter)
+    return _RuntimeContext(
+        config=effective_config,
+        previous_manifest_found=True,
+        previous_manifest_sha256=hashlib.sha256(manifest_bytes).hexdigest(),
+        previous_processed_until_ns=previous_processed_until_ns,
+        resume_from_ns=resume_from_ns,
+        restart_sequence=restart_sequence,
+        catalog_start_overridden=catalog_start_overridden,
+    )
+
+
+def _runtime_processed_until_ns(payload: dict[str, Any]) -> int | None:
+    runtime = payload.get("runtime") or {}
+    raw = runtime.get("processed_until_ns")
+    if isinstance(raw, int):
+        return raw
+    if isinstance(raw, str) and raw.isdigit():
+        return int(raw)
+    backtest_end = payload.get("backtest_end")
+    if isinstance(backtest_end, str):
+        return _iso_ms_utc_to_ns(backtest_end)
+    return None
+
+
+def _iso_ms_utc_to_ns(value: str) -> int:
+    dt = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=UTC)
+    delta = dt - _EPOCH
+    return (
+        ((delta.days * 24 * 60 * 60) + delta.seconds) * NANOSECONDS_PER_SECOND
+        + delta.microseconds * 1_000
+    )
+
+
 def _update_daily_risk_state(
     *,
     baseline: BaselineSignalStrategy,
@@ -784,6 +1097,7 @@ def _unrealized_pnl(
 def _build_paper_manifest_payload(
     *,
     config: PaperRunnerConfig,
+    runtime_context: _RuntimeContext,
     inputs: BacktestInputs,
     run_id: str,
     git_commit: str,
@@ -807,11 +1121,37 @@ def _build_paper_manifest_payload(
         "data_mode": config.data_mode,
         "order_mode": config.order_mode,
         "heartbeat_interval_seconds": config.heartbeat_interval_seconds,
+        "heartbeat_count": len(simulation.heartbeat_rows),
+        "polling_mode": "incremental",
+        "poll_interval_seconds": config.poll_interval_seconds,
+        "poll_batch_size": config.poll_batch_size,
+        "poll_count": simulation.poll_count,
+        "first_processed_ns": simulation.first_processed_ns,
+        "processed_until_ns": simulation.processed_until_ns,
+        "expected_bar_interval_ns": simulation.expected_bar_interval_ns,
         "max_signal_lag_seconds": config.max_signal_lag_seconds,
+        "data_gap_tolerance_intervals": config.data_gap_tolerance_intervals,
+        "data_gap_count": len(simulation.data_gaps),
+        "data_gaps": simulation.data_gaps,
         "operator": config.operator,
+        "restart_sequence": runtime_context.restart_sequence,
     }
     if config.previous_run_id is not None:
         runtime["previous_run_id"] = config.previous_run_id
+        runtime["previous_manifest_found"] = runtime_context.previous_manifest_found
+        runtime["catalog_start_overridden"] = runtime_context.catalog_start_overridden
+        if runtime_context.previous_manifest_sha256 is not None:
+            runtime["previous_manifest_sha256"] = (
+                runtime_context.previous_manifest_sha256
+            )
+        if runtime_context.previous_processed_until_ns is not None:
+            runtime["previous_processed_until_ns"] = (
+                runtime_context.previous_processed_until_ns
+            )
+        if runtime_context.resume_from_ns is not None:
+            runtime["resume_from_ns"] = runtime_context.resume_from_ns
+        if config.restart_reason is not None:
+            runtime["restart_reason"] = config.restart_reason
     return {
         "schema_version": SCHEMA_VERSION,
         "run_id": run_id,
@@ -924,9 +1264,13 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--machine-id", default="local")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--heartbeat-interval-seconds", type=int, default=30)
+    parser.add_argument("--poll-interval-seconds", type=int, default=60)
+    parser.add_argument("--poll-batch-size", type=int, default=1)
     parser.add_argument("--max-signal-lag-seconds", type=int, default=120)
+    parser.add_argument("--data-gap-tolerance-intervals", type=int, default=1)
     parser.add_argument("--operator", default="nishiki")
     parser.add_argument("--previous-run-id")
+    parser.add_argument("--restart-reason")
     return parser
 
 
@@ -960,9 +1304,13 @@ def _config_from_args(args: argparse.Namespace) -> PaperRunnerConfig:
         machine_id=base.machine_id,
         seed=base.seed,
         heartbeat_interval_seconds=args.heartbeat_interval_seconds,
+        poll_interval_seconds=args.poll_interval_seconds,
+        poll_batch_size=args.poll_batch_size,
         max_signal_lag_seconds=args.max_signal_lag_seconds,
+        data_gap_tolerance_intervals=args.data_gap_tolerance_intervals,
         operator=args.operator,
         previous_run_id=args.previous_run_id,
+        restart_reason=args.restart_reason,
     )
 
 

@@ -51,7 +51,10 @@ uv run python -m apps.strategies_nautilus.runners.paper_runner \
   --trade-size 0.001 \
   --starting-balance 100000 \
   --policy-position-pct-multiplier 0.2 \
-  --policy-dry-run
+  --policy-dry-run \
+  --heartbeat-interval-seconds 30 \
+  --poll-interval-seconds 60 \
+  --poll-batch-size 1
 ```
 
 检查：
@@ -60,14 +63,31 @@ uv run python -m apps.strategies_nautilus.runners.paper_runner \
 jq '.kind, .runtime, .totals, .strategies[0].params.policies' \
   data/paper/<run_id>/run_manifest.json
 
+tail -n 5 data/paper/<run_id>/logs/heartbeat.jsonl
+tail -n 20 data/paper/<run_id>/logs/runtime.log
+
 uv run python -m apps.strategies_nautilus.runners.report_paper_bundle \
   --json \
   data/paper/<run_id>
 ```
 
+重启 / 续跑：
+
+```bash
+uv run python -m apps.strategies_nautilus.runners.paper_runner \
+  ...same source/model/policy args... \
+  --previous-run-id <previous_run_id> \
+  --restart-reason operator_restart
+```
+
+如果 `data/paper/<previous_run_id>/run_manifest.json` 可读，runner 会从上次
+`runtime.processed_until_ns + 1` 自动设置 catalog / signal cursor，并在新 manifest
+记录 `previous_manifest_sha256`、`resume_from_ns`、`restart_sequence`。
+
 降档规则：
 
 - `signal_lineage.parquet` 出现批量 `expired`、`unauthorized`、`signal_lag`：保持或切回 `dry_run=True`。
+- `logs/runtime.log` 或 report 中出现 `data_gap` / `runtime_data_gaps`：保持或切回 `dry_run=True`，补齐行情后重新跑 session。
 - `risk.log` 出现 `kill_switch`：停用该 `(source, model_version)`，人工复盘后才能恢复。
 - 任何 session 的 `git_dirty=true`：不得作为升档依据。
 - Paper 通过前禁止添加真实 exchange credentials；testnet 通过前禁止 live。
