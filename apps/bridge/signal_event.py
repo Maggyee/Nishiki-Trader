@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -9,6 +10,11 @@ from apps.bridge.time_utils import ensure_ns
 SCHEMA_VERSION = "signal.v1"
 
 Side = Literal["buy", "sell", "flat"]
+
+SOURCE_FAMILIES: tuple[str, ...] = ("manual", "rule", "freqai", "llm")
+_SOURCE_RE = re.compile(
+    r"^(?:" + "|".join(SOURCE_FAMILIES) + r")_[a-z0-9][a-z0-9_]*$"
+)
 
 
 class SignalEvent(BaseModel):
@@ -33,3 +39,13 @@ class SignalEvent(BaseModel):
     @classmethod
     def _ts_event_in_ns(cls, v: int) -> int:
         return ensure_ns(v)
+
+    @field_validator("source")
+    @classmethod
+    def _source_family_prefix(cls, v: str) -> str:
+        if not _SOURCE_RE.fullmatch(v):
+            raise ValueError(
+                f"source={v!r} must match `<family>_<variant>` where family in "
+                f"{SOURCE_FAMILIES} and variant is lowercase a-z0-9_ (ADR-005 §2.1)"
+            )
+        return v

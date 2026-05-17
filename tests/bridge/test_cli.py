@@ -52,7 +52,7 @@ def test_cli_write_dedupes_on_second_run(tmp_path, signal_payload, capsys):
 
 def test_cli_validate_rejects_unauthorized(tmp_path, make_payload, capsys):
     inp = tmp_path / "signals.jsonl"
-    _write_jsonl(inp, [make_payload(source="rogue", signal_id="rogue-1")])
+    _write_jsonl(inp, [make_payload(source="llm_rogue", signal_id="rogue-1")])
     rc = main([
         "validate",
         "--allowed-sources", "freqai_v1",

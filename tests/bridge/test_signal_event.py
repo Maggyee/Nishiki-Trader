@@ -64,3 +64,64 @@ def test_invalid_values_rejected(make_payload, field, value):
 def test_signal_event_is_immutable(signal_event):
     with pytest.raises(PydanticValidationError):
         signal_event.symbol = "ETHUSDT"  # type: ignore[misc]
+
+
+# ----- ADR-005 §2.1: source family prefix ---------------------------------
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "manual_research",
+        "manual_morning_review",
+        "rule_baseline_v1",
+        "rule_ema_rsi",
+        "freqai_v1",
+        "freqai_lgbm_15m",
+        "llm_overnight_review",
+        "llm_news_sentiment_v2",
+    ],
+)
+def test_source_family_prefix_accepted(make_payload, source):
+    payload = make_payload(source=source)
+    event = SignalEvent.model_validate(payload)
+    assert event.source == source
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "unknown_source",
+        "agent_v1",  # `agent` is not one of the 4 families
+        "manual",  # missing variant
+        "manual_",  # variant must have at least one char
+        "rule_",  # ditto
+        "manual-research",  # hyphen disallowed
+        "Manual_research",  # uppercase disallowed
+        "manual_Research",  # uppercase in variant disallowed
+        "rule_BTC",  # uppercase in variant disallowed
+        "rule_3-day",  # hyphen disallowed
+        "freqai_lgbm.15m",  # dot disallowed
+        "llm news",  # space disallowed
+        "_manual_research",  # leading underscore disallowed
+        "",  # empty
+    ],
+)
+def test_source_family_prefix_rejected(make_payload, source):
+    payload = make_payload(source=source)
+    with pytest.raises(PydanticValidationError):
+        SignalEvent.model_validate(payload)
+
+
+def test_source_variant_must_start_with_alphanumeric(make_payload):
+    # ADR-005 §2.1: variant must start with [a-z0-9], not "_"
+    payload = make_payload(source="manual__double_underscore")
+    with pytest.raises(PydanticValidationError):
+        SignalEvent.model_validate(payload)
+
+
+def test_existing_demo_and_rule_sources_pass_under_adr_005(make_payload):
+    # Smoke-test that the two sources already living in production signals.db
+    # remain valid after ADR-005's prefix gate kicks in.
+    for source in ("manual_research", "rule_baseline_v1"):
+        SignalEvent.model_validate(make_payload(source=source))

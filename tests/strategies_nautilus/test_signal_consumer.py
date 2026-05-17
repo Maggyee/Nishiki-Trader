@@ -21,7 +21,7 @@ def test_reject_venue_mismatch(make_payload, config):
 
 
 def test_reject_unauthorized_source(make_payload, config):
-    event = SignalEvent.model_validate(make_payload(source="rogue"))
+    event = SignalEvent.model_validate(make_payload(source="llm_rogue"))
     outcome = evaluate(event, config, now_ns=event.ts_event)
     assert outcome.decision == "reject_unauthorized_source"
 

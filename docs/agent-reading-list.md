@@ -25,7 +25,7 @@ Read these before any non-trivial work:
 |---|---|
 | Project status, next step, or handoff | `docs/project-status.md`, `git status --short --branch`, `git fetch origin`, `git pull --ff-only`, `git log --oneline --decorate -5` |
 | Architecture, boundaries, or phase planning | `docs/agent-operating-contract.md`, `docs/decisions/001-tech-stack.md` |
-| Signal bridge, ML output, FreqAI integration | `docs/decisions/002-signal-bridge-protocol.md` |
+| Signal bridge, ML output, FreqAI integration | `docs/decisions/002-signal-bridge-protocol.md`, `docs/decisions/005-signal-source-taxonomy.md` |
 | Upstream source updates or dependency drift | `docs/upstream-versions.md` |
 | Project skeleton or directory layout | `docs/decisions/003-project-skeleton.md` |
 | Backtest result format or reports | `docs/decisions/004-backtest-result-format.md` |

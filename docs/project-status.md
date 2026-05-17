@@ -47,7 +47,7 @@ At task finish:
 ## Milestones
 
 - Phase 0 skeleton and agent contracts are in place.
-- ADR-001 through ADR-004 define the core tech stack, `SignalEvent v1`, project skeleton, and backtest result format.
+- ADR-001 through ADR-005 define the core tech stack, `SignalEvent v1`, project skeleton, backtest result format, and signal-source taxonomy (`<family>_<variant>` with families = {manual, rule, freqai, llm}).
 - Phase 1 bridge is implemented: `apps/bridge/` validates, persists, and replays `SignalEvent v1` through SQLite/WAL with CLI coverage.
 - Placeholder strategy-side consumer is implemented: `apps/strategies_nautilus/signal_consumer.py` applies ADR-002 §4.1 checks without touching trading APIs.
 - Baseline decision layer is implemented: `apps/strategies_nautilus/baseline_strategy.py` maps accepted signals to `OrderIntent` and enforces the 5%-day-loss kill-switch.
@@ -70,8 +70,9 @@ Immediate focus:
 ## Next Steps
 
 1. Extend backfill beyond one BTCUSDT day; append a new dated section to `docs/progress/phase-2-signal-source-baselines.md` when the catalog window changes.
-2. Plan ADR-005 (research-layer signal source taxonomy: how FreqAI / model-driven sources slot beside the rule baseline) before adding a second source family.
-3. Decide Phase 2 SQLite -> Postgres / Redis Stream readiness only after backtest volume exposes an actual bottleneck.
+2. Plan ADR-006 (gray-rollout / canary mechanics: per-source `max_position_pct` overrides, dry-run forcing, position-size haircuts for new `model_version`s on the live path). ADR-005 §2.3 only sketched the concept.
+3. Land the first `freqai_*` signal source against the existing catalog; record its fingerprint in the baselines note.
+4. Decide Phase 2 SQLite -> Postgres / Redis Stream readiness only after backtest volume exposes an actual bottleneck.
 
 ## Blocked / Deferred
 
@@ -86,9 +87,9 @@ Immediate focus:
 
 ## Latest Verification
 
-On 2026-05-17, after the rule-based baseline signal generator landed:
+On 2026-05-17, after ADR-005 source-family validation and the rule-based baseline signal generator landed:
 
-- `UV_CACHE_DIR=/tmp/uv-cache uv run pytest -q` -> 183 passed.
+- `UV_CACHE_DIR=/tmp/uv-cache uv run pytest -q` -> 207 passed (ADR-005 source-prefix gate added 24 cases).
 - `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check apps tests` -> clean.
 - `UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_freqtrade.research.baseline_rule_signals --catalog-path data/catalog --signal-store-path data/bridge/signals.db --symbol BTCUSDT --venue BINANCE --bar-type 'BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL'` -> 71 SignalEvents written for BTCUSDT 2024-01-01.
 - `UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.backtest_runner --instrument-id BTCUSDT.BINANCE --bar-type 'BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL' --signal-source rule_baseline_v1 --signal-model-version 'ema5-20+rsi14' --allowed-source rule_baseline_v1 --allowed-model-version 'ema5-20+rsi14' --trade-size 0.001 --starting-balance 100000 --min-confidence 0.5` -> 1 bundle, totals fills=142, PnL (total)=-$4.74, Win Rate=12.7% (placeholder strategy, no alpha expected).

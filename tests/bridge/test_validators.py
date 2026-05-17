@@ -31,7 +31,7 @@ def test_fresh_signal_not_expired(signal_event):
 
 
 def test_unauthorized_source_rejected(make_payload, auth):
-    event = SignalEvent.model_validate(make_payload(source="rogue_agent"))
+    event = SignalEvent.model_validate(make_payload(source="llm_rogue_agent"))
     with pytest.raises(UnauthorizedSourceError):
         validate(event, auth, now_ns=event.ts_event)
 

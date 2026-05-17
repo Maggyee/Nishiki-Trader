@@ -98,7 +98,7 @@ def test_venue_mismatch_returns_skip(strategy, make_payload):
 
 def test_unauthorized_source_returns_skip(strategy, make_payload):
     event = SignalEvent.model_validate(
-        make_payload(source="rogue", signal_id="src-1")
+        make_payload(source="llm_rogue", signal_id="src-1")
     )
     intent = strategy.decide(event, now_ns=event.ts_event)
     assert intent.action == "skip"
