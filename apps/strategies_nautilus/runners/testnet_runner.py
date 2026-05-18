@@ -14,6 +14,7 @@ order, and never writes the full API key or secret anywhere on disk.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -24,6 +25,7 @@ from collections import deque
 from collections.abc import Callable, Mapping
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
@@ -67,8 +69,12 @@ DEFAULT_WS_RECONNECT_BURST_THRESHOLD = 10
 EXIT_OK = 0
 EXIT_RUNTIME_ERROR = 1
 EXIT_STARTUP_VALIDATION = 2
+EXIT_RESTART_DRIFT = 3
 EXIT_EMERGENCY_FLATTEN_SUCCESS = 4
 EXIT_EMERGENCY_FLATTEN_FAILED = 5
+TERMINAL_ORDER_STATUSES = frozenset(
+    {"FILLED", "CANCELED", "REJECTED", "EXPIRED"}
+)
 
 
 class StartupValidationError(ValueError):
@@ -241,6 +247,8 @@ class LongRunningTestnetSettings:
     ws_reconnect_burst_threshold: int = DEFAULT_WS_RECONNECT_BURST_THRESHOLD
     emergency_fill_timeout_seconds: float = 60.0
     emergency_poll_interval_seconds: float = 1.0
+    previous_run_id: str | None = None
+    restart_reason: str | None = None
 
     def __post_init__(self) -> None:
         if not self.instrument_ids:
@@ -263,6 +271,42 @@ class LongRunningTestnetSettings:
             raise ValueError("emergency_fill_timeout_seconds must be positive")
         if self.emergency_poll_interval_seconds <= 0:
             raise ValueError("emergency_poll_interval_seconds must be positive")
+        if self.previous_run_id and not self.restart_reason:
+            raise ValueError("restart_reason is required with previous_run_id")
+        if self.restart_reason and not self.previous_run_id:
+            raise ValueError("previous_run_id is required with restart_reason")
+
+
+@dataclass(frozen=True)
+class RestartReconciliation:
+    previous_run_id: str
+    previous_manifest_sha256: str
+    previous_processed_until_ns: int | None
+    restart_sequence: int
+    restart_reason: str
+    restart_order_drift: dict[str, list[dict[str, str]]]
+    restart_position_drift: dict[str, list[dict[str, str]]]
+
+    @property
+    def drift_detected(self) -> bool:
+        return bool(
+            self.restart_order_drift["missing_on_exchange"]
+            or self.restart_order_drift["unexpected_on_exchange"]
+            or self.restart_position_drift["missing_on_exchange"]
+            or self.restart_position_drift["unexpected_on_exchange"]
+        )
+
+    def runtime_fields(self) -> dict[str, object]:
+        return {
+            "previous_run_id": self.previous_run_id,
+            "previous_manifest_sha256": self.previous_manifest_sha256,
+            "previous_processed_until_ns": self.previous_processed_until_ns,
+            "restart_sequence": self.restart_sequence,
+            "restart_reason": self.restart_reason,
+            "restart_order_drift": self.restart_order_drift,
+            "restart_position_drift": self.restart_position_drift,
+            "restart_drift_detected": self.drift_detected,
+        }
 
 
 @dataclass(frozen=True)
@@ -288,6 +332,8 @@ class LongRunningTestnetResult:
 
     @property
     def exit_code(self) -> int:
+        if self.stop_reason == "restart_drift_detected":
+            return EXIT_RESTART_DRIFT
         if self.auto_flatten_trigger is not None:
             return (
                 EXIT_EMERGENCY_FLATTEN_SUCCESS
@@ -312,6 +358,7 @@ NodeFactory = Callable[[TradingNodeConfig], Any]
 ClockFn = Callable[[], datetime]
 TelemetryReader = Callable[[], TestnetRuntimeTelemetry]
 FlattenRunner = Callable[[Any], Any]
+RestartExchangeFactory = Callable[[str], Any]
 
 
 def validate_startup(
@@ -678,6 +725,7 @@ def run_long_running_testnet(
     clock: ClockFn | None = None,
     telemetry_reader: TelemetryReader | None = None,
     flatten_runner: FlattenRunner | None = None,
+    restart_exchange_factory: RestartExchangeFactory | None = None,
     run_id: str | None = None,
 ) -> LongRunningTestnetResult:
     """Run the guarded ADR-008 §6.3c testnet shell with auto-flatten triggers.
@@ -710,6 +758,15 @@ def run_long_running_testnet(
     flatten: FlattenRunner = (
         flatten_runner if flatten_runner is not None else _default_flatten_runner
     )
+    exchange_factory: RestartExchangeFactory = (
+        restart_exchange_factory
+        if restart_exchange_factory is not None
+        else lambda current_run_id: _default_restart_exchange(
+            settings=settings,
+            run_settings=run_settings,
+            run_id=current_run_id,
+        )
+    )
 
     startup = validate_startup(settings, env=effective_env, git_state=git_state)
     started = now()
@@ -737,6 +794,70 @@ def run_long_running_testnet(
             ),
         },
     )
+
+    restart_reconciliation: RestartReconciliation | None = None
+    if run_settings.previous_run_id is not None:
+        restart_reconciliation = _reconcile_restart(
+            run_settings=run_settings,
+            exchange=exchange_factory(rid),
+        )
+        _append_runtime_event(
+            runtime_log_path,
+            {
+                "event": "restart_reconciliation",
+                "ts": _iso_ms_utc(now()),
+                **restart_reconciliation.runtime_fields(),
+            },
+        )
+        if restart_reconciliation.drift_detected:
+            _append_alert_event(
+                alerts_path,
+                severity="critical",
+                kind=KIND_TESTNET,
+                run_id=rid,
+                msg="restart_drift_detected",
+                ts=_iso_ms_utc(now()),
+                context=restart_reconciliation.runtime_fields(),
+            )
+            finished = now()
+            finished_at = _iso_ms_utc(finished)
+            elapsed = max(0.0, (finished - started).total_seconds())
+            runtime = _base_testnet_runtime(
+                startup=startup,
+                run_settings=run_settings,
+                shutdown_reason="restart_drift_detected",
+                restart=restart_reconciliation,
+            )
+            _append_runtime_event(
+                runtime_log_path,
+                {
+                    "event": "shutdown",
+                    "ts": finished_at,
+                    "elapsed_seconds": elapsed,
+                    "stop_reason": "restart_drift_detected",
+                    "node_built": False,
+                    "node_run_invoked": False,
+                },
+            )
+            result = LongRunningTestnetResult(
+                startup=startup,
+                run_id=rid,
+                bundle_root=bundle_root,
+                runtime_log_path=runtime_log_path,
+                alerts_path=alerts_path,
+                manifest_path=manifest_path,
+                started_at=started_at,
+                finished_at=finished_at,
+                elapsed_seconds=elapsed,
+                max_run_seconds=run_settings.max_run_seconds,
+                stop_reason="restart_drift_detected",
+                error=None,
+                node_built=False,
+                node_run_invoked=False,
+                runtime=runtime,
+            )
+            _write_long_run_manifest(result)
+            return result
 
     node_config = build_testnet_node_config(
         settings,
@@ -873,6 +994,7 @@ def run_long_running_testnet(
         run_settings=run_settings,
         shutdown_reason=stop_reason,
         sample=sample,
+        restart=restart_reconciliation,
     )
     if trigger is not None:
         runtime["auto_flatten_trigger"] = trigger.msg
@@ -926,6 +1048,7 @@ def _base_testnet_runtime(
     run_settings: LongRunningTestnetSettings,
     shutdown_reason: str,
     sample: TestnetRuntimeTelemetry | None = None,
+    restart: RestartReconciliation | None = None,
 ) -> dict[str, object]:
     runtime: dict[str, object] = {
         "mode": MODE_TESTNET,
@@ -949,6 +1072,8 @@ def _base_testnet_runtime(
         "daily_loss_limit_pct": run_settings.daily_loss_limit_pct,
         "operator": startup.operator,
         "shutdown_reason": shutdown_reason,
+        "restart_sequence": 0,
+        "restart_drift_detected": False,
     }
     if sample is not None:
         runtime.update(
@@ -960,10 +1085,221 @@ def _base_testnet_runtime(
                 "open_orders": sample.open_orders,
                 "open_positions": sample.open_positions,
                 "last_bar_ns": sample.last_bar_ns,
+                "processed_until_ns": sample.last_bar_ns,
                 "ws_connected": sample.ws_connected,
             }
         )
+    if restart is not None:
+        runtime.update(restart.runtime_fields())
     return runtime
+
+
+def _reconcile_restart(
+    *,
+    run_settings: LongRunningTestnetSettings,
+    exchange: Any,
+) -> RestartReconciliation:
+    if run_settings.previous_run_id is None or run_settings.restart_reason is None:
+        raise StartupValidationError(
+            "restart_args_required",
+            "previous_run_id and restart_reason are required for restart reconciliation",
+        )
+
+    previous_dir = run_settings.output_root / run_settings.previous_run_id
+    manifest_path = previous_dir / "run_manifest.json"
+    if not manifest_path.exists():
+        raise StartupValidationError(
+            "previous_manifest_missing",
+            f"previous run manifest not found: {manifest_path}",
+        )
+
+    manifest_bytes = manifest_path.read_bytes()
+    previous_manifest_sha256 = hashlib.sha256(manifest_bytes).hexdigest()
+    try:
+        manifest = json.loads(manifest_bytes.decode("utf-8"))
+    except json.JSONDecodeError as exc:
+        raise StartupValidationError(
+            "previous_manifest_invalid_json",
+            f"previous run manifest is not valid JSON: {manifest_path}",
+        ) from exc
+
+    runtime = manifest.get("runtime")
+    runtime = runtime if isinstance(runtime, Mapping) else {}
+    previous_processed_until_ns = _optional_int(
+        runtime.get("processed_until_ns", runtime.get("last_bar_ns"))
+    )
+    previous_sequence = _optional_int(runtime.get("restart_sequence")) or 0
+
+    instrument_ids = tuple(run_settings.instrument_ids)
+    local_orders = _load_local_open_orders(previous_dir / "orders.parquet")
+    local_positions = _load_local_open_positions(previous_dir / "positions.parquet")
+    exchange_orders = _exchange_open_orders(exchange, instrument_ids)
+    exchange_positions = _exchange_open_positions(exchange, instrument_ids)
+
+    return RestartReconciliation(
+        previous_run_id=run_settings.previous_run_id,
+        previous_manifest_sha256=previous_manifest_sha256,
+        previous_processed_until_ns=previous_processed_until_ns,
+        restart_sequence=previous_sequence + 1,
+        restart_reason=run_settings.restart_reason,
+        restart_order_drift=_record_drift(local_orders, exchange_orders),
+        restart_position_drift=_record_drift(local_positions, exchange_positions),
+    )
+
+
+def _load_local_open_orders(path: Path) -> list[dict[str, str]]:
+    records = _read_parquet_records(path)
+    open_orders: list[dict[str, str]] = []
+    for row in records:
+        status = str(row.get("status", "")).upper()
+        if status in TERMINAL_ORDER_STATUSES:
+            continue
+        order_id = _text(row.get("order_id") or row.get("venue_order_id"))
+        if not order_id:
+            continue
+        quantity = _decimal_text(row.get("quantity"))
+        if quantity is None:
+            continue
+        open_orders.append(
+            {
+                "order_id": order_id,
+                "instrument_id": _text(row.get("instrument_id")),
+                "side": _text(row.get("side")).upper(),
+                "quantity": quantity,
+            }
+        )
+    return _sorted_records(open_orders)
+
+
+def _load_local_open_positions(path: Path) -> list[dict[str, str]]:
+    records = _read_parquet_records(path)
+    open_positions: list[dict[str, str]] = []
+    for row in records:
+        side = _text(row.get("side")).upper()
+        quantity = _decimal_text(row.get("quantity"))
+        if side == "FLAT" or quantity in (None, "0"):
+            continue
+        closed_ts = _optional_int(row.get("closed_ts"))
+        if closed_ts is not None and closed_ts > 0:
+            continue
+        open_positions.append(
+            {
+                "instrument_id": _text(row.get("instrument_id")),
+                "side": side,
+                "quantity": quantity,
+            }
+        )
+    return _sorted_records(open_positions)
+
+
+def _read_parquet_records(path: Path) -> list[dict[str, Any]]:
+    if not path.exists():
+        return []
+    import pandas as pd
+
+    return pd.read_parquet(path).to_dict("records")
+
+
+def _exchange_open_orders(
+    exchange: Any,
+    instrument_ids: tuple[str, ...],
+) -> list[dict[str, str]]:
+    records: list[dict[str, str]] = []
+    for instrument_id in instrument_ids:
+        for order in exchange.list_open_orders(instrument_id):
+            quantity = _decimal_text(getattr(order, "quantity", None))
+            if quantity is None:
+                continue
+            records.append(
+                {
+                    "order_id": _text(getattr(order, "order_id", "")),
+                    "instrument_id": _text(getattr(order, "instrument_id", instrument_id)),
+                    "side": _text(getattr(order, "side", "")).upper(),
+                    "quantity": quantity,
+                }
+            )
+    return _sorted_records(records)
+
+
+def _exchange_open_positions(
+    exchange: Any,
+    instrument_ids: tuple[str, ...],
+) -> list[dict[str, str]]:
+    records: list[dict[str, str]] = []
+    for instrument_id in instrument_ids:
+        for position in exchange.list_open_positions(instrument_id):
+            side = _text(getattr(position, "side", "")).upper()
+            quantity = _decimal_text(getattr(position, "quantity", None))
+            if side == "FLAT" or quantity in (None, "0"):
+                continue
+            records.append(
+                {
+                    "instrument_id": _text(
+                        getattr(position, "instrument_id", instrument_id)
+                    ),
+                    "side": side,
+                    "quantity": quantity,
+                }
+            )
+    return _sorted_records(records)
+
+
+def _record_drift(
+    local: list[dict[str, str]],
+    exchange: list[dict[str, str]],
+) -> dict[str, list[dict[str, str]]]:
+    local_by_key = {_record_key(row): row for row in local}
+    exchange_by_key = {_record_key(row): row for row in exchange}
+    missing_on_exchange = [
+        local_by_key[key] for key in sorted(local_by_key.keys() - exchange_by_key.keys())
+    ]
+    unexpected_on_exchange = [
+        exchange_by_key[key] for key in sorted(exchange_by_key.keys() - local_by_key.keys())
+    ]
+    return {
+        "missing_on_exchange": missing_on_exchange,
+        "unexpected_on_exchange": unexpected_on_exchange,
+    }
+
+
+def _record_key(row: Mapping[str, str]) -> str:
+    return json.dumps(dict(row), sort_keys=True, separators=(",", ":"))
+
+
+def _sorted_records(records: list[dict[str, str]]) -> list[dict[str, str]]:
+    return sorted(records, key=_record_key)
+
+
+def _optional_int(value: object) -> int | None:
+    if value is None or value == "":
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _decimal_text(value: object) -> str | None:
+    if value is None or value == "":
+        return None
+    try:
+        decimal = Decimal(str(value))
+    except (InvalidOperation, ValueError):
+        return None
+    if not decimal.is_finite():
+        return None
+    text = format(decimal.normalize(), "f")
+    if "." in text:
+        text = text.rstrip("0").rstrip(".")
+    if text == "-0":
+        return "0"
+    return text or "0"
+
+
+def _text(value: object) -> str:
+    if value is None:
+        return ""
+    return str(value)
 
 
 def _monitor_long_run(
@@ -1228,6 +1564,25 @@ def _default_flatten_runner(flatten_settings: Any) -> Any:
 
     exchange = build_binance_spot_testnet_exchange(flatten_settings)
     return run_emergency_flatten(flatten_settings, exchange=exchange)
+
+
+def _default_restart_exchange(
+    *,
+    settings: StartupSettings,
+    run_settings: LongRunningTestnetSettings,
+    run_id: str,
+) -> Any:
+    flatten_settings = _emergency_flatten_settings_for_trigger(
+        settings=settings,
+        run_settings=run_settings,
+        run_id=run_id,
+        reason="restart reconciliation",
+    )
+    from apps.strategies_nautilus.runners.binance_testnet_exchange import (
+        build_binance_spot_testnet_exchange,
+    )
+
+    return build_binance_spot_testnet_exchange(flatten_settings)
 
 
 def _write_long_run_manifest(result: LongRunningTestnetResult) -> None:
@@ -1611,6 +1966,17 @@ def _build_parser() -> argparse.ArgumentParser:
         default=1.0,
         help="Order polling interval passed to emergency flatten from --long-run.",
     )
+    parser.add_argument(
+        "--previous-run-id",
+        help=(
+            "Previous testnet run_id for ADR-008 §5.3 restart reconciliation. "
+            "Requires --restart-reason."
+        ),
+    )
+    parser.add_argument(
+        "--restart-reason",
+        help="Operator-supplied restart reason required with --previous-run-id.",
+    )
     return parser
 
 
@@ -1640,6 +2006,7 @@ def main(
     clock: ClockFn | None = None,
     telemetry_reader: TelemetryReader | None = None,
     flatten_runner: FlattenRunner | None = None,
+    restart_exchange_factory: RestartExchangeFactory | None = None,
 ) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
@@ -1669,6 +2036,8 @@ def main(
                 ws_reconnect_burst_threshold=args.ws_reconnect_burst_threshold,
                 emergency_fill_timeout_seconds=args.emergency_fill_timeout_seconds,
                 emergency_poll_interval_seconds=args.emergency_poll_interval_seconds,
+                previous_run_id=args.previous_run_id,
+                restart_reason=args.restart_reason,
             )
         except ValueError as exc:
             parser.exit(EXIT_STARTUP_VALIDATION, f"{parser.prog}: error: {exc}\n")
@@ -1682,6 +2051,7 @@ def main(
                 clock=clock,
                 telemetry_reader=telemetry_reader,
                 flatten_runner=flatten_runner,
+                restart_exchange_factory=restart_exchange_factory,
             )
         except StartupValidationError as exc:
             parser.exit(EXIT_STARTUP_VALIDATION, f"{parser.prog}: error: {exc}\n")
@@ -1723,6 +2093,7 @@ __all__ = [
     "GitState",
     "LongRunningTestnetResult",
     "LongRunningTestnetSettings",
+    "RestartReconciliation",
     "TestnetAdapterPlan",
     "TestnetRuntimeTelemetry",
     "StartupCheckResult",

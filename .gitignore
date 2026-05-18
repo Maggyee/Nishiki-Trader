@@ -32,6 +32,7 @@ env/
 *.pem
 secrets/
 infra/secrets/
+infra/watchdog/state.json
 
 # Upstream source checkouts (tracked separately, read-only by default)
 freqtrade/

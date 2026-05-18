@@ -14,7 +14,7 @@
 
 **步骤**（Phase 3+）：
 
-1. 跑 `uv run python -m apps.ops.emergency_flatten --confirm I_REALLY_MEAN_IT`
+1. 跑 `uv run python -m apps.strategies_nautilus.runners.emergency_flatten --kind testnet --run-id <run_id> --operator <name> --reason '<reason>' --instrument-id BTCUSDT.BINANCE`
 2. 登录 Binance 网页 / app 二次确认仓位为 0
 3. 停 nautilus：`docker compose -f infra/docker-compose.yml stop nautilus` 或 `pkill -f nautilus`
 4. 在 `docs/retros/YYYY-MM.md` 记录事故 + 触发原因 + 复盘
@@ -83,6 +83,53 @@ uv run python -m apps.strategies_nautilus.runners.paper_runner \
 如果 `data/paper/<previous_run_id>/run_manifest.json` 可读，runner 会从上次
 `runtime.processed_until_ns + 1` 自动设置 catalog / signal cursor，并在新 manifest
 记录 `previous_manifest_sha256`、`resume_from_ns`、`restart_sequence`。
+
+### testnet session（Phase 3+）
+
+Testnet session 使用 Binance Spot testnet 凭证，但只允许 `BINANCE_TESTNET_*`
+环境变量和 `--allow-real-credentials` 双签，不允许 live credentials。
+
+启动长运行 guard shell：
+
+```bash
+uv run python -m apps.strategies_nautilus.runners.testnet_runner \
+  --mode testnet \
+  --kind testnet \
+  --allow-real-credentials \
+  --source freqai_linear_v1 \
+  --model-version linear-mom-train20240105 \
+  --policy-position-pct-multiplier 0.2 \
+  --long-run \
+  --instrument-id BTCUSDT.BINANCE \
+  --starting-balance 100000
+```
+
+重启前必须对账：
+
+```bash
+uv run python -m apps.strategies_nautilus.runners.testnet_runner \
+  ...same source/model/policy args... \
+  --long-run \
+  --previous-run-id <previous_run_id> \
+  --restart-reason operator_restart \
+  --starting-balance 100000
+```
+
+如果上一轮 bundle 的 open orders / open positions 与交易所 REST 返回不一致，
+runner 写 `logs/alerts.log` 的 `restart_drift_detected` 并以 exit code 3
+退出。此时不要继续启动，先人工登录 testnet 账户核对、撤单和平仓。
+
+外部 watchdog 单次检查：
+
+```bash
+uv run python -m infra.watchdog.watchdog \
+  --active-run-id <run_id> \
+  --instrument-id BTCUSDT.BINANCE \
+  --heartbeat-timeout-seconds 90
+```
+
+watchdog 只读 `data/testnet/<run_id>/logs/heartbeat.jsonl`，自身状态写
+`infra/watchdog/state.json`，心跳超时后调用同一个 emergency flatten CLI。
 
 降档规则：
 

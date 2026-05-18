@@ -24,6 +24,7 @@
 | 路径 | 用途 | 激活 Phase |
 |---|---|:-:|
 | `postgres/` | `init.sql`（启 Timescale + pgvector + 建库） | 2 |
+| `watchdog/` | Phase 3 testnet heartbeat watchdog（不读凭证，超时调用 emergency flatten） | 3 |
 | `grafana/dashboards/` | 看板 JSON | 5 |
 | `n8n/workflows/` | 工作流 JSON | 4 |
 

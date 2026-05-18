@@ -94,6 +94,12 @@ auto-invokes the ADR-008 emergency flatten path when the 5% daily-loss,
 exchange-error burst, or WS-reconnect burst thresholds fire. It writes only
 the credential source and API key prefix to disk.
 
+For a restart, pass `--previous-run-id <run_id> --restart-reason <reason>`;
+the runner compares the previous bundle's open orders / positions with
+exchange REST state before building a new node. Drift writes
+`restart_drift_detected` to `logs/alerts.log` and exits 3. The external
+heartbeat watchdog entrypoint is `python -m infra.watchdog.watchdog`.
+
 For the local BTCUSDT fixture, build `data/catalog/` first with:
 
 ```bash

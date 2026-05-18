@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import time
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 from pathlib import Path
 
+import pandas as pd
 import pytest
 from nautilus_trader.adapters.binance import (
     BINANCE,
@@ -17,6 +20,10 @@ from nautilus_trader.adapters.binance import (
 )
 from nautilus_trader.adapters.binance.common.enums import BinanceEnvironment
 
+from apps.strategies_nautilus.runners.emergency_flatten import (
+    OpenOrder,
+    OpenPosition,
+)
 from apps.strategies_nautilus.runners.testnet_runner import (
     ConnectionProbeResult,
     ConnectionProbeSettings,
@@ -336,6 +343,23 @@ class _FakeFlattenResult:
     audit_path: Path
 
 
+class _FakeRestartExchange:
+    def __init__(
+        self,
+        *,
+        open_orders: dict[str, list[OpenOrder]] | None = None,
+        open_positions: dict[str, list[OpenPosition]] | None = None,
+    ) -> None:
+        self._open_orders = open_orders or {}
+        self._open_positions = open_positions or {}
+
+    def list_open_orders(self, instrument_id):
+        return list(self._open_orders.get(instrument_id, []))
+
+    def list_open_positions(self, instrument_id):
+        return list(self._open_positions.get(instrument_id, []))
+
+
 def _frozen_clock(base: datetime, step_seconds: float = 1.0):
     state = {"t": base}
 
@@ -385,6 +409,47 @@ def _sequence_reader(samples: list[TestnetRuntimeTelemetry]):
         return samples[min(idx, len(samples) - 1)]
 
     return _read
+
+
+def _write_previous_testnet_bundle(
+    output_root: Path,
+    *,
+    run_id: str = "20260518-120000Z-abcdef12",
+    runtime: dict | None = None,
+    order_rows: list[dict] | None = None,
+    position_rows: list[dict] | None = None,
+) -> Path:
+    bundle = output_root / run_id
+    bundle.mkdir(parents=True)
+    manifest = {
+        "schema_version": "backtest.v1",
+        "kind": "testnet",
+        "run_id": run_id,
+        "runtime": {
+            "mode": "testnet",
+            "processed_until_ns": 1_716_038_400_000_000_000,
+            "restart_sequence": 1,
+            "instrument_ids": ["BTCUSDT.BINANCE"],
+            **(runtime or {}),
+        },
+    }
+    (bundle / "run_manifest.json").write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    if order_rows is not None:
+        pd.DataFrame(order_rows).to_parquet(
+            bundle / "orders.parquet",
+            engine="pyarrow",
+            index=False,
+        )
+    if position_rows is not None:
+        pd.DataFrame(position_rows).to_parquet(
+            bundle / "positions.parquet",
+            engine="pyarrow",
+            index=False,
+        )
+    return bundle
 
 
 def test_run_connection_probe_writes_redacted_runtime_log(tmp_path, _probe_setup):
@@ -816,6 +881,209 @@ def test_long_run_stops_cleanly_at_max_duration_without_auto_flatten(tmp_path):
         result.bundle_root / "logs" / "heartbeat.jsonl"
     ).read_text(encoding="utf-8").splitlines()
     assert len([line for line in heartbeat_lines if line.strip()]) >= 1
+
+
+def test_long_run_restart_reconciliation_allows_clean_restart(tmp_path):
+    _write_retro(tmp_path / "retros")
+    settings = _config(tmp_path)
+    output_root = tmp_path / "data" / "testnet"
+    previous_run_id = "20260518-120000Z-abcdef12"
+    previous_bundle = _write_previous_testnet_bundle(output_root, run_id=previous_run_id)
+    previous_manifest = previous_bundle / "run_manifest.json"
+    run_settings = _long_run_settings(
+        tmp_path,
+        output_root=output_root,
+        max_run_seconds=0.02,
+        previous_run_id=previous_run_id,
+        restart_reason="planned process restart",
+    )
+    base = datetime(2026, 5, 18, 13, 0, 0, tzinfo=UTC)
+
+    result = run_long_running_testnet(
+        settings,
+        run_settings,
+        env=VALID_ENV,
+        git_state=GIT_CLEAN,
+        node_factory=lambda cfg: _BlockingFakeNode(cfg),
+        clock=_frozen_clock(base),
+        telemetry_reader=lambda: TestnetRuntimeTelemetry(ts=base, daily_pnl=0.0),
+        flatten_runner=lambda settings: pytest.fail("flatten should not run"),
+        restart_exchange_factory=lambda run_id: _FakeRestartExchange(),
+        run_id="20260518-130000Z-12345678",
+    )
+
+    assert result.exit_code == 0
+    runtime = result.runtime
+    assert runtime["previous_run_id"] == previous_run_id
+    assert runtime["previous_processed_until_ns"] == 1_716_038_400_000_000_000
+    assert runtime["previous_manifest_sha256"]
+    assert runtime["previous_manifest_sha256"] == hashlib.sha256(
+        previous_manifest.read_bytes()
+    ).hexdigest()
+    assert runtime["restart_sequence"] == 2
+    assert runtime["restart_reason"] == "planned process restart"
+    assert runtime["restart_drift_detected"] is False
+    assert runtime["restart_order_drift"] == {
+        "missing_on_exchange": [],
+        "unexpected_on_exchange": [],
+    }
+    assert runtime["restart_position_drift"] == {
+        "missing_on_exchange": [],
+        "unexpected_on_exchange": [],
+    }
+
+
+def test_long_run_restart_drift_exits_3_and_writes_alert(tmp_path):
+    _write_retro(tmp_path / "retros")
+    settings = _config(tmp_path)
+    output_root = tmp_path / "data" / "testnet"
+    previous_run_id = "20260518-120000Z-abcdef12"
+    _write_previous_testnet_bundle(output_root, run_id=previous_run_id)
+    run_settings = _long_run_settings(
+        tmp_path,
+        output_root=output_root,
+        max_run_seconds=1.0,
+        previous_run_id=previous_run_id,
+        restart_reason="recover after crash",
+    )
+    exchange = _FakeRestartExchange(
+        open_orders={
+            "BTCUSDT.BINANCE": [
+                OpenOrder(
+                    order_id="EXCH-OPEN-1",
+                    instrument_id="BTCUSDT.BINANCE",
+                    side="BUY",
+                    quantity=Decimal("0.01"),
+                )
+            ],
+        }
+    )
+
+    result = run_long_running_testnet(
+        settings,
+        run_settings,
+        env=VALID_ENV,
+        git_state=GIT_CLEAN,
+        node_factory=lambda cfg: pytest.fail("node must not build on restart drift"),
+        clock=_frozen_clock(datetime(2026, 5, 18, 13, 0, 0, tzinfo=UTC)),
+        telemetry_reader=lambda: pytest.fail("telemetry must not start on drift"),
+        restart_exchange_factory=lambda run_id: exchange,
+        run_id="20260518-130000Z-12345678",
+    )
+
+    assert result.exit_code == 3
+    assert result.stop_reason == "restart_drift_detected"
+    assert result.node_built is False
+    assert result.node_run_invoked is False
+    assert result.runtime["restart_drift_detected"] is True
+    assert result.runtime["restart_order_drift"]["unexpected_on_exchange"] == [
+        {
+            "order_id": "EXCH-OPEN-1",
+            "instrument_id": "BTCUSDT.BINANCE",
+            "side": "BUY",
+            "quantity": "0.01",
+        }
+    ]
+    alerts = [
+        json.loads(line)
+        for line in result.alerts_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    assert len(alerts) == 1
+    assert alerts[0]["msg"] == "restart_drift_detected"
+    assert alerts[0]["severity"] == "critical"
+    assert alerts[0]["kind"] == "testnet"
+    assert alerts[0]["context"]["restart_drift_detected"] is True
+    assert alerts[0]["context"]["restart_order_drift"][
+        "unexpected_on_exchange"
+    ] == result.runtime["restart_order_drift"]["unexpected_on_exchange"]
+
+
+def test_long_run_restart_reconciliation_compares_local_sidecars(tmp_path):
+    _write_retro(tmp_path / "retros")
+    settings = _config(tmp_path)
+    output_root = tmp_path / "data" / "testnet"
+    previous_run_id = "20260518-120000Z-abcdef12"
+    _write_previous_testnet_bundle(
+        output_root,
+        run_id=previous_run_id,
+        order_rows=[
+            {
+                "order_id": "LOCAL-OPEN-1",
+                "instrument_id": "BTCUSDT.BINANCE",
+                "side": "SELL",
+                "quantity": 0.02,
+                "status": "NEW",
+            },
+            {
+                "order_id": "LOCAL-FILLED",
+                "instrument_id": "BTCUSDT.BINANCE",
+                "side": "BUY",
+                "quantity": 0.01,
+                "status": "FILLED",
+            },
+        ],
+        position_rows=[
+            {
+                "instrument_id": "BTCUSDT.BINANCE",
+                "side": "LONG",
+                "quantity": 0.05,
+                "closed_ts": 0,
+            },
+            {
+                "instrument_id": "BTCUSDT.BINANCE",
+                "side": "LONG",
+                "quantity": 0.03,
+                "closed_ts": 1,
+            },
+        ],
+    )
+    run_settings = _long_run_settings(
+        tmp_path,
+        output_root=output_root,
+        previous_run_id=previous_run_id,
+        restart_reason="compare sidecars",
+    )
+    exchange = _FakeRestartExchange(
+        open_orders={
+            "BTCUSDT.BINANCE": [
+                OpenOrder(
+                    order_id="LOCAL-OPEN-1",
+                    instrument_id="BTCUSDT.BINANCE",
+                    side="SELL",
+                    quantity=Decimal("0.0200"),
+                )
+            ],
+        },
+        open_positions={
+            "BTCUSDT.BINANCE": [
+                OpenPosition(
+                    instrument_id="BTCUSDT.BINANCE",
+                    side="LONG",
+                    quantity=Decimal("0.050000"),
+                )
+            ],
+        },
+    )
+
+    result = run_long_running_testnet(
+        settings,
+        run_settings,
+        env=VALID_ENV,
+        git_state=GIT_CLEAN,
+        node_factory=lambda cfg: _BlockingFakeNode(cfg),
+        clock=_frozen_clock(datetime(2026, 5, 18, 13, 0, 0, tzinfo=UTC)),
+        telemetry_reader=lambda: TestnetRuntimeTelemetry(
+            ts=datetime(2026, 5, 18, 13, 0, 0, tzinfo=UTC),
+            daily_pnl=0.0,
+        ),
+        flatten_runner=lambda settings: pytest.fail("flatten should not run"),
+        restart_exchange_factory=lambda run_id: exchange,
+        run_id="20260518-130000Z-12345678",
+    )
+
+    assert result.exit_code == 0
+    assert result.runtime["restart_drift_detected"] is False
 
 
 def test_cli_long_run_dispatches_and_returns_flatten_exit_code(tmp_path, capsys):
