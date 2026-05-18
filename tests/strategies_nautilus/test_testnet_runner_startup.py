@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import time
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -19,11 +21,14 @@ from apps.strategies_nautilus.runners.testnet_runner import (
     ConnectionProbeResult,
     ConnectionProbeSettings,
     GitState,
+    LongRunningTestnetSettings,
     StartupSettings,
     StartupValidationError,
+    TestnetRuntimeTelemetry,
     build_testnet_node_config,
     main,
     run_connection_probe,
+    run_long_running_testnet,
     validate_startup,
 )
 
@@ -313,6 +318,24 @@ class _FakeNode:
         self.dispose_called = True
 
 
+class _BlockingFakeNode(_FakeNode):
+    """Blocks in run() until the runner calls stop()."""
+
+    def run(self, raise_exception: bool = False) -> None:
+        self.run_called = True
+        while not self.stop_called:
+            time.sleep(0.001)
+
+    def stop(self) -> None:
+        self.stop_called = True
+
+
+@dataclass(frozen=True)
+class _FakeFlattenResult:
+    success: bool
+    audit_path: Path
+
+
 def _frozen_clock(base: datetime, step_seconds: float = 1.0):
     state = {"t": base}
 
@@ -333,6 +356,35 @@ def _probe_setup(tmp_path):
         max_connect_seconds=0.1,
     )
     return settings, probe_settings
+
+
+def _long_run_settings(tmp_path: Path, **overrides) -> LongRunningTestnetSettings:
+    values = {
+        "output_root": tmp_path / "data" / "testnet",
+        "instrument_ids": ("BTCUSDT.BINANCE",),
+        "starting_balance": 100000.0,
+        "max_run_seconds": 0.2,
+        "telemetry_poll_seconds": 0.001,
+        "heartbeat_interval_seconds": 30.0,
+        "daily_loss_limit_pct": 0.05,
+        "exchange_error_burst_threshold": 50,
+        "ws_reconnect_burst_threshold": 10,
+        "emergency_fill_timeout_seconds": 1.0,
+        "emergency_poll_interval_seconds": 0.1,
+    }
+    values.update(overrides)
+    return LongRunningTestnetSettings(**values)
+
+
+def _sequence_reader(samples: list[TestnetRuntimeTelemetry]):
+    state = {"idx": 0}
+
+    def _read() -> TestnetRuntimeTelemetry:
+        idx = state["idx"]
+        state["idx"] = idx + 1
+        return samples[min(idx, len(samples) - 1)]
+
+    return _read
 
 
 def test_run_connection_probe_writes_redacted_runtime_log(tmp_path, _probe_setup):
@@ -558,5 +610,274 @@ def test_cli_connect_probe_dispatches_to_probe(tmp_path, capsys):
     assert payload["error"] is None
     assert Path(payload["runtime_log_path"]).is_file()
     assert Path(payload["probe_summary_path"]).is_file()
+    assert VALID_KEY not in out_text
+    assert VALID_SECRET not in out_text
+
+
+# --- Long-running guarded testnet shell (ADR-008 §6.3c auto-flatten wiring) ---
+
+
+def test_long_run_auto_flattens_on_daily_loss_limit(tmp_path):
+    _write_retro(tmp_path / "retros")
+    settings = _config(tmp_path)
+    run_settings = _long_run_settings(tmp_path, max_run_seconds=1.0)
+    base = datetime(2026, 5, 18, 13, 0, 0, tzinfo=UTC)
+    flatten_calls = []
+
+    def _flatten(flatten_settings):
+        flatten_calls.append(flatten_settings)
+        audit_path = (
+            flatten_settings.output_root
+            / flatten_settings.run_id
+            / "emergency_flatten.json"
+        )
+        audit_path.write_text("{}", encoding="utf-8")
+        return _FakeFlattenResult(success=True, audit_path=audit_path)
+
+    result = run_long_running_testnet(
+        settings,
+        run_settings,
+        env=VALID_ENV,
+        git_state=GIT_CLEAN,
+        node_factory=lambda cfg: _BlockingFakeNode(cfg),
+        clock=_frozen_clock(base),
+        telemetry_reader=_sequence_reader(
+            [
+                TestnetRuntimeTelemetry(ts=base, daily_pnl=0.0),
+                TestnetRuntimeTelemetry(
+                    ts=base + timedelta(seconds=1),
+                    daily_pnl=-5000.0,
+                    account_total_usdt=95000.0,
+                ),
+            ]
+        ),
+        flatten_runner=_flatten,
+        run_id="20260518-130000Z-feedface",
+    )
+
+    assert result.exit_code == 4
+    assert result.stop_reason == "emergency_flatten"
+    assert result.auto_flatten_trigger == "kill_switch_fired"
+    assert result.emergency_flatten_success is True
+    assert len(flatten_calls) == 1
+    assert flatten_calls[0].kind == "testnet"
+    assert flatten_calls[0].instrument_ids == ("BTCUSDT.BINANCE",)
+    assert "daily PnL" in flatten_calls[0].reason
+
+    alerts = [
+        json.loads(line)
+        for line in result.alerts_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    assert alerts[0]["msg"] == "kill_switch_fired"
+    assert alerts[0]["severity"] == "critical"
+    assert alerts[0]["context"]["daily_pnl"] == -5000.0
+
+    manifest_text = result.manifest_path.read_text(encoding="utf-8")
+    manifest = json.loads(manifest_text)
+    runtime = manifest["runtime"]
+    assert runtime["shutdown_reason"] == "emergency_flatten"
+    assert runtime["daily_pnl"] == -5000.0
+    assert runtime["auto_flatten_trigger"] == "kill_switch_fired"
+    assert runtime["credentials_key_prefix"] == VALID_KEY[:8]
+    rendered = json.dumps(result.to_dict(), sort_keys=True)
+    assert VALID_KEY not in rendered
+    assert VALID_SECRET not in rendered
+    assert VALID_KEY not in manifest_text
+    assert VALID_SECRET not in manifest_text
+    runtime_log_text = result.runtime_log_path.read_text(encoding="utf-8")
+    assert VALID_KEY not in runtime_log_text
+    assert VALID_SECRET not in runtime_log_text
+
+
+def test_long_run_auto_flattens_on_exchange_error_burst(tmp_path):
+    _write_retro(tmp_path / "retros")
+    settings = _config(tmp_path)
+    run_settings = _long_run_settings(tmp_path, max_run_seconds=1.0)
+    base = datetime(2026, 5, 18, 13, 0, 0, tzinfo=UTC)
+    flatten_calls = []
+
+    def _flatten(flatten_settings):
+        flatten_calls.append(flatten_settings)
+        return _FakeFlattenResult(
+            success=True,
+            audit_path=flatten_settings.output_root
+            / flatten_settings.run_id
+            / "emergency_flatten.json",
+        )
+
+    result = run_long_running_testnet(
+        settings,
+        run_settings,
+        env=VALID_ENV,
+        git_state=GIT_CLEAN,
+        node_factory=lambda cfg: _BlockingFakeNode(cfg),
+        clock=_frozen_clock(base),
+        telemetry_reader=_sequence_reader(
+            [
+                TestnetRuntimeTelemetry(ts=base, daily_pnl=0.0),
+                TestnetRuntimeTelemetry(
+                    ts=base + timedelta(minutes=10),
+                    daily_pnl=0.0,
+                    exchange_error_count=51,
+                ),
+            ]
+        ),
+        flatten_runner=_flatten,
+        run_id="20260518-130000Z-bad00001",
+    )
+
+    assert result.exit_code == 4
+    assert result.auto_flatten_trigger == "exchange_error_burst"
+    assert len(flatten_calls) == 1
+    assert "exchange_error_count" in flatten_calls[0].reason
+    alerts = [
+        json.loads(line)
+        for line in result.alerts_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    assert alerts[0]["severity"] == "error"
+    assert alerts[0]["context"]["exchange_error_count_hour"] == 51
+
+
+def test_long_run_auto_flattens_on_ws_reconnect_burst(tmp_path):
+    _write_retro(tmp_path / "retros")
+    settings = _config(tmp_path)
+    run_settings = _long_run_settings(tmp_path, max_run_seconds=1.0)
+    base = datetime(2026, 5, 18, 13, 0, 0, tzinfo=UTC)
+    flatten_calls = []
+
+    def _flatten(flatten_settings):
+        flatten_calls.append(flatten_settings)
+        return _FakeFlattenResult(
+            success=False,
+            audit_path=flatten_settings.output_root
+            / flatten_settings.run_id
+            / "emergency_flatten.json",
+        )
+
+    result = run_long_running_testnet(
+        settings,
+        run_settings,
+        env=VALID_ENV,
+        git_state=GIT_CLEAN,
+        node_factory=lambda cfg: _BlockingFakeNode(cfg),
+        clock=_frozen_clock(base),
+        telemetry_reader=_sequence_reader(
+            [
+                TestnetRuntimeTelemetry(ts=base, daily_pnl=0.0),
+                TestnetRuntimeTelemetry(
+                    ts=base + timedelta(minutes=5),
+                    daily_pnl=0.0,
+                    ws_reconnect_count=11,
+                ),
+            ]
+        ),
+        flatten_runner=_flatten,
+        run_id="20260518-130000Z-bad00002",
+    )
+
+    assert result.exit_code == 5
+    assert result.auto_flatten_trigger == "ws_reconnect_burst"
+    assert result.emergency_flatten_success is False
+    assert len(flatten_calls) == 1
+    alerts = [
+        json.loads(line)
+        for line in result.alerts_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    assert alerts[0]["context"]["ws_reconnect_count_hour"] == 11
+
+
+def test_long_run_stops_cleanly_at_max_duration_without_auto_flatten(tmp_path):
+    _write_retro(tmp_path / "retros")
+    settings = _config(tmp_path)
+    run_settings = _long_run_settings(tmp_path, max_run_seconds=0.02)
+    base = datetime(2026, 5, 18, 13, 0, 0, tzinfo=UTC)
+
+    result = run_long_running_testnet(
+        settings,
+        run_settings,
+        env=VALID_ENV,
+        git_state=GIT_CLEAN,
+        node_factory=lambda cfg: _BlockingFakeNode(cfg),
+        clock=_frozen_clock(base),
+        telemetry_reader=lambda: TestnetRuntimeTelemetry(ts=base, daily_pnl=0.0),
+        flatten_runner=lambda settings: pytest.fail("flatten should not run"),
+        run_id="20260518-130000Z-cafefeed",
+    )
+
+    assert result.exit_code == 0
+    assert result.stop_reason == "max_duration"
+    assert result.auto_flatten_trigger is None
+    assert result.emergency_flatten_success is None
+    assert result.manifest_path.is_file()
+    heartbeat_lines = (
+        result.bundle_root / "logs" / "heartbeat.jsonl"
+    ).read_text(encoding="utf-8").splitlines()
+    assert len([line for line in heartbeat_lines if line.strip()]) >= 1
+
+
+def test_cli_long_run_dispatches_and_returns_flatten_exit_code(tmp_path, capsys):
+    _write_retro(tmp_path / "retros")
+    base = datetime(2026, 5, 18, 13, 0, 0, tzinfo=UTC)
+
+    def _flatten(flatten_settings):
+        return _FakeFlattenResult(
+            success=True,
+            audit_path=flatten_settings.output_root
+            / flatten_settings.run_id
+            / "emergency_flatten.json",
+        )
+
+    rc = main(
+        [
+            "--mode",
+            "testnet",
+            "--kind",
+            "testnet",
+            "--allow-real-credentials",
+            "--source",
+            SOURCE,
+            "--model-version",
+            MODEL_VERSION,
+            "--policy-position-pct-multiplier",
+            "0.2",
+            "--retros-dir",
+            str(tmp_path / "retros"),
+            "--repo-root",
+            str(tmp_path),
+            "--long-run",
+            "--output-root",
+            str(tmp_path / "data" / "testnet"),
+            "--starting-balance",
+            "100000",
+            "--max-run-seconds",
+            "1",
+            "--telemetry-poll-seconds",
+            "0.001",
+        ],
+        env=VALID_ENV,
+        git_state=GIT_CLEAN,
+        node_factory=lambda cfg: _BlockingFakeNode(cfg),
+        clock=_frozen_clock(base),
+        telemetry_reader=_sequence_reader(
+            [
+                TestnetRuntimeTelemetry(ts=base, daily_pnl=0.0),
+                TestnetRuntimeTelemetry(
+                    ts=base + timedelta(seconds=1),
+                    daily_pnl=-5000.0,
+                ),
+            ]
+        ),
+        flatten_runner=_flatten,
+    )
+
+    assert rc == 4
+    out_text = capsys.readouterr().out
+    payload = json.loads(out_text)
+    assert payload["auto_flatten_trigger"] == "kill_switch_fired"
+    assert payload["exit_code"] == 4
+    assert Path(payload["manifest_path"]).is_file()
     assert VALID_KEY not in out_text
     assert VALID_SECRET not in out_text

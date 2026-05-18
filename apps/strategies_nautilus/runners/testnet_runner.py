@@ -20,9 +20,10 @@ import re
 import secrets
 import subprocess
 import threading
+from collections import deque
 from collections.abc import Callable, Mapping
 from dataclasses import asdict, dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -57,6 +58,17 @@ TESTNET_MAX_MULTIPLIER = 0.2
 DEFAULT_TESTNET_INSTRUMENT_ID = "BTCUSDT.BINANCE"
 DEFAULT_TESTNET_ACCOUNT_TYPE = "SPOT"
 DEFAULT_TESTNET_TRADER_ID = "TESTNET_TRADER-001"
+DEFAULT_LONG_RUN_SECONDS = 3600.0
+DEFAULT_TELEMETRY_POLL_SECONDS = 1.0
+DEFAULT_HEARTBEAT_INTERVAL_SECONDS = 30.0
+DEFAULT_DAILY_LOSS_LIMIT_PCT = 0.05
+DEFAULT_EXCHANGE_ERROR_BURST_THRESHOLD = 50
+DEFAULT_WS_RECONNECT_BURST_THRESHOLD = 10
+EXIT_OK = 0
+EXIT_RUNTIME_ERROR = 1
+EXIT_STARTUP_VALIDATION = 2
+EXIT_EMERGENCY_FLATTEN_SUCCESS = 4
+EXIT_EMERGENCY_FLATTEN_FAILED = 5
 
 
 class StartupValidationError(ValueError):
@@ -183,6 +195,123 @@ class ConnectionProbeResult:
         payload["runtime_log_path"] = str(self.runtime_log_path)
         payload["probe_summary_path"] = str(self.probe_summary_path)
         return payload
+
+
+@dataclass(frozen=True)
+class TestnetRuntimeTelemetry:
+    """One runtime sample for ADR-008 §5.2 auto-flatten checks."""
+
+    __test__ = False
+
+    ts: datetime
+    daily_pnl: float
+    exchange_error_count: int = 0
+    ws_reconnect_count: int = 0
+    account_total_usdt: float | None = None
+    open_orders: int | None = None
+    open_positions: int | None = None
+    last_bar_ns: int | None = None
+    ws_connected: bool = True
+
+    def __post_init__(self) -> None:
+        if self.exchange_error_count < 0:
+            raise ValueError("exchange_error_count must be non-negative")
+        if self.ws_reconnect_count < 0:
+            raise ValueError("ws_reconnect_count must be non-negative")
+
+
+@dataclass(frozen=True)
+class AutoFlattenTrigger:
+    msg: str
+    severity: str
+    reason: str
+    context: dict[str, object]
+
+
+@dataclass(frozen=True)
+class LongRunningTestnetSettings:
+    output_root: Path
+    instrument_ids: tuple[str, ...]
+    starting_balance: float
+    max_run_seconds: float = DEFAULT_LONG_RUN_SECONDS
+    telemetry_poll_seconds: float = DEFAULT_TELEMETRY_POLL_SECONDS
+    heartbeat_interval_seconds: float = DEFAULT_HEARTBEAT_INTERVAL_SECONDS
+    daily_loss_limit_pct: float = DEFAULT_DAILY_LOSS_LIMIT_PCT
+    exchange_error_burst_threshold: int = DEFAULT_EXCHANGE_ERROR_BURST_THRESHOLD
+    ws_reconnect_burst_threshold: int = DEFAULT_WS_RECONNECT_BURST_THRESHOLD
+    emergency_fill_timeout_seconds: float = 60.0
+    emergency_poll_interval_seconds: float = 1.0
+
+    def __post_init__(self) -> None:
+        if not self.instrument_ids:
+            raise ValueError("at least one instrument_id is required")
+        if self.starting_balance <= 0:
+            raise ValueError("starting_balance must be positive")
+        if self.max_run_seconds <= 0:
+            raise ValueError("max_run_seconds must be positive")
+        if self.telemetry_poll_seconds <= 0:
+            raise ValueError("telemetry_poll_seconds must be positive")
+        if self.heartbeat_interval_seconds <= 0:
+            raise ValueError("heartbeat_interval_seconds must be positive")
+        if not 0 < self.daily_loss_limit_pct <= 1:
+            raise ValueError("daily_loss_limit_pct must be in (0, 1]")
+        if self.exchange_error_burst_threshold < 0:
+            raise ValueError("exchange_error_burst_threshold must be non-negative")
+        if self.ws_reconnect_burst_threshold < 0:
+            raise ValueError("ws_reconnect_burst_threshold must be non-negative")
+        if self.emergency_fill_timeout_seconds <= 0:
+            raise ValueError("emergency_fill_timeout_seconds must be positive")
+        if self.emergency_poll_interval_seconds <= 0:
+            raise ValueError("emergency_poll_interval_seconds must be positive")
+
+
+@dataclass(frozen=True)
+class LongRunningTestnetResult:
+    startup: StartupCheckResult
+    run_id: str
+    bundle_root: Path
+    runtime_log_path: Path
+    alerts_path: Path
+    manifest_path: Path
+    started_at: str
+    finished_at: str
+    elapsed_seconds: float
+    max_run_seconds: float
+    stop_reason: str
+    error: str | None
+    node_built: bool
+    node_run_invoked: bool
+    runtime: dict[str, object]
+    auto_flatten_trigger: str | None = None
+    emergency_flatten_success: bool | None = None
+    emergency_flatten_path: Path | None = None
+
+    @property
+    def exit_code(self) -> int:
+        if self.auto_flatten_trigger is not None:
+            return (
+                EXIT_EMERGENCY_FLATTEN_SUCCESS
+                if self.emergency_flatten_success
+                else EXIT_EMERGENCY_FLATTEN_FAILED
+            )
+        return EXIT_OK if self.error is None else EXIT_RUNTIME_ERROR
+
+    def to_dict(self) -> dict[str, object]:
+        payload = asdict(self)
+        payload["bundle_root"] = str(self.bundle_root)
+        payload["runtime_log_path"] = str(self.runtime_log_path)
+        payload["alerts_path"] = str(self.alerts_path)
+        payload["manifest_path"] = str(self.manifest_path)
+        if self.emergency_flatten_path is not None:
+            payload["emergency_flatten_path"] = str(self.emergency_flatten_path)
+        payload["exit_code"] = self.exit_code
+        return payload
+
+
+NodeFactory = Callable[[TradingNodeConfig], Any]
+ClockFn = Callable[[], datetime]
+TelemetryReader = Callable[[], TestnetRuntimeTelemetry]
+FlattenRunner = Callable[[Any], Any]
 
 
 def validate_startup(
@@ -390,11 +519,6 @@ def _adapter_plan_from_node_config(
         ),
     )
 
-
-NodeFactory = Callable[[TradingNodeConfig], Any]
-ClockFn = Callable[[], datetime]
-
-
 def run_connection_probe(
     settings: StartupSettings,
     probe: ConnectionProbeSettings,
@@ -542,6 +666,621 @@ def run_connection_probe(
         encoding="utf-8",
     )
     return result
+
+
+def run_long_running_testnet(
+    settings: StartupSettings,
+    run_settings: LongRunningTestnetSettings,
+    *,
+    env: Mapping[str, str] | None = None,
+    git_state: GitState | None = None,
+    node_factory: NodeFactory | None = None,
+    clock: ClockFn | None = None,
+    telemetry_reader: TelemetryReader | None = None,
+    flatten_runner: FlattenRunner | None = None,
+    run_id: str | None = None,
+) -> LongRunningTestnetResult:
+    """Run the guarded ADR-008 §6.3c testnet shell with auto-flatten triggers.
+
+    This is still a guard-rail runner: it reuses the Phase 3b Binance Spot
+    testnet connection path and monitors runtime counters for §5.2 thresholds.
+    The automatic stop path calls the same ``run_emergency_flatten`` surface as
+    the operator CLI. No LLM, FreqAI, or direct order shortcut is introduced.
+    """
+
+    effective_env: Mapping[str, str] = env if env is not None else os.environ
+    now: ClockFn = clock if clock is not None else _utc_now
+    factory: NodeFactory = (
+        node_factory if node_factory is not None else _default_node_factory
+    )
+    reader: TelemetryReader = (
+        telemetry_reader
+        if telemetry_reader is not None
+        else lambda: TestnetRuntimeTelemetry(
+            ts=now(),
+            daily_pnl=0.0,
+            exchange_error_count=0,
+            ws_reconnect_count=0,
+            account_total_usdt=run_settings.starting_balance,
+            open_orders=0,
+            open_positions=0,
+            ws_connected=True,
+        )
+    )
+    flatten: FlattenRunner = (
+        flatten_runner if flatten_runner is not None else _default_flatten_runner
+    )
+
+    startup = validate_startup(settings, env=effective_env, git_state=git_state)
+    started = now()
+    rid = run_id or _make_run_id(started)
+    bundle_root = run_settings.output_root / rid
+    logs_dir = bundle_root / "logs"
+    logs_dir.mkdir(parents=True, exist_ok=False)
+    runtime_log_path = logs_dir / "runtime.log"
+    alerts_path = logs_dir / "alerts.log"
+    manifest_path = bundle_root / "run_manifest.json"
+    started_at = _iso_ms_utc(started)
+
+    _append_runtime_event(
+        runtime_log_path,
+        {
+            "event": "credentials_loaded",
+            "ts": started_at,
+            "run_id": rid,
+            "operator": settings.operator,
+            "kind": KIND_TESTNET,
+            "runtime": _base_testnet_runtime(
+                startup=startup,
+                run_settings=run_settings,
+                shutdown_reason="starting",
+            ),
+        },
+    )
+
+    node_config = build_testnet_node_config(
+        settings,
+        api_key=effective_env[KEY_ENV],
+        api_secret=effective_env[SECRET_ENV],
+    )
+
+    node_built = False
+    node_run_invoked = False
+    stop_reason = "node_stopped"
+    error: str | None = None
+    latest_sample: dict[str, TestnetRuntimeTelemetry] = {}
+    trigger_box: dict[str, AutoFlattenTrigger] = {}
+    stop_reason_box: dict[str, str] = {}
+    stop_event = threading.Event()
+
+    node = factory(node_config)
+    monitor_thread: threading.Thread | None = None
+    timeout_thread: threading.Thread | None = None
+
+    try:
+        node.add_data_client_factory(BINANCE, BinanceLiveDataClientFactory)
+        node.add_exec_client_factory(BINANCE, BinanceLiveExecClientFactory)
+        node.build()
+        node_built = True
+        _append_runtime_event(
+            runtime_log_path,
+            {"event": "node_built", "ts": _iso_ms_utc(now())},
+        )
+
+        strategies_registered, actors_registered = _trader_counts(node)
+        if strategies_registered or actors_registered:
+            raise RuntimeError(
+                "long-running testnet runner refuses to run with registered "
+                f"strategies ({strategies_registered}) or actors ({actors_registered})"
+            )
+
+        monitor_thread = threading.Thread(
+            target=_monitor_long_run,
+            kwargs={
+                "run_settings": run_settings,
+                "reader": reader,
+                "runtime_log_path": runtime_log_path,
+                "alerts_path": alerts_path,
+                "kind": KIND_TESTNET,
+                "run_id": rid,
+                "node": node,
+                "stop_event": stop_event,
+                "latest_sample": latest_sample,
+                "trigger_box": trigger_box,
+                "stop_reason_box": stop_reason_box,
+            },
+            daemon=True,
+        )
+        timeout_thread = threading.Thread(
+            target=_stop_after_max_duration,
+            kwargs={
+                "node": node,
+                "stop_event": stop_event,
+                "stop_reason_box": stop_reason_box,
+                "max_seconds": run_settings.max_run_seconds,
+            },
+            daemon=True,
+        )
+        monitor_thread.start()
+        timeout_thread.start()
+
+        node_run_invoked = True
+        _append_runtime_event(
+            runtime_log_path,
+            {
+                "event": "node_run_invoked",
+                "ts": _iso_ms_utc(now()),
+                "max_run_seconds": run_settings.max_run_seconds,
+            },
+        )
+        node.run(raise_exception=False)
+    except Exception as exc:  # noqa: BLE001 — runner must always write manifest
+        stop_reason = "exception"
+        error = repr(exc)
+        stop_event.set()
+        _append_runtime_event(
+            runtime_log_path,
+            {"event": "exception", "ts": _iso_ms_utc(now()), "error": error},
+        )
+    finally:
+        stop_event.set()
+        if monitor_thread is not None:
+            monitor_thread.join(timeout=2.0)
+        if timeout_thread is not None:
+            timeout_thread.join(timeout=2.0)
+        _dispose_node(node, runtime_log_path, now)
+
+    trigger = trigger_box.get("trigger")
+    emergency_flatten_success: bool | None = None
+    emergency_flatten_path: Path | None = None
+    flatten_error: str | None = None
+    if trigger is not None:
+        stop_reason = "emergency_flatten"
+        flatten_settings = _emergency_flatten_settings_for_trigger(
+            settings=settings,
+            run_settings=run_settings,
+            run_id=rid,
+            reason=trigger.reason,
+        )
+        try:
+            flatten_result = flatten(flatten_settings)
+            emergency_flatten_success = bool(
+                getattr(flatten_result, "success", False)
+            )
+            raw_path = getattr(flatten_result, "audit_path", None)
+            if isinstance(raw_path, Path):
+                emergency_flatten_path = raw_path
+        except Exception as exc:  # noqa: BLE001
+            emergency_flatten_success = False
+            flatten_error = repr(exc)
+            _append_runtime_event(
+                runtime_log_path,
+                {
+                    "event": "emergency_flatten_exception",
+                    "ts": _iso_ms_utc(now()),
+                    "error": flatten_error,
+                },
+            )
+    elif stop_reason == "node_stopped":
+        stop_reason = stop_reason_box.get("stop_reason", stop_reason)
+
+    finished = now()
+    finished_at = _iso_ms_utc(finished)
+    elapsed = max(0.0, (finished - started).total_seconds())
+    sample = latest_sample.get("sample")
+    runtime = _base_testnet_runtime(
+        startup=startup,
+        run_settings=run_settings,
+        shutdown_reason=stop_reason,
+        sample=sample,
+    )
+    if trigger is not None:
+        runtime["auto_flatten_trigger"] = trigger.msg
+        runtime["emergency_flatten_success"] = emergency_flatten_success
+        if emergency_flatten_path is not None:
+            runtime["emergency_flatten_path"] = str(emergency_flatten_path)
+    if flatten_error is not None:
+        runtime["emergency_flatten_error"] = flatten_error
+
+    _append_runtime_event(
+        runtime_log_path,
+        {
+            "event": "shutdown",
+            "ts": finished_at,
+            "elapsed_seconds": elapsed,
+            "stop_reason": stop_reason,
+            "node_built": node_built,
+            "node_run_invoked": node_run_invoked,
+            "auto_flatten_trigger": None if trigger is None else trigger.msg,
+            "emergency_flatten_success": emergency_flatten_success,
+        },
+    )
+
+    result = LongRunningTestnetResult(
+        startup=startup,
+        run_id=rid,
+        bundle_root=bundle_root,
+        runtime_log_path=runtime_log_path,
+        alerts_path=alerts_path,
+        manifest_path=manifest_path,
+        started_at=started_at,
+        finished_at=finished_at,
+        elapsed_seconds=elapsed,
+        max_run_seconds=run_settings.max_run_seconds,
+        stop_reason=stop_reason,
+        error=error,
+        node_built=node_built,
+        node_run_invoked=node_run_invoked,
+        runtime=runtime,
+        auto_flatten_trigger=None if trigger is None else trigger.msg,
+        emergency_flatten_success=emergency_flatten_success,
+        emergency_flatten_path=emergency_flatten_path,
+    )
+    _write_long_run_manifest(result)
+    return result
+
+
+def _base_testnet_runtime(
+    *,
+    startup: StartupCheckResult,
+    run_settings: LongRunningTestnetSettings,
+    shutdown_reason: str,
+    sample: TestnetRuntimeTelemetry | None = None,
+) -> dict[str, object]:
+    runtime: dict[str, object] = {
+        "mode": MODE_TESTNET,
+        "data_mode": DATA_MODE_EXCHANGE_WS,
+        "order_mode": ORDER_MODE_TESTNET,
+        "exchange": "binance",
+        "exchange_endpoint": startup.adapter_plan.exchange_endpoint,
+        "credentials_source": startup.credentials_source,
+        "credentials_key_prefix": startup.credentials_key_prefix,
+        "credentials_loaded": True,
+        "instrument_ids": list(run_settings.instrument_ids),
+        "heartbeat_interval_seconds": run_settings.heartbeat_interval_seconds,
+        "exchange_error_count": 0,
+        "exchange_error_burst_threshold": (
+            run_settings.exchange_error_burst_threshold
+        ),
+        "ws_reconnect_count": 0,
+        "ws_reconnect_burst_threshold": run_settings.ws_reconnect_burst_threshold,
+        "daily_pnl": 0.0,
+        "starting_balance": run_settings.starting_balance,
+        "daily_loss_limit_pct": run_settings.daily_loss_limit_pct,
+        "operator": startup.operator,
+        "shutdown_reason": shutdown_reason,
+    }
+    if sample is not None:
+        runtime.update(
+            {
+                "exchange_error_count": sample.exchange_error_count,
+                "ws_reconnect_count": sample.ws_reconnect_count,
+                "daily_pnl": sample.daily_pnl,
+                "account_total_usdt": sample.account_total_usdt,
+                "open_orders": sample.open_orders,
+                "open_positions": sample.open_positions,
+                "last_bar_ns": sample.last_bar_ns,
+                "ws_connected": sample.ws_connected,
+            }
+        )
+    return runtime
+
+
+def _monitor_long_run(
+    *,
+    run_settings: LongRunningTestnetSettings,
+    reader: TelemetryReader,
+    runtime_log_path: Path,
+    alerts_path: Path,
+    kind: str,
+    run_id: str,
+    node: Any,
+    stop_event: threading.Event,
+    latest_sample: dict[str, TestnetRuntimeTelemetry],
+    trigger_box: dict[str, AutoFlattenTrigger],
+    stop_reason_box: dict[str, str],
+) -> None:
+    history: deque[TestnetRuntimeTelemetry] = deque()
+    last_heartbeat_ts: datetime | None = None
+    while not stop_event.is_set():
+        try:
+            sample = reader()
+        except Exception as exc:  # noqa: BLE001
+            _append_runtime_event(
+                runtime_log_path,
+                {
+                    "event": "telemetry_error",
+                    "ts": _iso_ms_utc(_utc_now()),
+                    "error": repr(exc),
+                },
+            )
+            stop_event.wait(run_settings.telemetry_poll_seconds)
+            continue
+
+        latest_sample["sample"] = sample
+        history.append(sample)
+        _trim_hourly_history(history, sample.ts)
+
+        if _should_emit_runtime_heartbeat(
+            last_heartbeat_ts=last_heartbeat_ts,
+            sample_ts=sample.ts,
+            interval_seconds=run_settings.heartbeat_interval_seconds,
+        ):
+            last_heartbeat_ts = sample.ts
+            _append_runtime_heartbeat(
+                runtime_log_path.parent / "heartbeat.jsonl",
+                sample=sample,
+                kind=kind,
+                run_id=run_id,
+            )
+
+        trigger = _auto_flatten_trigger(run_settings, sample, history)
+        if trigger is not None:
+            trigger_box["trigger"] = trigger
+            stop_reason_box["stop_reason"] = "emergency_flatten"
+            _append_alert_event(
+                alerts_path,
+                severity=trigger.severity,
+                kind=kind,
+                run_id=run_id,
+                msg=trigger.msg,
+                ts=_iso_ms_utc(sample.ts),
+                context=trigger.context,
+            )
+            _append_runtime_event(
+                runtime_log_path,
+                {
+                    "event": "auto_flatten_triggered",
+                    "ts": _iso_ms_utc(sample.ts),
+                    "trigger": trigger.msg,
+                    "reason": trigger.reason,
+                    "context": trigger.context,
+                },
+            )
+            _request_node_stop(node)
+            stop_event.set()
+            return
+
+        stop_event.wait(run_settings.telemetry_poll_seconds)
+
+
+def _trim_hourly_history(
+    history: deque[TestnetRuntimeTelemetry], now: datetime
+) -> None:
+    window_start = now - timedelta(hours=1)
+    while len(history) > 1 and history[1].ts <= window_start:
+        history.popleft()
+
+
+def _should_emit_runtime_heartbeat(
+    *,
+    last_heartbeat_ts: datetime | None,
+    sample_ts: datetime,
+    interval_seconds: float,
+) -> bool:
+    if last_heartbeat_ts is None:
+        return True
+    return (sample_ts - last_heartbeat_ts).total_seconds() >= interval_seconds
+
+
+def _append_runtime_heartbeat(
+    path: Path,
+    *,
+    sample: TestnetRuntimeTelemetry,
+    kind: str,
+    run_id: str,
+) -> None:
+    payload = {
+        "event": "heartbeat",
+        "ts": _iso_ms_utc(sample.ts),
+        "kind": kind,
+        "run_id": run_id,
+        "ws_connected": sample.ws_connected,
+        "last_bar_ns": sample.last_bar_ns,
+        "account_total_usdt": sample.account_total_usdt,
+        "open_orders": sample.open_orders,
+        "open_positions": sample.open_positions,
+        "daily_pnl": sample.daily_pnl,
+        "exchange_error_count": sample.exchange_error_count,
+        "ws_reconnect_count": sample.ws_reconnect_count,
+    }
+    with path.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(payload, sort_keys=True))
+        fh.write("\n")
+
+
+def _auto_flatten_trigger(
+    settings: LongRunningTestnetSettings,
+    sample: TestnetRuntimeTelemetry,
+    history: deque[TestnetRuntimeTelemetry],
+) -> AutoFlattenTrigger | None:
+    daily_loss_limit = -settings.daily_loss_limit_pct * settings.starting_balance
+    if sample.daily_pnl <= daily_loss_limit:
+        return AutoFlattenTrigger(
+            msg="kill_switch_fired",
+            severity="critical",
+            reason=(
+                "automatic kill-switch: daily PnL "
+                f"{sample.daily_pnl:.8g} <= {daily_loss_limit:.8g}"
+            ),
+            context={
+                "daily_pnl": sample.daily_pnl,
+                "starting_balance": settings.starting_balance,
+                "daily_loss_limit_pct": settings.daily_loss_limit_pct,
+                "loss_limit": daily_loss_limit,
+            },
+        )
+
+    exchange_errors = _window_delta(
+        history,
+        attr="exchange_error_count",
+        latest=sample.exchange_error_count,
+    )
+    if exchange_errors > settings.exchange_error_burst_threshold:
+        return AutoFlattenTrigger(
+            msg="exchange_error_burst",
+            severity="error",
+            reason=(
+                "automatic emergency flatten: exchange_error_count "
+                f"{exchange_errors} > {settings.exchange_error_burst_threshold}/hour"
+            ),
+            context={
+                "exchange_error_count_hour": exchange_errors,
+                "threshold": settings.exchange_error_burst_threshold,
+                "runtime_exchange_error_count": sample.exchange_error_count,
+            },
+        )
+
+    ws_reconnects = _window_delta(
+        history,
+        attr="ws_reconnect_count",
+        latest=sample.ws_reconnect_count,
+    )
+    if ws_reconnects > settings.ws_reconnect_burst_threshold:
+        return AutoFlattenTrigger(
+            msg="ws_reconnect_burst",
+            severity="error",
+            reason=(
+                "automatic emergency flatten: ws_reconnect_count "
+                f"{ws_reconnects} > {settings.ws_reconnect_burst_threshold}/hour"
+            ),
+            context={
+                "ws_reconnect_count_hour": ws_reconnects,
+                "threshold": settings.ws_reconnect_burst_threshold,
+                "runtime_ws_reconnect_count": sample.ws_reconnect_count,
+            },
+        )
+
+    return None
+
+
+def _window_delta(
+    history: deque[TestnetRuntimeTelemetry],
+    *,
+    attr: str,
+    latest: int,
+) -> int:
+    if not history:
+        return latest
+    base = getattr(history[0], attr)
+    if latest < base:
+        return latest
+    return latest - base
+
+
+def _stop_after_max_duration(
+    *,
+    node: Any,
+    stop_event: threading.Event,
+    stop_reason_box: dict[str, str],
+    max_seconds: float,
+) -> None:
+    if stop_event.wait(max_seconds):
+        return
+    stop_reason_box.setdefault("stop_reason", "max_duration")
+    _request_node_stop(node)
+    stop_event.set()
+
+
+def _request_node_stop(node: Any) -> None:
+    try:
+        loop = node.kernel.loop
+    except AttributeError:
+        node.stop()
+        return
+    try:
+        loop.call_soon_threadsafe(node.stop)
+    except RuntimeError:
+        node.stop()
+
+
+def _emergency_flatten_settings_for_trigger(
+    *,
+    settings: StartupSettings,
+    run_settings: LongRunningTestnetSettings,
+    run_id: str,
+    reason: str,
+) -> Any:
+    from apps.strategies_nautilus.runners.emergency_flatten import (
+        EmergencyFlattenSettings,
+    )
+
+    return EmergencyFlattenSettings(
+        kind=KIND_TESTNET,
+        run_id=run_id,
+        operator=settings.operator,
+        reason=reason,
+        instrument_ids=run_settings.instrument_ids,
+        output_root=run_settings.output_root,
+        fill_timeout_seconds=run_settings.emergency_fill_timeout_seconds,
+        poll_interval_seconds=run_settings.emergency_poll_interval_seconds,
+        runner_pid=None,
+    )
+
+
+def _default_flatten_runner(flatten_settings: Any) -> Any:
+    from apps.strategies_nautilus.runners.binance_testnet_exchange import (
+        build_binance_spot_testnet_exchange,
+    )
+    from apps.strategies_nautilus.runners.emergency_flatten import (
+        run_emergency_flatten,
+    )
+
+    exchange = build_binance_spot_testnet_exchange(flatten_settings)
+    return run_emergency_flatten(flatten_settings, exchange=exchange)
+
+
+def _write_long_run_manifest(result: LongRunningTestnetResult) -> None:
+    payload = {
+        "schema_version": "backtest.v1",
+        "kind": KIND_TESTNET,
+        "run_id": result.run_id,
+        "trader_id": result.startup.adapter_plan.trader_id,
+        "git_commit": result.startup.git_commit,
+        "git_dirty": result.startup.git_dirty,
+        "started_at": result.started_at,
+        "finished_at": result.finished_at,
+        "elapsed_seconds": result.elapsed_seconds,
+        "venues": [BINANCE],
+        "instruments": list(result.runtime.get("instrument_ids", []))
+        or [result.startup.adapter_plan.instrument_id],
+        "source": result.startup.source,
+        "model_version": result.startup.model_version,
+        "stage_evidence_path": result.startup.stage_evidence_path,
+        "runtime": result.runtime,
+    }
+    result.manifest_path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+
+
+def _append_alert_event(
+    path: Path,
+    *,
+    severity: str,
+    kind: str,
+    run_id: str,
+    msg: str,
+    ts: str,
+    context: Mapping[str, object],
+) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as fh:
+        fh.write(
+            json.dumps(
+                {
+                    "ts": ts,
+                    "severity": severity,
+                    "kind": kind,
+                    "run_id": run_id,
+                    "msg": msg,
+                    "context": dict(context),
+                },
+                sort_keys=True,
+            )
+        )
+        fh.write("\n")
 
 
 def _default_node_factory(node_config: TradingNodeConfig) -> Any:
@@ -755,7 +1494,10 @@ def _decision_allowed(text: str) -> bool:
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Validate ADR-008 Phase 3b testnet startup prerequisites.",
+        description=(
+            "Validate ADR-008 testnet startup prerequisites, run a controlled "
+            "connection probe, or start the guarded long-running shell."
+        ),
     )
     parser.add_argument("--mode", required=True)
     parser.add_argument("--kind", required=True)
@@ -779,16 +1521,95 @@ def _build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--long-run",
+        action="store_true",
+        help=(
+            "Start the ADR-008 §6.3c guarded long-running testnet shell. "
+            "Runtime telemetry thresholds auto-trigger emergency flatten."
+        ),
+    )
+    parser.add_argument(
         "--output-root",
         type=Path,
         default=Path("data/testnet"),
-        help="Bundle root for connection probe output (default: data/testnet).",
+        help="Bundle root for testnet output (default: data/testnet).",
     )
     parser.add_argument(
         "--max-connect-seconds",
         type=float,
         default=30.0,
         help="Stop the connection probe after this many seconds (default: 30).",
+    )
+    parser.add_argument(
+        "--starting-balance",
+        type=float,
+        help="Required with --long-run; base balance for the 5% daily-loss trigger.",
+    )
+    parser.add_argument(
+        "--max-run-seconds",
+        type=float,
+        default=DEFAULT_LONG_RUN_SECONDS,
+        help=(
+            "Stop --long-run after this many seconds "
+            f"(default: {DEFAULT_LONG_RUN_SECONDS:g})."
+        ),
+    )
+    parser.add_argument(
+        "--telemetry-poll-seconds",
+        type=float,
+        default=DEFAULT_TELEMETRY_POLL_SECONDS,
+        help=(
+            "Runtime threshold polling interval for --long-run "
+            f"(default: {DEFAULT_TELEMETRY_POLL_SECONDS:g})."
+        ),
+    )
+    parser.add_argument(
+        "--heartbeat-interval-seconds",
+        type=float,
+        default=DEFAULT_HEARTBEAT_INTERVAL_SECONDS,
+        help=(
+            "Heartbeat interval for --long-run logs "
+            f"(default: {DEFAULT_HEARTBEAT_INTERVAL_SECONDS:g})."
+        ),
+    )
+    parser.add_argument(
+        "--daily-loss-limit-pct",
+        type=float,
+        default=DEFAULT_DAILY_LOSS_LIMIT_PCT,
+        help=(
+            "Auto-flatten daily loss limit as a fraction of starting balance "
+            f"(default: {DEFAULT_DAILY_LOSS_LIMIT_PCT:g})."
+        ),
+    )
+    parser.add_argument(
+        "--exchange-error-burst-threshold",
+        type=int,
+        default=DEFAULT_EXCHANGE_ERROR_BURST_THRESHOLD,
+        help=(
+            "Auto-flatten when exchange errors exceed this count per hour "
+            f"(default: {DEFAULT_EXCHANGE_ERROR_BURST_THRESHOLD})."
+        ),
+    )
+    parser.add_argument(
+        "--ws-reconnect-burst-threshold",
+        type=int,
+        default=DEFAULT_WS_RECONNECT_BURST_THRESHOLD,
+        help=(
+            "Auto-flatten when WS reconnects exceed this count per hour "
+            f"(default: {DEFAULT_WS_RECONNECT_BURST_THRESHOLD})."
+        ),
+    )
+    parser.add_argument(
+        "--emergency-fill-timeout-seconds",
+        type=float,
+        default=60.0,
+        help="Fill timeout passed to emergency flatten from --long-run.",
+    )
+    parser.add_argument(
+        "--emergency-poll-interval-seconds",
+        type=float,
+        default=1.0,
+        help="Order polling interval passed to emergency flatten from --long-run.",
     )
     return parser
 
@@ -817,17 +1638,63 @@ def main(
     git_state: GitState | None = None,
     node_factory: NodeFactory | None = None,
     clock: ClockFn | None = None,
+    telemetry_reader: TelemetryReader | None = None,
+    flatten_runner: FlattenRunner | None = None,
 ) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
     settings = _config_from_args(args)
+    if args.connect_probe and args.long_run:
+        parser.exit(
+            EXIT_STARTUP_VALIDATION,
+            f"{parser.prog}: error: choose only one of --connect-probe or --long-run\n",
+        )
+
+    if args.long_run:
+        if args.starting_balance is None:
+            parser.exit(
+                EXIT_STARTUP_VALIDATION,
+                f"{parser.prog}: error: --starting-balance is required with --long-run\n",
+            )
+        try:
+            run_settings = LongRunningTestnetSettings(
+                output_root=args.output_root,
+                instrument_ids=(args.instrument_id,),
+                starting_balance=args.starting_balance,
+                max_run_seconds=args.max_run_seconds,
+                telemetry_poll_seconds=args.telemetry_poll_seconds,
+                heartbeat_interval_seconds=args.heartbeat_interval_seconds,
+                daily_loss_limit_pct=args.daily_loss_limit_pct,
+                exchange_error_burst_threshold=args.exchange_error_burst_threshold,
+                ws_reconnect_burst_threshold=args.ws_reconnect_burst_threshold,
+                emergency_fill_timeout_seconds=args.emergency_fill_timeout_seconds,
+                emergency_poll_interval_seconds=args.emergency_poll_interval_seconds,
+            )
+        except ValueError as exc:
+            parser.exit(EXIT_STARTUP_VALIDATION, f"{parser.prog}: error: {exc}\n")
+        try:
+            result = run_long_running_testnet(
+                settings,
+                run_settings,
+                env=env,
+                git_state=git_state,
+                node_factory=node_factory,
+                clock=clock,
+                telemetry_reader=telemetry_reader,
+                flatten_runner=flatten_runner,
+            )
+        except StartupValidationError as exc:
+            parser.exit(EXIT_STARTUP_VALIDATION, f"{parser.prog}: error: {exc}\n")
+        print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+        return result.exit_code
+
     if not args.connect_probe:
         try:
             result = validate_startup(settings, env=env, git_state=git_state)
         except StartupValidationError as exc:
-            parser.exit(2, f"{parser.prog}: error: {exc}\n")
+            parser.exit(EXIT_STARTUP_VALIDATION, f"{parser.prog}: error: {exc}\n")
         print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
-        return 0
+        return EXIT_OK
 
     probe_settings = ConnectionProbeSettings(
         output_root=args.output_root,
@@ -843,23 +1710,28 @@ def main(
             clock=clock,
         )
     except StartupValidationError as exc:
-        parser.exit(2, f"{parser.prog}: error: {exc}\n")
+        parser.exit(EXIT_STARTUP_VALIDATION, f"{parser.prog}: error: {exc}\n")
     print(json.dumps(probe.to_dict(), indent=2, sort_keys=True))
-    return 0 if probe.error is None else 1
+    return EXIT_OK if probe.error is None else EXIT_RUNTIME_ERROR
 
 
 __all__ = [
+    "AutoFlattenTrigger",
     "ConnectionProbeResult",
     "ConnectionProbeSettings",
     "CredentialAudit",
     "GitState",
+    "LongRunningTestnetResult",
+    "LongRunningTestnetSettings",
     "TestnetAdapterPlan",
+    "TestnetRuntimeTelemetry",
     "StartupCheckResult",
     "StartupValidationError",
     "StartupSettings",
     "build_testnet_node_config",
     "main",
     "run_connection_probe",
+    "run_long_running_testnet",
     "validate_startup",
 ]
 

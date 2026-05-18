@@ -2,7 +2,7 @@
 
 NautilusTrader 上的自定义 Strategy / Actor / 风控扩展。
 
-**当前 Phase**：2（ML signal layer / catalog-driven Nautilus backtests）。
+**当前 Phase**：3 entry（testnet guard rails / emergency flatten）。
 
 ## 职责
 
@@ -71,6 +71,28 @@ The report CLI reads the manifest and sidecar Parquet files, summarizes
 lineage decisions, risk blockers, policy state, PnL, and missing promotion
 metrics, and prints whether the bundle is reviewable. It does not promote
 sources or mutate policy.
+
+Phase 3 guarded testnet runner:
+
+```bash
+uv run python -m apps.strategies_nautilus.runners.testnet_runner \
+  --mode testnet \
+  --kind testnet \
+  --allow-real-credentials \
+  --source freqai_linear_v1 \
+  --model-version linear-mom-train20240105 \
+  --policy-position-pct-multiplier 0.2 \
+  --long-run \
+  --instrument-id BTCUSDT.BINANCE \
+  --starting-balance 100000 \
+  --max-run-seconds 3600
+```
+
+The long-running shell reuses the Phase 3b Binance Spot testnet connection
+guard, writes `data/testnet/<run_id>/run_manifest.json` plus runtime logs, and
+auto-invokes the ADR-008 emergency flatten path when the 5% daily-loss,
+exchange-error burst, or WS-reconnect burst thresholds fire. It writes only
+the credential source and API key prefix to disk.
 
 For the local BTCUSDT fixture, build `data/catalog/` first with:
 
