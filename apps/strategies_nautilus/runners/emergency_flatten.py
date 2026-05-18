@@ -10,10 +10,9 @@ plus two ``logs/alerts.log`` lines (``emergency_flatten_started`` /
 
 The orchestration is exchange-agnostic: callers supply an object that
 implements the :class:`ExchangeClient` protocol. Unit tests pass a fake
-client to drive every step deterministically. The real Binance Spot
-testnet driver is intentionally **not** implemented in this module; that
-adapter lands in a follow-up §6.3b commit so the orchestration code can
-be reviewed against the spec without network coupling.
+client to drive every step deterministically. For ``--kind testnet`` the
+CLI default factory now wires the real Binance Spot testnet REST driver;
+paper and live still require an injected factory.
 """
 
 from __future__ import annotations
@@ -780,6 +779,7 @@ def main(
     argv: list[str] | None = None,
     *,
     exchange_factory: ExchangeFactory | None = None,
+    env: Mapping[str, str] | None = None,
     clock: ClockFn | None = None,
     monotonic: MonoClockFn | None = None,
     sleeper: SleeperFn | None = None,
@@ -792,14 +792,11 @@ def main(
     except FlattenValidationError as exc:
         parser.exit(2, f"{parser.prog}: error: {exc}\n")
 
-    if exchange_factory is None:
-        parser.exit(
-            2,
-            f"{parser.prog}: error: no exchange driver wired yet; pass "
-            "exchange_factory in Python until §6.3b lands the real adapter.\n",
-        )
-
-    exchange = exchange_factory(settings)
+    factory = exchange_factory or (lambda s: _default_exchange_factory(s, env=env))
+    try:
+        exchange = factory(settings)
+    except FlattenValidationError as exc:
+        parser.exit(2, f"{parser.prog}: error: {exc}\n")
     result = run_emergency_flatten(
         settings,
         exchange=exchange,
@@ -810,6 +807,26 @@ def main(
     )
     print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
     return 0 if result.success else 1
+
+
+def _default_exchange_factory(
+    settings: EmergencyFlattenSettings,
+    *,
+    env: Mapping[str, str] | None = None,
+) -> ExchangeClient:
+    if settings.kind == "testnet":
+        from apps.strategies_nautilus.runners.binance_testnet_exchange import (
+            build_binance_spot_testnet_exchange,
+        )
+
+        return build_binance_spot_testnet_exchange(
+            settings,
+            env=env if env is not None else os.environ,
+        )
+    raise FlattenValidationError(
+        "exchange_driver_unavailable",
+        f"no default exchange driver is wired for kind={settings.kind!r}",
+    )
 
 
 __all__ = [
