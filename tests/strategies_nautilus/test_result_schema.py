@@ -303,8 +303,8 @@ def test_extra_nested_field_passed_through_in_stats_pnls(payload: dict) -> None:
     assert manifest.stats_pnls["USDT"]["future_metric"] == 0.42
 
 
-def test_kind_paper_and_live_accepted(payload: dict) -> None:
-    for kind in ("paper", "live"):
+def test_kind_paper_testnet_and_live_accepted(payload: dict) -> None:
+    for kind in ("paper", "testnet", "live"):
         payload["kind"] = kind
         manifest = BacktestManifest.model_validate(payload)
         assert manifest.kind == kind

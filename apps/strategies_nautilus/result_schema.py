@@ -25,7 +25,7 @@ _GIT_COMMIT_RE = re.compile(r"^[0-9a-f]{7,40}$")
 _ISO_MS_UTC_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$")
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
-Kind = Literal["backtest", "paper", "live"]
+Kind = Literal["backtest", "paper", "testnet", "live"]
 
 
 class _Base(BaseModel):

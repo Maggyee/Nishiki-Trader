@@ -6,11 +6,14 @@ import json
 from pathlib import Path
 
 import pytest
+from nautilus_trader.adapters.binance import BINANCE, BinanceAccountType
+from nautilus_trader.adapters.binance.common.enums import BinanceEnvironment
 
 from apps.strategies_nautilus.runners.testnet_runner import (
     GitState,
     StartupSettings,
     StartupValidationError,
+    build_testnet_node_config,
     main,
     validate_startup,
 )
@@ -98,6 +101,12 @@ def test_validate_startup_passes_without_leaking_secret(tmp_path):
     assert payload["runtime_order_mode"] == "exchange_testnet"
     assert payload["credentials_key_prefix"] == VALID_KEY[:8]
     assert payload["stage_evidence_path"] == str(retro_path)
+    assert payload["adapter_plan"]["exchange"] == "binance"
+    assert payload["adapter_plan"]["environment"] == "TESTNET"
+    assert payload["adapter_plan"]["account_type"] == "SPOT"
+    assert payload["adapter_plan"]["instrument_id"] == "BTCUSDT.BINANCE"
+    assert payload["adapter_plan"]["embedded_credentials"] is False
+    assert payload["adapter_plan"]["node_config_built"] is True
     assert payload["exchange_connected"] is False
     assert payload["bundle_written"] is False
     assert VALID_SECRET not in rendered
@@ -177,6 +186,48 @@ def test_validate_startup_accepts_promote_testnet_evidence(tmp_path):
     assert result.stage_evidence_path.endswith(".md")
 
 
+def test_build_testnet_node_config_uses_binance_spot_testnet_without_embedded_keys(
+    tmp_path,
+):
+    config = _config(tmp_path)
+
+    node_config = build_testnet_node_config(config)
+
+    assert str(node_config.trader_id) == "TESTNET_TRADER-001"
+    data_config = node_config.data_clients[BINANCE]
+    exec_config = node_config.exec_clients[BINANCE]
+    assert data_config.account_type == BinanceAccountType.SPOT
+    assert exec_config.account_type == BinanceAccountType.SPOT
+    assert data_config.environment == BinanceEnvironment.TESTNET
+    assert exec_config.environment == BinanceEnvironment.TESTNET
+    assert data_config.api_key is None
+    assert data_config.api_secret is None
+    assert exec_config.api_key is None
+    assert exec_config.api_secret is None
+
+
+def test_validate_startup_rejects_non_binance_instrument(tmp_path):
+    _write_retro(tmp_path / "retros")
+
+    with pytest.raises(StartupValidationError, match="instrument_venue_not_binance"):
+        validate_startup(
+            _config(tmp_path, instrument_id="BTCUSDT.COINBASE"),
+            env=VALID_ENV,
+            git_state=GIT_CLEAN,
+        )
+
+
+def test_validate_startup_rejects_non_spot_account_type(tmp_path):
+    _write_retro(tmp_path / "retros")
+
+    with pytest.raises(StartupValidationError, match="unsupported_account_type"):
+        validate_startup(
+            _config(tmp_path, account_type="USDT_FUTURES"),
+            env=VALID_ENV,
+            git_state=GIT_CLEAN,
+        )
+
+
 def test_cli_prints_json_summary(tmp_path, capsys):
     _write_retro(tmp_path / "retros")
 
@@ -205,4 +256,6 @@ def test_cli_prints_json_summary(tmp_path, capsys):
     assert rc == 0
     out = json.loads(capsys.readouterr().out)
     assert out["credentials_key_prefix"] == VALID_KEY[:8]
+    assert out["adapter_plan"]["exchange_endpoint"] == "https://testnet.binance.vision"
+    assert out["adapter_plan"]["embedded_credentials"] is False
     assert out["exchange_connected"] is False

@@ -129,7 +129,7 @@ data/backtests/<run_id>/
 |---|---:|---|
 | `schema_version` | 是 | 固定为 `backtest.v1`，未来加字段不破坏（appended）；不兼容改动必须升 `backtest.v2` |
 | `run_id` | 是 | 与目录名一致 |
-| `kind` | 是 | `backtest`、`paper`、`live`（Phase 2 只能是 `backtest`） |
+| `kind` | 是 | `backtest`、`paper`、`testnet`、`live`（Phase 2 只能是 `backtest`; ADR-008 defines `testnet` runtime semantics） |
 | `git_commit` / `git_dirty` | 是 | 起跑时 `git rev-parse HEAD` 与 `git diff --quiet` 的结果；**`git_dirty=true` 的回测不允许出现在策略比对里** |
 | `started_at` / `finished_at` | 是 | ISO 8601 UTC，毫秒精度，`Z` 结尾 |
 | `backtest_start` / `backtest_end` | 是 | 模拟时段（不是墙钟） |
