@@ -854,6 +854,218 @@ def test_long_run_auto_flattens_on_ws_reconnect_burst(tmp_path):
     assert alerts[0]["context"]["ws_reconnect_count_hour"] == 11
 
 
+def test_long_run_emits_ws_disconnected_on_transition(tmp_path):
+    """ADR-008 §5.4 ws_disconnected fires on True→False, re-arms after reconnect,
+    and does not block a clean max_duration exit."""
+    _write_retro(tmp_path / "retros")
+    settings = _config(tmp_path)
+    run_settings = _long_run_settings(tmp_path, max_run_seconds=0.2)
+    base = datetime(2026, 5, 18, 13, 0, 0, tzinfo=UTC)
+
+    result = run_long_running_testnet(
+        settings,
+        run_settings,
+        env=VALID_ENV,
+        git_state=GIT_CLEAN,
+        node_factory=lambda cfg: _BlockingFakeNode(cfg),
+        clock=_frozen_clock(base),
+        telemetry_reader=_sequence_reader(
+            [
+                TestnetRuntimeTelemetry(ts=base, daily_pnl=0.0, ws_connected=True),
+                TestnetRuntimeTelemetry(
+                    ts=base + timedelta(seconds=1),
+                    daily_pnl=0.0,
+                    ws_connected=False,
+                    ws_reconnect_count=1,
+                ),
+                TestnetRuntimeTelemetry(
+                    ts=base + timedelta(seconds=2),
+                    daily_pnl=0.0,
+                    ws_connected=True,
+                    ws_reconnect_count=1,
+                ),
+                TestnetRuntimeTelemetry(
+                    ts=base + timedelta(seconds=3),
+                    daily_pnl=0.0,
+                    ws_connected=False,
+                    ws_reconnect_count=2,
+                ),
+            ]
+        ),
+        flatten_runner=lambda settings: pytest.fail("flatten must not run"),
+        run_id="20260518-130000Z-aaaaaa01",
+    )
+
+    assert result.exit_code == 0
+    assert result.stop_reason == "max_duration"
+    assert result.auto_flatten_trigger is None
+
+    alerts = [
+        json.loads(line)
+        for line in result.alerts_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    ws_alerts = [a for a in alerts if a["msg"] == "ws_disconnected"]
+    assert len(ws_alerts) == 2
+    assert all(a["severity"] == "warning" for a in ws_alerts)
+    assert all(a["kind"] == "testnet" for a in ws_alerts)
+    assert ws_alerts[0]["context"]["ws_reconnect_count"] == 1
+    assert ws_alerts[1]["context"]["ws_reconnect_count"] == 2
+
+
+def test_long_run_emits_data_gap_exceeded_tolerance(tmp_path):
+    """ADR-008 §5.4 data_gap_exceeded_tolerance fires once per gap incident
+    and stays deduped while the gap persists."""
+    _write_retro(tmp_path / "retros")
+    settings = _config(tmp_path)
+    run_settings = _long_run_settings(
+        tmp_path,
+        max_run_seconds=0.2,
+        data_gap_tolerance_seconds=1.0,
+    )
+    base = datetime(2026, 5, 18, 13, 0, 0, tzinfo=UTC)
+    fresh_bar_ns = int(base.timestamp() * 1_000_000_000)
+    stale_bar_sample_ts = base + timedelta(seconds=10)
+
+    result = run_long_running_testnet(
+        settings,
+        run_settings,
+        env=VALID_ENV,
+        git_state=GIT_CLEAN,
+        node_factory=lambda cfg: _BlockingFakeNode(cfg),
+        clock=_frozen_clock(base),
+        telemetry_reader=_sequence_reader(
+            [
+                TestnetRuntimeTelemetry(
+                    ts=base,
+                    daily_pnl=0.0,
+                    last_bar_ns=fresh_bar_ns,
+                ),
+                TestnetRuntimeTelemetry(
+                    ts=stale_bar_sample_ts,
+                    daily_pnl=0.0,
+                    last_bar_ns=fresh_bar_ns,
+                ),
+            ]
+        ),
+        flatten_runner=lambda settings: pytest.fail("flatten must not run"),
+        run_id="20260518-130000Z-aaaaaa02",
+    )
+
+    assert result.exit_code == 0
+    assert result.stop_reason == "max_duration"
+    assert result.auto_flatten_trigger is None
+
+    alerts = [
+        json.loads(line)
+        for line in result.alerts_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    gap_alerts = [a for a in alerts if a["msg"] == "data_gap_exceeded_tolerance"]
+    assert len(gap_alerts) == 1
+    assert gap_alerts[0]["severity"] == "error"
+    assert gap_alerts[0]["kind"] == "testnet"
+    assert gap_alerts[0]["context"]["last_bar_ns"] == fresh_bar_ns
+    assert gap_alerts[0]["context"]["tolerance_seconds"] == 1.0
+    assert gap_alerts[0]["context"]["gap_seconds"] >= 9.0
+
+
+def test_long_run_emits_signal_lag_exceeded_threshold(tmp_path):
+    """ADR-008 §5.4 signal_lag_exceeded_threshold fires once per lag incident
+    and stays deduped while the lag persists."""
+    _write_retro(tmp_path / "retros")
+    settings = _config(tmp_path)
+    run_settings = _long_run_settings(
+        tmp_path,
+        max_run_seconds=0.2,
+        signal_lag_threshold_seconds=1.0,
+    )
+    base = datetime(2026, 5, 18, 13, 0, 0, tzinfo=UTC)
+    fresh_signal_ns = int(base.timestamp() * 1_000_000_000)
+    stale_signal_sample_ts = base + timedelta(seconds=10)
+
+    result = run_long_running_testnet(
+        settings,
+        run_settings,
+        env=VALID_ENV,
+        git_state=GIT_CLEAN,
+        node_factory=lambda cfg: _BlockingFakeNode(cfg),
+        clock=_frozen_clock(base),
+        telemetry_reader=_sequence_reader(
+            [
+                TestnetRuntimeTelemetry(
+                    ts=base,
+                    daily_pnl=0.0,
+                    last_signal_ns=fresh_signal_ns,
+                ),
+                TestnetRuntimeTelemetry(
+                    ts=stale_signal_sample_ts,
+                    daily_pnl=0.0,
+                    last_signal_ns=fresh_signal_ns,
+                ),
+            ]
+        ),
+        flatten_runner=lambda settings: pytest.fail("flatten must not run"),
+        run_id="20260518-130000Z-aaaaaa03",
+    )
+
+    assert result.exit_code == 0
+    assert result.stop_reason == "max_duration"
+    assert result.auto_flatten_trigger is None
+
+    alerts = [
+        json.loads(line)
+        for line in result.alerts_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    lag_alerts = [a for a in alerts if a["msg"] == "signal_lag_exceeded_threshold"]
+    assert len(lag_alerts) == 1
+    assert lag_alerts[0]["severity"] == "warning"
+    assert lag_alerts[0]["kind"] == "testnet"
+    assert lag_alerts[0]["context"]["last_signal_ns"] == fresh_signal_ns
+    assert lag_alerts[0]["context"]["threshold_seconds"] == 1.0
+    assert lag_alerts[0]["context"]["lag_seconds"] >= 9.0
+
+
+def test_adr_008_5_4_alert_kinds_have_runner_or_watchdog_wiring():
+    """ADR-008 §5.4 lists 9 mandatory alert msgs. Every one must have a
+    triggering code path in the runner or watchdog source."""
+    from pathlib import Path as _Path
+
+    project_root = _Path(__file__).resolve().parents[2]
+    runner_src = (
+        project_root
+        / "apps"
+        / "strategies_nautilus"
+        / "runners"
+        / "testnet_runner.py"
+    ).read_text(encoding="utf-8")
+    flatten_src = (
+        project_root
+        / "apps"
+        / "strategies_nautilus"
+        / "runners"
+        / "emergency_flatten.py"
+    ).read_text(encoding="utf-8")
+    watchdog_src = (
+        project_root / "infra" / "watchdog" / "watchdog.py"
+    ).read_text(encoding="utf-8")
+
+    sources = {
+        "kill_switch_fired": runner_src,
+        "restart_drift_detected": runner_src,
+        "data_gap_exceeded_tolerance": runner_src,
+        "signal_lag_exceeded_threshold": runner_src,
+        "exchange_error_burst": runner_src,
+        "ws_disconnected": runner_src,
+        "heartbeat_lost": watchdog_src,
+        "emergency_flatten_started": flatten_src,
+        "emergency_flatten_completed": flatten_src,
+    }
+    for kind, src in sources.items():
+        assert kind in src, f"§5.4 alert kind {kind!r} has no wiring"
+
+
 def test_long_run_stops_cleanly_at_max_duration_without_auto_flatten(tmp_path):
     _write_retro(tmp_path / "retros")
     settings = _config(tmp_path)

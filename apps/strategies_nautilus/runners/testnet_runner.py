@@ -66,6 +66,8 @@ DEFAULT_HEARTBEAT_INTERVAL_SECONDS = 30.0
 DEFAULT_DAILY_LOSS_LIMIT_PCT = 0.05
 DEFAULT_EXCHANGE_ERROR_BURST_THRESHOLD = 50
 DEFAULT_WS_RECONNECT_BURST_THRESHOLD = 10
+DEFAULT_DATA_GAP_TOLERANCE_SECONDS = 120.0
+DEFAULT_SIGNAL_LAG_THRESHOLD_SECONDS = 60.0
 EXIT_OK = 0
 EXIT_RUNTIME_ERROR = 1
 EXIT_STARTUP_VALIDATION = 2
@@ -217,6 +219,7 @@ class TestnetRuntimeTelemetry:
     open_orders: int | None = None
     open_positions: int | None = None
     last_bar_ns: int | None = None
+    last_signal_ns: int | None = None
     ws_connected: bool = True
 
     def __post_init__(self) -> None:
@@ -234,6 +237,22 @@ class AutoFlattenTrigger:
     context: dict[str, object]
 
 
+@dataclass
+class AdvisoryAlertState:
+    """Mutable dedup state for ADR-008 §5.4 warning/error alerts.
+
+    These alerts (``ws_disconnected``, ``data_gap_exceeded_tolerance``,
+    ``signal_lag_exceeded_threshold``) only land in ``logs/alerts.log`` — they
+    never trigger auto-flatten or change the runner exit code.
+    """
+
+    __test__ = False
+
+    ws_connected_prev: bool = True
+    data_gap_active: bool = False
+    signal_lag_active: bool = False
+
+
 @dataclass(frozen=True)
 class LongRunningTestnetSettings:
     output_root: Path
@@ -245,6 +264,8 @@ class LongRunningTestnetSettings:
     daily_loss_limit_pct: float = DEFAULT_DAILY_LOSS_LIMIT_PCT
     exchange_error_burst_threshold: int = DEFAULT_EXCHANGE_ERROR_BURST_THRESHOLD
     ws_reconnect_burst_threshold: int = DEFAULT_WS_RECONNECT_BURST_THRESHOLD
+    data_gap_tolerance_seconds: float = DEFAULT_DATA_GAP_TOLERANCE_SECONDS
+    signal_lag_threshold_seconds: float = DEFAULT_SIGNAL_LAG_THRESHOLD_SECONDS
     emergency_fill_timeout_seconds: float = 60.0
     emergency_poll_interval_seconds: float = 1.0
     previous_run_id: str | None = None
@@ -267,6 +288,10 @@ class LongRunningTestnetSettings:
             raise ValueError("exchange_error_burst_threshold must be non-negative")
         if self.ws_reconnect_burst_threshold < 0:
             raise ValueError("ws_reconnect_burst_threshold must be non-negative")
+        if self.data_gap_tolerance_seconds <= 0:
+            raise ValueError("data_gap_tolerance_seconds must be positive")
+        if self.signal_lag_threshold_seconds <= 0:
+            raise ValueError("signal_lag_threshold_seconds must be positive")
         if self.emergency_fill_timeout_seconds <= 0:
             raise ValueError("emergency_fill_timeout_seconds must be positive")
         if self.emergency_poll_interval_seconds <= 0:
@@ -1067,6 +1092,8 @@ def _base_testnet_runtime(
         ),
         "ws_reconnect_count": 0,
         "ws_reconnect_burst_threshold": run_settings.ws_reconnect_burst_threshold,
+        "data_gap_tolerance_seconds": run_settings.data_gap_tolerance_seconds,
+        "signal_lag_threshold_seconds": run_settings.signal_lag_threshold_seconds,
         "daily_pnl": 0.0,
         "starting_balance": run_settings.starting_balance,
         "daily_loss_limit_pct": run_settings.daily_loss_limit_pct,
@@ -1085,6 +1112,7 @@ def _base_testnet_runtime(
                 "open_orders": sample.open_orders,
                 "open_positions": sample.open_positions,
                 "last_bar_ns": sample.last_bar_ns,
+                "last_signal_ns": sample.last_signal_ns,
                 "processed_until_ns": sample.last_bar_ns,
                 "ws_connected": sample.ws_connected,
             }
@@ -1317,6 +1345,7 @@ def _monitor_long_run(
     stop_reason_box: dict[str, str],
 ) -> None:
     history: deque[TestnetRuntimeTelemetry] = deque()
+    advisory_state = AdvisoryAlertState()
     last_heartbeat_ts: datetime | None = None
     while not stop_event.is_set():
         try:
@@ -1348,6 +1377,19 @@ def _monitor_long_run(
                 sample=sample,
                 kind=kind,
                 run_id=run_id,
+            )
+
+        for msg, severity, context in _advisory_alerts(
+            sample, settings=run_settings, state=advisory_state
+        ):
+            _append_alert_event(
+                alerts_path,
+                severity=severity,
+                kind=kind,
+                run_id=run_id,
+                msg=msg,
+                ts=_iso_ms_utc(sample.ts),
+                context=context,
             )
 
         trigger = _auto_flatten_trigger(run_settings, sample, history)
@@ -1488,6 +1530,76 @@ def _auto_flatten_trigger(
         )
 
     return None
+
+
+def _advisory_alerts(
+    sample: TestnetRuntimeTelemetry,
+    *,
+    settings: LongRunningTestnetSettings,
+    state: AdvisoryAlertState,
+) -> list[tuple[str, str, dict[str, object]]]:
+    """Return ADR-008 §5.4 warning/error alerts to emit this tick.
+
+    Mutates ``state`` to dedup repeat alerts: ``ws_disconnected`` fires once
+    per True→False transition; ``data_gap_exceeded_tolerance`` and
+    ``signal_lag_exceeded_threshold`` fire once per incident and re-arm when
+    the underlying metric returns inside tolerance.
+    """
+
+    pending: list[tuple[str, str, dict[str, object]]] = []
+
+    if state.ws_connected_prev and not sample.ws_connected:
+        pending.append(
+            (
+                "ws_disconnected",
+                "warning",
+                {
+                    "ws_connected": False,
+                    "ws_reconnect_count": sample.ws_reconnect_count,
+                },
+            )
+        )
+    state.ws_connected_prev = sample.ws_connected
+
+    if sample.last_bar_ns is not None:
+        gap_seconds = sample.ts.timestamp() - sample.last_bar_ns / 1_000_000_000
+        if gap_seconds > settings.data_gap_tolerance_seconds:
+            if not state.data_gap_active:
+                pending.append(
+                    (
+                        "data_gap_exceeded_tolerance",
+                        "error",
+                        {
+                            "last_bar_ns": sample.last_bar_ns,
+                            "gap_seconds": gap_seconds,
+                            "tolerance_seconds": settings.data_gap_tolerance_seconds,
+                        },
+                    )
+                )
+                state.data_gap_active = True
+        else:
+            state.data_gap_active = False
+
+    if sample.last_signal_ns is not None:
+        lag_seconds = sample.ts.timestamp() - sample.last_signal_ns / 1_000_000_000
+        if lag_seconds > settings.signal_lag_threshold_seconds:
+            if not state.signal_lag_active:
+                pending.append(
+                    (
+                        "signal_lag_exceeded_threshold",
+                        "warning",
+                        {
+                            "last_signal_ns": sample.last_signal_ns,
+                            "lag_seconds": lag_seconds,
+                            "threshold_seconds": settings.signal_lag_threshold_seconds,
+                        },
+                    )
+                )
+                state.signal_lag_active = True
+        else:
+            state.signal_lag_active = False
+
+    return pending
 
 
 def _window_delta(
@@ -1955,6 +2067,24 @@ def _build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--data-gap-tolerance-seconds",
+        type=float,
+        default=DEFAULT_DATA_GAP_TOLERANCE_SECONDS,
+        help=(
+            "Emit data_gap_exceeded_tolerance alert when the latest bar age "
+            f"exceeds this many seconds (default: {DEFAULT_DATA_GAP_TOLERANCE_SECONDS:g})."
+        ),
+    )
+    parser.add_argument(
+        "--signal-lag-threshold-seconds",
+        type=float,
+        default=DEFAULT_SIGNAL_LAG_THRESHOLD_SECONDS,
+        help=(
+            "Emit signal_lag_exceeded_threshold alert when the latest signal age "
+            f"exceeds this many seconds (default: {DEFAULT_SIGNAL_LAG_THRESHOLD_SECONDS:g})."
+        ),
+    )
+    parser.add_argument(
         "--emergency-fill-timeout-seconds",
         type=float,
         default=60.0,
@@ -2034,6 +2164,8 @@ def main(
                 daily_loss_limit_pct=args.daily_loss_limit_pct,
                 exchange_error_burst_threshold=args.exchange_error_burst_threshold,
                 ws_reconnect_burst_threshold=args.ws_reconnect_burst_threshold,
+                data_gap_tolerance_seconds=args.data_gap_tolerance_seconds,
+                signal_lag_threshold_seconds=args.signal_lag_threshold_seconds,
                 emergency_fill_timeout_seconds=args.emergency_fill_timeout_seconds,
                 emergency_poll_interval_seconds=args.emergency_poll_interval_seconds,
                 previous_run_id=args.previous_run_id,
@@ -2086,6 +2218,7 @@ def main(
 
 
 __all__ = [
+    "AdvisoryAlertState",
     "AutoFlattenTrigger",
     "ConnectionProbeResult",
     "ConnectionProbeSettings",
