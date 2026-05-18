@@ -1,8 +1,14 @@
-"""ADR-008 Phase 3b testnet startup guard.
+"""ADR-008 Phase 3b testnet startup guard + connection probe.
 
-This module intentionally stops before opening network connections. It verifies
-the credential boundary and promotion prerequisites, then builds the Nautilus
-Binance testnet adapter configuration that a later runtime will connect.
+This module guards every step before a real Binance testnet connection. The
+``validate_startup`` path enforces ADR-008 §4 and builds a credential-less
+adapter config used for audit. The ``run_connection_probe`` path layers on top:
+after validation it builds a credentialed Nautilus Binance Spot **testnet**
+``TradingNode``, connects it briefly without registering any strategies or
+actors, then stops. The probe writes ``data/testnet/<run_id>/logs/runtime.log``
+with a redacted ``credentials_loaded`` event and a small
+``connection_probe.json`` summary; it never emits a strategy, never submits an
+order, and never writes the full API key or secret anywhere on disk.
 """
 
 from __future__ import annotations
@@ -11,10 +17,14 @@ import argparse
 import json
 import os
 import re
+import secrets
 import subprocess
-from collections.abc import Mapping
+import threading
+from collections.abc import Callable, Mapping
 from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 from nautilus_trader.adapters.binance import (
     BINANCE,
@@ -137,6 +147,44 @@ class StartupCheckResult:
         return asdict(self)
 
 
+@dataclass(frozen=True)
+class ConnectionProbeSettings:
+    output_root: Path
+    max_connect_seconds: float = 30.0
+
+    def __post_init__(self) -> None:
+        if self.max_connect_seconds <= 0:
+            raise ValueError(
+                f"max_connect_seconds must be positive, got {self.max_connect_seconds}"
+            )
+
+
+@dataclass(frozen=True)
+class ConnectionProbeResult:
+    startup: StartupCheckResult
+    run_id: str
+    bundle_root: Path
+    runtime_log_path: Path
+    probe_summary_path: Path
+    started_at: str
+    finished_at: str
+    elapsed_seconds: float
+    max_connect_seconds: float
+    stop_reason: str
+    error: str | None
+    node_built: bool
+    node_run_invoked: bool
+    strategies_registered: int = 0
+    actors_registered: int = 0
+
+    def to_dict(self) -> dict[str, object]:
+        payload = asdict(self)
+        payload["bundle_root"] = str(self.bundle_root)
+        payload["runtime_log_path"] = str(self.runtime_log_path)
+        payload["probe_summary_path"] = str(self.probe_summary_path)
+        return payload
+
+
 def validate_startup(
     config: StartupSettings,
     *,
@@ -189,7 +237,7 @@ def validate_startup(
 
     node_config = build_testnet_node_config(config)
     adapter_plan = _adapter_plan_from_node_config(
-        config=config,
+        settings=config,
         node_config=node_config,
         credential_audit=credential_audit,
     )
@@ -213,8 +261,19 @@ def validate_startup(
     )
 
 
-def build_testnet_node_config(config: StartupSettings) -> TradingNodeConfig:
-    """Build the Nautilus Binance testnet node config without connecting it."""
+def build_testnet_node_config(
+    config: StartupSettings,
+    *,
+    api_key: str | None = None,
+    api_secret: str | None = None,
+) -> TradingNodeConfig:
+    """Build the Nautilus Binance Spot testnet node config.
+
+    ``api_key`` / ``api_secret`` are ``None`` by default — the audit path uses
+    that form and asserts no credentials reach the config. The connection
+    probe passes real testnet credentials from environment variables; those
+    values live in memory only and never appear in any serialized output.
+    """
 
     _check_mode_kind(config.mode, config.kind)
     account_type = _parse_binance_account_type(config.account_type)
@@ -242,6 +301,8 @@ def build_testnet_node_config(config: StartupSettings) -> TradingNodeConfig:
         cache=CacheConfig(timestamps_as_iso8601=True, flush_on_start=False),
         data_clients={
             BINANCE: BinanceDataClientConfig(
+                api_key=api_key,
+                api_secret=api_secret,
                 account_type=account_type,
                 environment=BinanceEnvironment.TESTNET,
                 instrument_provider=instrument_provider,
@@ -249,6 +310,8 @@ def build_testnet_node_config(config: StartupSettings) -> TradingNodeConfig:
         },
         exec_clients={
             BINANCE: BinanceExecClientConfig(
+                api_key=api_key,
+                api_secret=api_secret,
                 account_type=account_type,
                 environment=BinanceEnvironment.TESTNET,
                 instrument_provider=instrument_provider,
@@ -287,7 +350,7 @@ def _parse_instrument_id(value: str) -> InstrumentId:
 
 def _adapter_plan_from_node_config(
     *,
-    config: StartupSettings,
+    settings: StartupSettings,
     node_config: TradingNodeConfig,
     credential_audit: CredentialAudit,
 ) -> TestnetAdapterPlan:
@@ -305,7 +368,7 @@ def _adapter_plan_from_node_config(
         account_type=exec_config.account_type.value,
         environment=exec_config.environment.value,
         exchange_endpoint=endpoint,
-        instrument_id=config.instrument_id,
+        instrument_id=settings.instrument_id,
         trader_id=str(node_config.trader_id),
         data_client_factory=(
             f"{BinanceLiveDataClientFactory.__module__}."
@@ -326,6 +389,250 @@ def _adapter_plan_from_node_config(
             or exec_config.api_secret
         ),
     )
+
+
+NodeFactory = Callable[[TradingNodeConfig], Any]
+ClockFn = Callable[[], datetime]
+
+
+def run_connection_probe(
+    settings: StartupSettings,
+    probe: ConnectionProbeSettings,
+    *,
+    env: Mapping[str, str] | None = None,
+    git_state: GitState | None = None,
+    node_factory: NodeFactory | None = None,
+    clock: ClockFn | None = None,
+    run_id: str | None = None,
+) -> ConnectionProbeResult:
+    """Validate, connect, and immediately stop a Binance Spot testnet node.
+
+    The probe never registers a strategy or an actor, so the node cannot
+    submit any orders even while connected. Real testnet credentials are
+    injected into the in-memory ``TradingNodeConfig`` only; they never reach
+    ``runtime.log``, ``connection_probe.json``, or any other on-disk artifact.
+    """
+
+    effective_env: Mapping[str, str] = env if env is not None else os.environ
+    now: ClockFn = clock if clock is not None else _utc_now
+    factory: NodeFactory = (
+        node_factory if node_factory is not None else _default_node_factory
+    )
+
+    startup = validate_startup(settings, env=effective_env, git_state=git_state)
+
+    started = now()
+    rid = run_id or _make_run_id(started)
+    bundle_root = probe.output_root / rid
+    logs_dir = bundle_root / "logs"
+    logs_dir.mkdir(parents=True, exist_ok=False)
+    runtime_log_path = logs_dir / "runtime.log"
+    probe_summary_path = bundle_root / "connection_probe.json"
+
+    started_at = _iso_ms_utc(started)
+    _append_runtime_event(
+        runtime_log_path,
+        {
+            "event": "credentials_loaded",
+            "ts": started_at,
+            "run_id": rid,
+            "operator": settings.operator,
+            "kind": KIND_TESTNET,
+            "runtime": {
+                "mode": MODE_TESTNET,
+                "data_mode": DATA_MODE_EXCHANGE_WS,
+                "order_mode": ORDER_MODE_TESTNET,
+                "exchange": "binance",
+                "exchange_endpoint": startup.adapter_plan.exchange_endpoint,
+                "credentials_source": startup.credentials_source,
+                "credentials_key_prefix": startup.credentials_key_prefix,
+                "credentials_loaded": True,
+            },
+        },
+    )
+
+    node_config = build_testnet_node_config(
+        settings,
+        api_key=effective_env[KEY_ENV],
+        api_secret=effective_env[SECRET_ENV],
+    )
+
+    node_built = False
+    node_run_invoked = False
+    stop_reason = "max_duration"
+    error: str | None = None
+    strategies_registered = 0
+    actors_registered = 0
+
+    node = factory(node_config)
+    try:
+        node.add_data_client_factory(BINANCE, BinanceLiveDataClientFactory)
+        node.add_exec_client_factory(BINANCE, BinanceLiveExecClientFactory)
+        node.build()
+        node_built = True
+        _append_runtime_event(
+            runtime_log_path,
+            {"event": "node_built", "ts": _iso_ms_utc(now())},
+        )
+
+        strategies_registered, actors_registered = _trader_counts(node)
+        if strategies_registered or actors_registered:
+            raise RuntimeError(
+                "connection probe refuses to run with registered strategies "
+                f"({strategies_registered}) or actors ({actors_registered})"
+            )
+
+        node_run_invoked = True
+        _append_runtime_event(
+            runtime_log_path,
+            {
+                "event": "node_run_invoked",
+                "ts": _iso_ms_utc(now()),
+                "max_connect_seconds": probe.max_connect_seconds,
+            },
+        )
+        _run_until_timeout(node, probe.max_connect_seconds)
+    except Exception as exc:  # noqa: BLE001 — probe must always write summary
+        stop_reason = "exception"
+        error = repr(exc)
+        _append_runtime_event(
+            runtime_log_path,
+            {"event": "exception", "ts": _iso_ms_utc(now()), "error": error},
+        )
+    finally:
+        _dispose_node(node, runtime_log_path, now)
+
+    finished = now()
+    finished_at = _iso_ms_utc(finished)
+    elapsed = max(0.0, (finished - started).total_seconds())
+
+    _append_runtime_event(
+        runtime_log_path,
+        {
+            "event": "shutdown",
+            "ts": finished_at,
+            "elapsed_seconds": elapsed,
+            "stop_reason": stop_reason,
+            "node_built": node_built,
+            "node_run_invoked": node_run_invoked,
+            "strategies_registered": strategies_registered,
+            "actors_registered": actors_registered,
+        },
+    )
+
+    result = ConnectionProbeResult(
+        startup=startup,
+        run_id=rid,
+        bundle_root=bundle_root,
+        runtime_log_path=runtime_log_path,
+        probe_summary_path=probe_summary_path,
+        started_at=started_at,
+        finished_at=finished_at,
+        elapsed_seconds=elapsed,
+        max_connect_seconds=probe.max_connect_seconds,
+        stop_reason=stop_reason,
+        error=error,
+        node_built=node_built,
+        node_run_invoked=node_run_invoked,
+        strategies_registered=strategies_registered,
+        actors_registered=actors_registered,
+    )
+    probe_summary_path.write_text(
+        json.dumps(result.to_dict(), indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+    return result
+
+
+def _default_node_factory(node_config: TradingNodeConfig) -> Any:
+    from nautilus_trader.live.node import TradingNode
+
+    return TradingNode(config=node_config)
+
+
+def _utc_now() -> datetime:
+    return datetime.now(UTC)
+
+
+def _make_run_id(started: datetime) -> str:
+    stem = started.astimezone(UTC).strftime("%Y%m%d-%H%M%SZ")
+    return f"{stem}-{secrets.token_hex(4)}"
+
+
+def _iso_ms_utc(dt: datetime) -> str:
+    aware = dt.astimezone(UTC)
+    return aware.strftime("%Y-%m-%dT%H:%M:%S.") + f"{aware.microsecond // 1000:03d}Z"
+
+
+def _append_runtime_event(path: Path, payload: Mapping[str, object]) -> None:
+    with path.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(dict(payload), sort_keys=True))
+        fh.write("\n")
+
+
+def _trader_counts(node: Any) -> tuple[int, int]:
+    trader = getattr(node, "trader", None)
+    if trader is None:
+        return 0, 0
+    strategies = _safe_len(getattr(trader, "strategies", None))
+    actors = _safe_len(getattr(trader, "actors", None))
+    return strategies, actors
+
+
+def _safe_len(value: object) -> int:
+    if callable(value):
+        try:
+            value = value()
+        except Exception:
+            return 0
+    if value is None:
+        return 0
+    try:
+        return len(value)  # type: ignore[arg-type]
+    except TypeError:
+        return 0
+
+
+def _run_until_timeout(node: Any, max_connect_seconds: float) -> None:
+    stop_called = threading.Event()
+
+    def _stop_later() -> None:
+        if stop_called.wait(max_connect_seconds):
+            return
+        try:
+            loop = node.kernel.loop
+        except AttributeError:
+            node.stop()
+            return
+        try:
+            loop.call_soon_threadsafe(node.stop)
+        except RuntimeError:
+            node.stop()
+
+    timer = threading.Thread(target=_stop_later, daemon=True)
+    timer.start()
+    try:
+        node.run(raise_exception=False)
+    finally:
+        stop_called.set()
+        timer.join(timeout=1.0)
+
+
+def _dispose_node(node: Any, runtime_log_path: Path, now: ClockFn) -> None:
+    dispose = getattr(node, "dispose", None)
+    if dispose is None:
+        return
+    try:
+        dispose()
+    except Exception as exc:  # noqa: BLE001 — disposal errors are logged, not raised
+        _append_runtime_event(
+            runtime_log_path,
+            {
+                "event": "dispose_failed",
+                "ts": _iso_ms_utc(now()),
+                "error": repr(exc),
+            },
+        )
 
 
 def _check_mode_kind(mode: str, kind: str) -> None:
@@ -462,6 +769,27 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--instrument-id", default=DEFAULT_TESTNET_INSTRUMENT_ID)
     parser.add_argument("--account-type", default=DEFAULT_TESTNET_ACCOUNT_TYPE)
     parser.add_argument("--trader-id", default=DEFAULT_TESTNET_TRADER_ID)
+    parser.add_argument(
+        "--connect-probe",
+        action="store_true",
+        help=(
+            "After validation passes, build a Binance Spot testnet TradingNode, "
+            "connect briefly without registering any strategy, then stop and "
+            "write data/testnet/<run_id>/{logs/runtime.log,connection_probe.json}."
+        ),
+    )
+    parser.add_argument(
+        "--output-root",
+        type=Path,
+        default=Path("data/testnet"),
+        help="Bundle root for connection probe output (default: data/testnet).",
+    )
+    parser.add_argument(
+        "--max-connect-seconds",
+        type=float,
+        default=30.0,
+        help="Stop the connection probe after this many seconds (default: 30).",
+    )
     return parser
 
 
@@ -487,22 +815,42 @@ def main(
     *,
     env: Mapping[str, str] | None = None,
     git_state: GitState | None = None,
+    node_factory: NodeFactory | None = None,
+    clock: ClockFn | None = None,
 ) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
+    settings = _config_from_args(args)
+    if not args.connect_probe:
+        try:
+            result = validate_startup(settings, env=env, git_state=git_state)
+        except StartupValidationError as exc:
+            parser.exit(2, f"{parser.prog}: error: {exc}\n")
+        print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+        return 0
+
+    probe_settings = ConnectionProbeSettings(
+        output_root=args.output_root,
+        max_connect_seconds=args.max_connect_seconds,
+    )
     try:
-        result = validate_startup(
-            _config_from_args(args),
+        probe = run_connection_probe(
+            settings,
+            probe_settings,
             env=env,
             git_state=git_state,
+            node_factory=node_factory,
+            clock=clock,
         )
     except StartupValidationError as exc:
         parser.exit(2, f"{parser.prog}: error: {exc}\n")
-    print(json.dumps(result.to_dict(), indent=2, sort_keys=True))
-    return 0
+    print(json.dumps(probe.to_dict(), indent=2, sort_keys=True))
+    return 0 if probe.error is None else 1
 
 
 __all__ = [
+    "ConnectionProbeResult",
+    "ConnectionProbeSettings",
     "CredentialAudit",
     "GitState",
     "TestnetAdapterPlan",
@@ -510,8 +858,9 @@ __all__ = [
     "StartupValidationError",
     "StartupSettings",
     "build_testnet_node_config",
-    "validate_startup",
     "main",
+    "run_connection_probe",
+    "validate_startup",
 ]
 
 
