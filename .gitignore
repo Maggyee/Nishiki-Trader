@@ -71,3 +71,4 @@ nautilus_cache/
 .DS_Store
 Thumbs.db
 *:Zone.Identifier
+infra/launchers/
