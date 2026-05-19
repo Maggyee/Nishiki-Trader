@@ -56,10 +56,13 @@ STAGE_ORDER: tuple[str, ...] = (
     STAGE_LIVE_NORMAL,
 )
 
-# Phase 2 only implements review for stages up to and including
-# ``paper_simulated``. Anything beyond requires Phase 3 testnet/live
-# infrastructure, which the project explicitly has not built yet.
-PHASE_2_STAGE_LIMIT = STAGE_PAPER_SIMULATED
+# Hard ceiling on which ``target_stage`` this tool will allow without an
+# explicit ADR-spec follow-up. After ADR-008 §6.6 Phase 3f stability soak
+# landed, the ceiling moved from ``paper_simulated`` to ``testnet_canary``;
+# anything beyond (live_canary / live_normal) still requires Phase 4 live
+# trading ADRs, which the project explicitly has not written yet. The
+# constant name is retained for ADR-008 §8 reference compatibility.
+PHASE_2_STAGE_LIMIT = STAGE_TESTNET_CANARY
 
 # Per-stage upper bounds for ``SourcePolicy`` (ADR-007 §2.5).
 #
@@ -168,6 +171,10 @@ class PromotionReview:
     rationale: str
     generated_at: str
 
+    # Phase 3 evidence paths (only meaningful for paper_simulated → testnet_canary)
+    paper_simulated_retro_path: str | None = None
+    testnet_runbook_signoff_path: str | None = None
+
     # Bookkeeping
     bundle_promotion_blockers: list[str] = field(default_factory=list)
 
@@ -182,6 +189,8 @@ def build_promotion_review(
     decision: str,
     rationale: str,
     operator: str,
+    paper_simulated_retro_path: Path | None = None,
+    testnet_runbook_signoff_path: Path | None = None,
     now: datetime | None = None,
 ) -> PromotionReview:
     """Produce a :class:`PromotionReview` for the given bundle and inputs.
@@ -221,6 +230,8 @@ def build_promotion_review(
         decision=decision,
         bundle_policy_mismatches=bundle_policy_mismatches,
         policy_diff=policy_diff,
+        paper_simulated_retro_path=paper_simulated_retro_path,
+        testnet_runbook_signoff_path=testnet_runbook_signoff_path,
     )
 
     decision_allowed, decision_reasons = _decision_outcome(
@@ -279,6 +290,16 @@ def build_promotion_review(
         operator=operator,
         rationale=rationale.strip(),
         generated_at=generated_at,
+        paper_simulated_retro_path=(
+            str(paper_simulated_retro_path)
+            if paper_simulated_retro_path is not None
+            else None
+        ),
+        testnet_runbook_signoff_path=(
+            str(testnet_runbook_signoff_path)
+            if testnet_runbook_signoff_path is not None
+            else None
+        ),
         bundle_promotion_blockers=list(report.promotion_blockers),
     )
 
@@ -353,6 +374,13 @@ def render_markdown(review: PromotionReview) -> str:
         f"mode={review.runtime_mode}, "
         f"data_mode={review.runtime_data_mode}, "
         f"order_mode={review.runtime_order_mode}",
+        "",
+        "## 3a. Phase 3 evidence paths",
+        "",
+        "- paper_simulated_retro_path: "
+        f"`{review.paper_simulated_retro_path or 'none'}`",
+        "- testnet_runbook_signoff_path: "
+        f"`{review.testnet_runbook_signoff_path or 'none'}`",
         "",
         "## 4. Signals & lineage",
         "",
@@ -515,6 +543,8 @@ def _promotion_gate_blockers(
     decision: str,
     bundle_policy_mismatches: list[str],
     policy_diff: dict[str, dict[str, Any]],
+    paper_simulated_retro_path: Path | None,
+    testnet_runbook_signoff_path: Path | None,
 ) -> list[str]:
     """Compute promotion-specific blockers on top of bundle review_blockers.
 
@@ -558,6 +588,19 @@ def _promotion_gate_blockers(
             target_policy=target_policy,
             policy_diff=policy_diff,
             report=report,
+        )
+    )
+
+    blockers.extend(
+        _testnet_canary_promote_blockers(
+            decision=decision,
+            current_stage=current_stage,
+            target_stage=target_stage,
+            current_policy=current_policy,
+            target_policy=target_policy,
+            source=report.source,
+            paper_simulated_retro_path=paper_simulated_retro_path,
+            testnet_runbook_signoff_path=testnet_runbook_signoff_path,
         )
     )
 
@@ -685,6 +728,121 @@ def _promote_blockers(
                 "promote_paper_simulated_requires_target_dry_run_false"
             )
     return blockers
+
+
+def _testnet_canary_promote_blockers(
+    *,
+    decision: str,
+    current_stage: str,
+    target_stage: str,
+    current_policy: PolicyFields,
+    target_policy: PolicyFields,
+    source: str | None,
+    paper_simulated_retro_path: Path | None,
+    testnet_runbook_signoff_path: Path | None,
+) -> list[str]:
+    """ADR-008 §6.6/§8 gate for ``paper_simulated → testnet_canary`` promotes.
+
+    Only fires for the exact transition. It enforces:
+
+    - both policies must already be live-style (``dry_run=False``);
+    - operator supplied a paper_simulated retro path for this source, the
+      file exists, and the file at least mentions ``paper_simulated`` and
+      the source name (cheap sanity check, not a content audit);
+    - operator supplied a testnet runbook signoff path, the file exists,
+      and the file at least mentions ``ADR-008`` and ``§6.6`` (i.e. the
+      ADR-008 §6.6 stability-soak retro).
+
+    Multiplier and stage-transition shape are already enforced by
+    ``_policy_bound_blockers`` and ``_promote_blockers`` respectively, so
+    this function intentionally does not duplicate those checks.
+    """
+
+    if decision != DECISION_PROMOTE:
+        return []
+    if (
+        current_stage != STAGE_PAPER_SIMULATED
+        or target_stage != STAGE_TESTNET_CANARY
+    ):
+        return []
+
+    blockers: list[str] = []
+
+    if current_policy.dry_run:
+        blockers.append(
+            "promote_testnet_canary_requires_current_no_dry_run:"
+            f"current_policy.dry_run={current_policy.dry_run}"
+        )
+    if target_policy.dry_run:
+        blockers.append(
+            "promote_testnet_canary_requires_target_no_dry_run:"
+            f"target_policy.dry_run={target_policy.dry_run}"
+        )
+
+    blockers.extend(
+        _evidence_path_blockers(
+            path=paper_simulated_retro_path,
+            label="paper_simulated_retro",
+            cli_flag="--paper-simulated-retro-path",
+            required_substrings=(
+                ("paper_simulated", None),
+                ("source", source),
+            ),
+        )
+    )
+
+    blockers.extend(
+        _evidence_path_blockers(
+            path=testnet_runbook_signoff_path,
+            label="testnet_runbook_signoff",
+            cli_flag="--testnet-runbook-signoff-path",
+            required_substrings=(
+                ("adr_marker", "ADR-008"),
+                ("section_marker", "§6.6"),
+            ),
+        )
+    )
+
+    return blockers
+
+
+def _evidence_path_blockers(
+    *,
+    path: Path | None,
+    label: str,
+    cli_flag: str,
+    required_substrings: tuple[tuple[str, str | None], ...],
+) -> list[str]:
+    """Verify an evidence file is supplied, exists, and contains expected markers.
+
+    ``required_substrings`` is a sequence of ``(marker_name, needle)``
+    pairs. A ``needle`` of ``None`` is treated as "operator did not
+    parameterize this marker" and is skipped (e.g. when ``source`` is
+    missing from the manifest there is nothing to check against).
+    """
+
+    if path is None:
+        return [
+            f"promote_testnet_canary_missing_{label}:"
+            f"pass {cli_flag} pointing at the relevant docs/retros/ file"
+        ]
+    if not path.is_file():
+        return [
+            f"promote_testnet_canary_{label}_not_found:{path}"
+        ]
+    text = path.read_text(encoding="utf-8")
+    missing: list[str] = []
+    for marker_name, needle in required_substrings:
+        if needle is None:
+            continue
+        if needle not in text:
+            missing.append(f"{marker_name}={needle!r}")
+    if missing:
+        return [
+            f"promote_testnet_canary_{label}_invalid:"
+            f"{path} missing_substrings=[{', '.join(missing)}]"
+        ]
+    return []
 
 
 def _paper_shadow_evidence_blockers(report: PaperBundleReport) -> list[str]:
@@ -838,6 +996,25 @@ def _build_parser() -> argparse.ArgumentParser:
     _add_policy_flags(target, "target")
 
     parser.add_argument(
+        "--paper-simulated-retro-path",
+        type=Path,
+        default=None,
+        help=(
+            "Path to the docs/retros/ entry that records this source's "
+            "paper_simulated hold/promote evidence. Required when "
+            "promoting paper_simulated -> testnet_canary."
+        ),
+    )
+    parser.add_argument(
+        "--testnet-runbook-signoff-path",
+        type=Path,
+        default=None,
+        help=(
+            "Path to the ADR-008 §6.6 testnet stability-soak retro. "
+            "Required when promoting paper_simulated -> testnet_canary."
+        ),
+    )
+    parser.add_argument(
         "--output-json",
         type=Path,
         help="Write the full review JSON to this path (in addition to text on stdout).",
@@ -917,6 +1094,8 @@ def main(argv: list[str] | None = None) -> int:
             decision=args.decision,
             rationale=args.rationale,
             operator=args.operator,
+            paper_simulated_retro_path=args.paper_simulated_retro_path,
+            testnet_runbook_signoff_path=args.testnet_runbook_signoff_path,
         )
     except Exception as exc:
         parser.exit(2, f"{parser.prog}: error: {exc}\n")

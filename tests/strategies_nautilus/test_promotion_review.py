@@ -689,3 +689,244 @@ def test_cli_rejects_invalid_decision(tmp_path):
                 "bad decision name",
             ]
         )
+
+
+# ---------------------------------------------------------------------------
+# ADR-008 §6.6/§8 paper_simulated -> testnet_canary promote gate
+# ---------------------------------------------------------------------------
+
+
+SIMULATED_BUNDLE_RUNTIME = {
+    "mode": "paper",
+    "data_mode": "catalog_polling",
+    "order_mode": "simulated",
+    "heartbeat_interval_seconds": 30,
+    "max_signal_lag_seconds": 120,
+    "operator": "pytest",
+}
+SIMULATED_BUNDLE_POLICIES = [
+    {
+        "source": SOURCE,
+        "model_version": MODEL_VERSION,
+        "position_pct_multiplier": 0.2,
+        "min_confidence_override": None,
+        "dry_run": False,
+    }
+]
+
+
+def _make_paper_simulated_bundle(tmp_path: Path) -> Path:
+    """A bundle whose recorded policy matches ``SIMULATED_POLICY``."""
+
+    return _make_bundle(
+        tmp_path,
+        runtime_overrides=SIMULATED_BUNDLE_RUNTIME,
+        policies=SIMULATED_BUNDLE_POLICIES,
+        lineage_rows=[
+            _lineage_row("s1", decision="target_long", reason="simulated"),
+            _lineage_row("s2", decision="target_long", reason="simulated"),
+        ],
+    )
+
+
+def _write_paper_simulated_retro(path: Path) -> Path:
+    path.write_text(
+        "# Promotion review — freqai_linear_v1 / linear-mom-train20240105\n"
+        "\n"
+        "Stage: paper_simulated. Source: freqai_linear_v1 confirmed.\n",
+        encoding="utf-8",
+    )
+    return path
+
+
+def _write_testnet_runbook_signoff(path: Path) -> Path:
+    path.write_text(
+        "# Phase 3f testnet long-run - 6h stability soak\n"
+        "\n"
+        "ADR-008 §6.6 stability soak completed. shutdown_reason=max_duration.\n",
+        encoding="utf-8",
+    )
+    return path
+
+
+def test_promote_paper_simulated_to_testnet_canary_allowed_with_evidence(tmp_path):
+    bundle_dir = _make_paper_simulated_bundle(tmp_path)
+    paper_retro = _write_paper_simulated_retro(tmp_path / "paper_simulated.md")
+    signoff = _write_testnet_runbook_signoff(tmp_path / "phase_3f.md")
+
+    review = build_promotion_review(
+        bundle_dir=bundle_dir,
+        current_stage=STAGE_PAPER_SIMULATED,
+        target_stage=STAGE_TESTNET_CANARY,
+        current_policy=SIMULATED_POLICY,
+        target_policy=PolicyFields(
+            dry_run=False,
+            position_pct_multiplier=0.1,
+            min_confidence_override=None,
+        ),
+        decision=DECISION_PROMOTE,
+        rationale="first testnet_canary promote after ADR-008 §6.6 soak",
+        operator="nishiki",
+        paper_simulated_retro_path=paper_retro,
+        testnet_runbook_signoff_path=signoff,
+    )
+
+    assert review.promotion_gate_blockers == []
+    assert review.decision_allowed is True
+    assert review.decision_reasons == ["promote_gates_passed"]
+    assert review.paper_simulated_retro_path == str(paper_retro)
+    assert review.testnet_runbook_signoff_path == str(signoff)
+    assert "phase_3_not_ready" not in " ".join(review.promotion_gate_blockers)
+
+
+def test_promote_testnet_canary_blocks_when_evidence_paths_missing(tmp_path):
+    bundle_dir = _make_paper_simulated_bundle(tmp_path)
+
+    review = build_promotion_review(
+        bundle_dir=bundle_dir,
+        current_stage=STAGE_PAPER_SIMULATED,
+        target_stage=STAGE_TESTNET_CANARY,
+        current_policy=SIMULATED_POLICY,
+        target_policy=SIMULATED_POLICY,
+        decision=DECISION_PROMOTE,
+        rationale="missing both evidence paths",
+        operator="nishiki",
+    )
+
+    assert review.decision_allowed is False
+    joined = " ".join(review.promotion_gate_blockers)
+    assert "promote_testnet_canary_missing_paper_simulated_retro" in joined
+    assert "promote_testnet_canary_missing_testnet_runbook_signoff" in joined
+
+
+def test_promote_testnet_canary_blocks_when_retro_file_not_found(tmp_path):
+    bundle_dir = _make_paper_simulated_bundle(tmp_path)
+    signoff = _write_testnet_runbook_signoff(tmp_path / "phase_3f.md")
+    bogus_retro = tmp_path / "nope" / "missing.md"
+
+    review = build_promotion_review(
+        bundle_dir=bundle_dir,
+        current_stage=STAGE_PAPER_SIMULATED,
+        target_stage=STAGE_TESTNET_CANARY,
+        current_policy=SIMULATED_POLICY,
+        target_policy=SIMULATED_POLICY,
+        decision=DECISION_PROMOTE,
+        rationale="retro path does not exist",
+        operator="nishiki",
+        paper_simulated_retro_path=bogus_retro,
+        testnet_runbook_signoff_path=signoff,
+    )
+
+    assert review.decision_allowed is False
+    assert any(
+        reason.startswith("promote_testnet_canary_paper_simulated_retro_not_found")
+        for reason in review.promotion_gate_blockers
+    )
+
+
+def test_promote_testnet_canary_blocks_when_signoff_lacks_adr_markers(tmp_path):
+    bundle_dir = _make_paper_simulated_bundle(tmp_path)
+    paper_retro = _write_paper_simulated_retro(tmp_path / "paper_simulated.md")
+    bad_signoff = tmp_path / "phase_3f.md"
+    bad_signoff.write_text(
+        "# Phase 3f notes — but lacks the ADR identifier or section marker.\n",
+        encoding="utf-8",
+    )
+
+    review = build_promotion_review(
+        bundle_dir=bundle_dir,
+        current_stage=STAGE_PAPER_SIMULATED,
+        target_stage=STAGE_TESTNET_CANARY,
+        current_policy=SIMULATED_POLICY,
+        target_policy=SIMULATED_POLICY,
+        decision=DECISION_PROMOTE,
+        rationale="signoff missing required markers",
+        operator="nishiki",
+        paper_simulated_retro_path=paper_retro,
+        testnet_runbook_signoff_path=bad_signoff,
+    )
+
+    assert review.decision_allowed is False
+    invalid_reasons = [
+        reason
+        for reason in review.promotion_gate_blockers
+        if reason.startswith("promote_testnet_canary_testnet_runbook_signoff_invalid")
+    ]
+    assert len(invalid_reasons) == 1
+    assert "ADR-008" in invalid_reasons[0]
+    assert "§6.6" in invalid_reasons[0]
+
+
+def test_promote_testnet_canary_cli_writes_markdown_with_evidence_paths(tmp_path):
+    bundle_dir = _make_paper_simulated_bundle(tmp_path)
+    paper_retro = _write_paper_simulated_retro(tmp_path / "paper_simulated.md")
+    signoff = _write_testnet_runbook_signoff(tmp_path / "phase_3f.md")
+    md_path = tmp_path / "out" / "review.md"
+
+    rc = main(
+        [
+            str(bundle_dir),
+            "--current-stage",
+            STAGE_PAPER_SIMULATED,
+            "--target-stage",
+            STAGE_TESTNET_CANARY,
+            "--current-no-dry-run",
+            "--current-position-pct-multiplier",
+            "0.2",
+            "--target-no-dry-run",
+            "--target-position-pct-multiplier",
+            "0.1",
+            "--decision",
+            DECISION_PROMOTE,
+            "--operator",
+            "nishiki",
+            "--rationale",
+            "cli end-to-end",
+            "--paper-simulated-retro-path",
+            str(paper_retro),
+            "--testnet-runbook-signoff-path",
+            str(signoff),
+            "--output-markdown",
+            str(md_path),
+        ]
+    )
+
+    assert rc == 0
+    md = md_path.read_text(encoding="utf-8")
+    assert "## 3a. Phase 3 evidence paths" in md
+    assert str(paper_retro) in md
+    assert str(signoff) in md
+    assert "decision: **PROMOTE**" in md
+    assert "decision_allowed: **yes**" in md
+
+
+def test_promote_live_canary_still_blocked_by_phase_3_not_ready(tmp_path):
+    """Phase 4 live ADRs do not exist yet; PHASE_2_STAGE_LIMIT must still cap there."""
+
+    bundle_dir = _make_paper_simulated_bundle(tmp_path)
+    paper_retro = _write_paper_simulated_retro(tmp_path / "paper_simulated.md")
+    signoff = _write_testnet_runbook_signoff(tmp_path / "phase_3f.md")
+
+    review = build_promotion_review(
+        bundle_dir=bundle_dir,
+        current_stage=STAGE_TESTNET_CANARY,
+        target_stage=STAGE_LIVE_CANARY,
+        current_policy=SIMULATED_POLICY,
+        target_policy=PolicyFields(
+            dry_run=False,
+            position_pct_multiplier=0.1,
+            min_confidence_override=None,
+        ),
+        decision=DECISION_PROMOTE,
+        rationale="live promotion must remain blocked",
+        operator="nishiki",
+        paper_simulated_retro_path=paper_retro,
+        testnet_runbook_signoff_path=signoff,
+    )
+
+    assert review.decision_allowed is False
+    assert any(
+        reason.startswith("phase_3_not_ready")
+        for reason in review.promotion_gate_blockers
+    )
+    _ = PAPER_SHADOW_MIN_DAYS  # keep import used
