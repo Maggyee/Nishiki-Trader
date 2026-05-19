@@ -270,6 +270,7 @@ class LongRunningTestnetSettings:
     emergency_poll_interval_seconds: float = 1.0
     previous_run_id: str | None = None
     restart_reason: str | None = None
+    enable_strategy_execution: bool = False
 
     def __post_init__(self) -> None:
         if not self.instrument_ids:
@@ -751,6 +752,7 @@ def run_long_running_testnet(
     telemetry_reader: TelemetryReader | None = None,
     flatten_runner: FlattenRunner | None = None,
     restart_exchange_factory: RestartExchangeFactory | None = None,
+    register_strategies: Callable[[Any], None] | None = None,
     run_id: str | None = None,
 ) -> LongRunningTestnetResult:
     """Run the guarded ADR-008 §6.3c testnet shell with auto-flatten triggers.
@@ -894,6 +896,8 @@ def run_long_running_testnet(
     node_run_invoked = False
     stop_reason = "node_stopped"
     error: str | None = None
+    strategies_registered = 0
+    actors_registered = 0
     latest_sample: dict[str, TestnetRuntimeTelemetry] = {}
     trigger_box: dict[str, AutoFlattenTrigger] = {}
     stop_reason_box: dict[str, str] = {}
@@ -913,12 +917,40 @@ def run_long_running_testnet(
             {"event": "node_built", "ts": _iso_ms_utc(now())},
         )
 
-        strategies_registered, actors_registered = _trader_counts(node)
-        if strategies_registered or actors_registered:
-            raise RuntimeError(
-                "long-running testnet runner refuses to run with registered "
-                f"strategies ({strategies_registered}) or actors ({actors_registered})"
+        if run_settings.enable_strategy_execution:
+            if register_strategies is None:
+                raise RuntimeError(
+                    "enable_strategy_execution=True requires a register_strategies "
+                    "callback; refusing to start the long-running testnet runner "
+                    "without an explicit strategy wiring step"
+                )
+            register_strategies(node)
+            strategies_registered, actors_registered = _trader_counts(node)
+            if strategies_registered < 1:
+                raise RuntimeError(
+                    "enable_strategy_execution=True but register_strategies "
+                    "callback left strategies_registered="
+                    f"{strategies_registered}; refusing to start"
+                )
+            _append_runtime_event(
+                runtime_log_path,
+                {
+                    "event": "strategies_registered",
+                    "ts": _iso_ms_utc(now()),
+                    "strategies": strategies_registered,
+                    "actors": actors_registered,
+                },
             )
+        else:
+            strategies_registered, actors_registered = _trader_counts(node)
+            if strategies_registered or actors_registered:
+                raise RuntimeError(
+                    "long-running testnet runner refuses to run with registered "
+                    f"strategies ({strategies_registered}) or actors "
+                    f"({actors_registered}); pass "
+                    "enable_strategy_execution=True (and a register_strategies "
+                    "callback) to allow strategy execution explicitly"
+                )
 
         monitor_thread = threading.Thread(
             target=_monitor_long_run,
@@ -1021,6 +1053,8 @@ def run_long_running_testnet(
         sample=sample,
         restart=restart_reconciliation,
     )
+    runtime["strategies_registered"] = strategies_registered
+    runtime["actors_registered"] = actors_registered
     if trigger is not None:
         runtime["auto_flatten_trigger"] = trigger.msg
         runtime["emergency_flatten_success"] = emergency_flatten_success
@@ -1101,6 +1135,9 @@ def _base_testnet_runtime(
         "shutdown_reason": shutdown_reason,
         "restart_sequence": 0,
         "restart_drift_detected": False,
+        "enable_strategy_execution": run_settings.enable_strategy_execution,
+        "strategies_registered": 0,
+        "actors_registered": 0,
     }
     if sample is not None:
         runtime.update(
@@ -2107,6 +2144,18 @@ def _build_parser() -> argparse.ArgumentParser:
         "--restart-reason",
         help="Operator-supplied restart reason required with --previous-run-id.",
     )
+    parser.add_argument(
+        "--enable-strategy-execution",
+        action="store_true",
+        help=(
+            "ADR-008 §6.6 double-signoff flag for --long-run. The CLI itself "
+            "cannot wire a strategy; with this flag set, callers using "
+            "run_long_running_testnet() must also supply a "
+            "register_strategies callback. Without this flag the runner "
+            "refuses to start whenever any strategy or actor is registered "
+            "(stability-soak mode, the Phase 3f default)."
+        ),
+    )
     return parser
 
 
@@ -2137,6 +2186,7 @@ def main(
     telemetry_reader: TelemetryReader | None = None,
     flatten_runner: FlattenRunner | None = None,
     restart_exchange_factory: RestartExchangeFactory | None = None,
+    register_strategies: Callable[[Any], None] | None = None,
 ) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
@@ -2170,6 +2220,7 @@ def main(
                 emergency_poll_interval_seconds=args.emergency_poll_interval_seconds,
                 previous_run_id=args.previous_run_id,
                 restart_reason=args.restart_reason,
+                enable_strategy_execution=bool(args.enable_strategy_execution),
             )
         except ValueError as exc:
             parser.exit(EXIT_STARTUP_VALIDATION, f"{parser.prog}: error: {exc}\n")
@@ -2184,6 +2235,7 @@ def main(
                 telemetry_reader=telemetry_reader,
                 flatten_runner=flatten_runner,
                 restart_exchange_factory=restart_exchange_factory,
+                register_strategies=register_strategies,
             )
         except StartupValidationError as exc:
             parser.exit(EXIT_STARTUP_VALIDATION, f"{parser.prog}: error: {exc}\n")

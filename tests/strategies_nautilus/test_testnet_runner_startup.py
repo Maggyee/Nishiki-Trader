@@ -25,6 +25,7 @@ from apps.strategies_nautilus.runners.emergency_flatten import (
     OpenPosition,
 )
 from apps.strategies_nautilus.runners.testnet_runner import (
+    EXIT_RUNTIME_ERROR,
     ConnectionProbeResult,
     ConnectionProbeSettings,
     GitState,
@@ -1361,3 +1362,218 @@ def test_cli_long_run_dispatches_and_returns_flatten_exit_code(tmp_path, capsys)
     assert Path(payload["manifest_path"]).is_file()
     assert VALID_KEY not in out_text
     assert VALID_SECRET not in out_text
+
+
+# ---------------------------------------------------------------------------
+# ADR-008 §6.6 enable_strategy_execution double-signoff
+# ---------------------------------------------------------------------------
+
+
+class _StrategyBlockingFakeNode(_BlockingFakeNode):
+    """Fake node whose trader can record arbitrary strategy/actor objects."""
+
+    def register(self, *, strategy: object | None = None, actor: object | None = None) -> None:
+        if strategy is not None:
+            self.trader.strategies.append(strategy)
+        if actor is not None:
+            self.trader.actors.append(actor)
+
+
+def test_long_run_default_still_rejects_registered_strategy(tmp_path):
+    _write_retro(tmp_path / "retros")
+    settings = _config(tmp_path)
+    run_settings = _long_run_settings(tmp_path, max_run_seconds=0.02)
+    base = datetime(2026, 5, 19, 13, 0, 0, tzinfo=UTC)
+
+    node_holder: dict[str, _StrategyBlockingFakeNode] = {}
+
+    def factory(cfg):
+        node = _StrategyBlockingFakeNode(cfg)
+        node.trader.strategies.append(object())  # operator forgot to opt in
+        node_holder["node"] = node
+        return node
+
+    result = run_long_running_testnet(
+        settings,
+        run_settings,
+        env=VALID_ENV,
+        git_state=GIT_CLEAN,
+        node_factory=factory,
+        clock=_frozen_clock(base),
+        telemetry_reader=lambda: TestnetRuntimeTelemetry(ts=base, daily_pnl=0.0),
+        flatten_runner=lambda settings: pytest.fail("flatten should not run"),
+        run_id="20260519-130000Z-deadbeef",
+    )
+
+    assert result.stop_reason == "exception"
+    assert result.error is not None
+    assert "refuses to run with registered strategies" in result.error
+    assert result.runtime["enable_strategy_execution"] is False
+    # The default-mode gate observes the trader's actual count before it
+    # raises, so the recorded runtime reflects "fact: 1 strategy was sitting
+    # there; we refused to run anyway".
+    assert result.runtime["strategies_registered"] == 1
+
+
+def test_long_run_enable_strategy_execution_requires_callback(tmp_path):
+    _write_retro(tmp_path / "retros")
+    settings = _config(tmp_path)
+    run_settings = _long_run_settings(
+        tmp_path,
+        max_run_seconds=0.02,
+        enable_strategy_execution=True,
+    )
+    base = datetime(2026, 5, 19, 13, 0, 0, tzinfo=UTC)
+
+    result = run_long_running_testnet(
+        settings,
+        run_settings,
+        env=VALID_ENV,
+        git_state=GIT_CLEAN,
+        node_factory=lambda cfg: _StrategyBlockingFakeNode(cfg),
+        clock=_frozen_clock(base),
+        telemetry_reader=lambda: TestnetRuntimeTelemetry(ts=base, daily_pnl=0.0),
+        flatten_runner=lambda settings: pytest.fail("flatten should not run"),
+        run_id="20260519-130000Z-cafef00d",
+    )
+
+    assert result.stop_reason == "exception"
+    assert result.error is not None
+    assert "requires a register_strategies callback" in result.error
+
+
+def test_long_run_enable_strategy_execution_rejects_zero_strategies(tmp_path):
+    _write_retro(tmp_path / "retros")
+    settings = _config(tmp_path)
+    run_settings = _long_run_settings(
+        tmp_path,
+        max_run_seconds=0.02,
+        enable_strategy_execution=True,
+    )
+    base = datetime(2026, 5, 19, 13, 0, 0, tzinfo=UTC)
+
+    def register_nothing(node):
+        return None
+
+    result = run_long_running_testnet(
+        settings,
+        run_settings,
+        env=VALID_ENV,
+        git_state=GIT_CLEAN,
+        node_factory=lambda cfg: _StrategyBlockingFakeNode(cfg),
+        clock=_frozen_clock(base),
+        telemetry_reader=lambda: TestnetRuntimeTelemetry(ts=base, daily_pnl=0.0),
+        flatten_runner=lambda settings: pytest.fail("flatten should not run"),
+        register_strategies=register_nothing,
+        run_id="20260519-130000Z-1234abcd",
+    )
+
+    assert result.stop_reason == "exception"
+    assert result.error is not None
+    assert "strategies_registered=0" in result.error
+
+
+def test_long_run_enable_strategy_execution_records_registered_counts(tmp_path):
+    _write_retro(tmp_path / "retros")
+    settings = _config(tmp_path)
+    run_settings = _long_run_settings(
+        tmp_path,
+        max_run_seconds=0.02,
+        enable_strategy_execution=True,
+    )
+    base = datetime(2026, 5, 19, 13, 0, 0, tzinfo=UTC)
+
+    register_calls: list[object] = []
+
+    def register_one_strategy(node):
+        register_calls.append(node)
+        node.trader.strategies.append(object())
+
+    result = run_long_running_testnet(
+        settings,
+        run_settings,
+        env=VALID_ENV,
+        git_state=GIT_CLEAN,
+        node_factory=lambda cfg: _StrategyBlockingFakeNode(cfg),
+        clock=_frozen_clock(base),
+        telemetry_reader=lambda: TestnetRuntimeTelemetry(ts=base, daily_pnl=0.0),
+        flatten_runner=lambda settings: pytest.fail("flatten should not run"),
+        register_strategies=register_one_strategy,
+        run_id="20260519-130000Z-feedbabe",
+    )
+
+    assert result.exit_code == 0
+    assert result.stop_reason == "max_duration"
+    assert len(register_calls) == 1
+    assert result.runtime["enable_strategy_execution"] is True
+    assert result.runtime["strategies_registered"] == 1
+    assert result.runtime["actors_registered"] == 0
+    runtime_log = (
+        result.bundle_root / "logs" / "runtime.log"
+    ).read_text(encoding="utf-8").splitlines()
+    register_events = [
+        json.loads(line)
+        for line in runtime_log
+        if json.loads(line).get("event") == "strategies_registered"
+    ]
+    assert len(register_events) == 1
+    assert register_events[0]["strategies"] == 1
+    assert register_events[0]["actors"] == 0
+
+
+def test_long_run_settings_default_enable_strategy_execution_is_false():
+    settings = LongRunningTestnetSettings(
+        output_root=Path("/tmp/nonexistent"),
+        instrument_ids=("BTCUSDT.BINANCE",),
+        starting_balance=10_000.0,
+    )
+    assert settings.enable_strategy_execution is False
+
+
+def test_long_run_cli_flag_flows_into_settings(tmp_path):
+    """CLI surface acquires --enable-strategy-execution; the CLI itself
+    cannot wire a strategy, so a long-run invocation that opts in without
+    Python-side register_strategies must still be rejected."""
+
+    _write_retro(tmp_path / "retros")
+    output_root = tmp_path / "data" / "testnet"
+    retros_dir = tmp_path / "retros"
+
+    rc = main(
+        [
+            "--mode",
+            "testnet",
+            "--kind",
+            "testnet",
+            "--allow-real-credentials",
+            "--source",
+            "freqai_linear_v1",
+            "--model-version",
+            "linear-mom-train20240105",
+            "--policy-position-pct-multiplier",
+            "0.1",
+            "--retros-dir",
+            str(retros_dir),
+            "--repo-root",
+            str(tmp_path),
+            "--operator",
+            "nishiki",
+            "--instrument-id",
+            "BTCUSDT.BINANCE",
+            "--long-run",
+            "--starting-balance",
+            "10000",
+            "--max-run-seconds",
+            "0.02",
+            "--telemetry-poll-seconds",
+            "0.001",
+            "--output-root",
+            str(output_root),
+            "--enable-strategy-execution",
+        ],
+        env=VALID_ENV,
+        git_state=GIT_CLEAN,
+        node_factory=lambda cfg: _StrategyBlockingFakeNode(cfg),
+    )
+
+    assert rc == EXIT_RUNTIME_ERROR

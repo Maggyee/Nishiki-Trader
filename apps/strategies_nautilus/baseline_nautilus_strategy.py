@@ -32,6 +32,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
 from decimal import Decimal
+from typing import Protocol
 
 from nautilus_trader.model.data import Bar, BarType
 from nautilus_trader.model.enums import OrderSide
@@ -40,11 +41,82 @@ from nautilus_trader.model.objects import Currency
 from nautilus_trader.trading.strategy import Strategy
 
 from apps.bridge.signal_event import SignalEvent
+from apps.bridge.store import SignalStore
 from apps.strategies_nautilus.baseline_strategy import (
     BaselineSignalStrategy,
     BaselineStrategyConfig,
     OrderIntent,
 )
+
+
+class SignalSource(Protocol):
+    """Pluggable signal feed consumed by ``BaselineNautilusStrategy.on_bar``.
+
+    Implementations must return every signal whose ``ts_event`` is ≤
+    ``until_ns`` and that has not been popped before, in
+    ``(ts_event, signal_id)`` order. A source must never re-emit a signal.
+    """
+
+    def pop_due(self, until_ns: int) -> list[SignalEvent]: ...
+
+
+@dataclass
+class StaticSignalSource:
+    """Default in-memory ``SignalSource``. Used by backtests and tests.
+
+    The full event list is provided at construction, sorted by
+    ``(ts_event, signal_id)`` once, and consumed via an advancing index.
+    """
+
+    events: list[SignalEvent] = field(default_factory=list)
+    _sorted: list[SignalEvent] = field(default_factory=list, init=False, repr=False)
+    _idx: int = field(default=0, init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        self._sorted = sorted(self.events, key=lambda e: (e.ts_event, e.signal_id))
+
+    def pop_due(self, until_ns: int) -> list[SignalEvent]:
+        out: list[SignalEvent] = []
+        while (
+            self._idx < len(self._sorted)
+            and int(self._sorted[self._idx].ts_event) <= until_ns
+        ):
+            out.append(self._sorted[self._idx])
+            self._idx += 1
+        return out
+
+
+@dataclass
+class SignalStorePollingSource:
+    """Incremental ``SignalStore`` poller for testnet / live runtime.
+
+    Each ``pop_due(until_ns)`` issues
+    ``store.replay(source=..., model_version=..., since_ns=cursor_ns,
+    until_ns=until_ns)`` and advances ``cursor_ns`` to one nanosecond past
+    the largest ``ts_event`` seen. ``cursor_ns`` should be initialised to
+    the runner start time so historical backfills are not re-consumed on
+    every restart — the operator launcher is responsible for picking that
+    value (typically ``time.time_ns()`` at startup, or
+    ``previous_processed_until_ns + 1`` for a restart).
+    """
+
+    store: SignalStore
+    source: str
+    model_version: str
+    cursor_ns: int
+
+    def pop_due(self, until_ns: int) -> list[SignalEvent]:
+        if until_ns < self.cursor_ns:
+            return []
+        events = self.store.replay(
+            source=self.source,
+            model_version=self.model_version,
+            since_ns=self.cursor_ns,
+            until_ns=until_ns,
+        )
+        if events:
+            self.cursor_ns = max(int(e.ts_event) for e in events) + 1
+        return events
 
 SIGNAL_TAG_PREFIX = "signal_id:"
 
@@ -65,10 +137,11 @@ class LineageRecord:
 class BaselineNautilusStrategyParams:
     instrument_id: InstrumentId
     bar_type: BarType
-    signals: list[SignalEvent]
     baseline_config: BaselineStrategyConfig
     trade_size: Decimal
     equity_currency: Currency
+    signals: list[SignalEvent] = field(default_factory=list)
+    signal_source: SignalSource | None = None
     lineage: list[LineageRecord] = field(default_factory=list)
 
 
@@ -77,11 +150,10 @@ class BaselineNautilusStrategy(Strategy):
         super().__init__()
         self._params = params
         self._baseline = BaselineSignalStrategy(config=params.baseline_config)
-        self._signals = sorted(
-            params.signals,
-            key=lambda e: (e.ts_event, e.signal_id),
-        )
-        self._signal_idx = 0
+        if params.signal_source is not None:
+            self._signal_source: SignalSource = params.signal_source
+        else:
+            self._signal_source = StaticSignalSource(events=list(params.signals))
         self.lineage = params.lineage  # shared with runner
         self._current_day: date | None = None
         self._day_open_equity: float | None = None
@@ -96,12 +168,7 @@ class BaselineNautilusStrategy(Strategy):
     def on_bar(self, bar: Bar) -> None:
         bar_ns = int(bar.ts_event)
         self._update_daily_risk_state(bar_ns)
-        while (
-            self._signal_idx < len(self._signals)
-            and int(self._signals[self._signal_idx].ts_event) <= bar_ns
-        ):
-            event = self._signals[self._signal_idx]
-            self._signal_idx += 1
+        for event in self._signal_source.pop_due(bar_ns):
             intent = self._baseline.decide(event, now_ns=bar_ns)
             client_order_ids = self._apply_intent(intent)
             self.lineage.append(
@@ -204,6 +271,9 @@ __all__ = [
     "BaselineNautilusStrategyParams",
     "LineageRecord",
     "SIGNAL_TAG_PREFIX",
+    "SignalSource",
+    "SignalStorePollingSource",
+    "StaticSignalSource",
 ]
 
 

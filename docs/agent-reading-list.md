@@ -32,7 +32,7 @@ Read these before any non-trivial work:
 | Adding or comparing a signal source | `docs/progress/phase-2-signal-source-baselines.md` — current demo / rule fingerprints to diff against |
 | Detailed historical progress | Relevant file under `docs/progress/` only when current status links it or history is needed |
 | Paper trading, risk rules, testnet, or live trading | `docs/decisions/007-paper-trading-runtime.md`; `docs/decisions/008-phase3-risk-runbook.md` (Draft, gates Phase 3 / testnet) |
-| Operations, restart, emergency handling | `docs/runbook.md` |
+| Operations, restart, emergency handling | `docs/runbook.md`; ADR-008 §6.6 first canary procedure: `docs/runbook-first-testnet-canary.md` + `docs/templates/testnet-canary-session-retro.md` |
 | Project skeleton, directory ownership, dev environment | `README.md`, `apps/README.md`, `infra/README.md` |
 | Recent project context | Latest file under `docs/retros/` |
 

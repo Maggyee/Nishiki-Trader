@@ -180,10 +180,17 @@ docker compose -f infra/docker-compose.yml up -d postgres redis
   2. backtest 重跑过去 30 天，PnL 偏差 < 5% 才允许合
   3. 不直接覆盖，保留旧版本可回滚 1 周
 
+## 首次 testnet canary（ADR-008 §6.6）
+
+第一次让真实策略在 binance Spot testnet 上下单的完整操作流程见
+[runbook-first-testnet-canary.md](runbook-first-testnet-canary.md)；
+对应 session retro 模板见
+[templates/testnet-canary-session-retro.md](templates/testnet-canary-session-retro.md)。
+
 ## 待补章节（按 Phase）
 
 - Phase 1：daily_health.py 自检项清单、signals 表损坏恢复流程
 - Phase 2：PG 故障 / Redis 故障的 SQLite 降级流程
-- Phase 3：testnet 与真实账户切换流程
+- Phase 3：testnet 与真实账户切换流程（首次 canary 见上节）
 - Phase 4：agent 失控的快速吊销流程
 - Phase 6：真实账户实盘第一日的逐步加仓和监控清单
