@@ -32,6 +32,24 @@ def _write_heartbeat(root: Path, *, ts: str) -> None:
     )
 
 
+def _write_manifest(root: Path, *, shutdown_reason: str = "max_duration") -> None:
+    manifest = root / RUN_ID / "run_manifest.json"
+    manifest.parent.mkdir(parents=True, exist_ok=True)
+    manifest.write_text(
+        json.dumps(
+            {
+                "kind": "testnet",
+                "run_id": RUN_ID,
+                "finished_at": "2026-05-18T13:00:00.000Z",
+                "runtime": {"shutdown_reason": shutdown_reason},
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+
 def _settings(tmp_path: Path) -> WatchdogSettings:
     return WatchdogSettings(
         active_run_id=RUN_ID,
@@ -100,6 +118,33 @@ def test_watchdog_stale_heartbeat_alerts_and_invokes_flatten(tmp_path):
     state = json.loads(settings.state_path.read_text(encoding="utf-8"))
     assert state["flatten_invoked"] is True
     assert state["exit_code"] == 4
+
+
+def test_watchdog_completed_run_does_not_flatten_stale_heartbeat(tmp_path):
+    now = datetime(2026, 5, 18, 13, 3, 0, tzinfo=UTC)
+    settings = _settings(tmp_path)
+    _write_heartbeat(
+        settings.testnet_root,
+        ts="2026-05-18T13:00:00.000Z",
+    )
+    _write_manifest(settings.testnet_root, shutdown_reason="max_duration")
+    flatten_calls = []
+
+    result = check_once(
+        settings,
+        clock=lambda: now,
+        flatten_invoker=lambda s: flatten_calls.append(s) or 0,
+    )
+
+    assert result.exit_code == 0
+    assert result.status == "run_completed"
+    assert result.heartbeat_age_seconds == 180.0
+    assert result.flatten_invoked is False
+    assert flatten_calls == []
+    assert not (settings.testnet_root / RUN_ID / "logs" / "alerts.log").exists()
+    state = json.loads(settings.state_path.read_text(encoding="utf-8"))
+    assert state["status"] == "run_completed"
+    assert state["flatten_invoked"] is False
 
 
 def test_watchdog_missing_heartbeat_maps_failed_flatten_to_exit_5(tmp_path):

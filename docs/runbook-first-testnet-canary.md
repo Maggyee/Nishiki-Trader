@@ -124,7 +124,7 @@ SignalStore cursor before the first restamped event becomes due.
 ### 1.6 Catalog still serves BTCUSDT 1m
 
 ```bash
-ls data/catalog/data/BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL/ | head -3
+ls data/catalog/data/bar/BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL/ | head -3
 ```
 
 Strategy depends on the bar type
@@ -244,33 +244,33 @@ runner CLI cannot enforce:
 
 ---
 
-## 4. Start watchdog (background terminal)
+## 4. Prepare watchdog loop
 
-In a dedicated terminal, start the watchdog **before** the runner.
+The watchdog CLI requires the active `run_id`, so prepare the loop but
+start it only after the runner has created the bundle in §5. The loop
+must be stopped after a normal `max_duration` shutdown. Current
+`infra.watchdog.watchdog` treats a completed `run_manifest.json` as
+terminal (`status=run_completed`), but the operator should still stop
+the loop so stale state does not pollute later sessions.
 
 ```bash
 mkdir -p /tmp/phase3f-canary
 cat > /tmp/phase3f-canary/watchdog_loop.sh <<'EOF'
 #!/usr/bin/env bash
 set -u
+: "${RUN_ID:?RUN_ID is required}"
+: "${RUNNER_PID:?RUNNER_PID is required}"
 while true; do
   UV_CACHE_DIR=/tmp/uv-cache uv run python -m infra.watchdog.watchdog \
-    --bundle-root data/testnet \
+    --active-run-id "$RUN_ID" \
+    --instrument-id BTCUSDT.BINANCE \
     --heartbeat-timeout-seconds 90 \
-    --kind testnet \
-    --operator nishiki >> /tmp/phase3f-canary/watchdog.loop.log 2>&1
+    --operator nishiki \
+    --runner-pid "$RUNNER_PID" >> /tmp/phase3f-canary/watchdog.loop.log 2>&1
   sleep 30
 done
 EOF
 chmod +x /tmp/phase3f-canary/watchdog_loop.sh
-nohup /tmp/phase3f-canary/watchdog_loop.sh >/dev/null 2>&1 &
-echo $! > /tmp/phase3f-canary/watchdog.pid
-```
-
-Confirm it is alive:
-
-```bash
-ps -p "$(cat /tmp/phase3f-canary/watchdog.pid)" -o pid,etime,stat
 ```
 
 ---
@@ -307,6 +307,17 @@ tail -f data/testnet/"$RUN_ID"/logs/runtime.log
 
 If `strategies_registered` does not appear within 30 s, **stop** (§7)
 and inspect `/tmp/phase3f-canary/runner.stderr.log`.
+
+Start the watchdog after the `RUN_ID` is known:
+
+```bash
+RUN_ID=$(ls -t data/testnet | head -1)
+RUNNER_PID=$(cat /tmp/phase3f-canary/runner.pid)
+RUN_ID="$RUN_ID" RUNNER_PID="$RUNNER_PID" \
+  nohup /tmp/phase3f-canary/watchdog_loop.sh >/dev/null 2>&1 &
+echo $! > /tmp/phase3f-canary/watchdog.pid
+ps -p "$(cat /tmp/phase3f-canary/watchdog.pid)" -o pid,etime,stat
+```
 
 ---
 
@@ -400,11 +411,11 @@ wc -l "$B"/logs/heartbeat.jsonl
 ls -la "$B"/logs/alerts.log 2>/dev/null || echo "no alerts (good)"
 ls -la "$B"/*.parquet 2>/dev/null
 
-# Kill watchdog (it's still looping)
+# Stop watchdog after the completed manifest is written.
 kill -TERM "$(cat /tmp/phase3f-canary/watchdog.pid)" 2>/dev/null || true
 ```
 
-Then stop watchdog (§7 last block) and move to §9.
+Then move to §9.
 
 ---
 

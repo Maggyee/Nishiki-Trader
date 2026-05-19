@@ -126,9 +126,10 @@ Build-to-run latency: `<float>` s. Run-to-shutdown: `<float>` s.
 
 ## 9. Real order flow
 
-This is the **first** session that can produce real testnet order /
-fill / position rows. Inspect each sidecar; record totals even when
-zero.
+This session can produce real testnet order / fill / position events.
+If live testnet sidecars are not present yet, say "not written" for the
+parquet rows and record the Nautilus stdout order/fill/position evidence
+plus exchange order/trade IDs instead.
 
 - `orders.parquet` row count: `<int>` (vs `<int>` in v9 simulated)
 - `fills.parquet` row count: `<int>`

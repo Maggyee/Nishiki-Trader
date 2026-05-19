@@ -25,6 +25,7 @@ DEFAULT_HEARTBEAT_TIMEOUT_SECONDS = 90.0
 EXIT_OK = 0
 EXIT_FLATTEN_SUCCESS = 4
 EXIT_FLATTEN_FAILED = 5
+COMPLETED_SHUTDOWN_REASONS = frozenset({"max_duration", "emergency_flatten"})
 
 
 @dataclass(frozen=True)
@@ -98,21 +99,25 @@ def check_once(
         settings.testnet_root / settings.active_run_id / "logs" / "heartbeat.jsonl"
     )
     alert_path = settings.testnet_root / settings.active_run_id / "logs" / "alerts.log"
+    manifest_path = settings.testnet_root / settings.active_run_id / "run_manifest.json"
     last_heartbeat_at = _last_heartbeat_ts(heartbeat_path)
     heartbeat_age = None
-    status = "heartbeat_missing"
+    completed_shutdown_reason = _completed_shutdown_reason(manifest_path)
+    status = "run_completed" if completed_shutdown_reason is not None else "heartbeat_missing"
     flatten_invoked = False
     flatten_returncode = None
 
-    if last_heartbeat_at is not None:
+    if completed_shutdown_reason is None and last_heartbeat_at is not None:
         heartbeat_age = max(0.0, (now - last_heartbeat_at).total_seconds())
         status = (
             "heartbeat_stale"
             if heartbeat_age > settings.heartbeat_timeout_seconds
             else "healthy"
         )
+    elif completed_shutdown_reason is not None and last_heartbeat_at is not None:
+        heartbeat_age = max(0.0, (now - last_heartbeat_at).total_seconds())
 
-    if status != "healthy":
+    if status not in {"healthy", "run_completed"}:
         _append_alert(
             alert_path,
             ts=checked_at,
@@ -144,7 +149,7 @@ def check_once(
         heartbeat_timeout_seconds=settings.heartbeat_timeout_seconds,
         flatten_invoked=flatten_invoked,
         flatten_returncode=flatten_returncode,
-        alert_path=alert_path if status != "healthy" else None,
+        alert_path=alert_path if status not in {"healthy", "run_completed"} else None,
     )
     _write_state(settings.state_path, result)
     return result
@@ -167,6 +172,24 @@ def _last_heartbeat_ts(path: Path) -> datetime | None:
         return None
     raw_ts = last_payload.get("ts")
     return _parse_iso_ms_utc(str(raw_ts)) if raw_ts else None
+
+
+def _completed_shutdown_reason(path: Path) -> str | None:
+    if not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(payload, dict) or not payload.get("finished_at"):
+        return None
+    runtime = payload.get("runtime")
+    if not isinstance(runtime, dict):
+        return None
+    reason = runtime.get("shutdown_reason")
+    if isinstance(reason, str) and reason in COMPLETED_SHUTDOWN_REASONS:
+        return reason
+    return None
 
 
 def _invoke_flatten(settings: WatchdogSettings) -> int:
