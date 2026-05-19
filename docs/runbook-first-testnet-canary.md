@@ -182,6 +182,7 @@ from apps.strategies_nautilus.runners import testnet_runner
 from apps.strategies_nautilus.runners.first_testnet_canary import (
     FirstCanaryStrategySpec,
     build_register_strategies,
+    build_sidecar_recording,
 )
 
 
@@ -205,6 +206,7 @@ def _build_argv() -> list[str]:
         "--daily-loss-limit-pct", "0.05",
         "--output-root", "data/testnet",
         "--enable-strategy-execution",
+        "--write-live-sidecars",
     ]
 
 
@@ -222,25 +224,31 @@ def main() -> int:
     )
     lineage: list[LineageRecord] = []
     register = build_register_strategies(spec, lineage=lineage)
-    return testnet_runner.main(_build_argv(), register_strategies=register)
+    recording = build_sidecar_recording(spec, lineage=lineage)
+    return testnet_runner.main(
+        _build_argv(),
+        register_strategies=register,
+        sidecar_recording=recording,
+    )
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
 ```
 
-Read the script before saving. Two responsibilities live here that the
+Read the script before saving. Three responsibilities live here that the
 runner CLI cannot enforce:
 
 - `FirstCanaryStrategySpec.position_pct_multiplier` matches the
   `--policy-position-pct-multiplier` value passed to the runner. If you
   edit one, edit both.
 - `lineage` is a plain `list[LineageRecord]` that the strategy mutates
-  in place. After the run completes the launcher does **not** write a
-  sidecar — the lineage rows are reachable only inside the still-running
-  Python process. Until a sidecar writer lands, treat lineage as a live
-  debugging probe, not as an artifact. The runner manifest is the
-  durable audit.
+  in place during the run. It is then handed back to the runner via
+  `build_sidecar_recording(spec, lineage=lineage)` so the post-run
+  sidecar writer can materialize it into `signal_lineage.parquet`.
+- The argv carries `--write-live-sidecars`. The runner refuses to start
+  if the flag is set without a `sidecar_recording`, or if a recording is
+  supplied without the flag. Edit both together or neither.
 
 ---
 
@@ -344,7 +352,10 @@ cat infra/watchdog/state.json
 grep -c ERROR /tmp/phase3f-canary/runner.stdout.log
 grep -c WARN /tmp/phase3f-canary/runner.stdout.log
 
-# Sidecar growth (orders / fills)
+# Live sidecars are written only after `node.run()` returns, not
+# during the session. Mid-session this listing is therefore empty even
+# on a healthy run; expect the five parquet files (orders, fills,
+# positions, account_balances, signal_lineage) to appear in §8.
 ls -la "$B"/*.parquet 2>/dev/null
 ```
 
@@ -409,7 +420,13 @@ jq '{
 
 wc -l "$B"/logs/heartbeat.jsonl
 ls -la "$B"/logs/alerts.log 2>/dev/null || echo "no alerts (good)"
-ls -la "$B"/*.parquet 2>/dev/null
+
+# Live sidecars from --write-live-sidecars. All five must exist after a
+# clean run; row counts must agree with .runtime.sidecar.result on the
+# manifest.
+ls -la "$B"/orders.parquet "$B"/fills.parquet "$B"/positions.parquet \
+       "$B"/account_balances.parquet "$B"/signal_lineage.parquet
+jq '.runtime.sidecar' "$B/run_manifest.json"
 
 # Stop watchdog after the completed manifest is written.
 kill -TERM "$(cat /tmp/phase3f-canary/watchdog.pid)" 2>/dev/null || true
@@ -442,7 +459,10 @@ The retro **must** record:
 3. heartbeat count, alerts.log status, all 9 ADR-008 §5.4 alert kinds
    (silent vs fired).
 4. Real order / fill / position counts from the sidecars, plus the
-   first/last fill timestamps if non-zero.
+   first/last fill timestamps if non-zero. Source both the parquet
+   sidecars (`orders.parquet` / `fills.parquet` /
+   `positions.parquet` / `signal_lineage.parquet`) and the manifest's
+   `runtime.sidecar.result` summary, and confirm they agree.
 5. The `freqai_linear_v1` signal flow during the session (rows polled,
    `cursor_ns` start/end).
 6. Nautilus log error count and final account snapshot.

@@ -21,6 +21,7 @@ import re
 import secrets
 import subprocess
 import threading
+import time
 from collections import deque
 from collections.abc import Callable, Mapping
 from dataclasses import asdict, dataclass
@@ -48,6 +49,12 @@ from nautilus_trader.config import (
     TradingNodeConfig,
 )
 from nautilus_trader.model.identifiers import InstrumentId, TraderId
+
+from apps.strategies_nautilus.runners.sidecar_writer import (
+    SidecarRecording,
+    SidecarWriteResult,
+    write_live_sidecars,
+)
 
 MODE_TESTNET = "testnet"
 KIND_TESTNET = "testnet"
@@ -271,6 +278,7 @@ class LongRunningTestnetSettings:
     previous_run_id: str | None = None
     restart_reason: str | None = None
     enable_strategy_execution: bool = False
+    write_live_sidecars: bool = False
 
     def __post_init__(self) -> None:
         if not self.instrument_ids:
@@ -301,6 +309,10 @@ class LongRunningTestnetSettings:
             raise ValueError("restart_reason is required with previous_run_id")
         if self.restart_reason and not self.previous_run_id:
             raise ValueError("previous_run_id is required with restart_reason")
+        if self.write_live_sidecars and not self.enable_strategy_execution:
+            raise ValueError(
+                "write_live_sidecars=True requires enable_strategy_execution=True"
+            )
 
 
 @dataclass(frozen=True)
@@ -355,6 +367,8 @@ class LongRunningTestnetResult:
     auto_flatten_trigger: str | None = None
     emergency_flatten_success: bool | None = None
     emergency_flatten_path: Path | None = None
+    sidecar_write_result: SidecarWriteResult | None = None
+    sidecar_error: str | None = None
 
     @property
     def exit_code(self) -> int:
@@ -376,15 +390,29 @@ class LongRunningTestnetResult:
         payload["manifest_path"] = str(self.manifest_path)
         if self.emergency_flatten_path is not None:
             payload["emergency_flatten_path"] = str(self.emergency_flatten_path)
+        if self.sidecar_write_result is not None:
+            payload["sidecar_write_result"] = {
+                "paths": {
+                    name: str(path)
+                    for name, path in self.sidecar_write_result.paths.items()
+                },
+                "orders_count": self.sidecar_write_result.orders_count,
+                "fills_count": self.sidecar_write_result.fills_count,
+                "positions_count": self.sidecar_write_result.positions_count,
+                "account_rows": self.sidecar_write_result.account_rows,
+                "lineage_rows": self.sidecar_write_result.lineage_rows,
+            }
         payload["exit_code"] = self.exit_code
         return payload
 
 
 NodeFactory = Callable[[TradingNodeConfig], Any]
 ClockFn = Callable[[], datetime]
+ClockNsFn = Callable[[], int]
 TelemetryReader = Callable[[], TestnetRuntimeTelemetry]
 FlattenRunner = Callable[[Any], Any]
 RestartExchangeFactory = Callable[[str], Any]
+LiveSidecarWriter = Callable[..., SidecarWriteResult]
 
 
 def validate_startup(
@@ -749,10 +777,13 @@ def run_long_running_testnet(
     git_state: GitState | None = None,
     node_factory: NodeFactory | None = None,
     clock: ClockFn | None = None,
+    clock_ns: ClockNsFn | None = None,
     telemetry_reader: TelemetryReader | None = None,
     flatten_runner: FlattenRunner | None = None,
     restart_exchange_factory: RestartExchangeFactory | None = None,
     register_strategies: Callable[[Any], None] | None = None,
+    sidecar_recording: SidecarRecording | None = None,
+    live_sidecar_writer: LiveSidecarWriter | None = None,
     run_id: str | None = None,
 ) -> LongRunningTestnetResult:
     """Run the guarded ADR-008 §6.3c testnet shell with auto-flatten triggers.
@@ -765,9 +796,27 @@ def run_long_running_testnet(
 
     effective_env: Mapping[str, str] = env if env is not None else os.environ
     now: ClockFn = clock if clock is not None else _utc_now
+    now_ns: ClockNsFn = clock_ns if clock_ns is not None else time.time_ns
     factory: NodeFactory = (
         node_factory if node_factory is not None else _default_node_factory
     )
+    sidecar_writer_fn: LiveSidecarWriter = (
+        live_sidecar_writer if live_sidecar_writer is not None else write_live_sidecars
+    )
+
+    if run_settings.write_live_sidecars and sidecar_recording is None:
+        raise StartupValidationError(
+            "sidecar_recording_required",
+            "--write-live-sidecars requires a SidecarRecording to be supplied "
+            "by the operator launcher",
+        )
+    if sidecar_recording is not None and not run_settings.write_live_sidecars:
+        raise StartupValidationError(
+            "write_live_sidecars_flag_required",
+            "a SidecarRecording was supplied without "
+            "write_live_sidecars=True; refuse to silently drop the recording",
+        )
+
     reader: TelemetryReader = (
         telemetry_reader
         if telemetry_reader is not None
@@ -906,6 +955,8 @@ def run_long_running_testnet(
     node = factory(node_config)
     monitor_thread: threading.Thread | None = None
     timeout_thread: threading.Thread | None = None
+    sidecar_write_result: SidecarWriteResult | None = None
+    sidecar_error: str | None = None
 
     try:
         node.add_data_client_factory(BINANCE, BinanceLiveDataClientFactory)
@@ -1006,6 +1057,27 @@ def run_long_running_testnet(
             monitor_thread.join(timeout=2.0)
         if timeout_thread is not None:
             timeout_thread.join(timeout=2.0)
+        if node_built and sidecar_recording is not None:
+            try:
+                sidecar_write_result = sidecar_writer_fn(
+                    trader=node.trader,
+                    venue_name=sidecar_recording.venue_name,
+                    lineage=sidecar_recording.lineage,
+                    bundle_root=bundle_root,
+                    report_ts_event_ns=now_ns(),
+                )
+            except Exception as exc:  # noqa: BLE001 — sidecar write must not block dispose
+                sidecar_error = repr(exc)
+            _append_runtime_event(
+                runtime_log_path,
+                {
+                    "event": "sidecar_write",
+                    "ts": _iso_ms_utc(now()),
+                    "success": sidecar_error is None,
+                    "error": sidecar_error,
+                    "result": _sidecar_write_event_payload(sidecar_write_result),
+                },
+            )
         _dispose_node(node, runtime_log_path, now)
 
     trigger = trigger_box.get("trigger")
@@ -1062,6 +1134,13 @@ def run_long_running_testnet(
             runtime["emergency_flatten_path"] = str(emergency_flatten_path)
     if flatten_error is not None:
         runtime["emergency_flatten_error"] = flatten_error
+    runtime["write_live_sidecars"] = run_settings.write_live_sidecars
+    if sidecar_write_result is not None or sidecar_error is not None:
+        runtime["sidecar"] = {
+            "success": sidecar_error is None,
+            "error": sidecar_error,
+            "result": _sidecar_write_event_payload(sidecar_write_result),
+        }
 
     _append_runtime_event(
         runtime_log_path,
@@ -1096,6 +1175,8 @@ def run_long_running_testnet(
         auto_flatten_trigger=None if trigger is None else trigger.msg,
         emergency_flatten_success=emergency_flatten_success,
         emergency_flatten_path=emergency_flatten_path,
+        sidecar_write_result=sidecar_write_result,
+        sidecar_error=sidecar_error,
     )
     _write_long_run_manifest(result)
     return result
@@ -1813,6 +1894,21 @@ def _append_runtime_event(path: Path, payload: Mapping[str, object]) -> None:
         fh.write("\n")
 
 
+def _sidecar_write_event_payload(
+    sidecar_write_result: SidecarWriteResult | None,
+) -> dict[str, object] | None:
+    if sidecar_write_result is None:
+        return None
+    return {
+        "paths": {name: str(path) for name, path in sidecar_write_result.paths.items()},
+        "orders_count": sidecar_write_result.orders_count,
+        "fills_count": sidecar_write_result.fills_count,
+        "positions_count": sidecar_write_result.positions_count,
+        "account_rows": sidecar_write_result.account_rows,
+        "lineage_rows": sidecar_write_result.lineage_rows,
+    }
+
+
 def _trader_counts(node: Any) -> tuple[int, int]:
     trader = getattr(node, "trader", None)
     if trader is None:
@@ -2156,6 +2252,17 @@ def _build_parser() -> argparse.ArgumentParser:
             "(stability-soak mode, the Phase 3f default)."
         ),
     )
+    parser.add_argument(
+        "--write-live-sidecars",
+        action="store_true",
+        help=(
+            "Materialize ADR-004 sidecars (orders/fills/positions/"
+            "account_balances/signal_lineage parquet) from node.trader after "
+            "node.run() returns. Requires --enable-strategy-execution and a "
+            "SidecarRecording supplied by the operator launcher; the CLI alone "
+            "cannot satisfy it."
+        ),
+    )
     return parser
 
 
@@ -2183,10 +2290,13 @@ def main(
     git_state: GitState | None = None,
     node_factory: NodeFactory | None = None,
     clock: ClockFn | None = None,
+    clock_ns: ClockNsFn | None = None,
     telemetry_reader: TelemetryReader | None = None,
     flatten_runner: FlattenRunner | None = None,
     restart_exchange_factory: RestartExchangeFactory | None = None,
     register_strategies: Callable[[Any], None] | None = None,
+    sidecar_recording: SidecarRecording | None = None,
+    live_sidecar_writer: LiveSidecarWriter | None = None,
 ) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
@@ -2221,6 +2331,7 @@ def main(
                 previous_run_id=args.previous_run_id,
                 restart_reason=args.restart_reason,
                 enable_strategy_execution=bool(args.enable_strategy_execution),
+                write_live_sidecars=bool(args.write_live_sidecars),
             )
         except ValueError as exc:
             parser.exit(EXIT_STARTUP_VALIDATION, f"{parser.prog}: error: {exc}\n")
@@ -2232,10 +2343,13 @@ def main(
                 git_state=git_state,
                 node_factory=node_factory,
                 clock=clock,
+                clock_ns=clock_ns,
                 telemetry_reader=telemetry_reader,
                 flatten_runner=flatten_runner,
                 restart_exchange_factory=restart_exchange_factory,
                 register_strategies=register_strategies,
+                sidecar_recording=sidecar_recording,
+                live_sidecar_writer=live_sidecar_writer,
             )
         except StartupValidationError as exc:
             parser.exit(EXIT_STARTUP_VALIDATION, f"{parser.prog}: error: {exc}\n")
@@ -2279,6 +2393,8 @@ __all__ = [
     "LongRunningTestnetResult",
     "LongRunningTestnetSettings",
     "RestartReconciliation",
+    "SidecarRecording",
+    "SidecarWriteResult",
     "TestnetAdapterPlan",
     "TestnetRuntimeTelemetry",
     "StartupCheckResult",

@@ -32,6 +32,7 @@ from apps.strategies_nautilus.baseline_nautilus_strategy import (
     SignalStorePollingSource,
 )
 from apps.strategies_nautilus.baseline_strategy import BaselineStrategyConfig
+from apps.strategies_nautilus.runners.sidecar_writer import SidecarRecording
 
 
 @dataclass(frozen=True)
@@ -162,7 +163,24 @@ def build_register_strategies(
     return register
 
 
+def build_sidecar_recording(
+    spec: FirstCanaryStrategySpec,
+    *,
+    lineage: list[LineageRecord],
+) -> SidecarRecording:
+    """Return a ``SidecarRecording`` wired against the same ``lineage`` list.
+
+    The launcher hands the same list to both ``build_register_strategies``
+    and this helper so that the strategy populates the lineage while running
+    and the runner consumes it post-run when materializing
+    ``signal_lineage.parquet``.
+    """
+
+    return SidecarRecording(venue_name=spec.venue, lineage=lineage)
+
+
 __all__ = [
     "FirstCanaryStrategySpec",
     "build_register_strategies",
+    "build_sidecar_recording",
 ]
