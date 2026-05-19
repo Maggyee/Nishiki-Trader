@@ -32,6 +32,11 @@ loop.
   ADR-005 `freqai` family, not the full freqtrade/FreqAI runtime loop yet.
   Default `source="freqai_linear_v1"`,
   `model_version="linear-mom-train20240105"`.
+- `wall_clock_signal_replay.py` — testnet-canary helper that copies already
+  reviewed historical `SignalEvent` rows, re-stamps `ts_event` into future
+  wall-clock times, and writes them back to `SignalStore`. It preserves the
+  original source/model for SourcePolicy authorization and records the
+  historical source row in `metadata.wall_clock_replay`.
 
 ## CLI
 
@@ -56,3 +61,24 @@ uv run python -m apps.strategies_freqtrade.research.freqai_linear_signals \
   --bar-type 'BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL' \
   --train-until '2024-01-05T23:59:00Z'
 ```
+
+For an ADR-008 testnet canary, generate a small future-time signal stream from
+the reviewed historical `freqai_linear_v1` rows:
+
+```bash
+uv run python -m apps.strategies_freqtrade.research.wall_clock_signal_replay \
+  --input-store-path data/bridge/signals.db \
+  --output-store-path data/bridge/signals.db \
+  --source freqai_linear_v1 \
+  --model-version linear-mom-train20240105 \
+  --start-delay-seconds 180 \
+  --interval-seconds 60 \
+  --max-signals 3 \
+  --min-confidence 0.55 \
+  --side buy \
+  --ttl-seconds 900
+```
+
+Pass `--dry-run` first to inspect the generated rows without touching the
+store. Run the real write shortly before starting the canary so the runner's
+initial SignalStore cursor is before the restamped `ts_event` values.

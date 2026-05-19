@@ -74,14 +74,16 @@ The file must contain only `BINANCE_TESTNET_API_KEY=…` and
 PEM-PKCS#8 private key. **Do not** cat the file — load it via
 `set -a; . ~/.config/trader/binance_testnet.env; set +a` later in §4.
 
-### 1.5 SignalStore has a recent `freqai_linear_v1` row
+### 1.5 SignalStore can produce a current `freqai_linear_v1` row
 
 Verify the bridge DB exists and the source/model_version filter returns
 something. The launcher's `SignalStorePollingSource` only fires on new
 rows after start, so signals must keep arriving while the session runs.
-Confirm the producer that writes `freqai_linear_v1` rows is alive in
-parallel (or accept that the canary session will see zero signals and
-produce a "0 orders" bundle — also a valid first data point).
+Until a real online FreqAI producer exists, use the wall-clock replay helper
+to copy reviewed historical rows into future timestamps. The helper preserves
+`source=freqai_linear_v1` / `model_version=linear-mom-train20240105` for
+SourcePolicy authorization and records the original row in
+`metadata.wall_clock_replay`.
 
 ```bash
 uv run python -c "
@@ -97,6 +99,27 @@ print('rows_last_24h=', len(recent))
 print('latest_ts_event_ns=', recent[-1].ts_event if recent else None)
 "
 ```
+
+Dry-run the restamp first:
+
+```bash
+uv run python -m apps.strategies_freqtrade.research.wall_clock_signal_replay \
+  --input-store-path data/bridge/signals.db \
+  --output-store-path data/bridge/signals.db \
+  --source freqai_linear_v1 \
+  --model-version linear-mom-train20240105 \
+  --start-delay-seconds 180 \
+  --interval-seconds 60 \
+  --max-signals 3 \
+  --min-confidence 0.55 \
+  --side buy \
+  --ttl-seconds 900 \
+  --dry-run
+```
+
+Then run the same command without `--dry-run` shortly before starting the
+canary. The 180 s delay gives the runner time to start with its initial
+SignalStore cursor before the first restamped event becomes due.
 
 ### 1.6 Catalog still serves BTCUSDT 1m
 
