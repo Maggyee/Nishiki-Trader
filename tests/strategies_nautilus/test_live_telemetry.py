@@ -150,6 +150,28 @@ class _FakeCache:
         return self._bar
 
 
+class _FakeEngine:
+    def __init__(self, connected: bool = True) -> None:
+        self._connected = connected
+
+    def check_connected(self) -> bool:
+        return self._connected
+
+    def set_connected(self, value: bool) -> None:
+        self._connected = value
+
+
+class _FakeKernel:
+    def __init__(
+        self,
+        *,
+        data_connected: bool = True,
+        exec_connected: bool = True,
+    ) -> None:
+        self.data_engine = _FakeEngine(data_connected)
+        self.exec_engine = _FakeEngine(exec_connected)
+
+
 class _FakeNode:
     def __init__(
         self,
@@ -159,6 +181,7 @@ class _FakeNode:
         open_positions: list[Any] | None = None,
         bar: Any = None,
         raises_bar: Exception | None = None,
+        kernel: _FakeKernel | None = None,
     ) -> None:
         self.portfolio = _FakePortfolio(equity_map)
         self.cache = _FakeCache(
@@ -167,6 +190,8 @@ class _FakeNode:
             bar=bar,
             raises_bar=raises_bar,
         )
+        if kernel is not None:
+            self.kernel = kernel
 
 
 def _reader(spec_overrides: dict | None = None, **kwargs: Any) -> LiveTelemetryReader:
@@ -381,6 +406,157 @@ def test_reader_catches_node_exceptions_and_returns_defaults() -> None:
     assert sample.daily_pnl == 0.0
     assert sample.open_orders == 0
     assert sample.open_positions == 0
+
+
+def test_reader_ws_connected_true_when_kernel_engines_connected() -> None:
+    reader = build_live_telemetry_reader(
+        FirstCanaryStrategySpec(**VALID_SPEC_KWARGS), starting_balance=10000.0
+    )
+    reader._clock = lambda: datetime(2026, 5, 20, 12, 0, 0, tzinfo=UTC)
+    reader.bind_node(
+        _FakeNode(
+            equity_map={reader.base_currency: _FakeMoney(10000.0)},
+            kernel=_FakeKernel(data_connected=True, exec_connected=True),
+        )
+    )
+
+    sample = reader()
+
+    assert sample.ws_connected is True
+    assert sample.ws_reconnect_count == 0
+
+
+def test_reader_ws_connected_false_when_data_engine_disconnected() -> None:
+    reader = build_live_telemetry_reader(
+        FirstCanaryStrategySpec(**VALID_SPEC_KWARGS), starting_balance=10000.0
+    )
+    reader._clock = lambda: datetime(2026, 5, 20, 12, 0, 0, tzinfo=UTC)
+    reader.bind_node(
+        _FakeNode(
+            equity_map={reader.base_currency: _FakeMoney(10000.0)},
+            kernel=_FakeKernel(data_connected=False, exec_connected=True),
+        )
+    )
+
+    sample = reader()
+
+    assert sample.ws_connected is False
+
+
+def test_reader_ws_connected_false_when_exec_engine_disconnected() -> None:
+    reader = build_live_telemetry_reader(
+        FirstCanaryStrategySpec(**VALID_SPEC_KWARGS), starting_balance=10000.0
+    )
+    reader._clock = lambda: datetime(2026, 5, 20, 12, 0, 0, tzinfo=UTC)
+    reader.bind_node(
+        _FakeNode(
+            equity_map={reader.base_currency: _FakeMoney(10000.0)},
+            kernel=_FakeKernel(data_connected=True, exec_connected=False),
+        )
+    )
+
+    sample = reader()
+
+    assert sample.ws_connected is False
+
+
+def test_reader_ws_reconnect_count_increments_on_false_to_true_edge() -> None:
+    reader = build_live_telemetry_reader(
+        FirstCanaryStrategySpec(**VALID_SPEC_KWARGS), starting_balance=10000.0
+    )
+    reader._clock = lambda: datetime(2026, 5, 20, 12, 0, 0, tzinfo=UTC)
+    kernel = _FakeKernel(data_connected=True, exec_connected=True)
+    reader.bind_node(
+        _FakeNode(
+            equity_map={reader.base_currency: _FakeMoney(10000.0)},
+            kernel=kernel,
+        )
+    )
+
+    s1 = reader()
+    assert s1.ws_connected is True
+    assert s1.ws_reconnect_count == 0
+
+    kernel.data_engine.set_connected(False)
+    s2 = reader()
+    assert s2.ws_connected is False
+    assert s2.ws_reconnect_count == 0
+
+    kernel.data_engine.set_connected(True)
+    s3 = reader()
+    assert s3.ws_connected is True
+    assert s3.ws_reconnect_count == 1
+
+    kernel.exec_engine.set_connected(False)
+    s4 = reader()
+    assert s4.ws_connected is False
+    assert s4.ws_reconnect_count == 1
+
+    kernel.exec_engine.set_connected(True)
+    s5 = reader()
+    assert s5.ws_connected is True
+    assert s5.ws_reconnect_count == 2
+
+
+def test_reader_ws_reconnect_count_does_not_increment_when_staying_connected() -> None:
+    reader = build_live_telemetry_reader(
+        FirstCanaryStrategySpec(**VALID_SPEC_KWARGS), starting_balance=10000.0
+    )
+    reader._clock = lambda: datetime(2026, 5, 20, 12, 0, 0, tzinfo=UTC)
+    reader.bind_node(
+        _FakeNode(
+            equity_map={reader.base_currency: _FakeMoney(10000.0)},
+            kernel=_FakeKernel(data_connected=True, exec_connected=True),
+        )
+    )
+
+    for _ in range(5):
+        sample = reader()
+        assert sample.ws_connected is True
+        assert sample.ws_reconnect_count == 0
+
+
+def test_reader_ws_connected_keeps_prev_when_kernel_read_raises() -> None:
+    reader = build_live_telemetry_reader(
+        FirstCanaryStrategySpec(**VALID_SPEC_KWARGS), starting_balance=10000.0
+    )
+    reader._clock = lambda: datetime(2026, 5, 20, 12, 0, 0, tzinfo=UTC)
+
+    class _BoomKernel:
+        @property
+        def data_engine(self) -> Any:
+            raise RuntimeError("kaboom")
+
+    portfolio = _FakePortfolio({reader.base_currency: _FakeMoney(10000.0)})
+    cache = _FakeCache()
+
+    class _NodeWithBoomKernel:
+        def __init__(self) -> None:
+            self.portfolio = portfolio
+            self.cache = cache
+            self.kernel = _BoomKernel()
+
+    reader.bind_node(_NodeWithBoomKernel())
+
+    sample = reader()
+
+    assert sample.ws_connected is True
+    assert sample.ws_reconnect_count == 0
+
+
+def test_reader_ws_connected_falls_back_to_prev_when_node_has_no_kernel() -> None:
+    reader = build_live_telemetry_reader(
+        FirstCanaryStrategySpec(**VALID_SPEC_KWARGS), starting_balance=10000.0
+    )
+    reader._clock = lambda: datetime(2026, 5, 20, 12, 0, 0, tzinfo=UTC)
+    reader.bind_node(
+        _FakeNode(equity_map={reader.base_currency: _FakeMoney(10000.0)})
+    )
+
+    sample = reader()
+
+    assert sample.ws_connected is True
+    assert sample.ws_reconnect_count == 0
 
 
 def test_reader_bind_node_is_idempotent() -> None:
