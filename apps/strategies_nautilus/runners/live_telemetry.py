@@ -95,6 +95,7 @@ class LiveTelemetryReader:
     _day_anchor_date: date | None = field(default=None, repr=False)
     _clock: ClockFn = field(default=_utc_now, repr=False)
     _ws_connected_prev: bool = field(default=True, repr=False)
+    _ws_connected_observed: bool = field(default=False, repr=False)
     _ws_reconnect_count: int = field(default=0, repr=False)
 
     def bind_node(self, node: Any) -> None:
@@ -187,6 +188,11 @@ class LiveTelemetryReader:
         except Exception:  # noqa: BLE001 — never crash the monitor loop
             return self._ws_connected_prev
         connected = data_ok and exec_ok
+        if not self._ws_connected_observed:
+            if connected:
+                self._ws_connected_observed = True
+                self._ws_connected_prev = True
+            return True
         if connected and not self._ws_connected_prev:
             self._ws_reconnect_count += 1
         self._ws_connected_prev = connected

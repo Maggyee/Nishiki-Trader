@@ -426,7 +426,7 @@ def test_reader_ws_connected_true_when_kernel_engines_connected() -> None:
     assert sample.ws_reconnect_count == 0
 
 
-def test_reader_ws_connected_false_when_data_engine_disconnected() -> None:
+def test_reader_ws_connected_suppresses_startup_false_before_first_connect() -> None:
     reader = build_live_telemetry_reader(
         FirstCanaryStrategySpec(**VALID_SPEC_KWARGS), starting_balance=10000.0
     )
@@ -440,20 +440,45 @@ def test_reader_ws_connected_false_when_data_engine_disconnected() -> None:
 
     sample = reader()
 
-    assert sample.ws_connected is False
+    assert sample.ws_connected is True
+    assert sample.ws_reconnect_count == 0
 
 
-def test_reader_ws_connected_false_when_exec_engine_disconnected() -> None:
+def test_reader_ws_connected_false_when_data_engine_disconnects_after_connect() -> None:
     reader = build_live_telemetry_reader(
         FirstCanaryStrategySpec(**VALID_SPEC_KWARGS), starting_balance=10000.0
     )
     reader._clock = lambda: datetime(2026, 5, 20, 12, 0, 0, tzinfo=UTC)
+    kernel = _FakeKernel(data_connected=True, exec_connected=True)
     reader.bind_node(
         _FakeNode(
             equity_map={reader.base_currency: _FakeMoney(10000.0)},
-            kernel=_FakeKernel(data_connected=True, exec_connected=False),
+            kernel=kernel,
         )
     )
+    assert reader().ws_connected is True
+
+    kernel.data_engine.set_connected(False)
+    sample = reader()
+
+    assert sample.ws_connected is False
+
+
+def test_reader_ws_connected_false_when_exec_engine_disconnects_after_connect() -> None:
+    reader = build_live_telemetry_reader(
+        FirstCanaryStrategySpec(**VALID_SPEC_KWARGS), starting_balance=10000.0
+    )
+    reader._clock = lambda: datetime(2026, 5, 20, 12, 0, 0, tzinfo=UTC)
+    kernel = _FakeKernel(data_connected=True, exec_connected=True)
+    reader.bind_node(
+        _FakeNode(
+            equity_map={reader.base_currency: _FakeMoney(10000.0)},
+            kernel=kernel,
+        )
+    )
+    assert reader().ws_connected is True
+
+    kernel.exec_engine.set_connected(False)
 
     sample = reader()
 
@@ -812,4 +837,3 @@ def test_run_long_running_testnet_calls_reader_bind_node_after_build(
     assert result.stop_reason == "max_duration"
     assert len(bind_calls) == 1
     assert bind_calls[0] is holder["node"]
-
