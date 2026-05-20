@@ -117,9 +117,28 @@ uv run python -m apps.strategies_freqtrade.research.wall_clock_signal_replay \
   --dry-run
 ```
 
-Then run the same command without `--dry-run` shortly before starting the
-canary. The 180 s delay gives the runner time to start with its initial
-SignalStore cursor before the first restamped event becomes due.
+For the actual 6 h canary, write a longer buy-only stream shortly before
+starting the runner:
+
+```bash
+uv run python -m apps.strategies_freqtrade.research.wall_clock_signal_replay \
+  --input-store-path data/bridge/signals.db \
+  --output-store-path data/bridge/signals.db \
+  --source freqai_linear_v1 \
+  --model-version linear-mom-train20240105 \
+  --start-delay-seconds 180 \
+  --interval-seconds 45 \
+  --max-signals 480 \
+  --min-confidence 0.55 \
+  --side buy \
+  --ttl-seconds 900
+```
+
+The 180 s delay gives the runner time to start with its initial SignalStore
+cursor before the first restamped event becomes due. The 45 s interval keeps
+`last_signal_ns` inside the runner's 60 s `signal_lag_exceeded_threshold`
+window for the whole session; the older 3-signal smoke pattern is now
+insufficient once live telemetry reports real signal lag.
 
 ### 1.6 Catalog still serves BTCUSDT 1m
 
