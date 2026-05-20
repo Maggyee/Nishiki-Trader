@@ -104,6 +104,7 @@ class SignalStorePollingSource:
     source: str
     model_version: str
     cursor_ns: int
+    last_popped_ns: int | None = None
 
     def pop_due(self, until_ns: int) -> list[SignalEvent]:
         if until_ns < self.cursor_ns:
@@ -115,7 +116,9 @@ class SignalStorePollingSource:
             until_ns=until_ns,
         )
         if events:
-            self.cursor_ns = max(int(e.ts_event) for e in events) + 1
+            last_ts = max(int(e.ts_event) for e in events)
+            self.cursor_ns = last_ts + 1
+            self.last_popped_ns = last_ts
         return events
 
 SIGNAL_TAG_PREFIX = "signal_id:"

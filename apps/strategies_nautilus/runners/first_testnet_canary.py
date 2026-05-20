@@ -32,6 +32,7 @@ from apps.strategies_nautilus.baseline_nautilus_strategy import (
     SignalStorePollingSource,
 )
 from apps.strategies_nautilus.baseline_strategy import BaselineStrategyConfig
+from apps.strategies_nautilus.runners.live_telemetry import LiveTelemetryReader
 from apps.strategies_nautilus.runners.sidecar_writer import SidecarRecording
 
 
@@ -95,6 +96,34 @@ class FirstCanaryStrategySpec:
         )
 
 
+def build_signal_source(
+    spec: FirstCanaryStrategySpec,
+    *,
+    clock_ns: Callable[[], int] | None = None,
+    store_factory: Callable[[Path], SignalStore] | None = None,
+) -> SignalStorePollingSource:
+    """Construct the ``SignalStorePollingSource`` that the launcher shares.
+
+    Splitting this from :func:`build_register_strategies` lets the launcher
+    own the source reference so the same instance can be handed to both the
+    strategy (via ``build_register_strategies(signal_source=)``) and the
+    live telemetry reader (via :func:`build_live_telemetry_reader`).
+    """
+
+    clock = clock_ns if clock_ns is not None else time.time_ns
+    factory = store_factory if store_factory is not None else SignalStore
+    store = factory(spec.signal_store_path)
+    cursor_ns = (
+        spec.initial_cursor_ns if spec.initial_cursor_ns is not None else clock()
+    )
+    return SignalStorePollingSource(
+        store=store,
+        source=spec.source,
+        model_version=spec.model_version,
+        cursor_ns=cursor_ns,
+    )
+
+
 def build_register_strategies(
     spec: FirstCanaryStrategySpec,
     *,
@@ -102,6 +131,7 @@ def build_register_strategies(
     clock_ns: Callable[[], int] | None = None,
     store_factory: Callable[[Path], SignalStore] | None = None,
     strategy_sink: Callable[[Any, BaselineNautilusStrategy], None] | None = None,
+    signal_source: SignalStorePollingSource | None = None,
 ) -> Callable[[Any], None]:
     """Return a ``register_strategies(node)`` callback for one source.
 
@@ -110,12 +140,12 @@ def build_register_strategies(
     native Nautilus ``Strategy`` lifecycle. The defaults are the
     production wiring: ``time.time_ns``, ``SignalStore(path)``, and
     ``node.trader.add_strategy(strategy)``.
-    """
 
-    clock: Callable[[], int] = clock_ns if clock_ns is not None else time.time_ns
-    factory: Callable[[Path], SignalStore] = (
-        store_factory if store_factory is not None else SignalStore
-    )
+    ``signal_source`` lets the launcher pre-construct the polling source
+    via :func:`build_signal_source` so the live telemetry reader can read
+    ``last_popped_ns`` off the same instance. When omitted, the callback
+    builds its own source internally (the pre-telemetry-reader behaviour).
+    """
 
     def _default_sink(node: Any, strategy: BaselineNautilusStrategy) -> None:
         node.trader.add_strategy(strategy)
@@ -135,17 +165,12 @@ def build_register_strategies(
         bar_type = BarType.from_str(spec.bar_type_str)
         base_currency = Currency.from_str(spec.base_currency_code)
 
-        store = factory(spec.signal_store_path)
-        cursor_ns = (
-            spec.initial_cursor_ns
-            if spec.initial_cursor_ns is not None
-            else clock()
-        )
-        signal_source = SignalStorePollingSource(
-            store=store,
-            source=spec.source,
-            model_version=spec.model_version,
-            cursor_ns=cursor_ns,
+        source = (
+            signal_source
+            if signal_source is not None
+            else build_signal_source(
+                spec, clock_ns=clock_ns, store_factory=store_factory
+            )
         )
         strategy = BaselineNautilusStrategy(
             params=BaselineNautilusStrategyParams(
@@ -154,13 +179,43 @@ def build_register_strategies(
                 baseline_config=spec.build_baseline_config(),
                 trade_size=spec.trade_size,
                 equity_currency=base_currency,
-                signal_source=signal_source,
+                signal_source=source,
                 lineage=lineage,
             )
         )
         sink(node, strategy)
 
     return register
+
+
+def build_live_telemetry_reader(
+    spec: FirstCanaryStrategySpec,
+    *,
+    starting_balance: float,
+    signal_source: SignalStorePollingSource | None = None,
+) -> LiveTelemetryReader:
+    """Construct a :class:`LiveTelemetryReader` matching ``spec``.
+
+    The returned reader is pre-bound to the launcher's ``signal_source`` so
+    the testnet runner's monitor loop reads ``last_popped_ns`` from the
+    same instance the strategy advances on each ``on_bar`` tick. Use
+    ``testnet_runner.main(..., telemetry_reader=reader)``; the runner calls
+    ``reader.bind_node(node)`` after ``node.build()``.
+    """
+
+    from nautilus_trader.model.data import BarType
+    from nautilus_trader.model.identifiers import InstrumentId
+    from nautilus_trader.model.objects import Currency
+
+    instrument_id = InstrumentId.from_str(spec.instrument_id_str)
+    bar_type = BarType.from_str(spec.bar_type_str)
+    return LiveTelemetryReader(
+        venue=instrument_id.venue,
+        bar_type=bar_type,
+        base_currency=Currency.from_str(spec.base_currency_code),
+        starting_balance=starting_balance,
+        signal_source=signal_source,
+    )
 
 
 def build_sidecar_recording(
@@ -181,6 +236,8 @@ def build_sidecar_recording(
 
 __all__ = [
     "FirstCanaryStrategySpec",
+    "build_live_telemetry_reader",
     "build_register_strategies",
     "build_sidecar_recording",
+    "build_signal_source",
 ]

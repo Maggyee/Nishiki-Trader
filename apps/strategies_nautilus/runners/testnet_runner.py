@@ -967,6 +967,9 @@ def run_long_running_testnet(
             runtime_log_path,
             {"event": "node_built", "ts": _iso_ms_utc(now())},
         )
+        bind_node = getattr(reader, "bind_node", None)
+        if callable(bind_node):
+            bind_node(node)
 
         if run_settings.enable_strategy_execution:
             if register_strategies is None:
