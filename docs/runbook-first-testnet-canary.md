@@ -135,10 +135,11 @@ uv run python -m apps.strategies_freqtrade.research.wall_clock_signal_replay \
 ```
 
 The 180 s delay gives the runner time to start with its initial SignalStore
-cursor before the first restamped event becomes due. The 45 s interval keeps
-`last_signal_ns` inside the runner's 60 s `signal_lag_exceeded_threshold`
-window for the whole session; the older 3-signal smoke pattern is now
-insufficient once live telemetry reports real signal lag.
+cursor before the first restamped event becomes due. The 45 s interval plus
+the launcher's 120 s `signal_lag_exceeded_threshold` keeps expected
+bar-cadence polling jitter from producing advisory lag alerts; the older
+3-signal smoke pattern is now insufficient once live telemetry reports real
+signal lag.
 
 ### 1.6 Catalog still serves BTCUSDT 1m
 
@@ -166,6 +167,7 @@ Lock these down **before** starting the launcher:
 | `max_run_seconds` | `21600` (6 h) | matches Phase 3f stability soak |
 | `starting_balance` | testnet faucet (`10000` USDT default) | observed in Phase 3b probe |
 | `daily_loss_limit_pct` | `0.05` | ADR-001 kill-switch threshold |
+| `signal_lag_threshold_seconds` | `120` | Allows one 1m bar cadence plus telemetry jitter; still alerts on producer stalls |
 | `instrument_id` | `BTCUSDT.BINANCE` | Phase 3 scope is single instrument |
 | `bar_type` | `BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL` | unchanged from Phase 3a |
 
@@ -222,6 +224,7 @@ def _build_argv() -> list[str]:
         "--max-run-seconds", "21600",
         "--telemetry-poll-seconds", "1.0",
         "--heartbeat-interval-seconds", "30.0",
+        "--signal-lag-threshold-seconds", "120.0",
         "--daily-loss-limit-pct", "0.05",
         "--output-root", "data/testnet",
         "--enable-strategy-execution",
