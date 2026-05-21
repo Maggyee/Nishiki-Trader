@@ -92,6 +92,9 @@ services:
       GF_AUTH_ANONYMOUS_ENABLED: "false"
       GF_SERVER_HTTP_ADDR: "0.0.0.0"
       GF_SERVER_HTTP_PORT: "3000"
+      # 仅本机 loopback (127.0.0.1:3000) 暴露, 公网不可达;
+      # 关闭 brute-force lockout 避免反复输错时账号被锁 5 分钟.
+      GF_SECURITY_DISABLE_BRUTE_FORCE_LOGIN_PROTECTION: "true"
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro

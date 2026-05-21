@@ -292,21 +292,23 @@
         "name": "run_id",
         "label": "run_id",
         "type": "query",
-        "datasource": {"type": "prometheus", "uid": "prometheus"},
+        "datasource": {"type": "loki", "uid": "loki"},
         "query": {
-          "query": "label_values(trader_canary_info, run_id)",
-          "refId": "Variable_run_id_PrometheusVariableQueryEditor-VariableQuery"
+          "label": "run_id",
+          "stream": "{job=~\"testnet_.+|paper_.+\"}",
+          "type": 1,
+          "refId": "LokiVariableQueryEditor-VariableQuery"
         },
         "multi": true,
         "includeAll": true,
-        "allValue": ".*",
+        "allValue": ".+",
         "refresh": 2,
         "sort": 5,
         "current": {"text": "All", "value": "$__all"}
       }
     ]
   },
-  "time": {"from": "now-6h", "to": "now"},
+  "time": {"from": "now-7d", "to": "now"},
   "timepicker": {},
   "timezone": "utc",
   "title": "Canary — Current Testnet Run",
