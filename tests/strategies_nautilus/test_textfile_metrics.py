@@ -213,6 +213,7 @@ def test_write_textfile_atomic_creates_parent_dir(tmp_path: Path) -> None:
     nested = tmp_path / "a" / "b" / "c.prom"
     write_textfile_atomic(nested, "x\n")
     assert nested.read_text(encoding="utf-8") == "x\n"
+    assert nested.stat().st_mode & 0o777 == 0o644
 
 
 def test_prometheus_textfile_writer_path_is_kind_run_id(tmp_path: Path) -> None:

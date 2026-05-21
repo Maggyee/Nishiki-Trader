@@ -212,6 +212,7 @@ def write_textfile_atomic(path: Path, content: str) -> None:
     tmp = path.with_suffix(path.suffix + ".tmp")
     tmp.write_text(content, encoding="utf-8")
     os.replace(tmp, path)
+    path.chmod(0o644)
 
 
 @dataclass

@@ -270,6 +270,7 @@ def _append_history(path: Path, result: WatchdogResult) -> None:
     with path.open("a", encoding="utf-8") as fh:
         fh.write(json.dumps(payload, sort_keys=True))
         fh.write("\n")
+    path.chmod(0o644)
 
 
 def _parse_iso_ms_utc(value: str) -> datetime | None:

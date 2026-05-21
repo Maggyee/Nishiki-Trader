@@ -85,6 +85,7 @@ def test_watchdog_healthy_heartbeat_writes_state_without_flatten(tmp_path):
     assert state["heartbeat_age_seconds"] == 30.0
     assert not (settings.testnet_root / RUN_ID / "logs" / "alerts.log").exists()
     history_path = settings.state_path.with_name("history.jsonl")
+    assert history_path.stat().st_mode & 0o777 == 0o644
     history = [
         json.loads(line)
         for line in history_path.read_text(encoding="utf-8").splitlines()
