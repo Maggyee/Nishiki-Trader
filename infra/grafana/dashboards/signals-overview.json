@@ -38,7 +38,7 @@
           "refId": "A",
           "format": "table",
           "editorMode": "code",
-          "rawSql": "SELECT COUNT(*)::bigint AS value FROM signal_events WHERE source = ANY(string_to_array('$source', ',')) AND ts_event BETWEEN extract(epoch from $__timeFrom())::bigint * 1000000000 AND extract(epoch from $__timeTo())::bigint * 1000000000"
+          "rawSql": "SELECT COUNT(*)::bigint AS value FROM signal_events WHERE source = ANY(string_to_array('$source', ',')) AND ts_event BETWEEN extract(epoch from $__timeFrom()::timestamptz)::bigint * 1000000000 AND extract(epoch from $__timeTo()::timestamptz)::bigint * 1000000000"
         }
       ],
       "options": {
@@ -60,7 +60,7 @@
           "refId": "A",
           "format": "table",
           "editorMode": "code",
-          "rawSql": "SELECT COUNT(DISTINCT source)::bigint AS value FROM signal_events WHERE source = ANY(string_to_array('$source', ',')) AND ts_event BETWEEN extract(epoch from $__timeFrom())::bigint * 1000000000 AND extract(epoch from $__timeTo())::bigint * 1000000000"
+          "rawSql": "SELECT COUNT(DISTINCT source)::bigint AS value FROM signal_events WHERE source = ANY(string_to_array('$source', ',')) AND ts_event BETWEEN extract(epoch from $__timeFrom()::timestamptz)::bigint * 1000000000 AND extract(epoch from $__timeTo()::timestamptz)::bigint * 1000000000"
         }
       ],
       "options": {
@@ -82,7 +82,7 @@
           "refId": "A",
           "format": "table",
           "editorMode": "code",
-          "rawSql": "SELECT COUNT(DISTINCT model_version)::bigint AS value FROM signal_events WHERE source = ANY(string_to_array('$source', ',')) AND ts_event BETWEEN extract(epoch from $__timeFrom())::bigint * 1000000000 AND extract(epoch from $__timeTo())::bigint * 1000000000"
+          "rawSql": "SELECT COUNT(DISTINCT model_version)::bigint AS value FROM signal_events WHERE source = ANY(string_to_array('$source', ',')) AND ts_event BETWEEN extract(epoch from $__timeFrom()::timestamptz)::bigint * 1000000000 AND extract(epoch from $__timeTo()::timestamptz)::bigint * 1000000000"
         }
       ],
       "options": {
@@ -104,7 +104,7 @@
           "refId": "A",
           "format": "table",
           "editorMode": "code",
-          "rawSql": "SELECT AVG(confidence)::float AS value FROM signal_events WHERE source = ANY(string_to_array('$source', ',')) AND ts_event BETWEEN extract(epoch from $__timeFrom())::bigint * 1000000000 AND extract(epoch from $__timeTo())::bigint * 1000000000"
+          "rawSql": "SELECT AVG(confidence)::float AS value FROM signal_events WHERE source = ANY(string_to_array('$source', ',')) AND ts_event BETWEEN extract(epoch from $__timeFrom()::timestamptz)::bigint * 1000000000 AND extract(epoch from $__timeTo()::timestamptz)::bigint * 1000000000"
         }
       ],
       "options": {
@@ -126,7 +126,7 @@
           "refId": "A",
           "format": "table",
           "editorMode": "code",
-          "rawSql": "SELECT (COUNT(*) FILTER (WHERE side='buy'))::float / NULLIF(COUNT(*) FILTER (WHERE side='sell'), 0) AS value FROM signal_events WHERE source = ANY(string_to_array('$source', ',')) AND ts_event BETWEEN extract(epoch from $__timeFrom())::bigint * 1000000000 AND extract(epoch from $__timeTo())::bigint * 1000000000"
+          "rawSql": "SELECT (COUNT(*) FILTER (WHERE side='buy'))::float / NULLIF(COUNT(*) FILTER (WHERE side='sell'), 0) AS value FROM signal_events WHERE source = ANY(string_to_array('$source', ',')) AND ts_event BETWEEN extract(epoch from $__timeFrom()::timestamptz)::bigint * 1000000000 AND extract(epoch from $__timeTo()::timestamptz)::bigint * 1000000000"
         }
       ],
       "options": {
@@ -180,7 +180,7 @@
           "refId": "A",
           "format": "time_series",
           "editorMode": "code",
-          "rawSql": "SELECT time_bucket($__interval::interval, to_timestamp(ts_event/1e9)) AS time, source, COUNT(*)::bigint AS value FROM signal_events WHERE source = ANY(string_to_array('$source', ',')) AND ts_event BETWEEN extract(epoch from $__timeFrom())::bigint * 1000000000 AND extract(epoch from $__timeTo())::bigint * 1000000000 GROUP BY 1, 2 ORDER BY 1"
+          "rawSql": "SELECT time_bucket('$__interval'::interval, to_timestamp(ts_event/1e9)) AS time, source, COUNT(*)::bigint AS value FROM signal_events WHERE source = ANY(string_to_array('$source', ',')) AND ts_event BETWEEN extract(epoch from $__timeFrom()::timestamptz)::bigint * 1000000000 AND extract(epoch from $__timeTo()::timestamptz)::bigint * 1000000000 GROUP BY 1, 2 ORDER BY 1"
         }
       ],
       "fieldConfig": {
@@ -206,7 +206,7 @@
           "refId": "A",
           "format": "time_series",
           "editorMode": "code",
-          "rawSql": "SELECT time_bucket($__interval::interval, to_timestamp(ts_event/1e9)) AS time, side, COUNT(*)::bigint AS value FROM signal_events WHERE source = ANY(string_to_array('$source', ',')) AND ts_event BETWEEN extract(epoch from $__timeFrom())::bigint * 1000000000 AND extract(epoch from $__timeTo())::bigint * 1000000000 GROUP BY 1, 2 ORDER BY 1"
+          "rawSql": "SELECT time_bucket('$__interval'::interval, to_timestamp(ts_event/1e9)) AS time, side, COUNT(*)::bigint AS value FROM signal_events WHERE source = ANY(string_to_array('$source', ',')) AND ts_event BETWEEN extract(epoch from $__timeFrom()::timestamptz)::bigint * 1000000000 AND extract(epoch from $__timeTo()::timestamptz)::bigint * 1000000000 GROUP BY 1, 2 ORDER BY 1"
         }
       ],
       "fieldConfig": {
@@ -246,7 +246,7 @@
           "refId": "A",
           "format": "time_series",
           "editorMode": "code",
-          "rawSql": "SELECT time_bucket($__interval::interval, to_timestamp(ts_event/1e9)) AS time, percentile_cont(0.25) WITHIN GROUP (ORDER BY confidence) AS p25, percentile_cont(0.50) WITHIN GROUP (ORDER BY confidence) AS p50, percentile_cont(0.75) WITHIN GROUP (ORDER BY confidence) AS p75, percentile_cont(0.90) WITHIN GROUP (ORDER BY confidence) AS p90 FROM signal_events WHERE source = ANY(string_to_array('$source', ',')) AND ts_event BETWEEN extract(epoch from $__timeFrom())::bigint * 1000000000 AND extract(epoch from $__timeTo())::bigint * 1000000000 GROUP BY 1 ORDER BY 1"
+          "rawSql": "SELECT time_bucket('$__interval'::interval, to_timestamp(ts_event/1e9)) AS time, percentile_cont(0.25) WITHIN GROUP (ORDER BY confidence) AS p25, percentile_cont(0.50) WITHIN GROUP (ORDER BY confidence) AS p50, percentile_cont(0.75) WITHIN GROUP (ORDER BY confidence) AS p75, percentile_cont(0.90) WITHIN GROUP (ORDER BY confidence) AS p90 FROM signal_events WHERE source = ANY(string_to_array('$source', ',')) AND ts_event BETWEEN extract(epoch from $__timeFrom()::timestamptz)::bigint * 1000000000 AND extract(epoch from $__timeTo()::timestamptz)::bigint * 1000000000 GROUP BY 1 ORDER BY 1"
         }
       ],
       "fieldConfig": {
@@ -268,7 +268,7 @@
           "refId": "A",
           "format": "time_series",
           "editorMode": "code",
-          "rawSql": "SELECT time_bucket($__interval::interval, to_timestamp(ts_event/1e9)) AS time, MIN(score) AS min, AVG(score) AS mean, MAX(score) AS max FROM signal_events WHERE source = ANY(string_to_array('$source', ',')) AND ts_event BETWEEN extract(epoch from $__timeFrom())::bigint * 1000000000 AND extract(epoch from $__timeTo())::bigint * 1000000000 GROUP BY 1 ORDER BY 1"
+          "rawSql": "SELECT time_bucket('$__interval'::interval, to_timestamp(ts_event/1e9)) AS time, MIN(score) AS min, AVG(score) AS mean, MAX(score) AS max FROM signal_events WHERE source = ANY(string_to_array('$source', ',')) AND ts_event BETWEEN extract(epoch from $__timeFrom()::timestamptz)::bigint * 1000000000 AND extract(epoch from $__timeTo()::timestamptz)::bigint * 1000000000 GROUP BY 1 ORDER BY 1"
         }
       ],
       "fieldConfig": {
@@ -298,7 +298,7 @@
           "refId": "A",
           "format": "table",
           "editorMode": "code",
-          "rawSql": "SELECT source, model_version, COUNT(*)::bigint AS total, COUNT(*) FILTER (WHERE side='buy')::bigint AS buy, COUNT(*) FILTER (WHERE side='sell')::bigint AS sell, COUNT(*) FILTER (WHERE side='flat')::bigint AS flat, ROUND(AVG(confidence)::numeric, 4) AS mean_conf, ROUND(AVG(score)::numeric, 6) AS mean_score, to_timestamp(MIN(ts_event)/1e9) AS first_ts, to_timestamp(MAX(ts_event)/1e9) AS last_ts FROM signal_events WHERE source = ANY(string_to_array('$source', ',')) AND ts_event BETWEEN extract(epoch from $__timeFrom())::bigint * 1000000000 AND extract(epoch from $__timeTo())::bigint * 1000000000 GROUP BY source, model_version ORDER BY total DESC"
+          "rawSql": "SELECT source, model_version, COUNT(*)::bigint AS total, COUNT(*) FILTER (WHERE side='buy')::bigint AS buy, COUNT(*) FILTER (WHERE side='sell')::bigint AS sell, COUNT(*) FILTER (WHERE side='flat')::bigint AS flat, ROUND(AVG(confidence)::numeric, 4) AS mean_conf, ROUND(AVG(score)::numeric, 6) AS mean_score, to_timestamp(MIN(ts_event)/1e9) AS first_ts, to_timestamp(MAX(ts_event)/1e9) AS last_ts FROM signal_events WHERE source = ANY(string_to_array('$source', ',')) AND ts_event BETWEEN extract(epoch from $__timeFrom()::timestamptz)::bigint * 1000000000 AND extract(epoch from $__timeTo()::timestamptz)::bigint * 1000000000 GROUP BY source, model_version ORDER BY total DESC"
         }
       ],
       "options": {
@@ -317,7 +317,7 @@
           "refId": "A",
           "format": "table",
           "editorMode": "code",
-          "rawSql": "SELECT to_timestamp(ts_event/1e9) AS ts, source, model_version, symbol, side, ROUND(score::numeric, 4) AS score, ROUND(confidence::numeric, 4) AS confidence, horizon, status FROM signal_events WHERE source = ANY(string_to_array('$source', ',')) AND ts_event BETWEEN extract(epoch from $__timeFrom())::bigint * 1000000000 AND extract(epoch from $__timeTo())::bigint * 1000000000 ORDER BY ts_event DESC LIMIT 100"
+          "rawSql": "SELECT to_timestamp(ts_event/1e9) AS ts, source, model_version, symbol, side, ROUND(score::numeric, 4) AS score, ROUND(confidence::numeric, 4) AS confidence, horizon, status FROM signal_events WHERE source = ANY(string_to_array('$source', ',')) AND ts_event BETWEEN extract(epoch from $__timeFrom()::timestamptz)::bigint * 1000000000 AND extract(epoch from $__timeTo()::timestamptz)::bigint * 1000000000 ORDER BY ts_event DESC LIMIT 100"
         }
       ],
       "options": {
@@ -346,7 +346,7 @@
       }
     ]
   },
-  "time": {"from": "now-2y", "to": "now"},
+  "time": {"from": "now-3y", "to": "now"},
   "timepicker": {},
   "timezone": "utc",
   "title": "Signals — Overview",
