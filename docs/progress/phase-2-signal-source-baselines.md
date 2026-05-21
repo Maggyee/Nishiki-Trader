@@ -1052,3 +1052,80 @@ PnL is the final open position's unrealized mark.
 - **No promotion implication.** `paper_simulated` remains the ceiling for
   this source until ADR-008 Phase 3a's 24h wall-clock soak is recorded and
   Phase 3b-3e testnet credential, emergency, restart, and alert gates exist.
+
+
+---
+
+## 2026-05-21 v11 — 152-day paper_simulated monitoring extension through May
+
+- **Catalog input**: `data/catalog/data/bar/BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL/`
+  covering **2024-01-01 through 2024-05-31** (218880 1m bars, 152
+  calendar days, no missing days). May was appended after v10 while keeping
+  the original `train_until=2024-01-05T23:59:00Z` boundary.
+- **Signal store**: `data/bridge/signals.db` sha256
+  `dc096103628497d286872a8cb62737a8880549f6b04ca5d0e91c29a832cf840d`.
+  The exporter generated 2107 total historical `freqai_linear_v1` rows,
+  wrote 357 new May rows, and skipped the prior 1750 Jan-Apr rows as
+  duplicates. The paper run explicitly used
+  `--signal-until-ns 1717199940000000000` to exclude later wall-clock
+  canary restamp rows from the offline historical window.
+- **Code baseline recorded in bundle**: git `7b048db`
+  (`docs(retros): record clean live telemetry canary`), `git_dirty=false`.
+- **Bundle**: `data/paper/20260521-021418Z-e535b581`, manifest sha256
+  `06d9300a3183a80cb8c3c7874034aad12985fee3c814dae48e2dd9881ab44095`.
+- **Monitoring record**:
+  [`docs/retros/2026-05-21-freqai-linear-v1-paper-simulated-152d-monitoring.md`](../retros/2026-05-21-freqai-linear-v1-paper-simulated-152d-monitoring.md).
+  This is not a `SourcePolicy` decision and does not open
+  `promotion_review.py`.
+
+### v11 simulated bundle fingerprint
+
+| metric | freqai paper simulated (v11) | reference (v10, 121d) |
+|---|---:|---:|
+| source / model | `freqai_linear_v1 / linear-mom-train20240105` | same |
+| `git_dirty` | false | false |
+| runtime mode / data_mode / order_mode | `paper` / `catalog_polling` / `simulated` | same |
+| backtest_start | 2024-01-01T00:00:00.000Z | same |
+| backtest_end | 2024-05-31T23:59:00.000Z | 2024-04-30T23:59:00.000Z |
+| session_days_inclusive | 152 | 121 |
+| iterations | 218880 | 174240 |
+| signal rows | 2107 | 1750 |
+| applied policy | `dry_run=False`, multiplier `0.2` | same |
+| heartbeat_count / poll_count | 218880 / 218880 | 174240 / 174240 |
+| data_gap_count / restart_sequence | 0 / 0 | 0 / 0 |
+| orders / fills / positions | 1987 / 1987 / 994 | 1649 / 1649 / 825 |
+| lineage decisions | `target_long×1525`, `target_short×582` | `target_long×1265`, `target_short×485` |
+| kill-switch / expired / unauthorized / signal_lag | 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 |
+| PnL (total, USDT) | +4.8726 | +4.4126 |
+| PnL% (total) | +0.004873% | +0.004413% |
+| Win Rate | 0.5358 | 0.5291 |
+| Expectancy (USDT/trade) | +0.00491 | +0.00524 |
+| Max Drawdown (Pct) | -3.8779e-05 (-0.003878%) | -3.8779e-05 (-0.003878%) |
+| Max Drawdown (Abs, USDT) | -3.8782 | -3.8782 |
+| review blockers / promotion blockers | none / none | none / none |
+
+### Month split
+
+| month | signals | target_long | target_short | score_abs_mean | confidence_mean | closed positions | closed PnL USDT | win rate | expectancy |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 2024-01 | 308 | 225 | 83 | 0.2857 | 0.5671 | 135 | +0.6463 | 0.5556 | +0.00479 |
+| 2024-02 | 287 | 211 | 76 | 0.2772 | 0.5619 | 137 | +4.4086 | 0.5547 | +0.03218 |
+| 2024-03 | 621 | 445 | 176 | 0.3168 | 0.5860 | 302 | +1.3731 | 0.5265 | +0.00455 |
+| 2024-04 | 534 | 384 | 150 | 0.2845 | 0.5664 | 250 | -2.1081 | 0.5040 | -0.00843 |
+| 2024-05 | 357 | 260 | 97 | 0.2689 | 0.5569 | 169 | +0.5535 | 0.5680 | +0.00328 |
+
+### Reading v11
+
+- **The mechanical evidence still holds.** Every historical signal through
+  May is accepted, sidecars match manifest totals, every order/fill path
+  remains simulated, `git_dirty=false`, and no data-gap, expiry,
+  authorization, signal-lag, or kill-switch blocker appears.
+- **May is mildly positive but does not strengthen the alpha case.** The
+  total PnL improves from v10's +4.4126 USDT to +4.8726 USDT and May alone
+  adds +0.5535 USDT, but overall expectancy stays very small at
+  +0.00491 USDT/trade. This remains monitoring evidence, not a reason to
+  increase risk.
+- **No policy implication.** The source is already authorized at
+  `testnet_canary` with multiplier `0.1`; this v11 bundle is a
+  paper_simulated monitoring extension at multiplier `0.2`. It should not be
+  used as routine `hold @ testnet_canary` ratification.
