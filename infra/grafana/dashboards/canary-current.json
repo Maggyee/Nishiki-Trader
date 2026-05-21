@@ -1,0 +1,316 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {"type": "grafana", "uid": "-- Grafana --"},
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": false,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "type": "row",
+      "title": "Runtime",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0},
+      "id": 100,
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "title": "ws_connected",
+      "gridPos": {"h": 4, "w": 4, "x": 0, "y": 1},
+      "id": 1,
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {
+          "expr": "max by (run_id) (trader_canary_ws_connected{run_id=~\"$run_id\"})",
+          "legendFormat": "{{run_id}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "textMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {"options": {"0": {"text": "DOWN", "color": "red"}}, "type": "value"},
+            {"options": {"1": {"text": "UP", "color": "green"}}, "type": "value"}
+          ],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "red"}, {"color": "green", "value": 1}]}
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Account total (USDT)",
+      "gridPos": {"h": 4, "w": 5, "x": 4, "y": 1},
+      "id": 2,
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {
+          "expr": "max by (run_id) (trader_canary_account_total_usdt{run_id=~\"$run_id\"})",
+          "legendFormat": "{{run_id}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "textMode": "auto"
+      },
+      "fieldConfig": {"defaults": {"unit": "currencyUSD", "decimals": 2}}
+    },
+    {
+      "type": "stat",
+      "title": "Daily PnL (USDT)",
+      "gridPos": {"h": 4, "w": 5, "x": 9, "y": 1},
+      "id": 3,
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {
+          "expr": "max by (run_id) (trader_canary_daily_pnl_usdt{run_id=~\"$run_id\"})",
+          "legendFormat": "{{run_id}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "textMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 4,
+          "thresholds": {"mode": "absolute", "steps": [
+            {"color": "red"},
+            {"color": "yellow", "value": -1},
+            {"color": "green", "value": 0}
+          ]}
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Open orders",
+      "gridPos": {"h": 4, "w": 3, "x": 14, "y": 1},
+      "id": 4,
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {
+          "expr": "max by (run_id) (trader_canary_open_orders{run_id=~\"$run_id\"})",
+          "legendFormat": "{{run_id}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "graphMode": "none",
+        "colorMode": "value",
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "textMode": "auto"
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Open positions",
+      "gridPos": {"h": 4, "w": 3, "x": 17, "y": 1},
+      "id": 5,
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {
+          "expr": "max by (run_id) (trader_canary_open_positions{run_id=~\"$run_id\"})",
+          "legendFormat": "{{run_id}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "graphMode": "none",
+        "colorMode": "value",
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "textMode": "auto"
+      }
+    },
+    {
+      "type": "stat",
+      "title": "WS reconnects",
+      "gridPos": {"h": 4, "w": 4, "x": 20, "y": 1},
+      "id": 6,
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {
+          "expr": "max by (run_id) (trader_canary_ws_reconnect_total{run_id=~\"$run_id\"})",
+          "legendFormat": "{{run_id}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "textMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {"mode": "absolute", "steps": [
+            {"color": "green"},
+            {"color": "yellow", "value": 1},
+            {"color": "red", "value": 10}
+          ]}
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Account total over time",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 5},
+      "id": 7,
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {
+          "expr": "trader_canary_account_total_usdt{run_id=~\"$run_id\"}",
+          "legendFormat": "{{run_id}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {"defaults": {"unit": "currencyUSD", "custom": {"drawStyle": "line"}}}
+    },
+    {
+      "type": "timeseries",
+      "title": "Daily PnL over time",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 5},
+      "id": 8,
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {
+          "expr": "trader_canary_daily_pnl_usdt{run_id=~\"$run_id\"}",
+          "legendFormat": "{{run_id}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {"defaults": {"unit": "currencyUSD", "custom": {"drawStyle": "line"}}}
+    },
+    {
+      "type": "timeseries",
+      "title": "Alert counts by kind",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 13},
+      "id": 9,
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {
+          "expr": "max by (alert, run_id) (trader_canary_alert_total{run_id=~\"$run_id\"})",
+          "legendFormat": "{{run_id}} {{alert}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {"defaults": {"custom": {"drawStyle": "bars", "stacking": {"mode": "normal"}}}}
+    },
+    {
+      "type": "timeseries",
+      "title": "Heartbeat freshness (seconds since last sample)",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 13},
+      "id": 10,
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {
+          "expr": "time() - trader_canary_heartbeat_timestamp_seconds{run_id=~\"$run_id\"}",
+          "legendFormat": "{{run_id}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {"mode": "absolute", "steps": [
+            {"color": "green"},
+            {"color": "yellow", "value": 60},
+            {"color": "red", "value": 120}
+          ]}
+        }
+      }
+    },
+    {
+      "type": "row",
+      "title": "Logs & Alerts",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 21},
+      "id": 200,
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "logs",
+      "title": "alerts.log (last 200)",
+      "gridPos": {"h": 9, "w": 12, "x": 0, "y": 22},
+      "id": 11,
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [
+        {
+          "expr": "{job=\"testnet_alerts\", run_id=~\"$run_id\"}",
+          "refId": "A"
+        }
+      ],
+      "options": {"showTime": true, "showLabels": false, "wrapLogMessage": true, "sortOrder": "Descending"}
+    },
+    {
+      "type": "logs",
+      "title": "heartbeat.jsonl (last 200)",
+      "gridPos": {"h": 9, "w": 12, "x": 12, "y": 22},
+      "id": 12,
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [
+        {
+          "expr": "{job=\"testnet_heartbeat\", run_id=~\"$run_id\"}",
+          "refId": "A"
+        }
+      ],
+      "options": {"showTime": true, "showLabels": false, "wrapLogMessage": false, "sortOrder": "Descending"}
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["trader", "canary", "phase-3"],
+  "templating": {
+    "list": [
+      {
+        "name": "run_id",
+        "label": "run_id",
+        "type": "query",
+        "datasource": {"type": "prometheus", "uid": "prometheus"},
+        "query": {
+          "query": "label_values(trader_canary_info, run_id)",
+          "refId": "Variable_run_id_PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "refresh": 2,
+        "sort": 5,
+        "current": {"text": "All", "value": "$__all"}
+      }
+    ]
+  },
+  "time": {"from": "now-6h", "to": "now"},
+  "timepicker": {},
+  "timezone": "utc",
+  "title": "Canary — Current Testnet Run",
+  "uid": "canary-current",
+  "version": 1,
+  "weekStart": ""
+}

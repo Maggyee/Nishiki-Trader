@@ -1,0 +1,134 @@
+# Promtail config for the trader project's testnet / paper runners.
+#
+# Mount layout (see infra/docker-compose.yml):
+#   ../data/testnet  -> /data/testnet
+#   ../data/paper    -> /data/paper
+#   ./watchdog       -> /data/watchdog
+#
+# Per-file expected schema:
+#   runtime.log     -> one JSON object per line, key "ts" (ISO ms UTC)
+#   heartbeat.jsonl -> one JSON object per line, key "ts" (ISO ms UTC)
+#   alerts.log      -> one JSON object per line, key "ts" (ISO ms UTC)
+#
+# All scrape jobs reject "promtail position not advancing" by setting a
+# narrow regex on __path__ and extracting run_id into a label. Labels are
+# kept small (<= ~5 distinct values per scrape) to avoid Loki cardinality
+# explosion.
+
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+  log_level: info
+
+positions:
+  filename: /var/lib/promtail/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: testnet_runtime
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: testnet_runtime
+          kind: testnet
+          source: runtime
+          __path__: /data/testnet/*/logs/runtime.log
+    pipeline_stages:
+      - regex:
+          source: filename
+          expression: ^/data/testnet/(?P<run_id>[^/]+)/logs/runtime\.log$
+      - labels:
+          run_id:
+      - json:
+          expressions:
+            ts: ts
+            event: event
+      - timestamp:
+          source: ts
+          format: RFC3339Nano
+          fallback_formats:
+            - "2006-01-02T15:04:05.000Z"
+      - labels:
+          event:
+
+  - job_name: testnet_heartbeat
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: testnet_heartbeat
+          kind: testnet
+          source: heartbeat
+          __path__: /data/testnet/*/logs/heartbeat.jsonl
+    pipeline_stages:
+      - regex:
+          source: filename
+          expression: ^/data/testnet/(?P<run_id>[^/]+)/logs/heartbeat\.jsonl$
+      - labels:
+          run_id:
+      - json:
+          expressions:
+            ts: ts
+      - timestamp:
+          source: ts
+          format: RFC3339Nano
+          fallback_formats:
+            - "2006-01-02T15:04:05.000Z"
+
+  - job_name: testnet_alerts
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: testnet_alerts
+          kind: testnet
+          source: alerts
+          __path__: /data/testnet/*/logs/alerts.log
+    pipeline_stages:
+      - regex:
+          source: filename
+          expression: ^/data/testnet/(?P<run_id>[^/]+)/logs/alerts\.log$
+      - labels:
+          run_id:
+      - json:
+          expressions:
+            ts: ts
+            severity: severity
+            msg: msg
+      - timestamp:
+          source: ts
+          format: RFC3339Nano
+          fallback_formats:
+            - "2006-01-02T15:04:05.000Z"
+      - labels:
+          severity:
+          msg:
+
+  - job_name: paper_runtime
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: paper_runtime
+          kind: paper
+          source: runtime
+          __path__: /data/paper/*/logs/runtime.log
+    pipeline_stages:
+      - regex:
+          source: filename
+          expression: ^/data/paper/(?P<run_id>[^/]+)/logs/runtime\.log$
+      - labels:
+          run_id:
+      - json:
+          expressions:
+            ts: ts
+      - timestamp:
+          source: ts
+          format: RFC3339Nano
+          fallback_formats:
+            - "2006-01-02T15:04:05.000Z"
+
+# NOTE: ``infra/watchdog/state.json`` is overwritten on every tick (not
+# append-only / jsonl), so it cannot be tailed by Promtail. Watchdog alerts
+# (``heartbeat_lost``) are appended into the run's
+# ``data/testnet/<run_id>/logs/alerts.log`` and are already covered by the
+# ``testnet_alerts`` scrape above.

@@ -1,0 +1,18 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: trader-local
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # node_exporter 通过 --collector.textfile.directory=/textfile 暴露
+  # data/testnet/<run_id>/metrics/*.prom 和 data/paper/<run_id>/metrics/*.prom.
+  # testnet_runner.py 在 monitor loop 里写这些 .prom 文件 (textfile collector
+  # 格式), node_exporter 在 9100 上 expose, Prometheus 在这里 scrape.
+  - job_name: node_exporter
+    static_configs:
+      - targets: ["node_exporter:9100"]

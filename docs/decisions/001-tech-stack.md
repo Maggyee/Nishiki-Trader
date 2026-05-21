@@ -277,3 +277,21 @@ LLM 挂掉、抽风、幻觉、API 超时——主交易系统必须能继续按
 
 - §3.2 / §3.4 / §6 已根据 Codex 框架优化对齐：阶段 0/1 默认 SQLite + Parquet，PG/Redis 推迟到阶段 2，监控/前端推迟到阶段 5，真实 Binance 账户推迟到阶段 6。
 - Phase 命名以 PLAN.md / agent-operating-contract.md 为准。
+
+---
+
+**2026-05-21 修订**：
+
+- §6 表对 grafana + prometheus + loki 的列从「Phase 5 才允许」修订为「Phase 3 entry
+  即可提前启用」。同时新增 promtail 与 node_exporter 两个支撑组件，
+  视作 grafana + prometheus + loki 的组成部分。
+- 触发条件：Phase 3 testnet canary 已经在产 heartbeat / alerts / manifest /
+  sidecar 数据，**被监控对象已齐**，等到 Phase 5 才接观测栈反而让 canary
+  调试继续依赖手动 `grep + jq`。
+- 范围限定：观测栈**只读** `data/testnet/<run_id>/logs/` / `data/paper/<run_id>/logs/`
+  和 `data/observability/textfile/<kind>-<run_id>.prom`。不接触 SignalStore、
+  不读凭证、不读取或改写订单/信号路径。
+- ADR-007 §2.5 与 ADR-008 §6.6 的促进/降档证据仍以 bundle 内
+  `run_manifest.json` + sidecar parquet 为准，**Grafana / Loki 不是 source of
+  truth**。看板和 logs explorer 用于运行时观察和异常定位。
+- 后悔条款：若观测栈成为 canary 评判依据（而非 bundle），回来撤销提前启用。

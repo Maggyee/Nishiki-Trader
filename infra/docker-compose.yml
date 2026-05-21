@@ -1,11 +1,109 @@
-# Phase 0：暂无长驻服务。
-# 此文件是占位 + 后续 Phase 的预期入口模板。
-# 启用时机参考 docs/decisions/001-tech-stack.md §6 和 infra/README.md。
+# Phase 3 entry: 观测栈提前启用。
+#
+# 在 ADR-001 §6 表中, Grafana/Prometheus/Loki 被列在 Phase 5,
+# 但 Phase 3 testnet canary 已经在产 heartbeat/alerts/manifest/sidecar,
+# 提前启用观测栈不动信号/订单路径, 也不引入新的相位依赖.
+#
+# 端口约定: 所有 host 端口绑 127.0.0.1, 不暴露到公网.
+# - Grafana:        127.0.0.1:3000
+# - Prometheus:     127.0.0.1:9090
+# - Loki:           127.0.0.1:3100
+# - Promtail:       127.0.0.1:9080  (debug only)
+# - node_exporter:  127.0.0.1:9100  (textfile collector for testnet_runner)
 
-services: {}
+services:
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: trader-prometheus
+    restart: unless-stopped
+    user: "65534:65534"
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=30d"
+      - "--web.listen-address=:9090"
+      - "--web.enable-lifecycle"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "127.0.0.1:9090:9090"
+    depends_on:
+      - node_exporter
+
+  node_exporter:
+    image: prom/node-exporter:v1.8.2
+    container_name: trader-node-exporter
+    restart: unless-stopped
+    command:
+      - "--path.rootfs=/host"
+      - "--collector.textfile.directory=/textfile"
+      - "--collector.disable-defaults"
+      - "--collector.textfile"
+      - "--web.listen-address=:9100"
+    volumes:
+      - /:/host:ro,rslave
+      # testnet_runner.py writes one .prom file per run_id into this
+      # directory; the textfile collector only scrapes the top level
+      # (no recursion), so the runner intentionally flattens to
+      # testnet-<run_id>.prom / paper-<run_id>.prom.
+      - ../data/observability/textfile:/textfile:ro
+    ports:
+      - "127.0.0.1:9100:9100"
+
+  loki:
+    image: grafana/loki:3.2.1
+    container_name: trader-loki
+    restart: unless-stopped
+    user: "10001:10001"
+    command:
+      - "-config.file=/etc/loki/loki-config.yml"
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - loki_data:/loki
+    ports:
+      - "127.0.0.1:3100:3100"
+
+  promtail:
+    image: grafana/promtail:3.2.1
+    container_name: trader-promtail
+    restart: unless-stopped
+    command:
+      - "-config.file=/etc/promtail/promtail.yml"
+    volumes:
+      - ./promtail/promtail.yml:/etc/promtail/promtail.yml:ro
+      - ../data/testnet:/data/testnet:ro
+      - ../data/paper:/data/paper:ro
+      - promtail_positions:/var/lib/promtail
+    ports:
+      - "127.0.0.1:9080:9080"
+    depends_on:
+      - loki
+
+  grafana:
+    image: grafana/grafana:11.3.1
+    container_name: trader-grafana
+    restart: unless-stopped
+    user: "472:472"
+    environment:
+      GF_SECURITY_ADMIN_USER: "${GRAFANA_ADMIN_USER:-admin}"
+      GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_ADMIN_PASSWORD:-admin}"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_SERVER_HTTP_ADDR: "0.0.0.0"
+      GF_SERVER_HTTP_PORT: "3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      - prometheus
+      - loki
 
 # ============================================================
-# Phase 2 启用：信号桥升级到 Redis Stream + 持久化迁到 PG
+# Phase 2 启用 (待 ADR-010 / SQLite 瓶颈出现后再启用):
 # ============================================================
 #   postgres:
 #     image: timescale/timescaledb-ha:pg16
@@ -17,7 +115,7 @@ services: {}
 #       - postgres_data:/var/lib/postgresql/data
 #       - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
 #     ports:
-#       - "127.0.0.1:5432:5432"
+#       - "127.0.0.1:5433:5432"  # 5432 已被 host 上无关的 nishiki-postgres 占
 #
 #   redis:
 #     image: redis:7-alpine
@@ -29,7 +127,7 @@ services: {}
 #       - "127.0.0.1:6379:6379"
 
 # ============================================================
-# Phase 4 启用：agent 编排 + 定时任务
+# Phase 4 启用: agent 编排 + 定时任务
 # ============================================================
 #   n8n:
 #     image: n8nio/n8n
@@ -44,35 +142,11 @@ services: {}
 #     ports:
 #       - "127.0.0.1:5678:5678"
 
-# ============================================================
-# Phase 5 启用：监控 + 前端
-# ============================================================
-#   prometheus:
-#     image: prom/prometheus
-#     restart: unless-stopped
-#     volumes:
-#       - prometheus_data:/prometheus
-#       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-#
-#   grafana:
-#     image: grafana/grafana
-#     restart: unless-stopped
-#     volumes:
-#       - grafana_data:/var/lib/grafana
-#       - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
-#     ports:
-#       - "127.0.0.1:3000:3000"
-#
-#   loki:
-#     image: grafana/loki
-#     restart: unless-stopped
-#     volumes:
-#       - loki_data:/loki
-
-# volumes:
-#   postgres_data:
-#   redis_data:
-#   n8n_data:
-#   prometheus_data:
-#   grafana_data:
-#   loki_data:
+volumes:
+  prometheus_data:
+  loki_data:
+  grafana_data:
+  promtail_positions:
+#  postgres_data:
+#  redis_data:
+#  n8n_data:

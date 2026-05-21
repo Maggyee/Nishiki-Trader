@@ -55,6 +55,9 @@ from apps.strategies_nautilus.runners.sidecar_writer import (
     SidecarWriteResult,
     write_live_sidecars,
 )
+from apps.strategies_nautilus.runners.textfile_metrics import (
+    PrometheusTextfileWriter,
+)
 
 MODE_TESTNET = "testnet"
 KIND_TESTNET = "testnet"
@@ -279,6 +282,7 @@ class LongRunningTestnetSettings:
     restart_reason: str | None = None
     enable_strategy_execution: bool = False
     write_live_sidecars: bool = False
+    observability_textfile_dir: Path | None = None
 
     def __post_init__(self) -> None:
         if not self.instrument_ids:
@@ -784,6 +788,7 @@ def run_long_running_testnet(
     register_strategies: Callable[[Any], None] | None = None,
     sidecar_recording: SidecarRecording | None = None,
     live_sidecar_writer: LiveSidecarWriter | None = None,
+    textfile_writer: PrometheusTextfileWriter | None = None,
     run_id: str | None = None,
 ) -> LongRunningTestnetResult:
     """Run the guarded ADR-008 §6.3c testnet shell with auto-flatten triggers.
@@ -957,6 +962,16 @@ def run_long_running_testnet(
     timeout_thread: threading.Thread | None = None
     sidecar_write_result: SidecarWriteResult | None = None
     sidecar_error: str | None = None
+    if (
+        textfile_writer is None
+        and run_settings.observability_textfile_dir is not None
+    ):
+        textfile_writer = PrometheusTextfileWriter(
+            target_dir=run_settings.observability_textfile_dir,
+            run_id=rid,
+            kind=KIND_TESTNET,
+            settings=run_settings,
+        )
 
     try:
         node.add_data_client_factory(BINANCE, BinanceLiveDataClientFactory)
@@ -1020,6 +1035,7 @@ def run_long_running_testnet(
                 "latest_sample": latest_sample,
                 "trigger_box": trigger_box,
                 "stop_reason_box": stop_reason_box,
+                "textfile_writer": textfile_writer,
             },
             daemon=True,
         )
@@ -1060,6 +1076,8 @@ def run_long_running_testnet(
             monitor_thread.join(timeout=2.0)
         if timeout_thread is not None:
             timeout_thread.join(timeout=2.0)
+        if textfile_writer is not None:
+            textfile_writer.cleanup()
         if node_built and sidecar_recording is not None:
             try:
                 sidecar_write_result = sidecar_writer_fn(
@@ -1492,6 +1510,7 @@ def _monitor_long_run(
     latest_sample: dict[str, TestnetRuntimeTelemetry],
     trigger_box: dict[str, AutoFlattenTrigger],
     stop_reason_box: dict[str, str],
+    textfile_writer: PrometheusTextfileWriter | None = None,
 ) -> None:
     history: deque[TestnetRuntimeTelemetry] = deque()
     advisory_state = AdvisoryAlertState()
@@ -1540,6 +1559,21 @@ def _monitor_long_run(
                 ts=_iso_ms_utc(sample.ts),
                 context=context,
             )
+            if textfile_writer is not None:
+                textfile_writer.record_alert(msg)
+
+        if textfile_writer is not None:
+            try:
+                textfile_writer.write_sample(sample)
+            except Exception as exc:  # noqa: BLE001 — telemetry export must not crash the monitor
+                _append_runtime_event(
+                    runtime_log_path,
+                    {
+                        "event": "textfile_metrics_error",
+                        "ts": _iso_ms_utc(_utc_now()),
+                        "error": repr(exc),
+                    },
+                )
 
         trigger = _auto_flatten_trigger(run_settings, sample, history)
         if trigger is not None:
@@ -1554,6 +1588,19 @@ def _monitor_long_run(
                 ts=_iso_ms_utc(sample.ts),
                 context=trigger.context,
             )
+            if textfile_writer is not None:
+                textfile_writer.record_alert(trigger.msg)
+                try:
+                    textfile_writer.write_sample(sample)
+                except Exception as exc:  # noqa: BLE001
+                    _append_runtime_event(
+                        runtime_log_path,
+                        {
+                            "event": "textfile_metrics_error",
+                            "ts": _iso_ms_utc(_utc_now()),
+                            "error": repr(exc),
+                        },
+                    )
             _append_runtime_event(
                 runtime_log_path,
                 {
@@ -2294,6 +2341,18 @@ def _build_parser() -> argparse.ArgumentParser:
             "cannot satisfy it."
         ),
     )
+    parser.add_argument(
+        "--observability-textfile-dir",
+        type=Path,
+        default=Path("data/observability/textfile"),
+        help=(
+            "Directory where the long-running runner writes the Prometheus "
+            "textfile collector .prom file (one per run_id). node_exporter "
+            "scrapes this directory and exposes the metrics for the Phase 3 "
+            "Grafana canary dashboard. Pass an empty string to disable export "
+            "(default: data/observability/textfile)."
+        ),
+    )
     return parser
 
 
@@ -2363,6 +2422,12 @@ def main(
                 restart_reason=args.restart_reason,
                 enable_strategy_execution=bool(args.enable_strategy_execution),
                 write_live_sidecars=bool(args.write_live_sidecars),
+                observability_textfile_dir=(
+                    args.observability_textfile_dir
+                    if args.observability_textfile_dir
+                    and str(args.observability_textfile_dir)
+                    else None
+                ),
             )
         except ValueError as exc:
             parser.exit(EXIT_STARTUP_VALIDATION, f"{parser.prog}: error: {exc}\n")

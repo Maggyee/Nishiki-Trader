@@ -2,31 +2,40 @@
 
 基础设施配置。
 
-**当前 Phase**：0。`docker-compose.yml` 暂为 stub，无长驻服务。
+**当前 Phase**：3 entry。`docker-compose.yml` 启用观测栈
+（prometheus + grafana + loki + promtail + node_exporter），其余服务仍占位。
 
-## 服务激活时间表（摘自 ADR-001 §6）
+## 服务激活时间表（摘自 ADR-001 §6，含观测栈提前启用补丁）
 
-| 服务 | 激活 Phase |
-|---|:-:|
-| SQLite + Parquet（非独立服务） | 0 |
-| nautilus（backtest 模式） | 0 |
-| freqtrade + signal bridge | 1 |
-| postgres + TimescaleDB + pgvector | 2 |
-| redis（Stream） | 2 |
-| nautilus 连 Binance **testnet** | 3 |
-| agent-orchestrator / mcp-server / n8n | 4 |
-| grafana + prometheus + loki | 5 |
-| frontend | 5 |
-| nautilus 连 Binance **真实账户** | 6 |
+| 服务 | 计划 Phase | 实际启用 |
+|---|:-:|:-:|
+| SQLite + Parquet（非独立服务） | 0 | 0 |
+| nautilus（backtest 模式） | 0 | 0 |
+| freqtrade + signal bridge | 1 | 1 |
+| postgres + TimescaleDB + pgvector | 2 | （未启用，等 SQLite 瓶颈） |
+| redis（Stream） | 2 | （未启用，待 ADR-010） |
+| nautilus 连 Binance **testnet** | 3 | 3 |
+| **grafana + prometheus + loki + promtail + node_exporter** | 5 | **3 entry（提前）** |
+| agent-orchestrator / mcp-server / n8n | 4 | （未启用） |
+| frontend | 5 | （未启用） |
+| nautilus 连 Binance **真实账户** | 6 | （未启用，需 live-risk ADR） |
+
+观测栈提前到 Phase 3 entry 的依据：testnet canary 已经在产
+heartbeat / alerts / manifest / sidecar 数据，被监控对象已齐；
+观测栈不动信号/订单路径，破坏风险最低。
 
 ## 子目录
 
-| 路径 | 用途 | 激活 Phase |
+| 路径 | 用途 | 激活状态 |
 |---|---|:-:|
-| `postgres/` | `init.sql`（启 Timescale + pgvector + 建库） | 2 |
+| `prometheus/` | scrape 配置 | 3 entry |
+| `loki/` | Loki 单机配置 | 3 entry |
+| `promtail/` | jsonl 日志采集 | 3 entry |
+| `grafana/provisioning/` | 数据源 + dashboards 自动注册 | 3 entry |
+| `grafana/dashboards/` | 看板 JSON | 3 entry |
 | `watchdog/` | Phase 3 testnet heartbeat watchdog（不读凭证，超时调用 emergency flatten） | 3 |
-| `grafana/dashboards/` | 看板 JSON | 5 |
-| `n8n/workflows/` | 工作流 JSON | 4 |
+| `postgres/` | `init.sql`（启 Timescale + pgvector + 建库） | 占位（未启用） |
+| `n8n/workflows/` | 工作流 JSON | 占位（未启用） |
 
 ## 部署
 
