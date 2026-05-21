@@ -267,8 +267,8 @@ postgres 一致。**不**暴露公网端口；**不**接 auth/TLS（Phase 4 多�
 
 **默认仍可以是 SQLite。** Redis 上线后跑 ≥1 个月 paper + ≥2 次 6 h
 canary 之后，复审"消费侧默认走 Redis 而不是 SQLite polling"这件事是否
-真的能省错误预算。这不属于本 ADR 必须 commit 的范围，是一个**后续
-ADR-011** 的题目（届时再定）。
+真的能省错误预算。这不属于本 ADR 必须 commit 的范围，是一个**后续 ADR**
+的题目（届时再定，注意：ADR-011 编号已被 bridge→Postgres mirror 占用）。
 
 ---
 
@@ -321,6 +321,7 @@ ADR-011** 的题目（届时再定）。
 - ADR-007 §2.6 promotion review 不读 Redis；§2.5 stage table 不动。
 - ADR-008 §6.6 testnet runbook 在 Redis 启用后**必须重新跑一次完整 6 h**，
   不允许在不重跑的情况下声称 Redis 通过 Phase 3 验收。
-- bridge 默认 backend 仍是 SQLite（直到 §7.5 出 ADR-011 决定切换）。
+- bridge 默认 backend 仍是 SQLite（直到 §7.5 提到的后续 ADR 决定切换；
+  ADR-011 是 bridge→Postgres mirror，不是这里的"消费侧默认切换"题）。
 - Grafana `canary-current` / `signals-overview` 看板继续工作；Redis 不
   接入也不影响看板。

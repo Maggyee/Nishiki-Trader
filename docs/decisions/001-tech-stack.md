@@ -317,3 +317,12 @@ LLM 挂掉、抽风、幻觉、API 超时——主交易系统必须能继续按
   (`docs/decisions/010-redis-stream-signal-transport.md`)，定义触发条件
   T1-T5、消息拓扑（per-`(source, model_version)` Stream key）、迁移
   Step A-E、验收清单。**实现 0 行**，等触发条件任一为真后才落地。
+- ADR-011（bridge SignalStore → Postgres 自动镜像）于 2026-05-21 落
+  Draft 草稿 (`docs/decisions/011-bridge-postgres-mirror.md`)，定义触发
+  条件 T1-T5（dashboard 实时性、跨表 JOIN、SQLite 瓶颈、并发 producer
+  锁、备份策略升级）、synchronous dual-write 写入语义（SQLite 主、PG
+  从、PG 失败不重试、startup catch-up 兜底）、测试隔离重构（不再
+  TRUNCATE）、迁移 Step A-G、验收清单。**实现 0 行**，bridge 默认
+  backend 仍是 SQLite，PG `signal_events` 仅靠
+  `apps/ops/sync_signals_to_postgres.py` 手动同步。与 ADR-010 正交，
+  可同时上线也可单独上线。

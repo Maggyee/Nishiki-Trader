@@ -27,6 +27,7 @@ Read these before any non-trivial work:
 | Architecture, boundaries, or phase planning | `docs/agent-operating-contract.md`, `docs/decisions/001-tech-stack.md` |
 | Signal bridge, ML output, FreqAI integration | `docs/decisions/002-signal-bridge-protocol.md`, `docs/decisions/005-signal-source-taxonomy.md`, `docs/decisions/006-gray-rollout-and-source-policies.md`, `docs/decisions/007-paper-trading-runtime.md` |
 | Signal transport / message bus / Redis | `docs/decisions/010-redis-stream-signal-transport.md` (Draft, **not implemented**; only read when one of §2 triggers fires) |
+| Bridge → Postgres auto-mirror, dashboard freshness, dual-write design | `docs/decisions/011-bridge-postgres-mirror.md` (Draft, **not implemented**; only read when one of §2 triggers fires) |
 | Upstream source updates or dependency drift | `docs/upstream-versions.md` |
 | Project skeleton or directory layout | `docs/decisions/003-project-skeleton.md` |
 | Backtest result format or reports | `docs/decisions/004-backtest-result-format.md` |
