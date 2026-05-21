@@ -1,0 +1,356 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {"type": "grafana", "uid": "-- Grafana --"},
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": false,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "type": "row",
+      "title": "Volume",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0},
+      "id": 100,
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "title": "Signals in range",
+      "gridPos": {"h": 4, "w": 4, "x": 0, "y": 1},
+      "id": 1,
+      "datasource": {"type": "grafana-postgresql-datasource", "uid": "postgres-trader"},
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "editorMode": "code",
+          "rawSql": "SELECT COUNT(*)::bigint AS value FROM signal_events WHERE source = ANY(string_to_array('$source', ',')) AND ts_event BETWEEN extract(epoch from $__timeFrom())::bigint * 1000000000 AND extract(epoch from $__timeTo())::bigint * 1000000000"
+        }
+      ],
+      "options": {
+        "graphMode": "none",
+        "colorMode": "value",
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "textMode": "auto"
+      },
+      "fieldConfig": {"defaults": {"unit": "short", "decimals": 0}}
+    },
+    {
+      "type": "stat",
+      "title": "Distinct sources",
+      "gridPos": {"h": 4, "w": 4, "x": 4, "y": 1},
+      "id": 2,
+      "datasource": {"type": "grafana-postgresql-datasource", "uid": "postgres-trader"},
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "editorMode": "code",
+          "rawSql": "SELECT COUNT(DISTINCT source)::bigint AS value FROM signal_events WHERE source = ANY(string_to_array('$source', ',')) AND ts_event BETWEEN extract(epoch from $__timeFrom())::bigint * 1000000000 AND extract(epoch from $__timeTo())::bigint * 1000000000"
+        }
+      ],
+      "options": {
+        "graphMode": "none",
+        "colorMode": "value",
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "textMode": "auto"
+      },
+      "fieldConfig": {"defaults": {"unit": "short", "decimals": 0}}
+    },
+    {
+      "type": "stat",
+      "title": "Distinct models",
+      "gridPos": {"h": 4, "w": 4, "x": 8, "y": 1},
+      "id": 3,
+      "datasource": {"type": "grafana-postgresql-datasource", "uid": "postgres-trader"},
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "editorMode": "code",
+          "rawSql": "SELECT COUNT(DISTINCT model_version)::bigint AS value FROM signal_events WHERE source = ANY(string_to_array('$source', ',')) AND ts_event BETWEEN extract(epoch from $__timeFrom())::bigint * 1000000000 AND extract(epoch from $__timeTo())::bigint * 1000000000"
+        }
+      ],
+      "options": {
+        "graphMode": "none",
+        "colorMode": "value",
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "textMode": "auto"
+      },
+      "fieldConfig": {"defaults": {"unit": "short", "decimals": 0}}
+    },
+    {
+      "type": "stat",
+      "title": "Mean confidence",
+      "gridPos": {"h": 4, "w": 4, "x": 12, "y": 1},
+      "id": 4,
+      "datasource": {"type": "grafana-postgresql-datasource", "uid": "postgres-trader"},
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "editorMode": "code",
+          "rawSql": "SELECT AVG(confidence)::float AS value FROM signal_events WHERE source = ANY(string_to_array('$source', ',')) AND ts_event BETWEEN extract(epoch from $__timeFrom())::bigint * 1000000000 AND extract(epoch from $__timeTo())::bigint * 1000000000"
+        }
+      ],
+      "options": {
+        "graphMode": "none",
+        "colorMode": "value",
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "textMode": "auto"
+      },
+      "fieldConfig": {"defaults": {"unit": "percentunit", "decimals": 3}}
+    },
+    {
+      "type": "stat",
+      "title": "Buy / sell ratio",
+      "gridPos": {"h": 4, "w": 4, "x": 16, "y": 1},
+      "id": 5,
+      "datasource": {"type": "grafana-postgresql-datasource", "uid": "postgres-trader"},
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "editorMode": "code",
+          "rawSql": "SELECT (COUNT(*) FILTER (WHERE side='buy'))::float / NULLIF(COUNT(*) FILTER (WHERE side='sell'), 0) AS value FROM signal_events WHERE source = ANY(string_to_array('$source', ',')) AND ts_event BETWEEN extract(epoch from $__timeFrom())::bigint * 1000000000 AND extract(epoch from $__timeTo())::bigint * 1000000000"
+        }
+      ],
+      "options": {
+        "graphMode": "none",
+        "colorMode": "value",
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "textMode": "auto"
+      },
+      "fieldConfig": {"defaults": {"unit": "short", "decimals": 2}}
+    },
+    {
+      "type": "stat",
+      "title": "Latest signal age",
+      "gridPos": {"h": 4, "w": 4, "x": 20, "y": 1},
+      "id": 6,
+      "datasource": {"type": "grafana-postgresql-datasource", "uid": "postgres-trader"},
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "editorMode": "code",
+          "rawSql": "SELECT extract(epoch from now()) - MAX(ts_event)/1e9 AS value FROM signal_events WHERE source = ANY(string_to_array('$source', ','))"
+        }
+      ],
+      "options": {
+        "graphMode": "none",
+        "colorMode": "value",
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "textMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 0,
+          "thresholds": {"mode": "absolute", "steps": [
+            {"color": "green"},
+            {"color": "yellow", "value": 3600},
+            {"color": "red", "value": 86400}
+          ]}
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Signals per bucket (by source)",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 5},
+      "id": 7,
+      "datasource": {"type": "grafana-postgresql-datasource", "uid": "postgres-trader"},
+      "targets": [
+        {
+          "refId": "A",
+          "format": "time_series",
+          "editorMode": "code",
+          "rawSql": "SELECT time_bucket($__interval::interval, to_timestamp(ts_event/1e9)) AS time, source, COUNT(*)::bigint AS value FROM signal_events WHERE source = ANY(string_to_array('$source', ',')) AND ts_event BETWEEN extract(epoch from $__timeFrom())::bigint * 1000000000 AND extract(epoch from $__timeTo())::bigint * 1000000000 GROUP BY 1, 2 ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "stacking": {"mode": "normal"},
+            "fillOpacity": 70,
+            "lineWidth": 0
+          },
+          "unit": "short"
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Signals per bucket (by side)",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 5},
+      "id": 8,
+      "datasource": {"type": "grafana-postgresql-datasource", "uid": "postgres-trader"},
+      "targets": [
+        {
+          "refId": "A",
+          "format": "time_series",
+          "editorMode": "code",
+          "rawSql": "SELECT time_bucket($__interval::interval, to_timestamp(ts_event/1e9)) AS time, side, COUNT(*)::bigint AS value FROM signal_events WHERE source = ANY(string_to_array('$source', ',')) AND ts_event BETWEEN extract(epoch from $__timeFrom())::bigint * 1000000000 AND extract(epoch from $__timeTo())::bigint * 1000000000 GROUP BY 1, 2 ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "stacking": {"mode": "normal"},
+            "fillOpacity": 70,
+            "lineWidth": 0
+          },
+          "unit": "short",
+          "color": {"mode": "fixed"}
+        },
+        "overrides": [
+          {"matcher": {"id": "byName", "options": "buy"}, "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "green"}}]},
+          {"matcher": {"id": "byName", "options": "sell"}, "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "red"}}]},
+          {"matcher": {"id": "byName", "options": "flat"}, "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "blue"}}]}
+        ]
+      }
+    },
+    {
+      "type": "row",
+      "title": "Confidence & score",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 13},
+      "id": 110,
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Confidence quantiles over time",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 14},
+      "id": 9,
+      "datasource": {"type": "grafana-postgresql-datasource", "uid": "postgres-trader"},
+      "targets": [
+        {
+          "refId": "A",
+          "format": "time_series",
+          "editorMode": "code",
+          "rawSql": "SELECT time_bucket($__interval::interval, to_timestamp(ts_event/1e9)) AS time, percentile_cont(0.25) WITHIN GROUP (ORDER BY confidence) AS p25, percentile_cont(0.50) WITHIN GROUP (ORDER BY confidence) AS p50, percentile_cont(0.75) WITHIN GROUP (ORDER BY confidence) AS p75, percentile_cont(0.90) WITHIN GROUP (ORDER BY confidence) AS p90 FROM signal_events WHERE source = ANY(string_to_array('$source', ',')) AND ts_event BETWEEN extract(epoch from $__timeFrom())::bigint * 1000000000 AND extract(epoch from $__timeTo())::bigint * 1000000000 GROUP BY 1 ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"drawStyle": "line", "lineWidth": 1, "fillOpacity": 5},
+          "unit": "percentunit",
+          "decimals": 3
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Score mean / min / max",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 14},
+      "id": 10,
+      "datasource": {"type": "grafana-postgresql-datasource", "uid": "postgres-trader"},
+      "targets": [
+        {
+          "refId": "A",
+          "format": "time_series",
+          "editorMode": "code",
+          "rawSql": "SELECT time_bucket($__interval::interval, to_timestamp(ts_event/1e9)) AS time, MIN(score) AS min, AVG(score) AS mean, MAX(score) AS max FROM signal_events WHERE source = ANY(string_to_array('$source', ',')) AND ts_event BETWEEN extract(epoch from $__timeFrom())::bigint * 1000000000 AND extract(epoch from $__timeTo())::bigint * 1000000000 GROUP BY 1 ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {"drawStyle": "line", "lineWidth": 1, "fillOpacity": 5},
+          "unit": "short",
+          "decimals": 4
+        }
+      }
+    },
+    {
+      "type": "row",
+      "title": "Source × model",
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 22},
+      "id": 120,
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "table",
+      "title": "Source × model summary",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 23},
+      "id": 11,
+      "datasource": {"type": "grafana-postgresql-datasource", "uid": "postgres-trader"},
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "editorMode": "code",
+          "rawSql": "SELECT source, model_version, COUNT(*)::bigint AS total, COUNT(*) FILTER (WHERE side='buy')::bigint AS buy, COUNT(*) FILTER (WHERE side='sell')::bigint AS sell, COUNT(*) FILTER (WHERE side='flat')::bigint AS flat, ROUND(AVG(confidence)::numeric, 4) AS mean_conf, ROUND(AVG(score)::numeric, 6) AS mean_score, to_timestamp(MIN(ts_event)/1e9) AS first_ts, to_timestamp(MAX(ts_event)/1e9) AS last_ts FROM signal_events WHERE source = ANY(string_to_array('$source', ',')) AND ts_event BETWEEN extract(epoch from $__timeFrom())::bigint * 1000000000 AND extract(epoch from $__timeTo())::bigint * 1000000000 GROUP BY source, model_version ORDER BY total DESC"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "footer": {"show": false}
+      }
+    },
+    {
+      "type": "table",
+      "title": "Last 100 signals",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 23},
+      "id": 12,
+      "datasource": {"type": "grafana-postgresql-datasource", "uid": "postgres-trader"},
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "editorMode": "code",
+          "rawSql": "SELECT to_timestamp(ts_event/1e9) AS ts, source, model_version, symbol, side, ROUND(score::numeric, 4) AS score, ROUND(confidence::numeric, 4) AS confidence, horizon, status FROM signal_events WHERE source = ANY(string_to_array('$source', ',')) AND ts_event BETWEEN extract(epoch from $__timeFrom())::bigint * 1000000000 AND extract(epoch from $__timeTo())::bigint * 1000000000 ORDER BY ts_event DESC LIMIT 100"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "footer": {"show": false}
+      }
+    }
+  ],
+  "refresh": "1m",
+  "schemaVersion": 39,
+  "tags": ["trader", "signals", "phase-3"],
+  "templating": {
+    "list": [
+      {
+        "name": "source",
+        "label": "source",
+        "type": "query",
+        "datasource": {"type": "grafana-postgresql-datasource", "uid": "postgres-trader"},
+        "query": "SELECT DISTINCT source FROM signal_events ORDER BY source",
+        "multi": true,
+        "includeAll": true,
+        "allValue": "freqai_linear_v1,rule_baseline_v1,manual_research,freqai_v1",
+        "refresh": 2,
+        "sort": 1,
+        "current": {"text": "All", "value": "$__all"}
+      }
+    ]
+  },
+  "time": {"from": "now-2y", "to": "now"},
+  "timepicker": {},
+  "timezone": "utc",
+  "title": "Signals — Overview",
+  "uid": "signals-overview",
+  "version": 1,
+  "weekStart": ""
+}

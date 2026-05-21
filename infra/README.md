@@ -32,7 +32,7 @@ heartbeat / alerts / manifest / sidecar 数据，被监控对象已齐；
 | `loki/` | Loki 单机配置 | 3 entry |
 | `promtail/` | jsonl 日志采集 | 3 entry |
 | `grafana/provisioning/` | 数据源 + dashboards 自动注册 | 3 entry |
-| `grafana/dashboards/` | 看板 JSON | 3 entry |
+| `grafana/dashboards/` | 看板 JSON（`canary-current` testnet 实时看板 + `signals-overview` PG SQL 信号统计看板） | 3 entry |
 | `watchdog/` | Phase 3 testnet heartbeat watchdog（不读凭证，超时调用 emergency flatten） | 3 |
 | `postgres/` | `init.sql`（启 Timescale + pgvector + 占位 schema + trader_ro） | 3 entry |
 | `n8n/workflows/` | 工作流 JSON | 占位（未启用） |
@@ -41,3 +41,19 @@ heartbeat / alerts / manifest / sidecar 数据，被监控对象已齐；
 
 Phase 0–5 都跑在**单台 VPS** + `docker compose`。
 Phase 6 实盘后是否分离机器，由 ADR-005（待写）决定。
+
+## Postgres signal mirror
+
+Bridge 默认仍走 SQLite (`apps/bridge/store.py::SignalStore`)。Grafana
+`signals-overview` 看板查的是 Postgres `signal_events` 表，需要先把
+SQLite 镜像过去：
+
+```bash
+UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.ops.sync_signals_to_postgres
+```
+
+幂等：已存在的 `signal_id` 通过 `DuplicateSignalError` 跳过。
+
+**注意**：`tests/bridge/test_postgres_store.py` / `tests/ops/test_sync_signals_to_postgres.py`
+在 setup 时 `TRUNCATE signal_events`。跑完 pytest 之后 PG 表会被清空，
+看板回到空。需要看板有数据时，跑完 pytest 再重新执行上面那条命令。
