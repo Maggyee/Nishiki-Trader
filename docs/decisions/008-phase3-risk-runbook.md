@@ -58,7 +58,9 @@ bundle，545 fills、273 positions、kill-switch 未触发、ADR-002 §4.1 trace
   不放松。LLM 的 paper-shadow 升档由 ADR-009（之前 ADR-007 §4 中的 ADR-008）
   定义。
 - **不**引入 Redis Stream 或 Postgres——SQLite `SignalStore` 仍是 Phase 3
-  默认 transport，瓶颈出现后再走 ADR-010。
+  默认 transport，瓶颈出现后再走 ADR-010
+  (`docs/decisions/010-redis-stream-signal-transport.md`，2026-05-21 Draft，
+  触发条件 §2、迁移路径 §7、验收清单 §9 已写入)。
 - **不**改 `SignalEvent v1` schema。ADR-002 §3 字段集合在本 ADR 里完全冻结。
 - **不**为 testnet 之外的交易所写 adapter。Binance testnet 是 Phase 3 的
   唯一目标交易所；多交易所支持留给后续 ADR。

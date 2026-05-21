@@ -236,8 +236,10 @@ Paper/runtime 层的默认降级：
 - **ADR-009**：LLM Agent 输出审计与双签。定义 `llm_*` 是否能从 paper shadow
   升到 simulated，以及 AgentAdvice 与 SignalEvent 的隔离表。（编号从原
   ADR-007 §4 中的 ADR-008 顺延，因为 Phase 3 risk/runbook 先落地。）
-- **ADR-010**：Redis Stream 桥接通道。只有当 SQLite polling 在 paper/testnet
-  暴露实际瓶颈后再写。（编号从原 ADR-009 顺延。）
+- **ADR-010**：Redis Stream 桥接通道。Draft 已写于 2026-05-21
+  （`docs/decisions/010-redis-stream-signal-transport.md`），定义触发条件、
+  消息拓扑、迁移路径与验收清单。**实现 0 行**，等 §2 触发条件任一为真后
+  才落地。
 
 ---
 

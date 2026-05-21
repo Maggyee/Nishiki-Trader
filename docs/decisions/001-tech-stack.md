@@ -313,4 +313,7 @@ LLM 挂掉、抽风、幻觉、API 超时——主交易系统必须能继续按
   全部不变；bundle 仍是 promotion source of truth。
 - 后悔条款：若 SQLite 在 paper / testnet / live 表现出真实瓶颈，再开一个迁移
   ADR 做数据切换（`SignalStore` 默认从 SQLite 切到 Postgres）。
-- ADR-010（Redis Stream 桥接通道）继续按"瓶颈出现后再写"的规则推迟。
+- ADR-010（Redis Stream 桥接通道）于 2026-05-21 落 Draft 草稿
+  (`docs/decisions/010-redis-stream-signal-transport.md`)，定义触发条件
+  T1-T5、消息拓扑（per-`(source, model_version)` Stream key）、迁移
+  Step A-E、验收清单。**实现 0 行**，等触发条件任一为真后才落地。
