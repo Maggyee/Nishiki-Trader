@@ -240,8 +240,43 @@ def _make_dummy_result(bundle_root: Path) -> SidecarWriteResult:
         "account_balances": bundle_root / "account_balances.parquet",
         "signal_lineage": bundle_root / "signal_lineage.parquet",
     }
-    for path in paths.values():
-        path.write_bytes(b"parquet-stub")
+    pd.DataFrame(
+        [
+            {
+                "order_id": "O-001",
+                "instrument_id": "BTCUSDT.BINANCE",
+                "side": "BUY",
+                "quantity": "0.001",
+                "status": "FILLED",
+            },
+            {
+                "order_id": "O-002",
+                "instrument_id": "BTCUSDT.BINANCE",
+                "side": "SELL",
+                "quantity": "0.001",
+                "status": "FILLED",
+            },
+        ]
+    ).to_parquet(paths["orders"])
+    pd.DataFrame([{"fill_id": "F-001"}, {"fill_id": "F-002"}]).to_parquet(
+        paths["fills"]
+    )
+    pd.DataFrame(
+        [
+            {
+                "instrument_id": "BTCUSDT.BINANCE",
+                "side": "FLAT",
+                "quantity": "0",
+                "closed_ts": 1714521540123456789,
+            }
+        ]
+    ).to_parquet(paths["positions"])
+    pd.DataFrame(
+        [{"currency": "USDT"}, {"currency": "BTC"}, {"currency": "USDT"}]
+    ).to_parquet(
+        paths["account_balances"],
+    )
+    pd.DataFrame([{"signal_id": "sig-001"}]).to_parquet(paths["signal_lineage"])
     return SidecarWriteResult(
         paths=paths,
         orders_count=2,
@@ -289,7 +324,12 @@ def test_long_run_invokes_sidecar_writer_with_recording(tmp_path: Path) -> None:
         node_factory=lambda cfg: _BlockingFakeNode(cfg),
         clock=_frozen_clock(base),
         clock_ns=lambda: 1714521540123456789,
-        telemetry_reader=lambda: TestnetRuntimeTelemetry(ts=base, daily_pnl=0.0),
+        telemetry_reader=lambda: TestnetRuntimeTelemetry(
+            ts=base,
+            daily_pnl=0.0,
+            open_orders=1,
+            open_positions=1,
+        ),
         flatten_runner=lambda settings: pytest.fail("flatten should not run"),
         register_strategies=_register_one_strategy,
         sidecar_recording=recording,
@@ -314,10 +354,15 @@ def test_long_run_invokes_sidecar_writer_with_recording(tmp_path: Path) -> None:
     assert runtime["sidecar"]["error"] is None
     assert runtime["sidecar"]["result"]["fills_count"] == 2
     assert runtime["sidecar"]["result"]["lineage_rows"] == 1
+    assert runtime["open_orders"] == 0
+    assert runtime["open_positions"] == 0
+    assert runtime["open_state_source"] == "live_sidecars"
 
     payload = json.loads(result.manifest_path.read_text(encoding="utf-8"))
     assert payload["runtime"]["sidecar"]["success"] is True
     assert payload["runtime"]["sidecar"]["result"]["orders_count"] == 2
+    assert payload["runtime"]["open_orders"] == 0
+    assert payload["runtime"]["open_positions"] == 0
 
     runtime_log = [
         json.loads(line)

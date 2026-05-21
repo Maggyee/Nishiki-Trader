@@ -1144,6 +1144,7 @@ def run_long_running_testnet(
             "error": sidecar_error,
             "result": _sidecar_write_event_payload(sidecar_write_result),
         }
+    _apply_sidecar_final_open_state(runtime, sidecar_write_result)
 
     _append_runtime_event(
         runtime_log_path,
@@ -1241,6 +1242,33 @@ def _base_testnet_runtime(
     if restart is not None:
         runtime.update(restart.runtime_fields())
     return runtime
+
+
+def _apply_sidecar_final_open_state(
+    runtime: dict[str, object],
+    sidecar_write_result: SidecarWriteResult | None,
+) -> None:
+    """Use post-run sidecars as the final open order/position source.
+
+    The monitor thread's last telemetry sample is taken before the strategy
+    ``on_stop`` close has fully materialized in the trader cache. Live sidecars
+    are written after ``node.run()`` returns and before dispose, so they are the
+    better source for final open-state counters in the manifest.
+    """
+
+    if sidecar_write_result is None:
+        return
+    try:
+        open_orders = _load_local_open_orders(sidecar_write_result.paths["orders"])
+        open_positions = _load_local_open_positions(
+            sidecar_write_result.paths["positions"]
+        )
+    except Exception as exc:  # noqa: BLE001
+        runtime["sidecar_open_state_error"] = repr(exc)
+        return
+    runtime["open_orders"] = len(open_orders)
+    runtime["open_positions"] = len(open_positions)
+    runtime["open_state_source"] = "live_sidecars"
 
 
 def _reconcile_restart(
