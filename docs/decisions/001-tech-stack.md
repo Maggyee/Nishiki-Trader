@@ -295,3 +295,22 @@ LLM 挂掉、抽风、幻觉、API 超时——主交易系统必须能继续按
   `run_manifest.json` + sidecar parquet 为准，**Grafana / Loki 不是 source of
   truth**。看板和 logs explorer 用于运行时观察和异常定位。
 - 后悔条款：若观测栈成为 canary 评判依据（而非 bundle），回来撤销提前启用。
+
+**2026-05-21 修订（第二段）**：
+
+- §6 表对 postgres + TimescaleDB + pgvector 的列从「Phase 2 启用」修订为
+  「Phase 3 entry **服务先启**」。「服务先启」≠ 数据迁移：bridge 默认仍是
+  SQLite，`apps/bridge/store.py` 提供 `PostgresSignalStore` 作为可选 backend，
+  不替换 `SignalStore` 的默认行为。
+- 触发条件：观测栈已提前到 Phase 3 entry；Grafana 自然需要 SQL 数据源做时序
+  查询；Phase 4 agent / mcp_server / n8n 后续依赖 pgvector。把服务先起好且
+  schema 占位，后续迁移是配置而非新基建。SQLite 没出现真实瓶颈前**不迁移**。
+- 范围限定：trader-postgres 仅本机 loopback (127.0.0.1:5433)；
+  `infra/postgres/init.sql` 建 5 张占位表（signal_events / orders / fills /
+  positions 是 hypertable；embeddings 用 pgvector(1536)）+ trader_ro 只读
+  角色；Grafana 通过 trader_ro 读 PG。**不**自动迁移历史 SignalStore 数据。
+- ADR-001 铁律 5（先 testnet 后 live）、ADR-002 / ADR-004 / ADR-007 / ADR-008
+  全部不变；bundle 仍是 promotion source of truth。
+- 后悔条款：若 SQLite 在 paper / testnet / live 表现出真实瓶颈，再开一个迁移
+  ADR 做数据切换（`SignalStore` 默认从 SQLite 切到 Postgres）。
+- ADR-010（Redis Stream 桥接通道）继续按"瓶颈出现后再写"的规则推迟。

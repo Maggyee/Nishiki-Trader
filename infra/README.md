@@ -12,7 +12,7 @@
 | SQLite + Parquet（非独立服务） | 0 | 0 |
 | nautilus（backtest 模式） | 0 | 0 |
 | freqtrade + signal bridge | 1 | 1 |
-| postgres + TimescaleDB + pgvector | 2 | （未启用，等 SQLite 瓶颈） |
+| postgres + TimescaleDB + pgvector | 2 | **3 entry（仅启服务，不迁移）** |
 | redis（Stream） | 2 | （未启用，待 ADR-010） |
 | nautilus 连 Binance **testnet** | 3 | 3 |
 | **grafana + prometheus + loki + promtail + node_exporter** | 5 | **3 entry（提前）** |
@@ -34,7 +34,7 @@ heartbeat / alerts / manifest / sidecar 数据，被监控对象已齐；
 | `grafana/provisioning/` | 数据源 + dashboards 自动注册 | 3 entry |
 | `grafana/dashboards/` | 看板 JSON | 3 entry |
 | `watchdog/` | Phase 3 testnet heartbeat watchdog（不读凭证，超时调用 emergency flatten） | 3 |
-| `postgres/` | `init.sql`（启 Timescale + pgvector + 建库） | 占位（未启用） |
+| `postgres/` | `init.sql`（启 Timescale + pgvector + 占位 schema + trader_ro） | 3 entry |
 | `n8n/workflows/` | 工作流 JSON | 占位（未启用） |
 
 ## 部署

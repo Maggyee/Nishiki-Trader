@@ -202,9 +202,14 @@ from apps.strategies_nautilus.baseline_nautilus_strategy import LineageRecord
 from apps.strategies_nautilus.runners import testnet_runner
 from apps.strategies_nautilus.runners.first_testnet_canary import (
     FirstCanaryStrategySpec,
+    build_live_telemetry_reader,
     build_register_strategies,
     build_sidecar_recording,
+    build_signal_source,
 )
+
+RUNNER_STDOUT_LOG = Path("/tmp/phase3f-canary/runner.stdout.log")
+RUNNER_STDERR_LOG = Path("/tmp/phase3f-canary/runner.stderr.log")
 
 
 def _build_argv() -> list[str]:
@@ -245,12 +250,22 @@ def main() -> int:
         position_pct_multiplier=0.1,
     )
     lineage: list[LineageRecord] = []
-    register = build_register_strategies(spec, lineage=lineage)
+    signal_source = build_signal_source(spec)
+    register = build_register_strategies(
+        spec, lineage=lineage, signal_source=signal_source
+    )
     recording = build_sidecar_recording(spec, lineage=lineage)
+    reader = build_live_telemetry_reader(
+        spec,
+        starting_balance=10000.0,
+        signal_source=signal_source,
+        exchange_error_log_paths=(RUNNER_STDOUT_LOG, RUNNER_STDERR_LOG),
+    )
     return testnet_runner.main(
         _build_argv(),
         register_strategies=register,
         sidecar_recording=recording,
+        telemetry_reader=reader,
     )
 
 
@@ -271,6 +286,9 @@ runner CLI cannot enforce:
 - The argv carries `--write-live-sidecars`. The runner refuses to start
   if the flag is set without a `sidecar_recording`, or if a recording is
   supplied without the flag. Edit both together or neither.
+- `exchange_error_log_paths` must match the stdout/stderr files in §5. The
+  live telemetry reader tails those files and converts new `ERROR` /
+  `CRITICAL` Nautilus log lines into `exchange_error_count`.
 
 ---
 

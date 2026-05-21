@@ -20,8 +20,27 @@ datasources:
     jsonData:
       maxLines: 5000
 
+  # Postgres + TimescaleDB read-only datasource (trader_ro role).
+  # Schema: see infra/postgres/init.sql.
+  - name: Postgres
+    uid: postgres-trader
+    type: postgres
+    access: proxy
+    url: postgres:5432
+    user: trader_ro
+    secureJsonData:
+      password: trader_ro_local
+    jsonData:
+      database: trader
+      sslmode: disable
+      postgresVersion: 1600
+      timescaledb: true
+    editable: false
+
 deleteDatasources:
   - name: Prometheus
     orgId: 1
   - name: Loki
+    orgId: 1
+  - name: Postgres
     orgId: 1

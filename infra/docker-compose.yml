@@ -25,6 +25,7 @@ services:
       - "--web.enable-lifecycle"
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
       - prometheus_data:/prometheus
     ports:
       - "127.0.0.1:9090:9090"
@@ -74,6 +75,7 @@ services:
       - ./promtail/promtail.yml:/etc/promtail/promtail.yml:ro
       - ../data/testnet:/data/testnet:ro
       - ../data/paper:/data/paper:ro
+      - ./watchdog:/data/watchdog:ro
       - promtail_positions:/var/lib/promtail
     ports:
       - "127.0.0.1:9080:9080"
@@ -105,21 +107,33 @@ services:
       - prometheus
       - loki
 
+  # Postgres + TimescaleDB + pgvector — Phase 3 entry 提前启服务
+  # (ADR-001 §6 2026-05-21 修订第二段):
+  # - 仅启服务, 不迁移 SignalStore (SQLite 仍是默认)
+  # - host 端口绑 127.0.0.1:5433 (5432 已被无关的 nishiki-postgres 占)
+  # - timescale/timescaledb-ha:pg16 镜像自带 pgvector
+  postgres:
+    image: timescale/timescaledb-ha:pg16
+    container_name: trader-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: "${POSTGRES_USER:-trader}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-trader_local_pg}"
+      POSTGRES_DB: "${POSTGRES_DB:-trader}"
+    volumes:
+      - postgres_data:/home/postgres/pgdata/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+    ports:
+      - "127.0.0.1:5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-trader} -d ${POSTGRES_DB:-trader}"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
 # ============================================================
-# Phase 2 启用 (待 ADR-010 / SQLite 瓶颈出现后再启用):
+# Phase 2 后续 (待 ADR-010 / SQLite 瓶颈出现后再启用):
 # ============================================================
-#   postgres:
-#     image: timescale/timescaledb-ha:pg16
-#     restart: unless-stopped
-#     environment:
-#       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-#       POSTGRES_DB: trader
-#     volumes:
-#       - postgres_data:/var/lib/postgresql/data
-#       - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-#     ports:
-#       - "127.0.0.1:5433:5432"  # 5432 已被 host 上无关的 nishiki-postgres 占
-#
 #   redis:
 #     image: redis:7-alpine
 #     restart: unless-stopped
@@ -150,6 +164,6 @@ volumes:
   loki_data:
   grafana_data:
   promtail_positions:
-#  postgres_data:
+  postgres_data:
 #  redis_data:
 #  n8n_data:

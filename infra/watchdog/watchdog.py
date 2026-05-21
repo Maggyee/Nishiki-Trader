@@ -21,6 +21,7 @@ from typing import Any
 KIND_TESTNET = "testnet"
 DEFAULT_TESTNET_ROOT = Path("data/testnet")
 DEFAULT_STATE_PATH = Path("infra/watchdog/state.json")
+DEFAULT_HISTORY_FILENAME = "history.jsonl"
 DEFAULT_HEARTBEAT_TIMEOUT_SECONDS = 90.0
 EXIT_OK = 0
 EXIT_FLATTEN_SUCCESS = 4
@@ -34,6 +35,7 @@ class WatchdogSettings:
     instrument_ids: tuple[str, ...]
     testnet_root: Path = DEFAULT_TESTNET_ROOT
     state_path: Path = DEFAULT_STATE_PATH
+    history_path: Path | None = None
     heartbeat_timeout_seconds: float = DEFAULT_HEARTBEAT_TIMEOUT_SECONDS
     operator: str = "watchdog"
     reason: str = "heartbeat_lost"
@@ -54,6 +56,7 @@ class WatchdogResult:
     active_run_id: str
     heartbeat_path: Path
     state_path: Path
+    history_path: Path | None
     status: str
     checked_at: str
     last_heartbeat_at: str | None
@@ -77,6 +80,8 @@ class WatchdogResult:
         payload = asdict(self)
         payload["heartbeat_path"] = str(self.heartbeat_path)
         payload["state_path"] = str(self.state_path)
+        if self.history_path is not None:
+            payload["history_path"] = str(self.history_path)
         if self.alert_path is not None:
             payload["alert_path"] = str(self.alert_path)
         payload["exit_code"] = self.exit_code
@@ -100,6 +105,7 @@ def check_once(
     )
     alert_path = settings.testnet_root / settings.active_run_id / "logs" / "alerts.log"
     manifest_path = settings.testnet_root / settings.active_run_id / "run_manifest.json"
+    history_path = _effective_history_path(settings)
     last_heartbeat_at = _last_heartbeat_ts(heartbeat_path)
     heartbeat_age = None
     completed_shutdown_reason = _completed_shutdown_reason(manifest_path)
@@ -140,6 +146,7 @@ def check_once(
         active_run_id=settings.active_run_id,
         heartbeat_path=heartbeat_path,
         state_path=settings.state_path,
+        history_path=history_path,
         status=status,
         checked_at=checked_at,
         last_heartbeat_at=None
@@ -152,6 +159,7 @@ def check_once(
         alert_path=alert_path if status not in {"healthy", "run_completed"} else None,
     )
     _write_state(settings.state_path, result)
+    _append_history(history_path, result)
     return result
 
 
@@ -250,6 +258,20 @@ def _write_state(path: Path, result: WatchdogResult) -> None:
     )
 
 
+def _effective_history_path(settings: WatchdogSettings) -> Path:
+    if settings.history_path is not None:
+        return settings.history_path
+    return settings.state_path.with_name(DEFAULT_HISTORY_FILENAME)
+
+
+def _append_history(path: Path, result: WatchdogResult) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {"event": "watchdog_tick", **result.to_dict()}
+    with path.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(payload, sort_keys=True))
+        fh.write("\n")
+
+
 def _parse_iso_ms_utc(value: str) -> datetime | None:
     try:
         return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(UTC)
@@ -271,6 +293,14 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--testnet-root", type=Path, default=DEFAULT_TESTNET_ROOT)
     parser.add_argument("--state-path", type=Path, default=DEFAULT_STATE_PATH)
     parser.add_argument(
+        "--history-path",
+        type=Path,
+        help=(
+            "Append-only watchdog tick log for Promtail/Loki. Defaults to "
+            "history.jsonl next to --state-path."
+        ),
+    )
+    parser.add_argument(
         "--heartbeat-timeout-seconds",
         type=float,
         default=DEFAULT_HEARTBEAT_TIMEOUT_SECONDS,
@@ -287,6 +317,7 @@ def _settings_from_args(args: argparse.Namespace) -> WatchdogSettings:
         instrument_ids=tuple(args.instrument_id),
         testnet_root=args.testnet_root,
         state_path=args.state_path,
+        history_path=args.history_path,
         heartbeat_timeout_seconds=args.heartbeat_timeout_seconds,
         operator=args.operator,
         reason=args.reason,

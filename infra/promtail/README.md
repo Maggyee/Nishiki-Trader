@@ -5,11 +5,12 @@
 Loki 的本机日志采集 agent. 单一目的: 把
 `data/testnet/<run_id>/logs/*.jsonl` /
 `data/paper/<run_id>/logs/*.jsonl` /
-`infra/watchdog/state.json` 推到 Loki, 给 Grafana Explore + 看板用.
+`infra/watchdog/history.jsonl` 推到 Loki, 给 Grafana Explore + 看板用.
 
 ## 文件
 
-- `promtail.yml` — Task 2 的最小占位配置, Task 4 替换为完整 scrape 规则.
+- `promtail.yml` — 完整 scrape 规则: testnet runtime / heartbeat /
+  alerts, paper runtime, watchdog append-only history.
 
 ## 监听
 
@@ -18,5 +19,6 @@ Loki 的本机日志采集 agent. 单一目的: 把
 
 ## 状态
 
-- Task 2 完成: 容器可起.
-- Task 4 完成: jsonl 实际进入 Loki.
+- Phase 3 entry 可用: jsonl 实际进入 Loki.
+- `state.json` 是 overwrite 状态快照, 不适合 tail; Promtail 使用
+  `history.jsonl`.

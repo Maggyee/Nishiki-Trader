@@ -1,0 +1,41 @@
+groups:
+  - name: trader-canary
+    rules:
+      - alert: TraderCanaryHeartbeatStale
+        expr: time() - trader_canary_heartbeat_timestamp_seconds > 120
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Canary heartbeat is stale"
+          description: "run_id={{ $labels.run_id }} has no fresh heartbeat for more than 120s."
+
+      - alert: TraderCanaryWsDisconnected
+        expr: trader_canary_ws_connected == 0
+        for: 60s
+        labels:
+          severity: warning
+        annotations:
+          summary: "Canary websocket disconnected"
+          description: "run_id={{ $labels.run_id }} reports ws_connected=0 for at least 60s."
+
+      - alert: TraderCanaryExchangeErrorBurst
+        expr: increase(trader_canary_exchange_error_total[1h]) > 50
+        for: 0s
+        labels:
+          severity: error
+        annotations:
+          summary: "Canary exchange error burst"
+          description: "run_id={{ $labels.run_id }} has more than 50 exchange/runtime errors in 1h."
+
+      - alert: TraderCanaryOpenPositionWithoutFreshHeartbeat
+        expr: |
+          (trader_canary_open_positions > 0)
+          and on(kind, run_id)
+          (time() - trader_canary_heartbeat_timestamp_seconds > 120)
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Canary has open position without fresh heartbeat"
+          description: "run_id={{ $labels.run_id }} last reported open_positions={{ $value }} and heartbeat is stale."

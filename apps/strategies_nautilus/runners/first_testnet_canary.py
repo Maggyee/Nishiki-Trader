@@ -32,7 +32,10 @@ from apps.strategies_nautilus.baseline_nautilus_strategy import (
     SignalStorePollingSource,
 )
 from apps.strategies_nautilus.baseline_strategy import BaselineStrategyConfig
-from apps.strategies_nautilus.runners.live_telemetry import LiveTelemetryReader
+from apps.strategies_nautilus.runners.live_telemetry import (
+    LiveTelemetryReader,
+    NautilusLogErrorCounter,
+)
 from apps.strategies_nautilus.runners.sidecar_writer import SidecarRecording
 
 
@@ -193,6 +196,8 @@ def build_live_telemetry_reader(
     *,
     starting_balance: float,
     signal_source: SignalStorePollingSource | None = None,
+    exchange_error_counter: Callable[[], int] | None = None,
+    exchange_error_log_paths: tuple[Path, ...] = (),
 ) -> LiveTelemetryReader:
     """Construct a :class:`LiveTelemetryReader` matching ``spec``.
 
@@ -203,18 +208,27 @@ def build_live_telemetry_reader(
     ``reader.bind_node(node)`` after ``node.build()``.
     """
 
+    if exchange_error_counter is not None and exchange_error_log_paths:
+        raise ValueError(
+            "pass either exchange_error_counter or exchange_error_log_paths, not both"
+        )
+
     from nautilus_trader.model.data import BarType
     from nautilus_trader.model.identifiers import InstrumentId
     from nautilus_trader.model.objects import Currency
 
     instrument_id = InstrumentId.from_str(spec.instrument_id_str)
     bar_type = BarType.from_str(spec.bar_type_str)
+    counter = exchange_error_counter
+    if counter is None and exchange_error_log_paths:
+        counter = NautilusLogErrorCounter(exchange_error_log_paths)
     return LiveTelemetryReader(
         venue=instrument_id.venue,
         bar_type=bar_type,
         base_currency=Currency.from_str(spec.base_currency_code),
         starting_balance=starting_balance,
         signal_source=signal_source,
+        exchange_error_counter=counter,
     )
 
 

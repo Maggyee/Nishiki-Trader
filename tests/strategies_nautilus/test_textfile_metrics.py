@@ -561,3 +561,24 @@ def test_run_long_running_testnet_records_alerts_in_textfile(tmp_path: Path) -> 
     assert spy.alert_counts.get("ws_disconnected") == 1
     assert spy.last_content is not None
     assert 'alert="ws_disconnected"' in spy.last_content
+
+
+def test_observability_configs_wire_watchdog_history_and_alert_rules() -> None:
+    prometheus = Path("infra/prometheus/prometheus.yml").read_text(encoding="utf-8")
+    alert_rules = Path("infra/prometheus/alert_rules.yml").read_text(encoding="utf-8")
+    promtail = Path("infra/promtail/promtail.yml").read_text(encoding="utf-8")
+    compose = Path("infra/docker-compose.yml").read_text(encoding="utf-8")
+
+    assert "/etc/prometheus/alert_rules.yml" in prometheus
+    for alert_name in (
+        "TraderCanaryHeartbeatStale",
+        "TraderCanaryWsDisconnected",
+        "TraderCanaryExchangeErrorBurst",
+        "TraderCanaryOpenPositionWithoutFreshHeartbeat",
+    ):
+        assert alert_name in alert_rules
+
+    assert "job_name: watchdog_history" in promtail
+    assert "__path__: /data/watchdog/history.jsonl" in promtail
+    assert "./watchdog:/data/watchdog:ro" in compose
+    assert "./prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro" in compose

@@ -9,6 +9,9 @@ Prometheus 配置. 单一目的: 抓 `node_exporter` 的 textfile collector,
 ## 文件
 
 - `prometheus.yml` — scrape 配置, 抓 self + node_exporter.
+- `alert_rules.yml` — Phase 3 canary 基础告警: heartbeat stale, WS
+  disconnected, exchange/runtime error burst, stale heartbeat with open
+  position.
 
 ## 数据保留
 
@@ -21,6 +24,6 @@ Prometheus 配置. 单一目的: 抓 `node_exporter` 的 textfile collector,
 ## 关联
 
 - textfile collector 目录在 `infra/docker-compose.yml` 的 `node_exporter`
-  服务里挂载: 容器内 `/textfile/testnet/<run_id>/metrics/*.prom`.
-- runner 侧的 .prom 文件格式见 `apps/strategies_nautilus/runners/`
-  里的 textfile 导出逻辑 (Task 3 实现).
+  服务里挂载: 容器内 `/textfile`.
+- runner 侧默认写 `data/observability/textfile/testnet-<run_id>.prom`;
+  文件格式见 `apps/strategies_nautilus/runners/textfile_metrics.py`.

@@ -84,6 +84,18 @@ def test_watchdog_healthy_heartbeat_writes_state_without_flatten(tmp_path):
     assert state["status"] == "healthy"
     assert state["heartbeat_age_seconds"] == 30.0
     assert not (settings.testnet_root / RUN_ID / "logs" / "alerts.log").exists()
+    history_path = settings.state_path.with_name("history.jsonl")
+    history = [
+        json.loads(line)
+        for line in history_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    assert history == [
+        {
+            **result.to_dict(),
+            "event": "watchdog_tick",
+        }
+    ]
 
 
 def test_watchdog_stale_heartbeat_alerts_and_invokes_flatten(tmp_path):
@@ -118,6 +130,14 @@ def test_watchdog_stale_heartbeat_alerts_and_invokes_flatten(tmp_path):
     state = json.loads(settings.state_path.read_text(encoding="utf-8"))
     assert state["flatten_invoked"] is True
     assert state["exit_code"] == 4
+    history_path = settings.state_path.with_name("history.jsonl")
+    history = [
+        json.loads(line)
+        for line in history_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    assert history[-1]["status"] == "heartbeat_stale"
+    assert history[-1]["alert_path"].endswith("alerts.log")
 
 
 def test_watchdog_completed_run_does_not_flatten_stale_heartbeat(tmp_path):
@@ -190,6 +210,7 @@ def test_watchdog_cli_dispatches_once(tmp_path, capsys):
     payload = json.loads(capsys.readouterr().out)
     assert payload["status"] == "heartbeat_stale"
     assert Path(payload["state_path"]).is_file()
+    assert Path(payload["history_path"]).is_file()
     assert len(flatten_calls) == 1
 
 

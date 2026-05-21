@@ -22,7 +22,10 @@ from apps.strategies_nautilus.runners.first_testnet_canary import (
     build_register_strategies,
     build_signal_source,
 )
-from apps.strategies_nautilus.runners.live_telemetry import LiveTelemetryReader
+from apps.strategies_nautilus.runners.live_telemetry import (
+    LiveTelemetryReader,
+    NautilusLogErrorCounter,
+)
 
 SOURCE = "freqai_linear_v1"
 MODEL = "linear-mom-train20240105"
@@ -319,6 +322,61 @@ def test_reader_reads_last_signal_ns_from_polling_source(tmp_path: Path) -> None
     sample = reader()
 
     assert sample.last_signal_ns == BASE_NS + 1_500_000_000
+
+
+def test_nautilus_log_error_counter_counts_new_error_lines(tmp_path: Path) -> None:
+    log_path = tmp_path / "runner.stdout.log"
+    log_path.write_text(
+        "2026-05-20T12:00:00Z [ERROR] old startup error\n",
+        encoding="utf-8",
+    )
+    counter = NautilusLogErrorCounter((log_path,))
+
+    assert counter() == 0
+
+    with log_path.open("a", encoding="utf-8") as fh:
+        fh.write("2026-05-20T12:00:01Z [INFO] ok\n")
+        fh.write("\x1b[31m2026-05-20T12:00:02Z [ERROR] exchange rejected\x1b[0m\n")
+        fh.write("2026-05-20T12:00:03Z [CRITICAL] client failed\n")
+
+    assert counter() == 2
+    assert counter() == 2
+
+    with log_path.open("a", encoding="utf-8") as fh:
+        fh.write("2026-05-20T12:00:04Z ERROR plain severity token\n")
+
+    assert counter() == 3
+
+
+def test_reader_reads_exchange_error_count_from_counter() -> None:
+    reader = build_live_telemetry_reader(
+        FirstCanaryStrategySpec(**VALID_SPEC_KWARGS),
+        starting_balance=10000.0,
+        exchange_error_counter=lambda: 7,
+    )
+    reader._clock = lambda: datetime(2026, 5, 20, 12, 0, 0, tzinfo=UTC)
+    reader.bind_node(_FakeNode(equity_map={reader.base_currency: _FakeMoney(10000.0)}))
+
+    sample = reader()
+
+    assert sample.exchange_error_count == 7
+
+
+def test_reader_suppresses_exchange_error_counter_exception() -> None:
+    def raises() -> int:
+        raise RuntimeError("log read failed")
+
+    reader = build_live_telemetry_reader(
+        FirstCanaryStrategySpec(**VALID_SPEC_KWARGS),
+        starting_balance=10000.0,
+        exchange_error_counter=raises,
+    )
+    reader._clock = lambda: datetime(2026, 5, 20, 12, 0, 0, tzinfo=UTC)
+    reader.bind_node(_FakeNode(equity_map={reader.base_currency: _FakeMoney(10000.0)}))
+
+    sample = reader()
+
+    assert sample.exchange_error_count == 0
 
 
 def test_reader_day_anchor_returns_zero_first_call_then_diff_same_day() -> None:
@@ -704,6 +762,22 @@ def test_build_live_telemetry_reader_plumbs_spec_fields() -> None:
     assert reader.base_currency.code == "USDT"
     assert reader.starting_balance == 12345.0
     assert reader.signal_source is source
+
+
+def test_build_live_telemetry_reader_accepts_exchange_error_log_paths(
+    tmp_path: Path,
+) -> None:
+    log_path = tmp_path / "runner.stdout.log"
+    log_path.write_text("", encoding="utf-8")
+    spec = FirstCanaryStrategySpec(**VALID_SPEC_KWARGS)
+
+    reader = build_live_telemetry_reader(
+        spec,
+        starting_balance=12345.0,
+        exchange_error_log_paths=(log_path,),
+    )
+
+    assert isinstance(reader.exchange_error_counter, NautilusLogErrorCounter)
 
 
 # ---------------------------------------------------------------------------

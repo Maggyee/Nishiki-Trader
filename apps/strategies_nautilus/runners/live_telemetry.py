@@ -25,22 +25,19 @@ combined connection state observed across telemetry samples; sub-poll-window
 blips are invisible, but any drop long enough to be observed at the
 ``telemetry_poll_seconds`` cadence (default 1 s) is counted on recovery.
 
-Known gap left for follow-up:
-
-- ``exchange_error_count`` stays at zero because the Binance live data /
-  exec clients catch errors internally (retry loops, log-only warnings) and
-  do not publish a counter or message-bus event we can subscribe to without
-  monkey-patching adapter internals. ``data_gap_exceeded_tolerance`` and
-  ``ws_disconnected`` together cover the user-visible failure modes; the
-  ``exchange_error_burst`` trigger remains inert until upstream exposes a
-  counter we can read non-invasively.
+``exchange_error_count`` can be supplied by an injected counter. The default
+operator launcher wires :class:`NautilusLogErrorCounter` against the Nautilus
+stdout / stderr redirection files, giving the runner a real, cumulative
+ERROR/CRITICAL-line counter without monkey-patching Binance adapter internals.
 """
 
 from __future__ import annotations
 
-from collections.abc import Callable
+import re
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
+from pathlib import Path
 from typing import Any
 
 from nautilus_trader.model.data import BarType
@@ -55,10 +52,44 @@ from apps.strategies_nautilus.runners.testnet_runner import (
 )
 
 ClockFn = Callable[[], datetime]
+ExchangeErrorCounter = Callable[[], int]
+
+_ANSI_RE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
+_ERROR_LINE_RE = re.compile(r"(^|[\s\[\]])(ERROR|CRITICAL)($|[\s:\]\[])")
 
 
 def _utc_now() -> datetime:
     return datetime.now(UTC)
+
+
+@dataclass
+class NautilusLogErrorCounter:
+    """Cumulative ERROR/CRITICAL line counter for Nautilus runtime logs.
+
+    Nautilus's Binance live clients do not expose a stable public error
+    counter. The least invasive runtime signal we do have is the pyo3 stdout /
+    stderr log stream the operator already redirects for every canary session.
+    This counter tails one or more files from their current size at
+    construction time and counts newly appended ERROR/CRITICAL lines.
+    """
+
+    paths: tuple[Path, ...]
+    _offsets: dict[Path, int] = field(default_factory=dict, init=False, repr=False)
+    _count: int = field(default=0, init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        self.paths = tuple(Path(path) for path in self.paths)
+        for path in self.paths:
+            self._offsets[path] = _safe_file_size(path)
+
+    @classmethod
+    def from_paths(cls, paths: Iterable[str | Path]) -> NautilusLogErrorCounter:
+        return cls(tuple(Path(path) for path in paths))
+
+    def __call__(self) -> int:
+        for path in self.paths:
+            self._count += _count_new_error_lines(path, self._offsets)
+        return self._count
 
 
 @dataclass
@@ -83,6 +114,9 @@ class LiveTelemetryReader:
         ``signal_source.last_popped_ns`` for ``last_signal_ns``. If omitted,
         ``last_signal_ns`` stays ``None`` and ``signal_lag_exceeded_threshold``
         cannot fire.
+    exchange_error_counter : optional callable returning a cumulative
+        exchange/runtime error count for this run. The production launcher uses
+        :class:`NautilusLogErrorCounter` over the redirected Nautilus logs.
     """
 
     venue: Venue
@@ -90,6 +124,7 @@ class LiveTelemetryReader:
     base_currency: Currency
     starting_balance: float
     signal_source: SignalStorePollingSource | None = None
+    exchange_error_counter: ExchangeErrorCounter | None = None
     _node_holder: dict[str, Any] = field(default_factory=dict, repr=False)
     _day_anchor_total: float | None = field(default=None, repr=False)
     _day_anchor_date: date | None = field(default=None, repr=False)
@@ -114,7 +149,7 @@ class LiveTelemetryReader:
             return TestnetRuntimeTelemetry(
                 ts=ts,
                 daily_pnl=daily_pnl,
-                exchange_error_count=0,
+                exchange_error_count=self._read_exchange_error_count(),
                 ws_reconnect_count=self._ws_reconnect_count,
                 account_total_usdt=total,
                 open_orders=_safe_len(
@@ -136,7 +171,7 @@ class LiveTelemetryReader:
         return TestnetRuntimeTelemetry(
             ts=ts,
             daily_pnl=daily_pnl,
-            exchange_error_count=0,
+            exchange_error_count=self._read_exchange_error_count(),
             ws_reconnect_count=self._ws_reconnect_count,
             account_total_usdt=total,
             open_orders=0,
@@ -170,6 +205,14 @@ class LiveTelemetryReader:
         if self.signal_source is None:
             return None
         return self.signal_source.last_popped_ns
+
+    def _read_exchange_error_count(self) -> int:
+        if self.exchange_error_counter is None:
+            return 0
+        try:
+            return max(0, int(self.exchange_error_counter()))
+        except Exception:  # noqa: BLE001 — telemetry must never crash the loop
+            return 0
 
     def _read_ws_connected(self, node: Any) -> bool:
         """Return whether every kernel client is currently connected.
@@ -226,4 +269,40 @@ def _read_last_bar_ns(node: Any, bar_type: BarType) -> int | None:
         return None
 
 
-__all__ = ["LiveTelemetryReader"]
+def _safe_file_size(path: Path) -> int:
+    try:
+        return path.stat().st_size
+    except OSError:
+        return 0
+
+
+def _count_new_error_lines(path: Path, offsets: dict[Path, int]) -> int:
+    offset = offsets.get(path, 0)
+    try:
+        size = path.stat().st_size
+    except OSError:
+        offsets[path] = 0
+        return 0
+    if size < offset:
+        offset = 0
+    try:
+        with path.open("rb") as fh:
+            fh.seek(offset)
+            chunk = fh.read()
+            offsets[path] = fh.tell()
+    except OSError:
+        return 0
+    if not chunk:
+        return 0
+    return sum(
+        1
+        for line in chunk.decode("utf-8", errors="replace").splitlines()
+        if _is_error_line(line)
+    )
+
+
+def _is_error_line(line: str) -> bool:
+    return bool(_ERROR_LINE_RE.search(_ANSI_RE.sub("", line)))
+
+
+__all__ = ["LiveTelemetryReader", "NautilusLogErrorCounter"]

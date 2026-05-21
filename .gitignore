@@ -34,6 +34,7 @@ env/
 secrets/
 infra/secrets/
 infra/watchdog/state.json
+infra/watchdog/history.jsonl
 
 # Upstream source checkouts (tracked separately, read-only by default)
 freqtrade/

@@ -9,6 +9,7 @@
 #   runtime.log     -> one JSON object per line, key "ts" (ISO ms UTC)
 #   heartbeat.jsonl -> one JSON object per line, key "ts" (ISO ms UTC)
 #   alerts.log      -> one JSON object per line, key "ts" (ISO ms UTC)
+#   history.jsonl   -> one watchdog tick per line, key "checked_at" (ISO ms UTC)
 #
 # All scrape jobs reject "promtail position not advancing" by setting a
 # narrow regex on __path__ and extracting run_id into a label. Labels are
@@ -127,8 +128,32 @@ scrape_configs:
           fallback_formats:
             - "2006-01-02T15:04:05.000Z"
 
+  - job_name: watchdog_history
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: watchdog_history
+          kind: testnet
+          source: watchdog
+          __path__: /data/watchdog/history.jsonl
+    pipeline_stages:
+      - json:
+          expressions:
+            ts: checked_at
+            run_id: active_run_id
+            status: status
+            exit_code: exit_code
+      - timestamp:
+          source: ts
+          format: RFC3339Nano
+          fallback_formats:
+            - "2006-01-02T15:04:05.000Z"
+      - labels:
+          run_id:
+          status:
+
 # NOTE: ``infra/watchdog/state.json`` is overwritten on every tick (not
-# append-only / jsonl), so it cannot be tailed by Promtail. Watchdog alerts
-# (``heartbeat_lost``) are appended into the run's
-# ``data/testnet/<run_id>/logs/alerts.log`` and are already covered by the
+# append-only / jsonl), so Promtail tails ``infra/watchdog/history.jsonl``
+# instead. Watchdog alerts (``heartbeat_lost``) are also appended into the
+# run's ``data/testnet/<run_id>/logs/alerts.log`` and are covered by the
 # ``testnet_alerts`` scrape above.
