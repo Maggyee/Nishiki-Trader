@@ -1,7 +1,7 @@
 # Phase 3 Testnet Canary Evidence Summary
 
 - **Status**: Active handoff summary
-- **Last updated**: 2026-05-22
+- **Last updated**: 2026-05-22 after canary `20260522-030142Z-36922497`
 - **Scope**: Phase 3 ADR-008 testnet canary evidence for `freqai_linear_v1 / linear-mom-train20240105`
 - **Decision state**: Operational evidence only. This file does not mutate `SourcePolicy`.
 
@@ -26,7 +26,7 @@ manual intervention, and there is no live-risk ADR.
 
 ## Evidence Bottom Line
 
-The project now has three clean, sidecar-backed, strategy-registered 6 h
+The project now has four clean, sidecar-backed, strategy-registered 6 h
 Binance Spot testnet canaries with real entry/exit order flow:
 
 | run_id | date | heartbeats | alerts | sidecars | final state | realized PnL |
@@ -34,14 +34,15 @@ Binance Spot testnet canaries with real entry/exit order flow:
 | `20260519-120037Z-f1b06fd3` | 2026-05-19 | 720 | none | orders=2 / fills=2 / positions=1 / account=451 / lineage=3 | FLAT | +0.07496 USDT |
 | `20260520-095350Z-6414ef0d` | 2026-05-20 | 720 | none | orders=2 / fills=2 / positions=1 / account=451 / lineage=490 | FLAT by sidecar | +0.02137 USDT |
 | `20260521-102631Z-ea999625` | 2026-05-21 | 719 | none | orders=2 / fills=2 / positions=1 / account=451 / lineage=955 | FLAT | -0.18422 USDT |
+| `20260522-030142Z-36922497` | 2026-05-22 | 719 | none | orders=2 / fills=2 / positions=1 / account=451 / lineage=477 | FLAT | -0.46798 USDT |
 
-Aggregate for those three clean 6 h sidecar-backed sessions:
+Aggregate for those four clean 6 h sidecar-backed sessions:
 
-- 18 h of clean strategy-registered testnet runtime.
-- 6 orders, 6 fills, 3 closed positions, all final FLAT by sidecar.
+- 24 h of clean strategy-registered testnet runtime.
+- 8 orders, 8 fills, 4 closed positions, all final FLAT by sidecar.
 - 0 `logs/alerts.log` rows, 0 `ws_reconnect_count`, 0 `exchange_error_count`.
 - External watchdog observed completion without emergency flatten.
-- Net realized PnL across the three sessions: -0.08789 USDT.
+- Net realized PnL across the four sessions: -0.55587 USDT.
 
 This is good operational evidence for the testnet path. It is not alpha
 evidence: the fill count is tiny, Binance testnet fees are zero, and the
@@ -59,7 +60,8 @@ signals are wall-clock replays of already-reviewed historical rows.
 | 2026-05-20 | `20260520-040143Z-90c3c62b` | about 5 h 48 min | Aborted after repeated `signal_lag_exceeded_threshold` warnings at 60 s; emergency flatten succeeded. No manifest written. | Invalidated clean canary. Fixed by using a 120 s lag threshold for the 1m bar-driven canary. |
 | 2026-05-20 | `20260520-095350Z-6414ef0d` | 6 h | Clean live-telemetry canary, no alerts, 2 orders / 2 fills / 1 position, sidecar final FLAT, PnL +0.02137 USDT. | Validated the startup WS and signal-lag fixes over a full window. |
 | 2026-05-21 | `20260521-072730Z-2e4d2146` | 30 min | Real order flow and observability smoke. One benign warning-only `signal_lag_exceeded_threshold` because the short replay window ended before the run. PnL +0.28908 USDT. | Validated Prometheus / Loki / Grafana / node_exporter flow under live traffic; not counted as a fully clean no-alert canary. |
-| 2026-05-21 | `20260521-102631Z-ea999625` | 6 h | Clean observability-backed canary, 719 heartbeats, no alerts, 2 orders / 2 fills / 1 position, final FLAT, PnL -0.18422 USDT. | Current best operational evidence. Confirms trading + observation + alerting + watchdog over the full 6 h path. |
+| 2026-05-21 | `20260521-102631Z-ea999625` | 6 h | Clean observability-backed canary, 719 heartbeats, no alerts, 2 orders / 2 fills / 1 position, final FLAT, PnL -0.18422 USDT. | Confirms trading + observation + alerting + watchdog over the full 6 h path. |
+| 2026-05-22 | `20260522-030142Z-36922497` | 6 h | Clean control-machine canary, 719 heartbeats, no alerts, 2 orders / 2 fills / 1 position, final FLAT, PnL -0.46798 USDT. | Current best operational evidence. Confirms the hardened foreground launch flow: no false start, no overlapping future replay rows, clean watchdog terminal state. |
 
 There was also a one-heartbeat false start before
 `20260521-102631Z-ea999625`: `data/testnet/20260521-102449Z-114b7c91/`.
@@ -105,4 +107,3 @@ Continue collecting testnet canary evidence with the hardened runbook:
 
 Do not implement Redis Stream or automatic bridge -> Postgres mirroring unless
 one of the trigger conditions in ADR-010 or ADR-011 actually fires.
-

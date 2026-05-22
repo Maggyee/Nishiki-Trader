@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-05-22 (Phase 3 testnet canary evidence summary)
 - **Current phase**: Phase 3 entry
-- **Current objective**: Phase 3 entry remains focused on testnet canary evidence, not live trading. The current evidence summary is `docs/progress/phase-3-testnet-canary-evidence.md`: three clean, sidecar-backed, strategy-registered 6 h Binance Spot testnet canaries are on record (`20260519-120037Z-f1b06fd3`, `20260520-095350Z-6414ef0d`, `20260521-102631Z-ea999625`) with real entry/exit order flow, final sidecar state FLAT, no alert logs, `ws_reconnect_count=0`, and `exchange_error_count=0`. Keep `freqai_linear_v1 / linear-mom-train20240105` at `hold @ testnet_canary` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. Observability and Postgres remain Phase 3 support systems; bundle artifacts remain the promotion source of truth. No live trading without a separate live-risk ADR and the ADR-001 capital ladder gate.
+- **Current objective**: Phase 3 entry remains focused on testnet canary evidence, not live trading. The current evidence summary is `docs/progress/phase-3-testnet-canary-evidence.md`: four clean, sidecar-backed, strategy-registered 6 h Binance Spot testnet canaries are on record (`20260519-120037Z-f1b06fd3`, `20260520-095350Z-6414ef0d`, `20260521-102631Z-ea999625`, `20260522-030142Z-36922497`) with real entry/exit order flow, final sidecar state FLAT, no alert logs, `ws_reconnect_count=0`, and `exchange_error_count=0`. Keep `freqai_linear_v1 / linear-mom-train20240105` at `hold @ testnet_canary` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. Observability and Postgres remain Phase 3 support systems; bundle artifacts remain the promotion source of truth. No live trading without a separate live-risk ADR and the ADR-001 capital ladder gate.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -98,7 +98,7 @@ At task finish:
 ## Current Focus
 
 Phase 3 entry: maintain the testnet canary path now that ADR-008 §6.6
-has three clean 6 h sidecar-backed testnet canaries summarized in
+has four clean 6 h sidecar-backed testnet canaries summarized in
 `docs/progress/phase-3-testnet-canary-evidence.md`.
 
 Immediate focus:
@@ -129,6 +129,14 @@ Immediate focus:
 - No edits to `freqtrade/` or `nautilus_trader/` unless explicitly requested.
 
 ## Latest Verification
+
+On 2026-05-22, after the next 6 h control-machine testnet canary:
+
+- `data/testnet/20260522-030142Z-36922497/run_manifest.json` -> `shutdown_reason=max_duration`, `elapsed_seconds=21605.416622`, `git_dirty=false`, `git_commit=63ae0a1`, `strategies_registered=1`, `actors_registered=0`, `enable_strategy_execution=true`, `write_live_sidecars=true`, `open_orders=0`, `open_positions=0`, `open_state_source=live_sidecars`, `ws_reconnect_count=0`, `exchange_error_count=0`.
+- 719 heartbeats at 30 s cadence, max gap 30.175 s, `ws_connected=true` throughout, no `logs/alerts.log`.
+- Live sidecars: orders=2 / fills=2 / positions=1 / account_balances=451 / signal_lineage=477. Entry `BUY 0.001 BTCUSDT @77719.74`, scheduled close `SELL 0.001 BTCUSDT @77251.76`, final position FLAT, realized PnL `-0.46798 USDT`.
+- Watchdog: 717 healthy + 14 run_completed ticks, 0 `flatten_invoked`.
+- Retro: `docs/retros/2026-05-22-phase-3f-testnet-canary-6h-control-run.md`; evidence summary updated in `docs/progress/phase-3-testnet-canary-evidence.md`.
 
 On 2026-05-21, after landing the ADR-011 Draft for bridge → Postgres auto-mirror:
 
