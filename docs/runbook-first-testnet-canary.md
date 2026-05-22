@@ -541,12 +541,14 @@ jq '{
 wc -l "$B"/logs/heartbeat.jsonl
 ls -la "$B"/logs/alerts.log 2>/dev/null || echo "no alerts (good)"
 
-# Live sidecars from --write-live-sidecars. All five must exist after a
-# clean run; row counts must agree with .runtime.sidecar.result on the
-# manifest.
-ls -la "$B"/orders.parquet "$B"/fills.parquet "$B"/positions.parquet \
-       "$B"/account_balances.parquet "$B"/signal_lineage.parquet
-jq '.runtime.sidecar' "$B/run_manifest.json"
+# Passive evidence report. This reads only the completed bundle; it does
+# not load credentials, start Nautilus, or talk to Binance.
+UV_CACHE_DIR=/tmp/uv-cache uv run python -m \
+  apps.strategies_nautilus.runners.report_testnet_bundle "$B"
+
+UV_CACHE_DIR=/tmp/uv-cache uv run python -m \
+  apps.strategies_nautilus.runners.report_testnet_bundle --json "$B" \
+  > "/tmp/phase3f-canary/${RUN_ID}-bundle-report.json"
 
 # Stop watchdog after the completed manifest is written.
 kill -TERM "$(cat /tmp/phase3f-canary/watchdog.pid)" 2>/dev/null || true
@@ -576,13 +578,13 @@ The retro **must** record:
 1. `run_id`, `git_commit`, `git_dirty`, `started_at`, `finished_at`,
    `elapsed_seconds`.
 2. `shutdown_reason`, `auto_flatten_trigger`, `emergency_flatten_success`.
-3. heartbeat count, alerts.log status, all 9 ADR-008 §5.4 alert kinds
-   (silent vs fired).
+3. `report_testnet_bundle` result: `clean_for_retro`, `review_blockers`,
+   heartbeat count/gaps, alerts.log status, and all surfaced ADR-008 alert
+   messages (silent vs fired).
 4. Real order / fill / position counts from the sidecars, plus the
-   first/last fill timestamps if non-zero. Source both the parquet
-   sidecars (`orders.parquet` / `fills.parquet` /
-   `positions.parquet` / `signal_lineage.parquet`) and the manifest's
-   `runtime.sidecar.result` summary, and confirm they agree.
+   first/last fill timestamps if non-zero. Use the report's
+   `sidecar_mismatches` field to confirm the parquet sidecars agree with
+   the manifest's `runtime.sidecar.result` summary.
 5. The `freqai_linear_v1` signal flow during the session (rows polled,
    `cursor_ns` start/end).
 6. Nautilus log error count and final account snapshot.
