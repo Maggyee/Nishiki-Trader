@@ -100,6 +100,52 @@ print('latest_ts_event_ns=', recent[-1].ts_event if recent else None)
 "
 ```
 
+Before writing a new wall-clock replay stream, check whether a previous
+attempt already staged future replay rows. This matters because
+`wall_clock_signal_replay` is append-only: writing a second overlapping
+stream is safe for exposure (the strategy should no-op while already long),
+but it pollutes `signal_lineage.parquet` and makes the evidence harder to
+read.
+
+```bash
+uv run python - <<'PY'
+from datetime import datetime, timezone
+import time
+
+from apps.bridge.store import SignalStore
+
+store = SignalStore('data/bridge/signals.db')
+future = [
+    event
+    for event in store.replay(
+        source='freqai_linear_v1',
+        model_version='linear-mom-train20240105',
+        since_ns=time.time_ns(),
+    )
+    if isinstance(event.metadata.get('wall_clock_replay'), dict)
+]
+future.sort(key=lambda event: (event.ts_event, event.signal_id))
+
+def iso(ns: int) -> str:
+    return datetime.fromtimestamp(ns / 1_000_000_000, timezone.utc).isoformat()
+
+print('future_wall_clock_replay_rows=', len(future))
+if future:
+    print('first_future_ts=', future[0].ts_event, iso(future[0].ts_event))
+    print('last_future_ts=', future[-1].ts_event, iso(future[-1].ts_event))
+PY
+```
+
+If `future_wall_clock_replay_rows > 0`, decide before continuing:
+
+- Reuse that existing stream if it still covers the full planned run.
+- Wait until it has aged out if it was staged for an abandoned attempt.
+- Or explicitly start a non-overlapping stream after `last_future_ts` with
+  `--start-at <ISO timestamp>`.
+
+Do **not** blindly write another immediate 480-row stream on top of existing
+future rows. If an overlap is intentionally accepted, record it in the retro.
+
 Dry-run the restamp first:
 
 ```bash
@@ -118,7 +164,8 @@ uv run python -m apps.strategies_freqtrade.research.wall_clock_signal_replay \
 ```
 
 For the actual 6 h canary, write a longer buy-only stream shortly before
-starting the runner:
+starting the runner. Use `--start-delay-seconds 180` only when the future
+replay check above returns zero rows:
 
 ```bash
 uv run python -m apps.strategies_freqtrade.research.wall_clock_signal_replay \
@@ -140,6 +187,22 @@ the launcher's 120 s `signal_lag_exceeded_threshold` keeps expected
 bar-cadence polling jitter from producing advisory lag alerts; the older
 3-signal smoke pattern is now insufficient once live telemetry reports real
 signal lag.
+
+When using an explicit non-overlapping start, set the timestamp first:
+
+```bash
+START_AT_UTC="<future UTC timestamp after last_future_ts, e.g. YYYY-MM-DDTHH:MM:SSZ>"
+```
+
+Then replace the `--start-delay-seconds 180` line in the full replay command
+with:
+
+```bash
+  --start-at "$START_AT_UTC" \
+```
+
+Use a UTC timestamp that is at least 180 s in the future and strictly after
+the previous future stream's last `ts_event`.
 
 ### 1.6 Catalog still serves BTCUSDT 1m
 
@@ -323,9 +386,21 @@ chmod +x /tmp/phase3f-canary/watchdog_loop.sh
 
 ---
 
-## 5. Start the canary (foreground terminal)
+## 5. Start the canary (long-lived foreground terminal)
+
+The runner must live in a terminal/session that stays open for the whole
+canary. When operating through Codex/control-tool command execution, do
+**not** use a one-shot shell with `nohup ... &`: the shell may exit and the
+tool environment may clean up the background child process. That failure mode
+looks deceptively healthy at first — the node can connect and write one
+heartbeat — but it exits before the first signal is due.
+
+Use a normal terminal, `tmux`/`screen`, or a long-lived foreground tool
+session. Redirect Nautilus output to files so the terminal can stay quiet
+while the process itself remains foreground-owned.
 
 ```bash
+set -euo pipefail
 set -a
 . ~/.config/trader/binance_testnet.env
 set +a
@@ -333,11 +408,14 @@ test "${#BINANCE_TESTNET_API_KEY}" -ge 32 || { echo "key too short"; exit 1; }
 test "${#BINANCE_TESTNET_API_SECRET}" -ge 32 || { echo "secret too short"; exit 1; }
 
 mkdir -p /tmp/phase3f-canary
-UV_CACHE_DIR=/tmp/uv-cache nohup uv run python \
+: > /tmp/phase3f-canary/runner.stdout.log
+: > /tmp/phase3f-canary/runner.stderr.log
+echo $$ > /tmp/phase3f-canary/runner.pid
+
+exec env UV_CACHE_DIR=/tmp/uv-cache uv run python \
   infra/launchers/first-testnet-canary.py \
   > /tmp/phase3f-canary/runner.stdout.log \
-  2> /tmp/phase3f-canary/runner.stderr.log &
-echo $! > /tmp/phase3f-canary/runner.pid
+  2> /tmp/phase3f-canary/runner.stderr.log
 ```
 
 Watch the first 60 seconds for the lifecycle four-tuple — read
@@ -348,23 +426,22 @@ print Nautilus traces):
 RUN_ID=$(ls -t data/testnet | head -1)
 echo "RUN_ID=$RUN_ID"
 tail -f data/testnet/"$RUN_ID"/logs/runtime.log
-# Expect: credentials_loaded → node_built → node_run_invoked →
-#         strategies_registered (strategies=1)
+# Expect: credentials_loaded → node_built → strategies_registered
+#         (strategies=1) → node_run_invoked
 # Ctrl-C the tail once strategies_registered shows up.
 ```
 
 If `strategies_registered` does not appear within 30 s, **stop** (§7)
 and inspect `/tmp/phase3f-canary/runner.stderr.log`.
 
-Start the watchdog after the `RUN_ID` is known:
+Start the watchdog after the `RUN_ID` is known, in a second long-lived
+foreground terminal/session:
 
 ```bash
 RUN_ID=$(ls -t data/testnet | head -1)
 RUNNER_PID=$(cat /tmp/phase3f-canary/runner.pid)
-RUN_ID="$RUN_ID" RUNNER_PID="$RUNNER_PID" \
-  nohup /tmp/phase3f-canary/watchdog_loop.sh >/dev/null 2>&1 &
-echo $! > /tmp/phase3f-canary/watchdog.pid
-ps -p "$(cat /tmp/phase3f-canary/watchdog.pid)" -o pid,etime,stat
+echo $$ > /tmp/phase3f-canary/watchdog.pid
+RUN_ID="$RUN_ID" RUNNER_PID="$RUNNER_PID" exec /tmp/phase3f-canary/watchdog_loop.sh
 ```
 
 ---
@@ -387,6 +464,9 @@ ls -la "$B"/logs/alerts.log 2>/dev/null || echo "no alerts (good)"
 
 # Watchdog last state
 cat infra/watchdog/state.json
+
+# Process still alive
+ps -p "$(cat /tmp/phase3f-canary/runner.pid)" -o pid,etime,stat,comm,args
 
 # Nautilus ERROR / WARN count
 grep -c ERROR /tmp/phase3f-canary/runner.stdout.log
@@ -506,6 +586,10 @@ The retro **must** record:
 5. The `freqai_linear_v1` signal flow during the session (rows polled,
    `cursor_ns` start/end).
 6. Nautilus log error count and final account snapshot.
+7. Launcher/session mode: foreground terminal vs other. If there was a
+   false start, abandoned run, overlapping replay stream, or reused future
+   replay rows, record the exact bundle path and how many orders/fills it
+   produced.
 
 Once the retro is committed, decide via `promotion_review.py` whether
 this experience supports a `hold @ testnet_canary` (keep going) or a
