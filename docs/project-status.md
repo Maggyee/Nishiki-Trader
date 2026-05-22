@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-05-21 (post ADR-010 + ADR-011 Drafts)
+- **Last updated**: 2026-05-22 (Phase 3 testnet canary evidence summary)
 - **Current phase**: Phase 3 entry
-- **Current objective**: Phase 3 entry remains focused on testnet canary evidence, not live trading. Latest control-machine 6 h canary completed cleanly on 2026-05-21: `data/testnet/20260521-102631Z-ea999625/`, retro `docs/retros/2026-05-21-phase-3f-testnet-canary-6h-observability-replay.md`; `shutdown_reason=max_duration`, 719 heartbeats, `ws_reconnect_count=0`, `exchange_error_count=0`, no `alerts.log`, watchdog `717 healthy / 3 run_completed / 0 flatten`, sidecars `orders=2 / fills=2 / positions=1 / account_balances=451 / signal_lineage=955`, final sidecar position `FLAT`, realized PnL `-0.18422 USDT`. Observability stack (Grafana / Prometheus / Loki / Promtail / node_exporter) and Postgres remain Phase 3 support systems; bundle (`run_manifest.json` + sidecar parquet) remains the promotion source of truth. Keep `freqai_linear_v1 / linear-mom-train20240105` at `hold @ testnet_canary`; next step is review / continue canary monitoring rather than live trading. No live trading without a separate live-risk ADR.
+- **Current objective**: Phase 3 entry remains focused on testnet canary evidence, not live trading. The current evidence summary is `docs/progress/phase-3-testnet-canary-evidence.md`: three clean, sidecar-backed, strategy-registered 6 h Binance Spot testnet canaries are on record (`20260519-120037Z-f1b06fd3`, `20260520-095350Z-6414ef0d`, `20260521-102631Z-ea999625`) with real entry/exit order flow, final sidecar state FLAT, no alert logs, `ws_reconnect_count=0`, and `exchange_error_count=0`. Keep `freqai_linear_v1 / linear-mom-train20240105` at `hold @ testnet_canary` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. Observability and Postgres remain Phase 3 support systems; bundle artifacts remain the promotion source of truth. No live trading without a separate live-risk ADR and the ADR-001 capital ladder gate.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -24,6 +24,7 @@ Detailed history archived so far:
 
 - `docs/progress/phase-0-1-to-phase-2-entry.md`
 - `docs/progress/phase-2-signal-source-baselines.md` — demo vs rule signal-source bundle fingerprints for BTCUSDT 2024-01-01.
+- `docs/progress/phase-3-testnet-canary-evidence.md` — current Phase 3 testnet canary evidence ledger and next operating step.
 
 ## Progress Sync Protocol
 
@@ -97,19 +98,20 @@ At task finish:
 ## Current Focus
 
 Phase 3 entry: maintain the testnet canary path now that ADR-008 §6.6
-has clean 6 h live-telemetry evidence.
+has three clean 6 h sidecar-backed testnet canaries summarized in
+`docs/progress/phase-3-testnet-canary-evidence.md`.
 
 Immediate focus:
 
 1. Keep `freqai_linear_v1 / linear-mom-train20240105` at `hold @ testnet_canary` under the already-signed `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`.
-2. Treat the 2026-05-20 6 h live-telemetry canary retro as the current operational evidence. Do not open a new `promotion_review` unless an actual policy/stage decision is being made.
+2. Treat `docs/progress/phase-3-testnet-canary-evidence.md` and the latest 2026-05-21 6 h canary retro as the current operational evidence. Do not open a new `promotion_review` unless an actual policy/stage decision is being made.
 3. ADR-008 §6.2 Phase 3b, §6.3 Phase 3c-a/b/c, §6.4 Phase 3d, §6.5 Phase 3e, §6.6 Phase 3f stability soak/canary, and the §8 promotion-review patch are all implemented and unit-tested. The `phase_3_not_ready` blocker now only hard-blocks `live_canary` / `live_normal`.
 4. Keep LLM agents and FreqAI out of the order path; `SignalEvent v1 -> NautilusTrader Strategy -> RiskEngine` remains the only bridge.
 
 ## Next Steps
 
 1. Use `promotion_review.py` (not just `report_paper_bundle.py`) as the required ADR-007 §2.6 audit artifact for any `SourcePolicy` change. Records land in `docs/retros/<UTC>-<source>-<decision>-<target_stage>.md`.
-2. **Do not** run `promotion_review.py hold @ testnet_canary` against the v9 paper_simulated bundle as a routine ratification of each canary — the v9 bundle's policy multiplier (0.2) does not match the live testnet_canary authorization (0.1) and the `_bundle_match_blockers` / `_hold_blockers` pair would either reject the call or force the retro to record a misleading current_policy. `promotion_review.py` is for stage/policy *decisions*, not for re-affirming every successful session. The canary retro (`docs/retros/2026-05-19-phase-3f-testnet-canary-6h-sidecar-bundle.md`) is the operational record; the source remains authorized at `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)` per `docs/retros/2026-05-19-freqai-linear-v1-promote-testnet-canary.md`. Open a new `promotion_review` only when an actual `hold/demote/disable` decision needs to land.
+2. **Do not** run `promotion_review.py hold @ testnet_canary` against the v9 paper_simulated bundle as a routine ratification of each canary — the v9 bundle's policy multiplier (0.2) does not match the live testnet_canary authorization (0.1) and the `_bundle_match_blockers` / `_hold_blockers` pair would either reject the call or force the retro to record a misleading current_policy. `promotion_review.py` is for stage/policy *decisions*, not for re-affirming every successful session. The canary retros plus `docs/progress/phase-3-testnet-canary-evidence.md` are the operational record; the source remains authorized at `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)` per `docs/retros/2026-05-19-freqai-linear-v1-promote-testnet-canary.md`. Open a new `promotion_review` only when an actual `hold/demote/disable` decision needs to land.
 3. Keep the `testnet_runner.py` startup guard + connection probe as the first line of defense for any subsequent testnet run: explicit `--allow-real-credentials`, clean git, source/model retro evidence, testnet multiplier cap, key-prefix-only audit, Ed25519-only credentials (HMAC fails Binance Spot WS `session.logon`), and Binance Spot TESTNET-only adapter config. The probe injects credentials into the in-memory `TradingNodeConfig` only and never writes the full key/secret to `logs/runtime.log` or `connection_probe.json`.
 4. Continue collecting testnet canary and paper_simulated evidence on `freqai_linear_v1 / linear-mom-train20240105` as needed. The v11 paper bundle's expectancy (+0.00491 USDT/trade, 53.6% win rate, -0.003878% max drawdown over 152 days) is weaker than v9, includes a negative April, and only mildly positive May; the parquet-backed canary fill set is still only a few trades. Treat both as operational/monitoring evidence, not alpha.
 5. Decide SQLite -> Postgres / Redis Stream readiness only after backtest, paper, or testnet volume exposes an actual bottleneck.
@@ -120,7 +122,7 @@ Immediate focus:
 - No live trading.
 - No real exchange API keys in the repository.
 - No Redis until cross-process signal transport is required.
-- No Postgres/TimescaleDB/pgvector until schemas stabilize.
+- No automatic SQLite -> Postgres mirror or PG-backed bridge default until an ADR-011 trigger fires; current Postgres/TimescaleDB/pgvector is service-only Phase 3 support.
 - No frontend implementation until backtest and risk result schemas are stable.
 - No n8n workflows until Phase 3/4.
 - No autonomous Agent trading. Agents may only research, review, summarize, and suggest.
