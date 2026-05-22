@@ -11,8 +11,11 @@ import pytest
 from apps.strategies_nautilus.runners.backtest_runner import _write_parquet
 from apps.strategies_nautilus.runners.report_testnet_bundle import (
     load_testnet_bundle_report,
+    load_testnet_continuity_summary,
     load_testnet_evidence_summary,
     main,
+    render_continuity_markdown,
+    render_continuity_text,
     render_markdown_summary,
     render_summary_text,
     render_text_report,
@@ -32,6 +35,9 @@ def _write_bundle(
     heartbeat_rows: list[dict] | None = None,
     alert_rows: list[dict] | None = None,
     realized_pnl: float = -0.5,
+    started_at: str = "2026-01-01T00:00:00.000Z",
+    finished_at: str = "2026-01-01T06:00:00.000Z",
+    elapsed_seconds: float = 21600.0,
     write_sidecars: bool = True,
 ) -> Path:
     bundle_dir = tmp_path / run_id
@@ -123,9 +129,9 @@ def _write_bundle(
         "trader_id": "TESTNET_TRADER-001",
         "git_commit": "0" * 40,
         "git_dirty": False,
-        "started_at": "2026-01-01T00:00:00.000Z",
-        "finished_at": "2026-01-01T06:00:00.000Z",
-        "elapsed_seconds": 21600.0,
+        "started_at": started_at,
+        "finished_at": finished_at,
+        "elapsed_seconds": elapsed_seconds,
         "venues": ["BINANCE"],
         "instruments": ["BTCUSDT.BINANCE"],
         "source": SOURCE,
@@ -407,6 +413,203 @@ def test_render_summary_text_and_markdown(tmp_path):
     assert "- clean_run_count: 2/2" in markdown
 
 
+def test_load_testnet_continuity_summary_counts_current_streak(tmp_path):
+    day_one = _write_bundle(
+        tmp_path,
+        run_id="20260101-000000Z-00000001",
+        started_at="2026-01-01T00:00:00.000Z",
+        finished_at="2026-01-01T06:00:00.000Z",
+        realized_pnl=0.25,
+    )
+    day_two = _write_bundle(
+        tmp_path,
+        run_id="20260102-000000Z-00000002",
+        started_at="2026-01-02T00:00:00.000Z",
+        finished_at="2026-01-02T06:00:00.000Z",
+        realized_pnl=-0.5,
+    )
+    day_three = _write_bundle(
+        tmp_path,
+        run_id="20260103-000000Z-00000003",
+        started_at="2026-01-03T00:00:00.000Z",
+        finished_at="2026-01-03T06:00:00.000Z",
+        realized_pnl=1.0,
+    )
+
+    summary = load_testnet_continuity_summary(
+        [day_one, day_two, day_three],
+        required_consecutive_days=3,
+    )
+
+    assert summary.day_count == 3
+    assert summary.qualified_day_count == 3
+    assert summary.longest_qualified_streak_days == 3
+    assert summary.current_qualified_streak_days == 3
+    assert summary.required_gate_met is True
+    assert summary.total_exchange_error_count == 0
+    assert summary.total_ws_reconnect_count == 0
+    assert summary.blockers == []
+    assert summary.recommendation == "ready_for_live_risk_adr_review"
+    assert [day.date for day in summary.days] == [
+        "2026-01-01",
+        "2026-01-02",
+        "2026-01-03",
+    ]
+
+
+def test_load_testnet_continuity_summary_breaks_on_blocked_day(tmp_path):
+    day_one = _write_bundle(
+        tmp_path,
+        run_id="20260101-000000Z-00000001",
+        started_at="2026-01-01T00:00:00.000Z",
+        finished_at="2026-01-01T06:00:00.000Z",
+    )
+    blocked_day = _write_bundle(
+        tmp_path,
+        run_id="20260102-000000Z-00000002",
+        started_at="2026-01-02T00:00:00.000Z",
+        finished_at="2026-01-02T06:00:00.000Z",
+        alert_rows=[
+            {
+                "ts": "2026-01-02T00:02:00.000Z",
+                "severity": "critical",
+                "kind": "testnet",
+                "run_id": "20260102-000000Z-00000002",
+                "msg": "heartbeat_lost",
+                "context": {"watchdog_status": "heartbeat_stale"},
+            }
+        ],
+    )
+    day_three = _write_bundle(
+        tmp_path,
+        run_id="20260103-000000Z-00000003",
+        started_at="2026-01-03T00:00:00.000Z",
+        finished_at="2026-01-03T06:00:00.000Z",
+    )
+
+    summary = load_testnet_continuity_summary(
+        [day_one, blocked_day, day_three],
+        required_consecutive_days=2,
+    )
+
+    assert summary.qualified_day_count == 2
+    assert summary.longest_qualified_streak_days == 1
+    assert summary.current_qualified_streak_days == 1
+    assert summary.required_gate_met is False
+    assert (
+        "current_qualified_streak_days=1<required=2"
+        in summary.blockers
+    )
+    assert summary.days[1].qualified is False
+    assert summary.days[1].blocked_run_ids == ["20260102-000000Z-00000002"]
+    assert "alerts=1" in summary.days[1].blockers
+
+
+def test_load_testnet_continuity_summary_blocks_mixed_same_day(tmp_path):
+    blocked = _write_bundle(
+        tmp_path,
+        run_id="20260102-000000Z-00000001",
+        started_at="2026-01-02T00:00:00.000Z",
+        finished_at="2026-01-02T00:30:00.000Z",
+        elapsed_seconds=1800.0,
+        alert_rows=[
+            {
+                "ts": "2026-01-02T00:02:00.000Z",
+                "severity": "critical",
+                "kind": "testnet",
+                "run_id": "20260102-000000Z-00000001",
+                "msg": "emergency_flatten_completed",
+                "context": {"success": True},
+            }
+        ],
+    )
+    clean = _write_bundle(
+        tmp_path,
+        run_id="20260102-060000Z-00000002",
+        started_at="2026-01-02T06:00:00.000Z",
+        finished_at="2026-01-02T12:00:00.000Z",
+    )
+
+    summary = load_testnet_continuity_summary(
+        [blocked, clean],
+        required_consecutive_days=1,
+    )
+
+    assert summary.qualified_day_count == 0
+    assert summary.current_qualified_streak_days == 0
+    assert summary.days[0].clean_run_ids == ["20260102-060000Z-00000002"]
+    assert summary.days[0].blocked_run_ids == ["20260102-000000Z-00000001"]
+    assert "blocked_runs=20260102-000000Z-00000001" in summary.days[0].blockers
+    assert "emergency_flatten_completed=1" in summary.blockers
+
+
+def test_load_testnet_continuity_summary_applies_adr_thresholds(tmp_path):
+    bundle_dir = _write_bundle(
+        tmp_path,
+        runtime_overrides={
+            "exchange_error_count": 1000,
+            "ws_reconnect_count": 50,
+            "restart_sequence": 4,
+            "restart_drift_detected": True,
+        },
+        alert_rows=[
+            {
+                "ts": "2026-01-01T00:02:00.000Z",
+                "severity": "critical",
+                "kind": "testnet",
+                "run_id": RUN_ID,
+                "msg": "kill_switch_fired",
+                "context": {"daily_loss_pct": 0.05},
+            }
+        ],
+    )
+
+    summary = load_testnet_continuity_summary(
+        [bundle_dir],
+        required_consecutive_days=1,
+    )
+
+    assert summary.required_gate_met is False
+    assert summary.total_exchange_error_count == 1000
+    assert summary.total_ws_reconnect_count == 50
+    assert summary.max_restart_sequence == 4
+    assert summary.restart_drift_days == ["2026-01-01"]
+    assert summary.kill_switch_alerts == 1
+    assert "exchange_error_count=1000>999" in summary.blockers
+    assert "ws_reconnect_count=50>49" in summary.blockers
+    assert "max_restart_sequence=4>3" in summary.blockers
+    assert "restart_drift_days=2026-01-01" in summary.blockers
+    assert "kill_switch_fired=1" in summary.blockers
+
+
+def test_render_continuity_text_and_markdown(tmp_path):
+    day_one = _write_bundle(
+        tmp_path,
+        run_id="20260101-000000Z-00000001",
+        started_at="2026-01-01T00:00:00.000Z",
+        finished_at="2026-01-01T06:00:00.000Z",
+    )
+    day_two = _write_bundle(
+        tmp_path,
+        run_id="20260102-000000Z-00000002",
+        started_at="2026-01-02T00:00:00.000Z",
+        finished_at="2026-01-02T06:00:00.000Z",
+    )
+    summary = load_testnet_continuity_summary(
+        [day_one, day_two],
+        required_consecutive_days=2,
+    )
+
+    text = render_continuity_text(summary)
+    markdown = render_continuity_markdown(summary)
+
+    assert "testnet continuity summary" in text
+    assert "required_gate_met: True" in text
+    assert "# Testnet Continuity Summary" in markdown
+    assert "- current_qualified_streak_days: 2/2" in markdown
+    assert "| date | qualified | clean hours | runs | alerts |" in markdown
+
+
 def test_report_cli_outputs_json(tmp_path, capsys):
     bundle_dir = _write_bundle(tmp_path)
 
@@ -454,6 +657,55 @@ def test_report_cli_outputs_summary_markdown(tmp_path, capsys):
     assert "# Testnet Evidence Summary" in out
     assert "- clean_run_count: 2/2" in out
     assert "`20260102-000000Z-00000002`" in out
+
+
+def test_report_cli_outputs_continuity_json(tmp_path, capsys):
+    day_one = _write_bundle(
+        tmp_path,
+        run_id="20260101-000000Z-00000001",
+        started_at="2026-01-01T00:00:00.000Z",
+        finished_at="2026-01-01T06:00:00.000Z",
+    )
+    day_two = _write_bundle(
+        tmp_path,
+        run_id="20260102-000000Z-00000002",
+        started_at="2026-01-02T00:00:00.000Z",
+        finished_at="2026-01-02T06:00:00.000Z",
+    )
+
+    rc = main(
+        [
+            "--continuity",
+            "--json",
+            "--required-consecutive-days",
+            "2",
+            str(day_one),
+            str(day_two),
+        ]
+    )
+
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["current_qualified_streak_days"] == 2
+    assert payload["required_gate_met"] is True
+    assert payload["days"][1]["date"] == "2026-01-02"
+
+
+def test_report_cli_outputs_continuity_markdown(tmp_path, capsys):
+    day_one = _write_bundle(
+        tmp_path,
+        run_id="20260101-000000Z-00000001",
+        started_at="2026-01-01T00:00:00.000Z",
+        finished_at="2026-01-01T06:00:00.000Z",
+    )
+
+    rc = main(["--continuity", "--markdown", str(day_one)])
+
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "# Testnet Continuity Summary" in out
+    assert "- qualified_day_count: 1/1" in out
+    assert "`20260101-000000Z-00000001`" in out
 
 
 def test_load_testnet_bundle_report_rejects_non_testnet_kind(tmp_path):

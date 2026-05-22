@@ -1,8 +1,8 @@
 # Phase 3 Testnet Canary Evidence Summary
 
 - **Status**: Active handoff summary
-- **Last updated**: 2026-05-22 after canary `20260522-030142Z-36922497`
-  and `report_testnet_bundle --markdown` aggregate verification
+- **Last updated**: 2026-05-22 after canary `20260522-030142Z-36922497`,
+  aggregate verification, and continuity-plan tooling
 - **Scope**: Phase 3 ADR-008 testnet canary evidence for `freqai_linear_v1 / linear-mom-train20240105`
 - **Decision state**: Operational evidence only. This file does not mutate `SourcePolicy`.
 
@@ -23,7 +23,8 @@ record.
 
 No live trading is authorized. The current evidence does not satisfy the
 ADR-001 live-money ladder requirement of 14 consecutive testnet days without
-manual intervention, and there is no live-risk ADR.
+manual intervention, and there is no live-risk ADR. The active continuity
+plan is `docs/progress/phase-3-testnet-continuity-plan.md`.
 
 ## Evidence Bottom Line
 
@@ -102,13 +103,29 @@ Continue collecting testnet canary evidence with the hardened runbook:
 3. Treat the bundle (`run_manifest.json` plus sidecar parquet files) as the
    promotion source of truth; Grafana/Prometheus/Loki are runtime observation
    aids.
-4. Before editing this evidence ledger, regenerate the aggregate table from
-   bundle artifacts:
+4. Before editing this evidence ledger, regenerate the clean aggregate table
+   from clean bundle artifacts. For the continuity view, include every
+   completed manifest-backed bundle in the candidate window, including
+   blocked runs:
 
    ```bash
    UV_CACHE_DIR=/tmp/uv-cache uv run python -m \
      apps.strategies_nautilus.runners.report_testnet_bundle --markdown \
      data/testnet/20260519-120037Z-f1b06fd3 \
+     data/testnet/20260520-095350Z-6414ef0d \
+     data/testnet/20260521-102631Z-ea999625 \
+     data/testnet/20260522-030142Z-36922497
+   ```
+
+   ```bash
+   UV_CACHE_DIR=/tmp/uv-cache uv run python -m \
+     apps.strategies_nautilus.runners.report_testnet_bundle \
+     --continuity \
+     --markdown \
+     --min-clean-hours-per-day 6 \
+     --required-consecutive-days 14 \
+     data/testnet/20260519-120037Z-f1b06fd3 \
+     data/testnet/20260520-035223Z-20061290 \
      data/testnet/20260520-095350Z-6414ef0d \
      data/testnet/20260521-102631Z-ea999625 \
      data/testnet/20260522-030142Z-36922497

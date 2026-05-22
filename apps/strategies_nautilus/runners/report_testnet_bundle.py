@@ -11,7 +11,7 @@ import argparse
 import hashlib
 import json
 from dataclasses import asdict, dataclass
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -47,6 +47,10 @@ KNOWN_ALERT_MSGS = (
     "emergency_flatten_started",
     "emergency_flatten_completed",
 )
+
+MAX_TESTNET_EXCHANGE_ERRORS = 999
+MAX_TESTNET_WS_RECONNECTS = 49
+MAX_TESTNET_RESTART_SEQUENCE = 3
 
 
 @dataclass(frozen=True)
@@ -159,6 +163,46 @@ class TestnetEvidenceSummary:
     final_flat_run_count: int
     review_blockers_by_run: dict[str, list[str]]
     per_run: list[TestnetRunSummary]
+    recommendation: str
+
+
+@dataclass(frozen=True)
+class TestnetContinuityDay:
+    date: str
+    clean_elapsed_seconds: float
+    total_elapsed_seconds: float
+    clean_run_ids: list[str]
+    blocked_run_ids: list[str]
+    alert_count: int
+    exchange_error_count: int
+    ws_reconnect_count: int
+    max_restart_sequence: int
+    restart_drift_detected: bool
+    kill_switch_alerts: int
+    emergency_flatten_completed_alerts: int
+    realized_pnl: float
+    qualified: bool
+    blockers: list[str]
+
+
+@dataclass(frozen=True)
+class TestnetContinuitySummary:
+    bundle_dirs: list[str]
+    min_clean_hours_per_day: float
+    required_consecutive_days: int
+    day_count: int
+    qualified_day_count: int
+    longest_qualified_streak_days: int
+    current_qualified_streak_days: int
+    required_gate_met: bool
+    total_exchange_error_count: int
+    total_ws_reconnect_count: int
+    max_restart_sequence: int
+    restart_drift_days: list[str]
+    kill_switch_alerts: int
+    emergency_flatten_completed_alerts: int
+    blockers: list[str]
+    days: list[TestnetContinuityDay]
     recommendation: str
 
 
@@ -333,6 +377,87 @@ def load_testnet_evidence_summary(
     )
 
 
+def load_testnet_continuity_summary(
+    bundle_dirs: list[Path],
+    *,
+    min_clean_hours_per_day: float = 6.0,
+    required_consecutive_days: int = 14,
+) -> TestnetContinuitySummary:
+    if min_clean_hours_per_day <= 0:
+        raise ValueError("min_clean_hours_per_day must be positive")
+    if required_consecutive_days <= 0:
+        raise ValueError("required_consecutive_days must be positive")
+
+    reports = [load_testnet_bundle_report(bundle_dir) for bundle_dir in bundle_dirs]
+    reports_by_date: dict[str, list[TestnetBundleReport]] = {}
+    for report in reports:
+        report_date = _date_from_report(report)
+        date_key = report_date or f"unknown:{report.run_id}"
+        reports_by_date.setdefault(date_key, []).append(report)
+
+    days = [
+        _continuity_day(
+            date_key,
+            day_reports,
+            min_clean_hours_per_day=min_clean_hours_per_day,
+        )
+        for date_key, day_reports in sorted(
+            reports_by_date.items(),
+            key=lambda item: _continuity_sort_key(item[0]),
+        )
+    ]
+    longest_streak = _longest_qualified_streak(days)
+    current_streak = _current_qualified_streak(days)
+    total_exchange_errors = sum(day.exchange_error_count for day in days)
+    total_ws_reconnects = sum(day.ws_reconnect_count for day in days)
+    max_restart_sequence = max(
+        (day.max_restart_sequence for day in days),
+        default=0,
+    )
+    restart_drift_days = [
+        day.date for day in days if day.restart_drift_detected
+    ]
+    kill_switch_alerts = sum(day.kill_switch_alerts for day in days)
+    emergency_flatten_alerts = sum(
+        day.emergency_flatten_completed_alerts for day in days
+    )
+
+    blockers = _continuity_summary_blockers(
+        days=days,
+        current_qualified_streak_days=current_streak,
+        required_consecutive_days=required_consecutive_days,
+        total_exchange_error_count=total_exchange_errors,
+        total_ws_reconnect_count=total_ws_reconnects,
+        max_restart_sequence=max_restart_sequence,
+        restart_drift_days=restart_drift_days,
+        kill_switch_alerts=kill_switch_alerts,
+        emergency_flatten_completed_alerts=emergency_flatten_alerts,
+    )
+    return TestnetContinuitySummary(
+        bundle_dirs=[str(path) for path in bundle_dirs],
+        min_clean_hours_per_day=min_clean_hours_per_day,
+        required_consecutive_days=required_consecutive_days,
+        day_count=len(days),
+        qualified_day_count=sum(1 for day in days if day.qualified),
+        longest_qualified_streak_days=longest_streak,
+        current_qualified_streak_days=current_streak,
+        required_gate_met=not blockers,
+        total_exchange_error_count=total_exchange_errors,
+        total_ws_reconnect_count=total_ws_reconnects,
+        max_restart_sequence=max_restart_sequence,
+        restart_drift_days=restart_drift_days,
+        kill_switch_alerts=kill_switch_alerts,
+        emergency_flatten_completed_alerts=emergency_flatten_alerts,
+        blockers=blockers,
+        days=days,
+        recommendation=(
+            "ready_for_live_risk_adr_review"
+            if not blockers
+            else "continue_testnet_continuity"
+        ),
+    )
+
+
 def render_text_report(report: TestnetBundleReport) -> str:
     blockers = ", ".join(report.review_blockers) if report.review_blockers else "none"
     return "\n".join(
@@ -484,6 +609,96 @@ def render_markdown_summary(summary: TestnetEvidenceSummary) -> str:
     return "\n".join(lines)
 
 
+def render_continuity_text(summary: TestnetContinuitySummary) -> str:
+    blockers = ", ".join(summary.blockers) if summary.blockers else "none"
+    return "\n".join(
+        [
+            "testnet continuity summary",
+            f"day_count: {summary.day_count}",
+            f"qualified_day_count: {summary.qualified_day_count}",
+            f"min_clean_hours_per_day: {summary.min_clean_hours_per_day:.2f}",
+            f"required_consecutive_days: {summary.required_consecutive_days}",
+            (
+                "qualified_streaks: "
+                f"current={summary.current_qualified_streak_days} "
+                f"longest={summary.longest_qualified_streak_days}"
+            ),
+            (
+                "adr_thresholds: "
+                f"exchange_error_count={summary.total_exchange_error_count} "
+                f"ws_reconnect_count={summary.total_ws_reconnect_count} "
+                f"max_restart_sequence={summary.max_restart_sequence} "
+                f"restart_drift_days={summary.restart_drift_days or 'none'} "
+                f"kill_switch_alerts={summary.kill_switch_alerts} "
+                "emergency_flatten_completed_alerts="
+                f"{summary.emergency_flatten_completed_alerts}"
+            ),
+            f"required_gate_met: {summary.required_gate_met}",
+            f"blockers: {blockers}",
+            f"recommendation: {summary.recommendation}",
+        ]
+    )
+
+
+def render_continuity_markdown(summary: TestnetContinuitySummary) -> str:
+    blockers = ", ".join(summary.blockers) if summary.blockers else "none"
+    lines = [
+        "# Testnet Continuity Summary",
+        "",
+        (
+            f"- qualified_day_count: "
+            f"{summary.qualified_day_count}/{summary.day_count}"
+        ),
+        (
+            f"- current_qualified_streak_days: "
+            f"{summary.current_qualified_streak_days}/"
+            f"{summary.required_consecutive_days}"
+        ),
+        f"- longest_qualified_streak_days: {summary.longest_qualified_streak_days}",
+        f"- min_clean_hours_per_day: {summary.min_clean_hours_per_day:.2f}",
+        (
+            "- adr_thresholds: "
+            f"exchange_errors={summary.total_exchange_error_count}/"
+            f"{MAX_TESTNET_EXCHANGE_ERRORS + 1} max exclusive, "
+            f"ws_reconnects={summary.total_ws_reconnect_count}/"
+            f"{MAX_TESTNET_WS_RECONNECTS + 1} max exclusive, "
+            f"restart_sequence={summary.max_restart_sequence}/"
+            f"{MAX_TESTNET_RESTART_SEQUENCE} max"
+        ),
+        (
+            "- alert_thresholds: "
+            f"kill_switch={summary.kill_switch_alerts}, "
+            "emergency_flatten_completed="
+            f"{summary.emergency_flatten_completed_alerts}"
+        ),
+        f"- required_gate_met: {str(summary.required_gate_met).lower()}",
+        f"- blockers: {blockers}",
+        f"- recommendation: `{summary.recommendation}`",
+        "",
+        (
+            "| date | qualified | clean hours | runs | alerts | exchange errors | "
+            "ws reconnects | restart seq | realized PnL | blockers |"
+        ),
+        "|---|---:|---:|---|---:|---:|---:|---:|---:|---|",
+    ]
+    for day in summary.days:
+        blockers = ", ".join(day.blockers) if day.blockers else "none"
+        lines.append(
+            "| "
+            f"{day.date} | "
+            f"{str(day.qualified).lower()} | "
+            f"{day.clean_elapsed_seconds / 3600:.2f} | "
+            f"{_continuity_run_ids_label(day)} | "
+            f"{day.alert_count} | "
+            f"{day.exchange_error_count} | "
+            f"{day.ws_reconnect_count} | "
+            f"{day.max_restart_sequence} | "
+            f"{day.realized_pnl:.8g} | "
+            f"{blockers} |"
+        )
+    return "\n".join(lines)
+
+
 def _run_summary(report: TestnetBundleReport) -> TestnetRunSummary:
     return TestnetRunSummary(
         bundle_dir=report.bundle_dir,
@@ -505,6 +720,228 @@ def _run_summary(report: TestnetBundleReport) -> TestnetRunSummary:
     )
 
 
+def _continuity_run_ids_label(day: TestnetContinuityDay) -> str:
+    labels: list[str] = []
+    if day.clean_run_ids:
+        labels.append(
+            "clean="
+            + ", ".join(f"`{run_id}`" for run_id in day.clean_run_ids)
+        )
+    if day.blocked_run_ids:
+        labels.append(
+            "blocked="
+            + ", ".join(f"`{run_id}`" for run_id in day.blocked_run_ids)
+        )
+    return "; ".join(labels) if labels else "none"
+
+
+def _continuity_day(
+    date_key: str,
+    reports: list[TestnetBundleReport],
+    *,
+    min_clean_hours_per_day: float,
+) -> TestnetContinuityDay:
+    clean_reports = [report for report in reports if report.clean_for_retro]
+    blocked_reports = [report for report in reports if not report.clean_for_retro]
+    clean_elapsed_seconds = _sum_elapsed_seconds(clean_reports)
+    total_elapsed_seconds = _sum_elapsed_seconds(reports)
+    alert_count = sum(report.alert_count for report in reports)
+    exchange_error_count = sum(_exchange_error_count(report) for report in reports)
+    ws_reconnect_count = sum(_ws_reconnect_count(report) for report in reports)
+    max_restart_sequence = max(
+        (_restart_sequence(report) for report in reports),
+        default=0,
+    )
+    restart_drift_detected = any(_restart_drift_detected(report) for report in reports)
+    kill_switch_alerts = sum(
+        report.alert_msg_counts.get("kill_switch_fired", 0) for report in reports
+    )
+    emergency_flatten_alerts = sum(
+        report.alert_msg_counts.get("emergency_flatten_completed", 0)
+        for report in reports
+    )
+    blockers = _continuity_day_blockers(
+        date_key=date_key,
+        clean_elapsed_seconds=clean_elapsed_seconds,
+        min_clean_hours_per_day=min_clean_hours_per_day,
+        blocked_reports=blocked_reports,
+        alert_count=alert_count,
+        restart_drift_detected=restart_drift_detected,
+        kill_switch_alerts=kill_switch_alerts,
+        emergency_flatten_completed_alerts=emergency_flatten_alerts,
+    )
+    return TestnetContinuityDay(
+        date=date_key,
+        clean_elapsed_seconds=clean_elapsed_seconds,
+        total_elapsed_seconds=total_elapsed_seconds,
+        clean_run_ids=[report.run_id for report in clean_reports],
+        blocked_run_ids=[report.run_id for report in blocked_reports],
+        alert_count=alert_count,
+        exchange_error_count=exchange_error_count,
+        ws_reconnect_count=ws_reconnect_count,
+        max_restart_sequence=max_restart_sequence,
+        restart_drift_detected=restart_drift_detected,
+        kill_switch_alerts=kill_switch_alerts,
+        emergency_flatten_completed_alerts=emergency_flatten_alerts,
+        realized_pnl=_sum_realized_pnl(reports),
+        qualified=not blockers,
+        blockers=blockers,
+    )
+
+
+def _continuity_day_blockers(
+    *,
+    date_key: str,
+    clean_elapsed_seconds: float,
+    min_clean_hours_per_day: float,
+    blocked_reports: list[TestnetBundleReport],
+    alert_count: int,
+    restart_drift_detected: bool,
+    kill_switch_alerts: int,
+    emergency_flatten_completed_alerts: int,
+) -> list[str]:
+    blockers: list[str] = []
+    if _parse_date(date_key) is None:
+        blockers.append("date_unknown")
+    min_clean_seconds = min_clean_hours_per_day * 3600
+    if clean_elapsed_seconds < min_clean_seconds:
+        blockers.append(
+            "clean_elapsed_hours="
+            f"{clean_elapsed_seconds / 3600:.2f}<min={min_clean_hours_per_day:.2f}"
+        )
+    if blocked_reports:
+        blockers.append(
+            "blocked_runs="
+            + ",".join(report.run_id for report in blocked_reports)
+        )
+    if alert_count:
+        blockers.append(f"alerts={alert_count}")
+    if restart_drift_detected:
+        blockers.append("restart_drift_detected")
+    if kill_switch_alerts:
+        blockers.append(f"kill_switch_fired={kill_switch_alerts}")
+    if emergency_flatten_completed_alerts:
+        blockers.append(
+            "emergency_flatten_completed="
+            f"{emergency_flatten_completed_alerts}"
+        )
+    return blockers
+
+
+def _continuity_summary_blockers(
+    *,
+    days: list[TestnetContinuityDay],
+    current_qualified_streak_days: int,
+    required_consecutive_days: int,
+    total_exchange_error_count: int,
+    total_ws_reconnect_count: int,
+    max_restart_sequence: int,
+    restart_drift_days: list[str],
+    kill_switch_alerts: int,
+    emergency_flatten_completed_alerts: int,
+) -> list[str]:
+    blockers: list[str] = []
+    if any(_parse_date(day.date) is None for day in days):
+        blockers.append("unknown_date_days_present")
+    if current_qualified_streak_days < required_consecutive_days:
+        blockers.append(
+            "current_qualified_streak_days="
+            f"{current_qualified_streak_days}<required={required_consecutive_days}"
+        )
+    if total_exchange_error_count > MAX_TESTNET_EXCHANGE_ERRORS:
+        blockers.append(
+            "exchange_error_count="
+            f"{total_exchange_error_count}>{MAX_TESTNET_EXCHANGE_ERRORS}"
+        )
+    if total_ws_reconnect_count > MAX_TESTNET_WS_RECONNECTS:
+        blockers.append(
+            "ws_reconnect_count="
+            f"{total_ws_reconnect_count}>{MAX_TESTNET_WS_RECONNECTS}"
+        )
+    if max_restart_sequence > MAX_TESTNET_RESTART_SEQUENCE:
+        blockers.append(
+            "max_restart_sequence="
+            f"{max_restart_sequence}>{MAX_TESTNET_RESTART_SEQUENCE}"
+        )
+    if restart_drift_days:
+        blockers.append("restart_drift_days=" + ",".join(restart_drift_days))
+    if kill_switch_alerts:
+        blockers.append(f"kill_switch_fired={kill_switch_alerts}")
+    if emergency_flatten_completed_alerts:
+        blockers.append(
+            "emergency_flatten_completed="
+            f"{emergency_flatten_completed_alerts}"
+        )
+    return blockers
+
+
+def _longest_qualified_streak(days: list[TestnetContinuityDay]) -> int:
+    longest = 0
+    current = 0
+    previous_date: date | None = None
+    for day in days:
+        parsed_date = _parse_date(day.date)
+        if not day.qualified or parsed_date is None:
+            current = 0
+            previous_date = parsed_date
+            continue
+        if previous_date is not None and parsed_date == previous_date + timedelta(days=1):
+            current += 1
+        else:
+            current = 1
+        previous_date = parsed_date
+        longest = max(longest, current)
+    return longest
+
+
+def _current_qualified_streak(days: list[TestnetContinuityDay]) -> int:
+    valid_days = [day for day in days if _parse_date(day.date) is not None]
+    if not valid_days or not valid_days[-1].qualified:
+        return 0
+    streak = 0
+    expected_date: date | None = None
+    for day in reversed(valid_days):
+        parsed_date = _parse_date(day.date)
+        if parsed_date is None or not day.qualified:
+            break
+        if expected_date is not None and parsed_date != expected_date:
+            break
+        streak += 1
+        expected_date = parsed_date - timedelta(days=1)
+    return streak
+
+
+def _continuity_sort_key(date_key: str) -> tuple[int, int | str]:
+    parsed = _parse_date(date_key)
+    if parsed is None:
+        return (0, date_key)
+    return (1, parsed.toordinal())
+
+
+def _exchange_error_count(report: TestnetBundleReport) -> int:
+    return max(
+        _int_or_zero(report.runtime.get("exchange_error_count")),
+        report.max_exchange_error_count,
+    )
+
+
+def _ws_reconnect_count(report: TestnetBundleReport) -> int:
+    return max(
+        _int_or_zero(report.runtime.get("ws_reconnect_count")),
+        report.max_ws_reconnect_count,
+    )
+
+
+def _restart_sequence(report: TestnetBundleReport) -> int:
+    return _int_or_zero(report.runtime.get("restart_sequence"))
+
+
+def _restart_drift_detected(report: TestnetBundleReport) -> bool:
+    return bool(report.runtime.get("restart_drift_detected")) or bool(
+        report.alert_msg_counts.get("restart_drift_detected", 0)
+    )
+
+
 def _date_from_report(report: TestnetBundleReport) -> str | None:
     if report.started_at and len(report.started_at) >= 10:
         return report.started_at[:10]
@@ -512,6 +949,13 @@ def _date_from_report(report: TestnetBundleReport) -> str | None:
         raw = report.run_id[:8]
         return f"{raw[:4]}-{raw[4:6]}-{raw[6:]}"
     return None
+
+
+def _parse_date(value: str) -> date | None:
+    try:
+        return date.fromisoformat(value)
+    except ValueError:
+        return None
 
 
 def _final_state_label(report: TestnetBundleReport) -> str:
@@ -924,6 +1368,23 @@ def _build_parser() -> argparse.ArgumentParser:
             "renders an aggregate table."
         ),
     )
+    parser.add_argument(
+        "--continuity",
+        action="store_true",
+        help="Emit a per-day continuity gate summary for 14-day testnet evidence.",
+    )
+    parser.add_argument(
+        "--min-clean-hours-per-day",
+        type=float,
+        default=6.0,
+        help="Minimum clean completed testnet hours required for a qualified day.",
+    )
+    parser.add_argument(
+        "--required-consecutive-days",
+        type=int,
+        default=14,
+        help="Required current consecutive qualified days for the continuity gate.",
+    )
     return parser
 
 
@@ -931,6 +1392,19 @@ def main(argv: list[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
     try:
+        if args.continuity:
+            continuity = load_testnet_continuity_summary(
+                list(args.bundle_dirs),
+                min_clean_hours_per_day=args.min_clean_hours_per_day,
+                required_consecutive_days=args.required_consecutive_days,
+            )
+            if args.json:
+                print(json.dumps(asdict(continuity), indent=2, sort_keys=True))
+            elif args.markdown:
+                print(render_continuity_markdown(continuity))
+            else:
+                print(render_continuity_text(continuity))
+            return 0
         if len(args.bundle_dirs) == 1 and not args.markdown:
             report = load_testnet_bundle_report(args.bundle_dirs[0])
             if args.json:
@@ -952,10 +1426,15 @@ def main(argv: list[str] | None = None) -> int:
 
 __all__ = [
     "TestnetBundleReport",
+    "TestnetContinuityDay",
+    "TestnetContinuitySummary",
     "TestnetEvidenceSummary",
     "TestnetRunSummary",
+    "load_testnet_continuity_summary",
     "load_testnet_evidence_summary",
     "load_testnet_bundle_report",
+    "render_continuity_markdown",
+    "render_continuity_text",
     "render_markdown_summary",
     "render_summary_text",
     "render_text_report",

@@ -11,3 +11,10 @@ Rules:
 - Put detailed completed-work lists, long verification transcripts, and implementation narratives here.
 - Put permanent architecture decisions in `docs/decisions/`, not here.
 - Link archive files from `docs/project-status.md` only when they remain useful context.
+
+Current Phase 3 progress files:
+
+- `phase-3-testnet-canary-evidence.md` records the testnet session ledger and
+  bundle evidence summary.
+- `phase-3-testnet-continuity-plan.md` defines the 14-day continuity tracking
+  plan and the `report_testnet_bundle --continuity` review command.

@@ -604,6 +604,21 @@ UV_CACHE_DIR=/tmp/uv-cache uv run python -m \
   data/testnet/<clean-run-id-N>
 ```
 
+For the 14-day continuity gate, also regenerate the per-day continuity view.
+Use every completed manifest-backed bundle in the candidate window, not only
+the clean runs:
+
+```bash
+UV_CACHE_DIR=/tmp/uv-cache uv run python -m \
+  apps.strategies_nautilus.runners.report_testnet_bundle \
+  --continuity \
+  --markdown \
+  --min-clean-hours-per-day 6 \
+  --required-consecutive-days 14 \
+  data/testnet/<window-run-id-1> \
+  data/testnet/<window-run-id-N>
+```
+
 Once the retro is committed, decide via `promotion_review.py` whether
 this experience supports a `hold @ testnet_canary` (keep going) or a
 `demote/disable` (back to `paper_simulated`). Open the new retro for
