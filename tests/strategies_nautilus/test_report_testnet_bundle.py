@@ -11,7 +11,10 @@ import pytest
 from apps.strategies_nautilus.runners.backtest_runner import _write_parquet
 from apps.strategies_nautilus.runners.report_testnet_bundle import (
     load_testnet_bundle_report,
+    load_testnet_evidence_summary,
     main,
+    render_markdown_summary,
+    render_summary_text,
     render_text_report,
 )
 
@@ -23,13 +26,15 @@ MODEL_VERSION = "linear-mom-train20240105"
 def _write_bundle(
     tmp_path: Path,
     *,
+    run_id: str = RUN_ID,
     manifest_overrides: dict | None = None,
     runtime_overrides: dict | None = None,
     heartbeat_rows: list[dict] | None = None,
     alert_rows: list[dict] | None = None,
+    realized_pnl: float = -0.5,
     write_sidecars: bool = True,
 ) -> Path:
-    bundle_dir = tmp_path / RUN_ID
+    bundle_dir = tmp_path / run_id
     bundle_dir.mkdir()
     logs_dir = bundle_dir / "logs"
     logs_dir.mkdir()
@@ -52,7 +57,7 @@ def _write_bundle(
             "peak_qty": 0.001,
             "avg_px_open": 100.0,
             "avg_px_close": 99.5,
-            "realized_pnl": -0.5,
+            "realized_pnl": realized_pnl,
             "unrealized_pnl": 0.0,
             "opened_ts": 1_704_067_200_000_000_000,
             "closed_ts": 1_704_067_260_000_000_000,
@@ -114,7 +119,7 @@ def _write_bundle(
     manifest = {
         "schema_version": "backtest.v1",
         "kind": "testnet",
-        "run_id": RUN_ID,
+        "run_id": run_id,
         "trader_id": "TESTNET_TRADER-001",
         "git_commit": "0" * 40,
         "git_dirty": False,
@@ -135,9 +140,9 @@ def _write_bundle(
     )
 
     heartbeat_rows = heartbeat_rows or [
-        _heartbeat("2026-01-01T00:00:00.000Z", open_positions=0),
-        _heartbeat("2026-01-01T00:00:30.000Z", open_positions=1),
-        _heartbeat("2026-01-01T00:01:00.000Z", open_positions=1),
+        _heartbeat("2026-01-01T00:00:00.000Z", run_id=run_id, open_positions=0),
+        _heartbeat("2026-01-01T00:00:30.000Z", run_id=run_id, open_positions=1),
+        _heartbeat("2026-01-01T00:01:00.000Z", run_id=run_id, open_positions=1),
     ]
     (logs_dir / "heartbeat.jsonl").write_text(
         "".join(json.dumps(row, sort_keys=True) + "\n" for row in heartbeat_rows),
@@ -215,11 +220,11 @@ def _lineage_row(
     }
 
 
-def _heartbeat(ts: str, *, open_positions: int) -> dict:
+def _heartbeat(ts: str, *, open_positions: int, run_id: str = RUN_ID) -> dict:
     return {
         "event": "heartbeat",
         "kind": "testnet",
-        "run_id": RUN_ID,
+        "run_id": run_id,
         "ts": ts,
         "ws_connected": True,
         "ws_reconnect_count": 0,
@@ -315,6 +320,23 @@ def test_load_testnet_bundle_report_flags_sidecar_count_mismatch(tmp_path):
     assert report.clean_for_retro is False
 
 
+def test_load_testnet_bundle_report_treats_flat_sidecars_as_final_state(tmp_path):
+    bundle_dir = _write_bundle(
+        tmp_path,
+        runtime_overrides={
+            "open_positions": 1,
+            "open_state_source": "telemetry",
+        },
+    )
+
+    report = load_testnet_bundle_report(bundle_dir)
+
+    assert report.final_position_sides == {"FLAT": 1}
+    assert "open_positions=1" not in report.review_blockers
+    assert "open_state_source_not_live_sidecars" not in report.review_blockers
+    assert report.clean_for_retro is True
+
+
 def test_load_testnet_bundle_report_flags_missing_live_sidecars(tmp_path):
     bundle_dir = _write_bundle(tmp_path, write_sidecars=False)
 
@@ -325,6 +347,64 @@ def test_load_testnet_bundle_report_flags_missing_live_sidecars(tmp_path):
     assert "sidecar_mismatch:orders manifest=2 actual=0" in report.review_blockers
     assert "no_orders" in report.review_blockers
     assert report.clean_for_retro is False
+
+
+def test_load_testnet_evidence_summary_aggregates_clean_and_blocked_runs(tmp_path):
+    clean_one = _write_bundle(
+        tmp_path,
+        run_id="20260101-000000Z-00000001",
+        realized_pnl=-0.25,
+    )
+    clean_two = _write_bundle(
+        tmp_path,
+        run_id="20260102-000000Z-00000002",
+        realized_pnl=0.75,
+    )
+    blocked = _write_bundle(
+        tmp_path,
+        run_id="20260103-000000Z-00000003",
+        manifest_overrides={"git_dirty": True},
+        realized_pnl=-1.0,
+    )
+
+    summary = load_testnet_evidence_summary([clean_one, clean_two, blocked])
+
+    assert summary.run_count == 3
+    assert summary.clean_run_count == 2
+    assert summary.blocked_run_count == 1
+    assert summary.clean_run_ids == [
+        "20260101-000000Z-00000001",
+        "20260102-000000Z-00000002",
+    ]
+    assert summary.blocked_run_ids == ["20260103-000000Z-00000003"]
+    assert summary.clean_elapsed_seconds == 43_200.0
+    assert summary.clean_orders == 4
+    assert summary.clean_fills == 4
+    assert summary.clean_positions == 2
+    assert summary.clean_heartbeats == 6
+    assert summary.clean_alerts == 0
+    assert summary.clean_realized_pnl == 0.5
+    assert summary.total_realized_pnl == -0.5
+    assert summary.final_flat_run_count == 3
+    assert summary.review_blockers_by_run == {
+        "20260103-000000Z-00000003": ["git_dirty"]
+    }
+    assert summary.recommendation == "review_blocked_runs_before_progress_evidence"
+
+
+def test_render_summary_text_and_markdown(tmp_path):
+    clean_one = _write_bundle(tmp_path, run_id="20260101-000000Z-00000001")
+    clean_two = _write_bundle(tmp_path, run_id="20260102-000000Z-00000002")
+    summary = load_testnet_evidence_summary([clean_one, clean_two])
+
+    text = render_summary_text(summary)
+    markdown = render_markdown_summary(summary)
+
+    assert "clean_run_count: 2" in text
+    assert "recommendation: ready_for_progress_evidence" in text
+    assert "| run_id | date | clean | heartbeats | alerts | sidecars |" in markdown
+    assert "`20260101-000000Z-00000001`" in markdown
+    assert "- clean_run_count: 2/2" in markdown
 
 
 def test_report_cli_outputs_json(tmp_path, capsys):
@@ -348,6 +428,32 @@ def test_report_cli_outputs_text(tmp_path, capsys):
     out = capsys.readouterr().out
     assert "clean_for_retro: True" in out
     assert "source_model: freqai_linear_v1 / linear-mom-train20240105" in out
+
+
+def test_report_cli_outputs_summary_json_for_multiple_bundles(tmp_path, capsys):
+    clean_one = _write_bundle(tmp_path, run_id="20260101-000000Z-00000001")
+    clean_two = _write_bundle(tmp_path, run_id="20260102-000000Z-00000002")
+
+    rc = main(["--json", str(clean_one), str(clean_two)])
+
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["run_count"] == 2
+    assert payload["clean_run_count"] == 2
+    assert payload["clean_orders"] == 4
+
+
+def test_report_cli_outputs_summary_markdown(tmp_path, capsys):
+    clean_one = _write_bundle(tmp_path, run_id="20260101-000000Z-00000001")
+    clean_two = _write_bundle(tmp_path, run_id="20260102-000000Z-00000002")
+
+    rc = main(["--markdown", str(clean_one), str(clean_two)])
+
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "# Testnet Evidence Summary" in out
+    assert "- clean_run_count: 2/2" in out
+    assert "`20260102-000000Z-00000002`" in out
 
 
 def test_load_testnet_bundle_report_rejects_non_testnet_kind(tmp_path):

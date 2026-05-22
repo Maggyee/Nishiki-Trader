@@ -2,6 +2,7 @@
 
 - **Status**: Active handoff summary
 - **Last updated**: 2026-05-22 after canary `20260522-030142Z-36922497`
+  and `report_testnet_bundle --markdown` aggregate verification
 - **Scope**: Phase 3 ADR-008 testnet canary evidence for `freqai_linear_v1 / linear-mom-train20240105`
 - **Decision state**: Operational evidence only. This file does not mutate `SourcePolicy`.
 
@@ -38,7 +39,7 @@ Binance Spot testnet canaries with real entry/exit order flow:
 
 Aggregate for those four clean 6 h sidecar-backed sessions:
 
-- 24 h of clean strategy-registered testnet runtime.
+- 24.01 h of clean strategy-registered testnet runtime.
 - 8 orders, 8 fills, 4 closed positions, all final FLAT by sidecar.
 - 0 `logs/alerts.log` rows, 0 `ws_reconnect_count`, 0 `exchange_error_count`.
 - External watchdog observed completion without emergency flatten.
@@ -101,7 +102,19 @@ Continue collecting testnet canary evidence with the hardened runbook:
 3. Treat the bundle (`run_manifest.json` plus sidecar parquet files) as the
    promotion source of truth; Grafana/Prometheus/Loki are runtime observation
    aids.
-4. Do not open a live-risk ADR or live promotion unless there is explicit user
+4. Before editing this evidence ledger, regenerate the aggregate table from
+   bundle artifacts:
+
+   ```bash
+   UV_CACHE_DIR=/tmp/uv-cache uv run python -m \
+     apps.strategies_nautilus.runners.report_testnet_bundle --markdown \
+     data/testnet/20260519-120037Z-f1b06fd3 \
+     data/testnet/20260520-095350Z-6414ef0d \
+     data/testnet/20260521-102631Z-ea999625 \
+     data/testnet/20260522-030142Z-36922497
+   ```
+
+5. Do not open a live-risk ADR or live promotion unless there is explicit user
    direction and enough continuous testnet evidence to satisfy the capital
    ladder gate.
 

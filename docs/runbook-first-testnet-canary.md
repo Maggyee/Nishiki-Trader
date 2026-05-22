@@ -593,6 +593,17 @@ The retro **must** record:
    replay rows, record the exact bundle path and how many orders/fills it
    produced.
 
+When updating the Phase 3 evidence ledger, use the same reader in aggregate
+mode so the table starts from bundle artifacts instead of hand-counted rows:
+
+```bash
+UV_CACHE_DIR=/tmp/uv-cache uv run python -m \
+  apps.strategies_nautilus.runners.report_testnet_bundle --markdown \
+  data/testnet/<clean-run-id-1> \
+  data/testnet/<clean-run-id-2> \
+  data/testnet/<clean-run-id-N>
+```
+
 Once the retro is committed, decide via `promotion_review.py` whether
 this experience supports a `hold @ testnet_canary` (keep going) or a
 `demote/disable` (back to `paper_simulated`). Open the new retro for

@@ -108,6 +108,60 @@ class TestnetBundleReport:
     recommendation: str
 
 
+@dataclass(frozen=True)
+class TestnetRunSummary:
+    bundle_dir: str
+    run_id: str
+    date: str | None
+    clean_for_retro: bool
+    elapsed_seconds: float | int | None
+    heartbeat_count: int
+    max_heartbeat_gap_seconds: float | None
+    alert_count: int
+    order_count: int
+    fill_count: int
+    position_count: int
+    account_balance_rows: int
+    lineage_rows: int
+    final_state: str
+    realized_pnl_total: float
+    review_blockers: list[str]
+
+
+@dataclass(frozen=True)
+class TestnetEvidenceSummary:
+    bundle_dirs: list[str]
+    run_count: int
+    clean_run_count: int
+    blocked_run_count: int
+    clean_run_ids: list[str]
+    blocked_run_ids: list[str]
+    total_elapsed_seconds: float
+    clean_elapsed_seconds: float
+    total_heartbeats: int
+    clean_heartbeats: int
+    max_heartbeat_gap_seconds: float | None
+    total_alerts: int
+    clean_alerts: int
+    alert_msg_counts: dict[str, int]
+    total_orders: int
+    total_fills: int
+    total_positions: int
+    total_account_balance_rows: int
+    total_lineage_rows: int
+    total_realized_pnl: float
+    clean_orders: int
+    clean_fills: int
+    clean_positions: int
+    clean_account_balance_rows: int
+    clean_lineage_rows: int
+    clean_realized_pnl: float
+    final_flat_run_count: int
+    review_blockers_by_run: dict[str, list[str]]
+    per_run: list[TestnetRunSummary]
+    recommendation: str
+
+
 def load_testnet_bundle_report(bundle_dir: Path) -> TestnetBundleReport:
     manifest_path = bundle_dir / "run_manifest.json"
     manifest_bytes = manifest_path.read_bytes()
@@ -222,6 +276,63 @@ def load_testnet_bundle_report(bundle_dir: Path) -> TestnetBundleReport:
     )
 
 
+def load_testnet_evidence_summary(
+    bundle_dirs: list[Path],
+) -> TestnetEvidenceSummary:
+    reports = [load_testnet_bundle_report(bundle_dir) for bundle_dir in bundle_dirs]
+    clean_reports = [report for report in reports if report.clean_for_retro]
+    blocked_reports = [report for report in reports if not report.clean_for_retro]
+    per_run = [_run_summary(report) for report in reports]
+    return TestnetEvidenceSummary(
+        bundle_dirs=[str(path) for path in bundle_dirs],
+        run_count=len(reports),
+        clean_run_count=len(clean_reports),
+        blocked_run_count=len(blocked_reports),
+        clean_run_ids=[report.run_id for report in clean_reports],
+        blocked_run_ids=[report.run_id for report in blocked_reports],
+        total_elapsed_seconds=_sum_elapsed_seconds(reports),
+        clean_elapsed_seconds=_sum_elapsed_seconds(clean_reports),
+        total_heartbeats=sum(report.heartbeat_count for report in reports),
+        clean_heartbeats=sum(report.heartbeat_count for report in clean_reports),
+        max_heartbeat_gap_seconds=_max_optional_float(
+            report.max_heartbeat_gap_seconds for report in reports
+        ),
+        total_alerts=sum(report.alert_count for report in reports),
+        clean_alerts=sum(report.alert_count for report in clean_reports),
+        alert_msg_counts=_sum_count_dicts(
+            report.alert_msg_counts for report in reports
+        ),
+        total_orders=sum(report.order_count for report in reports),
+        total_fills=sum(report.fill_count for report in reports),
+        total_positions=sum(report.position_count for report in reports),
+        total_account_balance_rows=sum(
+            report.account_balance_rows for report in reports
+        ),
+        total_lineage_rows=sum(report.lineage_rows for report in reports),
+        total_realized_pnl=_sum_realized_pnl(reports),
+        clean_orders=sum(report.order_count for report in clean_reports),
+        clean_fills=sum(report.fill_count for report in clean_reports),
+        clean_positions=sum(report.position_count for report in clean_reports),
+        clean_account_balance_rows=sum(
+            report.account_balance_rows for report in clean_reports
+        ),
+        clean_lineage_rows=sum(report.lineage_rows for report in clean_reports),
+        clean_realized_pnl=_sum_realized_pnl(clean_reports),
+        final_flat_run_count=sum(1 for report in reports if _is_final_flat(report)),
+        review_blockers_by_run={
+            report.run_id: report.review_blockers
+            for report in reports
+            if report.review_blockers
+        },
+        per_run=per_run,
+        recommendation=(
+            "ready_for_progress_evidence"
+            if reports and not blocked_reports
+            else "review_blocked_runs_before_progress_evidence"
+        ),
+    )
+
+
 def render_text_report(report: TestnetBundleReport) -> str:
     blockers = ", ".join(report.review_blockers) if report.review_blockers else "none"
     return "\n".join(
@@ -289,6 +400,161 @@ def render_text_report(report: TestnetBundleReport) -> str:
             f"recommendation: {report.recommendation}",
         ]
     )
+
+
+def render_summary_text(summary: TestnetEvidenceSummary) -> str:
+    blocked = ", ".join(summary.blocked_run_ids) if summary.blocked_run_ids else "none"
+    clean = ", ".join(summary.clean_run_ids) if summary.clean_run_ids else "none"
+    return "\n".join(
+        [
+            "testnet evidence summary",
+            f"run_count: {summary.run_count}",
+            f"clean_run_count: {summary.clean_run_count}",
+            f"blocked_run_count: {summary.blocked_run_count}",
+            f"clean_run_ids: {clean}",
+            f"blocked_run_ids: {blocked}",
+            f"clean_elapsed_hours: {summary.clean_elapsed_seconds / 3600:.2f}",
+            (
+                "clean_totals: "
+                f"orders={summary.clean_orders} fills={summary.clean_fills} "
+                f"positions={summary.clean_positions} "
+                f"heartbeats={summary.clean_heartbeats} "
+                f"alerts={summary.clean_alerts} "
+                f"realized_pnl={summary.clean_realized_pnl:.8g}"
+            ),
+            (
+                "all_totals: "
+                f"orders={summary.total_orders} fills={summary.total_fills} "
+                f"positions={summary.total_positions} "
+                f"heartbeats={summary.total_heartbeats} "
+                f"alerts={summary.total_alerts} "
+                f"realized_pnl={summary.total_realized_pnl:.8g}"
+            ),
+            (
+                "alert_msg_counts: "
+                f"{json.dumps(summary.alert_msg_counts, sort_keys=True)}"
+            ),
+            f"recommendation: {summary.recommendation}",
+        ]
+    )
+
+
+def render_markdown_summary(summary: TestnetEvidenceSummary) -> str:
+    lines = [
+        "# Testnet Evidence Summary",
+        "",
+        (
+            f"- clean_run_count: {summary.clean_run_count}/{summary.run_count}"
+        ),
+        f"- clean_elapsed_hours: {summary.clean_elapsed_seconds / 3600:.2f}",
+        (
+            "- clean_totals: "
+            f"orders={summary.clean_orders} / fills={summary.clean_fills} / "
+            f"positions={summary.clean_positions} / "
+            f"heartbeats={summary.clean_heartbeats} / alerts={summary.clean_alerts}"
+        ),
+        f"- clean_realized_pnl: {summary.clean_realized_pnl:.8g} USDT",
+        f"- recommendation: `{summary.recommendation}`",
+        "",
+        (
+            "| run_id | date | clean | heartbeats | alerts | sidecars | "
+            "final state | realized PnL | blockers |"
+        ),
+        "|---|---:|---:|---:|---:|---|---|---:|---|",
+    ]
+    for run in summary.per_run:
+        sidecars = (
+            f"orders={run.order_count} / fills={run.fill_count} / "
+            f"positions={run.position_count} / account={run.account_balance_rows} / "
+            f"lineage={run.lineage_rows}"
+        )
+        blockers = ", ".join(run.review_blockers) if run.review_blockers else "none"
+        lines.append(
+            "| "
+            f"`{run.run_id}` | "
+            f"{run.date or 'unknown'} | "
+            f"{str(run.clean_for_retro).lower()} | "
+            f"{run.heartbeat_count} | "
+            f"{run.alert_count} | "
+            f"{sidecars} | "
+            f"{run.final_state} | "
+            f"{run.realized_pnl_total:.8g} | "
+            f"{blockers} |"
+        )
+    return "\n".join(lines)
+
+
+def _run_summary(report: TestnetBundleReport) -> TestnetRunSummary:
+    return TestnetRunSummary(
+        bundle_dir=report.bundle_dir,
+        run_id=report.run_id,
+        date=_date_from_report(report),
+        clean_for_retro=report.clean_for_retro,
+        elapsed_seconds=report.elapsed_seconds,
+        heartbeat_count=report.heartbeat_count,
+        max_heartbeat_gap_seconds=report.max_heartbeat_gap_seconds,
+        alert_count=report.alert_count,
+        order_count=report.order_count,
+        fill_count=report.fill_count,
+        position_count=report.position_count,
+        account_balance_rows=report.account_balance_rows,
+        lineage_rows=report.lineage_rows,
+        final_state=_final_state_label(report),
+        realized_pnl_total=report.realized_pnl_total,
+        review_blockers=report.review_blockers,
+    )
+
+
+def _date_from_report(report: TestnetBundleReport) -> str | None:
+    if report.started_at and len(report.started_at) >= 10:
+        return report.started_at[:10]
+    if len(report.run_id) >= 8 and report.run_id[:8].isdigit():
+        raw = report.run_id[:8]
+        return f"{raw[:4]}-{raw[4:6]}-{raw[6:]}"
+    return None
+
+
+def _final_state_label(report: TestnetBundleReport) -> str:
+    if not report.final_position_sides:
+        return "none"
+    if set(report.final_position_sides) == {"FLAT"}:
+        return "FLAT"
+    return ", ".join(
+        f"{side}:{count}" for side, count in sorted(report.final_position_sides.items())
+    )
+
+
+def _is_final_flat(report: TestnetBundleReport) -> bool:
+    return bool(report.final_position_sides) and set(report.final_position_sides) == {
+        "FLAT"
+    }
+
+
+def _sum_elapsed_seconds(reports: list[TestnetBundleReport]) -> float:
+    return float(
+        sum(
+            report.elapsed_seconds
+            for report in reports
+            if isinstance(report.elapsed_seconds, int | float)
+        )
+    )
+
+
+def _sum_realized_pnl(reports: list[TestnetBundleReport]) -> float:
+    return float(sum(report.realized_pnl_total for report in reports))
+
+
+def _max_optional_float(values: Any) -> float | None:
+    floats = [float(value) for value in values if value is not None]
+    return max(floats) if floats else None
+
+
+def _sum_count_dicts(values: Any) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for value in values:
+        for key, count in value.items():
+            counts[str(key)] = counts.get(str(key), 0) + int(count)
+    return dict(sorted(counts.items()))
 
 
 def _dict_or_empty(value: Any) -> dict[str, Any]:
@@ -505,9 +771,19 @@ def _review_blockers(
         blockers.append("write_live_sidecars_disabled")
     if runtime.get("open_orders") != 0:
         blockers.append(f"open_orders={runtime.get('open_orders')}")
-    if runtime.get("open_positions") != 0:
+    sidecar = _dict_or_empty(runtime.get("sidecar"))
+    positions_flat = _positions_are_flat(positions)
+    sidecar_final_state_authoritative = (
+        sidecar.get("success") is True
+        and sidecar_rows["positions"] > 0
+        and positions_flat
+    )
+    if runtime.get("open_positions") != 0 and not positions_flat:
         blockers.append(f"open_positions={runtime.get('open_positions')}")
-    if runtime.get("open_state_source") != "live_sidecars":
+    if (
+        runtime.get("open_state_source") != "live_sidecars"
+        and not sidecar_final_state_authoritative
+    ):
         blockers.append("open_state_source_not_live_sidecars")
     if _int_or_zero(runtime.get("strategies_registered")) <= 0:
         blockers.append("no_strategies_registered")
@@ -515,7 +791,6 @@ def _review_blockers(
         blockers.append("source_unknown")
     if model_version is None:
         blockers.append("model_version_unknown")
-    sidecar = _dict_or_empty(runtime.get("sidecar"))
     if sidecar.get("success") is not True:
         blockers.append("sidecar_write_not_successful")
     if sidecar.get("error"):
@@ -556,7 +831,7 @@ def _review_blockers(
         blockers.append("no_lineage_fill_ids")
     if not _any_fill_has_signal_id(fills):
         blockers.append("no_fill_signal_id")
-    if not _positions_are_flat(positions):
+    if not positions_flat:
         blockers.append("positions_not_flat")
     return blockers
 
@@ -635,11 +910,19 @@ def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Summarize an ADR-008 testnet canary bundle for retro evidence.",
     )
-    parser.add_argument("bundle_dir", type=Path)
+    parser.add_argument("bundle_dirs", type=Path, nargs="+")
     parser.add_argument(
         "--json",
         action="store_true",
         help="Emit the full report as JSON instead of the text summary.",
+    )
+    parser.add_argument(
+        "--markdown",
+        action="store_true",
+        help=(
+            "Emit a Markdown aggregate summary. With one bundle this still "
+            "renders an aggregate table."
+        ),
     )
     return parser
 
@@ -648,19 +931,33 @@ def main(argv: list[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
     try:
-        report = load_testnet_bundle_report(args.bundle_dir)
+        if len(args.bundle_dirs) == 1 and not args.markdown:
+            report = load_testnet_bundle_report(args.bundle_dirs[0])
+            if args.json:
+                print(json.dumps(asdict(report), indent=2, sort_keys=True))
+            else:
+                print(render_text_report(report))
+            return 0
+        summary = load_testnet_evidence_summary(list(args.bundle_dirs))
     except Exception as exc:
         parser.exit(2, f"{parser.prog}: error: {exc}\n")
     if args.json:
-        print(json.dumps(asdict(report), indent=2, sort_keys=True))
+        print(json.dumps(asdict(summary), indent=2, sort_keys=True))
+    elif args.markdown:
+        print(render_markdown_summary(summary))
     else:
-        print(render_text_report(report))
+        print(render_summary_text(summary))
     return 0
 
 
 __all__ = [
     "TestnetBundleReport",
+    "TestnetEvidenceSummary",
+    "TestnetRunSummary",
+    "load_testnet_evidence_summary",
     "load_testnet_bundle_report",
+    "render_markdown_summary",
+    "render_summary_text",
     "render_text_report",
     "main",
 ]
