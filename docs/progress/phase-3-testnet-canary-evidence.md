@@ -1,8 +1,9 @@
 # Phase 3 Testnet Canary Evidence Summary
 
 - **Status**: Active handoff summary
-- **Last updated**: 2026-05-22 after canary `20260522-030142Z-36922497`,
-  aggregate verification, and continuity-plan tooling
+- **Last updated**: 2026-05-22 after evening canary
+  `20260522-175232Z-83a9d87d`, aggregate verification, and continuity
+  verification
 - **Scope**: Phase 3 ADR-008 testnet canary evidence for `freqai_linear_v1 / linear-mom-train20240105`
 - **Decision state**: Operational evidence only. This file does not mutate `SourcePolicy`.
 
@@ -28,7 +29,7 @@ plan is `docs/progress/phase-3-testnet-continuity-plan.md`.
 
 ## Evidence Bottom Line
 
-The project now has four clean, sidecar-backed, strategy-registered 6 h
+The project now has five clean, sidecar-backed, strategy-registered 6 h
 Binance Spot testnet canaries with real entry/exit order flow:
 
 | run_id | date | heartbeats | alerts | sidecars | final state | realized PnL |
@@ -37,14 +38,21 @@ Binance Spot testnet canaries with real entry/exit order flow:
 | `20260520-095350Z-6414ef0d` | 2026-05-20 | 720 | none | orders=2 / fills=2 / positions=1 / account=451 / lineage=490 | FLAT by sidecar | +0.02137 USDT |
 | `20260521-102631Z-ea999625` | 2026-05-21 | 719 | none | orders=2 / fills=2 / positions=1 / account=451 / lineage=955 | FLAT | -0.18422 USDT |
 | `20260522-030142Z-36922497` | 2026-05-22 | 719 | none | orders=2 / fills=2 / positions=1 / account=451 / lineage=477 | FLAT | -0.46798 USDT |
+| `20260522-175232Z-83a9d87d` | 2026-05-22 | 719 | none | orders=2 / fills=2 / positions=1 / account=451 / lineage=477 | FLAT | -1.23226 USDT |
 
-Aggregate for those four clean 6 h sidecar-backed sessions:
+Aggregate for those five clean 6 h sidecar-backed sessions:
 
-- 24.01 h of clean strategy-registered testnet runtime.
-- 8 orders, 8 fills, 4 closed positions, all final FLAT by sidecar.
+- 30.01 h of clean strategy-registered testnet runtime.
+- 10 orders, 10 fills, 5 closed positions, all final FLAT by sidecar.
 - 0 `logs/alerts.log` rows, 0 `ws_reconnect_count`, 0 `exchange_error_count`.
 - External watchdog observed completion without emergency flatten.
-- Net realized PnL across the four sessions: -0.55587 USDT.
+- Net realized PnL across the five sessions: -1.78813 USDT.
+
+Strict continuity review remains blocked by the 2026-05-20 manifest-backed
+aborted run. With every manifest-backed bundle in the candidate window
+included, the current continuity view is `qualified_day_count=3/4`,
+`current_qualified_streak_days=2/14`; 2026-05-22 now contributes 12.00 clean
+hours.
 
 This is good operational evidence for the testnet path. It is not alpha
 evidence: the fill count is tiny, Binance testnet fees are zero, and the
@@ -63,7 +71,8 @@ signals are wall-clock replays of already-reviewed historical rows.
 | 2026-05-20 | `20260520-095350Z-6414ef0d` | 6 h | Clean live-telemetry canary, no alerts, 2 orders / 2 fills / 1 position, sidecar final FLAT, PnL +0.02137 USDT. | Validated the startup WS and signal-lag fixes over a full window. |
 | 2026-05-21 | `20260521-072730Z-2e4d2146` | 30 min | Real order flow and observability smoke. One benign warning-only `signal_lag_exceeded_threshold` because the short replay window ended before the run. PnL +0.28908 USDT. | Validated Prometheus / Loki / Grafana / node_exporter flow under live traffic; not counted as a fully clean no-alert canary. |
 | 2026-05-21 | `20260521-102631Z-ea999625` | 6 h | Clean observability-backed canary, 719 heartbeats, no alerts, 2 orders / 2 fills / 1 position, final FLAT, PnL -0.18422 USDT. | Confirms trading + observation + alerting + watchdog over the full 6 h path. |
-| 2026-05-22 | `20260522-030142Z-36922497` | 6 h | Clean control-machine canary, 719 heartbeats, no alerts, 2 orders / 2 fills / 1 position, final FLAT, PnL -0.46798 USDT. | Current best operational evidence. Confirms the hardened foreground launch flow: no false start, no overlapping future replay rows, clean watchdog terminal state. |
+| 2026-05-22 | `20260522-030142Z-36922497` | 6 h | Clean control-machine canary, 719 heartbeats, no alerts, 2 orders / 2 fills / 1 position, final FLAT, PnL -0.46798 USDT. | Confirms the hardened foreground launch flow: no false start, no overlapping future replay rows, clean watchdog terminal state. |
+| 2026-05-22 | `20260522-175232Z-83a9d87d` | 6 h | Clean evening control-machine canary, 719 heartbeats, no alerts, 2 orders / 2 fills / 1 position, final FLAT, PnL -1.23226 USDT. | Adds a second clean 6 h block on 2026-05-22; the day now has 12.00 clean hours under the continuity report. |
 
 There was also a one-heartbeat false start before
 `20260521-102631Z-ea999625`: `data/testnet/20260521-102449Z-114b7c91/`.
@@ -114,7 +123,8 @@ Continue collecting testnet canary evidence with the hardened runbook:
      data/testnet/20260519-120037Z-f1b06fd3 \
      data/testnet/20260520-095350Z-6414ef0d \
      data/testnet/20260521-102631Z-ea999625 \
-     data/testnet/20260522-030142Z-36922497
+     data/testnet/20260522-030142Z-36922497 \
+     data/testnet/20260522-175232Z-83a9d87d
    ```
 
    ```bash
@@ -128,7 +138,8 @@ Continue collecting testnet canary evidence with the hardened runbook:
      data/testnet/20260520-035223Z-20061290 \
      data/testnet/20260520-095350Z-6414ef0d \
      data/testnet/20260521-102631Z-ea999625 \
-     data/testnet/20260522-030142Z-36922497
+     data/testnet/20260522-030142Z-36922497 \
+     data/testnet/20260522-175232Z-83a9d87d
    ```
 
 5. Do not open a live-risk ADR or live promotion unless there is explicit user
