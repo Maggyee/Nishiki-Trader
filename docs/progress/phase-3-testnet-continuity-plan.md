@@ -1,13 +1,13 @@
 # Phase 3 Testnet Continuity Plan
 
 - **Status**: Active operating plan
-- **Last updated**: 2026-05-23 after afternoon canary `20260523-121618Z-ba5c4bfe`
+- **Last updated**: 2026-05-24 after canary `20260524-005423Z-24c8c34d`
 - **Scope**: ADR-008 testnet continuity evidence for `freqai_linear_v1 / linear-mom-train20240105`
 - **Decision state**: Planning and evidence tracking only. This file does not authorize live trading or mutate `SourcePolicy`.
 
 ## Current Position
 
-The current clean-session evidence has seven 6 h canaries at the 6 h/day
+The current clean-session evidence has eight 6 h canaries at the 6 h/day
 tracking threshold:
 
 - 2026-05-19: `20260519-120037Z-f1b06fd3`
@@ -17,20 +17,22 @@ tracking threshold:
 - 2026-05-22: `20260522-175232Z-83a9d87d`
 - 2026-05-23: `20260523-014615Z-9ef29d55`
 - 2026-05-23: `20260523-121618Z-ba5c4bfe`
+- 2026-05-24: `20260524-005423Z-24c8c34d`
 
 For continuity review, do not feed the tool only the clean runs. The input
 must be the candidate continuity window: all completed `kind="testnet"`
 bundle directories with `run_manifest.json` inside that window, including
 blocked runs. With the current manifest-backed window from 2026-05-19 through
-2026-05-23, the strict continuity report includes the 2026-05-20 aborted
+2026-05-24, the strict continuity report includes the 2026-05-20 aborted
 bundle `20260520-035223Z-20061290` and shows
-`current_qualified_streak_days=3/14`, `qualified_day_count=4/5`,
+`current_qualified_streak_days=4/14`, `qualified_day_count=5/6`,
 `ws_reconnects=1`, and `emergency_flatten_completed=1`. The 2026-05-22 day
 contributes 12.00 clean hours and the 2026-05-23 day contributes 12.00 clean
-hours. The current blockers are:
+hours; the 2026-05-24 day contributes 6.00 clean hours. The current blockers
+are:
 
 ```text
-current_qualified_streak_days=3<required=14
+current_qualified_streak_days=4<required=14
 emergency_flatten_completed=1
 ```
 
