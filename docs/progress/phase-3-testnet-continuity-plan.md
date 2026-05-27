@@ -1,13 +1,13 @@
 # Phase 3 Testnet Continuity Plan
 
 - **Status**: Active operating plan
-- **Last updated**: 2026-05-26 after blocked canary `20260526-091917Z-1acd81fc`
+- **Last updated**: 2026-05-27 after clean canary `20260527-054700Z-cacef82e`
 - **Scope**: ADR-008 testnet continuity evidence for `freqai_linear_v1 / linear-mom-train20240105`
 - **Decision state**: Planning and evidence tracking only. This file does not authorize live trading or mutate `SourcePolicy`.
 
 ## Current Position
 
-The current clean-session evidence has twelve 6 h canaries at the 6 h/day
+The current clean-session evidence has thirteen 6 h canaries at the 6 h/day
 tracking threshold:
 
 - 2026-05-19: `20260519-120037Z-f1b06fd3`
@@ -22,12 +22,13 @@ tracking threshold:
 - 2026-05-25: `20260525-000508Z-af7de22d`
 - 2026-05-25: `20260525-074853Z-592ff1f1`
 - 2026-05-25: `20260525-140958Z-7bd13f02`
+- 2026-05-27: `20260527-054700Z-cacef82e`
 
 For continuity review, do not feed the tool only the clean runs. The input
 must be the candidate continuity window: all completed `kind="testnet"`
 bundle directories with `run_manifest.json` inside that window, including
 blocked runs. The current manifest-backed window from 2026-05-19 through
-2026-05-26 includes these blocked completed bundles:
+2026-05-27 includes these blocked completed bundles:
 
 - 2026-05-20: `20260520-035223Z-20061290` (startup artifact,
   `emergency_flatten_completed=1`)
@@ -35,15 +36,16 @@ blocked runs. The current manifest-backed window from 2026-05-19 through
   (`signal_lag_exceeded_threshold=1`)
 
 The strict continuity report now shows
-`current_qualified_streak_days=0/14`, `longest_qualified_streak_days=5`,
-`qualified_day_count=6/8`, `ws_reconnects=1`, and
+`current_qualified_streak_days=1/14`, `longest_qualified_streak_days=5`,
+`qualified_day_count=7/9`, `ws_reconnects=1`, and
 `emergency_flatten_completed=1`. The 2026-05-22 day contributes 12.00 clean
 hours, 2026-05-23 contributes 12.00 clean hours, 2026-05-24 contributes
-12.00 clean hours, 2026-05-25 contributes 18.00 clean hours, and 2026-05-26
-contributes 0.00 clean hours. The current blockers are:
+12.00 clean hours, 2026-05-25 contributes 18.00 clean hours, 2026-05-26
+contributes 0.00 clean hours, and 2026-05-27 contributes 6.00 clean hours.
+The current blockers are:
 
 ```text
-current_qualified_streak_days=0<required=14
+current_qualified_streak_days=1<required=14
 emergency_flatten_completed=1
 ```
 
@@ -110,8 +112,8 @@ manual review item until a paper-vs-testnet continuity comparator exists.
 
 1. Continue the hardened 6 h/day control-machine canary routine from
    `docs/runbook-first-testnet-canary.md`. The next possible strict streak
-   advancement begins with a clean 2026-05-27 UTC day because 2026-05-26 is
-   blocked.
+   advancement is a clean 2026-05-28 UTC day; 2026-05-27 is clean and the
+   current strict streak is `1/14` after the 2026-05-26 blocked day.
 2. After each completed run, generate the single-bundle report, write the
    retro, then regenerate the aggregate and continuity reports from bundle
    artifacts.
