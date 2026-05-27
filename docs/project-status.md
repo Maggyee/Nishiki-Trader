@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-05-25 (Phase 3 testnet canary)
+- **Last updated**: 2026-05-26 (Phase 3 testnet canary)
 - **Current phase**: Phase 3 entry
-- **Current objective**: Phase 3 entry remains focused on testnet canary continuity evidence, not live trading. The current evidence summary is `docs/progress/phase-3-testnet-canary-evidence.md`; the active continuity plan is `docs/progress/phase-3-testnet-continuity-plan.md`. Twelve clean, sidecar-backed, strategy-registered 6 h Binance Spot testnet canaries are on record (`20260519-120037Z-f1b06fd3`, `20260520-095350Z-6414ef0d`, `20260521-102631Z-ea999625`, `20260522-030142Z-36922497`, `20260522-175232Z-83a9d87d`, `20260523-014615Z-9ef29d55`, `20260523-121618Z-ba5c4bfe`, `20260524-005423Z-24c8c34d`, `20260524-072049Z-a49496ed`, `20260525-000508Z-af7de22d`, `20260525-074853Z-592ff1f1`, `20260525-140958Z-7bd13f02`) with real entry/exit order flow, final sidecar state FLAT, no alert logs, `ws_reconnect_count=0`, and `exchange_error_count=0`. Clean aggregate evidence is now 72.02 h, 24 orders, 24 fills, 12 closed positions, and -0.43603 USDT realized PnL. Strict continuity review must include blocked completed bundles in the candidate window; including the 2026-05-20 aborted bundle currently yields `current_qualified_streak_days=5/14`, 2026-05-22 contributes 12.00 clean hours, 2026-05-23 contributes 12.00 clean hours, 2026-05-24 contributes 12.00 clean hours, 2026-05-25 contributes 18.00 clean hours, and the blocker list still includes `emergency_flatten_completed=1`. Keep `freqai_linear_v1 / linear-mom-train20240105` at `hold @ testnet_canary` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. Observability and Postgres remain Phase 3 support systems; bundle artifacts remain the promotion source of truth. No live trading without a separate live-risk ADR and the ADR-001 capital ladder gate.
+- **Current objective**: Phase 3 entry remains focused on testnet canary continuity evidence, not live trading. The current evidence summary is `docs/progress/phase-3-testnet-canary-evidence.md`; the active continuity plan is `docs/progress/phase-3-testnet-continuity-plan.md`. Twelve clean, sidecar-backed, strategy-registered 6 h Binance Spot testnet canaries are on record (`20260519-120037Z-f1b06fd3`, `20260520-095350Z-6414ef0d`, `20260521-102631Z-ea999625`, `20260522-030142Z-36922497`, `20260522-175232Z-83a9d87d`, `20260523-014615Z-9ef29d55`, `20260523-121618Z-ba5c4bfe`, `20260524-005423Z-24c8c34d`, `20260524-072049Z-a49496ed`, `20260525-000508Z-af7de22d`, `20260525-074853Z-592ff1f1`, `20260525-140958Z-7bd13f02`) with real entry/exit order flow, final sidecar state FLAT, no alert logs, `ws_reconnect_count=0`, and `exchange_error_count=0`. Clean aggregate evidence remains 72.02 h, 24 orders, 24 fills, 12 closed positions, and -0.43603 USDT realized PnL. The 2026-05-26 run `20260526-091917Z-1acd81fc` completed `max_duration` and ended FLAT, but one `signal_lag_exceeded_threshold` warning makes it blocked evidence. Strict continuity review must include blocked completed bundles in the candidate window; including the 2026-05-20 aborted bundle and the 2026-05-26 blocked bundle currently yields `current_qualified_streak_days=0/14`, `longest_qualified_streak_days=5`, `qualified_day_count=6/8`, 2026-05-26 clean hours `0.00`, and blockers `current_qualified_streak_days=0<required=14` plus `emergency_flatten_completed=1`. Keep `freqai_linear_v1 / linear-mom-train20240105` at `hold @ testnet_canary` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. Observability and Postgres remain Phase 3 support systems; bundle artifacts remain the promotion source of truth. No live trading without a separate live-risk ADR and the ADR-001 capital ladder gate.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -99,22 +99,22 @@ At task finish:
 
 ## Current Focus
 
-Phase 3 entry: maintain the testnet canary path and grow the 14-day
-continuity streak now that ADR-008 §6.6 has twelve clean 6 h sidecar-backed
-testnet canaries summarized in
+Phase 3 entry: maintain the testnet canary path and rebuild the 14-day
+continuity streak after the 2026-05-26 blocked canary reset it to 0/14.
+ADR-008 §6.6 has twelve clean 6 h sidecar-backed testnet canaries summarized in
 `docs/progress/phase-3-testnet-canary-evidence.md` and tracked by
 `docs/progress/phase-3-testnet-continuity-plan.md`.
 
 Immediate focus:
 
 1. Keep `freqai_linear_v1 / linear-mom-train20240105` at `hold @ testnet_canary` under the already-signed `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`.
-2. Treat `docs/progress/phase-3-testnet-canary-evidence.md`, `docs/progress/phase-3-testnet-continuity-plan.md`, and the latest 2026-05-25 third 6 h canary retro as the current operational evidence. Use `python -m apps.strategies_nautilus.runners.report_testnet_bundle data/testnet/<run_id>` before writing future canary retros, use `--markdown` with clean bundle directories before updating the clean evidence ledger, and use `--continuity --markdown --min-clean-hours-per-day 6 --required-consecutive-days 14` with every completed manifest-backed bundle in the candidate window before claiming continuity progress. Do not open a new `promotion_review` unless an actual policy/stage decision is being made.
+2. Treat `docs/progress/phase-3-testnet-canary-evidence.md`, `docs/progress/phase-3-testnet-continuity-plan.md`, and the latest 2026-05-26 signal-lag blocked canary retro as the current operational evidence. Use `python -m apps.strategies_nautilus.runners.report_testnet_bundle data/testnet/<run_id>` before writing future canary retros, use `--markdown` with clean bundle directories before updating the clean evidence ledger, and use `--continuity --markdown --min-clean-hours-per-day 6 --required-consecutive-days 14` with every completed manifest-backed bundle in the candidate window before claiming continuity progress. Do not open a new `promotion_review` unless an actual policy/stage decision is being made.
 3. ADR-008 §6.2 Phase 3b, §6.3 Phase 3c-a/b/c, §6.4 Phase 3d, §6.5 Phase 3e, §6.6 Phase 3f stability soak/canary, and the §8 promotion-review patch are all implemented and unit-tested. The `phase_3_not_ready` blocker now only hard-blocks `live_canary` / `live_normal`.
 4. Keep LLM agents and FreqAI out of the order path; `SignalEvent v1 -> NautilusTrader Strategy -> RiskEngine` remains the only bridge.
 
 ## Next Steps
 
-1. Continue the hardened control-machine 6 h/day canary routine and grow the strict continuity streak from 5/14 qualified days. After each completed run, produce the single-bundle report, update the retro/evidence ledger, and rerun `report_testnet_bundle --continuity --markdown --min-clean-hours-per-day 6 --required-consecutive-days 14` with every completed manifest-backed bundle in the candidate window.
+1. Continue the hardened control-machine 6 h/day canary routine and rebuild the strict continuity streak from 0/14 qualified days. After each completed run, produce the single-bundle report, update the retro/evidence ledger, and rerun `report_testnet_bundle --continuity --markdown --min-clean-hours-per-day 6 --required-consecutive-days 14` with every completed manifest-backed bundle in the candidate window. For wall-clock replay canaries, treat the full replay write as the final pre-launch action; if more than 120 s elapse before runner `node_run_invoked`, write a fresh non-overlapping stream instead of counting the run as clean evidence.
 2. Use `promotion_review.py` (not just `report_paper_bundle.py`) as the required ADR-007 §2.6 audit artifact for any actual `SourcePolicy` change. Do **not** run `promotion_review.py hold @ testnet_canary` as a routine ratification of each canary — the canary retros plus the evidence and continuity progress files are the operational record.
 3. Keep the `testnet_runner.py` startup guard + connection probe as the first line of defense for any subsequent testnet run: explicit `--allow-real-credentials`, clean git, source/model retro evidence, testnet multiplier cap, key-prefix-only audit, Ed25519-only credentials (HMAC fails Binance Spot WS `session.logon`), and Binance Spot TESTNET-only adapter config. The probe injects credentials into the in-memory `TradingNodeConfig` only and never writes the full key/secret to `logs/runtime.log` or `connection_probe.json`.
 4. Continue collecting testnet canary and paper_simulated evidence on `freqai_linear_v1 / linear-mom-train20240105` as needed. The v11 paper bundle's expectancy (+0.00491 USDT/trade, 53.6% win rate, -0.003878% max drawdown over 152 days) is weaker than v9, includes a negative April, and only mildly positive May; the parquet-backed canary fill set is still only a few trades. Treat both as operational/monitoring evidence, not alpha.
@@ -134,19 +134,20 @@ Immediate focus:
 
 ## Latest Verification
 
-On 2026-05-25, after running the third 6 h testnet canary
-`20260525-140958Z-7bd13f02`:
+On 2026-05-26, after running the 6 h testnet canary
+`20260526-091917Z-1acd81fc`:
 
-- `run_manifest.json` -> `shutdown_reason=max_duration`, `elapsed_seconds=21605.369414`, `git_dirty=false`, `git_commit=14a7022`, `strategies_registered=1`, `actors_registered=0`, `enable_strategy_execution=true`, `write_live_sidecars=true`, `open_orders=0`, `open_positions=0`, `open_state_source=live_sidecars`, `ws_reconnect_count=0`, `exchange_error_count=0`.
-- 719 heartbeats at 30 s cadence, max gap 30.17 s, `ws_connected=true` throughout, no `logs/alerts.log`.
-- Live sidecars: orders=2 / fills=2 / positions=1 / account_balances=451 / signal_lineage=476. Entry `BUY 0.001 BTCUSDT @77489.38`, scheduled close `SELL 0.001 BTCUSDT @77449.99`, final position FLAT, realized PnL `-0.03939 USDT`.
-- Watchdog: 717 healthy + 15 run_completed ticks, 0 `flatten_invoked`.
-- `UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.report_testnet_bundle data/testnet/20260525-140958Z-7bd13f02` -> `clean_for_retro: True`, `review_blockers: none`, `recommendation=ready_for_retro_evidence`.
-- Clean aggregate command across twelve clean 6 h bundles -> `clean_run_count: 12/12`, `clean_elapsed_hours: 72.02`, `orders=24 / fills=24 / positions=12 / heartbeats=8630 / alerts=0`, `clean_realized_pnl=-0.43603 USDT`.
-- Strict continuity command including the 2026-05-20 blocked manifest -> `qualified_day_count: 6/7`, `current_qualified_streak_days: 5/14`, 2026-05-22 clean hours `12.00`, 2026-05-23 clean hours `12.00`, 2026-05-24 clean hours `12.00`, 2026-05-25 clean hours `18.00`, blockers `current_qualified_streak_days=5<required=14` and `emergency_flatten_completed=1`.
-- Pre-run baseline: `UV_CACHE_DIR=/tmp/uv-cache uv run pytest -q` -> **503 passed**; `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check apps tests docs infra` -> clean.
+- `run_manifest.json` -> `shutdown_reason=max_duration`, `elapsed_seconds=21605.387683`, `git_dirty=false`, `git_commit=2e37a2a`, `strategies_registered=1`, `actors_registered=0`, `enable_strategy_execution=true`, `write_live_sidecars=true`, `open_orders=0`, `open_positions=0`, `open_state_source=live_sidecars`, `ws_reconnect_count=0`, `exchange_error_count=0`.
+- 719 heartbeats at 30 s cadence, max gap 30.182 s, `ws_connected=true` throughout. `logs/alerts.log` has one warning: `signal_lag_exceeded_threshold`.
+- Live sidecars: orders=2 / fills=2 / positions=1 / account_balances=451 / signal_lineage=467. Entry `BUY 0.001 BTCUSDT @76799.54`, scheduled close `SELL 0.001 BTCUSDT @76898.00`, final position FLAT, realized PnL `+0.09846 USDT`.
+- Watchdog: 711 healthy + 15 run_completed ticks, 0 `flatten_invoked`.
+- `UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.strategies_nautilus.runners.report_testnet_bundle data/testnet/20260526-091917Z-1acd81fc` -> `clean_for_retro: False`, `review_blockers: alerts=1`, `recommendation=review_blockers_before_retro`.
+- Clean aggregate command across the twelve clean 6 h bundles remains unchanged -> `clean_run_count: 12/12`, `clean_elapsed_hours: 72.02`, `orders=24 / fills=24 / positions=12 / heartbeats=8630 / alerts=0`, `clean_realized_pnl=-0.43603 USDT`.
+- Strict continuity command including the 2026-05-20 blocked manifest and this 2026-05-26 blocked bundle -> `qualified_day_count: 6/8`, `current_qualified_streak_days: 0/14`, `longest_qualified_streak_days: 5`, 2026-05-26 clean hours `0.00`, blockers `current_qualified_streak_days=0<required=14` and `emergency_flatten_completed=1`.
+- Root cause: the wall-clock replay stream was written too early; first replay was `2026-05-26T09:10:05.617938Z`, runner `node_run_invoked` was `2026-05-26T09:19:17.704Z`, and the last replay was `2026-05-26T15:09:20.617938Z`, about 10 min before shutdown.
+- Pre-run baseline: `UV_CACHE_DIR=/tmp/uv-cache uv run pytest -q` -> **491 passed, 12 skipped**; `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check apps tests docs infra` -> clean.
 - Post-retro doc check: `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check apps tests docs infra` -> clean; `git diff --check` -> clean.
-- Retro: `docs/retros/2026-05-25-phase-3f-testnet-canary-6h-third-control-run.md`.
+- Retro: `docs/retros/2026-05-26-phase-3f-testnet-canary-6h-signal-lag-blocked-run.md`.
 
 On 2026-05-25, after running the 6 h testnet canary
 `20260525-000508Z-af7de22d`:

@@ -1,8 +1,8 @@
 # Phase 3 Testnet Canary Evidence Summary
 
 - **Status**: Active handoff summary
-- **Last updated**: 2026-05-25 after third canary
-  `20260525-140958Z-7bd13f02`, aggregate verification, and continuity
+- **Last updated**: 2026-05-26 after blocked canary
+  `20260526-091917Z-1acd81fc`, aggregate verification, and continuity
   verification
 - **Scope**: Phase 3 ADR-008 testnet canary evidence for `freqai_linear_v1 / linear-mom-train20240105`
 - **Decision state**: Operational evidence only. This file does not mutate `SourcePolicy`.
@@ -55,12 +55,19 @@ Aggregate for those twelve clean 6 h sidecar-backed sessions:
 - External watchdog observed completion without emergency flatten.
 - Net realized PnL across the twelve sessions: -0.43603 USDT.
 
+A later 2026-05-26 completed bundle,
+`20260526-091917Z-1acd81fc`, is not clean evidence because one advisory
+`signal_lag_exceeded_threshold` row fired after the wall-clock replay stream
+expired before shutdown. It completed `max_duration`, ended final FLAT, and
+wrote matching sidecars, but it must be included as a blocked bundle in
+continuity review.
+
 Strict continuity review remains blocked by the 2026-05-20 manifest-backed
-aborted run. With every manifest-backed bundle in the candidate window
-included, the current continuity view is `qualified_day_count=6/7`,
-`current_qualified_streak_days=5/14`; 2026-05-22 contributes 12.00 clean
-hours, 2026-05-23 contributes 12.00 clean hours, 2026-05-24 contributes
-12.00 clean hours, and 2026-05-25 contributes 18.00 clean hours.
+aborted run and the 2026-05-26 signal-lag blocked run. With every
+manifest-backed bundle in the candidate window included, the current
+continuity view is `qualified_day_count=6/8`,
+`current_qualified_streak_days=0/14`, and
+`longest_qualified_streak_days=5`; 2026-05-26 contributes 0.00 clean hours.
 
 This is good operational evidence for the testnet path. It is not alpha
 evidence: the fill count is tiny, Binance testnet fees are zero, and the
@@ -88,6 +95,7 @@ signals are wall-clock replays of already-reviewed historical rows.
 | 2026-05-25 | `20260525-000508Z-af7de22d` | 6 h | Clean control-machine canary, 719 heartbeats, no alerts, 2 orders / 2 fills / 1 position, final FLAT, PnL +0.17073 USDT. | Advances the strict current continuity streak to 5/14 qualified days. |
 | 2026-05-25 | `20260525-074853Z-592ff1f1` | 6 h | Clean second control-machine canary, 719 heartbeats, no alerts, 2 orders / 2 fills / 1 position, final FLAT, PnL +0.02838 USDT. | Adds a second clean 6 h block on 2026-05-25; the day now has 12.00 clean hours under the continuity report while the strict day streak remains 5/14. |
 | 2026-05-25 | `20260525-140958Z-7bd13f02` | 6 h | Clean third control-machine canary, 719 heartbeats, no alerts, 2 orders / 2 fills / 1 position, final FLAT, PnL -0.03939 USDT. | Adds a third clean 6 h block on 2026-05-25; the day now has 18.00 clean hours under the continuity report while the strict day streak remains 5/14. |
+| 2026-05-26 | `20260526-091917Z-1acd81fc` | 6 h | Completed `max_duration`, final FLAT, 719 heartbeats, 2 orders / 2 fills / 1 position, PnL +0.09846 USDT, but one `signal_lag_exceeded_threshold` warning fired after the replay stream expired before shutdown. | Manifest-backed blocked run; not counted as clean evidence and resets the strict current continuity streak to 0/14. |
 
 There was also a one-heartbeat false start before
 `20260521-102631Z-ea999625`: `data/testnet/20260521-102449Z-114b7c91/`.
@@ -124,10 +132,14 @@ Continue collecting testnet canary evidence with the hardened runbook:
 2. Before writing new replay rows, check for existing future
    `metadata.wall_clock_replay` rows and avoid overlapping streams unless the
    overlap is intentional and recorded in the retro.
-3. Treat the bundle (`run_manifest.json` plus sidecar parquet files) as the
+3. Treat the full replay write as the final pre-launch action. If more than
+   120 s elapse before runner `node_run_invoked`, re-check future replay rows
+   and write a fresh non-overlapping stream before accepting the run as clean
+   evidence.
+4. Treat the bundle (`run_manifest.json` plus sidecar parquet files) as the
    promotion source of truth; Grafana/Prometheus/Loki are runtime observation
    aids.
-4. Before editing this evidence ledger, regenerate the clean aggregate table
+5. Before editing this evidence ledger, regenerate the clean aggregate table
    from clean bundle artifacts. For the continuity view, include every
    completed manifest-backed bundle in the candidate window, including
    blocked runs:
@@ -168,10 +180,11 @@ Continue collecting testnet canary evidence with the hardened runbook:
      data/testnet/20260524-072049Z-a49496ed \
      data/testnet/20260525-000508Z-af7de22d \
      data/testnet/20260525-074853Z-592ff1f1 \
-     data/testnet/20260525-140958Z-7bd13f02
+     data/testnet/20260525-140958Z-7bd13f02 \
+     data/testnet/20260526-091917Z-1acd81fc
    ```
 
-5. Do not open a live-risk ADR or live promotion unless there is explicit user
+6. Do not open a live-risk ADR or live promotion unless there is explicit user
    direction and enough continuous testnet evidence to satisfy the capital
    ladder gate.
 

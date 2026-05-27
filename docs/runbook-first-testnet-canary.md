@@ -188,6 +188,16 @@ bar-cadence polling jitter from producing advisory lag alerts; the older
 3-signal smoke pattern is now insufficient once live telemetry reports real
 signal lag.
 
+Treat the full replay write as the final pre-launch action. A 480-row stream
+at 45 s spacing spans only `5h59m15s` from first replayed signal to last; the
+180 s start delay is the launch cushion that makes it cover a 6 h canary.
+Start the runner immediately after the full replay command completes. If more
+than 120 s elapse before the runner reaches `node_run_invoked`, do not count
+on that stream for clean evidence: stop before real order flow if possible,
+run the future replay check again, and write a fresh non-overlapping stream
+with `--start-at` at least 180 s in the future. Record any deviation in the
+retro.
+
 When using an explicit non-overlapping start, set the timestamp first:
 
 ```bash
