@@ -1,9 +1,9 @@
 # Phase 3 Testnet Canary Evidence Summary
 
 - **Status**: Active handoff summary
-- **Last updated**: 2026-05-30 after clean canary
-  `20260530-062356Z-f47c4a93`, aggregate verification, and continuity
-  verification
+- **Last updated**: 2026-05-30 after blocked duplicate-entry canary
+  `20260530-132316Z-9b5e2230`, same-bar order guard, aggregate verification,
+  and continuity verification
 - **Scope**: Phase 3 ADR-008 testnet canary evidence for `freqai_linear_v1 / linear-mom-train20240105`
 - **Decision state**: Operational evidence only. This file does not mutate `SourcePolicy`.
 
@@ -58,21 +58,27 @@ Aggregate for those fourteen clean 6 h sidecar-backed sessions:
 - 10068 heartbeats across clean bundles.
 - Net realized PnL across the fourteen sessions: -0.20318 USDT.
 
-A later 2026-05-26 completed bundle,
-`20260526-091917Z-1acd81fc`, is not clean evidence because one advisory
-`signal_lag_exceeded_threshold` row fired after the wall-clock replay stream
-expired before shutdown. It completed `max_duration`, ended final FLAT, and
-wrote matching sidecars, but it must be included as a blocked bundle in
-continuity review.
+The 2026-05-26 completed bundle `20260526-091917Z-1acd81fc` is not clean
+evidence because one advisory `signal_lag_exceeded_threshold` row fired after
+the wall-clock replay stream expired before shutdown. It completed
+`max_duration`, ended final FLAT, and wrote matching sidecars, but it must be
+included as a blocked bundle in continuity review.
+
+A later 2026-05-30 completed bundle `20260530-132316Z-9b5e2230` is also not
+clean evidence. Two due buy signals were processed in the same `on_bar` call
+and submitted two `BUY MARKET 0.001` orders before the Nautilus portfolio cache
+observed the first fill. The operator aborted the canary, external emergency
+flatten closed `0.002 BTC`, and residual orders/positions were empty. A
+same-bar executable intent suppression guard was added after this run.
 
 Strict continuity review remains blocked by the 2026-05-20 manifest-backed
-aborted run and the 2026-05-26 signal-lag blocked run. With every
-manifest-backed bundle in the candidate window included, the current
-continuity view is `qualified_day_count=8/10`,
-`current_qualified_streak_days=1/14`, and
-`longest_qualified_streak_days=5`; 2026-05-30 contributes 6.00 clean hours
-and is the current strict streak day after the 2026-05-28 and 2026-05-29
-UTC days had no manifest-backed canary bundle in this ledger.
+aborted run, the 2026-05-26 signal-lag blocked run, and the 2026-05-30
+duplicate-entry aborted run. With every manifest-backed bundle in the
+candidate window included, the current continuity view is
+`qualified_day_count=7/10`, `current_qualified_streak_days=0/14`, and
+`longest_qualified_streak_days=5`; 2026-05-30 contributes 6.00 clean hours but
+is not a qualified day because it also has the blocked
+`20260530-132316Z-9b5e2230` bundle.
 
 This is good operational evidence for the testnet path. It is not alpha
 evidence: the fill count is tiny, Binance testnet fees are zero, and the
@@ -102,7 +108,8 @@ signals are wall-clock replays of already-reviewed historical rows.
 | 2026-05-25 | `20260525-140958Z-7bd13f02` | 6 h | Clean third control-machine canary, 719 heartbeats, no alerts, 2 orders / 2 fills / 1 position, final FLAT, PnL -0.03939 USDT. | Adds a third clean 6 h block on 2026-05-25; the day now has 18.00 clean hours under the continuity report while the strict day streak remains 5/14. |
 | 2026-05-26 | `20260526-091917Z-1acd81fc` | 6 h | Completed `max_duration`, final FLAT, 719 heartbeats, 2 orders / 2 fills / 1 position, PnL +0.09846 USDT, but one `signal_lag_exceeded_threshold` warning fired after the replay stream expired before shutdown. | Manifest-backed blocked run; not counted as clean evidence and resets the strict current continuity streak to 0/14. |
 | 2026-05-27 | `20260527-054700Z-cacef82e` | 6 h | Clean control-machine canary, 719 heartbeats, no alerts, 2 orders / 2 fills / 1 position, final FLAT, PnL +0.16819 USDT. | Restarts the strict current continuity streak at 1/14 after the 2026-05-26 blocked day. |
-| 2026-05-30 | `20260530-062356Z-f47c4a93` | 6 h | Clean control-machine canary, 719 heartbeats, no alerts, 2 orders / 2 fills / 1 position, final FLAT, PnL +0.06466 USDT. | Current strict continuity streak is 1/14 because 2026-05-28 and 2026-05-29 have no manifest-backed canary bundle in this ledger. |
+| 2026-05-30 | `20260530-062356Z-f47c4a93` | 6 h | Clean control-machine canary, 719 heartbeats, no alerts, 2 orders / 2 fills / 1 position, final FLAT, PnL +0.06466 USDT. | Clean evidence remains valid, but the day is no longer qualified after the later blocked `20260530-132316Z-9b5e2230` bundle. |
+| 2026-05-30 | `20260530-132316Z-9b5e2230` | 378 s | Operator-aborted after duplicate same-bar entry orders opened `0.002 BTC`; external emergency flatten succeeded with no residual orders or positions. | Manifest-backed blocked run; not counted as clean evidence and resets the strict current continuity streak to 0/14. |
 
 There was also a one-heartbeat false start before
 `20260521-102631Z-ea999625`: `data/testnet/20260521-102449Z-114b7c91/`.
@@ -192,7 +199,8 @@ Continue collecting testnet canary evidence with the hardened runbook:
      data/testnet/20260525-140958Z-7bd13f02 \
      data/testnet/20260526-091917Z-1acd81fc \
      data/testnet/20260527-054700Z-cacef82e \
-     data/testnet/20260530-062356Z-f47c4a93
+     data/testnet/20260530-062356Z-f47c4a93 \
+     data/testnet/20260530-132316Z-9b5e2230
    ```
 
 6. Do not open a live-risk ADR or live promotion unless there is explicit user

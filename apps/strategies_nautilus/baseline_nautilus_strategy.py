@@ -14,7 +14,10 @@ The strategy:
 2. On each `Bar`, pops every signal whose `ts_event` is at-or-before the bar
    time, asks `BaselineSignalStrategy.decide(...)` for an `OrderIntent`, and
    either submits a market order (`target_long` / `target_short`) or closes
-   positions (`target_flat`). `skip` is a no-op.
+   positions (`target_flat`). `skip` is a no-op. If multiple executable
+   signals are due on the same bar, only the first order-submitting intent is
+   sent to NautilusTrader; later same-bar intents are preserved in lineage but
+   suppressed so the next bar can observe the updated portfolio state.
 3. Tracks `lineage` (one record per `SignalEvent`) including the
    `client_order_id` of any submitted order, so the runner can write
    `signal_lineage.parquet` per ADR-004 §2.3 and join `signal_id` back
@@ -171,9 +174,21 @@ class BaselineNautilusStrategy(Strategy):
     def on_bar(self, bar: Bar) -> None:
         bar_ns = int(bar.ts_event)
         self._update_daily_risk_state(bar_ns)
+        submitted_order_this_bar = False
         for event in self._signal_source.pop_due(bar_ns):
             intent = self._baseline.decide(event, now_ns=bar_ns)
-            client_order_ids = self._apply_intent(intent)
+            lineage_reason = intent.reason
+            if (
+                submitted_order_this_bar
+                and intent.action != "skip"
+                and not intent.dry_run
+            ):
+                client_order_ids = []
+                lineage_reason = "suppressed_after_same_bar_order_submission"
+            else:
+                client_order_ids = self._apply_intent(intent)
+                if client_order_ids:
+                    submitted_order_this_bar = True
             self.lineage.append(
                 LineageRecord(
                     signal_id=event.signal_id,
@@ -181,7 +196,7 @@ class BaselineNautilusStrategy(Strategy):
                     model_version=event.model_version,
                     ts_event=int(event.ts_event),
                     decision=intent.action,
-                    reason=intent.reason,
+                    reason=lineage_reason,
                     client_order_ids=client_order_ids,
                     ts_decision=bar_ns,
                 )

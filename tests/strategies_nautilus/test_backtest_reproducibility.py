@@ -15,6 +15,7 @@ import filecmp
 import json
 from decimal import Decimal
 from pathlib import Path
+from types import SimpleNamespace
 
 import pandas as pd
 import pyarrow as pa
@@ -529,6 +530,66 @@ def test_nautilus_wrapper_updates_daily_kill_switch(
 
     strategy._update_daily_risk_state(BASE_TS_NS + 24 * 60 * ONE_MIN_NS)
     assert strategy._baseline.kill_switch_engaged is False
+
+
+def test_nautilus_wrapper_suppresses_same_bar_order_intents(
+    btcusdt_instrument, bar_type, make_payload, monkeypatch
+):
+    config = BaselineStrategyConfig(
+        venue="BINANCE",
+        auth=Authorization(
+            allowed_sources=frozenset({"freqai_v1"}),
+            allowed_model_versions=frozenset({"2026-05-14"}),
+        ),
+        min_confidence=0.5,
+        max_position_pct=0.05,
+        daily_drawdown_stop_pct=0.05,
+    )
+    signals = [
+        SignalEvent.model_validate(
+            make_payload(
+                signal_id="same-bar-buy-1",
+                ts_event=BASE_TS_NS + ONE_MIN_NS,
+                side="buy",
+            )
+        ),
+        SignalEvent.model_validate(
+            make_payload(
+                signal_id="same-bar-buy-2",
+                ts_event=BASE_TS_NS + ONE_MIN_NS,
+                side="buy",
+            )
+        ),
+    ]
+    strategy = BaselineNautilusStrategy(
+        BaselineNautilusStrategyParams(
+            instrument_id=btcusdt_instrument.id,
+            bar_type=bar_type,
+            signals=signals,
+            baseline_config=config,
+            trade_size=Decimal("0.001"),
+            equity_currency=USDT,
+        )
+    )
+    monkeypatch.setattr(strategy, "_current_equity", lambda: None)
+    applied_signal_ids: list[str] = []
+
+    def fake_apply_intent(intent):
+        applied_signal_ids.append(intent.signal_id)
+        return [f"order-{len(applied_signal_ids)}"]
+
+    monkeypatch.setattr(strategy, "_apply_intent", fake_apply_intent)
+
+    strategy.on_bar(SimpleNamespace(ts_event=BASE_TS_NS + ONE_MIN_NS))
+
+    assert applied_signal_ids == ["same-bar-buy-1"]
+    assert [row.signal_id for row in strategy.lineage] == [
+        "same-bar-buy-1",
+        "same-bar-buy-2",
+    ]
+    assert strategy.lineage[0].client_order_ids == ["order-1"]
+    assert strategy.lineage[1].client_order_ids == []
+    assert strategy.lineage[1].reason == "suppressed_after_same_bar_order_submission"
 
 
 # ----- ADR-006 dry-run + policy integration -----------------------------
