@@ -1,13 +1,13 @@
 # Phase 3 Testnet Continuity Plan
 
 - **Status**: Active operating plan
-- **Last updated**: 2026-05-30 after blocked duplicate-entry canary `20260530-132316Z-9b5e2230`
+- **Last updated**: 2026-05-30 after clean post-fix canary `20260530-141037Z-6e860b4f`
 - **Scope**: ADR-008 testnet continuity evidence for `freqai_linear_v1 / linear-mom-train20240105`
 - **Decision state**: Planning and evidence tracking only. This file does not authorize live trading or mutate `SourcePolicy`.
 
 ## Current Position
 
-The current clean-session evidence has fourteen 6 h canaries at the 6 h/day
+The current clean-session evidence has fifteen 6 h canaries at the 6 h/day
 tracking threshold:
 
 - 2026-05-19: `20260519-120037Z-f1b06fd3`
@@ -24,6 +24,7 @@ tracking threshold:
 - 2026-05-25: `20260525-140958Z-7bd13f02`
 - 2026-05-27: `20260527-054700Z-cacef82e`
 - 2026-05-30: `20260530-062356Z-f47c4a93`
+- 2026-05-30: `20260530-141037Z-6e860b4f`
 
 For continuity review, do not feed the tool only the clean runs. The input
 must be the candidate continuity window: all completed `kind="testnet"`
@@ -45,7 +46,7 @@ The strict continuity report now shows
 hours, 2026-05-23 contributes 12.00 clean hours, 2026-05-24 contributes
 12.00 clean hours, 2026-05-25 contributes 18.00 clean hours, 2026-05-26
 contributes 0.00 clean hours, 2026-05-27 contributes 6.00 clean hours, and
-2026-05-30 contributes 6.00 clean hours but is unqualified because it also has
+2026-05-30 contributes 12.00 clean hours but is unqualified because it also has
 a blocked completed bundle. The current blockers are:
 
 ```text
@@ -117,9 +118,10 @@ manual review item until a paper-vs-testnet continuity comparator exists.
 1. Continue the hardened 6 h/day control-machine canary routine from
    `docs/runbook-first-testnet-canary.md` after the same-bar executable
    intent suppression guard is present. The next possible strict streak
-   advancement is a clean 2026-05-31 UTC day; 2026-05-30 has 6.00 clean hours
-   but is unqualified because the later duplicate-entry abort reset the
-   current strict streak to `0/14`.
+   advancement is a clean 2026-05-31 UTC day; 2026-05-30 has 12.00 clean
+   hours, including the post-fix guard validation run, but is unqualified
+   because the duplicate-entry abort reset the current strict streak to
+   `0/14`.
 2. After each completed run, generate the single-bundle report, write the
    retro, then regenerate the aggregate and continuity reports from bundle
    artifacts.

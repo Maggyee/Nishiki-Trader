@@ -1,9 +1,9 @@
 # Phase 3 Testnet Canary Evidence Summary
 
 - **Status**: Active handoff summary
-- **Last updated**: 2026-05-30 after blocked duplicate-entry canary
-  `20260530-132316Z-9b5e2230`, same-bar order guard, aggregate verification,
-  and continuity verification
+- **Last updated**: 2026-05-30 after clean post-fix canary
+  `20260530-141037Z-6e860b4f`, aggregate verification, and continuity
+  verification
 - **Scope**: Phase 3 ADR-008 testnet canary evidence for `freqai_linear_v1 / linear-mom-train20240105`
 - **Decision state**: Operational evidence only. This file does not mutate `SourcePolicy`.
 
@@ -29,7 +29,7 @@ plan is `docs/progress/phase-3-testnet-continuity-plan.md`.
 
 ## Evidence Bottom Line
 
-The project now has fourteen clean, sidecar-backed, strategy-registered 6 h
+The project now has fifteen clean, sidecar-backed, strategy-registered 6 h
 Binance Spot testnet canaries with real entry/exit order flow:
 
 | run_id | date | heartbeats | alerts | sidecars | final state | realized PnL |
@@ -48,15 +48,16 @@ Binance Spot testnet canaries with real entry/exit order flow:
 | `20260525-140958Z-7bd13f02` | 2026-05-25 | 719 | none | orders=2 / fills=2 / positions=1 / account=451 / lineage=476 | FLAT | -0.03939 USDT |
 | `20260527-054700Z-cacef82e` | 2026-05-27 | 719 | none | orders=2 / fills=2 / positions=1 / account=451 / lineage=475 | FLAT | +0.16819 USDT |
 | `20260530-062356Z-f47c4a93` | 2026-05-30 | 719 | none | orders=2 / fills=2 / positions=1 / account=451 / lineage=475 | FLAT | +0.06466 USDT |
+| `20260530-141037Z-6e860b4f` | 2026-05-30 | 719 | none | orders=2 / fills=2 / positions=1 / account=451 / lineage=896 | FLAT | -0.01055 USDT |
 
-Aggregate for those fourteen clean 6 h sidecar-backed sessions:
+Aggregate for those fifteen clean 6 h sidecar-backed sessions:
 
-- 84.02 h of clean strategy-registered testnet runtime.
-- 28 orders, 28 fills, 14 closed positions, all final FLAT by sidecar.
+- 90.02 h of clean strategy-registered testnet runtime.
+- 30 orders, 30 fills, 15 closed positions, all final FLAT by sidecar.
 - 0 `logs/alerts.log` rows, 0 `ws_reconnect_count`, 0 `exchange_error_count`.
 - External watchdog observed completion without emergency flatten.
-- 10068 heartbeats across clean bundles.
-- Net realized PnL across the fourteen sessions: -0.20318 USDT.
+- 10787 heartbeats across clean bundles.
+- Net realized PnL across the fifteen sessions: -0.21373 USDT.
 
 The 2026-05-26 completed bundle `20260526-091917Z-1acd81fc` is not clean
 evidence because one advisory `signal_lag_exceeded_threshold` row fired after
@@ -71,12 +72,20 @@ observed the first fill. The operator aborted the canary, external emergency
 flatten closed `0.002 BTC`, and residual orders/positions were empty. A
 same-bar executable intent suppression guard was added after this run.
 
+The post-fix 2026-05-30 clean bundle `20260530-141037Z-6e860b4f` intentionally
+overlapped the earlier aborted stream's remaining future replay rows. It
+consumed 896 lineage rows and recorded the second same-bar buy intent as
+`suppressed_after_same_bar_order_submission`; only one entry order was
+submitted. This is clean operational evidence for the guard but does not
+repair 2026-05-30 continuity because the same UTC day still has the blocked
+`20260530-132316Z-9b5e2230` bundle.
+
 Strict continuity review remains blocked by the 2026-05-20 manifest-backed
 aborted run, the 2026-05-26 signal-lag blocked run, and the 2026-05-30
 duplicate-entry aborted run. With every manifest-backed bundle in the
 candidate window included, the current continuity view is
 `qualified_day_count=7/10`, `current_qualified_streak_days=0/14`, and
-`longest_qualified_streak_days=5`; 2026-05-30 contributes 6.00 clean hours but
+`longest_qualified_streak_days=5`; 2026-05-30 contributes 12.00 clean hours but
 is not a qualified day because it also has the blocked
 `20260530-132316Z-9b5e2230` bundle.
 
@@ -110,6 +119,7 @@ signals are wall-clock replays of already-reviewed historical rows.
 | 2026-05-27 | `20260527-054700Z-cacef82e` | 6 h | Clean control-machine canary, 719 heartbeats, no alerts, 2 orders / 2 fills / 1 position, final FLAT, PnL +0.16819 USDT. | Restarts the strict current continuity streak at 1/14 after the 2026-05-26 blocked day. |
 | 2026-05-30 | `20260530-062356Z-f47c4a93` | 6 h | Clean control-machine canary, 719 heartbeats, no alerts, 2 orders / 2 fills / 1 position, final FLAT, PnL +0.06466 USDT. | Clean evidence remains valid, but the day is no longer qualified after the later blocked `20260530-132316Z-9b5e2230` bundle. |
 | 2026-05-30 | `20260530-132316Z-9b5e2230` | 378 s | Operator-aborted after duplicate same-bar entry orders opened `0.002 BTC`; external emergency flatten succeeded with no residual orders or positions. | Manifest-backed blocked run; not counted as clean evidence and resets the strict current continuity streak to 0/14. |
+| 2026-05-30 | `20260530-141037Z-6e860b4f` | 6 h | Clean post-fix control-machine canary, 719 heartbeats, no alerts, 2 orders / 2 fills / 1 position, final FLAT, PnL -0.01055 USDT. | Proves the same-bar guard prevented duplicate entry under overlapping replay streams; adds clean evidence but the day remains unqualified because of the earlier blocked bundle. |
 
 There was also a one-heartbeat false start before
 `20260521-102631Z-ea999625`: `data/testnet/20260521-102449Z-114b7c91/`.
@@ -174,7 +184,8 @@ Continue collecting testnet canary evidence with the hardened runbook:
      data/testnet/20260525-074853Z-592ff1f1 \
      data/testnet/20260525-140958Z-7bd13f02 \
      data/testnet/20260527-054700Z-cacef82e \
-     data/testnet/20260530-062356Z-f47c4a93
+     data/testnet/20260530-062356Z-f47c4a93 \
+     data/testnet/20260530-141037Z-6e860b4f
    ```
 
    ```bash
@@ -200,7 +211,8 @@ Continue collecting testnet canary evidence with the hardened runbook:
      data/testnet/20260526-091917Z-1acd81fc \
      data/testnet/20260527-054700Z-cacef82e \
      data/testnet/20260530-062356Z-f47c4a93 \
-     data/testnet/20260530-132316Z-9b5e2230
+     data/testnet/20260530-132316Z-9b5e2230 \
+     data/testnet/20260530-141037Z-6e860b4f
    ```
 
 6. Do not open a live-risk ADR or live promotion unless there is explicit user
