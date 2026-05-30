@@ -1,8 +1,8 @@
 # Phase 3 Testnet Canary Evidence Summary
 
 - **Status**: Active handoff summary
-- **Last updated**: 2026-05-27 after clean canary
-  `20260527-054700Z-cacef82e`, aggregate verification, and continuity
+- **Last updated**: 2026-05-30 after clean canary
+  `20260530-062356Z-f47c4a93`, aggregate verification, and continuity
   verification
 - **Scope**: Phase 3 ADR-008 testnet canary evidence for `freqai_linear_v1 / linear-mom-train20240105`
 - **Decision state**: Operational evidence only. This file does not mutate `SourcePolicy`.
@@ -29,7 +29,7 @@ plan is `docs/progress/phase-3-testnet-continuity-plan.md`.
 
 ## Evidence Bottom Line
 
-The project now has thirteen clean, sidecar-backed, strategy-registered 6 h
+The project now has fourteen clean, sidecar-backed, strategy-registered 6 h
 Binance Spot testnet canaries with real entry/exit order flow:
 
 | run_id | date | heartbeats | alerts | sidecars | final state | realized PnL |
@@ -47,15 +47,16 @@ Binance Spot testnet canaries with real entry/exit order flow:
 | `20260525-074853Z-592ff1f1` | 2026-05-25 | 719 | none | orders=2 / fills=2 / positions=1 / account=451 / lineage=476 | FLAT | +0.02838 USDT |
 | `20260525-140958Z-7bd13f02` | 2026-05-25 | 719 | none | orders=2 / fills=2 / positions=1 / account=451 / lineage=476 | FLAT | -0.03939 USDT |
 | `20260527-054700Z-cacef82e` | 2026-05-27 | 719 | none | orders=2 / fills=2 / positions=1 / account=451 / lineage=475 | FLAT | +0.16819 USDT |
+| `20260530-062356Z-f47c4a93` | 2026-05-30 | 719 | none | orders=2 / fills=2 / positions=1 / account=451 / lineage=475 | FLAT | +0.06466 USDT |
 
-Aggregate for those thirteen clean 6 h sidecar-backed sessions:
+Aggregate for those fourteen clean 6 h sidecar-backed sessions:
 
-- 78.02 h of clean strategy-registered testnet runtime.
-- 26 orders, 26 fills, 13 closed positions, all final FLAT by sidecar.
+- 84.02 h of clean strategy-registered testnet runtime.
+- 28 orders, 28 fills, 14 closed positions, all final FLAT by sidecar.
 - 0 `logs/alerts.log` rows, 0 `ws_reconnect_count`, 0 `exchange_error_count`.
 - External watchdog observed completion without emergency flatten.
-- 9349 heartbeats across clean bundles.
-- Net realized PnL across the thirteen sessions: -0.26784 USDT.
+- 10068 heartbeats across clean bundles.
+- Net realized PnL across the fourteen sessions: -0.20318 USDT.
 
 A later 2026-05-26 completed bundle,
 `20260526-091917Z-1acd81fc`, is not clean evidence because one advisory
@@ -67,10 +68,11 @@ continuity review.
 Strict continuity review remains blocked by the 2026-05-20 manifest-backed
 aborted run and the 2026-05-26 signal-lag blocked run. With every
 manifest-backed bundle in the candidate window included, the current
-continuity view is `qualified_day_count=7/9`,
+continuity view is `qualified_day_count=8/10`,
 `current_qualified_streak_days=1/14`, and
-`longest_qualified_streak_days=5`; 2026-05-27 contributes 6.00 clean hours
-and restarts the current strict streak after the 2026-05-26 blocked day.
+`longest_qualified_streak_days=5`; 2026-05-30 contributes 6.00 clean hours
+and is the current strict streak day after the 2026-05-28 and 2026-05-29
+UTC days had no manifest-backed canary bundle in this ledger.
 
 This is good operational evidence for the testnet path. It is not alpha
 evidence: the fill count is tiny, Binance testnet fees are zero, and the
@@ -100,6 +102,7 @@ signals are wall-clock replays of already-reviewed historical rows.
 | 2026-05-25 | `20260525-140958Z-7bd13f02` | 6 h | Clean third control-machine canary, 719 heartbeats, no alerts, 2 orders / 2 fills / 1 position, final FLAT, PnL -0.03939 USDT. | Adds a third clean 6 h block on 2026-05-25; the day now has 18.00 clean hours under the continuity report while the strict day streak remains 5/14. |
 | 2026-05-26 | `20260526-091917Z-1acd81fc` | 6 h | Completed `max_duration`, final FLAT, 719 heartbeats, 2 orders / 2 fills / 1 position, PnL +0.09846 USDT, but one `signal_lag_exceeded_threshold` warning fired after the replay stream expired before shutdown. | Manifest-backed blocked run; not counted as clean evidence and resets the strict current continuity streak to 0/14. |
 | 2026-05-27 | `20260527-054700Z-cacef82e` | 6 h | Clean control-machine canary, 719 heartbeats, no alerts, 2 orders / 2 fills / 1 position, final FLAT, PnL +0.16819 USDT. | Restarts the strict current continuity streak at 1/14 after the 2026-05-26 blocked day. |
+| 2026-05-30 | `20260530-062356Z-f47c4a93` | 6 h | Clean control-machine canary, 719 heartbeats, no alerts, 2 orders / 2 fills / 1 position, final FLAT, PnL +0.06466 USDT. | Current strict continuity streak is 1/14 because 2026-05-28 and 2026-05-29 have no manifest-backed canary bundle in this ledger. |
 
 There was also a one-heartbeat false start before
 `20260521-102631Z-ea999625`: `data/testnet/20260521-102449Z-114b7c91/`.
@@ -163,7 +166,8 @@ Continue collecting testnet canary evidence with the hardened runbook:
      data/testnet/20260525-000508Z-af7de22d \
      data/testnet/20260525-074853Z-592ff1f1 \
      data/testnet/20260525-140958Z-7bd13f02 \
-     data/testnet/20260527-054700Z-cacef82e
+     data/testnet/20260527-054700Z-cacef82e \
+     data/testnet/20260530-062356Z-f47c4a93
    ```
 
    ```bash
@@ -187,7 +191,8 @@ Continue collecting testnet canary evidence with the hardened runbook:
      data/testnet/20260525-074853Z-592ff1f1 \
      data/testnet/20260525-140958Z-7bd13f02 \
      data/testnet/20260526-091917Z-1acd81fc \
-     data/testnet/20260527-054700Z-cacef82e
+     data/testnet/20260527-054700Z-cacef82e \
+     data/testnet/20260530-062356Z-f47c4a93
    ```
 
 6. Do not open a live-risk ADR or live promotion unless there is explicit user
