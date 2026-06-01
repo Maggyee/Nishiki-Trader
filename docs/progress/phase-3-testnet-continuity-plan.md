@@ -1,7 +1,7 @@
 # Phase 3 Testnet Continuity Plan
 
 - **Status**: Active operating plan
-- **Last updated**: 2026-05-30 after clean post-fix canary `20260530-141037Z-6e860b4f`
+- **Last updated**: 2026-06-01 after non-clean canary `20260601-013940Z-ffe1e00c`
 - **Scope**: ADR-008 testnet continuity evidence for `freqai_linear_v1 / linear-mom-train20240105`
 - **Decision state**: Planning and evidence tracking only. This file does not authorize live trading or mutate `SourcePolicy`.
 
@@ -56,7 +56,12 @@ emergency_flatten_completed=2
 
 The 2026-05-20 no-manifest abort (`20260520-040143Z-90c3c62b`) and the
 2026-05-21 no-manifest false start (`20260521-102449Z-114b7c91`) remain
-manual ledger caveats because they cannot be parsed by the bundle reader.
+manual ledger caveats because they cannot be parsed by the bundle reader. The
+2026-06-01 no-manifest canary (`20260601-013940Z-ffe1e00c`) is also a manual
+blocked ledger entry: it wrote 684 heartbeats, opened one `0.001 BTC` LONG
+position, then stopped heartbeating before `max_duration`; watchdog appended 50
+`heartbeat_lost` alerts, and operator emergency flatten closed the residual
+position with no residual orders or positions.
 
 This is operational readiness evidence for the testnet path. It is not alpha
 evidence and not live authorization.
@@ -116,12 +121,14 @@ manual review item until a paper-vs-testnet continuity comparator exists.
 ## Operating Path
 
 1. Continue the hardened 6 h/day control-machine canary routine from
-   `docs/runbook-first-testnet-canary.md` after the same-bar executable
-   intent suppression guard is present. The next possible strict streak
-   advancement is a clean 2026-05-31 UTC day; 2026-05-30 has 12.00 clean
-   hours, including the post-fix guard validation run, but is unqualified
-   because the duplicate-entry abort reset the current strict streak to
-   `0/14`.
+   `docs/runbook-first-testnet-canary.md` after the same-bar executable intent
+   suppression guard is present. The next run must keep the runner and watchdog
+   under a process supervisor independent of Codex tool-session cleanup. The
+   next possible strict streak advancement is the next UTC day with a clean
+   6 h manifest-backed canary and no blocked run on that same day. 2026-05-30
+   has 12.00 clean hours but is unqualified because of the duplicate-entry
+   abort; 2026-06-01 is also unqualified because of the no-manifest
+   heartbeat-lost abort.
 2. After each completed run, generate the single-bundle report, write the
    retro, then regenerate the aggregate and continuity reports from bundle
    artifacts.

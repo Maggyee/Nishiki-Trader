@@ -1,9 +1,9 @@
 # Phase 3 Testnet Canary Evidence Summary
 
 - **Status**: Active handoff summary
-- **Last updated**: 2026-05-30 after clean post-fix canary
-  `20260530-141037Z-6e860b4f`, aggregate verification, and continuity
-  verification
+- **Last updated**: 2026-06-01 after non-clean canary
+  `20260601-013940Z-ffe1e00c`, emergency flatten, and manual continuity
+  review
 - **Scope**: Phase 3 ADR-008 testnet canary evidence for `freqai_linear_v1 / linear-mom-train20240105`
 - **Decision state**: Operational evidence only. This file does not mutate `SourcePolicy`.
 
@@ -80,14 +80,21 @@ submitted. This is clean operational evidence for the guard but does not
 repair 2026-05-30 continuity because the same UTC day still has the blocked
 `20260530-132316Z-9b5e2230` bundle.
 
+The 2026-06-01 run `20260601-013940Z-ffe1e00c` is not clean evidence. The
+runner wrote 684 heartbeats, opened one LONG `0.001 BTC` position, then stopped
+writing heartbeats before `max_duration` and did not write a
+`run_manifest.json`. The external watchdog appended 50 `heartbeat_lost`
+alerts, and operator emergency flatten closed the residual LONG with no
+residual orders or positions. This no-manifest run must be carried as a manual
+blocked ledger entry.
+
 Strict continuity review remains blocked by the 2026-05-20 manifest-backed
 aborted run, the 2026-05-26 signal-lag blocked run, and the 2026-05-30
-duplicate-entry aborted run. With every manifest-backed bundle in the
-candidate window included, the current continuity view is
+duplicate-entry aborted run. With every manifest-backed bundle in the candidate
+window included, the current tool-readable continuity view is
 `qualified_day_count=7/10`, `current_qualified_streak_days=0/14`, and
-`longest_qualified_streak_days=5`; 2026-05-30 contributes 12.00 clean hours but
-is not a qualified day because it also has the blocked
-`20260530-132316Z-9b5e2230` bundle.
+`longest_qualified_streak_days=5`; manual review also treats 2026-06-01 as a
+blocked day, so the strict current streak remains `0/14`.
 
 This is good operational evidence for the testnet path. It is not alpha
 evidence: the fill count is tiny, Binance testnet fees are zero, and the
@@ -120,6 +127,7 @@ signals are wall-clock replays of already-reviewed historical rows.
 | 2026-05-30 | `20260530-062356Z-f47c4a93` | 6 h | Clean control-machine canary, 719 heartbeats, no alerts, 2 orders / 2 fills / 1 position, final FLAT, PnL +0.06466 USDT. | Clean evidence remains valid, but the day is no longer qualified after the later blocked `20260530-132316Z-9b5e2230` bundle. |
 | 2026-05-30 | `20260530-132316Z-9b5e2230` | 378 s | Operator-aborted after duplicate same-bar entry orders opened `0.002 BTC`; external emergency flatten succeeded with no residual orders or positions. | Manifest-backed blocked run; not counted as clean evidence and resets the strict current continuity streak to 0/14. |
 | 2026-05-30 | `20260530-141037Z-6e860b4f` | 6 h | Clean post-fix control-machine canary, 719 heartbeats, no alerts, 2 orders / 2 fills / 1 position, final FLAT, PnL -0.01055 USDT. | Proves the same-bar guard prevented duplicate entry under overlapping replay streams; adds clean evidence but the day remains unqualified because of the earlier blocked bundle. |
+| 2026-06-01 | `20260601-013940Z-ffe1e00c` | about 5 h 42 min before last heartbeat | Runner opened `0.001 BTC`, then disappeared before `max_duration`; no manifest or sidecars were written, watchdog appended 50 `heartbeat_lost` alerts, and emergency flatten closed the residual LONG. | No-manifest blocked run; not counted as clean evidence and keeps the strict current continuity streak at 0/14. |
 
 There was also a one-heartbeat false start before
 `20260521-102631Z-ea999625`: `data/testnet/20260521-102449Z-114b7c91/`.
@@ -152,7 +160,9 @@ stream.
 
 Continue collecting testnet canary evidence with the hardened runbook:
 
-1. Use a long-lived foreground terminal/session for the runner and watchdog.
+1. Launch the runner and watchdog from a process supervisor that is independent
+   of Codex tool-session cleanup, then verify both processes remain alive before
+   the first signal is due.
 2. Before writing new replay rows, check for existing future
    `metadata.wall_clock_replay` rows and avoid overlapping streams unless the
    overlap is intentional and recorded in the retro.
