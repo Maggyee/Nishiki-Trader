@@ -1,9 +1,8 @@
 # Phase 3 Testnet Canary Evidence Summary
 
-- **Status**: Active handoff summary
-- **Last updated**: 2026-06-01 after non-clean canary
-  `20260601-013940Z-ffe1e00c`, emergency flatten, and manual continuity
-  review
+- **Status**: Paused handoff summary
+- **Last updated**: 2026-06-04 after operator decision to stop/pause routine
+  canary testing and continue development
 - **Scope**: Phase 3 ADR-008 testnet canary evidence for `freqai_linear_v1 / linear-mom-train20240105`
 - **Decision state**: Operational evidence only. This file does not mutate `SourcePolicy`.
 
@@ -24,8 +23,10 @@ record.
 
 No live trading is authorized. The current evidence does not satisfy the
 ADR-001 live-money ladder requirement of 14 consecutive testnet days without
-manual intervention, and there is no live-risk ADR. The active continuity
-plan is `docs/progress/phase-3-testnet-continuity-plan.md`.
+manual intervention, and there is no live-risk ADR. On 2026-06-04, the
+operator decided to stop/pause routine canary evidence collection and continue
+development; the continuity plan is preserved as a paused resume guide in
+`docs/progress/phase-3-testnet-continuity-plan.md`.
 
 ## Evidence Bottom Line
 
@@ -156,9 +157,12 @@ stream.
   non-zero value as investigation material, but note that fully surfacing this
   counter still depends on non-invasive upstream telemetry availability.
 
-## Next Operating Step
+## Current Development Step
 
-Continue collecting testnet canary evidence with the hardened runbook:
+Routine testnet canary collection is paused. Continue development with
+targeted verification for the changed surface area; do not launch more 6 h/day
+canaries only to rebuild the continuity streak. If live-readiness evidence is
+explicitly resumed later:
 
 1. Launch the runner and watchdog from a process supervisor that is independent
    of Codex tool-session cleanup, then verify both processes remain alive before

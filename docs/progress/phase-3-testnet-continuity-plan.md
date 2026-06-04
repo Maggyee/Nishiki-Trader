@@ -1,9 +1,9 @@
 # Phase 3 Testnet Continuity Plan
 
-- **Status**: Active operating plan
-- **Last updated**: 2026-06-01 after non-clean canary `20260601-013940Z-ffe1e00c`
+- **Status**: Paused operating plan
+- **Last updated**: 2026-06-04 after operator decision to stop/pause routine canary testing
 - **Scope**: ADR-008 testnet continuity evidence for `freqai_linear_v1 / linear-mom-train20240105`
-- **Decision state**: Planning and evidence tracking only. This file does not authorize live trading or mutate `SourcePolicy`.
+- **Decision state**: Planning and evidence tracking only. Routine continuity collection is paused. This file does not authorize live trading or mutate `SourcePolicy`.
 
 ## Current Position
 
@@ -66,6 +66,11 @@ position with no residual orders or positions.
 This is operational readiness evidence for the testnet path. It is not alpha
 evidence and not live authorization.
 
+On 2026-06-04, the operator decided to stop/pause the current slow routine
+canary-testing cadence and continue development. Treat this plan as the resume
+guide for live-readiness evidence, not as the active next step for ordinary
+development. The 14-day gate remains unmet.
+
 ## Continuity Gate
 
 Use the passive report reader as the source of truth before updating any
@@ -118,28 +123,26 @@ ADR-001/ADR-008 still require a live-risk decision before live money. The
 daily PnL standard-deviation comparison against paper_simulated remains a
 manual review item until a paper-vs-testnet continuity comparator exists.
 
-## Operating Path
+## Paused / Resume Path
 
-1. Continue the hardened 6 h/day control-machine canary routine from
-   `docs/runbook-first-testnet-canary.md` after the same-bar executable intent
-   suppression guard is present. The next run must keep the runner and watchdog
-   under a process supervisor independent of Codex tool-session cleanup. The
-   next possible strict streak advancement is the next UTC day with a clean
-   6 h manifest-backed canary and no blocked run on that same day. 2026-05-30
-   has 12.00 clean hours but is unqualified because of the duplicate-entry
-   abort; 2026-06-01 is also unqualified because of the no-manifest
-   heartbeat-lost abort.
-2. After each completed run, generate the single-bundle report, write the
-   retro, then regenerate the aggregate and continuity reports from bundle
+1. Routine 6 h/day canary collection is paused. Continue development with
+   targeted verification for changed code rather than launching canaries only
+   to advance the streak.
+2. If the operator explicitly resumes live-readiness evidence collection, use
+   the hardened routine from `docs/runbook-first-testnet-canary.md`. The next
+   run must keep the runner and watchdog under a process supervisor independent
+   of Codex tool-session cleanup. The next possible strict streak advancement is
+   the next UTC day with a clean 6 h manifest-backed canary and no blocked run
+   on that same day.
+3. After each completed resumed run, generate the single-bundle report, write
+   the retro, then regenerate the aggregate and continuity reports from bundle
    artifacts.
-3. For the continuity command, include every completed testnet bundle with a
-   manifest inside the candidate window. Keep no-manifest blocked or
-   abandoned runs in the session ledger and review them manually; do not hide
-   them from the retro.
-4. When the current streak reaches 7 qualified days, decide whether to raise
-   the tracking threshold to 12 h/day for the remaining window.
-5. When the current streak reaches 14 qualified days, do not jump to live.
-   Open a separate live-risk ADR/review that includes the continuity report,
+4. For the continuity command, include every completed testnet bundle with a
+   manifest inside the candidate window. Keep no-manifest blocked or abandoned
+   runs in the session ledger and review them manually; do not hide them from
+   the retro.
+5. When the current streak reaches 14 qualified days, do not jump to live. Open
+   a separate live-risk ADR/review that includes the continuity report,
    paper_simulated comparison, capital ladder sizing, and explicit go/no-go
    decision.
 
