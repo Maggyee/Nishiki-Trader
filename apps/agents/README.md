@@ -37,6 +37,18 @@ uv run python -m apps.agents.cli \
   list --agent-name review_agent --advice-type journal
 ```
 
+运行当前的 deterministic review agent（mock LLM harness）：
+
+```bash
+uv run python -m apps.agents.review_agent \
+  --db data/agents/advice.db \
+  --project-status-path docs/project-status.md \
+  --evidence-path docs/progress/phase-3-testnet-canary-evidence.md
+```
+
+它只读取本地文档并写入一条 `advice_type="project_review"` 的 AgentAdvice；
+不调用 LLM、不写 `SignalEvent`、不改 `SourcePolicy`、不连接交易所。
+
 人工复核：
 
 ```bash
@@ -50,6 +62,7 @@ uv run python -m apps.agents.cli \
 | Agent | 用途 | 最早 Phase |
 |---|---|:-:|
 | 复盘 agent | 每日读交易 + 新闻，写 journal | 4 |
+| deterministic review agent | 读取本地状态/证据，写 project_review AgentAdvice | 4 |
 | 数据分析 agent | 跑统计、出图、找异常 | 4 |
 | 金融专家 agent | 宏观偏向（多/空/中性），作为仓位乘数 | 4 |
 | 策略 brainstorm | 用户对话辅助 | 4+ |

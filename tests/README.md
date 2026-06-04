@@ -27,7 +27,7 @@ uv run pytest -k "ttl"              # 按关键字筛选
 |---|---|---|
 | 高 | bridge | SignalEvent schema / ttl 过期 / 重复 signal_id / ts_event ns 转换 / 未授权 source |
 | 高 | strategies_nautilus | 风控拦截 / 降级行为 / 单日 5% 停机 |
-| 中 | ops | 应急脚本 dry-run / 二次确认参数 |
+| 中 | ops | 应急脚本 dry-run / 二次确认参数 / dashboard snapshot 只读汇总 |
 | 中 | strategies_freqtrade | freqai 输出能转成合法 SignalEvent |
-| 低 | agents | mock LLM，验证 AgentAdvice 不进 signals 表 |
+| 低 | agents | deterministic review agent，验证 AgentAdvice 不进 signals 表 |
 | 低 | mcp_server | 工具白名单 / 审计日志 |

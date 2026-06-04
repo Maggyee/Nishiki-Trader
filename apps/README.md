@@ -7,12 +7,13 @@
 | `bridge/` | SignalEvent v1 schema + 验证 + SQLite 落地 | 1 | live |
 | `strategies_nautilus/` | nautilus 自定义 Strategy / Actor / 风控 | 1 | Phase 3 testnet |
 | `strategies_freqtrade/` | freqtrade 策略（通过 `--userdir` 加载） | 2 | research signals |
-| `ops/` | 运维脚本、应急平仓、健康检查 | 1 | fixture / mirror ops |
-| `agents/` | LLM agent（Claude SDK） | 4 | AgentAdvice audit |
+| `ops/` | 运维脚本、应急平仓、健康检查 | 1 | fixture / mirror / snapshot ops |
+| `agents/` | LLM agent（Claude SDK） | 4 | AgentAdvice audit + review agent |
 | `mcp_server/` | 给 agent / Claude Code 用的工具 | 4 | AgentAdvice wrappers |
 | `frontend/` | Next.js 监控面板 | 5 | 占位 |
 
-**当前 Phase 4 entry**：Agent research 先从 AgentAdvice 审计表开始。
+**当前 Phase 4 entry**：Agent research 先从 AgentAdvice 审计表、deterministic
+review agent、MCP-facing wrappers、以及只读 dashboard snapshot 开始。
 Phase 3 live-readiness gate 仍未满足；Phase 4 代码不得进入订单路径。
 参考 `docs/decisions/001-tech-stack.md` §6 服务激活时间表。
 

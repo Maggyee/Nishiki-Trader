@@ -78,6 +78,16 @@ The initial implementation is:
 No Claude SDK client, MCP server, external LLM calls, message bus, or long-lived
 agent process is introduced by this ADR.
 
+The first follow-on Phase 4 artifacts keep the same boundary:
+
+- `apps.mcp_server.agent_advice_tools` exposes safe AgentAdvice wrapper
+  functions with local JSONL audit logging, but no real MCP SDK dependency.
+- `apps.agents.review_agent` is a deterministic mock-review harness that reads
+  local status/evidence documents and writes only `advice_type="project_review"`.
+- `apps.ops.dashboard_snapshot` emits read-only JSON/Markdown summaries of
+  project status, AgentAdvice rows, and passive paper/testnet bundle reports for
+  future dashboard consumption.
+
 ## 5. Verification Standard
 
 The implementation must prove:
@@ -93,7 +103,8 @@ The implementation must prove:
 
 - Add real MCP protocol handlers around the AgentAdvice wrappers in
   `apps.mcp_server.agent_advice_tools`.
-- Add a single mock-LLM review agent that writes only `AgentAdvice`.
+- Add a Phase 5 frontend/dashboard consumer for `dashboard.snapshot.v1` once the
+  frontend phase opens.
 - Define any `llm_*` SignalEvent experiments in a separate ADR before they can
   move beyond paper shadow. Until then, LLM outputs stay outside the signal
   bridge.

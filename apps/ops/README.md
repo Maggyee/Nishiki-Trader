@@ -2,7 +2,8 @@
 
 运维脚本。
 
-**当前 Phase**：2（catalog fixture / backtest operations）。
+**当前 Phase**：2（catalog fixture / backtest operations）+ Phase 4 read-only
+dashboard snapshot support。
 
 ## 当前入口
 
@@ -38,6 +39,26 @@ uv run python -m apps.ops.backfill_bars \
 `--seed-demo-signals` 写入的 `manual_research/binance-fixture-v1` 信号只用于
 确认 catalog-backed runner 可以端到端产出 ADR-004 bundle，不代表可交易 alpha。
 
+生成 Phase 4 只读 dashboard snapshot（JSON 默认输出到 stdout）：
+
+```bash
+uv run python -m apps.ops.dashboard_snapshot \
+  --project-status-path docs/project-status.md \
+  --agent-advice-db data/agents/advice.db
+```
+
+也可以追加已完成的 passive bundle reports 作为压缩摘要输入：
+
+```bash
+uv run python -m apps.ops.dashboard_snapshot \
+  --testnet-bundle data/testnet/<run_id> \
+  --paper-bundle data/paper/<run_id> \
+  --markdown
+```
+
+`dashboard_snapshot` 只读取 `docs/`、AgentAdvice SQLite、以及既有 paper/testnet
+bundle report reader；不写 `SignalEvent`、不改 `SourcePolicy`、不读取交易所凭证。
+
 ## 计划脚本
 
 | 脚本 | 用途 | 最早 Phase |
@@ -47,6 +68,7 @@ uv run python -m apps.ops.backfill_bars \
 | `backfill_bars.py` | 从 Binance public klines 导入 K 线到 ParquetDataCatalog | 1 |
 | `signal_replay.py` | 重放 SQLite 中的历史 signals 跑回测 | 1 |
 | `migrate_sqlite_to_pg.py` | Phase 2 数据迁移 | 2 |
+| `dashboard_snapshot.py` | Phase 4 只读 AgentAdvice / report snapshot | 4 |
 | `testnet_handoff.py` | testnet ↔ live 切换前的检查清单 | 6 |
 
 ## 跑法
