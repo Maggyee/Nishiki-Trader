@@ -75,6 +75,7 @@ class NautilusLogErrorCounter:
 
     paths: tuple[Path, ...]
     _offsets: dict[Path, int] = field(default_factory=dict, init=False, repr=False)
+    _pending: dict[Path, str] = field(default_factory=dict, init=False, repr=False)
     _count: int = field(default=0, init=False, repr=False)
 
     def __post_init__(self) -> None:
@@ -88,7 +89,7 @@ class NautilusLogErrorCounter:
 
     def __call__(self) -> int:
         for path in self.paths:
-            self._count += _count_new_error_lines(path, self._offsets)
+            self._count += _count_new_error_lines(path, self._offsets, self._pending)
         return self._count
 
 
@@ -276,15 +277,19 @@ def _safe_file_size(path: Path) -> int:
         return 0
 
 
-def _count_new_error_lines(path: Path, offsets: dict[Path, int]) -> int:
+def _count_new_error_lines(
+    path: Path, offsets: dict[Path, int], pending: dict[Path, str]
+) -> int:
     offset = offsets.get(path, 0)
     try:
         size = path.stat().st_size
     except OSError:
         offsets[path] = 0
+        pending[path] = ""
         return 0
     if size < offset:
         offset = 0
+        pending[path] = ""
     try:
         with path.open("rb") as fh:
             fh.seek(offset)
@@ -294,9 +299,15 @@ def _count_new_error_lines(path: Path, offsets: dict[Path, int]) -> int:
         return 0
     if not chunk:
         return 0
+    text = pending.get(path, "") + chunk.decode("utf-8", errors="replace")
+    lines = text.splitlines(keepends=True)
+    if lines and not lines[-1].endswith(("\n", "\r")):
+        pending[path] = lines.pop()
+    else:
+        pending[path] = ""
     return sum(
         1
-        for line in chunk.decode("utf-8", errors="replace").splitlines()
+        for line in lines
         if _is_error_line(line)
     )
 

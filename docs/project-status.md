@@ -120,7 +120,7 @@ Immediate focus:
 3. Keep the `testnet_runner.py` startup guard + connection probe as the first line of defense for any subsequent testnet run: explicit `--allow-real-credentials`, clean git, source/model retro evidence, testnet multiplier cap, key-prefix-only audit, Ed25519-only credentials (HMAC fails Binance Spot WS `session.logon`), and Binance Spot TESTNET-only adapter config. The probe injects credentials into the in-memory `TradingNodeConfig` only and never writes the full key/secret to `logs/runtime.log` or `connection_probe.json`.
 4. Collect additional testnet canary or paper_simulated evidence only when it directly supports a concrete development or promotion question. The v11 paper bundle's expectancy (+0.00491 USDT/trade, 53.6% win rate, -0.003878% max drawdown over 152 days) is weaker than v9, includes a negative April, and only mildly positive May; the parquet-backed canary fill set is still only a few trades. Treat both as operational/monitoring evidence, not alpha.
 5. Decide SQLite -> Postgres / Redis Stream readiness only after backtest, paper, or testnet volume exposes an actual bottleneck.
-6. `ws_connected` and `ws_reconnect_count` are wired through `node.kernel.{data,exec}_engine.check_connected()` and passed the 2026-05-20 6 h live-telemetry canary with `ws_reconnect_count=0`. Treat any future non-zero `ws_reconnect_count` as evidence to investigate, not as an automatic failure. `exchange_error_count` remains pinned at 0 — surfacing it cleanly still needs upstream changes to expose a counter from `BinanceLive*Client` we can read non-invasively; `data_gap_exceeded_tolerance` + `ws_disconnected` together cover the user-visible failure modes meanwhile.
+6. `ws_connected` and `ws_reconnect_count` are wired through `node.kernel.{data,exec}_engine.check_connected()` and passed the 2026-05-20 6 h live-telemetry canary with `ws_reconnect_count=0`. `exchange_error_count` is now supplied non-invasively through `NautilusLogErrorCounter` over redirected Nautilus stdout/stderr; the 2026-06-04 hardening buffers partial log lines so `ERROR` / `CRITICAL` severities split across writes are still counted. Treat any future non-zero `ws_reconnect_count` or `exchange_error_count` as evidence to investigate, not as an automatic failure unless the configured burst threshold fires.
 
 ## Blocked / Deferred
 
@@ -134,6 +134,12 @@ Immediate focus:
 - No edits to `freqtrade/` or `nautilus_trader/` unless explicitly requested.
 
 ## Latest Verification
+
+On 2026-06-04, after hardening live telemetry exchange-error log counting:
+
+- `UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/strategies_nautilus/test_live_telemetry.py -q` -> **33 passed**.
+- `UV_CACHE_DIR=/tmp/uv-cache uv run pytest -q` -> **505 passed**.
+- `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check apps tests docs infra` -> clean.
 
 On 2026-06-01, after the non-clean testnet canary
 `20260601-013940Z-ffe1e00c`:

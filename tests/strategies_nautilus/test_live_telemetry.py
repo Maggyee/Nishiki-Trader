@@ -348,6 +348,23 @@ def test_nautilus_log_error_counter_counts_new_error_lines(tmp_path: Path) -> No
     assert counter() == 3
 
 
+def test_nautilus_log_error_counter_buffers_partial_lines(tmp_path: Path) -> None:
+    log_path = tmp_path / "runner.stdout.log"
+    log_path.write_text("", encoding="utf-8")
+    counter = NautilusLogErrorCounter((log_path,))
+
+    with log_path.open("a", encoding="utf-8") as fh:
+        fh.write("2026-05-20T12:00:01Z [ERR")
+
+    assert counter() == 0
+
+    with log_path.open("a", encoding="utf-8") as fh:
+        fh.write("OR] split exchange error\n")
+
+    assert counter() == 1
+    assert counter() == 1
+
+
 def test_reader_reads_exchange_error_count_from_counter() -> None:
     reader = build_live_telemetry_reader(
         FirstCanaryStrategySpec(**VALID_SPEC_KWARGS),
