@@ -4,15 +4,16 @@
 
 | 子目录 | 用途 | 激活 Phase | 状态 |
 |---|---|:-:|:-:|
-| `bridge/` | SignalEvent v1 schema + 验证 + SQLite 落地 | 1 | 空骨架 |
-| `strategies_nautilus/` | nautilus 自定义 Strategy / Actor / 风控 | 1 | 空骨架 |
-| `strategies_freqtrade/` | freqtrade 策略（通过 `--userdir` 加载） | 2 | 空骨架 |
-| `ops/` | 运维脚本、应急平仓、健康检查 | 1 | 空骨架 |
-| `agents/` | LLM agent（Claude SDK） | 4 | 占位 |
-| `mcp_server/` | 给 agent / Claude Code 用的工具 | 4 | 占位 |
+| `bridge/` | SignalEvent v1 schema + 验证 + SQLite 落地 | 1 | live |
+| `strategies_nautilus/` | nautilus 自定义 Strategy / Actor / 风控 | 1 | Phase 3 testnet |
+| `strategies_freqtrade/` | freqtrade 策略（通过 `--userdir` 加载） | 2 | research signals |
+| `ops/` | 运维脚本、应急平仓、健康检查 | 1 | fixture / mirror ops |
+| `agents/` | LLM agent（Claude SDK） | 4 | AgentAdvice audit |
+| `mcp_server/` | 给 agent / Claude Code 用的工具 | 4 | 边界占位 |
 | `frontend/` | Next.js 监控面板 | 5 | 占位 |
 
-**当前 Phase 0**：除 README 占位外，Phase 2–5 的目录里不写代码。
+**当前 Phase 4 entry**：Agent research 先从 AgentAdvice 审计表开始。
+Phase 3 live-readiness gate 仍未满足；Phase 4 代码不得进入订单路径。
 参考 `docs/decisions/001-tech-stack.md` §6 服务激活时间表。
 
 ## 跨模块边界（contract §5）

@@ -20,6 +20,15 @@ MCP server，向 Claude Code / Claude Desktop / agents 暴露工具调用。
 - `write_journal(content, tags)`
 - `write_agent_advice(advice_type, payload, confidence)`
 
+当前 AgentAdvice 本地审计存储已经落在 `apps.agents`：
+
+```bash
+uv run python -m apps.agents.cli list --db data/agents/advice.db
+```
+
+MCP server 后续只允许包装这类审计写入 / 查询接口；不能绕过
+`apps.agents.advice.AgentAdvice` schema，也不能写 `signals` 表。
+
 触发类（Phase 5+ 才开放，且要二次确认）：
 
 - `run_backtest(strategy, params, period)` — 触发回测，不影响实盘

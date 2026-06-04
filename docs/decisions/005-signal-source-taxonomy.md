@@ -141,7 +141,8 @@ PR / commit 检查（人工）：
 
 - **ADR-006**：实盘前硬风控与灰度实施（包括 Authorization canary 字段、per-source `max_position_pct` 覆盖、强制 dry-run 模式）。
 - **Future**：Redis Stream 桥接（与本 ADR 命名无关，但 Redis Stream 的 stream key 应当沿用 `signals.v1.<family>` 的命名，本 ADR 暂留）。
-- **ADR-008**：LLM Agent 输出的额外审计与"双签"要求（如有真实落库到 `signals` 表的 LLM 信号）。
+- **ADR-009**：AgentAdvice 审计与 LLM 隔离。任何 `llm_*` 真实落库到
+  `signals` 表的实验，仍需另开 LLM SignalEvent 升档 ADR。
 
 ---
 

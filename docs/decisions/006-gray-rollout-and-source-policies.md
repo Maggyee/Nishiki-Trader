@@ -254,8 +254,9 @@ params + 同 risk_rules + **同 manifest.strategies[].policies** + 同 Nautilus
 - **ADR-007**：Paper trading runtime（kind="paper" 流程）。Policy 跨 backtest →
   paper → live 时如何升档；本 ADR 的 multiplier 数值在 paper / live 中的
   默认上限。
-- **ADR-008**：LLM agent 输出审计 / 双签。LLM 输出的 SourcePolicy 是否必须
-  默认 dry_run=True、或必须 multiplier ≤ 0.01，留给本 ADR 决定。
+- **ADR-009**：AgentAdvice 审计与 LLM 隔离。LLM 输出目前只允许进入
+  AgentAdvice；任何 `llm_*` SignalEvent 的 SourcePolicy 规则仍需另开
+  LLM SignalEvent 升档 ADR。
 
 ---
 
