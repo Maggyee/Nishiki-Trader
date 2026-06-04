@@ -21,6 +21,14 @@ uv run pytest tests/bridge/         # 只跑 bridge
 uv run pytest -k "ttl"              # 按关键字筛选
 ```
 
+前端 Phase 5 校验在 `apps/frontend` 内运行：
+
+```bash
+npm audit --audit-level=moderate
+npm run typecheck
+npm run build
+```
+
 ## 优先级（按"破坏交易系统的能力"排）
 
 | 优先级 | 模块 | 必测点 |
@@ -31,3 +39,4 @@ uv run pytest -k "ttl"              # 按关键字筛选
 | 中 | strategies_freqtrade | freqai 输出能转成合法 SignalEvent |
 | 低 | agents | deterministic review agent，验证 AgentAdvice 不进 signals 表 |
 | 低 | mcp_server | 工具白名单 / 审计日志 |
+| 低 | frontend | 只读 dashboard build / snapshot contract display |

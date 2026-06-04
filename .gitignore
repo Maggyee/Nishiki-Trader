@@ -56,6 +56,12 @@ data/testnet/
 *.log
 logs/
 
+# Frontend
+apps/frontend/.next/
+apps/frontend/node_modules/
+apps/frontend/out/
+apps/frontend/tsconfig.tsbuildinfo
+
 # Jupyter
 .ipynb_checkpoints/
 notebooks/*.html

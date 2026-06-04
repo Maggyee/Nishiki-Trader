@@ -10,11 +10,12 @@
 | `ops/` | 运维脚本、应急平仓、健康检查 | 1 | fixture / mirror / snapshot ops |
 | `agents/` | LLM agent（Claude SDK） | 4 | AgentAdvice audit + review agent |
 | `mcp_server/` | 给 agent / Claude Code 用的工具 | 4 | AgentAdvice wrappers |
-| `frontend/` | Next.js 监控面板 | 5 | 占位 |
+| `frontend/` | Next.js 监控面板 | 5 | read-only dashboard shell |
 
-**当前 Phase 4 entry**：Agent research 先从 AgentAdvice 审计表、deterministic
-review agent、MCP-facing wrappers、以及只读 dashboard snapshot 开始。
-Phase 3 live-readiness gate 仍未满足；Phase 4 代码不得进入订单路径。
+**当前 Phase 5 entry**：只读 frontend 已经开始消费 `dashboard.snapshot.v1`；
+Agent research 仍通过 AgentAdvice 审计表、deterministic review agent、
+MCP-facing wrappers、以及只读 dashboard snapshot 工作。
+Phase 3 live-readiness gate 仍未满足；Phase 5 代码不得进入订单路径。
 参考 `docs/decisions/001-tech-stack.md` §6 服务激活时间表。
 
 ## 跨模块边界（contract §5）
@@ -28,5 +29,6 @@ freqtrade / FreqAI / research
   -> Exchange (binance testnet/live)
 ```
 
-- `agents/` / `mcp_server/` **不进入这条路径**，只写 AgentAdvice
+- `agents/` / `mcp_server` / `frontend/` **不进入这条路径**；agent 侧只写
+  AgentAdvice，frontend 只读 snapshot
 - `bridge/` 是研究层向执行层的**唯一**入口

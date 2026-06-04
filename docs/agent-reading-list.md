@@ -27,6 +27,7 @@ Read these before any non-trivial work:
 | Architecture, boundaries, or phase planning | `docs/agent-operating-contract.md`, `docs/decisions/001-tech-stack.md` |
 | Signal bridge, ML output, FreqAI integration | `docs/decisions/002-signal-bridge-protocol.md`, `docs/decisions/005-signal-source-taxonomy.md`, `docs/decisions/006-gray-rollout-and-source-policies.md`, `docs/decisions/007-paper-trading-runtime.md` |
 | Agent research, AgentAdvice, or MCP tool boundaries | `docs/decisions/009-agent-advice-audit.md`, `apps/agents/README.md`, `apps/mcp_server/README.md` |
+| Frontend or dashboard work | `docs/decisions/012-phase5-readonly-dashboard.md`, `apps/frontend/README.md` |
 | Signal transport / message bus / Redis | `docs/decisions/010-redis-stream-signal-transport.md` (Draft, **not implemented**; only read when one of §2 triggers fires) |
 | Bridge → Postgres auto-mirror, dashboard freshness, dual-write design | `docs/decisions/011-bridge-postgres-mirror.md` (Draft, **not implemented**; only read when one of §2 triggers fires) |
 | Upstream source updates or dependency drift | `docs/upstream-versions.md` |

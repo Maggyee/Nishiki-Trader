@@ -103,8 +103,8 @@ The implementation must prove:
 
 - Add real MCP protocol handlers around the AgentAdvice wrappers in
   `apps.mcp_server.agent_advice_tools`.
-- Add a Phase 5 frontend/dashboard consumer for `dashboard.snapshot.v1` once the
-  frontend phase opens.
+- Expand the Phase 5 frontend/dashboard consumer for `dashboard.snapshot.v1`
+  without adding browser-side mutation paths.
 - Define any `llm_*` SignalEvent experiments in a separate ADR before they can
   move beyond paper shadow. Until then, LLM outputs stay outside the signal
   bridge.
