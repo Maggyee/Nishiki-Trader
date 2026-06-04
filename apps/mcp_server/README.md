@@ -2,7 +2,7 @@
 
 MCP server，向 Claude Code / Claude Desktop / agents 暴露工具调用。
 
-**当前 Phase**：0（占位）。代码 Phase 4 开始写。
+**当前 Phase**：4 entry（AgentAdvice 工具包装层）。
 
 ## 计划工具
 
@@ -26,8 +26,28 @@ MCP server，向 Claude Code / Claude Desktop / agents 暴露工具调用。
 uv run python -m apps.agents.cli list --db data/agents/advice.db
 ```
 
+当前 Phase 4 代码入口是普通 Python wrapper，不启动 MCP 服务、不引入新依赖：
+
+```python
+from apps.mcp_server import AgentAdviceToolContext, query_agent_advice, write_journal
+
+ctx = AgentAdviceToolContext(
+    advice_db_path="data/agents/advice.db",
+    audit_log_path="data/agents/mcp_tool_audit.jsonl",
+)
+write_journal(
+    context=ctx,
+    agent_name="review_agent",
+    advice_id="review_agent:journal:1778760000000000000:manual",
+    created_at_ns=1778760000000000000,
+    content="Record a research note.",
+)
+rows = query_agent_advice(context=ctx, agent_name="review_agent")
+```
+
 MCP server 后续只允许包装这类审计写入 / 查询接口；不能绕过
-`apps.agents.advice.AgentAdvice` schema，也不能写 `signals` 表。
+`apps.agents.advice.AgentAdvice` schema，也不能写 `signals` 表。每次 wrapper
+调用都会追加 `data/agents/mcp_tool_audit.jsonl` 审计行。
 
 触发类（Phase 5+ 才开放，且要二次确认）：
 

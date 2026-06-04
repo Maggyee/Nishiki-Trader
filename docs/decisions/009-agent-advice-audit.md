@@ -91,7 +91,8 @@ The implementation must prove:
 
 ## 6. Future Work
 
-- Add read-only MCP wrappers around the store.
+- Add real MCP protocol handlers around the AgentAdvice wrappers in
+  `apps.mcp_server.agent_advice_tools`.
 - Add a single mock-LLM review agent that writes only `AgentAdvice`.
 - Define any `llm_*` SignalEvent experiments in a separate ADR before they can
   move beyond paper shadow. Until then, LLM outputs stay outside the signal

@@ -9,7 +9,7 @@
 | `strategies_freqtrade/` | freqtrade 策略（通过 `--userdir` 加载） | 2 | research signals |
 | `ops/` | 运维脚本、应急平仓、健康检查 | 1 | fixture / mirror ops |
 | `agents/` | LLM agent（Claude SDK） | 4 | AgentAdvice audit |
-| `mcp_server/` | 给 agent / Claude Code 用的工具 | 4 | 边界占位 |
+| `mcp_server/` | 给 agent / Claude Code 用的工具 | 4 | AgentAdvice wrappers |
 | `frontend/` | Next.js 监控面板 | 5 | 占位 |
 
 **当前 Phase 4 entry**：Agent research 先从 AgentAdvice 审计表开始。
