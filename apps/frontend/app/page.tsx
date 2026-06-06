@@ -8,15 +8,344 @@ import {
 
 export const dynamic = "force-dynamic";
 
-const BOUNDARY_LABELS: Record<string, string> = {
-  live_path_allowed: "Live path",
-  signal_event_write_allowed: "SignalEvent writes",
-  source_policy_mutation_allowed: "SourcePolicy mutation",
-  exchange_api_access_allowed: "Exchange API",
-};
+const LANGUAGES = ["en", "zh-CN"] as const;
+type Language = (typeof LANGUAGES)[number];
+type SearchParams = Record<string, string | string[] | undefined>;
+type Copy = (typeof COPY)[Language];
 
-export default function DashboardPage() {
+const BOUNDARY_KEYS = [
+  "live_path_allowed",
+  "signal_event_write_allowed",
+  "source_policy_mutation_allowed",
+  "exchange_api_access_allowed",
+] as const;
+
+const COPY = {
+  en: {
+    languageLabel: "Language",
+    languageOptions: {
+      en: "EN",
+      "zh-CN": "简体中文",
+    },
+    brand: "Trader Dashboard",
+    title: "Operations Console",
+    header: {
+      snapshot: "Snapshot",
+      loaded: "Loaded",
+      phase: "Phase",
+      liveTrading: "Live trading",
+      loadedYes: "yes",
+      loadedFallback: "fallback",
+    },
+    command: {
+      posture: "Operational posture",
+      postureUnknown: "Read-only dashboard posture unknown.",
+      noObjective: "No project objective was found in the snapshot.",
+      liveGate: "Live gate",
+      strictContinuity: "Strict continuity",
+      generated: "Generated",
+    },
+    metrics: {
+      agentAdvice: "AgentAdvice",
+      evidenceInputs: "Evidence Inputs",
+      blockers: "Blockers",
+      blockersDetail: "review, promotion, and boundary blockers",
+      orderPath: "Order Path",
+      sealed: "sealed",
+      liveGateBlocked: "Live gate blocked",
+      liveGateUnknown: "Live gate unknown",
+    },
+    sections: {
+      consoleBrief: "Console Brief",
+      evidenceMatrix: "Evidence Matrix",
+      evidenceSubtitle: "read-only snapshot totals",
+      agentAdviceQueue: "AgentAdvice Queue",
+      operatorChecklist: "Operator Checklist",
+      watchlist: "Watchlist",
+      verification: "Verification",
+      boundaryLedger: "Boundary Ledger",
+    },
+    evidence: {
+      paperBundles: "Paper bundles",
+      paperFills: "Paper fills",
+      cleanTestnet: "Clean testnet",
+      testnetAlerts: "Testnet alerts",
+      testnetFills: "Testnet fills",
+      paper: "Paper",
+      testnet: "Testnet",
+      unknownRun: "unknown run",
+      noRecommendation: "no recommendation",
+      noBundles: "No bundle summaries attached",
+      attachBundles: "pass --paper-bundle or --testnet-bundle when generating snapshot",
+    },
+    advice: {
+      noRowsSnapshot: "no rows in snapshot",
+      latestRows: "latest rows",
+      agent: "Agent",
+      type: "Type",
+      status: "Status",
+      confidence: "Confidence",
+      summary: "Summary",
+      noRows: "No AgentAdvice rows are present in this snapshot.",
+      noSummary: "No summary",
+    },
+    checklist: {
+      items: "items",
+      item: "Checklist item",
+      noDetail: "No detail provided.",
+    },
+    watchlist: {
+      blockedDeferred: "Blocked / Deferred",
+      nextSteps: "Next Steps",
+      noBlockers: "No blockers listed.",
+      noNextSteps: "No next steps listed.",
+    },
+    verification: {
+      latestBlock: "latest block",
+      none: "none",
+      latestChecks: "Latest checks",
+      noItems: "No verification items were parsed from project status.",
+    },
+    boundary: {
+      mustRemainFalse: "must remain false",
+      open: "open",
+      closed: "closed",
+    },
+    boundaries: {
+      live_path_allowed: "Live path",
+      signal_event_write_allowed: "SignalEvent writes",
+      source_policy_mutation_allowed: "SourcePolicy mutation",
+      exchange_api_access_allowed: "Exchange API",
+    },
+    states: {
+      guarded: "guarded",
+      attention: "attention",
+      breach: "breach",
+    },
+    statusValues: {
+      ok: "ok",
+      reviewed: "reviewed",
+      warn: "warn",
+      manual: "manual",
+      archived: "archived",
+      blocked: "blocked",
+      breach: "breach",
+      unknown: "unknown",
+    },
+    generated: {
+      notGenerated: "not generated",
+      unknown: "unknown",
+    },
+    fallback: {
+      summary: "No operations summary is present in the snapshot.",
+    },
+    common: {
+      blocked: "blocked",
+      unknown: "unknown",
+      fallback: "fallback",
+      checks: "checks",
+      types: "types",
+      recorded: "recorded",
+      paper: "paper",
+      testnet: "testnet",
+      nA: "n/a",
+    },
+    known: {
+      "Read-only operations are guarded; live trading remains blocked.":
+        "Read-only operations are guarded; live trading remains blocked.",
+      "A dashboard or agent boundary is open.": "A dashboard or agent boundary is open.",
+      "Review blockers exist in attached evidence.": "Review blockers exist in attached evidence.",
+      "Live gate state is not explicitly blocked.":
+        "Live gate state is not explicitly blocked.",
+      "Live trading is blocked by ADR gates.": "Live trading is blocked by ADR gates.",
+      "Live trading gate is not explicitly blocked in project status.":
+        "Live trading gate is not explicitly blocked in project status.",
+      "All dashboard/agent mutation boundaries are closed.":
+        "All dashboard/agent mutation boundaries are closed.",
+      "No recorded AgentAdvice rows in the snapshot.":
+        "No recorded AgentAdvice rows in the snapshot.",
+      "Strict continuity is 0/14; do not claim live readiness.":
+        "Strict continuity is 0/14; do not claim live readiness.",
+      "Run apps.ops.dashboard_snapshot before operational review.":
+        "Run apps.ops.dashboard_snapshot before operational review.",
+      "Frontend must not expose order, SignalEvent, SourcePolicy, or exchange writes.":
+        "Frontend must not expose order, SignalEvent, SourcePolicy, or exchange writes.",
+      "SourcePolicy changes must go through promotion_review, not the dashboard.":
+        "SourcePolicy changes must go through promotion_review, not the dashboard.",
+      "Refresh dashboard snapshot": "Refresh dashboard snapshot",
+      "Keep trading mutations closed": "Keep trading mutations closed",
+      "Review AgentAdvice queue": "Review AgentAdvice queue",
+      "Respect paused continuity": "Respect paused continuity",
+      "Use promotion review for policy changes": "Use promotion review for policy changes",
+    },
+  },
+  "zh-CN": {
+    languageLabel: "语言",
+    languageOptions: {
+      en: "English",
+      "zh-CN": "简体中文",
+    },
+    brand: "交易看板",
+    title: "运维观察台",
+    header: {
+      snapshot: "快照",
+      loaded: "加载状态",
+      phase: "阶段",
+      liveTrading: "实盘交易",
+      loadedYes: "已加载",
+      loadedFallback: "兜底数据",
+    },
+    command: {
+      posture: "运维姿态",
+      postureUnknown: "只读看板姿态未知。",
+      noObjective: "当前快照没有找到项目目标。",
+      liveGate: "实盘闸门",
+      strictContinuity: "严格连续性",
+      generated: "生成时间",
+    },
+    metrics: {
+      agentAdvice: "AgentAdvice",
+      evidenceInputs: "证据输入",
+      blockers: "阻塞项",
+      blockersDetail: "审阅、promotion 与边界阻塞",
+      orderPath: "订单路径",
+      sealed: "已封闭",
+      liveGateBlocked: "实盘闸门已阻塞",
+      liveGateUnknown: "实盘闸门未知",
+    },
+    sections: {
+      consoleBrief: "控制台简报",
+      evidenceMatrix: "证据矩阵",
+      evidenceSubtitle: "只读快照汇总",
+      agentAdviceQueue: "AgentAdvice 队列",
+      operatorChecklist: "操作员检查表",
+      watchlist: "关注列表",
+      verification: "验证记录",
+      boundaryLedger: "边界账本",
+    },
+    evidence: {
+      paperBundles: "Paper bundle",
+      paperFills: "Paper 成交",
+      cleanTestnet: "干净 testnet",
+      testnetAlerts: "Testnet 告警",
+      testnetFills: "Testnet 成交",
+      paper: "Paper",
+      testnet: "Testnet",
+      unknownRun: "未知运行",
+      noRecommendation: "无建议",
+      noBundles: "未附加 bundle 摘要",
+      attachBundles: "生成快照时传入 --paper-bundle 或 --testnet-bundle",
+    },
+    advice: {
+      noRowsSnapshot: "快照中没有记录",
+      latestRows: "条最近记录",
+      agent: "Agent",
+      type: "类型",
+      status: "状态",
+      confidence: "置信度",
+      summary: "摘要",
+      noRows: "当前快照没有 AgentAdvice 记录。",
+      noSummary: "无摘要",
+    },
+    checklist: {
+      items: "项",
+      item: "检查项",
+      noDetail: "没有详情。",
+    },
+    watchlist: {
+      blockedDeferred: "阻塞 / 暂缓",
+      nextSteps: "下一步",
+      noBlockers: "没有列出的阻塞项。",
+      noNextSteps: "没有列出的下一步。",
+    },
+    verification: {
+      latestBlock: "最新记录",
+      none: "无",
+      latestChecks: "最近检查",
+      noItems: "没有从项目状态中解析到验证记录。",
+    },
+    boundary: {
+      mustRemainFalse: "必须保持 false",
+      open: "打开",
+      closed: "关闭",
+    },
+    boundaries: {
+      live_path_allowed: "实盘路径",
+      signal_event_write_allowed: "SignalEvent 写入",
+      source_policy_mutation_allowed: "SourcePolicy 修改",
+      exchange_api_access_allowed: "交易所 API",
+    },
+    states: {
+      guarded: "受控",
+      attention: "需关注",
+      breach: "越界",
+    },
+    statusValues: {
+      ok: "正常",
+      reviewed: "已审阅",
+      warn: "警告",
+      manual: "人工",
+      archived: "已归档",
+      blocked: "阻塞",
+      breach: "越界",
+      unknown: "未知",
+    },
+    generated: {
+      notGenerated: "未生成",
+      unknown: "未知",
+    },
+    fallback: {
+      summary: "当前快照没有运维摘要。",
+    },
+    common: {
+      blocked: "阻塞",
+      unknown: "未知",
+      fallback: "兜底",
+      checks: "项检查",
+      types: "种类型",
+      recorded: "条待审阅",
+      paper: "paper",
+      testnet: "testnet",
+      nA: "无",
+    },
+    known: {
+      "Read-only operations are guarded; live trading remains blocked.":
+        "只读运维状态受控；实盘交易仍保持阻塞。",
+      "A dashboard or agent boundary is open.": "有 dashboard 或 agent 边界被打开。",
+      "Review blockers exist in attached evidence.": "附加证据中存在需要审阅的阻塞项。",
+      "Live gate state is not explicitly blocked.": "实盘闸门未明确处于阻塞状态。",
+      "Live trading is blocked by ADR gates.": "实盘交易被 ADR gate 阻塞。",
+      "Live trading gate is not explicitly blocked in project status.":
+        "项目状态里没有明确阻塞实盘闸门。",
+      "All dashboard/agent mutation boundaries are closed.":
+        "所有 dashboard / agent 写入边界都保持关闭。",
+      "No recorded AgentAdvice rows in the snapshot.": "快照中没有待审阅的 AgentAdvice 记录。",
+      "Strict continuity is 0/14; do not claim live readiness.":
+        "严格连续性为 0/14；不能声称已具备实盘条件。",
+      "Run apps.ops.dashboard_snapshot before operational review.":
+        "运维审阅前先运行 apps.ops.dashboard_snapshot。",
+      "Frontend must not expose order, SignalEvent, SourcePolicy, or exchange writes.":
+        "前端不能暴露订单、SignalEvent、SourcePolicy 或交易所写入能力。",
+      "SourcePolicy changes must go through promotion_review, not the dashboard.":
+        "SourcePolicy 变更必须走 promotion_review，不能从 dashboard 发起。",
+      "Refresh dashboard snapshot": "刷新 dashboard 快照",
+      "Keep trading mutations closed": "保持交易写入关闭",
+      "Review AgentAdvice queue": "审阅 AgentAdvice 队列",
+      "Respect paused continuity": "尊重已暂停的连续性",
+      "Use promotion review for policy changes": "策略变更使用 promotion review",
+    },
+  },
+} as const;
+
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams?: Promise<SearchParams>;
+}) {
   const snapshot = loadDashboardSnapshot();
+  const params = (await searchParams) ?? {};
+  const language = resolveLanguage(params.lang);
+  const copy = COPY[language];
   const status = snapshot.project_status ?? {};
   const sections = status.sections ?? {};
   const advice = snapshot.agent_advice ?? {};
@@ -25,28 +354,34 @@ export default function DashboardPage() {
   const ops = snapshot.ops_status ?? {};
 
   return (
-    <main className="min-h-screen bg-stone-100 text-zinc-950">
-      <Header snapshot={snapshot} />
+    <main className="min-h-screen bg-stone-100 text-zinc-950" lang={language === "zh-CN" ? "zh-Hans" : "en"}>
+      <Header snapshot={snapshot} language={language} copy={copy} />
 
       <section className="mx-auto grid max-w-[1540px] gap-4 px-4 py-4 sm:px-5">
-        <CommandBand snapshot={snapshot} />
+        <CommandBand snapshot={snapshot} copy={copy} />
 
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(380px,0.55fr)]">
           <div className="grid gap-4">
-            <StatusGrid snapshot={snapshot} />
-            <OpsSummary summary={ops.summary ?? []} />
-            <EvidenceMatrix paperBundles={paperBundles} testnetBundles={testnetBundles} />
-            <AdviceTable rows={advice.latest ?? []} />
+            <StatusGrid snapshot={snapshot} language={language} copy={copy} />
+            <OpsSummary summary={ops.summary ?? []} copy={copy} />
+            <EvidenceMatrix
+              paperBundles={paperBundles}
+              testnetBundles={testnetBundles}
+              language={language}
+              copy={copy}
+            />
+            <AdviceTable rows={advice.latest ?? []} language={language} copy={copy} />
           </div>
 
           <aside className="grid content-start gap-4">
-            <ChecklistPanel items={snapshot.operator_checklist ?? []} />
+            <ChecklistPanel items={snapshot.operator_checklist ?? []} copy={copy} />
             <WatchlistPanel
               blocked={sections.blocked_deferred ?? []}
               nextSteps={sections.next_steps ?? []}
+              copy={copy}
             />
-            <VerificationPanel items={sections.latest_verification ?? []} />
-            <BoundaryPanel boundaries={snapshot.boundaries ?? {}} />
+            <VerificationPanel items={sections.latest_verification ?? []} copy={copy} />
+            <BoundaryPanel boundaries={snapshot.boundaries ?? {}} copy={copy} />
           </aside>
         </div>
       </section>
@@ -54,35 +389,63 @@ export default function DashboardPage() {
   );
 }
 
-function Header({ snapshot }: { snapshot: DashboardSnapshot }) {
+function Header({
+  snapshot,
+  language,
+  copy,
+}: {
+  snapshot: DashboardSnapshot;
+  language: Language;
+  copy: Copy;
+}) {
   const status = snapshot.project_status ?? {};
   return (
     <header className="border-b border-zinc-300 bg-white">
       <div className="mx-auto flex max-w-[1540px] flex-col gap-3 px-4 py-4 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <div className="text-xs font-semibold uppercase tracking-normal text-emerald-700">
-            Trader Dashboard
+        <div className="header-title-block">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-normal text-emerald-700">
+              {copy.brand}
+            </div>
+            <h1 className="mt-1 text-2xl font-semibold tracking-normal text-zinc-950 md:text-3xl">
+              {copy.title}
+            </h1>
           </div>
-          <h1 className="mt-1 text-2xl font-semibold tracking-normal text-zinc-950 md:text-3xl">
-            Operations Console
-          </h1>
+          <LanguageSwitch language={language} copy={copy} />
         </div>
         <div className="grid gap-2 text-sm text-zinc-700 sm:grid-cols-2 lg:min-w-[620px]">
-          <HeaderFact label="Snapshot" value={snapshot.schema_version ?? "unknown"} />
+          <HeaderFact label={copy.header.snapshot} value={snapshot.schema_version ?? copy.common.unknown} />
           <HeaderFact
-            label="Loaded"
-            value={snapshot.snapshot_source.loaded ? "yes" : "fallback"}
+            label={copy.header.loaded}
+            value={snapshot.snapshot_source.loaded ? copy.header.loadedYes : copy.header.loadedFallback}
             tone={snapshot.snapshot_source.loaded ? "good" : "warn"}
           />
-          <HeaderFact label="Phase" value={status.current_phase ?? "unknown"} wide />
+          <HeaderFact label={copy.header.phase} value={status.current_phase ?? copy.common.unknown} wide />
           <HeaderFact
-            label="Live trading"
-            value={status.live_trading_blocked ? "blocked" : "unknown"}
+            label={copy.header.liveTrading}
+            value={status.live_trading_blocked ? copy.common.blocked : copy.common.unknown}
             tone={status.live_trading_blocked ? "stop" : "warn"}
           />
         </div>
       </div>
     </header>
+  );
+}
+
+function LanguageSwitch({ language, copy }: { language: Language; copy: Copy }) {
+  return (
+    <nav className="language-switch" aria-label={copy.languageLabel}>
+      {LANGUAGES.map((option) => (
+        <a
+          aria-current={language === option ? "page" : undefined}
+          data-active={String(language === option)}
+          href={`/?lang=${option}`}
+          key={option}
+        >
+          {copy.languageOptions[option]}
+        </a>
+      ))}
+    </nav>
   );
 }
 
@@ -105,24 +468,24 @@ function HeaderFact({
   );
 }
 
-function CommandBand({ snapshot }: { snapshot: DashboardSnapshot }) {
+function CommandBand({ snapshot, copy }: { snapshot: DashboardSnapshot; copy: Copy }) {
   const ops = snapshot.ops_status ?? {};
   const status = snapshot.project_status ?? {};
   const state = normalizeState(ops.state);
   return (
     <section className="command-band" data-state={state}>
       <div className="posture-block">
-        <span>Operational posture</span>
-        <strong>{labelState(state)}</strong>
+        <span>{copy.command.posture}</span>
+        <strong>{labelState(state, copy)}</strong>
       </div>
       <div className="posture-copy">
-        <h2>{ops.headline ?? "Read-only dashboard posture unknown."}</h2>
-        <p>{status.current_objective ?? "No project objective was found in the snapshot."}</p>
+        <h2>{localizeKnown(ops.headline, copy) || copy.command.postureUnknown}</h2>
+        <p>{status.current_objective ?? copy.command.noObjective}</p>
       </div>
       <div className="posture-meta">
-        <MiniFact label="Live gate" value={ops.live_gate ?? "unknown"} />
-        <MiniFact label="Strict continuity" value={ops.strict_continuity ?? "unknown"} />
-        <MiniFact label="Generated" value={formatGenerated(snapshot.generated_at_ns)} />
+        <MiniFact label={copy.command.liveGate} value={localizeStatus(ops.live_gate, copy)} />
+        <MiniFact label={copy.command.strictContinuity} value={ops.strict_continuity ?? copy.common.unknown} />
+        <MiniFact label={copy.command.generated} value={formatGenerated(snapshot.generated_at_ns, copy)} />
       </div>
     </section>
   );
@@ -137,38 +500,46 @@ function MiniFact({ label, value }: { label: string; value: string }) {
   );
 }
 
-function StatusGrid({ snapshot }: { snapshot: DashboardSnapshot }) {
+function StatusGrid({
+  snapshot,
+  language,
+  copy,
+}: {
+  snapshot: DashboardSnapshot;
+  language: Language;
+  copy: Copy;
+}) {
   const status = snapshot.project_status ?? {};
   const advice = snapshot.agent_advice ?? {};
   const counts = snapshot.ops_status?.counts ?? {};
+  const recordedAdvice = counts.recorded_advice ?? 0;
+  const paperBundleCount = counts.paper_bundle_count ?? 0;
+  const testnetBundleCount = counts.testnet_bundle_count ?? 0;
+  const blockers = totalBlockers(counts);
   return (
     <section className="grid gap-3 md:grid-cols-4">
       <Metric
-        label="AgentAdvice"
-        value={formatCount(advice.total)}
-        detail={`${Object.keys(advice.by_type ?? {}).length} types / ${formatCount(
-          counts.recorded_advice,
-        )} recorded`}
-        tone={counts.recorded_advice ? "amber" : "blue"}
+        label={copy.metrics.agentAdvice}
+        value={formatCount(advice.total, language)}
+        detail={formatAdviceDetail(Object.keys(advice.by_type ?? {}).length, recordedAdvice, language, copy)}
+        tone={recordedAdvice ? "amber" : "blue"}
       />
       <Metric
-        label="Evidence Inputs"
-        value={formatCount((counts.paper_bundle_count ?? 0) + (counts.testnet_bundle_count ?? 0))}
-        detail={`${formatCount(counts.paper_bundle_count)} paper / ${formatCount(
-          counts.testnet_bundle_count,
-        )} testnet`}
+        label={copy.metrics.evidenceInputs}
+        value={formatCount(paperBundleCount + testnetBundleCount, language)}
+        detail={formatEvidenceInputDetail(paperBundleCount, testnetBundleCount, language, copy)}
         tone="green"
       />
       <Metric
-        label="Blockers"
-        value={formatCount(totalBlockers(counts))}
-        detail="review, promotion, and boundary blockers"
-        tone={totalBlockers(counts) ? "red" : "green"}
+        label={copy.metrics.blockers}
+        value={formatCount(blockers, language)}
+        detail={copy.metrics.blockersDetail}
+        tone={blockers ? "red" : "green"}
       />
       <Metric
-        label="Order Path"
-        value="sealed"
-        detail={status.live_trading_blocked ? "Live gate blocked" : "Live gate unknown"}
+        label={copy.metrics.orderPath}
+        value={copy.metrics.sealed}
+        detail={status.live_trading_blocked ? copy.metrics.liveGateBlocked : copy.metrics.liveGateUnknown}
         tone="red"
       />
     </section>
@@ -195,22 +566,21 @@ function Metric({
   );
 }
 
-function OpsSummary({ summary }: { summary: string[] }) {
+function OpsSummary({ summary, copy }: { summary: string[]; copy: Copy }) {
+  const items = summary.length ? summary : [copy.fallback.summary];
   return (
     <section className="panel">
       <div className="section-head">
-        <h2>Console Brief</h2>
-        <span>{summary.length ? `${summary.length} checks` : "fallback"}</span>
+        <h2>{copy.sections.consoleBrief}</h2>
+        <span>{summary.length ? `${summary.length} ${copy.common.checks}` : copy.common.fallback}</span>
       </div>
       <div className="brief-grid">
-        {(summary.length ? summary : ["No operations summary is present in the snapshot."]).map(
-          (item) => (
-            <div className="brief-item" key={item}>
-              <span aria-hidden="true" />
-              <p>{item}</p>
-            </div>
-          ),
-        )}
+        {items.map((item) => (
+          <div className="brief-item" key={item}>
+            <span aria-hidden="true" />
+            <p>{localizeKnown(item, copy)}</p>
+          </div>
+        ))}
       </div>
     </section>
   );
@@ -219,9 +589,13 @@ function OpsSummary({ summary }: { summary: string[] }) {
 function EvidenceMatrix({
   paperBundles,
   testnetBundles,
+  language,
+  copy,
 }: {
   paperBundles: PaperBundle[];
   testnetBundles: TestnetBundle[];
+  language: Language;
+  copy: Copy;
 }) {
   const cleanTestnet = testnetBundles.filter((bundle) => bundle.clean_for_retro).length;
   const paperFills = sum(paperBundles.map((bundle) => bundle.fills));
@@ -231,19 +605,37 @@ function EvidenceMatrix({
   return (
     <section className="panel">
       <div className="section-head">
-        <h2>Evidence Matrix</h2>
-        <span>read-only snapshot totals</span>
+        <h2>{copy.sections.evidenceMatrix}</h2>
+        <span>{copy.sections.evidenceSubtitle}</span>
       </div>
       <div className="evidence-grid">
-        <EvidenceBar label="Paper bundles" value={paperBundles.length} max={8} tone="blue" />
-        <EvidenceBar label="Paper fills" value={paperFills} max={2000} tone="green" />
-        <EvidenceBar label="Clean testnet" value={cleanTestnet} max={16} tone="green" />
-        <EvidenceBar label="Testnet alerts" value={alerts} max={12} tone="red" />
-        <EvidenceBar label="Testnet fills" value={testnetFills} max={48} tone="amber" />
+        <EvidenceBar
+          label={copy.evidence.paperBundles}
+          value={paperBundles.length}
+          max={8}
+          tone="blue"
+          language={language}
+        />
+        <EvidenceBar label={copy.evidence.paperFills} value={paperFills} max={2000} tone="green" language={language} />
+        <EvidenceBar
+          label={copy.evidence.cleanTestnet}
+          value={cleanTestnet}
+          max={16}
+          tone="green"
+          language={language}
+        />
+        <EvidenceBar label={copy.evidence.testnetAlerts} value={alerts} max={12} tone="red" language={language} />
+        <EvidenceBar
+          label={copy.evidence.testnetFills}
+          value={testnetFills}
+          max={48}
+          tone="amber"
+          language={language}
+        />
       </div>
       <div className="bundle-ledger">
-        <BundleList title="Paper" bundles={paperBundles} />
-        <BundleList title="Testnet" bundles={testnetBundles} />
+        <BundleList title={copy.evidence.paper} bundles={paperBundles} copy={copy} />
+        <BundleList title={copy.evidence.testnet} bundles={testnetBundles} copy={copy} />
       </div>
     </section>
   );
@@ -254,18 +646,20 @@ function EvidenceBar({
   value,
   max,
   tone,
+  language,
 }: {
   label: string;
   value: number;
   max: number;
   tone: "green" | "blue" | "amber" | "red";
+  language: Language;
 }) {
   const width = Math.min(Math.max((value / max) * 100, value > 0 ? 7 : 0), 100);
   return (
     <div className="evidence-row" data-tone={tone}>
       <div>
         <span>{label}</span>
-        <strong>{formatCount(value)}</strong>
+        <strong>{formatCount(value, language)}</strong>
       </div>
       <div className="bar-track" aria-hidden="true">
         <span style={{ width: `${width}%` }} />
@@ -277,9 +671,11 @@ function EvidenceBar({
 function BundleList({
   title,
   bundles,
+  copy,
 }: {
   title: string;
   bundles: Array<PaperBundle | TestnetBundle>;
+  copy: Copy;
 }) {
   return (
     <div className="ledger-column">
@@ -287,54 +683,62 @@ function BundleList({
       {bundles.length ? (
         bundles.slice(0, 4).map((bundle) => (
           <div className="ledger-row" key={bundle.run_id ?? `${title}-unknown`}>
-            <span>{bundle.run_id ?? "unknown run"}</span>
-            <small>{bundle.recommendation ?? "no recommendation"}</small>
+            <span>{bundle.run_id ?? copy.evidence.unknownRun}</span>
+            <small>{bundle.recommendation ?? copy.evidence.noRecommendation}</small>
           </div>
         ))
       ) : (
         <div className="ledger-row">
-          <span>No bundle summaries attached</span>
-          <small>pass --paper-bundle or --testnet-bundle when generating snapshot</small>
+          <span>{copy.evidence.noBundles}</span>
+          <small>{copy.evidence.attachBundles}</small>
         </div>
       )}
     </div>
   );
 }
 
-function AdviceTable({ rows }: { rows: AdviceRow[] }) {
+function AdviceTable({
+  rows,
+  language,
+  copy,
+}: {
+  rows: AdviceRow[];
+  language: Language;
+  copy: Copy;
+}) {
   return (
     <section className="panel">
       <div className="section-head">
-        <h2>AgentAdvice Queue</h2>
-        <span>{rows.length ? `${rows.length} latest rows` : "no rows in snapshot"}</span>
+        <h2>{copy.sections.agentAdviceQueue}</h2>
+        <span>{rows.length ? `${formatCount(rows.length, language)} ${copy.advice.latestRows}` : copy.advice.noRowsSnapshot}</span>
       </div>
       <div className="table-wrap">
         <table>
           <thead>
             <tr>
-              <th>Agent</th>
-              <th>Type</th>
-              <th>Status</th>
-              <th>Confidence</th>
-              <th>Summary</th>
+              <th>{copy.advice.agent}</th>
+              <th>{copy.advice.type}</th>
+              <th>{copy.advice.status}</th>
+              <th>{copy.advice.confidence}</th>
+              <th>{copy.advice.summary}</th>
             </tr>
           </thead>
           <tbody>
             {rows.length ? (
               rows.slice(0, 10).map((row) => (
                 <tr key={row.advice_id ?? `${row.agent_name}-${row.created_at_ns}`}>
-                  <td>{row.agent_name ?? "unknown"}</td>
-                  <td>{row.advice_type ?? "unknown"}</td>
+                  <td>{row.agent_name ?? copy.common.unknown}</td>
+                  <td>{row.advice_type ?? copy.common.unknown}</td>
                   <td>
-                    <StatusPill value={row.status ?? "unknown"} />
+                    <StatusPill value={row.status ?? "unknown"} copy={copy} />
                   </td>
-                  <td>{formatConfidence(row.confidence)}</td>
-                  <td>{row.summary ?? "No summary"}</td>
+                  <td>{formatConfidence(row.confidence, copy)}</td>
+                  <td>{row.summary ?? copy.advice.noSummary}</td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={5}>No AgentAdvice rows are present in this snapshot.</td>
+                <td colSpan={5}>{copy.advice.noRows}</td>
               </tr>
             )}
           </tbody>
@@ -346,21 +750,25 @@ function AdviceTable({ rows }: { rows: AdviceRow[] }) {
 
 function ChecklistPanel({
   items,
+  copy,
 }: {
   items: NonNullable<DashboardSnapshot["operator_checklist"]>;
+  copy: Copy;
 }) {
   return (
     <section className="panel">
       <div className="section-head">
-        <h2>Operator Checklist</h2>
-        <span>{items.length} items</span>
+        <h2>{copy.sections.operatorChecklist}</h2>
+        <span>
+          {items.length} {copy.checklist.items}
+        </span>
       </div>
       <div className="checklist">
         {items.map((item) => (
           <div className="check-row" data-status={normalizeChecklist(item.status)} key={item.label}>
-            <strong>{item.label ?? "Checklist item"}</strong>
-            <StatusPill value={item.status ?? "unknown"} />
-            <p>{item.detail ?? "No detail provided."}</p>
+            <strong>{localizeKnown(item.label, copy) || copy.checklist.item}</strong>
+            <StatusPill value={item.status ?? "unknown"} copy={copy} />
+            <p>{localizeKnown(item.detail, copy) || copy.checklist.noDetail}</p>
           </div>
         ))}
       </div>
@@ -371,34 +779,32 @@ function ChecklistPanel({
 function WatchlistPanel({
   blocked,
   nextSteps,
+  copy,
 }: {
   blocked: string[];
   nextSteps: string[];
+  copy: Copy;
 }) {
   return (
     <section className="panel">
       <div className="section-head">
-        <h2>Watchlist</h2>
-        <span>{blocked.length} blocked / {nextSteps.length} next</span>
+        <h2>{copy.sections.watchlist}</h2>
+        <span>{formatWatchlistCount(blocked.length, nextSteps.length, copy)}</span>
       </div>
-      <ListBlock title="Blocked / Deferred" items={blocked} empty="No blockers listed." />
-      <ListBlock title="Next Steps" items={nextSteps} empty="No next steps listed." />
+      <ListBlock title={copy.watchlist.blockedDeferred} items={blocked} empty={copy.watchlist.noBlockers} />
+      <ListBlock title={copy.watchlist.nextSteps} items={nextSteps} empty={copy.watchlist.noNextSteps} />
     </section>
   );
 }
 
-function VerificationPanel({ items }: { items: string[] }) {
+function VerificationPanel({ items, copy }: { items: string[]; copy: Copy }) {
   return (
     <section className="panel">
       <div className="section-head">
-        <h2>Verification</h2>
-        <span>{items.length ? "latest block" : "none"}</span>
+        <h2>{copy.sections.verification}</h2>
+        <span>{items.length ? copy.verification.latestBlock : copy.verification.none}</span>
       </div>
-      <ListBlock
-        title="Latest checks"
-        items={items}
-        empty="No verification items were parsed from project status."
-      />
+      <ListBlock title={copy.verification.latestChecks} items={items} empty={copy.verification.noItems} />
     </section>
   );
 }
@@ -416,21 +822,20 @@ function ListBlock({ title, items, empty }: { title: string; items: string[]; em
   );
 }
 
-function BoundaryPanel({ boundaries }: { boundaries: Record<string, boolean> }) {
-  const entries = Object.entries(BOUNDARY_LABELS);
+function BoundaryPanel({ boundaries, copy }: { boundaries: Record<string, boolean>; copy: Copy }) {
   return (
     <section className="panel">
       <div className="section-head">
-        <h2>Boundary Ledger</h2>
-        <span>must remain false</span>
+        <h2>{copy.sections.boundaryLedger}</h2>
+        <span>{copy.boundary.mustRemainFalse}</span>
       </div>
       <div className="boundary-list">
-        {entries.map(([key, label]) => {
+        {BOUNDARY_KEYS.map((key) => {
           const allowed = boundaries[key] === true;
           return (
             <div className="boundary-row" key={key} data-open={String(allowed)}>
-              <span>{label}</span>
-              <strong>{allowed ? "open" : "closed"}</strong>
+              <span>{copy.boundaries[key]}</span>
+              <strong>{allowed ? copy.boundary.open : copy.boundary.closed}</strong>
             </div>
           );
         })}
@@ -439,7 +844,7 @@ function BoundaryPanel({ boundaries }: { boundaries: Record<string, boolean> }) 
   );
 }
 
-function StatusPill({ value }: { value: string }) {
+function StatusPill({ value, copy }: { value: string; copy: Copy }) {
   const tone =
     value === "ok" || value === "reviewed"
       ? "good"
@@ -450,9 +855,14 @@ function StatusPill({ value }: { value: string }) {
           : "neutral";
   return (
     <span className="status-pill" data-tone={tone}>
-      {value}
+      {localizeStatus(value, copy)}
     </span>
   );
+}
+
+function resolveLanguage(value: string | string[] | undefined): Language {
+  const candidate = Array.isArray(value) ? value[0] : value;
+  return candidate === "zh-CN" ? "zh-CN" : "en";
 }
 
 function normalizeState(value: unknown): "guarded" | "attention" | "breach" {
@@ -462,18 +872,28 @@ function normalizeState(value: unknown): "guarded" | "attention" | "breach" {
   return "attention";
 }
 
-function labelState(value: "guarded" | "attention" | "breach"): string {
-  if (value === "guarded") {
-    return "guarded";
-  }
-  if (value === "breach") {
-    return "breach";
-  }
-  return "attention";
+function labelState(value: "guarded" | "attention" | "breach", copy: Copy): string {
+  return copy.states[value];
 }
 
 function normalizeChecklist(value: string | undefined): string {
   return value ?? "unknown";
+}
+
+function localizeKnown(value: string | undefined | null, copy: Copy): string {
+  if (!value) {
+    return "";
+  }
+  const known = copy.known as Record<string, string>;
+  return known[value] ?? value;
+}
+
+function localizeStatus(value: string | undefined | null, copy: Copy): string {
+  if (!value) {
+    return copy.common.unknown;
+  }
+  const labels = copy.statusValues as Record<string, string>;
+  return labels[value] ?? localizeKnown(value, copy);
 }
 
 function totalBlockers(counts: Record<string, number>): number {
@@ -485,24 +905,48 @@ function totalBlockers(counts: Record<string, number>): number {
   );
 }
 
-function formatCount(value: number | undefined): string {
-  return new Intl.NumberFormat("en-US").format(value ?? 0);
+function formatAdviceDetail(countTypes: number, recorded: number, language: Language, copy: Copy): string {
+  if (language === "zh-CN") {
+    return `${formatCount(countTypes, language)} ${copy.common.types} / ${formatCount(recorded, language)} ${
+      copy.common.recorded
+    }`;
+  }
+  return `${formatCount(countTypes, language)} ${copy.common.types} / ${formatCount(recorded, language)} ${
+    copy.common.recorded
+  }`;
 }
 
-function formatConfidence(value: number | undefined): string {
+function formatEvidenceInputDetail(paper: number, testnet: number, language: Language, copy: Copy): string {
+  return `${formatCount(paper, language)} ${copy.common.paper} / ${formatCount(testnet, language)} ${
+    copy.common.testnet
+  }`;
+}
+
+function formatWatchlistCount(blocked: number, nextSteps: number, copy: Copy): string {
+  if (copy === COPY["zh-CN"]) {
+    return `${blocked} 个阻塞 / ${nextSteps} 个下一步`;
+  }
+  return `${blocked} blocked / ${nextSteps} next`;
+}
+
+function formatCount(value: number | undefined, language: Language): string {
+  return new Intl.NumberFormat(language === "zh-CN" ? "zh-CN" : "en-US").format(value ?? 0);
+}
+
+function formatConfidence(value: number | undefined, copy: Copy): string {
   if (typeof value !== "number") {
-    return "n/a";
+    return copy.common.nA;
   }
   return `${Math.round(value * 100)}%`;
 }
 
-function formatGenerated(value: DashboardSnapshot["generated_at_ns"]): string {
+function formatGenerated(value: DashboardSnapshot["generated_at_ns"], copy: Copy): string {
   if (value === null || value === undefined) {
-    return "not generated";
+    return copy.generated.notGenerated;
   }
   const raw = typeof value === "number" ? value : Number(value);
   if (!Number.isFinite(raw)) {
-    return "unknown";
+    return copy.generated.unknown;
   }
   const date = new Date(Math.floor(raw / 1_000_000));
   return date.toISOString().replace("T", " ").slice(0, 19);

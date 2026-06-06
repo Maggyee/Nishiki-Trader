@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-06-06 (Phase 5 read-only operations console pass)
+- **Last updated**: 2026-06-06 (Phase 5 read-only operations console language toggle)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
-- **Current objective**: Phase 5 entry is open. ADR-012, `apps.ops.dashboard_snapshot`, and `apps/frontend` now define a read-only Next.js operations console consuming `dashboard.snapshot.v1`; the snapshot carries `ops_status`, `operator_checklist`, parsed project-status sections, boundary flags, AgentAdvice rows, and optional passive paper/testnet bundle summaries. The earlier Grafana/Prometheus/Loki stack remains the runtime monitoring surface. ADR-009 and `apps.agents` remain the agent-safe Phase 4 substrate: `AgentAdvice v1`, MCP-facing safe wrappers, and the deterministic review agent. Agents and frontend still cannot write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or enter the order path. Existing Phase 3 evidence remains documented in `docs/progress/phase-3-testnet-canary-evidence.md`, with the paused continuity plan in `docs/progress/phase-3-testnet-continuity-plan.md`. Strict continuity remains `current_qualified_streak_days=0/14`; this does not satisfy the ADR-001/ADR-008 live gate. Keep `freqai_linear_v1 / linear-mom-train20240105` at `hold @ testnet_canary` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. No live trading without a separate live-risk ADR and the ADR-001 capital ladder gate.
+- **Current objective**: Phase 5 entry is open. ADR-012, `apps.ops.dashboard_snapshot`, and `apps/frontend` now define a read-only Next.js operations console consuming `dashboard.snapshot.v1`; the snapshot carries `ops_status`, `operator_checklist`, parsed project-status sections, boundary flags, AgentAdvice rows, and optional passive paper/testnet bundle summaries. The frontend also supports read-only English / Simplified Chinese UI chrome via `?lang=en` / `?lang=zh-CN`. The earlier Grafana/Prometheus/Loki stack remains the runtime monitoring surface. ADR-009 and `apps.agents` remain the agent-safe Phase 4 substrate: `AgentAdvice v1`, MCP-facing safe wrappers, and the deterministic review agent. Agents and frontend still cannot write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or enter the order path. Existing Phase 3 evidence remains documented in `docs/progress/phase-3-testnet-canary-evidence.md`, with the paused continuity plan in `docs/progress/phase-3-testnet-continuity-plan.md`. Strict continuity remains `current_qualified_streak_days=0/14`; this does not satisfy the ADR-001/ADR-008 live gate. Keep `freqai_linear_v1 / linear-mom-train20240105` at `hold @ testnet_canary` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. No live trading without a separate live-risk ADR and the ADR-001 capital ladder gate.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -100,7 +100,7 @@ At task finish:
 - Phase 4 MCP-facing AgentAdvice wrappers are implemented and unit-tested. `apps.mcp_server.agent_advice_tools` exposes only `query_agent_advice`, `write_agent_advice`, and `write_journal`, wraps `AgentAdviceStore`, appends local JSONL audit rows, rejects execution directives through the AgentAdvice schema, and does not import `SignalStore` outside tests.
 - Phase 4 deterministic review agent is implemented and unit-tested. `apps.agents.review_agent` reads local status/evidence markdown, produces `advice_type="project_review"` AgentAdvice, and can dry-run or write to the AgentAdvice store without LLM calls, exchange access, `SignalEvent` writes, or `SourcePolicy` mutation.
 - Phase 4 read-only dashboard snapshot surface is implemented and unit-tested. `apps.ops.dashboard_snapshot` emits `dashboard.snapshot.v1` JSON/Markdown from `docs/project-status.md`, the AgentAdvice SQLite store, and optional passive paper/testnet bundle report readers; it is a frontend/Grafana input surface only and does not touch the live order path.
-- ADR-012 **Phase 5 read-only dashboard entry is implemented and verified**. `apps/frontend` is now a Next.js 15 + Tailwind operations console that reads `dashboard.snapshot.v1` server-side from `data/frontend/dashboard-snapshot.json` (or `TRADER_DASHBOARD_SNAPSHOT`) and renders operational posture, live gate, strict continuity, guardrail counts, order-path boundary flags, AgentAdvice rows, operator checklist, watchlist, latest verification, and optional paper/testnet bundle summaries. It has no API routes, no browser-side mutations, no trading controls, and no exchange access.
+- ADR-012 **Phase 5 read-only dashboard entry is implemented and verified**. `apps/frontend` is now a Next.js 15 + Tailwind operations console that reads `dashboard.snapshot.v1` server-side from `data/frontend/dashboard-snapshot.json` (or `TRADER_DASHBOARD_SNAPSHOT`) and renders operational posture, live gate, strict continuity, guardrail counts, order-path boundary flags, AgentAdvice rows, operator checklist, watchlist, latest verification, optional paper/testnet bundle summaries, and English / Simplified Chinese UI chrome selected by URL query. It has no API routes, no browser-side mutations, no trading controls, and no exchange access.
 
 ## Current Focus
 
@@ -143,6 +143,18 @@ Immediate focus:
 - No edits to `freqtrade/` or `nautilus_trader/` unless explicitly requested.
 
 ## Latest Verification
+
+On 2026-06-06, after adding the read-only English / Simplified Chinese language switch:
+
+- `cd apps/frontend && npm run typecheck` -> clean.
+- `cd apps/frontend && npm run build` -> clean Next.js production build.
+- `cd apps/frontend && npm audit --audit-level=moderate` -> **0 vulnerabilities**.
+- `curl -I http://127.0.0.1:3002/?lang=zh-CN` -> **HTTP 200 OK** after restarting the dev server from a clean `.next`.
+- `curl -s http://127.0.0.1:3002/?lang=zh-CN` -> content smoke found `运维观察台`, `语言`, `简体中文`, `操作员检查表`, `关注列表`, and `边界账本`.
+- `ssh home-frp 'curl -s http://127.0.0.1:13002/?lang=zh-CN'` -> same Simplified Chinese content visible through the active tunnel.
+- `UV_CACHE_DIR=/tmp/uv-cache uv run pytest -q` -> **551 passed**.
+- `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check apps tests docs infra` -> clean.
+- `git diff --check` -> clean.
 
 On 2026-06-06, after upgrading the Phase 5 frontend into a read-only operations console:
 

@@ -35,8 +35,14 @@ npm run build
 snapshot 路径。默认路径是仓库根目录下的
 `data/frontend/dashboard-snapshot.json`。
 
+语言切换是只读 URL 状态：
+
+- `/?lang=en`：英文
+- `/?lang=zh-CN`：简体中文
+
 ## 当前展示
 
+- 顶部语言切换：English / 简体中文，不写 cookie、不调用 API
 - Operational posture：live gate、strict continuity、生成时间、当前目标
 - Guardrail metrics：AgentAdvice 记录数、paper/testnet bundle 输入、阻塞项、order-path 边界
 - Evidence matrix：paper / testnet bundle 数量、审阅阻塞、promotion 阻塞

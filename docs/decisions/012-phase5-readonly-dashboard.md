@@ -39,6 +39,10 @@ boundaries, AgentAdvice history, and passive bundle summaries. If the file is
 absent, it renders a fallback read-only state so build and local smoke checks
 remain deterministic.
 
+Language selection is read-only URL state. The dashboard may render English or
+Simplified Chinese UI chrome through `?lang=en` / `?lang=zh-CN`; this does not
+write cookies, call API routes, or mutate operator state.
+
 ## 3. Boundary
 
 Allowed:
@@ -72,7 +76,8 @@ Phase 5 entry implementation:
   `operator_checklist`.
 - `apps/frontend/app/page.tsx` renders the read-only operations dashboard:
   posture band, guardrail metrics, evidence matrix, bundle ledger, AgentAdvice
-  queue, operator checklist, watchlist, verification, and boundary ledger.
+  queue, operator checklist, watchlist, verification, boundary ledger, and an
+  English / Simplified Chinese URL language switch.
 - `apps/frontend/app/globals.css` defines the compact dashboard surface.
 
 The first implementation deliberately has no API routes and no client-side
