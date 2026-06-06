@@ -1,8 +1,8 @@
 # frontend
 
-Next.js + Tailwind 监控面板。
+Next.js + Tailwind 只读运维观察台。
 
-**当前 Phase**：5 entry（只读 dashboard shell）。
+**当前 Phase**：5 entry（只读 operations console）。
 
 ## 当前入口
 
@@ -35,13 +35,21 @@ npm run build
 snapshot 路径。默认路径是仓库根目录下的
 `data/frontend/dashboard-snapshot.json`。
 
-## 计划展示
+## 当前展示
 
-- 策略版本 / 启停 / 回测曲线
-- 持仓 / PnL / 回撤 / 风险状态
-- 信号流 / 拒绝原因 / source 分布
-- Agent 建议历史 / 准确率
-- 服务存活 / 数据延迟 / 报警
+- Operational posture：live gate、strict continuity、生成时间、当前目标
+- Guardrail metrics：AgentAdvice 记录数、paper/testnet bundle 输入、阻塞项、order-path 边界
+- Evidence matrix：paper / testnet bundle 数量、审阅阻塞、promotion 阻塞
+- AgentAdvice queue：最近 advice 记录、类型、状态、置信度
+- Operator checklist：刷新 snapshot、边界检查、AgentAdvice 审阅、连续性阻塞、SourcePolicy 流程
+- Watchlist / Verification：从 `docs/project-status.md` 解析 blocked/deferred、next steps、latest verification
+- Boundary ledger：确认前端相关 live/order mutation flags 仍关闭
+
+## 后续可加
+
+- Grafana / frontend source-of-truth-neutral cross-links
+- Passive service-liveness and data-lag summaries from existing observability outputs
+- Read-only signal-source distribution and rejection summaries from approved reports
 
 ## 锁定边界
 

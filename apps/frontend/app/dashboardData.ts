@@ -44,6 +44,13 @@ export type DashboardSnapshot = {
     current_phase?: string | null;
     current_objective?: string | null;
     live_trading_blocked?: boolean;
+    strict_continuity?: string | null;
+    sections?: {
+      immediate_focus?: string[];
+      next_steps?: string[];
+      blocked_deferred?: string[];
+      latest_verification?: string[];
+    };
   };
   agent_advice?: {
     db_exists?: boolean;
@@ -55,6 +62,19 @@ export type DashboardSnapshot = {
   };
   paper_bundles?: PaperBundle[];
   testnet_bundles?: TestnetBundle[];
+  ops_status?: {
+    state?: "guarded" | "attention" | "breach" | string;
+    headline?: string;
+    live_gate?: string;
+    strict_continuity?: string | null;
+    counts?: Record<string, number>;
+    summary?: string[];
+  };
+  operator_checklist?: Array<{
+    label?: string;
+    status?: "ok" | "warn" | "blocked" | "breach" | "manual" | string;
+    detail?: string;
+  }>;
   snapshot_source: {
     path: string;
     loaded: boolean;
@@ -98,6 +118,13 @@ function fallbackSnapshot(snapshotPath: string, error: unknown): DashboardSnapsh
       current_phase: "Phase 5 entry frontend shell",
       current_objective: "Read-only dashboard is waiting for a generated snapshot.",
       live_trading_blocked: true,
+      strict_continuity: null,
+      sections: {
+        immediate_focus: ["Generate a dashboard snapshot before review."],
+        next_steps: ["Run apps.ops.dashboard_snapshot and refresh the frontend."],
+        blocked_deferred: ["No live trading."],
+        latest_verification: [],
+      },
     },
     agent_advice: {
       db_exists: false,
@@ -109,6 +136,32 @@ function fallbackSnapshot(snapshotPath: string, error: unknown): DashboardSnapsh
     },
     paper_bundles: [],
     testnet_bundles: [],
+    ops_status: {
+      state: "attention",
+      headline: "Dashboard is waiting for a generated snapshot.",
+      live_gate: "blocked",
+      strict_continuity: null,
+      counts: {
+        boundary_open_count: 0,
+        recorded_advice: 0,
+        paper_bundle_count: 0,
+        testnet_bundle_count: 0,
+        paper_review_blockers: 0,
+        paper_promotion_blockers: 0,
+        testnet_review_blockers: 0,
+      },
+      summary: [
+        "No snapshot file was loaded.",
+        "All trading mutation boundaries remain closed in fallback mode.",
+      ],
+    },
+    operator_checklist: [
+      {
+        label: "Generate dashboard snapshot",
+        status: "manual",
+        detail: "Run apps.ops.dashboard_snapshot before operational review.",
+      },
+    ],
     snapshot_source: {
       path: snapshotPath,
       loaded: false,

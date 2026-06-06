@@ -34,9 +34,10 @@ Operators generate the file with:
 uv run python -m apps.ops.dashboard_snapshot > data/frontend/dashboard-snapshot.json
 ```
 
-The frontend may render status, boundaries, AgentAdvice history, and passive
-bundle summaries. If the file is absent, it renders a fallback read-only state
-so build and local smoke checks remain deterministic.
+The frontend may render status, operational posture, operator checklist,
+boundaries, AgentAdvice history, and passive bundle summaries. If the file is
+absent, it renders a fallback read-only state so build and local smoke checks
+remain deterministic.
 
 ## 3. Boundary
 
@@ -66,8 +67,12 @@ The source of truth remains unchanged:
 Phase 5 entry implementation:
 
 - `apps/frontend/package.json` locks a Next.js + Tailwind app.
-- `apps/frontend/app/dashboardData.ts` loads the local snapshot server-side.
-- `apps/frontend/app/page.tsx` renders the read-only operations dashboard.
+- `apps/frontend/app/dashboardData.ts` loads the local snapshot server-side,
+  including `ops_status`, parsed project-status sections, and
+  `operator_checklist`.
+- `apps/frontend/app/page.tsx` renders the read-only operations dashboard:
+  posture band, guardrail metrics, evidence matrix, bundle ledger, AgentAdvice
+  queue, operator checklist, watchlist, verification, and boundary ledger.
 - `apps/frontend/app/globals.css` defines the compact dashboard surface.
 
 The first implementation deliberately has no API routes and no client-side

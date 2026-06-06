@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-06-04 (Phase 5 read-only dashboard entry opened)
+- **Last updated**: 2026-06-06 (Phase 5 read-only operations console pass)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
-- **Current objective**: Phase 5 entry is open. ADR-012 and `apps/frontend` define the first read-only Next.js dashboard shell consuming `dashboard.snapshot.v1` from `apps.ops.dashboard_snapshot`; the earlier Grafana/Prometheus/Loki stack remains the runtime monitoring surface. ADR-009 and `apps.agents` remain the agent-safe Phase 4 substrate: `AgentAdvice v1`, MCP-facing safe wrappers, and the deterministic review agent. Agents and frontend still cannot write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or enter the order path. Existing Phase 3 evidence remains documented in `docs/progress/phase-3-testnet-canary-evidence.md`, with the paused continuity plan in `docs/progress/phase-3-testnet-continuity-plan.md`. Strict continuity remains `current_qualified_streak_days=0/14`; this does not satisfy the ADR-001/ADR-008 live gate. Keep `freqai_linear_v1 / linear-mom-train20240105` at `hold @ testnet_canary` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. No live trading without a separate live-risk ADR and the ADR-001 capital ladder gate.
+- **Current objective**: Phase 5 entry is open. ADR-012, `apps.ops.dashboard_snapshot`, and `apps/frontend` now define a read-only Next.js operations console consuming `dashboard.snapshot.v1`; the snapshot carries `ops_status`, `operator_checklist`, parsed project-status sections, boundary flags, AgentAdvice rows, and optional passive paper/testnet bundle summaries. The earlier Grafana/Prometheus/Loki stack remains the runtime monitoring surface. ADR-009 and `apps.agents` remain the agent-safe Phase 4 substrate: `AgentAdvice v1`, MCP-facing safe wrappers, and the deterministic review agent. Agents and frontend still cannot write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or enter the order path. Existing Phase 3 evidence remains documented in `docs/progress/phase-3-testnet-canary-evidence.md`, with the paused continuity plan in `docs/progress/phase-3-testnet-continuity-plan.md`. Strict continuity remains `current_qualified_streak_days=0/14`; this does not satisfy the ADR-001/ADR-008 live gate. Keep `freqai_linear_v1 / linear-mom-train20240105` at `hold @ testnet_canary` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. No live trading without a separate live-risk ADR and the ADR-001 capital ladder gate.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -100,11 +100,12 @@ At task finish:
 - Phase 4 MCP-facing AgentAdvice wrappers are implemented and unit-tested. `apps.mcp_server.agent_advice_tools` exposes only `query_agent_advice`, `write_agent_advice`, and `write_journal`, wraps `AgentAdviceStore`, appends local JSONL audit rows, rejects execution directives through the AgentAdvice schema, and does not import `SignalStore` outside tests.
 - Phase 4 deterministic review agent is implemented and unit-tested. `apps.agents.review_agent` reads local status/evidence markdown, produces `advice_type="project_review"` AgentAdvice, and can dry-run or write to the AgentAdvice store without LLM calls, exchange access, `SignalEvent` writes, or `SourcePolicy` mutation.
 - Phase 4 read-only dashboard snapshot surface is implemented and unit-tested. `apps.ops.dashboard_snapshot` emits `dashboard.snapshot.v1` JSON/Markdown from `docs/project-status.md`, the AgentAdvice SQLite store, and optional passive paper/testnet bundle report readers; it is a frontend/Grafana input surface only and does not touch the live order path.
-- ADR-012 **Phase 5 read-only dashboard entry is implemented and verified**. `apps/frontend` is now a Next.js 15 + Tailwind dashboard shell that reads `dashboard.snapshot.v1` server-side from `data/frontend/dashboard-snapshot.json` (or `TRADER_DASHBOARD_SNAPSHOT`) and renders project status, order-path boundary flags, AgentAdvice rows, and optional paper/testnet bundle summaries. It has no API routes, no browser-side mutations, no trading controls, and no exchange access.
+- ADR-012 **Phase 5 read-only dashboard entry is implemented and verified**. `apps/frontend` is now a Next.js 15 + Tailwind operations console that reads `dashboard.snapshot.v1` server-side from `data/frontend/dashboard-snapshot.json` (or `TRADER_DASHBOARD_SNAPSHOT`) and renders operational posture, live gate, strict continuity, guardrail counts, order-path boundary flags, AgentAdvice rows, operator checklist, watchlist, latest verification, and optional paper/testnet bundle summaries. It has no API routes, no browser-side mutations, no trading controls, and no exchange access.
 
 ## Current Focus
 
-Phase 5 entry: expand read-only dashboard/report consumption while routine
+Phase 5 entry: operate and harden the read-only dashboard as the current
+operations console while routine
 14-day testnet continuity testing remains paused by operator decision on
 2026-06-04. The Phase 3 strict streak remains 0/14, so this phase pivot is not a
 live-readiness claim. ADR-008 §6.6 has fifteen clean 6 h sidecar-backed testnet
@@ -116,13 +117,13 @@ Immediate focus:
 
 1. Keep `freqai_linear_v1 / linear-mom-train20240105` at `hold @ testnet_canary` under the already-signed `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`.
 2. Treat `docs/progress/phase-3-testnet-canary-evidence.md`, `docs/progress/phase-3-testnet-continuity-plan.md`, the 2026-05-30 clean canary retro, the 2026-05-30 duplicate-entry abort retro, the 2026-05-30 post-fix clean retro, and the 2026-06-01 heartbeat-lost retro as the current operational evidence. Do not run more routine canaries unless the operator explicitly resumes live-readiness evidence collection. If canary evidence resumes, use `python -m apps.strategies_nautilus.runners.report_testnet_bundle data/testnet/<run_id>` before writing future manifest-backed canary retros, use `--markdown` with clean bundle directories before updating the clean evidence ledger, and use `--continuity --markdown --min-clean-hours-per-day 6 --required-consecutive-days 14` with every completed manifest-backed bundle in the candidate window before claiming continuity progress. Carry no-manifest aborts manually. Do not open a new `promotion_review` unless an actual policy/stage decision is being made.
-3. Use `docs/decisions/009-agent-advice-audit.md` and `docs/decisions/012-phase5-readonly-dashboard.md` as the active agent/frontend boundaries. Agent/MCP work may write/replay/review `AgentAdvice`; dashboard work may read passive reports and AgentAdvice through `dashboard.snapshot.v1`. Neither path may write `signals`, mutate `SourcePolicy`, call exchange APIs, or encode structured execution directives.
+3. Use `docs/decisions/009-agent-advice-audit.md` and `docs/decisions/012-phase5-readonly-dashboard.md` as the active agent/frontend boundaries. Agent/MCP work may write/replay/review `AgentAdvice`; dashboard work may read passive reports and AgentAdvice through `dashboard.snapshot.v1`. Neither path may write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or encode structured execution directives.
 4. ADR-008 §6.2 Phase 3b, §6.3 Phase 3c-a/b/c, §6.4 Phase 3d, §6.5 Phase 3e, §6.6 Phase 3f stability soak/canary, and the §8 promotion-review patch are all implemented and unit-tested. The `phase_3_not_ready` blocker now only hard-blocks `live_canary` / `live_normal`.
 5. Keep LLM agents and FreqAI out of the order path; `SignalEvent v1 -> NautilusTrader Strategy -> RiskEngine` remains the only bridge.
 
 ## Next Steps
 
-1. Continue Phase 5 with more read-only dashboard panels fed by `dashboard.snapshot.v1`, then add Grafana/frontend cross-links only where they remain source-of-truth neutral. Keep the frontend free of API routes and mutation controls until a separate ADR opens a specific workflow.
+1. Continue Phase 5 with only read-only dashboard improvements fed by `dashboard.snapshot.v1`, then add Grafana/frontend cross-links only where they remain source-of-truth neutral. Keep the frontend free of API routes and mutation controls until a separate ADR opens a specific workflow.
 2. Continue project development with targeted verification for the changed surface area; do not spend routine time rebuilding the 0/14 strict continuity streak unless live-readiness evidence is explicitly resumed.
 3. Use `promotion_review.py` (not just `report_paper_bundle.py`) as the required ADR-007 §2.6 audit artifact for any actual `SourcePolicy` change. Do **not** run `promotion_review.py hold @ testnet_canary` as a routine ratification of each canary — the canary retros plus the evidence and continuity progress files are the operational record.
 4. Keep the `testnet_runner.py` startup guard + connection probe as the first line of defense for any subsequent testnet run: explicit `--allow-real-credentials`, clean git, source/model retro evidence, testnet multiplier cap, key-prefix-only audit, Ed25519-only credentials (HMAC fails Binance Spot WS `session.logon`), and Binance Spot TESTNET-only adapter config. The probe injects credentials into the in-memory `TradingNodeConfig` only and never writes the full key/secret to `logs/runtime.log` or `connection_probe.json`.
@@ -142,6 +143,19 @@ Immediate focus:
 - No edits to `freqtrade/` or `nautilus_trader/` unless explicitly requested.
 
 ## Latest Verification
+
+On 2026-06-06, after upgrading the Phase 5 frontend into a read-only operations console:
+
+- `UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/ops/test_dashboard_snapshot.py -q` -> **5 passed**.
+- `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check apps/ops/dashboard_snapshot.py tests/ops/test_dashboard_snapshot.py` -> clean.
+- `cd apps/frontend && npm run typecheck` -> clean.
+- `cd apps/frontend && npm run build` -> clean Next.js production build.
+- `cd apps/frontend && npm audit --audit-level=moderate` -> **0 vulnerabilities**.
+- `UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.ops.dashboard_snapshot --project-status-path docs/project-status.md --agent-advice-db data/agents/advice.db --advice-limit 10 > data/frontend/dashboard-snapshot.json` -> emitted local gitignored snapshot with `ops_status`, parsed sections, and `operator_checklist`.
+- `cd apps/frontend && npm run dev -- --port 3002`; `curl -I http://127.0.0.1:3002/` -> **HTTP 200 OK**; content smoke found `Operations Console`, `Operational posture`, `Operator Checklist`, `Watchlist`, `Verification`, and `Boundary Ledger`.
+- `UV_CACHE_DIR=/tmp/uv-cache uv run pytest -q` -> **551 passed**.
+- `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check apps tests docs infra` -> clean.
+- `git diff --check` -> clean.
 
 On 2026-06-04, after opening Phase 5 read-only frontend entry:
 

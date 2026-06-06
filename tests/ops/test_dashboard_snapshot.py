@@ -20,7 +20,31 @@ def _write_status(path: Path) -> None:
                 "- **Current phase**: Phase 4 entry (agent research foundation)",
                 "- **Current objective**: Keep agent output out of the order path.",
                 "",
+                "Strict continuity remains current_qualified_streak_days=0/14.",
                 "No live trading without a separate live-risk ADR.",
+                "",
+                "## Current Focus",
+                "",
+                "Immediate focus:",
+                "",
+                "1. Keep agents out of the order path.",
+                "2. Review all recorded AgentAdvice rows.",
+                "",
+                "## Next Steps",
+                "",
+                "1. Expand the dashboard with read-only operations panels.",
+                "2. Keep frontend mutations closed.",
+                "",
+                "## Blocked / Deferred",
+                "",
+                "- No live trading.",
+                "- No frontend write actions.",
+                "",
+                "## Latest Verification",
+                "",
+                "On 2026-06-04, after snapshot test:",
+                "",
+                "- `pytest tests/ops/test_dashboard_snapshot.py` -> passed.",
             ]
         ),
         encoding="utf-8",
@@ -82,14 +106,31 @@ def test_snapshot_reads_project_status_and_agent_advice(tmp_path: Path) -> None:
         "source_policy_mutation_allowed": False,
         "exchange_api_access_allowed": False,
     }
-    assert snapshot["project_status"] == {
-        "path": str(status_path),
-        "exists": True,
-        "last_updated": "2026-06-04 (snapshot test)",
-        "current_phase": "Phase 4 entry (agent research foundation)",
-        "current_objective": "Keep agent output out of the order path.",
-        "live_trading_blocked": True,
-    }
+    assert snapshot["project_status"]["path"] == str(status_path)
+    assert snapshot["project_status"]["exists"] is True
+    assert snapshot["project_status"]["last_updated"] == "2026-06-04 (snapshot test)"
+    assert snapshot["project_status"]["current_phase"] == (
+        "Phase 4 entry (agent research foundation)"
+    )
+    assert snapshot["project_status"]["current_objective"] == (
+        "Keep agent output out of the order path."
+    )
+    assert snapshot["project_status"]["live_trading_blocked"] is True
+    assert snapshot["project_status"]["strict_continuity"] == "0/14"
+    assert snapshot["project_status"]["sections"]["next_steps"] == [
+        "Expand the dashboard with read-only operations panels.",
+        "Keep frontend mutations closed.",
+    ]
+    assert snapshot["project_status"]["sections"]["blocked_deferred"] == [
+        "No live trading.",
+        "No frontend write actions.",
+    ]
+    assert snapshot["project_status"]["sections"]["latest_verification"] == [
+        "pytest tests/ops/test_dashboard_snapshot.py -> passed."
+    ]
+    assert snapshot["ops_status"]["state"] == "guarded"
+    assert snapshot["ops_status"]["strict_continuity"] == "0/14"
+    assert snapshot["operator_checklist"][1]["status"] == "ok"
     assert snapshot["agent_advice"]["total"] == 2
     assert snapshot["agent_advice"]["by_status"] == {"recorded": 1, "reviewed": 1}
     assert snapshot["agent_advice"]["by_type"] == {
@@ -132,6 +173,8 @@ def test_markdown_snapshot_renders_boundary_and_advice(tmp_path: Path) -> None:
     out = dashboard_snapshot.render_markdown_snapshot(snapshot)
 
     assert "# Dashboard Snapshot" in out
+    assert "ops_state: `guarded`" in out
+    assert "Expand the dashboard with read-only operations panels." in out
     assert "signal_event_write_allowed=false" in out
     assert "`advice-1`" in out
 
@@ -226,3 +269,5 @@ def test_snapshot_wraps_passive_bundle_reports(
     assert snapshot["paper_bundles"][0]["fills"] == 4
     assert snapshot["testnet_bundles"][0]["run_id"] == "testnet-1"
     assert snapshot["testnet_bundles"][0]["clean_for_retro"] is True
+    assert snapshot["ops_status"]["counts"]["paper_promotion_blockers"] == 1
+    assert snapshot["ops_status"]["state"] == "attention"

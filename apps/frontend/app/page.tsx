@@ -17,27 +17,38 @@ const BOUNDARY_LABELS: Record<string, string> = {
 
 export default function DashboardPage() {
   const snapshot = loadDashboardSnapshot();
+  const status = snapshot.project_status ?? {};
+  const sections = status.sections ?? {};
   const advice = snapshot.agent_advice ?? {};
-  const latestAdvice = advice.latest ?? [];
   const paperBundles = snapshot.paper_bundles ?? [];
   const testnetBundles = snapshot.testnet_bundles ?? [];
+  const ops = snapshot.ops_status ?? {};
 
   return (
     <main className="min-h-screen bg-stone-100 text-zinc-950">
       <Header snapshot={snapshot} />
 
-      <section className="mx-auto grid max-w-[1480px] gap-4 px-4 py-4 sm:px-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(360px,0.6fr)]">
-        <div className="grid gap-4">
-          <StatusGrid snapshot={snapshot} />
-          <EvidenceStrip paperBundles={paperBundles} testnetBundles={testnetBundles} />
-          <AdviceTable rows={latestAdvice} />
-        </div>
+      <section className="mx-auto grid max-w-[1540px] gap-4 px-4 py-4 sm:px-5">
+        <CommandBand snapshot={snapshot} />
 
-        <aside className="grid content-start gap-4">
-          <BoundaryPanel boundaries={snapshot.boundaries ?? {}} />
-          <FlowPanel />
-          <BundlePanel paperBundles={paperBundles} testnetBundles={testnetBundles} />
-        </aside>
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(380px,0.55fr)]">
+          <div className="grid gap-4">
+            <StatusGrid snapshot={snapshot} />
+            <OpsSummary summary={ops.summary ?? []} />
+            <EvidenceMatrix paperBundles={paperBundles} testnetBundles={testnetBundles} />
+            <AdviceTable rows={advice.latest ?? []} />
+          </div>
+
+          <aside className="grid content-start gap-4">
+            <ChecklistPanel items={snapshot.operator_checklist ?? []} />
+            <WatchlistPanel
+              blocked={sections.blocked_deferred ?? []}
+              nextSteps={sections.next_steps ?? []}
+            />
+            <VerificationPanel items={sections.latest_verification ?? []} />
+            <BoundaryPanel boundaries={snapshot.boundaries ?? {}} />
+          </aside>
+        </div>
       </section>
     </main>
   );
@@ -47,16 +58,16 @@ function Header({ snapshot }: { snapshot: DashboardSnapshot }) {
   const status = snapshot.project_status ?? {};
   return (
     <header className="border-b border-zinc-300 bg-white">
-      <div className="mx-auto flex max-w-[1480px] flex-col gap-3 px-4 py-4 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
+      <div className="mx-auto flex max-w-[1540px] flex-col gap-3 px-4 py-4 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <div className="text-xs font-semibold uppercase tracking-normal text-emerald-700">
             Trader Dashboard
           </div>
           <h1 className="mt-1 text-2xl font-semibold tracking-normal text-zinc-950 md:text-3xl">
-            Phase 5 Read-Only Operations
+            Operations Console
           </h1>
         </div>
-        <div className="grid gap-2 text-sm text-zinc-700 sm:grid-cols-2 lg:min-w-[560px]">
+        <div className="grid gap-2 text-sm text-zinc-700 sm:grid-cols-2 lg:min-w-[620px]">
           <HeaderFact label="Snapshot" value={snapshot.schema_version ?? "unknown"} />
           <HeaderFact
             label="Loaded"
@@ -94,33 +105,70 @@ function HeaderFact({
   );
 }
 
+function CommandBand({ snapshot }: { snapshot: DashboardSnapshot }) {
+  const ops = snapshot.ops_status ?? {};
+  const status = snapshot.project_status ?? {};
+  const state = normalizeState(ops.state);
+  return (
+    <section className="command-band" data-state={state}>
+      <div className="posture-block">
+        <span>Operational posture</span>
+        <strong>{labelState(state)}</strong>
+      </div>
+      <div className="posture-copy">
+        <h2>{ops.headline ?? "Read-only dashboard posture unknown."}</h2>
+        <p>{status.current_objective ?? "No project objective was found in the snapshot."}</p>
+      </div>
+      <div className="posture-meta">
+        <MiniFact label="Live gate" value={ops.live_gate ?? "unknown"} />
+        <MiniFact label="Strict continuity" value={ops.strict_continuity ?? "unknown"} />
+        <MiniFact label="Generated" value={formatGenerated(snapshot.generated_at_ns)} />
+      </div>
+    </section>
+  );
+}
+
+function MiniFact({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="mini-fact">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
+}
+
 function StatusGrid({ snapshot }: { snapshot: DashboardSnapshot }) {
   const status = snapshot.project_status ?? {};
   const advice = snapshot.agent_advice ?? {};
+  const counts = snapshot.ops_status?.counts ?? {};
   return (
     <section className="grid gap-3 md:grid-cols-4">
       <Metric
         label="AgentAdvice"
         value={formatCount(advice.total)}
-        detail={`${Object.keys(advice.by_type ?? {}).length} types`}
-        tone="blue"
+        detail={`${Object.keys(advice.by_type ?? {}).length} types / ${formatCount(
+          counts.recorded_advice,
+        )} recorded`}
+        tone={counts.recorded_advice ? "amber" : "blue"}
       />
       <Metric
-        label="Advice DB"
-        value={advice.db_exists ? "present" : "missing"}
-        detail={snapshot.snapshot_source.path}
-        tone={advice.db_exists ? "green" : "amber"}
-      />
-      <Metric
-        label="Snapshot Age"
-        value={formatGenerated(snapshot.generated_at_ns)}
-        detail={status.last_updated ?? "project status timestamp unavailable"}
+        label="Evidence Inputs"
+        value={formatCount((counts.paper_bundle_count ?? 0) + (counts.testnet_bundle_count ?? 0))}
+        detail={`${formatCount(counts.paper_bundle_count)} paper / ${formatCount(
+          counts.testnet_bundle_count,
+        )} testnet`}
         tone="green"
+      />
+      <Metric
+        label="Blockers"
+        value={formatCount(totalBlockers(counts))}
+        detail="review, promotion, and boundary blockers"
+        tone={totalBlockers(counts) ? "red" : "green"}
       />
       <Metric
         label="Order Path"
         value="sealed"
-        detail="No trading controls exposed"
+        detail={status.live_trading_blocked ? "Live gate blocked" : "Live gate unknown"}
         tone="red"
       />
     </section>
@@ -147,7 +195,28 @@ function Metric({
   );
 }
 
-function EvidenceStrip({
+function OpsSummary({ summary }: { summary: string[] }) {
+  return (
+    <section className="panel">
+      <div className="section-head">
+        <h2>Console Brief</h2>
+        <span>{summary.length ? `${summary.length} checks` : "fallback"}</span>
+      </div>
+      <div className="brief-grid">
+        {(summary.length ? summary : ["No operations summary is present in the snapshot."]).map(
+          (item) => (
+            <div className="brief-item" key={item}>
+              <span aria-hidden="true" />
+              <p>{item}</p>
+            </div>
+          ),
+        )}
+      </div>
+    </section>
+  );
+}
+
+function EvidenceMatrix({
   paperBundles,
   testnetBundles,
 }: {
@@ -162,7 +231,7 @@ function EvidenceStrip({
   return (
     <section className="panel">
       <div className="section-head">
-        <h2>Evidence</h2>
+        <h2>Evidence Matrix</h2>
         <span>read-only snapshot totals</span>
       </div>
       <div className="evidence-grid">
@@ -171,6 +240,10 @@ function EvidenceStrip({
         <EvidenceBar label="Clean testnet" value={cleanTestnet} max={16} tone="green" />
         <EvidenceBar label="Testnet alerts" value={alerts} max={12} tone="red" />
         <EvidenceBar label="Testnet fills" value={testnetFills} max={48} tone="amber" />
+      </div>
+      <div className="bundle-ledger">
+        <BundleList title="Paper" bundles={paperBundles} />
+        <BundleList title="Testnet" bundles={testnetBundles} />
       </div>
     </section>
   );
@@ -201,11 +274,38 @@ function EvidenceBar({
   );
 }
 
+function BundleList({
+  title,
+  bundles,
+}: {
+  title: string;
+  bundles: Array<PaperBundle | TestnetBundle>;
+}) {
+  return (
+    <div className="ledger-column">
+      <strong>{title}</strong>
+      {bundles.length ? (
+        bundles.slice(0, 4).map((bundle) => (
+          <div className="ledger-row" key={bundle.run_id ?? `${title}-unknown`}>
+            <span>{bundle.run_id ?? "unknown run"}</span>
+            <small>{bundle.recommendation ?? "no recommendation"}</small>
+          </div>
+        ))
+      ) : (
+        <div className="ledger-row">
+          <span>No bundle summaries attached</span>
+          <small>pass --paper-bundle or --testnet-bundle when generating snapshot</small>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AdviceTable({ rows }: { rows: AdviceRow[] }) {
   return (
     <section className="panel">
       <div className="section-head">
-        <h2>AgentAdvice</h2>
+        <h2>AgentAdvice Queue</h2>
         <span>{rows.length ? `${rows.length} latest rows` : "no rows in snapshot"}</span>
       </div>
       <div className="table-wrap">
@@ -221,7 +321,7 @@ function AdviceTable({ rows }: { rows: AdviceRow[] }) {
           </thead>
           <tbody>
             {rows.length ? (
-              rows.slice(0, 8).map((row) => (
+              rows.slice(0, 10).map((row) => (
                 <tr key={row.advice_id ?? `${row.agent_name}-${row.created_at_ns}`}>
                   <td>{row.agent_name ?? "unknown"}</td>
                   <td>{row.advice_type ?? "unknown"}</td>
@@ -244,12 +344,84 @@ function AdviceTable({ rows }: { rows: AdviceRow[] }) {
   );
 }
 
+function ChecklistPanel({
+  items,
+}: {
+  items: NonNullable<DashboardSnapshot["operator_checklist"]>;
+}) {
+  return (
+    <section className="panel">
+      <div className="section-head">
+        <h2>Operator Checklist</h2>
+        <span>{items.length} items</span>
+      </div>
+      <div className="checklist">
+        {items.map((item) => (
+          <div className="check-row" data-status={normalizeChecklist(item.status)} key={item.label}>
+            <strong>{item.label ?? "Checklist item"}</strong>
+            <StatusPill value={item.status ?? "unknown"} />
+            <p>{item.detail ?? "No detail provided."}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function WatchlistPanel({
+  blocked,
+  nextSteps,
+}: {
+  blocked: string[];
+  nextSteps: string[];
+}) {
+  return (
+    <section className="panel">
+      <div className="section-head">
+        <h2>Watchlist</h2>
+        <span>{blocked.length} blocked / {nextSteps.length} next</span>
+      </div>
+      <ListBlock title="Blocked / Deferred" items={blocked} empty="No blockers listed." />
+      <ListBlock title="Next Steps" items={nextSteps} empty="No next steps listed." />
+    </section>
+  );
+}
+
+function VerificationPanel({ items }: { items: string[] }) {
+  return (
+    <section className="panel">
+      <div className="section-head">
+        <h2>Verification</h2>
+        <span>{items.length ? "latest block" : "none"}</span>
+      </div>
+      <ListBlock
+        title="Latest checks"
+        items={items}
+        empty="No verification items were parsed from project status."
+      />
+    </section>
+  );
+}
+
+function ListBlock({ title, items, empty }: { title: string; items: string[]; empty: string }) {
+  return (
+    <div className="list-block">
+      <strong>{title}</strong>
+      <ul>
+        {(items.length ? items : [empty]).map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function BoundaryPanel({ boundaries }: { boundaries: Record<string, boolean> }) {
   const entries = Object.entries(BOUNDARY_LABELS);
   return (
     <section className="panel">
       <div className="section-head">
-        <h2>Boundaries</h2>
+        <h2>Boundary Ledger</h2>
         <span>must remain false</span>
       </div>
       <div className="boundary-list">
@@ -267,81 +439,49 @@ function BoundaryPanel({ boundaries }: { boundaries: Record<string, boolean> }) 
   );
 }
 
-function FlowPanel() {
-  return (
-    <section className="panel flow-panel">
-      <div className="section-head">
-        <h2>Research Flow</h2>
-        <span>audited path</span>
-      </div>
-      <div className="flow-rail" aria-hidden="true">
-        <span data-step="1" />
-        <span data-step="2" />
-        <span data-step="3" />
-        <span data-step="4" />
-      </div>
-      <div className="flow-labels">
-        <span>Research</span>
-        <span>AgentAdvice</span>
-        <span>Snapshot</span>
-        <span>Dashboard</span>
-      </div>
-    </section>
-  );
-}
-
-function BundlePanel({
-  paperBundles,
-  testnetBundles,
-}: {
-  paperBundles: PaperBundle[];
-  testnetBundles: TestnetBundle[];
-}) {
-  const latestPaper = paperBundles[0];
-  const latestTestnet = testnetBundles[0];
-  return (
-    <section className="panel">
-      <div className="section-head">
-        <h2>Bundle Inputs</h2>
-        <span>{paperBundles.length + testnetBundles.length} attached</span>
-      </div>
-      <BundleSummary title="Paper" bundle={latestPaper} />
-      <BundleSummary title="Testnet" bundle={latestTestnet} />
-    </section>
-  );
-}
-
-function BundleSummary({
-  title,
-  bundle,
-}: {
-  title: string;
-  bundle: PaperBundle | TestnetBundle | undefined;
-}) {
-  if (!bundle) {
-    return (
-      <div className="bundle-summary">
-        <strong>{title}</strong>
-        <span>No bundle summary in snapshot</span>
-      </div>
-    );
-  }
-
-  return (
-    <div className="bundle-summary">
-      <strong>{title}</strong>
-      <span>{bundle.run_id ?? "unknown run"}</span>
-      <small>{bundle.recommendation ?? "no recommendation"}</small>
-    </div>
-  );
-}
-
 function StatusPill({ value }: { value: string }) {
-  const tone = value === "reviewed" ? "good" : value === "archived" ? "warn" : "neutral";
+  const tone =
+    value === "ok" || value === "reviewed"
+      ? "good"
+      : value === "warn" || value === "manual" || value === "archived"
+        ? "warn"
+        : value === "blocked" || value === "breach"
+          ? "stop"
+          : "neutral";
   return (
     <span className="status-pill" data-tone={tone}>
       {value}
     </span>
+  );
+}
+
+function normalizeState(value: unknown): "guarded" | "attention" | "breach" {
+  if (value === "breach" || value === "attention" || value === "guarded") {
+    return value;
+  }
+  return "attention";
+}
+
+function labelState(value: "guarded" | "attention" | "breach"): string {
+  if (value === "guarded") {
+    return "guarded";
+  }
+  if (value === "breach") {
+    return "breach";
+  }
+  return "attention";
+}
+
+function normalizeChecklist(value: string | undefined): string {
+  return value ?? "unknown";
+}
+
+function totalBlockers(counts: Record<string, number>): number {
+  return (
+    (counts.boundary_open_count ?? 0) +
+    (counts.paper_review_blockers ?? 0) +
+    (counts.paper_promotion_blockers ?? 0) +
+    (counts.testnet_review_blockers ?? 0)
   );
 }
 
