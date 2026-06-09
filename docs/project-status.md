@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-06-06 (Phase 5 read-only operations console language toggle)
+- **Last updated**: 2026-06-09 (Phase 5 read-only reference links)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
-- **Current objective**: Phase 5 entry is open. ADR-012, `apps.ops.dashboard_snapshot`, and `apps/frontend` now define a read-only Next.js operations console consuming `dashboard.snapshot.v1`; the snapshot carries `ops_status`, `operator_checklist`, parsed project-status sections, boundary flags, AgentAdvice rows, and optional passive paper/testnet bundle summaries. The frontend also supports read-only English / Simplified Chinese UI chrome via `?lang=en` / `?lang=zh-CN`. The earlier Grafana/Prometheus/Loki stack remains the runtime monitoring surface. ADR-009 and `apps.agents` remain the agent-safe Phase 4 substrate: `AgentAdvice v1`, MCP-facing safe wrappers, and the deterministic review agent. Agents and frontend still cannot write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or enter the order path. Existing Phase 3 evidence remains documented in `docs/progress/phase-3-testnet-canary-evidence.md`, with the paused continuity plan in `docs/progress/phase-3-testnet-continuity-plan.md`. Strict continuity remains `current_qualified_streak_days=0/14`; this does not satisfy the ADR-001/ADR-008 live gate. Keep `freqai_linear_v1 / linear-mom-train20240105` at `hold @ testnet_canary` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. No live trading without a separate live-risk ADR and the ADR-001 capital ladder gate.
+- **Current objective**: Phase 5 entry is open. ADR-012, `apps.ops.dashboard_snapshot`, and `apps/frontend` now define a read-only Next.js operations console consuming `dashboard.snapshot.v1`; the snapshot carries `ops_status`, `operator_checklist`, parsed project-status sections, boundary flags, AgentAdvice rows, optional passive paper/testnet bundle summaries, and source-of-truth-neutral `reference_links` to docs, evidence, runbooks, and Grafana dashboards. The frontend also supports read-only English / Simplified Chinese UI chrome via `?lang=en` / `?lang=zh-CN`. The earlier Grafana/Prometheus/Loki stack remains the runtime monitoring surface. ADR-009 and `apps.agents` remain the agent-safe Phase 4 substrate: `AgentAdvice v1`, MCP-facing safe wrappers, and the deterministic review agent. Agents and frontend still cannot write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or enter the order path. Existing Phase 3 evidence remains documented in `docs/progress/phase-3-testnet-canary-evidence.md`, with the paused continuity plan in `docs/progress/phase-3-testnet-continuity-plan.md`. Strict continuity remains `current_qualified_streak_days=0/14`; this does not satisfy the ADR-001/ADR-008 live gate. Keep `freqai_linear_v1 / linear-mom-train20240105` at `hold @ testnet_canary` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. No live trading without a separate live-risk ADR and the ADR-001 capital ladder gate.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -123,7 +123,7 @@ Immediate focus:
 
 ## Next Steps
 
-1. Continue Phase 5 with only read-only dashboard improvements fed by `dashboard.snapshot.v1`, then add Grafana/frontend cross-links only where they remain source-of-truth neutral. Keep the frontend free of API routes and mutation controls until a separate ADR opens a specific workflow.
+1. Continue Phase 5 with only read-only dashboard improvements fed by `dashboard.snapshot.v1`; next useful additions are passive service-liveness, data-lag, and signal-source/rejection summaries from existing approved observability outputs. Keep the frontend free of API routes and mutation controls until a separate ADR opens a specific workflow.
 2. Continue project development with targeted verification for the changed surface area; do not spend routine time rebuilding the 0/14 strict continuity streak unless live-readiness evidence is explicitly resumed.
 3. Use `promotion_review.py` (not just `report_paper_bundle.py`) as the required ADR-007 §2.6 audit artifact for any actual `SourcePolicy` change. Do **not** run `promotion_review.py hold @ testnet_canary` as a routine ratification of each canary — the canary retros plus the evidence and continuity progress files are the operational record.
 4. Keep the `testnet_runner.py` startup guard + connection probe as the first line of defense for any subsequent testnet run: explicit `--allow-real-credentials`, clean git, source/model retro evidence, testnet multiplier cap, key-prefix-only audit, Ed25519-only credentials (HMAC fails Binance Spot WS `session.logon`), and Binance Spot TESTNET-only adapter config. The probe injects credentials into the in-memory `TradingNodeConfig` only and never writes the full key/secret to `logs/runtime.log` or `connection_probe.json`.
@@ -143,6 +143,17 @@ Immediate focus:
 - No edits to `freqtrade/` or `nautilus_trader/` unless explicitly requested.
 
 ## Latest Verification
+
+On 2026-06-09, after adding Phase 5 read-only reference links:
+
+- `UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/ops/test_dashboard_snapshot.py -q` -> **7 passed**.
+- `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check apps/ops/dashboard_snapshot.py tests/ops/test_dashboard_snapshot.py` -> clean.
+- `cd apps/frontend && npm run typecheck` -> clean.
+- `cd apps/frontend && npm run build` -> clean Next.js production build.
+- `UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.ops.dashboard_snapshot --project-status-path docs/project-status.md --agent-advice-db data/agents/advice.db --advice-limit 2 --grafana-base-url '' --repo-browser-base-url https://github.com/Maggyee/Nishiki-Trader/blob/main > /tmp/dashboard-snapshot-check.json` plus `json.tool` / `rg` smoke -> `reference_links` emitted GitHub doc hrefs and local-only Grafana source paths.
+- `UV_CACHE_DIR=/tmp/uv-cache uv run pytest -q` -> **541 passed, 12 skipped** (Postgres-backed tests skipped because `trader-postgres` was not reachable on `127.0.0.1:5433`).
+- `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check apps tests docs infra` -> clean.
+- `cd apps/frontend && npm audit --audit-level=moderate` -> not completed: npm registry audit endpoint DNS failed with `EAI_AGAIN`.
 
 On 2026-06-06, after adding the read-only English / Simplified Chinese language switch:
 

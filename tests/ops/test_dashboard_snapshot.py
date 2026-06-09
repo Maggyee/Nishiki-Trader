@@ -176,7 +176,58 @@ def test_markdown_snapshot_renders_boundary_and_advice(tmp_path: Path) -> None:
     assert "ops_state: `guarded`" in out
     assert "Expand the dashboard with read-only operations panels." in out
     assert "signal_event_write_allowed=false" in out
+    assert "## Reference Links" in out
+    assert "Signals overview" in out
     assert "`advice-1`" in out
+
+
+def test_snapshot_includes_source_neutral_reference_links(tmp_path: Path) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        grafana_base_url="http://grafana.local",
+        repo_browser_base_url="https://github.com/example/trader/blob/main/",
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    links = {item["label"]: item for item in snapshot["reference_links"]}
+    assert links["Project status"] == {
+        "group": "docs",
+        "label": "Project status",
+        "kind": "status",
+        "path": "docs/project-status.md",
+        "detail": "Current phase, focus, blockers, next steps, and verification.",
+        "href": "https://github.com/example/trader/blob/main/docs/project-status.md",
+    }
+    assert links["Signals overview"]["href"] == (
+        "http://grafana.local/d/signals-overview/signals-overview"
+    )
+    assert links["Signals overview"]["path"] == (
+        "infra/grafana/dashboards/signals-overview.json"
+    )
+    assert links["Current testnet canary"]["kind"] == "dashboard"
+
+
+def test_snapshot_can_emit_local_reference_paths_without_urls(tmp_path: Path) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        grafana_base_url="",
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    links = {item["label"]: item for item in snapshot["reference_links"]}
+    assert links["Project status"]["href"] is None
+    assert links["Signals overview"]["href"] is None
+    assert links["Signals overview"]["path"] == (
+        "infra/grafana/dashboards/signals-overview.json"
+    )
 
 
 def test_cli_outputs_json(tmp_path: Path, capsys) -> None:
@@ -193,12 +244,15 @@ def test_cli_outputs_json(tmp_path: Path, capsys) -> None:
             str(db),
             "--advice-limit",
             "1",
+            "--grafana-base-url",
+            "",
         ]
     )
 
     assert rc == 0
     out = json.loads(capsys.readouterr().out)
     assert out["agent_advice"]["latest"][0]["advice_id"] == "advice-1"
+    assert out["reference_links"][0]["href"] is None
 
 
 def test_snapshot_wraps_passive_bundle_reports(

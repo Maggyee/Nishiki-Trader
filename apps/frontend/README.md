@@ -15,6 +15,14 @@ uv run python -m apps.ops.dashboard_snapshot \
   > data/frontend/dashboard-snapshot.json
 ```
 
+如果需要从前端打开仓库文档链接，可以生成 snapshot 时追加：
+
+```bash
+uv run python -m apps.ops.dashboard_snapshot \
+  --repo-browser-base-url https://github.com/Maggyee/Nishiki-Trader/blob/main \
+  > data/frontend/dashboard-snapshot.json
+```
+
 启动前端：
 
 ```bash
@@ -49,11 +57,11 @@ snapshot 路径。默认路径是仓库根目录下的
 - AgentAdvice queue：最近 advice 记录、类型、状态、置信度
 - Operator checklist：刷新 snapshot、边界检查、AgentAdvice 审阅、连续性阻塞、SourcePolicy 流程
 - Watchlist / Verification：从 `docs/project-status.md` 解析 blocked/deferred、next steps、latest verification
+- Reference links：文档、证据 ledger、runbook、本地 Grafana 只读看板和其源 JSON
 - Boundary ledger：确认前端相关 live/order mutation flags 仍关闭
 
 ## 后续可加
 
-- Grafana / frontend source-of-truth-neutral cross-links
 - Passive service-liveness and data-lag summaries from existing observability outputs
 - Read-only signal-source distribution and rejection summaries from approved reports
 

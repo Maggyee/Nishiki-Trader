@@ -35,6 +35,15 @@ export type TestnetBundle = {
   review_blockers?: string[];
 };
 
+export type ReferenceLink = {
+  group?: string;
+  label?: string;
+  kind?: string;
+  href?: string | null;
+  path?: string | null;
+  detail?: string;
+};
+
 export type DashboardSnapshot = {
   schema_version?: string;
   generated_at_ns?: number | string | null;
@@ -70,6 +79,7 @@ export type DashboardSnapshot = {
     counts?: Record<string, number>;
     summary?: string[];
   };
+  reference_links?: ReferenceLink[];
   operator_checklist?: Array<{
     label?: string;
     status?: "ok" | "warn" | "blocked" | "breach" | "manual" | string;
@@ -155,6 +165,32 @@ function fallbackSnapshot(snapshotPath: string, error: unknown): DashboardSnapsh
         "All trading mutation boundaries remain closed in fallback mode.",
       ],
     },
+    reference_links: [
+      {
+        group: "docs",
+        label: "Project status",
+        kind: "status",
+        href: null,
+        path: "docs/project-status.md",
+        detail: "Current phase, focus, blockers, next steps, and verification.",
+      },
+      {
+        group: "grafana",
+        label: "Signals overview",
+        kind: "dashboard",
+        href: "http://127.0.0.1:3000/d/signals-overview/signals-overview",
+        path: "infra/grafana/dashboards/signals-overview.json",
+        detail: "Read-only signal distribution dashboard backed by provisioned Grafana.",
+      },
+      {
+        group: "grafana",
+        label: "Current testnet canary",
+        kind: "dashboard",
+        href: "http://127.0.0.1:3000/d/canary-current/canary-current",
+        path: "infra/grafana/dashboards/canary-current.json",
+        detail: "Read-only heartbeat, alert, and runtime panels for the active canary.",
+      },
+    ],
     operator_checklist: [
       {
         label: "Generate dashboard snapshot",

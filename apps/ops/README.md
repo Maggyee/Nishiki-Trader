@@ -2,7 +2,7 @@
 
 运维脚本。
 
-**当前 Phase**：2（catalog fixture / backtest operations）+ Phase 4 read-only
+**当前 Phase**：2（catalog fixture / backtest operations）+ Phase 4/5 read-only
 dashboard snapshot support。
 
 ## 当前入口
@@ -47,6 +47,22 @@ uv run python -m apps.ops.dashboard_snapshot \
   --agent-advice-db data/agents/advice.db
 ```
 
+默认 snapshot 还会带只读 `reference_links`：
+
+- 本地 Grafana：`http://127.0.0.1:3000/d/signals-overview/signals-overview`
+  和 `http://127.0.0.1:3000/d/canary-current/canary-current`
+- 对应源文件：`infra/grafana/dashboards/*.json`
+- 当前状态、ADR、证据 ledger、runbook 的本地源路径
+
+可用空字符串关闭 Grafana URL，只保留本地源路径；也可以传入仓库浏览基准
+URL，让文档路径变成浏览器可打开的只读链接：
+
+```bash
+uv run python -m apps.ops.dashboard_snapshot \
+  --grafana-base-url "" \
+  --repo-browser-base-url https://github.com/Maggyee/Nishiki-Trader/blob/main
+```
+
 也可以追加已完成的 passive bundle reports 作为压缩摘要输入：
 
 ```bash
@@ -56,8 +72,9 @@ uv run python -m apps.ops.dashboard_snapshot \
   --markdown
 ```
 
-`dashboard_snapshot` 只读取 `docs/`、AgentAdvice SQLite、以及既有 paper/testnet
-bundle report reader；不写 `SignalEvent`、不改 `SourcePolicy`、不读取交易所凭证。
+`dashboard_snapshot` 只读取 `docs/`、AgentAdvice SQLite、既有 paper/testnet bundle
+report reader、以及静态链接配置；不写 `SignalEvent`、不改 `SourcePolicy`、不读取
+交易所凭证。
 
 ## 计划脚本
 

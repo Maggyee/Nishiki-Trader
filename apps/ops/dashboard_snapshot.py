@@ -19,6 +19,7 @@ from apps.strategies_nautilus.runners.report_testnet_bundle import (
 )
 
 DEFAULT_PROJECT_STATUS_PATH = Path("docs/project-status.md")
+DEFAULT_GRAFANA_BASE_URL = "http://127.0.0.1:3000"
 SNAPSHOT_SCHEMA_VERSION = "dashboard.snapshot.v1"
 
 _STATUS_FIELD_RE = re.compile(
@@ -33,6 +34,68 @@ _STRICT_STREAK_RE = re.compile(
     r"(?P<value>\d+/\d+)",
     re.IGNORECASE,
 )
+_SOURCE_REFERENCE_LINKS = (
+    {
+        "group": "docs",
+        "label": "Project status",
+        "kind": "status",
+        "path": "docs/project-status.md",
+        "detail": "Current phase, focus, blockers, next steps, and verification.",
+    },
+    {
+        "group": "docs",
+        "label": "Phase 5 dashboard ADR",
+        "kind": "adr",
+        "path": "docs/decisions/012-phase5-readonly-dashboard.md",
+        "detail": "Read-only frontend boundary and verification standard.",
+    },
+    {
+        "group": "docs",
+        "label": "AgentAdvice audit ADR",
+        "kind": "adr",
+        "path": "docs/decisions/009-agent-advice-audit.md",
+        "detail": "Agent output audit store and no-order-path boundary.",
+    },
+    {
+        "group": "evidence",
+        "label": "Testnet canary evidence",
+        "kind": "progress",
+        "path": "docs/progress/phase-3-testnet-canary-evidence.md",
+        "detail": "Clean and non-clean Phase 3 canary evidence ledger.",
+    },
+    {
+        "group": "evidence",
+        "label": "Paused continuity plan",
+        "kind": "progress",
+        "path": "docs/progress/phase-3-testnet-continuity-plan.md",
+        "detail": "Paused 14-day strict-continuity procedure and resume command.",
+    },
+    {
+        "group": "ops",
+        "label": "First testnet canary runbook",
+        "kind": "runbook",
+        "path": "docs/runbook-first-testnet-canary.md",
+        "detail": "Operator steps for controlled testnet canary evidence collection.",
+    },
+)
+_GRAFANA_REFERENCE_LINKS = (
+    {
+        "group": "grafana",
+        "label": "Signals overview",
+        "kind": "dashboard",
+        "grafana_path": "/d/signals-overview/signals-overview",
+        "path": "infra/grafana/dashboards/signals-overview.json",
+        "detail": "Read-only signal distribution dashboard backed by provisioned Grafana.",
+    },
+    {
+        "group": "grafana",
+        "label": "Current testnet canary",
+        "kind": "dashboard",
+        "grafana_path": "/d/canary-current/canary-current",
+        "path": "infra/grafana/dashboards/canary-current.json",
+        "detail": "Read-only heartbeat, alert, and runtime panels for the active canary.",
+    },
+)
 
 
 def build_dashboard_snapshot(
@@ -42,6 +105,8 @@ def build_dashboard_snapshot(
     paper_bundle_dirs: Sequence[Path] = (),
     testnet_bundle_dirs: Sequence[Path] = (),
     advice_limit: int = 20,
+    grafana_base_url: str | None = DEFAULT_GRAFANA_BASE_URL,
+    repo_browser_base_url: str | None = None,
     generated_at_ns: int | None = None,
 ) -> dict[str, Any]:
     if advice_limit <= 0:
@@ -79,6 +144,10 @@ def build_dashboard_snapshot(
         "paper_bundles": paper_bundles,
         "testnet_bundles": testnet_bundles,
         "ops_status": ops_status,
+        "reference_links": _reference_links(
+            grafana_base_url=grafana_base_url,
+            repo_browser_base_url=repo_browser_base_url,
+        ),
         "operator_checklist": _operator_checklist(
             project_status=project_status,
             boundaries=boundaries,
@@ -124,6 +193,29 @@ def render_markdown_snapshot(snapshot: dict[str, Any]) -> str:
     )
     for item in status.get("sections", {}).get("blocked_deferred", []):
         lines.append(f"- {item}")
+
+    reference_links = snapshot.get("reference_links") or []
+    if reference_links:
+        lines.extend(
+            [
+                "",
+                "## Reference Links",
+                "",
+                "| group | label | target | source path |",
+                "|---|---|---|---|",
+            ]
+        )
+        for link in reference_links:
+            href = link.get("href")
+            label = _markdown_cell(str(link.get("label") or "unknown"))
+            target = f"[{label}]({href})" if href else "local path only"
+            lines.append(
+                "| "
+                f"{_markdown_cell(str(link.get('group') or 'unknown'))} | "
+                f"{label} | "
+                f"{target} | "
+                f"`{_markdown_cell(str(link.get('path') or ''))}` |"
+            )
 
     lines.extend(
         [
@@ -360,6 +452,45 @@ def _compact_testnet_report(report: Any) -> dict[str, Any]:
     }
 
 
+def _reference_links(
+    *,
+    grafana_base_url: str | None,
+    repo_browser_base_url: str | None,
+) -> list[dict[str, str | None]]:
+    repo_base = _optional_base_url(repo_browser_base_url)
+    links: list[dict[str, str | None]] = []
+    for item in _SOURCE_REFERENCE_LINKS:
+        path = item["path"]
+        links.append(
+            {
+                **item,
+                "href": f"{repo_base}/{path}" if repo_base else None,
+            }
+        )
+
+    grafana_base = _optional_base_url(grafana_base_url)
+    for item in _GRAFANA_REFERENCE_LINKS:
+        grafana_path = item["grafana_path"]
+        links.append(
+            {
+                "group": item["group"],
+                "label": item["label"],
+                "kind": item["kind"],
+                "path": item["path"],
+                "detail": item["detail"],
+                "href": f"{grafana_base}{grafana_path}" if grafana_base else None,
+            }
+        )
+    return links
+
+
+def _optional_base_url(value: str | None) -> str | None:
+    if value is None:
+        return None
+    stripped = value.strip().rstrip("/")
+    return stripped or None
+
+
 def _ops_status_snapshot(
     *,
     project_status: dict[str, Any],
@@ -593,6 +724,22 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--paper-bundle", action="append", default=[])
     parser.add_argument("--testnet-bundle", action="append", default=[])
     parser.add_argument("--advice-limit", type=int, default=20)
+    parser.add_argument(
+        "--grafana-base-url",
+        default=DEFAULT_GRAFANA_BASE_URL,
+        help=(
+            "Base URL for read-only Grafana dashboard links. "
+            "Pass an empty string to emit only local dashboard definition paths."
+        ),
+    )
+    parser.add_argument(
+        "--repo-browser-base-url",
+        default=None,
+        help=(
+            "Optional repository browser base URL, for example "
+            "https://github.com/Maggyee/Nishiki-Trader/blob/main."
+        ),
+    )
     parser.add_argument("--markdown", action="store_true")
     return parser
 
@@ -606,6 +753,8 @@ def main(argv: list[str] | None = None) -> int:
         paper_bundle_dirs=tuple(Path(path) for path in args.paper_bundle),
         testnet_bundle_dirs=tuple(Path(path) for path in args.testnet_bundle),
         advice_limit=args.advice_limit,
+        grafana_base_url=args.grafana_base_url,
+        repo_browser_base_url=args.repo_browser_base_url,
     )
     if args.markdown:
         sys.stdout.write(render_markdown_snapshot(snapshot) + "\n")
@@ -619,6 +768,7 @@ if __name__ == "__main__":
 
 
 __all__ = [
+    "DEFAULT_GRAFANA_BASE_URL",
     "SNAPSHOT_SCHEMA_VERSION",
     "build_dashboard_snapshot",
     "render_markdown_snapshot",

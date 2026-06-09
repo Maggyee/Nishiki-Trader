@@ -2,6 +2,7 @@ import {
   type AdviceRow,
   type DashboardSnapshot,
   type PaperBundle,
+  type ReferenceLink,
   type TestnetBundle,
   loadDashboardSnapshot,
 } from "./dashboardData";
@@ -63,6 +64,7 @@ const COPY = {
       operatorChecklist: "Operator Checklist",
       watchlist: "Watchlist",
       verification: "Verification",
+      referenceLinks: "Reference Links",
       boundaryLedger: "Boundary Ledger",
     },
     evidence: {
@@ -105,6 +107,27 @@ const COPY = {
       none: "none",
       latestChecks: "Latest checks",
       noItems: "No verification items were parsed from project status.",
+    },
+    reference: {
+      subtitle: "docs and read-only monitoring",
+      noLinks: "No reference links are present in this snapshot.",
+      sourcePath: "source path",
+      open: "open",
+      localOnly: "local only",
+      groups: {
+        docs: "Docs",
+        evidence: "Evidence",
+        grafana: "Grafana",
+        ops: "Ops",
+        frontend: "Frontend",
+      },
+      kinds: {
+        adr: "ADR",
+        dashboard: "dashboard",
+        progress: "progress",
+        runbook: "runbook",
+        status: "status",
+      },
     },
     boundary: {
       mustRemainFalse: "must remain false",
@@ -221,6 +244,7 @@ const COPY = {
       operatorChecklist: "操作员检查表",
       watchlist: "关注列表",
       verification: "验证记录",
+      referenceLinks: "参考链接",
       boundaryLedger: "边界账本",
     },
     evidence: {
@@ -263,6 +287,27 @@ const COPY = {
       none: "无",
       latestChecks: "最近检查",
       noItems: "没有从项目状态中解析到验证记录。",
+    },
+    reference: {
+      subtitle: "文档与只读监控",
+      noLinks: "当前快照没有参考链接。",
+      sourcePath: "源路径",
+      open: "打开",
+      localOnly: "本地路径",
+      groups: {
+        docs: "文档",
+        evidence: "证据",
+        grafana: "Grafana",
+        ops: "运维",
+        frontend: "前端",
+      },
+      kinds: {
+        adr: "ADR",
+        dashboard: "看板",
+        progress: "进度",
+        runbook: "runbook",
+        status: "状态",
+      },
     },
     boundary: {
       mustRemainFalse: "必须保持 false",
@@ -351,6 +396,7 @@ export default async function DashboardPage({
   const advice = snapshot.agent_advice ?? {};
   const paperBundles = snapshot.paper_bundles ?? [];
   const testnetBundles = snapshot.testnet_bundles ?? [];
+  const referenceLinks = snapshot.reference_links ?? [];
   const ops = snapshot.ops_status ?? {};
 
   return (
@@ -381,6 +427,7 @@ export default async function DashboardPage({
               copy={copy}
             />
             <VerificationPanel items={sections.latest_verification ?? []} copy={copy} />
+            <ReferenceLinksPanel links={referenceLinks} copy={copy} />
             <BoundaryPanel boundaries={snapshot.boundaries ?? {}} copy={copy} />
           </aside>
         </div>
@@ -809,6 +856,68 @@ function VerificationPanel({ items, copy }: { items: string[]; copy: Copy }) {
   );
 }
 
+function ReferenceLinksPanel({ links, copy }: { links: ReferenceLink[]; copy: Copy }) {
+  return (
+    <section className="panel">
+      <div className="section-head">
+        <h2>{copy.sections.referenceLinks}</h2>
+        <span>{links.length ? `${links.length} ${copy.reference.subtitle}` : copy.reference.localOnly}</span>
+      </div>
+      <div className="reference-list">
+        {links.length ? (
+          links.slice(0, 8).map((link) => (
+            <ReferenceLinkRow
+              copy={copy}
+              key={`${link.group ?? "unknown"}-${link.label ?? link.path ?? link.href ?? "link"}`}
+              link={link}
+            />
+          ))
+        ) : (
+          <div className="reference-row" data-linkable="false">
+            <div className="reference-row-head">
+              <strong>{copy.reference.noLinks}</strong>
+              <span>{copy.reference.localOnly}</span>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function ReferenceLinkRow({ link, copy }: { link: ReferenceLink; copy: Copy }) {
+  const href = typeof link.href === "string" && isWebHref(link.href) ? link.href : null;
+  const content = (
+    <>
+      <div className="reference-row-head">
+        <strong>{link.label ?? copy.common.unknown}</strong>
+        <span>
+          {localizeReferenceGroup(link.group, copy)} / {localizeReferenceKind(link.kind, copy)}
+        </span>
+      </div>
+      {link.detail ? <p>{link.detail}</p> : null}
+      <div className="reference-target">
+        <small>{href ? copy.reference.open : copy.reference.sourcePath}</small>
+        <code>{link.path ?? link.href ?? copy.common.unknown}</code>
+      </div>
+    </>
+  );
+
+  if (href) {
+    return (
+      <a className="reference-row" data-linkable="true" href={href} rel="noreferrer" target="_blank">
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <div className="reference-row" data-linkable="false">
+      {content}
+    </div>
+  );
+}
+
 function ListBlock({ title, items, empty }: { title: string; items: string[]; empty: string }) {
   return (
     <div className="list-block">
@@ -927,6 +1036,26 @@ function formatWatchlistCount(blocked: number, nextSteps: number, copy: Copy): s
     return `${blocked} 个阻塞 / ${nextSteps} 个下一步`;
   }
   return `${blocked} blocked / ${nextSteps} next`;
+}
+
+function localizeReferenceGroup(value: string | undefined, copy: Copy): string {
+  if (!value) {
+    return copy.common.unknown;
+  }
+  const labels = copy.reference.groups as Record<string, string>;
+  return labels[value] ?? value;
+}
+
+function localizeReferenceKind(value: string | undefined, copy: Copy): string {
+  if (!value) {
+    return copy.common.unknown;
+  }
+  const labels = copy.reference.kinds as Record<string, string>;
+  return labels[value] ?? value;
+}
+
+function isWebHref(value: string): boolean {
+  return value.startsWith("https://") || value.startsWith("http://");
 }
 
 function formatCount(value: number | undefined, language: Language): string {
