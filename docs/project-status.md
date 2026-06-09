@@ -154,6 +154,7 @@ On 2026-06-09, after adding Phase 5 read-only reference links:
 - `UV_CACHE_DIR=/tmp/uv-cache uv run pytest -q` -> **541 passed, 12 skipped** (Postgres-backed tests skipped because `trader-postgres` was not reachable on `127.0.0.1:5433`).
 - `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check apps tests docs infra` -> clean.
 - `cd apps/frontend && npm audit --audit-level=moderate` -> not completed: npm registry audit endpoint DNS failed with `EAI_AGAIN`.
+- home-frp follow-up after push: `npm --prefix /home/nishiki/projects/trader/apps/frontend ci` -> **0 vulnerabilities**; `npm --prefix /home/nishiki/projects/trader/apps/frontend run typecheck` -> clean; `npm --prefix /home/nishiki/projects/trader/apps/frontend run build` -> clean Next.js production build (with a non-fatal workspace-root inference warning from `/home/nishiki/package-lock.json`); `curl -I http://127.0.0.1:3002/?lang=zh-CN` -> **HTTP 200 OK**; content smoke found `参考链接`, `Signals overview`, `Current testnet canary`, and `边界账本`.
 
 On 2026-06-06, after adding the read-only English / Simplified Chinese language switch:
 
