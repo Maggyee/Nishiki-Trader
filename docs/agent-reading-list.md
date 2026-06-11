@@ -26,7 +26,7 @@ Read these before any non-trivial work:
 | Project status, next step, or handoff | `docs/project-status.md`, `git status --short --branch`, `git fetch origin`, `git pull --ff-only`, `git log --oneline --decorate -5` |
 | Architecture, boundaries, or phase planning | `docs/agent-operating-contract.md`, `docs/decisions/001-tech-stack.md` |
 | Signal bridge, ML output, FreqAI integration | `docs/decisions/002-signal-bridge-protocol.md`, `docs/decisions/005-signal-source-taxonomy.md`, `docs/decisions/006-gray-rollout-and-source-policies.md`, `docs/decisions/007-paper-trading-runtime.md` |
-| Agent research, AgentAdvice, MCP tool boundaries, or TradingAgents-inspired configuration | `docs/decisions/009-agent-advice-audit.md`, `apps/agents/README.md`, `apps/mcp_server/README.md`, `docs/upstream-versions.md` |
+| Agent research, AgentAdvice, MCP tool boundaries, or TradingAgents-inspired configuration | `docs/decisions/009-agent-advice-audit.md`, `apps/agents/README.md`, `apps/mcp_server/README.md`, `docs/upstream-versions.md`, `docs/progress/tradingagents-reference-map.md` |
 | Frontend or dashboard work | `docs/decisions/012-phase5-readonly-dashboard.md`, `apps/frontend/README.md` |
 | Signal transport / message bus / Redis | `docs/decisions/010-redis-stream-signal-transport.md` (Draft, **not implemented**; only read when one of §2 triggers fires) |
 | Bridge → Postgres auto-mirror, dashboard freshness, dual-write design | `docs/decisions/011-bridge-postgres-mirror.md` (Draft, **not implemented**; only read when one of §2 triggers fires) |

@@ -57,6 +57,10 @@ uv run python -m apps.agents.review_agent \
 输出仍必须落在 `AgentAdvice v1`，除非后续 ADR 单独打开受审阅的 `llm_*`
 信号实验。
 
+具体映射见 `docs/progress/tradingagents-reference-map.md`。未来 agent 配置应优先
+借鉴那份文档里的 safe role vocabulary 和 boundary checklist，而不是直接导入
+TradingAgents 代码。
+
 人工复核：
 
 ```bash

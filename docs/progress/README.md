@@ -18,3 +18,5 @@ Current Phase 3 progress files:
   bundle evidence summary.
 - `phase-3-testnet-continuity-plan.md` defines the 14-day continuity tracking
   plan and the `report_testnet_bundle --continuity` review command.
+- `tradingagents-reference-map.md` maps the ignored TradingAgents upstream
+  checkout to project-safe AgentAdvice-only role/configuration ideas.
