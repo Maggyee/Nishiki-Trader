@@ -5,6 +5,8 @@ import {
   type ObservabilitySnapshot,
   type PaperBundle,
   type ReferenceLink,
+  type SignalReasonCount,
+  type SignalSummary,
   type TestnetBundle,
   loadDashboardSnapshot,
 } from "./dashboardData";
@@ -64,6 +66,7 @@ const COPY = {
       evidenceSubtitle: "read-only snapshot totals",
       runtimeHealth: "Runtime Health",
       runtimeSubtitle: "textfile collector snapshot",
+      signalSummary: "Signals & Rejections",
       agentAdviceQueue: "AgentAdvice Queue",
       operatorChecklist: "Operator Checklist",
       watchlist: "Watchlist",
@@ -110,6 +113,32 @@ const COPY = {
         attention: "attention",
         disconnected: "disconnected",
         unknown: "unknown",
+      },
+    },
+    signal: {
+      attachedBundles: "bundles",
+      signals: "Signals",
+      accepted: "Accepted",
+      skipped: "Skipped",
+      rejections: "Rejections",
+      sourceModel: "Source / model",
+      bundles: "Bundles",
+      topReasons: "Top reasons",
+      runLedger: "Run ledger",
+      noRows: "No signal-source summaries attached.",
+      noRuns: "No run-level signal summaries.",
+      unknownSource: "unknown source",
+      unknownModel: "unknown model",
+      noReasons: "none",
+      reasons: {
+        data_gap: "data gap",
+        expired: "expired",
+        kill_switch: "kill switch",
+        low_confidence: "low confidence",
+        reject_other: "other rejects",
+        signal_lag: "signal lag",
+        suppressed: "suppressed",
+        unauthorized: "unauthorized",
       },
     },
     advice: {
@@ -274,6 +303,7 @@ const COPY = {
       evidenceSubtitle: "只读快照汇总",
       runtimeHealth: "运行健康",
       runtimeSubtitle: "textfile collector 快照",
+      signalSummary: "信号与拒绝",
       agentAdviceQueue: "AgentAdvice 队列",
       operatorChecklist: "操作员检查表",
       watchlist: "关注列表",
@@ -320,6 +350,32 @@ const COPY = {
         attention: "需关注",
         disconnected: "已断开",
         unknown: "未知",
+      },
+    },
+    signal: {
+      attachedBundles: "个 bundle",
+      signals: "信号",
+      accepted: "接受",
+      skipped: "跳过",
+      rejections: "拒绝",
+      sourceModel: "来源 / 模型",
+      bundles: "Bundle",
+      topReasons: "主要原因",
+      runLedger: "运行账本",
+      noRows: "当前快照没有信号来源摘要。",
+      noRuns: "当前快照没有运行级信号摘要。",
+      unknownSource: "未知来源",
+      unknownModel: "未知模型",
+      noReasons: "无",
+      reasons: {
+        data_gap: "数据缺口",
+        expired: "过期",
+        kill_switch: "熔断",
+        low_confidence: "低置信度",
+        reject_other: "其他拒绝",
+        signal_lag: "信号延迟",
+        suppressed: "抑制",
+        unauthorized: "未授权",
       },
     },
     advice: {
@@ -459,6 +515,7 @@ export default async function DashboardPage({
   const paperBundles = snapshot.paper_bundles ?? [];
   const testnetBundles = snapshot.testnet_bundles ?? [];
   const observability = snapshot.observability ?? {};
+  const signalSummary = snapshot.signal_summary ?? {};
   const referenceLinks = snapshot.reference_links ?? [];
   const ops = snapshot.ops_status ?? {};
 
@@ -473,6 +530,7 @@ export default async function DashboardPage({
           <div className="grid gap-4">
             <StatusGrid snapshot={snapshot} language={language} copy={copy} />
             <RuntimeHealthPanel observability={observability} language={language} copy={copy} />
+            <SignalSummaryPanel signalSummary={signalSummary} language={language} copy={copy} />
             <OpsSummary summary={ops.summary ?? []} copy={copy} />
             <EvidenceMatrix
               paperBundles={paperBundles}
@@ -806,6 +864,109 @@ function RuntimeStatePill({ state, copy }: { state: string | undefined; copy: Co
     <span className="runtime-state-pill" data-state={normalized}>
       {labels[normalized] ?? normalized}
     </span>
+  );
+}
+
+function SignalSummaryPanel({
+  signalSummary,
+  language,
+  copy,
+}: {
+  signalSummary: SignalSummary;
+  language: Language;
+  copy: Copy;
+}) {
+  const sourceRows = signalSummary.by_source_model ?? [];
+  const runs = signalSummary.runs ?? [];
+  return (
+    <section className="panel">
+      <div className="section-head">
+        <h2>{copy.sections.signalSummary}</h2>
+        <span>
+          {formatCount(signalSummary.bundle_count, language)} {copy.signal.attachedBundles}
+        </span>
+      </div>
+      <div className="signal-facts">
+        <RuntimeFact
+          label={copy.signal.signals}
+          value={formatCount(signalSummary.signal_rows, language)}
+          detail={copy.signal.sourceModel}
+          tone="blue"
+        />
+        <RuntimeFact
+          label={copy.signal.accepted}
+          value={formatCount(signalSummary.accepted_signals, language)}
+          detail={formatSignalRate(signalSummary.accepted_signals, signalSummary.signal_rows, copy)}
+          tone="green"
+        />
+        <RuntimeFact
+          label={copy.signal.skipped}
+          value={formatCount(signalSummary.skipped_signals, language)}
+          detail={copy.signal.runLedger}
+          tone={(signalSummary.skipped_signals ?? 0) > 0 ? "amber" : "green"}
+        />
+        <RuntimeFact
+          label={copy.signal.rejections}
+          value={formatCount(signalSummary.rejection_signals, language)}
+          detail={formatReasonCounts(topReasonCounts(signalSummary.rejection_reason_counts), copy)}
+          tone={(signalSummary.rejection_signals ?? 0) > 0 ? "red" : "green"}
+        />
+      </div>
+      <div className="table-wrap signal-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>{copy.signal.sourceModel}</th>
+              <th>{copy.signal.bundles}</th>
+              <th>{copy.signal.signals}</th>
+              <th>{copy.signal.accepted}</th>
+              <th>{copy.signal.skipped}</th>
+              <th>{copy.signal.topReasons}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sourceRows.length ? (
+              sourceRows.slice(0, 6).map((row) => (
+                <tr key={`${row.source ?? "unknown"}-${row.model_version ?? "unknown"}`}>
+                  <td>
+                    <strong>{row.source ?? copy.signal.unknownSource}</strong>
+                    <br />
+                    <small>{row.model_version ?? copy.signal.unknownModel}</small>
+                  </td>
+                  <td>{formatCount(row.bundle_count, language)}</td>
+                  <td>{formatCount(row.signal_rows, language)}</td>
+                  <td>{formatCount(row.accepted_signals, language)}</td>
+                  <td>{formatCount(row.skipped_signals, language)}</td>
+                  <td>{formatReasonCounts(row.top_rejection_reasons, copy)}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={6}>{copy.signal.noRows}</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+      <div className="signal-run-list">
+        {runs.length ? (
+          runs.slice(0, 4).map((run) => (
+            <div className="signal-run" key={`${run.kind ?? "unknown"}-${run.run_id ?? "unknown"}`}>
+              <strong>{run.run_id ?? copy.evidence.unknownRun}</strong>
+              <span>
+                {run.kind ?? copy.common.unknown} / {run.source ?? copy.signal.unknownSource}
+              </span>
+              <small>
+                {copy.signal.accepted} {formatCount(run.accepted_signals, language)} / {copy.signal.rejections}{" "}
+                {formatCount(run.rejection_signals, language)}
+              </small>
+            </div>
+          ))
+        ) : (
+          <div className="runtime-empty">{copy.signal.noRuns}</div>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -1289,6 +1450,37 @@ function formatCount(value: number | undefined, language: Language): string {
 
 function formatMaybeNumber(value: number | null | undefined, language: Language, copy: Copy): string {
   return typeof value === "number" ? formatCount(value, language) : copy.common.nA;
+}
+
+function formatSignalRate(value: number | undefined, total: number | undefined, copy: Copy): string {
+  if (!total) {
+    return copy.common.nA;
+  }
+  return `${Math.round(((value ?? 0) / total) * 100)}%`;
+}
+
+function topReasonCounts(counts: Record<string, number> | undefined): SignalReasonCount[] {
+  return Object.entries(counts ?? {})
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, 3)
+    .map(([reason, count]) => ({ reason, count }));
+}
+
+function formatReasonCounts(values: SignalReasonCount[] | undefined, copy: Copy): string {
+  if (!values?.length) {
+    return copy.signal.noReasons;
+  }
+  return values
+    .map((item) => `${localizeSignalReason(item.reason, copy)} ${item.count ?? 0}`)
+    .join(" / ");
+}
+
+function localizeSignalReason(value: string | undefined, copy: Copy): string {
+  if (!value) {
+    return copy.common.unknown;
+  }
+  const labels = copy.signal.reasons as Record<string, string>;
+  return labels[value] ?? value;
 }
 
 function formatDuration(value: number | null | undefined, copy: Copy): string {

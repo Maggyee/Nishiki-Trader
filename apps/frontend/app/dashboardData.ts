@@ -35,6 +35,47 @@ export type TestnetBundle = {
   review_blockers?: string[];
 };
 
+export type SignalReasonCount = {
+  reason?: string;
+  count?: number;
+};
+
+export type SignalSummaryRun = {
+  kind?: string | null;
+  run_id?: string | null;
+  source?: string | null;
+  model_version?: string | null;
+  signal_rows?: number;
+  accepted_signals?: number;
+  skipped_signals?: number;
+  rejection_signals?: number;
+  top_rejection_reasons?: SignalReasonCount[];
+};
+
+export type SignalSourceSummary = {
+  source?: string;
+  model_version?: string;
+  bundle_count?: number;
+  signal_rows?: number;
+  accepted_signals?: number;
+  skipped_signals?: number;
+  rejection_signals?: number;
+  kinds?: Record<string, number>;
+  top_rejection_reasons?: SignalReasonCount[];
+};
+
+export type SignalSummary = {
+  bundle_count?: number;
+  signal_rows?: number;
+  accepted_signals?: number;
+  skipped_signals?: number;
+  rejection_signals?: number;
+  rejection_reason_counts?: Record<string, number>;
+  by_kind?: Record<string, Record<string, number>>;
+  by_source_model?: SignalSourceSummary[];
+  runs?: SignalSummaryRun[];
+};
+
 export type ReferenceLink = {
   group?: string;
   label?: string;
@@ -105,6 +146,7 @@ export type DashboardSnapshot = {
   };
   paper_bundles?: PaperBundle[];
   testnet_bundles?: TestnetBundle[];
+  signal_summary?: SignalSummary;
   ops_status?: {
     state?: "guarded" | "attention" | "breach" | string;
     headline?: string;
@@ -181,6 +223,17 @@ function fallbackSnapshot(snapshotPath: string, error: unknown): DashboardSnapsh
     },
     paper_bundles: [],
     testnet_bundles: [],
+    signal_summary: {
+      bundle_count: 0,
+      signal_rows: 0,
+      accepted_signals: 0,
+      skipped_signals: 0,
+      rejection_signals: 0,
+      rejection_reason_counts: {},
+      by_kind: {},
+      by_source_model: [],
+      runs: [],
+    },
     ops_status: {
       state: "attention",
       headline: "Dashboard is waiting for a generated snapshot.",

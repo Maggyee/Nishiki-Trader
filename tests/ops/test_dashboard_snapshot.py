@@ -399,6 +399,19 @@ def test_snapshot_wraps_passive_bundle_reports(
             model_version="linear-mom-train20240105",
             signal_rows=10,
             accepted_signals=8,
+            skipped_signals=2,
+            dry_run_signals=0,
+            expired_signals=1,
+            unauthorized_signals=1,
+            signal_lag_signals=0,
+            kill_switch_signals=0,
+            data_gap_signals=0,
+            decision_counts={"target_long": 8, "skip": 2},
+            reason_counts={
+                "simulated": 8,
+                "expired: signal ttl": 1,
+                "reject_unauthorized_source: test": 1,
+            },
             totals={"fills": 4, "positions": 2},
             pnl_total_by_currency={"USDT": 1.25},
             max_drawdown_pct_by_currency={"USDT": -0.01},
@@ -425,6 +438,18 @@ def test_snapshot_wraps_passive_bundle_reports(
             order_count=2,
             fill_count=2,
             position_count=1,
+            lineage_rows=3,
+            decision_counts={
+                "target_long": 2,
+                "skip": 1,
+            },
+            reason_counts={
+                "simulated": 2,
+                "signal_lag: 180s > 120s": 1,
+            },
+            lineage_rows_with_order_ids=2,
+            lineage_rows_with_fill_ids=2,
+            lineage_rows_with_position_id=1,
             final_position_sides={"FLAT": 1},
             realized_pnl_total=0.1,
             max_ws_reconnect_count=0,
@@ -448,3 +473,30 @@ def test_snapshot_wraps_passive_bundle_reports(
     assert snapshot["testnet_bundles"][0]["clean_for_retro"] is True
     assert snapshot["ops_status"]["counts"]["paper_promotion_blockers"] == 1
     assert snapshot["ops_status"]["state"] == "attention"
+    assert snapshot["signal_summary"]["bundle_count"] == 2
+    assert snapshot["signal_summary"]["signal_rows"] == 13
+    assert snapshot["signal_summary"]["accepted_signals"] == 10
+    assert snapshot["signal_summary"]["skipped_signals"] == 3
+    assert snapshot["signal_summary"]["rejection_signals"] == 3
+    assert snapshot["signal_summary"]["rejection_reason_counts"] == {
+        "expired": 1,
+        "signal_lag": 1,
+        "unauthorized": 1,
+    }
+    assert snapshot["signal_summary"]["by_source_model"] == [
+        {
+            "source": "freqai_linear_v1",
+            "model_version": "linear-mom-train20240105",
+            "bundle_count": 2,
+            "signal_rows": 13,
+            "accepted_signals": 10,
+            "skipped_signals": 3,
+            "rejection_signals": 3,
+            "kinds": {"paper": 1, "testnet": 1},
+            "top_rejection_reasons": [
+                {"reason": "expired", "count": 1},
+                {"reason": "signal_lag", "count": 1},
+                {"reason": "unauthorized", "count": 1},
+            ],
+        }
+    ]

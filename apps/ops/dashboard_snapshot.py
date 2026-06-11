@@ -142,6 +142,10 @@ def build_dashboard_snapshot(
         _compact_testnet_report(load_testnet_bundle_report(path))
         for path in testnet_bundle_dirs
     ]
+    signal_summary = _signal_summary_snapshot(
+        paper_bundles=paper_bundles,
+        testnet_bundles=testnet_bundles,
+    )
     ops_status = _ops_status_snapshot(
         project_status=project_status,
         boundaries=boundaries,
@@ -157,6 +161,7 @@ def build_dashboard_snapshot(
         "agent_advice": agent_advice,
         "paper_bundles": paper_bundles,
         "testnet_bundles": testnet_bundles,
+        "signal_summary": signal_summary,
         "ops_status": ops_status,
         "observability": _observability_snapshot(
             observability_textfile_dir,
@@ -240,6 +245,40 @@ def render_markdown_snapshot(snapshot: dict[str, Any]) -> str:
                 f"{_format_optional_int(run.get('open_positions'))} | "
                 f"{_format_optional_int(run.get('alert_total'))} | "
                 f"{_format_optional_float(data_lag)} |"
+            )
+
+    signal_summary = snapshot.get("signal_summary") or {}
+    if signal_summary:
+        lines.extend(
+            [
+                "",
+                "## Signal Summary",
+                "",
+                f"- bundle_count: {signal_summary.get('bundle_count', 0)}",
+                f"- signal_rows: {signal_summary.get('signal_rows', 0)}",
+                f"- accepted_signals: {signal_summary.get('accepted_signals', 0)}",
+                f"- skipped_signals: {signal_summary.get('skipped_signals', 0)}",
+                f"- rejection_signals: {signal_summary.get('rejection_signals', 0)}",
+                "",
+                "| kind | run_id | source/model | signals | accepted | skipped | rejections | top rejection reasons |",
+                "|---|---|---|---:|---:|---:|---:|---|",
+            ]
+        )
+        for run in signal_summary.get("runs", []):
+            source_model = (
+                f"{run.get('source') or 'unknown'} / "
+                f"{run.get('model_version') or 'unknown'}"
+            )
+            lines.append(
+                "| "
+                f"{run.get('kind') or 'unknown'} | "
+                f"`{run.get('run_id') or 'unknown'}` | "
+                f"{_markdown_cell(source_model)} | "
+                f"{_format_optional_int(run.get('signal_rows'))} | "
+                f"{_format_optional_int(run.get('accepted_signals'))} | "
+                f"{_format_optional_int(run.get('skipped_signals'))} | "
+                f"{_format_optional_int(run.get('rejection_signals'))} | "
+                f"{_join_reason_counts(run.get('top_rejection_reasons') or [])} |"
             )
 
     reference_links = snapshot.get("reference_links") or []
@@ -465,6 +504,15 @@ def _compact_paper_report(report: Any) -> dict[str, Any]:
         "model_version": report.model_version,
         "signal_rows": report.signal_rows,
         "accepted_signals": report.accepted_signals,
+        "skipped_signals": report.skipped_signals,
+        "dry_run_signals": report.dry_run_signals,
+        "expired_signals": report.expired_signals,
+        "unauthorized_signals": report.unauthorized_signals,
+        "signal_lag_signals": report.signal_lag_signals,
+        "kill_switch_signals": report.kill_switch_signals,
+        "data_gap_signals": report.data_gap_signals,
+        "decision_counts": report.decision_counts,
+        "reason_counts": report.reason_counts,
         "fills": int(report.totals["fills"]),
         "positions": int(report.totals["positions"]),
         "pnl_total_by_currency": report.pnl_total_by_currency,
@@ -491,6 +539,17 @@ def _compact_testnet_report(report: Any) -> dict[str, Any]:
         "orders": report.order_count,
         "fills": report.fill_count,
         "positions": report.position_count,
+        "lineage_rows": report.lineage_rows,
+        "accepted_signals": _accepted_signal_count(
+            signal_rows=report.lineage_rows,
+            decision_counts=report.decision_counts,
+        ),
+        "skipped_signals": int(report.decision_counts.get("skip", 0)),
+        "lineage_rows_with_order_ids": report.lineage_rows_with_order_ids,
+        "lineage_rows_with_fill_ids": report.lineage_rows_with_fill_ids,
+        "lineage_rows_with_position_id": report.lineage_rows_with_position_id,
+        "decision_counts": report.decision_counts,
+        "reason_counts": report.reason_counts,
         "final_position_sides": report.final_position_sides,
         "realized_pnl_total": report.realized_pnl_total,
         "max_ws_reconnect_count": report.max_ws_reconnect_count,
@@ -498,6 +557,181 @@ def _compact_testnet_report(report: Any) -> dict[str, Any]:
         "review_blockers": report.review_blockers,
         "recommendation": report.recommendation,
     }
+
+
+def _signal_summary_snapshot(
+    *,
+    paper_bundles: Sequence[dict[str, Any]],
+    testnet_bundles: Sequence[dict[str, Any]],
+) -> dict[str, Any]:
+    runs = [
+        _signal_run_summary(bundle)
+        for bundle in (*paper_bundles, *testnet_bundles)
+    ]
+    source_model: dict[tuple[str, str], dict[str, Any]] = {}
+    reason_counts: dict[str, int] = {}
+    by_kind: dict[str, dict[str, int]] = {}
+
+    for run in runs:
+        key = (
+            str(run.get("source") or "unknown"),
+            str(run.get("model_version") or "unknown"),
+        )
+        source_row = source_model.setdefault(
+            key,
+            {
+                "source": key[0],
+                "model_version": key[1],
+                "bundle_count": 0,
+                "signal_rows": 0,
+                "accepted_signals": 0,
+                "skipped_signals": 0,
+                "rejection_signals": 0,
+                "kinds": {},
+                "top_rejection_reasons": [],
+            },
+        )
+        kind = str(run.get("kind") or "unknown")
+        source_row["bundle_count"] += 1
+        source_row["signal_rows"] += int(run.get("signal_rows") or 0)
+        source_row["accepted_signals"] += int(run.get("accepted_signals") or 0)
+        source_row["skipped_signals"] += int(run.get("skipped_signals") or 0)
+        source_row["rejection_signals"] += int(run.get("rejection_signals") or 0)
+        source_row["kinds"][kind] = int(source_row["kinds"].get(kind, 0)) + 1
+
+        kind_row = by_kind.setdefault(
+            kind,
+            {
+                "bundle_count": 0,
+                "signal_rows": 0,
+                "accepted_signals": 0,
+                "skipped_signals": 0,
+                "rejection_signals": 0,
+            },
+        )
+        kind_row["bundle_count"] += 1
+        kind_row["signal_rows"] += int(run.get("signal_rows") or 0)
+        kind_row["accepted_signals"] += int(run.get("accepted_signals") or 0)
+        kind_row["skipped_signals"] += int(run.get("skipped_signals") or 0)
+        kind_row["rejection_signals"] += int(run.get("rejection_signals") or 0)
+
+        for reason, count in (run.get("rejection_reason_counts") or {}).items():
+            reason_counts[str(reason)] = reason_counts.get(str(reason), 0) + int(count)
+
+    for row in source_model.values():
+        source_reasons: dict[str, int] = {}
+        for run in runs:
+            if run.get("source") != row["source"]:
+                continue
+            if run.get("model_version") != row["model_version"]:
+                continue
+            for reason, count in (run.get("rejection_reason_counts") or {}).items():
+                source_reasons[str(reason)] = source_reasons.get(str(reason), 0) + int(count)
+        row["top_rejection_reasons"] = _top_reason_counts(source_reasons)
+
+    return {
+        "bundle_count": len(runs),
+        "signal_rows": sum(int(run.get("signal_rows") or 0) for run in runs),
+        "accepted_signals": sum(int(run.get("accepted_signals") or 0) for run in runs),
+        "skipped_signals": sum(int(run.get("skipped_signals") or 0) for run in runs),
+        "rejection_signals": sum(int(run.get("rejection_signals") or 0) for run in runs),
+        "rejection_reason_counts": dict(sorted(reason_counts.items())),
+        "by_kind": dict(sorted(by_kind.items())),
+        "by_source_model": sorted(
+            source_model.values(),
+            key=lambda item: (
+                -int(item.get("signal_rows") or 0),
+                str(item.get("source") or ""),
+                str(item.get("model_version") or ""),
+            ),
+        ),
+        "runs": runs,
+    }
+
+
+def _signal_run_summary(bundle: dict[str, Any]) -> dict[str, Any]:
+    decision_counts = {
+        str(key): int(value)
+        for key, value in (bundle.get("decision_counts") or {}).items()
+    }
+    reason_counts = {
+        str(key): int(value)
+        for key, value in (bundle.get("reason_counts") or {}).items()
+    }
+    signal_rows = int(bundle.get("signal_rows") or bundle.get("lineage_rows") or 0)
+    accepted = int(
+        bundle.get("accepted_signals")
+        if bundle.get("accepted_signals") is not None
+        else _accepted_signal_count(
+            signal_rows=signal_rows,
+            decision_counts=decision_counts,
+        )
+    )
+    skipped = int(
+        bundle.get("skipped_signals")
+        if bundle.get("skipped_signals") is not None
+        else decision_counts.get("skip", 0)
+    )
+    rejection_reason_counts = _rejection_reason_counts(reason_counts)
+    return {
+        "kind": bundle.get("kind"),
+        "run_id": bundle.get("run_id"),
+        "source": bundle.get("source"),
+        "model_version": bundle.get("model_version"),
+        "signal_rows": signal_rows,
+        "accepted_signals": accepted,
+        "skipped_signals": skipped,
+        "rejection_signals": sum(rejection_reason_counts.values()),
+        "decision_counts": decision_counts,
+        "rejection_reason_counts": rejection_reason_counts,
+        "top_rejection_reasons": _top_reason_counts(rejection_reason_counts),
+    }
+
+
+def _accepted_signal_count(
+    *,
+    signal_rows: int,
+    decision_counts: dict[str, int],
+) -> int:
+    return max(signal_rows - int(decision_counts.get("skip", 0)), 0)
+
+
+def _rejection_reason_counts(reason_counts: dict[str, int]) -> dict[str, int]:
+    out: dict[str, int] = {}
+    for reason, count in reason_counts.items():
+        category = _rejection_reason_category(reason)
+        if category is None:
+            continue
+        out[category] = out.get(category, 0) + int(count)
+    return dict(sorted(out.items()))
+
+
+def _rejection_reason_category(reason: str) -> str | None:
+    if reason.startswith("expired:"):
+        return "expired"
+    if reason.startswith("reject_unauthorized"):
+        return "unauthorized"
+    if reason.startswith("reject_low_confidence"):
+        return "low_confidence"
+    if reason.startswith("reject_"):
+        return "reject_other"
+    if reason.startswith("signal_lag"):
+        return "signal_lag"
+    if reason.startswith("kill_switch"):
+        return "kill_switch"
+    if reason.startswith("data_gap"):
+        return "data_gap"
+    return None
+
+
+def _top_reason_counts(reason_counts: dict[str, int], *, limit: int = 3) -> list[dict[str, int | str]]:
+    return [
+        {"reason": reason, "count": count}
+        for reason, count in sorted(
+            reason_counts.items(),
+            key=lambda item: (-int(item[1]), str(item[0])),
+        )[:limit]
+    ]
 
 
 def _observability_snapshot(
@@ -995,6 +1229,15 @@ def _strip_markdown(value: str) -> str:
 
 def _join_or_none(values: Sequence[str]) -> str:
     return ", ".join(values) if values else "none"
+
+
+def _join_reason_counts(values: Sequence[dict[str, Any]]) -> str:
+    if not values:
+        return "none"
+    return ", ".join(
+        f"{_markdown_cell(str(value.get('reason') or 'unknown'))}={int(value.get('count') or 0)}"
+        for value in values
+    )
 
 
 def _format_optional_float(value: Any) -> str:

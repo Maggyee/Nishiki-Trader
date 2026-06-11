@@ -86,6 +86,11 @@ uv run python -m apps.ops.dashboard_snapshot \
 report reader、Prometheus textfile `.prom`、以及静态链接配置；不写
 `SignalEvent`、不改 `SourcePolicy`、不读取交易所凭证。
 
+当传入 paper/testnet bundle 时，snapshot 还会从 passive report 的
+`signal_lineage` 汇总出只读 `signal_summary`：source/model 分布、accepted /
+skipped 计数、以及 expired / unauthorized / signal_lag / kill_switch /
+data_gap 等 rejection 原因。该摘要来自已落盘证据，不重新消费 SignalStore。
+
 ## 计划脚本
 
 | 脚本 | 用途 | 最早 Phase |

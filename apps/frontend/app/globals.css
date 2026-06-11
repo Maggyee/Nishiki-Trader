@@ -388,6 +388,13 @@ select {
     padding: 14px;
   }
 
+  .signal-facts {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    padding: 14px;
+  }
+
   .runtime-fact {
     display: grid;
     gap: 6px;
@@ -545,6 +552,75 @@ select {
     border-top: 1px solid #e7e5e4;
     padding: 12px 14px;
     background: #fafaf9;
+  }
+
+  .signal-table-wrap {
+    border-top: 1px solid #e7e5e4;
+  }
+
+  .signal-table-wrap td strong,
+  .signal-table-wrap td small {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .signal-table-wrap td strong {
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 760;
+  }
+
+  .signal-table-wrap td small {
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .signal-run-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+    border-top: 1px solid #e7e5e4;
+    padding: 14px;
+    background: #fafaf9;
+  }
+
+  .signal-run {
+    display: grid;
+    gap: 4px;
+    min-height: 74px;
+    border: 1px solid #e7e5e4;
+    border-left: 4px solid var(--blue);
+    border-radius: 8px;
+    padding: 10px;
+    background: #ffffff;
+  }
+
+  .signal-run strong,
+  .signal-run span,
+  .signal-run small {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .signal-run strong {
+    color: var(--ink);
+    font-family:
+      JetBrains Mono,
+      ui-monospace,
+      monospace;
+    font-size: 12px;
+    font-weight: 780;
+  }
+
+  .signal-run span {
+    color: #3f3f46;
+    font-size: 12px;
+    font-weight: 650;
+  }
+
+  .signal-run small {
+    color: var(--muted);
+    font-size: 12px;
   }
 
   .table-wrap {
@@ -994,7 +1070,9 @@ select {
 
   .runtime-facts,
   .runtime-run-grid,
-  .runtime-summary {
+  .runtime-summary,
+  .signal-facts,
+  .signal-run-list {
     grid-template-columns: 1fr;
   }
 
@@ -1014,7 +1092,8 @@ select {
     grid-template-columns: 1fr;
   }
 
-  .runtime-facts {
+  .runtime-facts,
+  .signal-facts {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -1027,7 +1106,8 @@ select {
 }
 
 @media (max-width: 640px) {
-  .runtime-facts {
+  .runtime-facts,
+  .signal-facts {
     grid-template-columns: 1fr;
   }
 }
