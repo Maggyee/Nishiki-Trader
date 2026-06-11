@@ -8,6 +8,7 @@ import time
 from pathlib import Path
 
 from apps.agents.advice import AgentAdvice
+from apps.agents.role_profiles import get_agent_role_profile, list_agent_role_profiles
 from apps.agents.store import (
     DEFAULT_ADVICE_DB_PATH,
     AgentAdviceStore,
@@ -108,6 +109,20 @@ def _cmd_review(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_profiles(args: argparse.Namespace) -> int:
+    try:
+        profiles = (
+            [get_agent_role_profile(args.profile_id)]
+            if args.profile_id
+            else list(list_agent_role_profiles())
+        )
+    except KeyError as exc:
+        raise SystemExit(str(exc)) from exc
+    rows = [profile.model_dump(mode="json") for profile in profiles]
+    print(json.dumps(rows, indent=2, sort_keys=True))
+    return 0
+
+
 def _make_advice_id(
     *,
     agent_name: str,
@@ -171,6 +186,13 @@ def build_parser() -> argparse.ArgumentParser:
     review.add_argument("--note", default=None)
     review.add_argument("--reviewed-at-ns", type=int, default=None)
     review.set_defaults(func=_cmd_review)
+
+    profiles = sub.add_parser(
+        "profiles",
+        help="List safe, non-executing AgentAdvice role profiles",
+    )
+    profiles.add_argument("--profile-id", default=None)
+    profiles.set_defaults(func=_cmd_profiles)
 
     return parser
 

@@ -1,7 +1,7 @@
 # tests/agents
 
-- **Purpose**: Phase 4 AgentAdvice schema, SQLite audit-store, CLI, and
-  deterministic review-agent tests.
+- **Purpose**: Phase 4 AgentAdvice schema, safe role profiles, SQLite
+  audit-store, CLI, and deterministic review-agent tests.
 - **Current phase**: Phase 4 entry.
 - **Boundaries**: Tests verify that agent output stays in `agent_advice`, does
   not become `SignalEvent`, and rejects structured execution directives.

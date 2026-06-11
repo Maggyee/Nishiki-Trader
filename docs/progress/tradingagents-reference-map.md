@@ -9,6 +9,11 @@ This note is a map, not an adoption plan. TradingAgents remains a read-only
 upstream reference; this project does not install it, import it at runtime, or
 copy its trader / portfolio-manager execution semantics.
 
+The first project-owned machine-readable layer is
+`apps.agents.role_profiles`. It exposes safe AgentAdvice-only role profiles and
+the CLI command `python -m apps.agents.cli profiles`; it still does not run
+agents or call an LLM.
+
 ## Useful Patterns To Borrow
 
 | TradingAgents pattern | Upstream files inspected | Project-safe adaptation |
@@ -43,6 +48,10 @@ describe research or review work rather than execution authority:
 | `strategy_brainstorm_agent` | historical reports, rejected signal summaries, user prompts | `advice_type="strategy_note"` |
 | `parameter_review_agent` | paper/testnet evidence and existing SourcePolicy docs | `advice_type="parameter_candidate"` |
 
+These are now encoded in `apps.agents.role_profiles.DEFAULT_AGENT_ROLE_PROFILES`.
+Use `uv run python -m apps.agents.cli profiles` to inspect the current profile
+set.
+
 Unsafe names such as `trader_agent`, `portfolio_manager_agent`, or
 `execution_agent` should be avoided unless a future ADR deliberately redefines
 them as non-executing aliases.
@@ -51,14 +60,15 @@ them as non-executing aliases.
 
 1. Extend `apps.agents.review_agent` or add a sibling deterministic analyzer
    that reads only local docs/reports and writes `AgentAdvice`.
-2. Add one small config surface for model/provider/depth only after a real LLM
+2. Reuse `apps.agents.role_profiles.AgentRoleProfile` as the role/config seed.
+3. Add one small config surface for model/provider/depth only after a real LLM
    call is introduced. Keep provider credentials in ignored env files.
-3. Keep all external tool access behind MCP-facing safe wrappers that cannot
+4. Keep all external tool access behind MCP-facing safe wrappers that cannot
    import `SignalStore` write paths, `SourcePolicy` mutation paths, or exchange
    clients.
-4. Add tests that prove any TradingAgents-inspired payload cannot parse as
+5. Add tests that prove any TradingAgents-inspired payload cannot parse as
    `SignalEvent` and is rejected if it contains execution fields.
-5. Only after the single-agent loop is useful, consider a bounded two-role
+6. Only after the single-agent loop is useful, consider a bounded two-role
    debate such as `bull_case` vs `bear_case`, with the merged output still
    stored as one `AgentAdvice` row.
 

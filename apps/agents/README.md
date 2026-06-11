@@ -37,6 +37,17 @@ uv run python -m apps.agents.cli \
   list --agent-name review_agent --advice-type journal
 ```
 
+列出当前安全 agent role profile：
+
+```bash
+uv run python -m apps.agents.cli profiles
+uv run python -m apps.agents.cli profiles --profile-id evidence_review
+```
+
+这些 profile 来自 `apps.agents.role_profiles`，只描述未来 AgentAdvice 生产者的
+角色、输入、允许的 `advice_type` 和强制关闭的能力；它们不启动 agent、不调用 LLM、
+不导入 TradingAgents。
+
 运行当前的 deterministic review agent（mock LLM harness）：
 
 ```bash
