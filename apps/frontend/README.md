@@ -53,6 +53,7 @@ snapshot 路径。默认路径是仓库根目录下的
 - 顶部语言切换：English / 简体中文，不写 cookie、不调用 API
 - Operational posture：live gate、strict continuity、生成时间、当前目标
 - Guardrail metrics：AgentAdvice 记录数、paper/testnet bundle 输入、阻塞项、order-path 边界
+- Runtime health：从 `observability` 读取 Prometheus textfile 摘要，显示心跳、WS、open state、alert 与数据延迟
 - Evidence matrix：paper / testnet bundle 数量、审阅阻塞、promotion 阻塞
 - AgentAdvice queue：最近 advice 记录、类型、状态、置信度
 - Operator checklist：刷新 snapshot、边界检查、AgentAdvice 审阅、连续性阻塞、SourcePolicy 流程
@@ -62,7 +63,6 @@ snapshot 路径。默认路径是仓库根目录下的
 
 ## 后续可加
 
-- Passive service-liveness and data-lag summaries from existing observability outputs
 - Read-only signal-source distribution and rejection summaries from approved reports
 
 ## 锁定边界

@@ -6,5 +6,5 @@
   files. They must not write `SignalEvent`, mutate `SourcePolicy`, call exchange
   APIs, or expose order-placement controls.
 - **Next entrypoint**: Add read-only dashboard routes or panels that consume the
-  same snapshot contract, such as passive liveness or data-lag summaries from
-  existing observability outputs.
+  same snapshot contract, such as signal-source distribution or rejection
+  summaries from approved reports.

@@ -44,6 +44,40 @@ export type ReferenceLink = {
   detail?: string;
 };
 
+export type ObservabilityRun = {
+  path?: string;
+  kind?: string | null;
+  run_id?: string | null;
+  state?: string;
+  state_reason?: string;
+  parse_errors?: string[];
+  heartbeat_timestamp_seconds?: number | null;
+  heartbeat_age_seconds?: number | null;
+  ws_connected?: boolean | null;
+  ws_reconnect_total?: number | null;
+  exchange_error_total?: number | null;
+  open_orders?: number | null;
+  open_positions?: number | null;
+  daily_pnl_usdt?: number | null;
+  account_total_usdt?: number | null;
+  last_bar_timestamp_seconds?: number | null;
+  last_bar_age_seconds?: number | null;
+  last_signal_timestamp_seconds?: number | null;
+  last_signal_age_seconds?: number | null;
+  alert_total?: number;
+  alerts_by_kind?: Record<string, number>;
+};
+
+export type ObservabilitySnapshot = {
+  textfile_dir?: string | null;
+  exists?: boolean;
+  file_count?: number;
+  stale_after_seconds?: number;
+  counts?: Record<string, number>;
+  latest?: ObservabilityRun | null;
+  runs?: ObservabilityRun[];
+};
+
 export type DashboardSnapshot = {
   schema_version?: string;
   generated_at_ns?: number | string | null;
@@ -79,6 +113,7 @@ export type DashboardSnapshot = {
     counts?: Record<string, number>;
     summary?: string[];
   };
+  observability?: ObservabilitySnapshot;
   reference_links?: ReferenceLink[];
   operator_checklist?: Array<{
     label?: string;
@@ -164,6 +199,24 @@ function fallbackSnapshot(snapshotPath: string, error: unknown): DashboardSnapsh
         "No snapshot file was loaded.",
         "All trading mutation boundaries remain closed in fallback mode.",
       ],
+    },
+    observability: {
+      textfile_dir: "data/observability/textfile",
+      exists: false,
+      file_count: 0,
+      stale_after_seconds: 120,
+      counts: {
+        run_count: 0,
+        connected_count: 0,
+        stale_count: 0,
+        attention_count: 0,
+        open_orders: 0,
+        open_positions: 0,
+        alert_total: 0,
+        parse_error_count: 0,
+      },
+      latest: null,
+      runs: [],
     },
     reference_links: [
       {

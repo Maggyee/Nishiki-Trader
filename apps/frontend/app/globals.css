@@ -381,6 +381,172 @@ select {
     background: var(--red);
   }
 
+  .runtime-facts {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .runtime-fact {
+    display: grid;
+    gap: 6px;
+    min-height: 96px;
+    border: 1px solid #e7e5e4;
+    border-top: 4px solid var(--blue);
+    border-radius: 8px;
+    padding: 10px;
+    background: #fafaf9;
+  }
+
+  .runtime-fact[data-tone="green"] {
+    border-top-color: var(--green);
+  }
+
+  .runtime-fact[data-tone="amber"] {
+    border-top-color: var(--amber);
+  }
+
+  .runtime-fact[data-tone="red"] {
+    border-top-color: var(--red);
+  }
+
+  .runtime-fact span {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  .runtime-fact strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: var(--ink);
+    font-size: 20px;
+    font-weight: 760;
+    line-height: 1.1;
+  }
+
+  .runtime-fact small {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: #52525b;
+    font-size: 12px;
+    line-height: 1.3;
+  }
+
+  .runtime-run-list {
+    display: grid;
+    gap: 9px;
+    border-top: 1px solid #e7e5e4;
+    padding: 14px;
+  }
+
+  .runtime-run {
+    display: grid;
+    gap: 8px;
+    border: 1px solid #e7e5e4;
+    border-left: 4px solid #a1a1aa;
+    border-radius: 8px;
+    padding: 10px;
+    background: #fafaf9;
+  }
+
+  .runtime-run[data-state="healthy"] {
+    border-left-color: var(--green);
+  }
+
+  .runtime-run[data-state="attention"] {
+    border-left-color: var(--amber);
+  }
+
+  .runtime-run[data-state="stale"],
+  .runtime-run[data-state="disconnected"] {
+    border-left-color: var(--red);
+  }
+
+  .runtime-run-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .runtime-run-head strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: var(--ink);
+    font-family:
+      JetBrains Mono,
+      ui-monospace,
+      monospace;
+    font-size: 12px;
+    font-weight: 780;
+  }
+
+  .runtime-state-pill {
+    display: inline-flex;
+    min-width: 74px;
+    justify-content: center;
+    border: 1px solid #d4d4d8;
+    border-radius: 999px;
+    padding: 3px 8px;
+    color: #3f3f46;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .runtime-state-pill[data-state="healthy"] {
+    border-color: #a7f3d0;
+    color: var(--green);
+    background: #ecfdf5;
+  }
+
+  .runtime-state-pill[data-state="attention"] {
+    border-color: #fed7aa;
+    color: var(--amber);
+    background: #fffbeb;
+  }
+
+  .runtime-state-pill[data-state="stale"],
+  .runtime-state-pill[data-state="disconnected"] {
+    border-color: #fecaca;
+    color: var(--red);
+    background: #fef2f2;
+  }
+
+  .runtime-run-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px 10px;
+  }
+
+  .runtime-run-grid span,
+  .runtime-empty,
+  .runtime-summary span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: #52525b;
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .runtime-empty {
+    border: 1px dashed #d6d3d1;
+    border-radius: 8px;
+    padding: 12px;
+    background: #fafaf9;
+  }
+
+  .runtime-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    border-top: 1px solid #e7e5e4;
+    padding: 12px 14px;
+    background: #fafaf9;
+  }
+
   .table-wrap {
     overflow-x: auto;
   }
@@ -826,6 +992,12 @@ select {
     text-align: left;
   }
 
+  .runtime-facts,
+  .runtime-run-grid,
+  .runtime-summary {
+    grid-template-columns: 1fr;
+  }
+
   .reference-row-head {
     grid-template-columns: 1fr;
   }
@@ -842,10 +1014,20 @@ select {
     grid-template-columns: 1fr;
   }
 
+  .runtime-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .posture-block {
     border-right: 0;
     border-bottom: 1px solid #e7e5e4;
     padding-right: 0;
     padding-bottom: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .runtime-facts {
+    grid-template-columns: 1fr;
   }
 }

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import re
 import sqlite3
 import sys
@@ -20,6 +21,8 @@ from apps.strategies_nautilus.runners.report_testnet_bundle import (
 
 DEFAULT_PROJECT_STATUS_PATH = Path("docs/project-status.md")
 DEFAULT_GRAFANA_BASE_URL = "http://127.0.0.1:3000"
+DEFAULT_OBSERVABILITY_TEXTFILE_DIR = Path("data/observability/textfile")
+DEFAULT_OBSERVABILITY_STALE_AFTER_SECONDS = 120.0
 SNAPSHOT_SCHEMA_VERSION = "dashboard.snapshot.v1"
 
 _STATUS_FIELD_RE = re.compile(
@@ -34,6 +37,12 @@ _STRICT_STREAK_RE = re.compile(
     r"(?P<value>\d+/\d+)",
     re.IGNORECASE,
 )
+_PROM_SAMPLE_RE = re.compile(
+    r"^(?P<name>[a-zA-Z_:][a-zA-Z0-9_:]*)"
+    r"(?:\{(?P<labels>[^}]*)\})?\s+"
+    r"(?P<value>[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?|NaN|\+Inf|-Inf)\s*$"
+)
+_PROM_LABEL_RE = re.compile(r'(?P<key>[a-zA-Z_][a-zA-Z0-9_]*)="(?P<value>(?:\\.|[^"\\])*)"')
 _SOURCE_REFERENCE_LINKS = (
     {
         "group": "docs",
@@ -107,11 +116,16 @@ def build_dashboard_snapshot(
     advice_limit: int = 20,
     grafana_base_url: str | None = DEFAULT_GRAFANA_BASE_URL,
     repo_browser_base_url: str | None = None,
+    observability_textfile_dir: Path | None = DEFAULT_OBSERVABILITY_TEXTFILE_DIR,
+    observability_limit: int = 5,
     generated_at_ns: int | None = None,
 ) -> dict[str, Any]:
     if advice_limit <= 0:
         raise ValueError("advice_limit must be positive")
+    if observability_limit <= 0:
+        raise ValueError("observability_limit must be positive")
 
+    generated_ns = time.time_ns() if generated_at_ns is None else generated_at_ns
     boundaries = {
         "live_path_allowed": False,
         "signal_event_write_allowed": False,
@@ -137,13 +151,18 @@ def build_dashboard_snapshot(
     )
     return {
         "schema_version": SNAPSHOT_SCHEMA_VERSION,
-        "generated_at_ns": time.time_ns() if generated_at_ns is None else generated_at_ns,
+        "generated_at_ns": generated_ns,
         "boundaries": boundaries,
         "project_status": project_status,
         "agent_advice": agent_advice,
         "paper_bundles": paper_bundles,
         "testnet_bundles": testnet_bundles,
         "ops_status": ops_status,
+        "observability": _observability_snapshot(
+            observability_textfile_dir,
+            generated_at_ns=generated_ns,
+            limit=observability_limit,
+        ),
         "reference_links": _reference_links(
             grafana_base_url=grafana_base_url,
             repo_browser_base_url=repo_browser_base_url,
@@ -193,6 +212,35 @@ def render_markdown_snapshot(snapshot: dict[str, Any]) -> str:
     )
     for item in status.get("sections", {}).get("blocked_deferred", []):
         lines.append(f"- {item}")
+
+    observability = snapshot.get("observability") or {}
+    if observability:
+        lines.extend(
+            [
+                "",
+                "## Observability Textfiles",
+                "",
+                f"- textfile_dir: `{observability.get('textfile_dir') or 'disabled'}`",
+                f"- exists: {str(observability.get('exists')).lower()}",
+                f"- file_count: {observability.get('file_count', 0)}",
+                "",
+                "| run_id | state | heartbeat_age_s | ws | open orders | open positions | alerts | data_lag_s |",
+                "|---|---|---:|---|---:|---:|---:|---:|",
+            ]
+        )
+        for run in observability.get("runs", []):
+            data_lag = run.get("last_bar_age_seconds")
+            lines.append(
+                "| "
+                f"`{run.get('run_id') or 'unknown'}` | "
+                f"{run.get('state') or 'unknown'} | "
+                f"{_format_optional_float(run.get('heartbeat_age_seconds'))} | "
+                f"{_format_optional_bool(run.get('ws_connected'))} | "
+                f"{_format_optional_int(run.get('open_orders'))} | "
+                f"{_format_optional_int(run.get('open_positions'))} | "
+                f"{_format_optional_int(run.get('alert_total'))} | "
+                f"{_format_optional_float(data_lag)} |"
+            )
 
     reference_links = snapshot.get("reference_links") or []
     if reference_links:
@@ -452,6 +500,251 @@ def _compact_testnet_report(report: Any) -> dict[str, Any]:
     }
 
 
+def _observability_snapshot(
+    textfile_dir: Path | None,
+    *,
+    generated_at_ns: int,
+    limit: int,
+) -> dict[str, Any]:
+    if textfile_dir is None:
+        return {
+            "textfile_dir": None,
+            "exists": False,
+            "file_count": 0,
+            "stale_after_seconds": DEFAULT_OBSERVABILITY_STALE_AFTER_SECONDS,
+            "counts": _observability_counts([]),
+            "latest": None,
+            "runs": [],
+        }
+
+    if not textfile_dir.exists():
+        return {
+            "textfile_dir": str(textfile_dir),
+            "exists": False,
+            "file_count": 0,
+            "stale_after_seconds": DEFAULT_OBSERVABILITY_STALE_AFTER_SECONDS,
+            "counts": _observability_counts([]),
+            "latest": None,
+            "runs": [],
+        }
+
+    paths = sorted(path for path in textfile_dir.glob("*.prom") if path.is_file())
+    runs = [
+        _textfile_run_snapshot(path, generated_at_ns=generated_at_ns)
+        for path in paths
+    ]
+    runs.sort(
+        key=lambda run: (
+            run.get("heartbeat_timestamp_seconds") or 0.0,
+            run.get("file_mtime_ns") or 0,
+        ),
+        reverse=True,
+    )
+    limited = runs[:limit]
+    return {
+        "textfile_dir": str(textfile_dir),
+        "exists": True,
+        "file_count": len(paths),
+        "stale_after_seconds": DEFAULT_OBSERVABILITY_STALE_AFTER_SECONDS,
+        "counts": _observability_counts(runs),
+        "latest": limited[0] if limited else None,
+        "runs": limited,
+    }
+
+
+def _textfile_run_snapshot(path: Path, *, generated_at_ns: int) -> dict[str, Any]:
+    metrics, parse_errors = _parse_prometheus_textfile(path)
+    heartbeat_ts = _metric_value(metrics, "trader_canary_heartbeat_timestamp_seconds")
+    last_bar_ts = _metric_value(metrics, "trader_canary_last_bar_timestamp_seconds")
+    last_signal_ts = _metric_value(metrics, "trader_canary_last_signal_timestamp_seconds")
+    labels = (
+        _metric_labels(metrics, "trader_canary_info")
+        or _metric_labels(metrics, "trader_canary_heartbeat_timestamp_seconds")
+        or {}
+    )
+    fallback_kind, fallback_run_id = _kind_run_from_prom_filename(path)
+    ws_connected_value = _metric_value(metrics, "trader_canary_ws_connected")
+    alerts = _alert_counts(metrics)
+    generated_seconds = generated_at_ns / 1_000_000_000
+
+    heartbeat_age = _age_seconds(generated_seconds, heartbeat_ts)
+    last_bar_age = _age_seconds(generated_seconds, last_bar_ts)
+    last_signal_age = _age_seconds(generated_seconds, last_signal_ts)
+    state, reason = _observability_run_state(
+        heartbeat_age_seconds=heartbeat_age,
+        ws_connected=_bool_metric(ws_connected_value),
+        alert_total=sum(alerts.values()),
+        parse_errors=parse_errors,
+    )
+
+    return {
+        "path": str(path),
+        "file_mtime_ns": path.stat().st_mtime_ns,
+        "kind": labels.get("kind") or fallback_kind,
+        "run_id": labels.get("run_id") or fallback_run_id,
+        "state": state,
+        "state_reason": reason,
+        "parse_errors": parse_errors[:3],
+        "heartbeat_timestamp_seconds": heartbeat_ts,
+        "heartbeat_age_seconds": heartbeat_age,
+        "ws_connected": _bool_metric(ws_connected_value),
+        "ws_reconnect_total": _optional_int_metric(
+            _metric_value(metrics, "trader_canary_ws_reconnect_total")
+        ),
+        "exchange_error_total": _optional_int_metric(
+            _metric_value(metrics, "trader_canary_exchange_error_total")
+        ),
+        "open_orders": _optional_int_metric(
+            _metric_value(metrics, "trader_canary_open_orders")
+        ),
+        "open_positions": _optional_int_metric(
+            _metric_value(metrics, "trader_canary_open_positions")
+        ),
+        "daily_pnl_usdt": _metric_value(metrics, "trader_canary_daily_pnl_usdt"),
+        "account_total_usdt": _metric_value(metrics, "trader_canary_account_total_usdt"),
+        "last_bar_timestamp_seconds": last_bar_ts,
+        "last_bar_age_seconds": last_bar_age,
+        "last_signal_timestamp_seconds": last_signal_ts,
+        "last_signal_age_seconds": last_signal_age,
+        "alert_total": sum(alerts.values()),
+        "alerts_by_kind": alerts,
+    }
+
+
+def _parse_prometheus_textfile(
+    path: Path,
+) -> tuple[dict[str, list[tuple[dict[str, str], float]]], list[str]]:
+    metrics: dict[str, list[tuple[dict[str, str], float]]] = {}
+    parse_errors: list[str] = []
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError as exc:
+        return {}, [f"read_failed:{exc.__class__.__name__}"]
+
+    for lineno, line in enumerate(lines, start=1):
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        match = _PROM_SAMPLE_RE.match(stripped)
+        if not match:
+            parse_errors.append(f"line_{lineno}:unparseable")
+            continue
+        value = _parse_prom_float(match.group("value"))
+        if value is None:
+            parse_errors.append(f"line_{lineno}:non_finite")
+            continue
+        labels = _parse_prom_labels(match.group("labels") or "")
+        metrics.setdefault(match.group("name"), []).append((labels, value))
+    return metrics, parse_errors
+
+
+def _parse_prom_float(value: str) -> float | None:
+    try:
+        parsed = float(value)
+    except ValueError:
+        return None
+    return parsed if math.isfinite(parsed) else None
+
+
+def _parse_prom_labels(value: str) -> dict[str, str]:
+    return {
+        match.group("key"): _unescape_prom_label(match.group("value"))
+        for match in _PROM_LABEL_RE.finditer(value)
+    }
+
+
+def _unescape_prom_label(value: str) -> str:
+    return (
+        value.replace(r"\n", "\n")
+        .replace(r"\"", '"')
+        .replace(r"\\", "\\")
+    )
+
+
+def _metric_value(
+    metrics: dict[str, list[tuple[dict[str, str], float]]],
+    name: str,
+) -> float | None:
+    values = metrics.get(name) or []
+    return values[0][1] if values else None
+
+
+def _metric_labels(
+    metrics: dict[str, list[tuple[dict[str, str], float]]],
+    name: str,
+) -> dict[str, str] | None:
+    values = metrics.get(name) or []
+    return values[0][0] if values else None
+
+
+def _alert_counts(
+    metrics: dict[str, list[tuple[dict[str, str], float]]],
+) -> dict[str, int]:
+    alerts: dict[str, int] = {}
+    for labels, value in metrics.get("trader_canary_alert_total") or []:
+        alert = labels.get("alert") or "unknown"
+        alerts[alert] = alerts.get(alert, 0) + int(value)
+    return alerts
+
+
+def _kind_run_from_prom_filename(path: Path) -> tuple[str | None, str | None]:
+    kind, sep, run_id = path.stem.partition("-")
+    return (kind or None, run_id or None) if sep else (None, path.stem or None)
+
+
+def _age_seconds(generated_seconds: float, timestamp_seconds: float | None) -> float | None:
+    if timestamp_seconds is None:
+        return None
+    return max(0.0, generated_seconds - timestamp_seconds)
+
+
+def _bool_metric(value: float | None) -> bool | None:
+    if value is None:
+        return None
+    return value >= 0.5
+
+
+def _optional_int_metric(value: float | None) -> int | None:
+    return None if value is None else int(value)
+
+
+def _observability_run_state(
+    *,
+    heartbeat_age_seconds: float | None,
+    ws_connected: bool | None,
+    alert_total: int,
+    parse_errors: Sequence[str],
+) -> tuple[str, str]:
+    if parse_errors:
+        return "attention", "parse_errors_present"
+    if heartbeat_age_seconds is None:
+        return "unknown", "heartbeat_missing"
+    if heartbeat_age_seconds > DEFAULT_OBSERVABILITY_STALE_AFTER_SECONDS:
+        return "stale", "heartbeat_age_exceeds_threshold"
+    if ws_connected is False:
+        return "disconnected", "ws_disconnected"
+    if alert_total > 0:
+        return "attention", "alerts_present"
+    return "healthy", "latest_sample_within_threshold"
+
+
+def _observability_counts(runs: Sequence[dict[str, Any]]) -> dict[str, int]:
+    return {
+        "run_count": len(runs),
+        "connected_count": sum(1 for run in runs if run.get("ws_connected") is True),
+        "stale_count": sum(1 for run in runs if run.get("state") == "stale"),
+        "attention_count": sum(
+            1
+            for run in runs
+            if run.get("state") in {"attention", "disconnected", "unknown"}
+        ),
+        "open_orders": sum(int(run.get("open_orders") or 0) for run in runs),
+        "open_positions": sum(int(run.get("open_positions") or 0) for run in runs),
+        "alert_total": sum(int(run.get("alert_total") or 0) for run in runs),
+        "parse_error_count": sum(len(run.get("parse_errors") or []) for run in runs),
+    }
+
+
 def _reference_links(
     *,
     grafana_base_url: str | None,
@@ -704,6 +997,20 @@ def _join_or_none(values: Sequence[str]) -> str:
     return ", ".join(values) if values else "none"
 
 
+def _format_optional_float(value: Any) -> str:
+    return f"{value:.1f}" if isinstance(value, float | int) else "n/a"
+
+
+def _format_optional_int(value: Any) -> str:
+    return str(value) if isinstance(value, int) else "n/a"
+
+
+def _format_optional_bool(value: Any) -> str:
+    if isinstance(value, bool):
+        return str(value).lower()
+    return "n/a"
+
+
 def _markdown_cell(value: str) -> str:
     return value.replace("|", "\\|").replace("\n", " ")
 
@@ -724,6 +1031,15 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--paper-bundle", action="append", default=[])
     parser.add_argument("--testnet-bundle", action="append", default=[])
     parser.add_argument("--advice-limit", type=int, default=20)
+    parser.add_argument(
+        "--observability-textfile-dir",
+        default=str(DEFAULT_OBSERVABILITY_TEXTFILE_DIR),
+        help=(
+            "Directory containing Prometheus textfile collector .prom files. "
+            "Pass an empty string to disable this read-only summary."
+        ),
+    )
+    parser.add_argument("--observability-limit", type=int, default=5)
     parser.add_argument(
         "--grafana-base-url",
         default=DEFAULT_GRAFANA_BASE_URL,
@@ -755,6 +1071,12 @@ def main(argv: list[str] | None = None) -> int:
         advice_limit=args.advice_limit,
         grafana_base_url=args.grafana_base_url,
         repo_browser_base_url=args.repo_browser_base_url,
+        observability_textfile_dir=(
+            Path(args.observability_textfile_dir)
+            if args.observability_textfile_dir
+            else None
+        ),
+        observability_limit=args.observability_limit,
     )
     if args.markdown:
         sys.stdout.write(render_markdown_snapshot(snapshot) + "\n")
@@ -769,6 +1091,7 @@ if __name__ == "__main__":
 
 __all__ = [
     "DEFAULT_GRAFANA_BASE_URL",
+    "DEFAULT_OBSERVABILITY_TEXTFILE_DIR",
     "SNAPSHOT_SCHEMA_VERSION",
     "build_dashboard_snapshot",
     "render_markdown_snapshot",

@@ -1,6 +1,8 @@
 import {
   type AdviceRow,
   type DashboardSnapshot,
+  type ObservabilityRun,
+  type ObservabilitySnapshot,
   type PaperBundle,
   type ReferenceLink,
   type TestnetBundle,
@@ -60,6 +62,8 @@ const COPY = {
       consoleBrief: "Console Brief",
       evidenceMatrix: "Evidence Matrix",
       evidenceSubtitle: "read-only snapshot totals",
+      runtimeHealth: "Runtime Health",
+      runtimeSubtitle: "textfile collector snapshot",
       agentAdviceQueue: "AgentAdvice Queue",
       operatorChecklist: "Operator Checklist",
       watchlist: "Watchlist",
@@ -79,6 +83,34 @@ const COPY = {
       noRecommendation: "no recommendation",
       noBundles: "No bundle summaries attached",
       attachBundles: "pass --paper-bundle or --testnet-bundle when generating snapshot",
+    },
+    runtime: {
+      noRuns: "No textfile collector runs were found.",
+      sourceMissing: "Textfile directory is absent",
+      sourceReady: "Textfile directory loaded",
+      textfiles: "Textfiles",
+      latestHeartbeat: "Latest heartbeat",
+      ws: "WS",
+      dataLag: "Data lag",
+      openState: "Open state",
+      connected: "connected",
+      disconnected: "disconnected",
+      unknown: "unknown",
+      bar: "bar",
+      signal: "signal",
+      orders: "orders",
+      positions: "positions",
+      alerts: "alerts",
+      errors: "errors",
+      reconnects: "reconnects",
+      reason: "reason",
+      states: {
+        healthy: "healthy",
+        stale: "stale",
+        attention: "attention",
+        disconnected: "disconnected",
+        unknown: "unknown",
+      },
     },
     advice: {
       noRowsSnapshot: "no rows in snapshot",
@@ -240,6 +272,8 @@ const COPY = {
       consoleBrief: "控制台简报",
       evidenceMatrix: "证据矩阵",
       evidenceSubtitle: "只读快照汇总",
+      runtimeHealth: "运行健康",
+      runtimeSubtitle: "textfile collector 快照",
       agentAdviceQueue: "AgentAdvice 队列",
       operatorChecklist: "操作员检查表",
       watchlist: "关注列表",
@@ -259,6 +293,34 @@ const COPY = {
       noRecommendation: "无建议",
       noBundles: "未附加 bundle 摘要",
       attachBundles: "生成快照时传入 --paper-bundle 或 --testnet-bundle",
+    },
+    runtime: {
+      noRuns: "没有找到 textfile collector 运行记录。",
+      sourceMissing: "Textfile 目录不存在",
+      sourceReady: "Textfile 目录已加载",
+      textfiles: "Textfile",
+      latestHeartbeat: "最新心跳",
+      ws: "WS",
+      dataLag: "数据延迟",
+      openState: "未平状态",
+      connected: "已连接",
+      disconnected: "已断开",
+      unknown: "未知",
+      bar: "K 线",
+      signal: "信号",
+      orders: "订单",
+      positions: "仓位",
+      alerts: "告警",
+      errors: "错误",
+      reconnects: "重连",
+      reason: "原因",
+      states: {
+        healthy: "健康",
+        stale: "过期",
+        attention: "需关注",
+        disconnected: "已断开",
+        unknown: "未知",
+      },
     },
     advice: {
       noRowsSnapshot: "快照中没有记录",
@@ -396,6 +458,7 @@ export default async function DashboardPage({
   const advice = snapshot.agent_advice ?? {};
   const paperBundles = snapshot.paper_bundles ?? [];
   const testnetBundles = snapshot.testnet_bundles ?? [];
+  const observability = snapshot.observability ?? {};
   const referenceLinks = snapshot.reference_links ?? [];
   const ops = snapshot.ops_status ?? {};
 
@@ -409,6 +472,7 @@ export default async function DashboardPage({
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(380px,0.55fr)]">
           <div className="grid gap-4">
             <StatusGrid snapshot={snapshot} language={language} copy={copy} />
+            <RuntimeHealthPanel observability={observability} language={language} copy={copy} />
             <OpsSummary summary={ops.summary ?? []} copy={copy} />
             <EvidenceMatrix
               paperBundles={paperBundles}
@@ -610,6 +674,138 @@ function Metric({
       <div className="metric-value">{value}</div>
       <div className="metric-detail">{detail}</div>
     </article>
+  );
+}
+
+function RuntimeHealthPanel({
+  observability,
+  language,
+  copy,
+}: {
+  observability: ObservabilitySnapshot;
+  language: Language;
+  copy: Copy;
+}) {
+  const counts = observability.counts ?? {};
+  const runs = observability.runs ?? [];
+  const latest = observability.latest ?? runs[0] ?? null;
+  const sourceLoaded = Boolean(observability.exists);
+
+  return (
+    <section className="panel">
+      <div className="section-head">
+        <h2>{copy.sections.runtimeHealth}</h2>
+        <span>{sourceLoaded ? copy.runtime.sourceReady : copy.runtime.sourceMissing}</span>
+      </div>
+      <div className="runtime-facts">
+        <RuntimeFact
+          label={copy.runtime.textfiles}
+          value={formatCount(observability.file_count, language)}
+          detail={observability.textfile_dir ?? copy.common.unknown}
+        />
+        <RuntimeFact
+          label={copy.runtime.latestHeartbeat}
+          value={formatDuration(latest?.heartbeat_age_seconds, copy)}
+          detail={latest?.run_id ?? copy.runtime.noRuns}
+          tone={runtimeTone(latest?.state)}
+        />
+        <RuntimeFact
+          label={copy.runtime.ws}
+          value={formatWs(latest?.ws_connected, copy)}
+          detail={`${copy.runtime.reconnects}: ${formatMaybeNumber(latest?.ws_reconnect_total, language, copy)}`}
+          tone={latest?.ws_connected === true ? "green" : latest?.ws_connected === false ? "red" : "amber"}
+        />
+        <RuntimeFact
+          label={copy.runtime.dataLag}
+          value={`${copy.runtime.bar}: ${formatDuration(latest?.last_bar_age_seconds, copy)}`}
+          detail={`${copy.runtime.signal}: ${formatDuration(latest?.last_signal_age_seconds, copy)}`}
+          tone={runtimeLagTone(latest?.last_bar_age_seconds, observability.stale_after_seconds)}
+        />
+      </div>
+      <div className="runtime-run-list">
+        {runs.length ? (
+          runs.slice(0, 4).map((run) => (
+            <RuntimeRunRow copy={copy} key={run.run_id ?? run.path ?? "runtime-run"} language={language} run={run} />
+          ))
+        ) : (
+          <div className="runtime-empty">{copy.runtime.noRuns}</div>
+        )}
+      </div>
+      <div className="runtime-summary">
+        <span>
+          {copy.runtime.openState}: {copy.runtime.orders} {formatCount(counts.open_orders, language)} /{" "}
+          {copy.runtime.positions} {formatCount(counts.open_positions, language)}
+        </span>
+        <span>
+          {copy.runtime.alerts} {formatCount(counts.alert_total, language)} / {copy.runtime.errors}{" "}
+          {formatCount(counts.parse_error_count, language)}
+        </span>
+      </div>
+    </section>
+  );
+}
+
+function RuntimeFact({
+  label,
+  value,
+  detail,
+  tone = "blue",
+}: {
+  label: string;
+  value: string;
+  detail: string;
+  tone?: "green" | "blue" | "amber" | "red";
+}) {
+  return (
+    <div className="runtime-fact" data-tone={tone}>
+      <span>{label}</span>
+      <strong>{value}</strong>
+      <small>{detail}</small>
+    </div>
+  );
+}
+
+function RuntimeRunRow({
+  run,
+  language,
+  copy,
+}: {
+  run: ObservabilityRun;
+  language: Language;
+  copy: Copy;
+}) {
+  return (
+    <div className="runtime-run" data-state={normalizeRuntimeState(run.state)}>
+      <div className="runtime-run-head">
+        <strong>{run.run_id ?? copy.common.unknown}</strong>
+        <RuntimeStatePill state={run.state} copy={copy} />
+      </div>
+      <div className="runtime-run-grid">
+        <span>
+          {copy.runtime.latestHeartbeat}: {formatDuration(run.heartbeat_age_seconds, copy)}
+        </span>
+        <span>
+          {copy.runtime.openState}: {copy.runtime.orders} {formatMaybeNumber(run.open_orders, language, copy)} /{" "}
+          {copy.runtime.positions} {formatMaybeNumber(run.open_positions, language, copy)}
+        </span>
+        <span>
+          {copy.runtime.alerts}: {formatCount(run.alert_total, language)}
+        </span>
+        <span>
+          {copy.runtime.reason}: {run.state_reason ?? copy.common.unknown}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function RuntimeStatePill({ state, copy }: { state: string | undefined; copy: Copy }) {
+  const normalized = normalizeRuntimeState(state);
+  const labels = copy.runtime.states as Record<string, string>;
+  return (
+    <span className="runtime-state-pill" data-state={normalized}>
+      {labels[normalized] ?? normalized}
+    </span>
   );
 }
 
@@ -985,6 +1181,13 @@ function labelState(value: "guarded" | "attention" | "breach", copy: Copy): stri
   return copy.states[value];
 }
 
+function normalizeRuntimeState(value: string | undefined): "healthy" | "stale" | "attention" | "disconnected" | "unknown" {
+  if (value === "healthy" || value === "stale" || value === "attention" || value === "disconnected") {
+    return value;
+  }
+  return "unknown";
+}
+
 function normalizeChecklist(value: string | undefined): string {
   return value ?? "unknown";
 }
@@ -1038,6 +1241,28 @@ function formatWatchlistCount(blocked: number, nextSteps: number, copy: Copy): s
   return `${blocked} blocked / ${nextSteps} next`;
 }
 
+function runtimeTone(value: string | undefined): "green" | "blue" | "amber" | "red" {
+  const state = normalizeRuntimeState(value);
+  if (state === "healthy") {
+    return "green";
+  }
+  if (state === "stale" || state === "disconnected") {
+    return "red";
+  }
+  return state === "attention" ? "amber" : "blue";
+}
+
+function runtimeLagTone(value: number | null | undefined, staleAfter: number | undefined): "green" | "blue" | "amber" | "red" {
+  if (typeof value !== "number") {
+    return "blue";
+  }
+  const threshold = staleAfter ?? 120;
+  if (value <= threshold) {
+    return "green";
+  }
+  return value <= threshold * 3 ? "amber" : "red";
+}
+
 function localizeReferenceGroup(value: string | undefined, copy: Copy): string {
   if (!value) {
     return copy.common.unknown;
@@ -1060,6 +1285,36 @@ function isWebHref(value: string): boolean {
 
 function formatCount(value: number | undefined, language: Language): string {
   return new Intl.NumberFormat(language === "zh-CN" ? "zh-CN" : "en-US").format(value ?? 0);
+}
+
+function formatMaybeNumber(value: number | null | undefined, language: Language, copy: Copy): string {
+  return typeof value === "number" ? formatCount(value, language) : copy.common.nA;
+}
+
+function formatDuration(value: number | null | undefined, copy: Copy): string {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return copy.common.nA;
+  }
+  if (value < 60) {
+    return `${Math.round(value)}s`;
+  }
+  if (value < 3600) {
+    return `${Math.round(value / 60)}m`;
+  }
+  if (value < 86_400) {
+    return `${Math.round(value / 3600)}h`;
+  }
+  return `${Math.round(value / 86_400)}d`;
+}
+
+function formatWs(value: boolean | null | undefined, copy: Copy): string {
+  if (value === true) {
+    return copy.runtime.connected;
+  }
+  if (value === false) {
+    return copy.runtime.disconnected;
+  }
+  return copy.runtime.unknown;
 }
 
 function formatConfidence(value: number | undefined, copy: Copy): string {

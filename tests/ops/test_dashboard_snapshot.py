@@ -230,6 +230,129 @@ def test_snapshot_can_emit_local_reference_paths_without_urls(tmp_path: Path) ->
     )
 
 
+def test_snapshot_observability_missing_textfile_dir_is_empty(tmp_path: Path) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        observability_textfile_dir=tmp_path / "missing-observability",
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    assert snapshot["observability"] == {
+        "textfile_dir": str(tmp_path / "missing-observability"),
+        "exists": False,
+        "file_count": 0,
+        "stale_after_seconds": 120.0,
+        "counts": {
+            "run_count": 0,
+            "connected_count": 0,
+            "stale_count": 0,
+            "attention_count": 0,
+            "open_orders": 0,
+            "open_positions": 0,
+            "alert_total": 0,
+            "parse_error_count": 0,
+        },
+        "latest": None,
+        "runs": [],
+    }
+
+
+def test_snapshot_reads_prometheus_textfile_observability(tmp_path: Path) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    obs_dir = tmp_path / "observability"
+    obs_dir.mkdir()
+    (obs_dir / "testnet-run-new.prom").write_text(
+        "\n".join(
+            [
+                'trader_canary_heartbeat_timestamp_seconds{kind="testnet",run_id="run-new"} 1778759970',
+                'trader_canary_ws_connected{kind="testnet",run_id="run-new"} 1',
+                'trader_canary_ws_reconnect_total{kind="testnet",run_id="run-new"} 0',
+                'trader_canary_exchange_error_total{kind="testnet",run_id="run-new"} 1',
+                'trader_canary_open_orders{kind="testnet",run_id="run-new"} 2',
+                'trader_canary_open_positions{kind="testnet",run_id="run-new"} 1',
+                'trader_canary_daily_pnl_usdt{kind="testnet",run_id="run-new"} -0.25',
+                'trader_canary_account_total_usdt{kind="testnet",run_id="run-new"} 9999.75',
+                'trader_canary_last_bar_timestamp_seconds{kind="testnet",run_id="run-new"} 1778759940',
+                'trader_canary_last_signal_timestamp_seconds{kind="testnet",run_id="run-new"} 1778759985',
+                'trader_canary_alert_total{alert="ws_disconnected",kind="testnet",run_id="run-new"} 2',
+                'trader_canary_info{kind="testnet",run_id="run-new"} 1',
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (obs_dir / "testnet-run-old.prom").write_text(
+        "\n".join(
+            [
+                'trader_canary_heartbeat_timestamp_seconds{kind="testnet",run_id="run-old"} 1778759000',
+                'trader_canary_ws_connected{kind="testnet",run_id="run-old"} 1',
+                'trader_canary_info{kind="testnet",run_id="run-old"} 1',
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        observability_textfile_dir=obs_dir,
+        observability_limit=1,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    observability = snapshot["observability"]
+    assert observability["exists"] is True
+    assert observability["file_count"] == 2
+    assert observability["counts"]["run_count"] == 2
+    assert observability["counts"]["connected_count"] == 2
+    assert observability["counts"]["stale_count"] == 1
+    assert observability["counts"]["open_orders"] == 2
+    assert observability["counts"]["open_positions"] == 1
+    assert observability["counts"]["alert_total"] == 2
+    assert len(observability["runs"]) == 1
+
+    latest = observability["latest"]
+    assert latest["run_id"] == "run-new"
+    assert latest["state"] == "attention"
+    assert latest["state_reason"] == "alerts_present"
+    assert latest["heartbeat_age_seconds"] == 30.0
+    assert latest["last_bar_age_seconds"] == 60.0
+    assert latest["last_signal_age_seconds"] == 15.0
+    assert latest["alerts_by_kind"] == {"ws_disconnected": 2}
+    assert latest["exchange_error_total"] == 1
+
+
+def test_markdown_snapshot_renders_observability_runs(tmp_path: Path) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    obs_dir = tmp_path / "observability"
+    obs_dir.mkdir()
+    (obs_dir / "testnet-run-1.prom").write_text(
+        'trader_canary_heartbeat_timestamp_seconds{kind="testnet",run_id="run-1"} 1778759970\n'
+        'trader_canary_ws_connected{kind="testnet",run_id="run-1"} 1\n'
+        'trader_canary_info{kind="testnet",run_id="run-1"} 1\n',
+        encoding="utf-8",
+    )
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        observability_textfile_dir=obs_dir,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    out = dashboard_snapshot.render_markdown_snapshot(snapshot)
+
+    assert "## Observability Textfiles" in out
+    assert "`run-1`" in out
+    assert "| `run-1` | healthy | 30.0 | true | n/a | n/a | 0 | n/a |" in out
+
+
 def test_cli_outputs_json(tmp_path: Path, capsys) -> None:
     status_path = tmp_path / "project-status.md"
     _write_status(status_path)

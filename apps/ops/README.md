@@ -63,6 +63,16 @@ uv run python -m apps.ops.dashboard_snapshot \
   --repo-browser-base-url https://github.com/Maggyee/Nishiki-Trader/blob/main
 ```
 
+默认还会被动读取 `data/observability/textfile/*.prom`，把 Prometheus textfile
+collector 中的最近 runner 心跳、WS 状态、open orders / positions、alert 计数和
+bar / signal 数据延迟压缩到 `observability` 字段。可用空字符串关闭：
+
+```bash
+uv run python -m apps.ops.dashboard_snapshot \
+  --observability-textfile-dir "" \
+  > data/frontend/dashboard-snapshot.json
+```
+
 也可以追加已完成的 passive bundle reports 作为压缩摘要输入：
 
 ```bash
@@ -73,8 +83,8 @@ uv run python -m apps.ops.dashboard_snapshot \
 ```
 
 `dashboard_snapshot` 只读取 `docs/`、AgentAdvice SQLite、既有 paper/testnet bundle
-report reader、以及静态链接配置；不写 `SignalEvent`、不改 `SourcePolicy`、不读取
-交易所凭证。
+report reader、Prometheus textfile `.prom`、以及静态链接配置；不写
+`SignalEvent`、不改 `SourcePolicy`、不读取交易所凭证。
 
 ## 计划脚本
 

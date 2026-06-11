@@ -35,9 +35,10 @@ uv run python -m apps.ops.dashboard_snapshot > data/frontend/dashboard-snapshot.
 ```
 
 The frontend may render status, operational posture, operator checklist,
-boundaries, AgentAdvice history, passive bundle summaries, and source-of-truth
-neutral reference links. If the file is absent, it renders a fallback read-only
-state so build and local smoke checks remain deterministic.
+boundaries, AgentAdvice history, passive bundle summaries, passive textfile
+observability summaries, and source-of-truth neutral reference links. If the
+file is absent, it renders a fallback read-only state so build and local smoke
+checks remain deterministic.
 
 Language selection is read-only URL state. The dashboard may render English or
 Simplified Chinese UI chrome through `?lang=en` / `?lang=zh-CN`; this does not
@@ -49,6 +50,7 @@ Allowed:
 
 - read `dashboard.snapshot.v1`;
 - render AgentAdvice, status, bundle-summary, and monitoring-oriented panels;
+- render passive Prometheus textfile summaries produced by existing runners;
 - render links to docs, evidence files, runbooks, and Grafana dashboards without
   treating the frontend as the source of truth;
 - show whether live/order-path boundary flags are closed.
@@ -74,12 +76,13 @@ Phase 5 entry implementation:
 
 - `apps/frontend/package.json` locks a Next.js + Tailwind app.
 - `apps/frontend/app/dashboardData.ts` loads the local snapshot server-side,
-  including `ops_status`, parsed project-status sections, `reference_links`,
-  and `operator_checklist`.
+  including `ops_status`, parsed project-status sections, `observability`,
+  `reference_links`, and `operator_checklist`.
 - `apps/frontend/app/page.tsx` renders the read-only operations dashboard:
-  posture band, guardrail metrics, evidence matrix, bundle ledger, AgentAdvice
-  queue, operator checklist, watchlist, verification, reference links, boundary
-  ledger, and an English / Simplified Chinese URL language switch.
+  posture band, guardrail metrics, runtime health, evidence matrix, bundle
+  ledger, AgentAdvice queue, operator checklist, watchlist, verification,
+  reference links, boundary ledger, and an English / Simplified Chinese URL
+  language switch.
 - `apps/frontend/app/globals.css` defines the compact dashboard surface.
 
 The first implementation deliberately has no API routes and no client-side
