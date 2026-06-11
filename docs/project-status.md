@@ -1,7 +1,7 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-06-11 (Phase 5 passive observability summaries)
+- **Last updated**: 2026-06-11 (TradingAgents read-only upstream reference)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
 - **Current objective**: Phase 5 entry is open. ADR-012, `apps.ops.dashboard_snapshot`, and `apps/frontend` now define a read-only Next.js operations console consuming `dashboard.snapshot.v1`; the snapshot carries `ops_status`, `operator_checklist`, parsed project-status sections, boundary flags, AgentAdvice rows, optional passive paper/testnet bundle summaries, passive Prometheus textfile observability summaries, and source-of-truth-neutral `reference_links` to docs, evidence, runbooks, and Grafana dashboards. The frontend renders runtime health from the passive textfile snapshot and supports read-only English / Simplified Chinese UI chrome via `?lang=en` / `?lang=zh-CN`. The earlier Grafana/Prometheus/Loki stack remains the runtime monitoring surface. ADR-009 and `apps.agents` remain the agent-safe Phase 4 substrate: `AgentAdvice v1`, MCP-facing safe wrappers, and the deterministic review agent. Agents and frontend still cannot write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or enter the order path. Existing Phase 3 evidence remains documented in `docs/progress/phase-3-testnet-canary-evidence.md`, with the paused continuity plan in `docs/progress/phase-3-testnet-continuity-plan.md`. Strict continuity remains `current_qualified_streak_days=0/14`; this does not satisfy the ADR-001/ADR-008 live gate. Keep `freqai_linear_v1 / linear-mom-train20240105` at `hold @ testnet_canary` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. No live trading without a separate live-risk ADR and the ADR-001 capital ladder gate.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
@@ -117,7 +117,7 @@ Immediate focus:
 
 1. Keep `freqai_linear_v1 / linear-mom-train20240105` at `hold @ testnet_canary` under the already-signed `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`.
 2. Treat `docs/progress/phase-3-testnet-canary-evidence.md`, `docs/progress/phase-3-testnet-continuity-plan.md`, the 2026-05-30 clean canary retro, the 2026-05-30 duplicate-entry abort retro, the 2026-05-30 post-fix clean retro, and the 2026-06-01 heartbeat-lost retro as the current operational evidence. Do not run more routine canaries unless the operator explicitly resumes live-readiness evidence collection. If canary evidence resumes, use `python -m apps.strategies_nautilus.runners.report_testnet_bundle data/testnet/<run_id>` before writing future manifest-backed canary retros, use `--markdown` with clean bundle directories before updating the clean evidence ledger, and use `--continuity --markdown --min-clean-hours-per-day 6 --required-consecutive-days 14` with every completed manifest-backed bundle in the candidate window before claiming continuity progress. Carry no-manifest aborts manually. Do not open a new `promotion_review` unless an actual policy/stage decision is being made.
-3. Use `docs/decisions/009-agent-advice-audit.md` and `docs/decisions/012-phase5-readonly-dashboard.md` as the active agent/frontend boundaries. Agent/MCP work may write/replay/review `AgentAdvice`; dashboard work may read passive reports, observability textfiles, and AgentAdvice through `dashboard.snapshot.v1`. Neither path may write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or encode structured execution directives.
+3. Use `docs/decisions/009-agent-advice-audit.md` and `docs/decisions/012-phase5-readonly-dashboard.md` as the active agent/frontend boundaries. Agent/MCP work may write/replay/review `AgentAdvice`; dashboard work may read passive reports, observability textfiles, and AgentAdvice through `dashboard.snapshot.v1`. `TradingAgents/` is available as an ignored read-only upstream reference for future agent role/configuration ideas only. Neither path may write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or encode structured execution directives.
 4. ADR-008 §6.2 Phase 3b, §6.3 Phase 3c-a/b/c, §6.4 Phase 3d, §6.5 Phase 3e, §6.6 Phase 3f stability soak/canary, and the §8 promotion-review patch are all implemented and unit-tested. The `phase_3_not_ready` blocker now only hard-blocks `live_canary` / `live_normal`.
 5. Keep LLM agents and FreqAI out of the order path; `SignalEvent v1 -> NautilusTrader Strategy -> RiskEngine` remains the only bridge.
 
@@ -143,6 +143,14 @@ Immediate focus:
 - No edits to `freqtrade/` or `nautilus_trader/` unless explicitly requested.
 
 ## Latest Verification
+
+On 2026-06-11, after adding the TradingAgents read-only upstream reference:
+
+- `git clone https://github.com/TauricResearch/TradingAgents.git TradingAgents` -> checkout created at `04f434e86db88e7707bf16db8ed7183f9764fe26` on `main`.
+- `TradingAgents/pyproject.toml` -> upstream version `0.2.5`; `TradingAgents/LICENSE` -> Apache-2.0.
+- `git check-ignore -v TradingAgents/` -> `.gitignore:42:TradingAgents/`; root git does not track the upstream source tree.
+- Boundary documented in `docs/upstream-versions.md` and `apps/agents/README.md`: TradingAgents is reference-only; no runtime dependency, no `SignalEvent` write, no `SourcePolicy` mutation, no exchange API access, and no live order path impact.
+- `git diff --check` -> clean.
 
 On 2026-06-11, after adding passive Prometheus textfile observability summaries to the dashboard snapshot and frontend runtime-health panel:
 

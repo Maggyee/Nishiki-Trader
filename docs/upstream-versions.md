@@ -4,7 +4,7 @@
 - **Owner**: nishiki
 - **Purpose**: Record the upstream source checkouts used for local reference and integration testing.
 
-The root repository does not commit upstream source trees. `freqtrade/` and `nautilus_trader/` are local read-only checkouts, ignored by root git, and updated through a controlled review process.
+The root repository does not commit upstream source trees. `freqtrade/`, `nautilus_trader/`, and `TradingAgents/` are local read-only checkouts, ignored by root git, and updated through a controlled review process.
 
 ## freqtrade
 
@@ -23,6 +23,17 @@ The root repository does not commit upstream source trees. `freqtrade/` and `nau
 - Project role: execution engine, backtesting, risk, portfolio, and exchange adapters
 - Runtime install: PyPI wheel `nautilus-trader==1.226.0` pinned in `pyproject.toml`. The local checkout is for browsing source only; runtime imports resolve to the venv wheel.
 - Pin policy: exact-version pin (`==`) is required by ADR-004 §2.4 — backtest reproducibility depends on identical `nautilus_version`. Bumping the pin must move the checkout to the matching tag and re-record both here in the same commit.
+
+## TradingAgents
+
+- Repository: `https://github.com/TauricResearch/TradingAgents`
+- Local path: `TradingAgents/` (read-only source reference, **not** installed from)
+- Branch at setup: `main`
+- Commit at setup: `04f434e86db88e7707bf16db8ed7183f9764fe26`
+- Version at setup: `0.2.5` from `pyproject.toml`
+- License: Apache-2.0
+- Project role: reference for future LLM-agent role decomposition, debate/review flow design, LLM provider configuration, CLI ergonomics, and research workflow ideas.
+- Boundary: reference only. Do not install TradingAgents as a runtime dependency, do not copy its trader / portfolio-manager execution semantics into this project, and do not let any TradingAgents-inspired output write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or enter the live order path. Any adapted agent output must stay within `AgentAdvice v1` unless a later ADR explicitly opens a reviewed `llm_*` signal experiment.
 
 ## Update Policy
 

@@ -49,6 +49,14 @@ uv run python -m apps.agents.review_agent \
 它只读取本地文档并写入一条 `advice_type="project_review"` 的 AgentAdvice；
 不调用 LLM、不写 `SignalEvent`、不改 `SourcePolicy`、不连接交易所。
 
+## 上游参考
+
+`TradingAgents/` 是本地忽略的只读 upstream checkout，用于参考多 agent
+角色拆分、辩论 / 审阅流程、LLM provider 配置和 CLI 体验。它不是本项目运行时依赖；
+不要把它的 trader / portfolio-manager 执行语义接入本项目。任何借鉴后的 agent
+输出仍必须落在 `AgentAdvice v1`，除非后续 ADR 单独打开受审阅的 `llm_*`
+信号实验。
+
 人工复核：
 
 ```bash

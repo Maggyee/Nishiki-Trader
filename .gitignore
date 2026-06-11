@@ -39,6 +39,7 @@ infra/watchdog/history.jsonl
 # Upstream source checkouts (tracked separately, read-only by default)
 freqtrade/
 nautilus_trader/
+TradingAgents/
 
 # Data (keep dir, ignore contents)
 data/*
