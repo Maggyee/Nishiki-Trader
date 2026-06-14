@@ -45,6 +45,9 @@ export type SignalSummaryRun = {
   run_id?: string | null;
   source?: string | null;
   model_version?: string | null;
+  first_signal_ts_event_ns?: number | string | null;
+  last_signal_ts_event_ns?: number | string | null;
+  latest_signal_age_seconds?: number | null;
   signal_rows?: number;
   accepted_signals?: number;
   skipped_signals?: number;
@@ -61,7 +64,21 @@ export type SignalSourceSummary = {
   skipped_signals?: number;
   rejection_signals?: number;
   kinds?: Record<string, number>;
+  first_signal_ts_event_ns?: number | string | null;
+  last_signal_ts_event_ns?: number | string | null;
+  latest_signal_age_seconds?: number | null;
+  latest_signal_run_id?: string | null;
+  latest_signal_kind?: string | null;
   top_rejection_reasons?: SignalReasonCount[];
+};
+
+export type SignalFreshness = {
+  latest_signal_ts_event_ns?: number | string | null;
+  latest_signal_age_seconds?: number | null;
+  latest_signal_run_id?: string | null;
+  latest_signal_kind?: string | null;
+  latest_signal_source?: string | null;
+  latest_signal_model_version?: string | null;
 };
 
 export type SignalSummary = {
@@ -70,6 +87,7 @@ export type SignalSummary = {
   accepted_signals?: number;
   skipped_signals?: number;
   rejection_signals?: number;
+  freshness?: SignalFreshness | null;
   rejection_reason_counts?: Record<string, number>;
   by_kind?: Record<string, Record<string, number>>;
   by_source_model?: SignalSourceSummary[];
@@ -229,6 +247,7 @@ function fallbackSnapshot(snapshotPath: string, error: unknown): DashboardSnapsh
       accepted_signals: 0,
       skipped_signals: 0,
       rejection_signals: 0,
+      freshness: null,
       rejection_reason_counts: {},
       by_kind: {},
       by_source_model: [],

@@ -264,6 +264,8 @@ def test_load_testnet_bundle_report_summarizes_clean_canary(tmp_path):
         "signal_lineage": 2,
     }
     assert report.sidecar_mismatches == []
+    assert report.first_signal_ts_event_ns == 1_704_067_200_000_000_000
+    assert report.last_signal_ts_event_ns == 1_704_067_200_000_000_000
     assert report.decision_counts == {"target_long": 2}
     assert report.lineage_rows_with_order_ids == 1
     assert report.first_fill is not None
@@ -631,6 +633,7 @@ def test_report_cli_outputs_text(tmp_path, capsys):
     out = capsys.readouterr().out
     assert "clean_for_retro: True" in out
     assert "source_model: freqai_linear_v1 / linear-mom-train20240105" in out
+    assert "last_signal_ts_event_ns=1704067200000000000" in out
 
 
 def test_report_cli_outputs_summary_json_for_multiple_bundles(tmp_path, capsys):

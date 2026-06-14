@@ -9,6 +9,10 @@ from apps.agents.store import AgentAdviceStore
 from apps.ops import dashboard_snapshot
 
 REFERENCE_TS_NS = 1_778_760_000_000_000_000
+PAPER_FIRST_SIGNAL_TS_NS = REFERENCE_TS_NS - 600_000_000_000
+PAPER_LAST_SIGNAL_TS_NS = REFERENCE_TS_NS - 300_000_000_000
+TESTNET_FIRST_SIGNAL_TS_NS = REFERENCE_TS_NS - 120_000_000_000
+TESTNET_LAST_SIGNAL_TS_NS = REFERENCE_TS_NS - 60_000_000_000
 
 
 def _write_status(path: Path) -> None:
@@ -398,6 +402,8 @@ def test_snapshot_wraps_passive_bundle_reports(
             source="freqai_linear_v1",
             model_version="linear-mom-train20240105",
             signal_rows=10,
+            first_signal_ts_event_ns=PAPER_FIRST_SIGNAL_TS_NS,
+            last_signal_ts_event_ns=PAPER_LAST_SIGNAL_TS_NS,
             accepted_signals=8,
             skipped_signals=2,
             dry_run_signals=0,
@@ -432,6 +438,8 @@ def test_snapshot_wraps_passive_bundle_reports(
             source="freqai_linear_v1",
             model_version="linear-mom-train20240105",
             clean_for_retro=True,
+            first_signal_ts_event_ns=TESTNET_FIRST_SIGNAL_TS_NS,
+            last_signal_ts_event_ns=TESTNET_LAST_SIGNAL_TS_NS,
             elapsed_seconds=21600,
             heartbeat_count=720,
             alert_count=0,
@@ -483,6 +491,16 @@ def test_snapshot_wraps_passive_bundle_reports(
         "signal_lag": 1,
         "unauthorized": 1,
     }
+    assert snapshot["signal_summary"]["freshness"] == {
+        "latest_signal_ts_event_ns": TESTNET_LAST_SIGNAL_TS_NS,
+        "latest_signal_age_seconds": 60.0,
+        "latest_signal_run_id": "testnet-1",
+        "latest_signal_kind": "testnet",
+        "latest_signal_source": "freqai_linear_v1",
+        "latest_signal_model_version": "linear-mom-train20240105",
+    }
+    assert snapshot["signal_summary"]["runs"][0]["latest_signal_age_seconds"] == 300.0
+    assert snapshot["signal_summary"]["runs"][1]["latest_signal_age_seconds"] == 60.0
     assert snapshot["signal_summary"]["by_source_model"] == [
         {
             "source": "freqai_linear_v1",
@@ -493,6 +511,11 @@ def test_snapshot_wraps_passive_bundle_reports(
             "skipped_signals": 3,
             "rejection_signals": 3,
             "kinds": {"paper": 1, "testnet": 1},
+            "first_signal_ts_event_ns": PAPER_FIRST_SIGNAL_TS_NS,
+            "last_signal_ts_event_ns": TESTNET_LAST_SIGNAL_TS_NS,
+            "latest_signal_age_seconds": 60.0,
+            "latest_signal_run_id": "testnet-1",
+            "latest_signal_kind": "testnet",
             "top_rejection_reasons": [
                 {"reason": "expired", "count": 1},
                 {"reason": "signal_lag", "count": 1},

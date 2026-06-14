@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-06-11 (Phase 5 signal summary)
+- **Last updated**: 2026-06-14 (Phase 5 source/model freshness)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
-- **Current objective**: Phase 5 entry is open. ADR-012, `apps.ops.dashboard_snapshot`, and `apps/frontend` now define a read-only Next.js operations console consuming `dashboard.snapshot.v1`; the snapshot carries `ops_status`, `operator_checklist`, parsed project-status sections, boundary flags, AgentAdvice rows, optional passive paper/testnet bundle summaries, read-only `signal_summary` from attached bundle `signal_lineage` decision/reason counts, passive Prometheus textfile observability summaries, and source-of-truth-neutral `reference_links` to docs, evidence, runbooks, and Grafana dashboards. The frontend renders runtime health plus signal-source / rejection summaries from passive evidence and supports read-only English / Simplified Chinese UI chrome via `?lang=en` / `?lang=zh-CN`. The earlier Grafana/Prometheus/Loki stack remains the runtime monitoring surface. ADR-009 and `apps.agents` remain the agent-safe Phase 4 substrate: `AgentAdvice v1`, MCP-facing safe wrappers, and the deterministic review agent. Agents and frontend still cannot write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or enter the order path. Existing Phase 3 evidence remains documented in `docs/progress/phase-3-testnet-canary-evidence.md`, with the paused continuity plan in `docs/progress/phase-3-testnet-continuity-plan.md`. Strict continuity remains `current_qualified_streak_days=0/14`; this does not satisfy the ADR-001/ADR-008 live gate. Keep `freqai_linear_v1 / linear-mom-train20240105` at `hold @ testnet_canary` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. No live trading without a separate live-risk ADR and the ADR-001 capital ladder gate.
+- **Current objective**: Phase 5 entry is open. ADR-012, `apps.ops.dashboard_snapshot`, and `apps/frontend` now define a read-only Next.js operations console consuming `dashboard.snapshot.v1`; the snapshot carries `ops_status`, `operator_checklist`, parsed project-status sections, boundary flags, AgentAdvice rows, optional passive paper/testnet bundle summaries, read-only `signal_summary` from attached bundle `signal_lineage` decision/reason counts plus source/model freshness, passive Prometheus textfile observability summaries, and source-of-truth-neutral `reference_links` to docs, evidence, runbooks, and Grafana dashboards. The frontend renders runtime health plus signal-source / rejection / freshness summaries from passive evidence and supports read-only English / Simplified Chinese UI chrome via `?lang=en` / `?lang=zh-CN`. The earlier Grafana/Prometheus/Loki stack remains the runtime monitoring surface. ADR-009 and `apps.agents` remain the agent-safe Phase 4 substrate: `AgentAdvice v1`, MCP-facing safe wrappers, and the deterministic review agent. Agents and frontend still cannot write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or enter the order path. Existing Phase 3 evidence remains documented in `docs/progress/phase-3-testnet-canary-evidence.md`, with the paused continuity plan in `docs/progress/phase-3-testnet-continuity-plan.md`. Strict continuity remains `current_qualified_streak_days=0/14`; this does not satisfy the ADR-001/ADR-008 live gate. Keep `freqai_linear_v1 / linear-mom-train20240105` at `hold @ testnet_canary` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. No live trading without a separate live-risk ADR and the ADR-001 capital ladder gate.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -123,7 +123,7 @@ Immediate focus:
 
 ## Next Steps
 
-1. Continue Phase 5 with only read-only dashboard improvements fed by `dashboard.snapshot.v1`; next useful additions are source/model freshness summaries once an approved observability output exists. Keep the frontend free of API routes and mutation controls until a separate ADR opens a specific workflow.
+1. Continue Phase 5 with only read-only dashboard improvements fed by `dashboard.snapshot.v1`; next useful additions are source-evidence drill-down links only after a specific read-only navigation workflow is approved. Keep the frontend free of API routes and mutation controls until a separate ADR opens a specific workflow.
 2. Continue project development with targeted verification for the changed surface area; do not spend routine time rebuilding the 0/14 strict continuity streak unless live-readiness evidence is explicitly resumed.
 3. Use `promotion_review.py` (not just `report_paper_bundle.py`) as the required ADR-007 §2.6 audit artifact for any actual `SourcePolicy` change. Do **not** run `promotion_review.py hold @ testnet_canary` as a routine ratification of each canary — the canary retros plus the evidence and continuity progress files are the operational record.
 4. Keep the `testnet_runner.py` startup guard + connection probe as the first line of defense for any subsequent testnet run: explicit `--allow-real-credentials`, clean git, source/model retro evidence, testnet multiplier cap, key-prefix-only audit, Ed25519-only credentials (HMAC fails Binance Spot WS `session.logon`), and Binance Spot TESTNET-only adapter config. The probe injects credentials into the in-memory `TradingNodeConfig` only and never writes the full key/secret to `logs/runtime.log` or `connection_probe.json`.
@@ -143,6 +143,19 @@ Immediate focus:
 - No edits to `freqtrade/` or `nautilus_trader/` unless explicitly requested.
 
 ## Latest Verification
+
+On 2026-06-14, after adding read-only source/model freshness to passive signal summaries:
+
+- `PaperBundleReport` and `TestnetBundleReport` now expose first/last `signal_lineage.ts_event` bounds without changing sidecar schemas.
+- `dashboard.snapshot.v1` `signal_summary` now emits global, per-run, and per-source/model latest signal freshness from attached passive paper/testnet bundle reports; the frontend renders a read-only Latest signal metric and source/model freshness column.
+- `UV_CACHE_DIR=/tmp/uv-cache uv run python -m pytest -s tests/ops/test_dashboard_snapshot.py tests/strategies_nautilus/test_report_paper_bundle.py tests/strategies_nautilus/test_report_testnet_bundle.py -q` -> **39 passed**.
+- `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check apps/ops/dashboard_snapshot.py apps/strategies_nautilus/runners/report_paper_bundle.py apps/strategies_nautilus/runners/report_testnet_bundle.py tests/ops/test_dashboard_snapshot.py tests/strategies_nautilus/test_report_paper_bundle.py tests/strategies_nautilus/test_report_testnet_bundle.py` -> clean.
+- `npm --prefix /home/nishiki/projects/trader/apps/frontend run typecheck` -> clean.
+- `npm --prefix /home/nishiki/projects/trader/apps/frontend run build` -> clean Next.js production build (same workspace-root inference warning as prior runs).
+- `npm --prefix /home/nishiki/projects/trader/apps/frontend audit --audit-level=moderate` -> **0 vulnerabilities**.
+- Snapshot JSON smoke with paper bundle `data/paper/20260521-021418Z-e535b581` and testnet bundle `data/testnet/20260530-141037Z-6e860b4f` -> `signal_summary.freshness.latest_signal_run_id=20260530-141037Z-6e860b4f`, `latest_signal_kind=testnet`, and 3003 signal rows.
+- `TMPDIR=/tmp UV_CACHE_DIR=/tmp/uv-cache uv run python -m pytest -s -q` -> **552 passed, 12 skipped** (Postgres-backed tests skipped because `trader-postgres` was not reachable on `127.0.0.1:5433`). Running full pytest without `TMPDIR=/tmp` hit an environment-specific `/mnt/c` file-mode assertion in two existing tests.
+- `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check apps tests docs infra` -> clean.
 
 On 2026-06-11, after adding read-only signal-source and rejection summaries to the dashboard snapshot and frontend:
 

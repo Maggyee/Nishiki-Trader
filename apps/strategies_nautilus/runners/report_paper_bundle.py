@@ -57,6 +57,8 @@ class PaperBundleReport:
     source: str | None
     model_version: str | None
     signal_rows: int
+    first_signal_ts_event_ns: int | None
+    last_signal_ts_event_ns: int | None
     session_days_inclusive: int
     policies: list[dict[str, Any]]
     matching_policy: dict[str, Any] | None
@@ -143,6 +145,7 @@ def load_paper_bundle_report(bundle_dir: Path) -> PaperBundleReport:
 
     runtime = dict(manifest_payload.get("runtime") or {})
     runtime_data_gaps = _runtime_data_gap_count(runtime)
+    first_signal_ts_event_ns, last_signal_ts_event_ns = _signal_ts_event_bounds(lineage)
     review_blockers = _review_blockers(
         manifest=manifest,
         runtime=runtime,
@@ -177,6 +180,8 @@ def load_paper_bundle_report(bundle_dir: Path) -> PaperBundleReport:
         source=source,
         model_version=model_version,
         signal_rows=manifest.signal_source.row_count,
+        first_signal_ts_event_ns=first_signal_ts_event_ns,
+        last_signal_ts_event_ns=last_signal_ts_event_ns,
         session_days_inclusive=session_days,
         policies=policies,
         matching_policy=matching_policy,
@@ -238,7 +243,9 @@ def render_text_report(report: PaperBundleReport) -> str:
                 f"unauthorized={report.unauthorized_signals} "
                 f"signal_lag={report.signal_lag_signals} "
                 f"kill_switch={report.kill_switch_signals} "
-                f"data_gap_signals={report.data_gap_signals}"
+                f"data_gap_signals={report.data_gap_signals} "
+                f"first_ts_event_ns={report.first_signal_ts_event_ns} "
+                f"last_ts_event_ns={report.last_signal_ts_event_ns}"
             ),
             (
                 "runtime: "
@@ -270,6 +277,15 @@ def _value_counts(df: pd.DataFrame, column: str) -> dict[str, int]:
         return {}
     counts = df[column].fillna("").astype(str).value_counts(sort=False).to_dict()
     return {str(k): int(v) for k, v in counts.items()}
+
+
+def _signal_ts_event_bounds(lineage: pd.DataFrame) -> tuple[int | None, int | None]:
+    if lineage.empty or "ts_event" not in lineage.columns:
+        return None, None
+    ts_events = pd.to_numeric(lineage["ts_event"], errors="coerce").dropna()
+    if ts_events.empty:
+        return None, None
+    return int(ts_events.min()), int(ts_events.max())
 
 
 def _exact_reason_count(reason_counts: dict[str, int], reason: str) -> int:

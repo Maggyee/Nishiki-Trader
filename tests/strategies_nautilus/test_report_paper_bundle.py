@@ -185,6 +185,8 @@ def test_load_paper_bundle_report_summarizes_dry_run_bundle(tmp_path):
     assert report.policy_dry_run is True
     assert report.position_pct_multiplier == 0.2
     assert report.signal_rows == 2
+    assert report.first_signal_ts_event_ns == 1_704_067_200_000_000_000
+    assert report.last_signal_ts_event_ns == 1_704_067_200_000_000_000
     assert report.session_days_inclusive == 7
     assert report.accepted_signals == 2
     assert report.dry_run_signals == 2
@@ -320,6 +322,7 @@ def test_report_cli_outputs_text(tmp_path, capsys):
     out = capsys.readouterr().out
     assert "eligible_for_review: True" in out
     assert "source_model: freqai_linear_v1 / linear-mom-train20240105" in out
+    assert "last_ts_event_ns=1704067200000000000" in out
 
 
 def test_load_paper_bundle_report_rejects_non_paper_kind(tmp_path):

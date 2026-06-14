@@ -390,7 +390,7 @@ select {
 
   .signal-facts {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 10px;
     padding: 14px;
   }
@@ -556,6 +556,10 @@ select {
 
   .signal-table-wrap {
     border-top: 1px solid #e7e5e4;
+  }
+
+  .signal-table-wrap table {
+    min-width: 900px;
   }
 
   .signal-table-wrap td strong,

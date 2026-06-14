@@ -145,6 +145,7 @@ def build_dashboard_snapshot(
     signal_summary = _signal_summary_snapshot(
         paper_bundles=paper_bundles,
         testnet_bundles=testnet_bundles,
+        generated_at_ns=generated_ns,
     )
     ops_status = _ops_status_snapshot(
         project_status=project_status,
@@ -249,6 +250,7 @@ def render_markdown_snapshot(snapshot: dict[str, Any]) -> str:
 
     signal_summary = snapshot.get("signal_summary") or {}
     if signal_summary:
+        freshness = signal_summary.get("freshness") or {}
         lines.extend(
             [
                 "",
@@ -259,9 +261,11 @@ def render_markdown_snapshot(snapshot: dict[str, Any]) -> str:
                 f"- accepted_signals: {signal_summary.get('accepted_signals', 0)}",
                 f"- skipped_signals: {signal_summary.get('skipped_signals', 0)}",
                 f"- rejection_signals: {signal_summary.get('rejection_signals', 0)}",
+                "- latest_signal_age_seconds: "
+                f"{_format_optional_float(freshness.get('latest_signal_age_seconds'))}",
                 "",
-                "| kind | run_id | source/model | signals | accepted | skipped | rejections | top rejection reasons |",
-                "|---|---|---|---:|---:|---:|---:|---|",
+                "| kind | run_id | source/model | signals | accepted | skipped | rejections | latest age s | top rejection reasons |",
+                "|---|---|---|---:|---:|---:|---:|---:|---|",
             ]
         )
         for run in signal_summary.get("runs", []):
@@ -278,6 +282,7 @@ def render_markdown_snapshot(snapshot: dict[str, Any]) -> str:
                 f"{_format_optional_int(run.get('accepted_signals'))} | "
                 f"{_format_optional_int(run.get('skipped_signals'))} | "
                 f"{_format_optional_int(run.get('rejection_signals'))} | "
+                f"{_format_optional_float(run.get('latest_signal_age_seconds'))} | "
                 f"{_join_reason_counts(run.get('top_rejection_reasons') or [])} |"
             )
 
@@ -503,6 +508,8 @@ def _compact_paper_report(report: Any) -> dict[str, Any]:
         "source": report.source,
         "model_version": report.model_version,
         "signal_rows": report.signal_rows,
+        "first_signal_ts_event_ns": getattr(report, "first_signal_ts_event_ns", None),
+        "last_signal_ts_event_ns": getattr(report, "last_signal_ts_event_ns", None),
         "accepted_signals": report.accepted_signals,
         "skipped_signals": report.skipped_signals,
         "dry_run_signals": report.dry_run_signals,
@@ -540,6 +547,8 @@ def _compact_testnet_report(report: Any) -> dict[str, Any]:
         "fills": report.fill_count,
         "positions": report.position_count,
         "lineage_rows": report.lineage_rows,
+        "first_signal_ts_event_ns": getattr(report, "first_signal_ts_event_ns", None),
+        "last_signal_ts_event_ns": getattr(report, "last_signal_ts_event_ns", None),
         "accepted_signals": _accepted_signal_count(
             signal_rows=report.lineage_rows,
             decision_counts=report.decision_counts,
@@ -563,9 +572,10 @@ def _signal_summary_snapshot(
     *,
     paper_bundles: Sequence[dict[str, Any]],
     testnet_bundles: Sequence[dict[str, Any]],
+    generated_at_ns: int,
 ) -> dict[str, Any]:
     runs = [
-        _signal_run_summary(bundle)
+        _signal_run_summary(bundle, generated_at_ns=generated_at_ns)
         for bundle in (*paper_bundles, *testnet_bundles)
     ]
     source_model: dict[tuple[str, str], dict[str, Any]] = {}
@@ -588,16 +598,35 @@ def _signal_summary_snapshot(
                 "skipped_signals": 0,
                 "rejection_signals": 0,
                 "kinds": {},
+                "first_signal_ts_event_ns": None,
+                "last_signal_ts_event_ns": None,
+                "latest_signal_age_seconds": None,
+                "latest_signal_run_id": None,
+                "latest_signal_kind": None,
                 "top_rejection_reasons": [],
             },
         )
         kind = str(run.get("kind") or "unknown")
+        first_ts = _optional_int(run.get("first_signal_ts_event_ns"))
+        last_ts = _optional_int(run.get("last_signal_ts_event_ns"))
         source_row["bundle_count"] += 1
         source_row["signal_rows"] += int(run.get("signal_rows") or 0)
         source_row["accepted_signals"] += int(run.get("accepted_signals") or 0)
         source_row["skipped_signals"] += int(run.get("skipped_signals") or 0)
         source_row["rejection_signals"] += int(run.get("rejection_signals") or 0)
         source_row["kinds"][kind] = int(source_row["kinds"].get(kind, 0)) + 1
+        source_row["first_signal_ts_event_ns"] = _min_optional_int(
+            _optional_int(source_row.get("first_signal_ts_event_ns")),
+            first_ts,
+        )
+        current_last = _optional_int(source_row.get("last_signal_ts_event_ns"))
+        source_row["last_signal_ts_event_ns"] = _max_optional_int(
+            current_last,
+            last_ts,
+        )
+        if last_ts is not None and (current_last is None or last_ts > current_last):
+            source_row["latest_signal_run_id"] = run.get("run_id")
+            source_row["latest_signal_kind"] = run.get("kind")
 
         kind_row = by_kind.setdefault(
             kind,
@@ -628,6 +657,10 @@ def _signal_summary_snapshot(
             for reason, count in (run.get("rejection_reason_counts") or {}).items():
                 source_reasons[str(reason)] = source_reasons.get(str(reason), 0) + int(count)
         row["top_rejection_reasons"] = _top_reason_counts(source_reasons)
+        row["latest_signal_age_seconds"] = _signal_age_seconds(
+            generated_at_ns,
+            _optional_int(row.get("last_signal_ts_event_ns")),
+        )
 
     return {
         "bundle_count": len(runs),
@@ -635,6 +668,7 @@ def _signal_summary_snapshot(
         "accepted_signals": sum(int(run.get("accepted_signals") or 0) for run in runs),
         "skipped_signals": sum(int(run.get("skipped_signals") or 0) for run in runs),
         "rejection_signals": sum(int(run.get("rejection_signals") or 0) for run in runs),
+        "freshness": _latest_signal_freshness(runs),
         "rejection_reason_counts": dict(sorted(reason_counts.items())),
         "by_kind": dict(sorted(by_kind.items())),
         "by_source_model": sorted(
@@ -649,7 +683,11 @@ def _signal_summary_snapshot(
     }
 
 
-def _signal_run_summary(bundle: dict[str, Any]) -> dict[str, Any]:
+def _signal_run_summary(
+    bundle: dict[str, Any],
+    *,
+    generated_at_ns: int,
+) -> dict[str, Any]:
     decision_counts = {
         str(key): int(value)
         for key, value in (bundle.get("decision_counts") or {}).items()
@@ -673,11 +711,19 @@ def _signal_run_summary(bundle: dict[str, Any]) -> dict[str, Any]:
         else decision_counts.get("skip", 0)
     )
     rejection_reason_counts = _rejection_reason_counts(reason_counts)
+    first_signal_ts_event_ns = _optional_int(bundle.get("first_signal_ts_event_ns"))
+    last_signal_ts_event_ns = _optional_int(bundle.get("last_signal_ts_event_ns"))
     return {
         "kind": bundle.get("kind"),
         "run_id": bundle.get("run_id"),
         "source": bundle.get("source"),
         "model_version": bundle.get("model_version"),
+        "first_signal_ts_event_ns": first_signal_ts_event_ns,
+        "last_signal_ts_event_ns": last_signal_ts_event_ns,
+        "latest_signal_age_seconds": _signal_age_seconds(
+            generated_at_ns,
+            last_signal_ts_event_ns,
+        ),
         "signal_rows": signal_rows,
         "accepted_signals": accepted,
         "skipped_signals": skipped,
@@ -686,6 +732,59 @@ def _signal_run_summary(bundle: dict[str, Any]) -> dict[str, Any]:
         "rejection_reason_counts": rejection_reason_counts,
         "top_rejection_reasons": _top_reason_counts(rejection_reason_counts),
     }
+
+
+def _latest_signal_freshness(runs: Sequence[dict[str, Any]]) -> dict[str, Any] | None:
+    latest: dict[str, Any] | None = None
+    latest_ts: int | None = None
+    for run in runs:
+        run_ts = _optional_int(run.get("last_signal_ts_event_ns"))
+        if run_ts is None:
+            continue
+        if latest_ts is None or run_ts > latest_ts:
+            latest = run
+            latest_ts = run_ts
+    if latest is None or latest_ts is None:
+        return None
+    return {
+        "latest_signal_ts_event_ns": latest_ts,
+        "latest_signal_age_seconds": latest.get("latest_signal_age_seconds"),
+        "latest_signal_run_id": latest.get("run_id"),
+        "latest_signal_kind": latest.get("kind"),
+        "latest_signal_source": latest.get("source"),
+        "latest_signal_model_version": latest.get("model_version"),
+    }
+
+
+def _signal_age_seconds(generated_at_ns: int, ts_event_ns: int | None) -> float | None:
+    if ts_event_ns is None:
+        return None
+    return _age_seconds(generated_at_ns / 1_000_000_000, ts_event_ns / 1_000_000_000)
+
+
+def _optional_int(value: Any) -> int | None:
+    if value is None or isinstance(value, bool):
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError, OverflowError):
+        return None
+
+
+def _min_optional_int(left: int | None, right: int | None) -> int | None:
+    if left is None:
+        return right
+    if right is None:
+        return left
+    return min(left, right)
+
+
+def _max_optional_int(left: int | None, right: int | None) -> int | None:
+    if left is None:
+        return right
+    if right is None:
+        return left
+    return max(left, right)
 
 
 def _accepted_signal_count(

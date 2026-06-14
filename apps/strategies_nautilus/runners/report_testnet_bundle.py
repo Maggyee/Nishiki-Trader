@@ -97,6 +97,8 @@ class TestnetBundleReport:
     position_count: int
     account_balance_rows: int
     lineage_rows: int
+    first_signal_ts_event_ns: int | None
+    last_signal_ts_event_ns: int | None
     decision_counts: dict[str, int]
     reason_counts: dict[str, int]
     lineage_rows_with_order_ids: int
@@ -228,6 +230,7 @@ def load_testnet_bundle_report(bundle_dir: Path) -> TestnetBundleReport:
     positions = sidecars["positions"]
     account_balances = sidecars["account_balances"]
     lineage = sidecars["signal_lineage"]
+    first_signal_ts_event_ns, last_signal_ts_event_ns = _signal_ts_event_bounds(lineage)
 
     source = _str_or_none(manifest_payload.get("source")) or _single_value(
         lineage,
@@ -300,6 +303,8 @@ def load_testnet_bundle_report(bundle_dir: Path) -> TestnetBundleReport:
         position_count=sidecar_rows["positions"],
         account_balance_rows=sidecar_rows["account_balances"],
         lineage_rows=sidecar_rows["signal_lineage"],
+        first_signal_ts_event_ns=first_signal_ts_event_ns,
+        last_signal_ts_event_ns=last_signal_ts_event_ns,
         decision_counts=_value_counts(lineage, "decision"),
         reason_counts=_value_counts(lineage, "reason"),
         lineage_rows_with_order_ids=_nonempty_count(lineage, "order_ids"),
@@ -497,6 +502,8 @@ def render_text_report(report: TestnetBundleReport) -> str:
                 f"positions={report.position_count} "
                 f"account_balances={report.account_balance_rows} "
                 f"lineage={report.lineage_rows} "
+                f"first_signal_ts_event_ns={report.first_signal_ts_event_ns} "
+                f"last_signal_ts_event_ns={report.last_signal_ts_event_ns} "
                 f"mismatches={report.sidecar_mismatches or 'none'}"
             ),
             (
@@ -1116,6 +1123,15 @@ def _value_counts(df: pd.DataFrame, column: str) -> dict[str, int]:
         return {}
     counts = df[column].fillna("").astype(str).value_counts(sort=False).to_dict()
     return {str(key): int(value) for key, value in counts.items()}
+
+
+def _signal_ts_event_bounds(lineage: pd.DataFrame) -> tuple[int | None, int | None]:
+    if lineage.empty or "ts_event" not in lineage.columns:
+        return None, None
+    ts_events = pd.to_numeric(lineage["ts_event"], errors="coerce").dropna()
+    if ts_events.empty:
+        return None, None
+    return int(ts_events.min()), int(ts_events.max())
 
 
 def _single_value(df: pd.DataFrame, column: str) -> str | None:

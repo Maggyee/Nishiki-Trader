@@ -55,7 +55,8 @@ snapshot 路径。默认路径是仓库根目录下的
 - Guardrail metrics：AgentAdvice 记录数、paper/testnet bundle 输入、阻塞项、order-path 边界
 - Runtime health：从 `observability` 读取 Prometheus textfile 摘要，显示心跳、WS、open state、alert 与数据延迟
 - Signals & Rejections：从已附加的 passive paper/testnet bundle report 读取
-  signal lineage 摘要，按 source/model 显示 accepted、skipped 与 rejection 原因
+  signal lineage 摘要，按 source/model 显示 accepted、skipped、rejection 原因与
+  最新信号 freshness
 - Evidence matrix：paper / testnet bundle 数量、审阅阻塞、promotion 阻塞
 - AgentAdvice queue：最近 advice 记录、类型、状态、置信度
 - Operator checklist：刷新 snapshot、边界检查、AgentAdvice 审阅、连续性阻塞、SourcePolicy 流程
@@ -65,7 +66,8 @@ snapshot 路径。默认路径是仓库根目录下的
 
 ## 后续可加
 
-- Read-only source/model freshness summaries once approved observability output exists
+- Read-only source/model drill-down links to source evidence once a specific
+  navigation workflow is approved
 
 ## 锁定边界
 

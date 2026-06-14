@@ -121,6 +121,9 @@ const COPY = {
       accepted: "Accepted",
       skipped: "Skipped",
       rejections: "Rejections",
+      latestSignal: "Latest signal",
+      freshness: "Freshness",
+      latestRun: "Latest run",
       sourceModel: "Source / model",
       bundles: "Bundles",
       topReasons: "Top reasons",
@@ -358,6 +361,9 @@ const COPY = {
       accepted: "接受",
       skipped: "跳过",
       rejections: "拒绝",
+      latestSignal: "最新信号",
+      freshness: "新鲜度",
+      latestRun: "最新运行",
       sourceModel: "来源 / 模型",
       bundles: "Bundle",
       topReasons: "主要原因",
@@ -878,6 +884,7 @@ function SignalSummaryPanel({
 }) {
   const sourceRows = signalSummary.by_source_model ?? [];
   const runs = signalSummary.runs ?? [];
+  const freshness = signalSummary.freshness ?? null;
   return (
     <section className="panel">
       <div className="section-head">
@@ -911,6 +918,12 @@ function SignalSummaryPanel({
           detail={formatReasonCounts(topReasonCounts(signalSummary.rejection_reason_counts), copy)}
           tone={(signalSummary.rejection_signals ?? 0) > 0 ? "red" : "green"}
         />
+        <RuntimeFact
+          label={copy.signal.latestSignal}
+          value={formatDuration(freshness?.latest_signal_age_seconds, copy)}
+          detail={formatFreshnessDetail(freshness, copy)}
+          tone={freshnessTone(freshness?.latest_signal_age_seconds)}
+        />
       </div>
       <div className="table-wrap signal-table-wrap">
         <table>
@@ -921,6 +934,7 @@ function SignalSummaryPanel({
               <th>{copy.signal.signals}</th>
               <th>{copy.signal.accepted}</th>
               <th>{copy.signal.skipped}</th>
+              <th>{copy.signal.freshness}</th>
               <th>{copy.signal.topReasons}</th>
             </tr>
           </thead>
@@ -937,12 +951,17 @@ function SignalSummaryPanel({
                   <td>{formatCount(row.signal_rows, language)}</td>
                   <td>{formatCount(row.accepted_signals, language)}</td>
                   <td>{formatCount(row.skipped_signals, language)}</td>
+                  <td>
+                    <strong>{formatDuration(row.latest_signal_age_seconds, copy)}</strong>
+                    <br />
+                    <small>{row.latest_signal_run_id ?? copy.signal.latestRun}</small>
+                  </td>
                   <td>{formatReasonCounts(row.top_rejection_reasons, copy)}</td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={6}>{copy.signal.noRows}</td>
+                <td colSpan={7}>{copy.signal.noRows}</td>
               </tr>
             )}
           </tbody>
@@ -1457,6 +1476,29 @@ function formatSignalRate(value: number | undefined, total: number | undefined, 
     return copy.common.nA;
   }
   return `${Math.round(((value ?? 0) / total) * 100)}%`;
+}
+
+function formatFreshnessDetail(
+  freshness: SignalSummary["freshness"] | undefined | null,
+  copy: Copy,
+): string {
+  if (!freshness) {
+    return copy.common.nA;
+  }
+  const source = freshness.latest_signal_source ?? copy.signal.unknownSource;
+  const model = freshness.latest_signal_model_version ?? copy.signal.unknownModel;
+  const run = freshness.latest_signal_run_id ?? copy.evidence.unknownRun;
+  return `${source} / ${model} / ${run}`;
+}
+
+function freshnessTone(value: number | null | undefined): "green" | "blue" | "amber" | "red" {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return "blue";
+  }
+  if (value <= 3600) {
+    return "green";
+  }
+  return value <= 86_400 ? "amber" : "red";
 }
 
 function topReasonCounts(counts: Record<string, number> | undefined): SignalReasonCount[] {
