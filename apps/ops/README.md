@@ -91,7 +91,10 @@ report reader、Prometheus textfile `.prom`、以及静态链接配置；不写
 skipped 计数、以及 expired / unauthorized / signal_lag / kill_switch /
 data_gap 等 rejection 原因。该摘要来自已落盘证据，不重新消费 SignalStore。
 `signal_summary` 同时携带每个 run 与 source/model 的首尾 `ts_event`、最新
-信号年龄和最新 run id，用于前端只读展示 source/model freshness。
+信号年龄、最新 run id、以及 source/model 证据链接，用于前端只读展示
+source/model freshness 与证据 drill-down。证据链接只指向 Grafana read-only
+source 过滤视图、已附加的本地 bundle 路径和既有证据文档；不会触发 runner、
+写 `SignalEvent` 或修改 `SourcePolicy`。
 
 ## 计划脚本
 

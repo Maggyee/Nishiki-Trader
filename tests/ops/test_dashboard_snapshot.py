@@ -521,5 +521,52 @@ def test_snapshot_wraps_passive_bundle_reports(
                 {"reason": "signal_lag", "count": 1},
                 {"reason": "unauthorized", "count": 1},
             ],
+            "evidence_links": [
+                {
+                    "group": "grafana",
+                    "label": "Signals overview",
+                    "kind": "dashboard",
+                    "path": "infra/grafana/dashboards/signals-overview.json",
+                    "detail": (
+                        "Read-only Grafana source drill-down for this "
+                        "source/model row."
+                    ),
+                    "href": (
+                        "http://127.0.0.1:3000/d/signals-overview/"
+                        "signals-overview?var-source=freqai_linear_v1"
+                        "&from=1778755800000&to=1778763540000"
+                    ),
+                },
+                {
+                    "group": "evidence",
+                    "label": "testnet bundle testnet-1",
+                    "kind": "bundle",
+                    "path": str(testnet_dir),
+                    "detail": (
+                        "Attached passive bundle source for this "
+                        "source/model row."
+                    ),
+                    "href": None,
+                },
+                {
+                    "group": "evidence",
+                    "label": "paper bundle paper-1",
+                    "kind": "bundle",
+                    "path": str(paper_dir),
+                    "detail": (
+                        "Attached passive bundle source for this "
+                        "source/model row."
+                    ),
+                    "href": None,
+                },
+                {
+                    "group": "evidence",
+                    "label": "Testnet canary evidence",
+                    "kind": "progress",
+                    "path": "docs/progress/phase-3-testnet-canary-evidence.md",
+                    "detail": "Clean and non-clean Phase 3 canary evidence ledger.",
+                    "href": None,
+                },
+            ],
         }
     ]

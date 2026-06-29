@@ -127,6 +127,7 @@ const COPY = {
       sourceModel: "Source / model",
       bundles: "Bundles",
       topReasons: "Top reasons",
+      evidence: "Evidence",
       runLedger: "Run ledger",
       noRows: "No signal-source summaries attached.",
       noRuns: "No run-level signal summaries.",
@@ -367,6 +368,7 @@ const COPY = {
       sourceModel: "来源 / 模型",
       bundles: "Bundle",
       topReasons: "主要原因",
+      evidence: "证据",
       runLedger: "运行账本",
       noRows: "当前快照没有信号来源摘要。",
       noRuns: "当前快照没有运行级信号摘要。",
@@ -936,6 +938,7 @@ function SignalSummaryPanel({
               <th>{copy.signal.skipped}</th>
               <th>{copy.signal.freshness}</th>
               <th>{copy.signal.topReasons}</th>
+              <th>{copy.signal.evidence}</th>
             </tr>
           </thead>
           <tbody>
@@ -957,11 +960,14 @@ function SignalSummaryPanel({
                     <small>{row.latest_signal_run_id ?? copy.signal.latestRun}</small>
                   </td>
                   <td>{formatReasonCounts(row.top_rejection_reasons, copy)}</td>
+                  <td>
+                    <SignalEvidenceLinks links={row.evidence_links} copy={copy} />
+                  </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={7}>{copy.signal.noRows}</td>
+                <td colSpan={8}>{copy.signal.noRows}</td>
               </tr>
             )}
           </tbody>
@@ -986,6 +992,40 @@ function SignalSummaryPanel({
         )}
       </div>
     </section>
+  );
+}
+
+function SignalEvidenceLinks({
+  links,
+  copy,
+}: {
+  links: ReferenceLink[] | undefined;
+  copy: Copy;
+}) {
+  const visibleLinks = (links ?? []).slice(0, 4);
+  if (!visibleLinks.length) {
+    return <span className="signal-evidence-empty">{copy.common.nA}</span>;
+  }
+  return (
+    <div className="signal-evidence-links">
+      {visibleLinks.map((link) => {
+        const href = typeof link.href === "string" && isWebHref(link.href) ? link.href : null;
+        const label = link.label ?? link.path ?? copy.common.unknown;
+        const title = link.detail ?? link.path ?? link.href ?? label;
+        if (href) {
+          return (
+            <a key={`${label}-${href}`} href={href} rel="noreferrer" target="_blank" title={title}>
+              {label}
+            </a>
+          );
+        }
+        return (
+          <span key={`${label}-${link.path ?? "local"}`} title={title}>
+            {label}
+          </span>
+        );
+      })}
+    </div>
   );
 }
 

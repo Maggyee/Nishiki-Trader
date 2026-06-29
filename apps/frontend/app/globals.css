@@ -559,7 +559,7 @@ select {
   }
 
   .signal-table-wrap table {
-    min-width: 900px;
+    min-width: 1040px;
   }
 
   .signal-table-wrap td strong,
@@ -577,6 +577,41 @@ select {
   .signal-table-wrap td small {
     color: var(--muted);
     font-size: 12px;
+  }
+
+  .signal-evidence-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    min-width: 0;
+  }
+
+  .signal-evidence-links a,
+  .signal-evidence-links span,
+  .signal-evidence-empty {
+    display: inline-flex;
+    max-width: 100%;
+    border: 1px solid #d4d4d8;
+    border-radius: 999px;
+    padding: 3px 7px;
+    color: #3f3f46;
+    background: #fafafa;
+    font-size: 11px;
+    font-weight: 720;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+    text-decoration: none;
+  }
+
+  .signal-evidence-links a {
+    border-color: #bfdbfe;
+    color: var(--blue);
+    background: #eff6ff;
+  }
+
+  .signal-evidence-links a:hover {
+    border-color: #93c5fd;
+    background: #dbeafe;
   }
 
   .signal-run-list {

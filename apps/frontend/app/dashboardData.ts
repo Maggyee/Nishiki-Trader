@@ -70,6 +70,7 @@ export type SignalSourceSummary = {
   latest_signal_run_id?: string | null;
   latest_signal_kind?: string | null;
   top_rejection_reasons?: SignalReasonCount[];
+  evidence_links?: ReferenceLink[];
 };
 
 export type SignalFreshness = {

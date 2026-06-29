@@ -10,6 +10,7 @@ import time
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 from apps.agents.store import DEFAULT_ADVICE_DB_PATH
 from apps.strategies_nautilus.runners.report_paper_bundle import (
@@ -146,6 +147,8 @@ def build_dashboard_snapshot(
         paper_bundles=paper_bundles,
         testnet_bundles=testnet_bundles,
         generated_at_ns=generated_ns,
+        grafana_base_url=grafana_base_url,
+        repo_browser_base_url=repo_browser_base_url,
     )
     ops_status = _ops_status_snapshot(
         project_status=project_status,
@@ -573,6 +576,8 @@ def _signal_summary_snapshot(
     paper_bundles: Sequence[dict[str, Any]],
     testnet_bundles: Sequence[dict[str, Any]],
     generated_at_ns: int,
+    grafana_base_url: str | None,
+    repo_browser_base_url: str | None,
 ) -> dict[str, Any]:
     runs = [
         _signal_run_summary(bundle, generated_at_ns=generated_at_ns)
@@ -604,6 +609,7 @@ def _signal_summary_snapshot(
                 "latest_signal_run_id": None,
                 "latest_signal_kind": None,
                 "top_rejection_reasons": [],
+                "evidence_links": [],
             },
         )
         kind = str(run.get("kind") or "unknown")
@@ -649,17 +655,25 @@ def _signal_summary_snapshot(
 
     for row in source_model.values():
         source_reasons: dict[str, int] = {}
+        matching_runs = []
         for run in runs:
             if run.get("source") != row["source"]:
                 continue
             if run.get("model_version") != row["model_version"]:
                 continue
+            matching_runs.append(run)
             for reason, count in (run.get("rejection_reason_counts") or {}).items():
                 source_reasons[str(reason)] = source_reasons.get(str(reason), 0) + int(count)
         row["top_rejection_reasons"] = _top_reason_counts(source_reasons)
         row["latest_signal_age_seconds"] = _signal_age_seconds(
             generated_at_ns,
             _optional_int(row.get("last_signal_ts_event_ns")),
+        )
+        row["evidence_links"] = _signal_source_evidence_links(
+            row,
+            matching_runs,
+            grafana_base_url=grafana_base_url,
+            repo_browser_base_url=repo_browser_base_url,
         )
 
     return {
@@ -716,6 +730,7 @@ def _signal_run_summary(
     return {
         "kind": bundle.get("kind"),
         "run_id": bundle.get("run_id"),
+        "bundle_dir": bundle.get("bundle_dir"),
         "source": bundle.get("source"),
         "model_version": bundle.get("model_version"),
         "first_signal_ts_event_ns": first_signal_ts_event_ns,
@@ -732,6 +747,83 @@ def _signal_run_summary(
         "rejection_reason_counts": rejection_reason_counts,
         "top_rejection_reasons": _top_reason_counts(rejection_reason_counts),
     }
+
+
+def _signal_source_evidence_links(
+    row: dict[str, Any],
+    runs: Sequence[dict[str, Any]],
+    *,
+    grafana_base_url: str | None,
+    repo_browser_base_url: str | None,
+) -> list[dict[str, str | None]]:
+    links: list[dict[str, str | None]] = []
+    source = str(row.get("source") or "")
+    grafana_base = _optional_base_url(grafana_base_url)
+    if grafana_base and source:
+        params = [f"var-source={quote(source, safe='')}"]
+        first_ts = _optional_int(row.get("first_signal_ts_event_ns"))
+        last_ts = _optional_int(row.get("last_signal_ts_event_ns"))
+        if first_ts is not None and last_ts is not None:
+            params.extend(
+                [
+                    f"from={max(0, first_ts - 3_600_000_000_000) // 1_000_000}",
+                    f"to={(last_ts + 3_600_000_000_000) // 1_000_000}",
+                ]
+            )
+        links.append(
+            {
+                "group": "grafana",
+                "label": "Signals overview",
+                "kind": "dashboard",
+                "path": "infra/grafana/dashboards/signals-overview.json",
+                "detail": "Read-only Grafana source drill-down for this source/model row.",
+                "href": f"{grafana_base}/d/signals-overview/signals-overview?{'&'.join(params)}",
+            }
+        )
+
+    seen_bundle_dirs: set[str] = set()
+    sorted_runs = sorted(
+        runs,
+        key=lambda run: _optional_int(run.get("last_signal_ts_event_ns")) or -1,
+        reverse=True,
+    )
+    for run in sorted_runs:
+        bundle_dir = run.get("bundle_dir")
+        if not bundle_dir:
+            continue
+        bundle_path = str(bundle_dir)
+        if bundle_path in seen_bundle_dirs:
+            continue
+        seen_bundle_dirs.add(bundle_path)
+        kind = str(run.get("kind") or "bundle")
+        run_id = str(run.get("run_id") or "unknown")
+        links.append(
+            {
+                "group": "evidence",
+                "label": f"{kind} bundle {run_id}",
+                "kind": "bundle",
+                "path": bundle_path,
+                "detail": "Attached passive bundle source for this source/model row.",
+                "href": None,
+            }
+        )
+        if len(seen_bundle_dirs) >= 2:
+            break
+
+    if any(run.get("kind") == "testnet" for run in runs):
+        repo_base = _optional_base_url(repo_browser_base_url)
+        path = "docs/progress/phase-3-testnet-canary-evidence.md"
+        links.append(
+            {
+                "group": "evidence",
+                "label": "Testnet canary evidence",
+                "kind": "progress",
+                "path": path,
+                "detail": "Clean and non-clean Phase 3 canary evidence ledger.",
+                "href": f"{repo_base}/{path}" if repo_base else None,
+            }
+        )
+    return links
 
 
 def _latest_signal_freshness(runs: Sequence[dict[str, Any]]) -> dict[str, Any] | None:
