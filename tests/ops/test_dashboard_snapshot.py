@@ -104,6 +104,13 @@ def test_snapshot_reads_project_status_and_agent_advice(tmp_path: Path) -> None:
 
     assert snapshot["schema_version"] == "dashboard.snapshot.v1"
     assert snapshot["generated_at_ns"] == REFERENCE_TS_NS + 3
+    assert snapshot["snapshot_freshness"] == {
+        "generated_at_ns": REFERENCE_TS_NS + 3,
+        "state_at_generation": "fresh",
+        "warning_after_seconds": 900.0,
+        "stale_after_seconds": 3600.0,
+        "evaluated_by": "dashboard_reader",
+    }
     assert snapshot["boundaries"] == {
         "live_path_allowed": False,
         "signal_event_write_allowed": False,
@@ -178,6 +185,7 @@ def test_markdown_snapshot_renders_boundary_and_advice(tmp_path: Path) -> None:
 
     assert "# Dashboard Snapshot" in out
     assert "ops_state: `guarded`" in out
+    assert "snapshot_stale_after_seconds: `3600.0`" in out
     assert "Expand the dashboard with read-only operations panels." in out
     assert "signal_event_write_allowed=false" in out
     assert "## Reference Links" in out

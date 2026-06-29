@@ -50,6 +50,7 @@ const COPY = {
       liveGate: "Live gate",
       strictContinuity: "Strict continuity",
       generated: "Generated",
+      snapshotAge: "Snapshot age",
     },
     metrics: {
       agentAdvice: "AgentAdvice",
@@ -243,6 +244,9 @@ const COPY = {
     generated: {
       notGenerated: "not generated",
       unknown: "unknown",
+      fresh: "fresh",
+      aging: "aging",
+      stale: "stale",
     },
     fallback: {
       summary: "No operations summary is present in the snapshot.",
@@ -310,6 +314,7 @@ const COPY = {
       liveGate: "实盘闸门",
       strictContinuity: "严格连续性",
       generated: "生成时间",
+      snapshotAge: "快照年龄",
     },
     metrics: {
       agentAdvice: "AgentAdvice",
@@ -503,6 +508,9 @@ const COPY = {
     generated: {
       notGenerated: "未生成",
       unknown: "未知",
+      fresh: "新鲜",
+      aging: "偏旧",
+      stale: "过期",
     },
     fallback: {
       summary: "当前快照没有运维摘要。",
@@ -704,6 +712,7 @@ function CommandBand({ snapshot, copy }: { snapshot: DashboardSnapshot; copy: Co
         <MiniFact label={copy.command.liveGate} value={localizeStatus(ops.live_gate, copy)} />
         <MiniFact label={copy.command.strictContinuity} value={ops.strict_continuity ?? copy.common.unknown} />
         <MiniFact label={copy.command.generated} value={formatGenerated(snapshot.generated_at_ns, copy)} />
+        <MiniFact label={copy.command.snapshotAge} value={formatSnapshotAge(snapshot, copy)} />
       </div>
     </section>
   );
@@ -1754,6 +1763,31 @@ function formatGenerated(value: DashboardSnapshot["generated_at_ns"], copy: Copy
   }
   const date = new Date(Math.floor(raw / 1_000_000));
   return date.toISOString().replace("T", " ").slice(0, 19);
+}
+
+function formatSnapshotAge(snapshot: DashboardSnapshot, copy: Copy): string {
+  const rawGenerated = snapshot.generated_at_ns;
+  if (rawGenerated === null || rawGenerated === undefined) {
+    return copy.generated.notGenerated;
+  }
+  const generatedNs = typeof rawGenerated === "number" ? rawGenerated : Number(rawGenerated);
+  if (!Number.isFinite(generatedNs)) {
+    return copy.generated.unknown;
+  }
+  const ageSeconds = Math.max(0, (Date.now() - Math.floor(generatedNs / 1_000_000)) / 1000);
+  const warningAfter = positiveNumber(snapshot.snapshot_freshness?.warning_after_seconds, 900);
+  const staleAfter = positiveNumber(snapshot.snapshot_freshness?.stale_after_seconds, 3600);
+  const state =
+    ageSeconds >= staleAfter
+      ? copy.generated.stale
+      : ageSeconds >= warningAfter
+        ? copy.generated.aging
+        : copy.generated.fresh;
+  return `${state} / ${formatDuration(ageSeconds, copy)}`;
+}
+
+function positiveNumber(value: number | undefined, fallback: number): number {
+  return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : fallback;
 }
 
 function sum(values: Array<number | undefined>): number {

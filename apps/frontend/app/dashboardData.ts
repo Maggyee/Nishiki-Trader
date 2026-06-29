@@ -168,9 +168,18 @@ export type Phase6Snapshot = {
   boundaries?: Record<string, boolean>;
 };
 
+export type SnapshotFreshness = {
+  generated_at_ns?: number | string | null;
+  state_at_generation?: string;
+  warning_after_seconds?: number;
+  stale_after_seconds?: number;
+  evaluated_by?: string;
+};
+
 export type DashboardSnapshot = {
   schema_version?: string;
   generated_at_ns?: number | string | null;
+  snapshot_freshness?: SnapshotFreshness;
   boundaries?: Record<string, boolean>;
   project_status?: {
     last_updated?: string | null;
@@ -244,6 +253,13 @@ function fallbackSnapshot(snapshotPath: string, error: unknown): DashboardSnapsh
   return {
     schema_version: "dashboard.snapshot.v1",
     generated_at_ns: null,
+    snapshot_freshness: {
+      generated_at_ns: null,
+      state_at_generation: "unknown",
+      warning_after_seconds: 900,
+      stale_after_seconds: 3600,
+      evaluated_by: "dashboard_reader",
+    },
     boundaries: {
       live_path_allowed: false,
       signal_event_write_allowed: false,

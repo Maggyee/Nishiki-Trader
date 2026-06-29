@@ -54,6 +54,9 @@ uv run python -m apps.ops.dashboard_snapshot \
 - 对应源文件：`infra/grafana/dashboards/*.json`
 - 当前状态、ADR、证据 ledger、runbook 的本地源路径
 
+snapshot 也会携带 `snapshot_freshness` 策略：默认 15 分钟进入 aging、60 分钟
+进入 stale。前端只用它显示快照年龄，不会自动刷新或触发任何 runner。
+
 可用空字符串关闭 Grafana URL，只保留本地源路径；也可以传入仓库浏览基准
 URL，让文档路径变成浏览器可打开的只读链接：
 
@@ -93,8 +96,8 @@ data_gap 等 rejection 原因。该摘要来自已落盘证据，不重新消费
 `signal_summary` 同时携带每个 run 与 source/model 的首尾 `ts_event`、最新
 信号年龄、最新 run id、以及 source/model 证据链接，用于前端只读展示
 source/model freshness 与证据 drill-down。证据链接只指向 Grafana read-only
-source 过滤视图、已附加的本地 bundle 路径和既有证据文档；不会触发 runner、
-写 `SignalEvent` 或修改 `SourcePolicy`。
+source/model 过滤视图、已附加的本地 bundle 路径和既有证据文档；不会触发
+runner、写 `SignalEvent` 或修改 `SourcePolicy`。
 
 也可以附加已保存的 Phase 6 passive gate JSON artifact，让 dashboard 只读展示
 readiness/startup guard 阻塞状态：

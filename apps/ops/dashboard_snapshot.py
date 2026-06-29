@@ -24,6 +24,8 @@ DEFAULT_PROJECT_STATUS_PATH = Path("docs/project-status.md")
 DEFAULT_GRAFANA_BASE_URL = "http://127.0.0.1:3000"
 DEFAULT_OBSERVABILITY_TEXTFILE_DIR = Path("data/observability/textfile")
 DEFAULT_OBSERVABILITY_STALE_AFTER_SECONDS = 120.0
+DEFAULT_SNAPSHOT_WARNING_AFTER_SECONDS = 15 * 60.0
+DEFAULT_SNAPSHOT_STALE_AFTER_SECONDS = 60 * 60.0
 SNAPSHOT_SCHEMA_VERSION = "dashboard.snapshot.v1"
 
 _STATUS_FIELD_RE = re.compile(
@@ -180,6 +182,7 @@ def build_dashboard_snapshot(
     return {
         "schema_version": SNAPSHOT_SCHEMA_VERSION,
         "generated_at_ns": generated_ns,
+        "snapshot_freshness": _snapshot_freshness_policy(generated_ns),
         "boundaries": boundaries,
         "project_status": project_status,
         "agent_advice": agent_advice,
@@ -215,6 +218,8 @@ def render_markdown_snapshot(snapshot: dict[str, Any]) -> str:
         "",
         f"- schema_version: `{snapshot['schema_version']}`",
         f"- generated_at_ns: `{snapshot['generated_at_ns']}`",
+        "- snapshot_stale_after_seconds: "
+        f"`{snapshot.get('snapshot_freshness', {}).get('stale_after_seconds', 'unknown')}`",
         f"- current_phase: {status.get('current_phase') or 'unknown'}",
         f"- ops_state: `{snapshot.get('ops_status', {}).get('state', 'unknown')}`",
         f"- live_trading_blocked: {str(status.get('live_trading_blocked')).lower()}",
@@ -459,6 +464,16 @@ def _project_status_snapshot(path: Path) -> dict[str, Any]:
             "blocked_deferred": _bullet_section_items(text, "Blocked / Deferred"),
             "latest_verification": _latest_verification_items(text),
         },
+    }
+
+
+def _snapshot_freshness_policy(generated_at_ns: int) -> dict[str, Any]:
+    return {
+        "generated_at_ns": generated_at_ns,
+        "state_at_generation": "fresh",
+        "warning_after_seconds": DEFAULT_SNAPSHOT_WARNING_AFTER_SECONDS,
+        "stale_after_seconds": DEFAULT_SNAPSHOT_STALE_AFTER_SECONDS,
+        "evaluated_by": "dashboard_reader",
     }
 
 

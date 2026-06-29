@@ -51,7 +51,7 @@ snapshot 路径。默认路径是仓库根目录下的
 ## 当前展示
 
 - 顶部语言切换：English / 简体中文，不写 cookie、不调用 API
-- Operational posture：live gate、strict continuity、生成时间、当前目标
+- Operational posture：live gate、strict continuity、生成时间、快照年龄、当前目标
 - Guardrail metrics：AgentAdvice 记录数、paper/testnet bundle 输入、阻塞项、order-path 边界
 - Runtime health：从 `observability` 读取 Prometheus textfile 摘要，显示心跳、WS、open state、alert 与数据延迟
 - Signals & Rejections：从已附加的 passive paper/testnet bundle report 读取
