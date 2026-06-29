@@ -59,6 +59,8 @@ Allowed:
   `phase6.live_startup_guard.v1` JSON artifacts;
 - render links to docs, evidence files, runbooks, and Grafana dashboards without
   treating the frontend as the source of truth;
+- show snapshot age using the freshness thresholds declared by
+  `dashboard.snapshot.v1`.
 - show whether live/order-path boundary flags are closed.
 
 Forbidden:

@@ -42,6 +42,9 @@ npm run build
 `TRADER_DASHBOARD_SNAPSHOT=/abs/path/to/dashboard-snapshot.json` 可以覆盖默认
 snapshot 路径。默认路径是仓库根目录下的
 `data/frontend/dashboard-snapshot.json`。
+快照年龄的 aging/stale 阈值来自 snapshot 内的 `snapshot_freshness` 策略；需要
+调整时在生成 snapshot 时传入 `--snapshot-warning-after-seconds` 和
+`--snapshot-stale-after-seconds`，前端不会自行刷新或触发 runner。
 
 语言切换是只读 URL 状态：
 

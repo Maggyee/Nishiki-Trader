@@ -137,12 +137,18 @@ def build_dashboard_snapshot(
     repo_browser_base_url: str | None = None,
     observability_textfile_dir: Path | None = DEFAULT_OBSERVABILITY_TEXTFILE_DIR,
     observability_limit: int = 5,
+    snapshot_warning_after_seconds: float = DEFAULT_SNAPSHOT_WARNING_AFTER_SECONDS,
+    snapshot_stale_after_seconds: float = DEFAULT_SNAPSHOT_STALE_AFTER_SECONDS,
     generated_at_ns: int | None = None,
 ) -> dict[str, Any]:
     if advice_limit <= 0:
         raise ValueError("advice_limit must be positive")
     if observability_limit <= 0:
         raise ValueError("observability_limit must be positive")
+    _validate_snapshot_freshness_thresholds(
+        warning_after_seconds=snapshot_warning_after_seconds,
+        stale_after_seconds=snapshot_stale_after_seconds,
+    )
 
     generated_ns = time.time_ns() if generated_at_ns is None else generated_at_ns
     boundaries = {
@@ -182,7 +188,11 @@ def build_dashboard_snapshot(
     return {
         "schema_version": SNAPSHOT_SCHEMA_VERSION,
         "generated_at_ns": generated_ns,
-        "snapshot_freshness": _snapshot_freshness_policy(generated_ns),
+        "snapshot_freshness": _snapshot_freshness_policy(
+            generated_ns,
+            warning_after_seconds=snapshot_warning_after_seconds,
+            stale_after_seconds=snapshot_stale_after_seconds,
+        ),
         "boundaries": boundaries,
         "project_status": project_status,
         "agent_advice": agent_advice,
@@ -467,12 +477,33 @@ def _project_status_snapshot(path: Path) -> dict[str, Any]:
     }
 
 
-def _snapshot_freshness_policy(generated_at_ns: int) -> dict[str, Any]:
+def _validate_snapshot_freshness_thresholds(
+    *,
+    warning_after_seconds: float,
+    stale_after_seconds: float,
+) -> None:
+    if warning_after_seconds <= 0:
+        raise ValueError("snapshot_warning_after_seconds must be positive")
+    if stale_after_seconds <= 0:
+        raise ValueError("snapshot_stale_after_seconds must be positive")
+    if stale_after_seconds <= warning_after_seconds:
+        raise ValueError(
+            "snapshot_stale_after_seconds must be greater than "
+            "snapshot_warning_after_seconds"
+        )
+
+
+def _snapshot_freshness_policy(
+    generated_at_ns: int,
+    *,
+    warning_after_seconds: float,
+    stale_after_seconds: float,
+) -> dict[str, Any]:
     return {
         "generated_at_ns": generated_at_ns,
         "state_at_generation": "fresh",
-        "warning_after_seconds": DEFAULT_SNAPSHOT_WARNING_AFTER_SECONDS,
-        "stale_after_seconds": DEFAULT_SNAPSHOT_STALE_AFTER_SECONDS,
+        "warning_after_seconds": float(warning_after_seconds),
+        "stale_after_seconds": float(stale_after_seconds),
         "evaluated_by": "dashboard_reader",
     }
 
@@ -1710,6 +1741,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--observability-limit", type=int, default=5)
     parser.add_argument(
+        "--snapshot-warning-after-seconds",
+        type=float,
+        default=DEFAULT_SNAPSHOT_WARNING_AFTER_SECONDS,
+        help="Snapshot age in seconds after which dashboard readers should show aging.",
+    )
+    parser.add_argument(
+        "--snapshot-stale-after-seconds",
+        type=float,
+        default=DEFAULT_SNAPSHOT_STALE_AFTER_SECONDS,
+        help="Snapshot age in seconds after which dashboard readers should show stale.",
+    )
+    parser.add_argument(
         "--grafana-base-url",
         default=DEFAULT_GRAFANA_BASE_URL,
         help=(
@@ -1756,6 +1799,8 @@ def main(argv: list[str] | None = None) -> int:
             else None
         ),
         observability_limit=args.observability_limit,
+        snapshot_warning_after_seconds=args.snapshot_warning_after_seconds,
+        snapshot_stale_after_seconds=args.snapshot_stale_after_seconds,
     )
     if args.markdown:
         sys.stdout.write(render_markdown_snapshot(snapshot) + "\n")

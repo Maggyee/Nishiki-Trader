@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-06-29 (dashboard snapshot freshness)
+- **Last updated**: 2026-06-29 (dashboard snapshot freshness thresholds)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
-- **Current objective**: Phase 5 remains the active implemented phase. ADR-013, `apps.ops.live_readiness`, and `apps.strategies_nautilus.runners.live_startup_guard` define passive Phase 6 live-readiness and startup-refusal gates, and `dashboard.snapshot.v1` can summarize saved `phase6.live_readiness.v1` / `phase6.live_startup_guard.v1` artifacts for read-only operator visibility. Phase 6 is still closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired. ADR-012, `apps.ops.dashboard_snapshot`, `infra/grafana/dashboards/signals-overview.json`, and `apps/frontend` continue to define the read-only operations console consuming `dashboard.snapshot.v1` with runtime health, AgentAdvice, passive paper/testnet summaries, source/model Grafana drill-down links, snapshot freshness status, signal/rejection/freshness/evidence summaries, observability, reference links, and Phase 6 blocker summaries. Agents and frontend still cannot write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or enter the order path. Keep `freqai_linear_v1 / linear-mom-train20240105` at `hold @ testnet_canary` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. No live trading without ADR-013 acceptance, the ADR-001 capital ladder gate, and the ADR-008 14-day continuity gate.
+- **Current objective**: Phase 5 remains the active implemented phase. ADR-013, `apps.ops.live_readiness`, and `apps.strategies_nautilus.runners.live_startup_guard` define passive Phase 6 live-readiness and startup-refusal gates, and `dashboard.snapshot.v1` can summarize saved `phase6.live_readiness.v1` / `phase6.live_startup_guard.v1` artifacts for read-only operator visibility. Phase 6 is still closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired. ADR-012, `apps.ops.dashboard_snapshot`, `infra/grafana/dashboards/signals-overview.json`, and `apps/frontend` continue to define the read-only operations console consuming `dashboard.snapshot.v1` with runtime health, AgentAdvice, passive paper/testnet summaries, source/model Grafana drill-down links, snapshot freshness status with generator-configurable thresholds, signal/rejection/freshness/evidence summaries, observability, reference links, and Phase 6 blocker summaries. Agents and frontend still cannot write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or enter the order path. Keep `freqai_linear_v1 / linear-mom-train20240105` at `hold @ testnet_canary` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. No live trading without ADR-013 acceptance, the ADR-001 capital ladder gate, and the ADR-008 14-day continuity gate.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -146,6 +146,19 @@ Immediate focus:
 - No edits to `freqtrade/` or `nautilus_trader/` unless explicitly requested.
 
 ## Latest Verification
+
+On 2026-06-29, after making dashboard snapshot freshness thresholds configurable:
+
+- `apps.ops.dashboard_snapshot` now accepts `--snapshot-warning-after-seconds` and `--snapshot-stale-after-seconds`, validates both thresholds are positive and `stale > warning`, and emits the selected values in `snapshot_freshness`; the frontend continues to only read and display snapshot age.
+- The change is read-only: it only changes snapshot generation metadata, tests, and docs; it does not write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, start Nautilus, or affect live trading authorization.
+- Custom snapshot JSON smoke with `--snapshot-warning-after-seconds 60 --snapshot-stale-after-seconds 300` -> `warning_after_seconds=60.0`, `stale_after_seconds=300.0`, `state_at_generation=fresh`, `evaluated_by=dashboard_reader`, and `live_path_allowed=false`.
+- `TMPDIR=/tmp UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/ops/test_dashboard_snapshot.py -q` -> **18 passed**.
+- `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check apps tests docs infra` -> clean.
+- `npm --prefix /home/nishiki/projects/trader/apps/frontend run typecheck` -> clean.
+- `npm --prefix /home/nishiki/projects/trader/apps/frontend run build` -> clean Next.js production build (same workspace-root inference warning as prior runs).
+- `npm --prefix /home/nishiki/projects/trader/apps/frontend audit --audit-level=moderate` -> **0 vulnerabilities**.
+- `curl -I --max-time 10 http://127.0.0.1:3001/?lang=zh-CN` -> HTTP 200 after restarting the local dev server on port 3001.
+- `git diff --check` -> clean.
 
 On 2026-06-29, after adding dashboard snapshot freshness status:
 

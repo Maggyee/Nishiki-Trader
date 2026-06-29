@@ -55,7 +55,9 @@ uv run python -m apps.ops.dashboard_snapshot \
 - 当前状态、ADR、证据 ledger、runbook 的本地源路径
 
 snapshot 也会携带 `snapshot_freshness` 策略：默认 15 分钟进入 aging、60 分钟
-进入 stale。前端只用它显示快照年龄，不会自动刷新或触发任何 runner。
+进入 stale，可用 `--snapshot-warning-after-seconds` /
+`--snapshot-stale-after-seconds` 调整。前端只用它显示快照年龄，不会自动刷新或
+触发任何 runner。
 
 可用空字符串关闭 Grafana URL，只保留本地源路径；也可以传入仓库浏览基准
 URL，让文档路径变成浏览器可打开的只读链接：

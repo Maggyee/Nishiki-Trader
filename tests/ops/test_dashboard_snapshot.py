@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
+
 from apps.agents.advice import AgentAdvice
 from apps.agents.store import AgentAdviceStore
 from apps.ops import dashboard_snapshot
@@ -153,6 +155,57 @@ def test_snapshot_reads_project_status_and_agent_advice(tmp_path: Path) -> None:
         "advice-1",
     ]
     assert snapshot["agent_advice"]["latest"][1]["review_decision"] == "accepted"
+
+
+def test_snapshot_freshness_thresholds_can_be_configured(tmp_path: Path) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        snapshot_warning_after_seconds=30.5,
+        snapshot_stale_after_seconds=120,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+    markdown = dashboard_snapshot.render_markdown_snapshot(snapshot)
+
+    assert snapshot["snapshot_freshness"] == {
+        "generated_at_ns": REFERENCE_TS_NS,
+        "state_at_generation": "fresh",
+        "warning_after_seconds": 30.5,
+        "stale_after_seconds": 120.0,
+        "evaluated_by": "dashboard_reader",
+    }
+    assert "snapshot_stale_after_seconds: `120.0`" in markdown
+
+
+@pytest.mark.parametrize(
+    ("warning_after_seconds", "stale_after_seconds", "message"),
+    [
+        (0, 60, "snapshot_warning_after_seconds must be positive"),
+        (60, 0, "snapshot_stale_after_seconds must be positive"),
+        (60, 60, "snapshot_stale_after_seconds must be greater"),
+        (90, 60, "snapshot_stale_after_seconds must be greater"),
+    ],
+)
+def test_snapshot_freshness_thresholds_reject_invalid_values(
+    tmp_path: Path,
+    warning_after_seconds: float,
+    stale_after_seconds: float,
+    message: str,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+
+    with pytest.raises(ValueError, match=message):
+        dashboard_snapshot.build_dashboard_snapshot(
+            project_status_path=status_path,
+            agent_advice_db_path=tmp_path / "missing.db",
+            snapshot_warning_after_seconds=warning_after_seconds,
+            snapshot_stale_after_seconds=stale_after_seconds,
+            generated_at_ns=REFERENCE_TS_NS,
+        )
 
 
 def test_snapshot_missing_advice_db_is_empty(tmp_path: Path) -> None:
@@ -485,6 +538,10 @@ def test_cli_outputs_json(tmp_path: Path, capsys) -> None:
             str(db),
             "--advice-limit",
             "1",
+            "--snapshot-warning-after-seconds",
+            "45",
+            "--snapshot-stale-after-seconds",
+            "180",
             "--grafana-base-url",
             "",
         ]
@@ -493,6 +550,8 @@ def test_cli_outputs_json(tmp_path: Path, capsys) -> None:
     assert rc == 0
     out = json.loads(capsys.readouterr().out)
     assert out["agent_advice"]["latest"][0]["advice_id"] == "advice-1"
+    assert out["snapshot_freshness"]["warning_after_seconds"] == 45.0
+    assert out["snapshot_freshness"]["stale_after_seconds"] == 180.0
     assert out["reference_links"][0]["href"] is None
 
 
