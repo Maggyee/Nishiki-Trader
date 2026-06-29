@@ -36,7 +36,8 @@ Read these before any non-trivial work:
 | Adding or comparing a signal source | `docs/progress/phase-2-signal-source-baselines.md` — current demo / rule fingerprints to diff against |
 | Detailed historical progress | Relevant file under `docs/progress/` only when current status links it or history is needed |
 | Paper trading, risk rules, testnet, or live trading | `docs/decisions/007-paper-trading-runtime.md`; `docs/decisions/008-phase3-risk-runbook.md` (Draft, gates Phase 3 / testnet) |
-| Testnet continuity or next live-readiness stage | `docs/progress/phase-3-testnet-canary-evidence.md`, `docs/progress/phase-3-testnet-continuity-plan.md`, `docs/runbook-first-testnet-canary.md`, `docs/decisions/008-phase3-risk-runbook.md` |
+| Testnet continuity or next live-readiness stage | `docs/progress/phase-3-testnet-canary-evidence.md`, `docs/progress/phase-3-testnet-continuity-plan.md`, `docs/runbook-first-testnet-canary.md`, `docs/decisions/008-phase3-risk-runbook.md`, `docs/decisions/013-phase6-live-risk-gate.md`, `apps/ops/live_readiness.py` |
+| Phase 6, live-risk gate, or small-money live trading | `docs/decisions/013-phase6-live-risk-gate.md`, `docs/decisions/001-tech-stack.md`, `docs/decisions/007-paper-trading-runtime.md`, `docs/decisions/008-phase3-risk-runbook.md`, `docs/progress/phase-3-testnet-continuity-plan.md`, `docs/progress/phase-3-testnet-canary-evidence.md` |
 | Operations, restart, emergency handling | `docs/runbook.md`; ADR-008 §6.6 first canary procedure: `docs/runbook-first-testnet-canary.md` + `docs/templates/testnet-canary-session-retro.md` |
 | Project skeleton, directory ownership, dev environment | `README.md`, `apps/README.md`, `infra/README.md` |
 | Recent project context | Latest file under `docs/retros/` |

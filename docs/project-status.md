@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-06-29 (Phase 5 source evidence drill-down)
+- **Last updated**: 2026-06-29 (Phase 6 live-readiness gate)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
-- **Current objective**: Phase 5 entry is open. ADR-012, `apps.ops.dashboard_snapshot`, and `apps/frontend` define a read-only Next.js operations console consuming `dashboard.snapshot.v1`; the snapshot carries `ops_status`, `operator_checklist`, parsed project-status sections, boundary flags, AgentAdvice rows, optional passive paper/testnet bundle summaries, read-only `signal_summary` from attached bundle `signal_lineage` decision/reason counts plus source/model freshness and source evidence links, passive Prometheus textfile observability summaries, and source-of-truth-neutral `reference_links` to docs, evidence, runbooks, and Grafana dashboards. The frontend renders runtime health plus signal-source / rejection / freshness / evidence summaries from passive evidence and supports read-only English / Simplified Chinese UI chrome via `?lang=en` / `?lang=zh-CN`. The earlier Grafana/Prometheus/Loki stack remains the runtime monitoring surface. ADR-009 and `apps.agents` remain the agent-safe Phase 4 substrate: `AgentAdvice v1`, MCP-facing safe wrappers, and the deterministic review agent. Agents and frontend still cannot write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or enter the order path. Existing Phase 3 evidence remains documented in `docs/progress/phase-3-testnet-canary-evidence.md`, with the paused continuity plan in `docs/progress/phase-3-testnet-continuity-plan.md`. Strict continuity remains `current_qualified_streak_days=0/14`; this does not satisfy the ADR-001/ADR-008 live gate. Keep `freqai_linear_v1 / linear-mom-train20240105` at `hold @ testnet_canary` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. No live trading without a separate live-risk ADR and the ADR-001 capital ladder gate.
+- **Current objective**: Phase 5 remains the active implemented phase. ADR-013 and `apps.ops.live_readiness` now define a passive Phase 6 live-readiness gate, but Phase 6 is still closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, and no live startup guard or first-live-day runbook has been accepted. ADR-012, `apps.ops.dashboard_snapshot`, and `apps/frontend` continue to define the read-only operations console consuming `dashboard.snapshot.v1` with runtime health, AgentAdvice, passive paper/testnet summaries, signal/rejection/freshness/evidence summaries, observability, and reference links. Agents and frontend still cannot write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or enter the order path. Keep `freqai_linear_v1 / linear-mom-train20240105` at `hold @ testnet_canary` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. No live trading without ADR-013 acceptance, the ADR-001 capital ladder gate, and the ADR-008 14-day continuity gate.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -105,13 +105,13 @@ At task finish:
 ## Current Focus
 
 Phase 5 entry: operate and harden the read-only dashboard as the current
-operations console while routine
-14-day testnet continuity testing remains paused by operator decision on
-2026-06-04. The Phase 3 strict streak remains 0/14, so this phase pivot is not a
-live-readiness claim. ADR-008 §6.6 has fifteen clean 6 h sidecar-backed testnet
-canaries summarized in `docs/progress/phase-3-testnet-canary-evidence.md`; the
-continuity procedure is preserved but paused in
-`docs/progress/phase-3-testnet-continuity-plan.md`.
+operations console while the new ADR-013 / `apps.ops.live_readiness` gate
+tracks Phase 6 blockers passively. Routine 14-day testnet continuity testing
+remains paused by operator decision on 2026-06-04. The Phase 3 strict streak
+remains 0/14, so Phase 6 is not open. ADR-008 §6.6 has fifteen clean 6 h
+sidecar-backed testnet canaries summarized in
+`docs/progress/phase-3-testnet-canary-evidence.md`; the continuity procedure
+is preserved but paused in `docs/progress/phase-3-testnet-continuity-plan.md`.
 
 Immediate focus:
 
@@ -123,17 +123,19 @@ Immediate focus:
 
 ## Next Steps
 
-1. Continue Phase 5 with only read-only dashboard improvements fed by `dashboard.snapshot.v1`; source-evidence drill-down links are now wired for source/model rows, so the next useful navigation addition would be narrower model-level Grafana filtering only after the dashboard gains an explicit `model_version` variable. Keep the frontend free of API routes and mutation controls until a separate ADR opens a specific workflow.
-2. Continue project development with targeted verification for the changed surface area; do not spend routine time rebuilding the 0/14 strict continuity streak unless live-readiness evidence is explicitly resumed.
-3. Use `promotion_review.py` (not just `report_paper_bundle.py`) as the required ADR-007 §2.6 audit artifact for any actual `SourcePolicy` change. Do **not** run `promotion_review.py hold @ testnet_canary` as a routine ratification of each canary — the canary retros plus the evidence and continuity progress files are the operational record.
-4. Keep the `testnet_runner.py` startup guard + connection probe as the first line of defense for any subsequent testnet run: explicit `--allow-real-credentials`, clean git, source/model retro evidence, testnet multiplier cap, key-prefix-only audit, Ed25519-only credentials (HMAC fails Binance Spot WS `session.logon`), and Binance Spot TESTNET-only adapter config. The probe injects credentials into the in-memory `TradingNodeConfig` only and never writes the full key/secret to `logs/runtime.log` or `connection_probe.json`.
-5. Collect additional testnet canary or paper_simulated evidence only when it directly supports a concrete development or promotion question. The v11 paper bundle's expectancy (+0.00491 USDT/trade, 53.6% win rate, -0.003878% max drawdown over 152 days) is weaker than v9, includes a negative April, and only mildly positive May; the parquet-backed canary fill set is still only a few trades. Treat both as operational/monitoring evidence, not alpha.
-6. Decide SQLite -> Postgres / Redis Stream readiness only after backtest, paper, or testnet volume exposes an actual bottleneck.
-7. `ws_connected` and `ws_reconnect_count` are wired through `node.kernel.{data,exec}_engine.check_connected()` and passed the 2026-05-20 6 h live-telemetry canary with `ws_reconnect_count=0`. `exchange_error_count` is now supplied non-invasively through `NautilusLogErrorCounter` over redirected Nautilus stdout/stderr; the 2026-06-04 hardening buffers partial log lines so `ERROR` / `CRITICAL` severities split across writes are still counted. Treat any future non-zero `ws_reconnect_count` or `exchange_error_count` as evidence to investigate, not as an automatic failure unless the configured burst threshold fires.
+1. Use `python -m apps.ops.live_readiness` as the passive Phase 6 blocker report before any live-risk discussion. It should remain blocked until ADR-013 is Accepted, 14-day testnet continuity is proven, starting capital is declared within 100-500 USDT, and a live-canary promotion review exists.
+2. Continue Phase 5 with only read-only dashboard improvements fed by `dashboard.snapshot.v1`; source-evidence drill-down links are wired for source/model rows, so the next useful navigation addition would be narrower model-level Grafana filtering only after the dashboard gains an explicit `model_version` variable. Keep the frontend free of API routes and mutation controls until a separate ADR opens a specific workflow.
+3. Continue project development with targeted verification for the changed surface area; do not spend routine time rebuilding the 0/14 strict continuity streak unless live-readiness evidence is explicitly resumed.
+4. If the operator explicitly resumes live-readiness evidence collection, use `docs/progress/phase-3-testnet-continuity-plan.md` and include every completed manifest-backed testnet bundle in the candidate window when running both `report_testnet_bundle --continuity` and `apps.ops.live_readiness`.
+5. Use `promotion_review.py` (not just `report_paper_bundle.py`) as the required ADR-007 §2.6 audit artifact for any actual `SourcePolicy` change. Do **not** run `promotion_review.py hold @ testnet_canary` as a routine ratification of each canary — the canary retros plus the evidence and continuity progress files are the operational record.
+6. Keep the `testnet_runner.py` startup guard + connection probe as the first line of defense for any subsequent testnet run: explicit `--allow-real-credentials`, clean git, source/model retro evidence, testnet multiplier cap, key-prefix-only audit, Ed25519-only credentials (HMAC fails Binance Spot WS `session.logon`), and Binance Spot TESTNET-only adapter config. The probe injects credentials into the in-memory `TradingNodeConfig` only and never writes the full key/secret to `logs/runtime.log` or `connection_probe.json`.
+7. Collect additional testnet canary or paper_simulated evidence only when it directly supports a concrete development or promotion question. The v11 paper bundle's expectancy (+0.00491 USDT/trade, 53.6% win rate, -0.003878% max drawdown over 152 days) is weaker than v9, includes a negative April, and only mildly positive May; the parquet-backed canary fill set is still only a few trades. Treat both as operational/monitoring evidence, not alpha.
+8. Decide SQLite -> Postgres / Redis Stream readiness only after backtest, paper, or testnet volume exposes an actual bottleneck.
 
 ## Blocked / Deferred
 
 - No live trading.
+- No Phase 6 entry: ADR-013 is Draft, strict continuity is 0/14, no live-canary promotion review exists, and no live startup guard has been accepted.
 - No real exchange API keys in the repository.
 - No Redis until cross-process signal transport is required.
 - No automatic SQLite -> Postgres mirror or PG-backed bridge default until an ADR-011 trigger fires; current Postgres/TimescaleDB/pgvector is service-only Phase 3 support.
@@ -143,6 +145,17 @@ Immediate focus:
 - No edits to `freqtrade/` or `nautilus_trader/` unless explicitly requested.
 
 ## Latest Verification
+
+On 2026-06-29, after adding the passive Phase 6 live-readiness gate:
+
+- Added Draft ADR-013 (`docs/decisions/013-phase6-live-risk-gate.md`) and `apps.ops.live_readiness`, which emits `phase6.live_readiness.v1` JSON/Markdown from project status, ADR-013 status, optional passive testnet continuity bundles, optional live-canary promotion review evidence, and a declared starting capital. The tool is audit-only: it does not load credentials, start Nautilus, mutate `SourcePolicy`, write `SignalEvent`, place orders, or authorize live trading.
+- `UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/ops/test_live_readiness.py -q` -> **4 passed**.
+- `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check apps/ops/live_readiness.py tests/ops/test_live_readiness.py` -> clean.
+- Blocked default smoke: `UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.ops.live_readiness --source freqai_linear_v1 --model-version linear-mom-train20240105 --starting-capital-usdt 100 --markdown` -> `readiness_gate_met=false`, `live_trading_allowed=false`, blockers = live-canary promotion review missing, ADR-013 not accepted, continuity evidence missing.
+- Blocked current-window smoke with every completed manifest-backed testnet bundle in the paused candidate window -> `readiness_gate_met=false`, blockers include `testnet_continuity:current_qualified_streak_days=0<required=14` and `testnet_continuity:emergency_flatten_completed=2`.
+- `UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/ops -q` -> **14 passed, 5 skipped** (Postgres-backed sync tests skipped because `trader-postgres` was not reachable on `127.0.0.1:5433`).
+- `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check apps tests docs infra` -> clean.
+- `git diff --check` -> clean.
 
 On 2026-06-29, after adding read-only source/model evidence drill-down links:
 

@@ -1,0 +1,203 @@
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+from apps.ops import live_readiness
+from apps.strategies_nautilus.runners.report_testnet_bundle import (
+    TestnetContinuitySummary as ContinuitySummary,
+)
+
+REFERENCE_TS_NS = 1_778_760_000_000_000_000
+
+
+def _write_status(path: Path) -> None:
+    path.write_text(
+        "\n".join(
+            [
+                "# Project Status",
+                "- **Last updated**: 2026-06-29",
+                "- **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)",
+                "- **Current objective**: Strict continuity remains current_qualified_streak_days=0/14. No live trading without a separate live-risk ADR.",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+
+def _write_live_adr(path: Path, *, status: str) -> None:
+    path.write_text(
+        "\n".join(
+            [
+                "# ADR-013: Phase 6 Live Risk Gate",
+                f"- **Status**: {status}",
+                "",
+                "This document does not authorize live trading.",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+
+def _continuity_summary(*, gate_met: bool) -> ContinuitySummary:
+    return ContinuitySummary(
+        bundle_dirs=["data/testnet/run-1"],
+        min_clean_hours_per_day=6.0,
+        required_consecutive_days=14,
+        day_count=14,
+        qualified_day_count=14 if gate_met else 7,
+        longest_qualified_streak_days=14 if gate_met else 5,
+        current_qualified_streak_days=14 if gate_met else 0,
+        required_gate_met=gate_met,
+        total_exchange_error_count=0,
+        total_ws_reconnect_count=0,
+        max_restart_sequence=0,
+        restart_drift_days=[],
+        kill_switch_alerts=0,
+        emergency_flatten_completed_alerts=0 if gate_met else 2,
+        blockers=[] if gate_met else ["current_qualified_streak_days=0<required=14"],
+        days=[],
+        recommendation=(
+            "ready_for_live_risk_adr_review"
+            if gate_met
+            else "continue_testnet_continuity"
+        ),
+    )
+
+
+def test_live_readiness_blocks_without_continuity_or_accepted_adr(tmp_path: Path) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    live_adr = tmp_path / "missing-adr.md"
+
+    report = live_readiness.build_live_readiness_report(
+        project_status_path=status_path,
+        live_risk_adr_path=live_adr,
+        continuity_bundle_dirs=[],
+        source="freqai_linear_v1",
+        model_version="linear-mom-train20240105",
+        starting_capital_usdt=100,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    assert report.schema_version == "phase6.live_readiness.v1"
+    assert report.live_trading_allowed is False
+    assert report.readiness_gate_met is False
+    assert report.recommendation == "remain_blocked_before_phase6_live_canary"
+    assert "live_risk_adr_not_accepted" in report.blockers
+    assert "testnet_continuity_evidence_missing" in report.blockers
+    assert "live_canary_promotion_review_required" in report.blockers
+    assert report.boundaries == {
+        "starts_runtime": False,
+        "loads_exchange_credentials": False,
+        "mutates_source_policy": False,
+        "writes_signal_event": False,
+        "places_orders": False,
+        "authorizes_live_trading": False,
+    }
+
+
+def test_live_readiness_uses_passive_continuity_summary(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    live_adr = tmp_path / "013-phase6-live-risk-gate.md"
+    _write_status(status_path)
+    _write_live_adr(live_adr, status="Draft")
+
+    monkeypatch.setattr(
+        live_readiness,
+        "load_testnet_continuity_summary",
+        lambda bundle_dirs, **kwargs: _continuity_summary(gate_met=False),
+    )
+
+    report = live_readiness.build_live_readiness_report(
+        project_status_path=status_path,
+        live_risk_adr_path=live_adr,
+        continuity_bundle_dirs=[tmp_path / "bundle-1"],
+        source="freqai_linear_v1",
+        model_version="linear-mom-train20240105",
+        starting_capital_usdt=100,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    assert report.continuity_summary is not None
+    assert report.continuity_summary["required_gate_met"] is False
+    assert "testnet_continuity:current_qualified_streak_days=0<required=14" in (
+        report.blockers
+    )
+    assert report.live_risk_adr["status"] == "Draft"
+    assert "live_risk_adr_not_accepted" in report.blockers
+
+
+def test_live_readiness_can_emit_markdown_when_all_evidence_is_present(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    live_adr = tmp_path / "013-phase6-live-risk-gate.md"
+    promotion = tmp_path / "live-promotion.md"
+    _write_status(status_path)
+    _write_live_adr(live_adr, status="Accepted")
+    promotion.write_text(
+        "\n".join(
+            [
+                "decision_allowed: **yes**",
+                "target_stage: live_canary",
+                "source: freqai_linear_v1",
+                "model_version: linear-mom-train20240105",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        live_readiness,
+        "load_testnet_continuity_summary",
+        lambda bundle_dirs, **kwargs: _continuity_summary(gate_met=True),
+    )
+
+    report = live_readiness.build_live_readiness_report(
+        project_status_path=status_path,
+        live_risk_adr_path=live_adr,
+        continuity_bundle_dirs=[tmp_path / "bundle-1"],
+        source="freqai_linear_v1",
+        model_version="linear-mom-train20240105",
+        live_promotion_review_path=promotion,
+        starting_capital_usdt=250,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+    markdown = live_readiness.render_markdown_report(report)
+
+    assert report.readiness_gate_met is True
+    assert report.live_trading_allowed is False
+    assert report.recommendation == "ready_for_manual_live_go_no_go_review"
+    assert "# Phase 6 Live Readiness" in markdown
+    assert "live_trading_allowed: false" in markdown
+    assert "| live_risk_adr | ok |" in markdown
+
+
+def test_live_readiness_cli_outputs_json(tmp_path: Path, capsys) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+
+    rc = live_readiness.main(
+        [
+            "--project-status-path",
+            str(status_path),
+            "--live-risk-adr-path",
+            str(tmp_path / "missing.md"),
+            "--source",
+            "freqai_linear_v1",
+            "--model-version",
+            "linear-mom-train20240105",
+            "--starting-capital-usdt",
+            "100",
+        ]
+    )
+
+    assert rc == 0
+    out = json.loads(capsys.readouterr().out)
+    assert out["schema_version"] == "phase6.live_readiness.v1"
+    assert out["live_trading_allowed"] is False
+    assert "testnet_continuity_evidence_missing" in out["blockers"]

@@ -3,7 +3,7 @@
 运维脚本。
 
 **当前 Phase**：2（catalog fixture / backtest operations）+ Phase 4/5 read-only
-dashboard snapshot support。
+dashboard snapshot support + Phase 6 passive readiness gate support。
 
 ## 当前入口
 
@@ -96,6 +96,22 @@ source/model freshness 与证据 drill-down。证据链接只指向 Grafana read
 source 过滤视图、已附加的本地 bundle 路径和既有证据文档；不会触发 runner、
 写 `SignalEvent` 或修改 `SourcePolicy`。
 
+生成 Phase 6 只读 live-readiness gate（默认会阻塞，因为 ADR-013 仍是 Draft，
+且 14 天 testnet continuity 仍未满足）：
+
+```bash
+uv run python -m apps.ops.live_readiness \
+  --source freqai_linear_v1 \
+  --model-version linear-mom-train20240105 \
+  --starting-capital-usdt 100 \
+  --markdown
+```
+
+`live_readiness` 只读取项目状态、ADR-013、可选的已完成 testnet bundle
+continuity evidence、可选 promotion review artifact、以及显式声明的起步资金；
+不读取 live/testnet 凭证、不启动 Nautilus、不写 `SignalEvent`、不改
+`SourcePolicy`、不下单，也不授权 live trading。
+
 ## 计划脚本
 
 | 脚本 | 用途 | 最早 Phase |
@@ -106,6 +122,7 @@ source 过滤视图、已附加的本地 bundle 路径和既有证据文档；�
 | `signal_replay.py` | 重放 SQLite 中的历史 signals 跑回测 | 1 |
 | `migrate_sqlite_to_pg.py` | Phase 2 数据迁移 | 2 |
 | `dashboard_snapshot.py` | Phase 4 只读 AgentAdvice / report snapshot | 4 |
+| `live_readiness.py` | Phase 6 只读 live-risk gate / blocker report | 5 |
 | `testnet_handoff.py` | testnet ↔ live 切换前的检查清单 | 6 |
 
 ## 跑法
