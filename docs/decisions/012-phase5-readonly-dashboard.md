@@ -38,9 +38,9 @@ uv run python -m apps.ops.dashboard_snapshot > data/frontend/dashboard-snapshot.
 The frontend may render status, operational posture, operator checklist,
 boundaries, AgentAdvice history, passive bundle summaries, passive textfile
 observability summaries, optional Phase 6 live-readiness/startup-guard artifact
-summaries, and source-of-truth neutral reference links. If the file is absent,
-it renders a fallback read-only state so build and local smoke checks remain
-deterministic.
+summaries, and source-of-truth neutral reference links, including source/model
+Grafana drill-down links. If the file is absent, it renders a fallback
+read-only state so build and local smoke checks remain deterministic.
 
 Language selection is read-only URL state. The dashboard may render English or
 Simplified Chinese UI chrome through `?lang=en` / `?lang=zh-CN`; this does not

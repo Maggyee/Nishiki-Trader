@@ -16,3 +16,8 @@
   自动加到 `trader` folder.
 - `dashboards/` — 看板 JSON 源文件 (Task 5 写入 canary-current.json +
   watchdog-current.json).
+
+`dashboards/signals-overview.json` 是只读 Postgres `signal_events` 观察面板，
+支持 `source` 和 `model_version` 模板变量。前端 dashboard snapshot 的
+source/model evidence link 会把这两个变量带入 Grafana URL，用于只读
+drill-down；它不写 `SignalEvent`，也不触发 runner。

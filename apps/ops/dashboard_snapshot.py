@@ -788,9 +788,12 @@ def _signal_source_evidence_links(
 ) -> list[dict[str, str | None]]:
     links: list[dict[str, str | None]] = []
     source = str(row.get("source") or "")
+    model_version = str(row.get("model_version") or "")
     grafana_base = _optional_base_url(grafana_base_url)
     if grafana_base and source:
         params = [f"var-source={quote(source, safe='')}"]
+        if model_version:
+            params.append(f"var-model_version={quote(model_version, safe='')}")
         first_ts = _optional_int(row.get("first_signal_ts_event_ns"))
         last_ts = _optional_int(row.get("last_signal_ts_event_ns"))
         if first_ts is not None and last_ts is not None:
@@ -806,7 +809,10 @@ def _signal_source_evidence_links(
                 "label": "Signals overview",
                 "kind": "dashboard",
                 "path": "infra/grafana/dashboards/signals-overview.json",
-                "detail": "Read-only Grafana source drill-down for this source/model row.",
+                "detail": (
+                    "Read-only Grafana source/model drill-down for this "
+                    "source/model row."
+                ),
                 "href": f"{grafana_base}/d/signals-overview/signals-overview?{'&'.join(params)}",
             }
         )

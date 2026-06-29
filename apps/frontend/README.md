@@ -56,19 +56,14 @@ snapshot 路径。默认路径是仓库根目录下的
 - Runtime health：从 `observability` 读取 Prometheus textfile 摘要，显示心跳、WS、open state、alert 与数据延迟
 - Signals & Rejections：从已附加的 passive paper/testnet bundle report 读取
   signal lineage 摘要，按 source/model 显示 accepted、skipped、rejection 原因与
-  最新信号 freshness，并展示只读 evidence 链接（Grafana source drill-down、
-  本地 bundle 路径、testnet evidence ledger）
+  最新信号 freshness，并展示只读 evidence 链接（Grafana source/model
+  drill-down、本地 bundle 路径、testnet evidence ledger）
 - Evidence matrix：paper / testnet bundle 数量、审阅阻塞、promotion 阻塞
 - AgentAdvice queue：最近 advice 记录、类型、状态、置信度
 - Operator checklist：刷新 snapshot、边界检查、AgentAdvice 审阅、连续性阻塞、SourcePolicy 流程
 - Watchlist / Verification：从 `docs/project-status.md` 解析 blocked/deferred、next steps、latest verification
 - Reference links：文档、证据 ledger、runbook、本地 Grafana 只读看板和其源 JSON
 - Boundary ledger：确认前端相关 live/order mutation flags 仍关闭
-
-## 后续可加
-
-- Model-level Grafana drill-down only after the read-only signals dashboard has
-  an explicit `model_version` variable
 
 ## 锁定边界
 

@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-06-29 (Phase 6 dashboard gate summaries)
+- **Last updated**: 2026-06-29 (source/model Grafana drill-down)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
-- **Current objective**: Phase 5 remains the active implemented phase. ADR-013, `apps.ops.live_readiness`, and `apps.strategies_nautilus.runners.live_startup_guard` define passive Phase 6 live-readiness and startup-refusal gates, and `dashboard.snapshot.v1` can now summarize saved `phase6.live_readiness.v1` / `phase6.live_startup_guard.v1` artifacts for read-only operator visibility. Phase 6 is still closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired. ADR-012, `apps.ops.dashboard_snapshot`, and `apps/frontend` continue to define the read-only operations console consuming `dashboard.snapshot.v1` with runtime health, AgentAdvice, passive paper/testnet summaries, signal/rejection/freshness/evidence summaries, observability, reference links, and Phase 6 blocker summaries. Agents and frontend still cannot write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or enter the order path. Keep `freqai_linear_v1 / linear-mom-train20240105` at `hold @ testnet_canary` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. No live trading without ADR-013 acceptance, the ADR-001 capital ladder gate, and the ADR-008 14-day continuity gate.
+- **Current objective**: Phase 5 remains the active implemented phase. ADR-013, `apps.ops.live_readiness`, and `apps.strategies_nautilus.runners.live_startup_guard` define passive Phase 6 live-readiness and startup-refusal gates, and `dashboard.snapshot.v1` can summarize saved `phase6.live_readiness.v1` / `phase6.live_startup_guard.v1` artifacts for read-only operator visibility. Phase 6 is still closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired. ADR-012, `apps.ops.dashboard_snapshot`, `infra/grafana/dashboards/signals-overview.json`, and `apps/frontend` continue to define the read-only operations console consuming `dashboard.snapshot.v1` with runtime health, AgentAdvice, passive paper/testnet summaries, source/model Grafana drill-down links, signal/rejection/freshness/evidence summaries, observability, reference links, and Phase 6 blocker summaries. Agents and frontend still cannot write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or enter the order path. Keep `freqai_linear_v1 / linear-mom-train20240105` at `hold @ testnet_canary` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. No live trading without ADR-013 acceptance, the ADR-001 capital ladder gate, and the ADR-008 14-day continuity gate.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -125,7 +125,7 @@ Immediate focus:
 ## Next Steps
 
 1. Use `python -m apps.ops.live_readiness` as the passive Phase 6 blocker report before any live-risk discussion, feed a saved JSON report into `python -m apps.strategies_nautilus.runners.live_startup_guard` before any future live runner could load credentials, and attach saved JSON artifacts to `python -m apps.ops.dashboard_snapshot` with `--phase6-live-readiness-report` / `--phase6-live-startup-guard-report` for read-only dashboard visibility. Both gates should remain blocked until ADR-013 is Accepted, 14-day testnet continuity is proven, starting capital is declared within 100-500 USDT, a live-canary promotion review exists, and `docs/runbook-first-live-day.md` is Accepted.
-2. Continue Phase 5 with only read-only dashboard improvements fed by `dashboard.snapshot.v1`; source-evidence drill-down links are wired for source/model rows, so the next useful navigation addition would be narrower model-level Grafana filtering only after the dashboard gains an explicit `model_version` variable. Keep the frontend free of API routes and mutation controls until a separate ADR opens a specific workflow.
+2. Continue Phase 5 with only read-only dashboard improvements fed by `dashboard.snapshot.v1`; source/model drill-down links now land on Grafana `source` + `model_version` variables. Keep the frontend free of API routes and mutation controls until a separate ADR opens a specific workflow.
 3. Continue project development with targeted verification for the changed surface area; do not spend routine time rebuilding the 0/14 strict continuity streak unless live-readiness evidence is explicitly resumed.
 4. If the operator explicitly resumes live-readiness evidence collection, use `docs/progress/phase-3-testnet-continuity-plan.md` and include every completed manifest-backed testnet bundle in the candidate window when running both `report_testnet_bundle --continuity` and `apps.ops.live_readiness`.
 5. Use `promotion_review.py` (not just `report_paper_bundle.py`) as the required ADR-007 §2.6 audit artifact for any actual `SourcePolicy` change. Do **not** run `promotion_review.py hold @ testnet_canary` as a routine ratification of each canary — the canary retros plus the evidence and continuity progress files are the operational record.
@@ -146,6 +146,18 @@ Immediate focus:
 - No edits to `freqtrade/` or `nautilus_trader/` unless explicitly requested.
 
 ## Latest Verification
+
+On 2026-06-29, after adding source/model Grafana drill-down links:
+
+- `dashboard.snapshot.v1` source/model evidence links now include `var-source` and `var-model_version`; `infra/grafana/dashboards/signals-overview.json` has an explicit `model_version` template variable and all `signal_events` panel queries apply the model filter.
+- The change is read-only: it only changes dashboard links and Grafana SQL filters, does not write `SignalEvent`, does not mutate `SourcePolicy`, does not call exchange APIs, does not start Nautilus, and does not affect live trading authorization.
+- `UV_CACHE_DIR=/tmp/uv-cache uv run python -m json.tool infra/grafana/dashboards/signals-overview.json >/tmp/signals-overview.validated.json` -> valid JSON.
+- `TMPDIR=/tmp UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/ops/test_dashboard_snapshot.py -q` -> **13 passed**.
+- `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check apps tests docs infra` -> clean.
+- `npm --prefix /home/nishiki/projects/trader/apps/frontend run typecheck` -> clean.
+- `npm --prefix /home/nishiki/projects/trader/apps/frontend run build` -> clean Next.js production build (same workspace-root inference warning as prior runs).
+- `npm --prefix /home/nishiki/projects/trader/apps/frontend audit --audit-level=moderate` -> **0 vulnerabilities**.
+- Snapshot JSON smoke with the v11 paper bundle and 2026-05-30 testnet bundle -> first Grafana evidence href contains `var-source=freqai_linear_v1`, `var-model_version=linear-mom-train20240105`, `from=`, and `to=`.
 
 On 2026-06-29, after adding read-only Phase 6 dashboard gate summaries:
 

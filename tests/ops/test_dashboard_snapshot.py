@@ -634,12 +634,13 @@ def test_snapshot_wraps_passive_bundle_reports(
                     "kind": "dashboard",
                     "path": "infra/grafana/dashboards/signals-overview.json",
                     "detail": (
-                        "Read-only Grafana source drill-down for this "
+                        "Read-only Grafana source/model drill-down for this "
                         "source/model row."
                     ),
                     "href": (
                         "http://127.0.0.1:3000/d/signals-overview/"
                         "signals-overview?var-source=freqai_linear_v1"
+                        "&var-model_version=linear-mom-train20240105"
                         "&from=1778755800000&to=1778763540000"
                     ),
                 },
@@ -676,3 +677,33 @@ def test_snapshot_wraps_passive_bundle_reports(
             ],
         }
     ]
+
+
+def test_signals_overview_dashboard_filters_by_model_version() -> None:
+    dashboard_path = Path("infra/grafana/dashboards/signals-overview.json")
+    dashboard = json.loads(dashboard_path.read_text(encoding="utf-8"))
+    variables = {
+        item["name"]: item
+        for item in dashboard.get("templating", {}).get("list", [])
+    }
+
+    assert variables["model_version"]["query"] == (
+        "SELECT DISTINCT model_version FROM signal_events "
+        "WHERE source = ANY(string_to_array('$source', ',')) "
+        "ORDER BY model_version"
+    )
+    assert variables["model_version"]["includeAll"] is True
+    assert variables["model_version"]["allValue"] == "__all"
+
+    raw_sql = [
+        target["rawSql"]
+        for panel in dashboard["panels"]
+        for target in panel.get("targets", [])
+        if "rawSql" in target
+    ]
+    signal_event_queries = [
+        query for query in raw_sql if " FROM signal_events " in query
+    ]
+    assert len(signal_event_queries) == 12
+    assert all("$model_version" in query for query in signal_event_queries)
+    assert all("model_version = ANY" in query for query in signal_event_queries)
