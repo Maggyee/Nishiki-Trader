@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-06-29 (Phase 6 live-readiness gate)
+- **Last updated**: 2026-06-29 (Phase 6 live startup guard)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
-- **Current objective**: Phase 5 remains the active implemented phase. ADR-013 and `apps.ops.live_readiness` now define a passive Phase 6 live-readiness gate, but Phase 6 is still closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, and no live startup guard or first-live-day runbook has been accepted. ADR-012, `apps.ops.dashboard_snapshot`, and `apps/frontend` continue to define the read-only operations console consuming `dashboard.snapshot.v1` with runtime health, AgentAdvice, passive paper/testnet summaries, signal/rejection/freshness/evidence summaries, observability, and reference links. Agents and frontend still cannot write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or enter the order path. Keep `freqai_linear_v1 / linear-mom-train20240105` at `hold @ testnet_canary` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. No live trading without ADR-013 acceptance, the ADR-001 capital ladder gate, and the ADR-008 14-day continuity gate.
+- **Current objective**: Phase 5 remains the active implemented phase. ADR-013, `apps.ops.live_readiness`, and `apps.strategies_nautilus.runners.live_startup_guard` now define passive Phase 6 live-readiness and startup-refusal gates, but Phase 6 is still closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired. ADR-012, `apps.ops.dashboard_snapshot`, and `apps/frontend` continue to define the read-only operations console consuming `dashboard.snapshot.v1` with runtime health, AgentAdvice, passive paper/testnet summaries, signal/rejection/freshness/evidence summaries, observability, and reference links. Agents and frontend still cannot write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or enter the order path. Keep `freqai_linear_v1 / linear-mom-train20240105` at `hold @ testnet_canary` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. No live trading without ADR-013 acceptance, the ADR-001 capital ladder gate, and the ADR-008 14-day continuity gate.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -105,13 +105,14 @@ At task finish:
 ## Current Focus
 
 Phase 5 entry: operate and harden the read-only dashboard as the current
-operations console while the new ADR-013 / `apps.ops.live_readiness` gate
-tracks Phase 6 blockers passively. Routine 14-day testnet continuity testing
-remains paused by operator decision on 2026-06-04. The Phase 3 strict streak
-remains 0/14, so Phase 6 is not open. ADR-008 §6.6 has fifteen clean 6 h
-sidecar-backed testnet canaries summarized in
-`docs/progress/phase-3-testnet-canary-evidence.md`; the continuity procedure
-is preserved but paused in `docs/progress/phase-3-testnet-continuity-plan.md`.
+operations console while ADR-013, `apps.ops.live_readiness`, and
+`apps.strategies_nautilus.runners.live_startup_guard` track Phase 6 blockers
+passively. Routine 14-day testnet continuity testing remains paused by operator
+decision on 2026-06-04. The Phase 3 strict streak remains 0/14, so Phase 6 is
+not open. ADR-008 §6.6 has fifteen clean 6 h sidecar-backed testnet canaries
+summarized in `docs/progress/phase-3-testnet-canary-evidence.md`; the
+continuity procedure is preserved but paused in
+`docs/progress/phase-3-testnet-continuity-plan.md`.
 
 Immediate focus:
 
@@ -123,7 +124,7 @@ Immediate focus:
 
 ## Next Steps
 
-1. Use `python -m apps.ops.live_readiness` as the passive Phase 6 blocker report before any live-risk discussion. It should remain blocked until ADR-013 is Accepted, 14-day testnet continuity is proven, starting capital is declared within 100-500 USDT, and a live-canary promotion review exists.
+1. Use `python -m apps.ops.live_readiness` as the passive Phase 6 blocker report before any live-risk discussion, then feed a saved JSON report into `python -m apps.strategies_nautilus.runners.live_startup_guard` before any future live runner could load credentials. Both should remain blocked until ADR-013 is Accepted, 14-day testnet continuity is proven, starting capital is declared within 100-500 USDT, a live-canary promotion review exists, and `docs/runbook-first-live-day.md` is Accepted.
 2. Continue Phase 5 with only read-only dashboard improvements fed by `dashboard.snapshot.v1`; source-evidence drill-down links are wired for source/model rows, so the next useful navigation addition would be narrower model-level Grafana filtering only after the dashboard gains an explicit `model_version` variable. Keep the frontend free of API routes and mutation controls until a separate ADR opens a specific workflow.
 3. Continue project development with targeted verification for the changed surface area; do not spend routine time rebuilding the 0/14 strict continuity streak unless live-readiness evidence is explicitly resumed.
 4. If the operator explicitly resumes live-readiness evidence collection, use `docs/progress/phase-3-testnet-continuity-plan.md` and include every completed manifest-backed testnet bundle in the candidate window when running both `report_testnet_bundle --continuity` and `apps.ops.live_readiness`.
@@ -135,7 +136,7 @@ Immediate focus:
 ## Blocked / Deferred
 
 - No live trading.
-- No Phase 6 entry: ADR-013 is Draft, strict continuity is 0/14, no live-canary promotion review exists, and no live startup guard has been accepted.
+- No Phase 6 entry: ADR-013 is Draft, strict continuity is 0/14, no live-canary promotion review exists, `docs/runbook-first-live-day.md` is Draft, and the live startup guard is not wired to any live runner.
 - No real exchange API keys in the repository.
 - No Redis until cross-process signal transport is required.
 - No automatic SQLite -> Postgres mirror or PG-backed bridge default until an ADR-011 trigger fires; current Postgres/TimescaleDB/pgvector is service-only Phase 3 support.
@@ -145,6 +146,16 @@ Immediate focus:
 - No edits to `freqtrade/` or `nautilus_trader/` unless explicitly requested.
 
 ## Latest Verification
+
+On 2026-06-29, after adding the passive Phase 6 live startup guard:
+
+- Added `apps.strategies_nautilus.runners.live_startup_guard`, which emits `phase6.live_startup_guard.v1` JSON/Markdown and returns exit code 2 when a future live runner must refuse startup. It validates `--mode live`, `--kind live`, explicit `--allow-live-credentials`, clean git, accepted ADR-013, a saved passing `phase6.live_readiness.v1` report, exact source/model live-canary promotion review, 100-500 USDT starting capital, `SourcePolicy(dry_run=False, position_pct_multiplier<=0.1)`, and an accepted first-live-day runbook.
+- Added Draft `docs/runbook-first-live-day.md`; it is a checklist and manual fallback draft only, not live authorization.
+- The guard remains passive: it does not read live credential values, build a Nautilus node, connect to Binance, mutate `SourcePolicy`, write `SignalEvent`, place orders, or authorize live trading.
+- `TMPDIR=/tmp UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/strategies_nautilus/test_live_startup_guard.py tests/ops/test_live_readiness.py -q` -> **13 passed**.
+- `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check apps tests docs infra` -> clean.
+- Blocked current-repo smoke with the standard live guard CLI args -> exit 2, `startup_allowed=false`, `live_trading_authorized=false`, blockers include Draft ADR-013, missing readiness report, missing live promotion review, Draft first-live-day runbook, and dirty working tree.
+- `git diff --check` -> clean.
 
 On 2026-06-29, after adding the passive Phase 6 live-readiness gate:
 

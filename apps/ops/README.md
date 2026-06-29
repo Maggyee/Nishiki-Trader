@@ -112,6 +112,11 @@ continuity evidence、可选 promotion review artifact、以及显式声明的�
 不读取 live/testnet 凭证、不启动 Nautilus、不写 `SignalEvent`、不改
 `SourcePolicy`、不下单，也不授权 live trading。
 
+当 Phase 6 证据最终齐备时，把 JSON 输出保存成 operator 审计材料，再交给
+`apps.strategies_nautilus.runners.live_startup_guard` 做未来 live runner 的启动前
+拒绝校验。当前仓库默认仍会阻塞，因为 ADR-013 是 Draft，14 天 continuity 未满足，
+没有 live-canary promotion review，且 first-live-day runbook 仍是 Draft。
+
 ## 计划脚本
 
 | 脚本 | 用途 | 最早 Phase |

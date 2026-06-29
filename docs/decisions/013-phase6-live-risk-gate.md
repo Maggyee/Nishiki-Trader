@@ -45,7 +45,7 @@ Phase 6 entry requires all of the following evidence, in this order:
    `(source, model_version)` moving `testnet_canary -> live_canary`.
 4. A declared starting capital between 100 and 500 USDT, spot-only, no margin,
    no leverage.
-5. An operator runbook for the first live day, including:
+5. An accepted operator runbook for the first live day, including:
    - preflight clean git check;
    - credential load and key-prefix-only audit;
    - emergency flatten command and manual exchange fallback;
@@ -77,7 +77,7 @@ Forbidden before this ADR is Accepted:
 - allowing LLM agents to write `SignalEvent`, mutate `SourcePolicy`, or call
   exchange APIs.
 
-## 4. Readiness Tool
+## 4. Readiness Tools
 
 `python -m apps.ops.live_readiness` is the passive gate reader for this ADR. It
 emits `phase6.live_readiness.v1` JSON or Markdown from:
@@ -103,6 +103,36 @@ UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.ops.live_readiness \
   --markdown
 ```
 
+`python -m apps.strategies_nautilus.runners.live_startup_guard` is the passive
+startup preflight reader for a future live runner. It consumes a saved
+`phase6.live_readiness.v1` JSON report plus the live-risk ADR, live-canary
+promotion review, first-live-day runbook, capital declaration, live SourcePolicy
+fields, explicit `--allow-live-credentials`, and git state. It returns exit code
+2 when the future live runner must refuse startup.
+
+The startup guard still does not load live credentials, inspect credential
+values, build a Nautilus node, connect to Binance, mutate `SourcePolicy`, write
+`SignalEvent`, place orders, or authorize live trading. It only defines the
+startup refusal contract before those capabilities exist.
+
+Current blocked example:
+
+```bash
+UV_CACHE_DIR=/tmp/uv-cache uv run python -m \
+  apps.strategies_nautilus.runners.live_startup_guard \
+  --mode live \
+  --kind live \
+  --allow-live-credentials \
+  --source freqai_linear_v1 \
+  --model-version linear-mom-train20240105 \
+  --policy-position-pct-multiplier 0.1 \
+  --starting-capital-usdt 100 \
+  --live-readiness-report-path docs/retros/<phase6-live-readiness>.json \
+  --live-promotion-review-path docs/retros/<live-canary-promotion-review>.md \
+  --first-live-day-runbook-path docs/runbook-first-live-day.md \
+  --markdown
+```
+
 When live-readiness evidence collection resumes, pass every completed
 manifest-backed bundle in the candidate continuity window:
 
@@ -124,15 +154,19 @@ A future live runner must refuse startup unless:
 - `--allow-live-credentials` is present;
 - git status is clean and matches the committed evidence;
 - this ADR or its successor is Accepted;
-- a continuity report proves the 14-day gate;
-- a live-canary promotion review exists for the exact source/model;
+- a saved `phase6.live_readiness.v1` report proves the 14-day continuity gate
+  and has no blockers;
+- a live-canary promotion review exists for the exact source/model transition
+  `testnet_canary -> live_canary`;
 - starting capital is declared and within 100-500 USDT;
+- `SourcePolicy.dry_run=false`;
 - `SourcePolicy.position_pct_multiplier <= 0.1`;
-- emergency flatten has a tested live-mode path or an explicit manual fallback
-  checklist.
+- an accepted first-live-day runbook exists;
+- emergency flatten has a tested live-mode path or an explicit manual exchange
+  fallback checklist.
 
-The live startup guard must be implemented and unit-tested before Phase 6 can
-open.
+The passive live startup guard is implemented and unit-tested, but it is not
+wired to a live runner and does not open Phase 6 by itself.
 
 ## 6. Deferred
 

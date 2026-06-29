@@ -94,6 +94,29 @@ auto-invokes the ADR-008 emergency flatten path when the 5% daily-loss,
 exchange-error burst, or WS-reconnect burst thresholds fire. It writes only
 the credential source and API key prefix to disk.
 
+Phase 6 passive live startup guard:
+
+```bash
+uv run python -m apps.strategies_nautilus.runners.live_startup_guard \
+  --mode live \
+  --kind live \
+  --allow-live-credentials \
+  --source freqai_linear_v1 \
+  --model-version linear-mom-train20240105 \
+  --policy-position-pct-multiplier 0.1 \
+  --starting-capital-usdt 100 \
+  --live-readiness-report-path docs/retros/<phase6-live-readiness>.json \
+  --live-promotion-review-path docs/retros/<live-canary-promotion-review>.md \
+  --first-live-day-runbook-path docs/runbook-first-live-day.md \
+  --markdown
+```
+
+The guard is a refusal contract for a future live runner. It reads only local
+evidence paths and git state, returns exit code 2 when blocked, and does not
+read live credential values, build a Nautilus node, connect to Binance, mutate
+`SourcePolicy`, write `SignalEvent`, or place orders. Current repo evidence is
+expected to block because Phase 6 is not open.
+
 For a restart, pass `--previous-run-id <run_id> --restart-reason <reason>`;
 the runner compares the previous bundle's open orders / positions with
 exchange REST state before building a new node. Drift writes
@@ -138,6 +161,7 @@ strategies_nautilus/
     ├── backtest_runner.py
     ├── paper_runner.py
     ├── report_paper_bundle.py
+    ├── live_startup_guard.py
     └── compare_backtests.py
 ```
 
