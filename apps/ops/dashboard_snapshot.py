@@ -87,6 +87,20 @@ _SOURCE_REFERENCE_LINKS = (
         "path": "docs/runbook-first-testnet-canary.md",
         "detail": "Operator steps for controlled testnet canary evidence collection.",
     },
+    {
+        "group": "docs",
+        "label": "Phase 6 live-risk ADR",
+        "kind": "adr",
+        "path": "docs/decisions/013-phase6-live-risk-gate.md",
+        "detail": "Passive live-readiness and startup-refusal gate requirements.",
+    },
+    {
+        "group": "ops",
+        "label": "First live day runbook",
+        "kind": "runbook",
+        "path": "docs/runbook-first-live-day.md",
+        "detail": "Draft first live day checklist and manual fallback boundary.",
+    },
 )
 _GRAFANA_REFERENCE_LINKS = (
     {
@@ -114,6 +128,8 @@ def build_dashboard_snapshot(
     agent_advice_db_path: Path = DEFAULT_ADVICE_DB_PATH,
     paper_bundle_dirs: Sequence[Path] = (),
     testnet_bundle_dirs: Sequence[Path] = (),
+    phase6_live_readiness_report_path: Path | None = None,
+    phase6_live_startup_guard_report_path: Path | None = None,
     advice_limit: int = 20,
     grafana_base_url: str | None = DEFAULT_GRAFANA_BASE_URL,
     repo_browser_base_url: str | None = None,
@@ -157,6 +173,10 @@ def build_dashboard_snapshot(
         paper_bundles=paper_bundles,
         testnet_bundles=testnet_bundles,
     )
+    phase6 = _phase6_snapshot(
+        live_readiness_report_path=phase6_live_readiness_report_path,
+        live_startup_guard_report_path=phase6_live_startup_guard_report_path,
+    )
     return {
         "schema_version": SNAPSHOT_SCHEMA_VERSION,
         "generated_at_ns": generated_ns,
@@ -166,6 +186,7 @@ def build_dashboard_snapshot(
         "paper_bundles": paper_bundles,
         "testnet_bundles": testnet_bundles,
         "signal_summary": signal_summary,
+        "phase6": phase6,
         "ops_status": ops_status,
         "observability": _observability_snapshot(
             observability_textfile_dir,
@@ -205,10 +226,19 @@ def render_markdown_snapshot(snapshot: dict[str, Any]) -> str:
             "source_policy_mutation_allowed="
             f"{str(boundaries['source_policy_mutation_allowed']).lower()}"
         ),
-        "",
-        "## Operator Next Steps",
-        "",
     ]
+    phase6 = snapshot.get("phase6") or {}
+    lines.extend(["", "## Phase 6 Gates", ""])
+    for report in phase6.get("reports", []):
+        lines.append(
+            "- "
+            f"{report.get('label')}: "
+            f"status=`{report.get('status')}`, "
+            f"blockers={_join_or_none(report.get('blockers') or [])}, "
+            f"path=`{report.get('path') or 'not attached'}`"
+        )
+
+    lines.extend(["", "## Operator Next Steps", ""])
     for item in status.get("sections", {}).get("next_steps", []):
         lines.append(f"- {item}")
 
@@ -1170,6 +1200,180 @@ def _observability_counts(runs: Sequence[dict[str, Any]]) -> dict[str, int]:
     }
 
 
+def _phase6_snapshot(
+    *,
+    live_readiness_report_path: Path | None,
+    live_startup_guard_report_path: Path | None,
+) -> dict[str, Any]:
+    readiness = _phase6_report_snapshot(
+        label="Live readiness",
+        path=live_readiness_report_path,
+        expected_schema="phase6.live_readiness.v1",
+        gate_field="readiness_gate_met",
+        authorization_field="live_trading_allowed",
+    )
+    startup_guard = _phase6_report_snapshot(
+        label="Live startup guard",
+        path=live_startup_guard_report_path,
+        expected_schema="phase6.live_startup_guard.v1",
+        gate_field="startup_allowed",
+        authorization_field="live_trading_authorized",
+    )
+    reports = [readiness, startup_guard]
+    blocker_count = sum(len(report.get("blockers") or []) for report in reports)
+    missing_count = sum(1 for report in reports if report.get("status") == "missing")
+    invalid_count = sum(1 for report in reports if report.get("status") == "invalid")
+    passed_count = sum(1 for report in reports if report.get("status") == "ok")
+    return {
+        "state": "review" if passed_count == len(reports) else "blocked",
+        "reports": reports,
+        "counts": {
+            "attached_report_count": sum(1 for report in reports if report.get("attached")),
+            "passed_report_count": passed_count,
+            "missing_report_count": missing_count,
+            "invalid_report_count": invalid_count,
+            "blocker_count": blocker_count,
+        },
+        "summary": _phase6_summary_lines(reports),
+        "boundaries": {
+            "loads_exchange_credentials": False,
+            "starts_runtime": False,
+            "mutates_source_policy": False,
+            "writes_signal_event": False,
+            "places_orders": False,
+            "authorizes_live_trading": False,
+        },
+    }
+
+
+def _phase6_report_snapshot(
+    *,
+    label: str,
+    path: Path | None,
+    expected_schema: str,
+    gate_field: str,
+    authorization_field: str,
+) -> dict[str, Any]:
+    if path is None:
+        return {
+            "label": label,
+            "path": None,
+            "attached": False,
+            "exists": False,
+            "schema_version": None,
+            "status": "missing",
+            "gate_field": gate_field,
+            "gate_met": False,
+            "authorization_field": authorization_field,
+            "authorizes_live_trading": False,
+            "source": None,
+            "model_version": None,
+            "recommendation": None,
+            "blockers": [f"{gate_field}_report_not_attached"],
+            "checks": [],
+        }
+    if not path.exists():
+        return {
+            "label": label,
+            "path": str(path),
+            "attached": True,
+            "exists": False,
+            "schema_version": None,
+            "status": "missing",
+            "gate_field": gate_field,
+            "gate_met": False,
+            "authorization_field": authorization_field,
+            "authorizes_live_trading": False,
+            "source": None,
+            "model_version": None,
+            "recommendation": None,
+            "blockers": [f"{gate_field}_report_not_found"],
+            "checks": [],
+        }
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        return {
+            "label": label,
+            "path": str(path),
+            "attached": True,
+            "exists": True,
+            "schema_version": None,
+            "status": "invalid",
+            "gate_field": gate_field,
+            "gate_met": False,
+            "authorization_field": authorization_field,
+            "authorizes_live_trading": False,
+            "source": None,
+            "model_version": None,
+            "recommendation": None,
+            "blockers": [f"invalid_json:{exc.__class__.__name__}"],
+            "checks": [],
+        }
+
+    blockers = [str(item) for item in payload.get("blockers") or []]
+    schema_version = payload.get("schema_version")
+    gate_met = payload.get(gate_field) is True
+    authorizes_live_trading = payload.get(authorization_field) is True
+    if schema_version != expected_schema:
+        blockers.append(f"unexpected_schema_version:{schema_version}")
+    if authorizes_live_trading:
+        blockers.append(f"{authorization_field}_must_remain_false")
+    status = "ok" if gate_met and not blockers else "blocked"
+    return {
+        "label": label,
+        "path": str(path),
+        "attached": True,
+        "exists": True,
+        "schema_version": schema_version,
+        "status": status,
+        "gate_field": gate_field,
+        "gate_met": gate_met,
+        "authorization_field": authorization_field,
+        "authorizes_live_trading": authorizes_live_trading,
+        "source": payload.get("source"),
+        "model_version": payload.get("model_version"),
+        "recommendation": payload.get("recommendation"),
+        "blockers": sorted(dict.fromkeys(blockers)),
+        "checks": _compact_phase6_checks(payload.get("checks") or []),
+    }
+
+
+def _compact_phase6_checks(checks: Sequence[Any]) -> list[dict[str, str]]:
+    compact: list[dict[str, str]] = []
+    for check in checks:
+        if not isinstance(check, dict):
+            continue
+        compact.append(
+            {
+                "name": str(check.get("name") or "unknown"),
+                "status": str(check.get("status") or "unknown"),
+                "detail": str(check.get("detail") or ""),
+            }
+        )
+    return compact[:8]
+
+
+def _phase6_summary_lines(reports: Sequence[dict[str, Any]]) -> list[str]:
+    lines: list[str] = []
+    for report in reports:
+        status = str(report.get("status") or "unknown")
+        label = str(report.get("label") or "Phase 6 report")
+        blockers = report.get("blockers") or []
+        if status == "ok":
+            lines.append(f"{label} artifact passes its passive gate.")
+        elif status == "missing":
+            if report.get("attached"):
+                lines.append(f"{label} artifact path is missing.")
+            else:
+                lines.append(f"{label} artifact is not attached.")
+        elif status == "invalid":
+            lines.append(f"{label} artifact is invalid.")
+        else:
+            lines.append(f"{label} remains blocked: {_join_or_none(blockers)}.")
+    return lines
+
+
 def _reference_links(
     *,
     grafana_base_url: str | None,
@@ -1464,6 +1668,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--paper-bundle", action="append", default=[])
     parser.add_argument("--testnet-bundle", action="append", default=[])
+    parser.add_argument(
+        "--phase6-live-readiness-report",
+        default=None,
+        help="Optional saved phase6.live_readiness.v1 JSON artifact to summarize.",
+    )
+    parser.add_argument(
+        "--phase6-live-startup-guard-report",
+        default=None,
+        help="Optional saved phase6.live_startup_guard.v1 JSON artifact to summarize.",
+    )
     parser.add_argument("--advice-limit", type=int, default=20)
     parser.add_argument(
         "--observability-textfile-dir",
@@ -1502,6 +1716,16 @@ def main(argv: list[str] | None = None) -> int:
         agent_advice_db_path=Path(args.agent_advice_db),
         paper_bundle_dirs=tuple(Path(path) for path in args.paper_bundle),
         testnet_bundle_dirs=tuple(Path(path) for path in args.testnet_bundle),
+        phase6_live_readiness_report_path=(
+            Path(args.phase6_live_readiness_report)
+            if args.phase6_live_readiness_report
+            else None
+        ),
+        phase6_live_startup_guard_report_path=(
+            Path(args.phase6_live_startup_guard_report)
+            if args.phase6_live_startup_guard_report
+            else None
+        ),
         advice_limit=args.advice_limit,
         grafana_base_url=args.grafana_base_url,
         repo_browser_base_url=args.repo_browser_base_url,

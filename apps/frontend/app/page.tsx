@@ -4,6 +4,7 @@ import {
   type ObservabilityRun,
   type ObservabilitySnapshot,
   type PaperBundle,
+  type Phase6Snapshot,
   type ReferenceLink,
   type SignalReasonCount,
   type SignalSummary,
@@ -67,6 +68,7 @@ const COPY = {
       runtimeHealth: "Runtime Health",
       runtimeSubtitle: "textfile collector snapshot",
       signalSummary: "Signals & Rejections",
+      phase6Gates: "Phase 6 Gates",
       agentAdviceQueue: "AgentAdvice Queue",
       operatorChecklist: "Operator Checklist",
       watchlist: "Watchlist",
@@ -145,6 +147,21 @@ const COPY = {
         unauthorized: "unauthorized",
       },
     },
+    phase6: {
+      reports: "reports",
+      attached: "attached",
+      blockers: "blockers",
+      passiveOnly: "passive evidence only",
+      noReports: "No Phase 6 gate artifacts are attached.",
+      report: "Report",
+      status: "Status",
+      gate: "Gate",
+      authorization: "Authorization",
+      path: "Path",
+      checks: "checks",
+      blockedSummary: "Phase 6 remains closed.",
+      reviewSummary: "All attached Phase 6 gate artifacts passed their passive checks.",
+    },
     advice: {
       noRowsSnapshot: "no rows in snapshot",
       latestRows: "latest rows",
@@ -218,6 +235,9 @@ const COPY = {
       archived: "archived",
       blocked: "blocked",
       breach: "breach",
+      missing: "missing",
+      invalid: "invalid",
+      review: "review",
       unknown: "unknown",
     },
     generated: {
@@ -308,6 +328,7 @@ const COPY = {
       runtimeHealth: "运行健康",
       runtimeSubtitle: "textfile collector 快照",
       signalSummary: "信号与拒绝",
+      phase6Gates: "Phase 6 闸门",
       agentAdviceQueue: "AgentAdvice 队列",
       operatorChecklist: "操作员检查表",
       watchlist: "关注列表",
@@ -386,6 +407,21 @@ const COPY = {
         unauthorized: "未授权",
       },
     },
+    phase6: {
+      reports: "份报告",
+      attached: "已附加",
+      blockers: "阻塞项",
+      passiveOnly: "仅被动证据",
+      noReports: "当前快照未附加 Phase 6 gate artifact。",
+      report: "报告",
+      status: "状态",
+      gate: "闸门",
+      authorization: "授权",
+      path: "路径",
+      checks: "项检查",
+      blockedSummary: "Phase 6 仍然关闭。",
+      reviewSummary: "所有已附加 Phase 6 gate artifact 均通过被动检查。",
+    },
     advice: {
       noRowsSnapshot: "快照中没有记录",
       latestRows: "条最近记录",
@@ -459,6 +495,9 @@ const COPY = {
       archived: "已归档",
       blocked: "阻塞",
       breach: "越界",
+      missing: "缺失",
+      invalid: "无效",
+      review: "待复核",
       unknown: "未知",
     },
     generated: {
@@ -524,6 +563,7 @@ export default async function DashboardPage({
   const testnetBundles = snapshot.testnet_bundles ?? [];
   const observability = snapshot.observability ?? {};
   const signalSummary = snapshot.signal_summary ?? {};
+  const phase6 = snapshot.phase6 ?? {};
   const referenceLinks = snapshot.reference_links ?? [];
   const ops = snapshot.ops_status ?? {};
 
@@ -537,6 +577,7 @@ export default async function DashboardPage({
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(380px,0.55fr)]">
           <div className="grid gap-4">
             <StatusGrid snapshot={snapshot} language={language} copy={copy} />
+            <Phase6GatePanel phase6={phase6} language={language} copy={copy} />
             <RuntimeHealthPanel observability={observability} language={language} copy={copy} />
             <SignalSummaryPanel signalSummary={signalSummary} language={language} copy={copy} />
             <OpsSummary summary={ops.summary ?? []} copy={copy} />
@@ -740,6 +781,94 @@ function Metric({
       <div className="metric-value">{value}</div>
       <div className="metric-detail">{detail}</div>
     </article>
+  );
+}
+
+function Phase6GatePanel({
+  phase6,
+  language,
+  copy,
+}: {
+  phase6: Phase6Snapshot;
+  language: Language;
+  copy: Copy;
+}) {
+  const reports = phase6.reports ?? [];
+  const counts = phase6.counts ?? {};
+  const state = phase6.state === "review" ? "review" : "blocked";
+  return (
+    <section className="panel">
+      <div className="section-head">
+        <h2>{copy.sections.phase6Gates}</h2>
+        <span>{state === "review" ? copy.phase6.reviewSummary : copy.phase6.blockedSummary}</span>
+      </div>
+      <div className="phase6-facts">
+        <RuntimeFact
+          label={copy.phase6.attached}
+          value={`${formatCount(counts.attached_report_count, language)} / ${formatCount(reports.length, language)}`}
+          detail={copy.phase6.reports}
+          tone={(counts.attached_report_count ?? 0) === reports.length && reports.length > 0 ? "green" : "amber"}
+        />
+        <RuntimeFact
+          label={copy.phase6.blockers}
+          value={formatCount(counts.blocker_count, language)}
+          detail={copy.phase6.passiveOnly}
+          tone={(counts.blocker_count ?? 0) > 0 ? "red" : "green"}
+        />
+        <RuntimeFact
+          label={copy.phase6.status}
+          value={localizeStatus(state === "review" ? "ok" : "blocked", copy)}
+          detail={copy.phase6.passiveOnly}
+          tone={state === "review" ? "green" : "red"}
+        />
+      </div>
+      <div className="phase6-report-list">
+        {reports.length ? (
+          reports.map((report) => (
+            <Phase6ReportRow copy={copy} key={report.label ?? report.gate_field} language={language} report={report} />
+          ))
+        ) : (
+          <div className="runtime-empty">{copy.phase6.noReports}</div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function Phase6ReportRow({
+  report,
+  language,
+  copy,
+}: {
+  report: NonNullable<Phase6Snapshot["reports"]>[number];
+  language: Language;
+  copy: Copy;
+}) {
+  const blockers = report.blockers ?? [];
+  return (
+    <div className="phase6-report" data-status={normalizePhase6Status(report.status)}>
+      <div className="phase6-report-head">
+        <strong>{report.label ?? copy.phase6.report}</strong>
+        <StatusPill value={report.status ?? "unknown"} copy={copy} />
+      </div>
+      <div className="phase6-report-grid">
+        <span>
+          {copy.phase6.gate}: {formatBoolean(report.gate_met, copy)}
+        </span>
+        <span>
+          {copy.phase6.authorization}: {formatBoolean(report.authorizes_live_trading, copy)}
+        </span>
+        <span>
+          {copy.phase6.blockers}: {blockers.length ? blockers.join(", ") : copy.signal.noReasons}
+        </span>
+        <span>
+          {copy.phase6.checks}: {formatMaybeNumber(report.checks?.length, language, copy)}
+        </span>
+      </div>
+      <small>
+        {copy.phase6.path}: {report.path ?? copy.reference.localOnly}
+      </small>
+    </div>
   );
 }
 
@@ -1281,7 +1410,7 @@ function ReferenceLinksPanel({ links, copy }: { links: ReferenceLink[]; copy: Co
       </div>
       <div className="reference-list">
         {links.length ? (
-          links.slice(0, 8).map((link) => (
+          links.slice(0, 10).map((link) => (
             <ReferenceLinkRow
               copy={copy}
               key={`${link.group ?? "unknown"}-${link.label ?? link.path ?? link.href ?? "link"}`}
@@ -1410,6 +1539,13 @@ function normalizeRuntimeState(value: string | undefined): "healthy" | "stale" |
 
 function normalizeChecklist(value: string | undefined): string {
   return value ?? "unknown";
+}
+
+function normalizePhase6Status(value: string | undefined): string {
+  if (value === "ok" || value === "blocked" || value === "missing" || value === "invalid") {
+    return value;
+  }
+  return "unknown";
 }
 
 function localizeKnown(value: string | undefined | null, copy: Copy): string {
@@ -1589,6 +1725,16 @@ function formatWs(value: boolean | null | undefined, copy: Copy): string {
     return copy.runtime.disconnected;
   }
   return copy.runtime.unknown;
+}
+
+function formatBoolean(value: boolean | null | undefined, copy: Copy): string {
+  if (value === true) {
+    return copy.boundary.open;
+  }
+  if (value === false) {
+    return copy.boundary.closed;
+  }
+  return copy.common.unknown;
 }
 
 function formatConfidence(value: number | undefined, copy: Copy): string {

@@ -96,6 +96,20 @@ source/model freshness 与证据 drill-down。证据链接只指向 Grafana read
 source 过滤视图、已附加的本地 bundle 路径和既有证据文档；不会触发 runner、
 写 `SignalEvent` 或修改 `SourcePolicy`。
 
+也可以附加已保存的 Phase 6 passive gate JSON artifact，让 dashboard 只读展示
+readiness/startup guard 阻塞状态：
+
+```bash
+uv run python -m apps.ops.dashboard_snapshot \
+  --phase6-live-readiness-report docs/retros/<readiness-report>.json \
+  --phase6-live-startup-guard-report docs/retros/<startup-guard-report>.json \
+  > data/frontend/dashboard-snapshot.json
+```
+
+这些参数只读取 `phase6.live_readiness.v1` 和
+`phase6.live_startup_guard.v1` JSON 文件并压缩到 `phase6` 字段；不会生成报告、
+不会运行 `live_readiness` 或 `live_startup_guard`，也不会授权 live trading。
+
 生成 Phase 6 只读 live-readiness gate（默认会阻塞，因为 ADR-013 仍是 Draft，
 且 14 天 testnet continuity 仍未满足）：
 

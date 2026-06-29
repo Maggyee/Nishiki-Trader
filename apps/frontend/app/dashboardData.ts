@@ -138,6 +138,36 @@ export type ObservabilitySnapshot = {
   runs?: ObservabilityRun[];
 };
 
+export type Phase6GateReport = {
+  label?: string;
+  path?: string | null;
+  attached?: boolean;
+  exists?: boolean;
+  schema_version?: string | null;
+  status?: string;
+  gate_field?: string;
+  gate_met?: boolean;
+  authorization_field?: string;
+  authorizes_live_trading?: boolean;
+  source?: string | null;
+  model_version?: string | null;
+  recommendation?: string | null;
+  blockers?: string[];
+  checks?: Array<{
+    name?: string;
+    status?: string;
+    detail?: string;
+  }>;
+};
+
+export type Phase6Snapshot = {
+  state?: string;
+  reports?: Phase6GateReport[];
+  counts?: Record<string, number>;
+  summary?: string[];
+  boundaries?: Record<string, boolean>;
+};
+
 export type DashboardSnapshot = {
   schema_version?: string;
   generated_at_ns?: number | string | null;
@@ -166,6 +196,7 @@ export type DashboardSnapshot = {
   paper_bundles?: PaperBundle[];
   testnet_bundles?: TestnetBundle[];
   signal_summary?: SignalSummary;
+  phase6?: Phase6Snapshot;
   ops_status?: {
     state?: "guarded" | "attention" | "breach" | string;
     headline?: string;
@@ -254,6 +285,64 @@ function fallbackSnapshot(snapshotPath: string, error: unknown): DashboardSnapsh
       by_source_model: [],
       runs: [],
     },
+    phase6: {
+      state: "blocked",
+      reports: [
+        {
+          label: "Live readiness",
+          path: null,
+          attached: false,
+          exists: false,
+          schema_version: null,
+          status: "missing",
+          gate_field: "readiness_gate_met",
+          gate_met: false,
+          authorization_field: "live_trading_allowed",
+          authorizes_live_trading: false,
+          source: null,
+          model_version: null,
+          recommendation: null,
+          blockers: ["readiness_gate_met_report_not_attached"],
+          checks: [],
+        },
+        {
+          label: "Live startup guard",
+          path: null,
+          attached: false,
+          exists: false,
+          schema_version: null,
+          status: "missing",
+          gate_field: "startup_allowed",
+          gate_met: false,
+          authorization_field: "live_trading_authorized",
+          authorizes_live_trading: false,
+          source: null,
+          model_version: null,
+          recommendation: null,
+          blockers: ["startup_allowed_report_not_attached"],
+          checks: [],
+        },
+      ],
+      counts: {
+        attached_report_count: 0,
+        passed_report_count: 0,
+        missing_report_count: 2,
+        invalid_report_count: 0,
+        blocker_count: 2,
+      },
+      summary: [
+        "Live readiness artifact is not attached.",
+        "Live startup guard artifact is not attached.",
+      ],
+      boundaries: {
+        loads_exchange_credentials: false,
+        starts_runtime: false,
+        mutates_source_policy: false,
+        writes_signal_event: false,
+        places_orders: false,
+        authorizes_live_trading: false,
+      },
+    },
     ops_status: {
       state: "attention",
       headline: "Dashboard is waiting for a generated snapshot.",
@@ -315,6 +404,22 @@ function fallbackSnapshot(snapshotPath: string, error: unknown): DashboardSnapsh
         href: "http://127.0.0.1:3000/d/canary-current/canary-current",
         path: "infra/grafana/dashboards/canary-current.json",
         detail: "Read-only heartbeat, alert, and runtime panels for the active canary.",
+      },
+      {
+        group: "docs",
+        label: "Phase 6 live-risk ADR",
+        kind: "adr",
+        href: null,
+        path: "docs/decisions/013-phase6-live-risk-gate.md",
+        detail: "Passive live-readiness and startup-refusal gate requirements.",
+      },
+      {
+        group: "ops",
+        label: "First live day runbook",
+        kind: "runbook",
+        href: null,
+        path: "docs/runbook-first-live-day.md",
+        detail: "Draft first live day checklist and manual fallback boundary.",
       },
     ],
     operator_checklist: [

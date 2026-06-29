@@ -183,6 +183,8 @@ def test_markdown_snapshot_renders_boundary_and_advice(tmp_path: Path) -> None:
     assert "## Reference Links" in out
     assert "Signals overview" in out
     assert "`advice-1`" in out
+    assert "## Phase 6 Gates" in out
+    assert "Live readiness" in out
 
 
 def test_snapshot_includes_source_neutral_reference_links(tmp_path: Path) -> None:
@@ -213,6 +215,11 @@ def test_snapshot_includes_source_neutral_reference_links(tmp_path: Path) -> Non
         "infra/grafana/dashboards/signals-overview.json"
     )
     assert links["Current testnet canary"]["kind"] == "dashboard"
+    assert links["Phase 6 live-risk ADR"]["href"] == (
+        "https://github.com/example/trader/blob/main/"
+        "docs/decisions/013-phase6-live-risk-gate.md"
+    )
+    assert links["First live day runbook"]["kind"] == "runbook"
 
 
 def test_snapshot_can_emit_local_reference_paths_without_urls(tmp_path: Path) -> None:
@@ -232,6 +239,105 @@ def test_snapshot_can_emit_local_reference_paths_without_urls(tmp_path: Path) ->
     assert links["Signals overview"]["path"] == (
         "infra/grafana/dashboards/signals-overview.json"
     )
+
+
+def test_snapshot_summarizes_missing_phase6_reports_by_default(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    phase6 = snapshot["phase6"]
+    assert phase6["state"] == "blocked"
+    assert phase6["counts"] == {
+        "attached_report_count": 0,
+        "passed_report_count": 0,
+        "missing_report_count": 2,
+        "invalid_report_count": 0,
+        "blocker_count": 2,
+    }
+    assert [report["status"] for report in phase6["reports"]] == [
+        "missing",
+        "missing",
+    ]
+    assert phase6["boundaries"]["authorizes_live_trading"] is False
+
+
+def test_snapshot_summarizes_phase6_gate_artifacts(tmp_path: Path) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    readiness_path = tmp_path / "live-readiness.json"
+    guard_path = tmp_path / "live-startup-guard.json"
+    readiness_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "phase6.live_readiness.v1",
+                "source": "freqai_linear_v1",
+                "model_version": "linear-mom-train20240105",
+                "readiness_gate_met": False,
+                "live_trading_allowed": False,
+                "recommendation": "remain_blocked_before_phase6_live_canary",
+                "blockers": ["live_risk_adr_not_accepted"],
+                "checks": [
+                    {
+                        "name": "live_risk_adr",
+                        "status": "blocked",
+                        "detail": "ADR-013 is Draft.",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    guard_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "phase6.live_startup_guard.v1",
+                "source": "freqai_linear_v1",
+                "model_version": "linear-mom-train20240105",
+                "startup_allowed": False,
+                "live_trading_authorized": False,
+                "recommendation": "refuse_live_startup",
+                "blockers": ["first_live_day_runbook_not_accepted"],
+                "checks": [
+                    {
+                        "name": "first_live_day_runbook",
+                        "status": "blocked",
+                        "detail": "Runbook is Draft.",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_readiness_report_path=readiness_path,
+        phase6_live_startup_guard_report_path=guard_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+    markdown = dashboard_snapshot.render_markdown_snapshot(snapshot)
+
+    phase6 = snapshot["phase6"]
+    assert phase6["state"] == "blocked"
+    assert phase6["counts"]["attached_report_count"] == 2
+    assert phase6["counts"]["blocker_count"] == 2
+    assert phase6["reports"][0]["label"] == "Live readiness"
+    assert phase6["reports"][0]["status"] == "blocked"
+    assert phase6["reports"][0]["blockers"] == ["live_risk_adr_not_accepted"]
+    assert phase6["reports"][1]["label"] == "Live startup guard"
+    assert phase6["reports"][1]["status"] == "blocked"
+    assert phase6["reports"][1]["checks"][0]["name"] == "first_live_day_runbook"
+    assert "## Phase 6 Gates" in markdown
+    assert "first_live_day_runbook_not_accepted" in markdown
 
 
 def test_snapshot_observability_missing_textfile_dir_is_empty(tmp_path: Path) -> None:

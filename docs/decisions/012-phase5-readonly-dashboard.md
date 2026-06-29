@@ -15,8 +15,9 @@ project-owned frontend.
 
 Phase 4 now has a stable read-only input contract for that frontend:
 `dashboard.snapshot.v1`, emitted by `apps.ops.dashboard_snapshot`. The snapshot
-summarizes project status, AgentAdvice rows, and optional passive paper/testnet
-bundle reports. It does not write signals, policies, credentials, or orders.
+summarizes project status, AgentAdvice rows, optional passive paper/testnet
+bundle reports, and optional saved Phase 6 gate artifacts. It does not write
+signals, policies, credentials, or orders.
 
 ## 2. Decision
 
@@ -36,9 +37,10 @@ uv run python -m apps.ops.dashboard_snapshot > data/frontend/dashboard-snapshot.
 
 The frontend may render status, operational posture, operator checklist,
 boundaries, AgentAdvice history, passive bundle summaries, passive textfile
-observability summaries, and source-of-truth neutral reference links. If the
-file is absent, it renders a fallback read-only state so build and local smoke
-checks remain deterministic.
+observability summaries, optional Phase 6 live-readiness/startup-guard artifact
+summaries, and source-of-truth neutral reference links. If the file is absent,
+it renders a fallback read-only state so build and local smoke checks remain
+deterministic.
 
 Language selection is read-only URL state. The dashboard may render English or
 Simplified Chinese UI chrome through `?lang=en` / `?lang=zh-CN`; this does not
@@ -51,6 +53,8 @@ Allowed:
 - read `dashboard.snapshot.v1`;
 - render AgentAdvice, status, bundle-summary, and monitoring-oriented panels;
 - render passive Prometheus textfile summaries produced by existing runners;
+- render passive summaries of saved `phase6.live_readiness.v1` and
+  `phase6.live_startup_guard.v1` JSON artifacts;
 - render links to docs, evidence files, runbooks, and Grafana dashboards without
   treating the frontend as the source of truth;
 - show whether live/order-path boundary flags are closed.
@@ -61,12 +65,17 @@ Forbidden:
 - writing `SignalEvent`, `SourcePolicy`, or AgentAdvice from the browser;
 - triggering `promotion_review`, emergency flatten, or any runner from the
   frontend;
-- treating frontend output as promotion or live-readiness evidence.
+- generating Phase 6 readiness reports or startup-guard reports from the
+  frontend or dashboard snapshot;
+- treating frontend output as promotion, live-readiness, or live authorization
+  evidence.
 
 The source of truth remains unchanged:
 
 - bundle `run_manifest.json` + sidecar parquet for ADR-004/ADR-007/ADR-008
   evidence;
+- saved `phase6.live_readiness.v1` and `phase6.live_startup_guard.v1` JSON
+  artifacts for Phase 6 blocker review;
 - `docs/project-status.md` for current phase/focus;
 - ADRs for durable decisions.
 
@@ -77,12 +86,12 @@ Phase 5 entry implementation:
 - `apps/frontend/package.json` locks a Next.js + Tailwind app.
 - `apps/frontend/app/dashboardData.ts` loads the local snapshot server-side,
   including `ops_status`, parsed project-status sections, `observability`,
-  `reference_links`, and `operator_checklist`.
+  `reference_links`, `operator_checklist`, and optional `phase6` summaries.
 - `apps/frontend/app/page.tsx` renders the read-only operations dashboard:
-  posture band, guardrail metrics, runtime health, evidence matrix, bundle
-  ledger, AgentAdvice queue, operator checklist, watchlist, verification,
-  reference links, boundary ledger, and an English / Simplified Chinese URL
-  language switch.
+  posture band, guardrail metrics, Phase 6 gate-artifact status, runtime
+  health, evidence matrix, bundle ledger, AgentAdvice queue, operator checklist,
+  watchlist, verification, reference links, boundary ledger, and an English /
+  Simplified Chinese URL language switch.
 - `apps/frontend/app/globals.css` defines the compact dashboard surface.
 
 The first implementation deliberately has no API routes and no client-side
