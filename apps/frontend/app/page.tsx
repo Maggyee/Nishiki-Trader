@@ -76,6 +76,7 @@ const COPY = {
       verification: "Verification",
       referenceLinks: "Reference Links",
       boundaryLedger: "Boundary Ledger",
+      snapshotSource: "Snapshot Source",
     },
     evidence: {
       paperBundles: "Paper bundles",
@@ -217,6 +218,18 @@ const COPY = {
       open: "open",
       closed: "closed",
     },
+    snapshotSource: {
+      loaded: "loaded",
+      fallback: "fallback",
+      status: "Status",
+      path: "Path",
+      generated: "Generated",
+      warning: "Aging threshold",
+      stale: "Stale threshold",
+      evaluator: "Evaluator",
+      error: "Load error",
+      noError: "No load error",
+    },
     boundaries: {
       live_path_allowed: "Live path",
       signal_event_write_allowed: "SignalEvent writes",
@@ -340,6 +353,7 @@ const COPY = {
       verification: "验证记录",
       referenceLinks: "参考链接",
       boundaryLedger: "边界账本",
+      snapshotSource: "快照来源",
     },
     evidence: {
       paperBundles: "Paper bundle",
@@ -481,6 +495,18 @@ const COPY = {
       open: "打开",
       closed: "关闭",
     },
+    snapshotSource: {
+      loaded: "已加载",
+      fallback: "兜底数据",
+      status: "状态",
+      path: "路径",
+      generated: "生成时间",
+      warning: "偏旧阈值",
+      stale: "过期阈值",
+      evaluator: "评估方",
+      error: "加载错误",
+      noError: "无加载错误",
+    },
     boundaries: {
       live_path_allowed: "实盘路径",
       signal_event_write_allowed: "SignalEvent 写入",
@@ -600,6 +626,7 @@ export default async function DashboardPage({
 
           <aside className="grid content-start gap-4">
             <ChecklistPanel items={snapshot.operator_checklist ?? []} copy={copy} />
+            <SnapshotSourcePanel snapshot={snapshot} copy={copy} />
             <WatchlistPanel
               blocked={sections.blocked_deferred ?? []}
               nextSteps={sections.next_steps ?? []}
@@ -1374,6 +1401,54 @@ function ChecklistPanel({
         ))}
       </div>
     </section>
+  );
+}
+
+function SnapshotSourcePanel({ snapshot, copy }: { snapshot: DashboardSnapshot; copy: Copy }) {
+  const source = snapshot.snapshot_source;
+  const freshness = snapshot.snapshot_freshness ?? {};
+  return (
+    <section className="panel">
+      <div className="section-head">
+        <h2>{copy.sections.snapshotSource}</h2>
+        <span>{source.loaded ? copy.snapshotSource.loaded : copy.snapshotSource.fallback}</span>
+      </div>
+      <div className="snapshot-audit-list">
+        <div className="snapshot-audit-row" data-status={source.loaded ? "ok" : "missing"}>
+          <span>{copy.snapshotSource.status}</span>
+          <strong>{source.loaded ? copy.snapshotSource.loaded : copy.snapshotSource.fallback}</strong>
+          <StatusPill value={source.loaded ? "ok" : "missing"} copy={copy} />
+        </div>
+        <SnapshotAuditRow label={copy.snapshotSource.path} value={source.path} />
+        <SnapshotAuditRow label={copy.snapshotSource.generated} value={formatGenerated(snapshot.generated_at_ns, copy)} />
+        <SnapshotAuditRow
+          label={copy.snapshotSource.warning}
+          value={formatDuration(freshness.warning_after_seconds, copy)}
+        />
+        <SnapshotAuditRow
+          label={copy.snapshotSource.stale}
+          value={formatDuration(freshness.stale_after_seconds, copy)}
+        />
+        <SnapshotAuditRow
+          label={copy.snapshotSource.evaluator}
+          value={freshness.evaluated_by ?? copy.common.unknown}
+        />
+        <SnapshotAuditRow
+          label={copy.snapshotSource.error}
+          value={source.error ?? copy.snapshotSource.noError}
+          muted={!source.error}
+        />
+      </div>
+    </section>
+  );
+}
+
+function SnapshotAuditRow({ label, value, muted = false }: { label: string; value: string; muted?: boolean }) {
+  return (
+    <div className="snapshot-audit-row" data-muted={String(muted)}>
+      <span>{label}</span>
+      <code>{value}</code>
+    </div>
   );
 }
 

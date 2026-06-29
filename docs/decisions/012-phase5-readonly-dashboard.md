@@ -94,8 +94,8 @@ Phase 5 entry implementation:
 - `apps/frontend/app/page.tsx` renders the read-only operations dashboard:
   posture band, guardrail metrics, Phase 6 gate-artifact status, runtime
   health, evidence matrix, bundle ledger, AgentAdvice queue, operator checklist,
-  watchlist, verification, reference links, boundary ledger, and an English /
-  Simplified Chinese URL language switch.
+  snapshot source audit, watchlist, verification, reference links, boundary
+  ledger, and an English / Simplified Chinese URL language switch.
 - `apps/frontend/app/globals.css` defines the compact dashboard surface.
 
 The first implementation deliberately has no API routes and no client-side
