@@ -233,6 +233,9 @@ def test_live_startup_guard_passes_with_complete_evidence(tmp_path: Path) -> Non
         "authorizes_live_trading": False,
     }
     assert report.credential_boundary["values_inspected"] is False
+    assert report.evidence["live_readiness_report"]["sha256"] == hashlib.sha256(
+        _settings(tmp_path).live_readiness_report_path.read_bytes()
+    ).hexdigest()
     assert (
         report.evidence["live_readiness_report"][
             "expected_live_promotion_review_sha256"

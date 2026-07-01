@@ -12,6 +12,7 @@ orders.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import subprocess
@@ -464,15 +465,19 @@ def _live_readiness_report_gate(
     if not path.exists():
         return {
             "path": str(path),
+            "sha256": None,
             "accepted": False,
             "blocker": "live_readiness_report_not_found",
             "detail": f"{path} does not exist.",
         }
+    raw = path.read_bytes()
+    artifact_sha256 = hashlib.sha256(raw).hexdigest()
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload = json.loads(raw.decode("utf-8"))
     except json.JSONDecodeError as exc:
         return {
             "path": str(path),
+            "sha256": artifact_sha256,
             "accepted": False,
             "blocker": "live_readiness_report_invalid_json",
             "detail": f"{path} is not valid JSON: {exc}",
@@ -560,6 +565,7 @@ def _live_readiness_report_gate(
     if problems:
         return {
             "path": str(path),
+            "sha256": artifact_sha256,
             "accepted": False,
             "blocker": "live_readiness_report_gate_not_met",
             "detail": "Live readiness report failed checks: " + ", ".join(problems),
@@ -571,6 +577,7 @@ def _live_readiness_report_gate(
         }
     return {
         "path": str(path),
+        "sha256": artifact_sha256,
         "accepted": True,
         "blocker": "",
         "detail": f"{path} proves the passive live-readiness gate and is fresh.",

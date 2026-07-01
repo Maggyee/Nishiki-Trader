@@ -1589,6 +1589,10 @@ def _phase6_report_evidence(
     )
     sha_matches = bool(readiness_sha and expected_sha and readiness_sha == expected_sha)
     return [
+        _artifact_evidence_item(
+            readiness_gate,
+            label="Readiness report artifact",
+        ),
         _promotion_review_evidence_item(
             startup_promotion_gate,
             label="Startup promotion review artifact",
@@ -1606,6 +1610,35 @@ def _phase6_report_evidence(
             "expected_sha256": expected_sha,
         },
     ]
+
+
+def _artifact_evidence_item(
+    gate: Any,
+    *,
+    label: str,
+) -> dict[str, str | None]:
+    if not isinstance(gate, dict):
+        return {
+            "label": label,
+            "status": "missing",
+            "detail": "Artifact evidence is not recorded in this report.",
+            "path": None,
+            "sha256": None,
+        }
+    sha256 = _optional_str(gate.get("sha256"))
+    path = _optional_str(gate.get("path"))
+    status = "ok" if sha256 else "blocked"
+    return {
+        "label": label,
+        "status": status,
+        "detail": (
+            "Artifact fingerprint is recorded."
+            if status == "ok"
+            else "Artifact fingerprint is not recorded."
+        ),
+        "path": path,
+        "sha256": sha256,
+    }
 
 
 def _promotion_review_evidence_item(
