@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-07-01 (Phase 6 dashboard startup-continuity evidence)
+- **Last updated**: 2026-07-01 (Phase 6 dashboard ADR-match evidence)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
-- **Current objective**: Phase 5 remains the active implemented phase. ADR-013, `apps.ops.live_readiness`, and `apps.strategies_nautilus.runners.live_startup_guard` define passive Phase 6 live-readiness and startup-refusal gates, including spot-only/no-margin/no-leverage market-scope checks, exact live promotion-review field parsing, project-status / live-risk ADR / testnet continuity bundle manifest / promotion-review artifact SHA-256 capture in readiness reports, clean git evidence capture, and startup-guard cross-checks that saved readiness artifacts kept passive boundary flags closed, were generated from the same clean commit, referenced the same live-risk ADR bytes and promotion-review artifact bytes, carried continuity bundle manifest fingerprints whose manifest paths still hash to the recorded bytes, and are fresh by `generated_at_ns` (default max age 24h). Startup guard reports record SHA-256 fingerprints for the saved readiness report, live-risk ADR, first-live-day runbook artifacts, and startup-side continuity manifest byte verification they consumed. `dashboard.snapshot.v1` can summarize saved `phase6.live_readiness.v1` / `phase6.live_startup_guard.v1` artifacts for read-only operator visibility, including project-status, live-risk ADR, continuity bundle manifests, startup continuity byte verification, readiness artifact, promotion-review artifact, promotion SHA-256 match, and first-live-day runbook evidence already present in those saved reports. Phase 6 is still closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired. ADR-012, `apps.ops.dashboard_snapshot`, `infra/grafana/dashboards/signals-overview.json`, and `apps/frontend` continue to define the read-only operations console consuming `dashboard.snapshot.v1` with runtime health, AgentAdvice, passive paper/testnet summaries, source/model Grafana drill-down links, snapshot freshness status with generator-configurable thresholds, snapshot source/input audit, signal/rejection/freshness/evidence summaries, observability, reference links, and Phase 6 blocker summaries. Agents and frontend still cannot write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or enter the order path. Keep `freqai_linear_v1 / linear-mom-train20240105` at `hold @ testnet_canary` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. No live trading without ADR-013 acceptance, the ADR-001 capital ladder gate, and the ADR-008 14-day continuity gate.
+- **Current objective**: Phase 5 remains the active implemented phase. ADR-013, `apps.ops.live_readiness`, and `apps.strategies_nautilus.runners.live_startup_guard` define passive Phase 6 live-readiness and startup-refusal gates, including spot-only/no-margin/no-leverage market-scope checks, exact live promotion-review field parsing, project-status / live-risk ADR / testnet continuity bundle manifest / promotion-review artifact SHA-256 capture in readiness reports, clean git evidence capture, and startup-guard cross-checks that saved readiness artifacts kept passive boundary flags closed, were generated from the same clean commit, referenced the same live-risk ADR bytes and promotion-review artifact bytes, carried continuity bundle manifest fingerprints whose manifest paths still hash to the recorded bytes, and are fresh by `generated_at_ns` (default max age 24h). Startup guard reports record SHA-256 fingerprints for the saved readiness report, live-risk ADR, first-live-day runbook artifacts, readiness-vs-startup live-risk ADR SHA inputs, and startup-side continuity manifest byte verification they consumed. `dashboard.snapshot.v1` can summarize saved `phase6.live_readiness.v1` / `phase6.live_startup_guard.v1` artifacts for read-only operator visibility, including project-status, live-risk ADR, continuity bundle manifests, startup continuity byte verification, readiness artifact, readiness-vs-startup ADR SHA match, promotion-review artifact, promotion SHA-256 match, and first-live-day runbook evidence already present in those saved reports. Phase 6 is still closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired. ADR-012, `apps.ops.dashboard_snapshot`, `infra/grafana/dashboards/signals-overview.json`, and `apps/frontend` continue to define the read-only operations console consuming `dashboard.snapshot.v1` with runtime health, AgentAdvice, passive paper/testnet summaries, source/model Grafana drill-down links, snapshot freshness status with generator-configurable thresholds, snapshot source/input audit, signal/rejection/freshness/evidence summaries, observability, reference links, and Phase 6 blocker summaries. Agents and frontend still cannot write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or enter the order path. Keep `freqai_linear_v1 / linear-mom-train20240105` at `hold @ testnet_canary` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. No live trading without ADR-013 acceptance, the ADR-001 capital ladder gate, and the ADR-008 14-day continuity gate.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -147,29 +147,29 @@ Immediate focus:
 
 ## Latest Verification
 
-On 2026-07-01, after adding dashboard visibility for startup-side continuity byte verification:
+On 2026-07-01, after adding dashboard visibility for the readiness-vs-startup live-risk ADR SHA match:
 
-- `dashboard.snapshot.v1` startup-guard evidence now includes `Startup
-  continuity artifact verification`, derived from
-  `live_readiness_report.continuity_artifact_problems` and the saved
-  `continuity_artifacts` list inside `phase6.live_startup_guard.v1`.
+- `dashboard.snapshot.v1` startup-guard evidence now includes `Readiness
+  live-risk ADR SHA-256 match`, derived from the saved readiness report's
+  `live_risk_adr.sha256` and the startup guard's
+  `expected_live_risk_adr_sha256`.
 - A passing startup-guard report is now marked blocked by the dashboard if the
-  startup artifact is old enough to omit continuity byte-verification evidence
-  or if startup reported missing/changed continuity manifest bytes.
+  startup artifact is old enough to omit the ADR SHA cross-check or if the
+  readiness ADR fingerprint differs from the ADR artifact supplied to startup.
 - The frontend already renders Phase 6 evidence rows generically, so no
   frontend write/control surface changed.
 - The change remains passive: it reads saved JSON artifacts only; it does not
   run a live runner, load credentials, build or start Nautilus, connect to
   Binance, write `SignalEvent`, mutate `SourcePolicy`, place orders, or
   authorize live trading.
-- `TMPDIR=/tmp UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/ops/test_live_readiness.py tests/strategies_nautilus/test_live_startup_guard.py tests/ops/test_dashboard_snapshot.py -q` -> **58 passed**.
+- `TMPDIR=/tmp UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/ops/test_live_readiness.py tests/strategies_nautilus/test_live_startup_guard.py tests/ops/test_dashboard_snapshot.py -q` -> **59 passed**.
 - `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check apps tests docs infra` -> clean.
 - Blocked readiness/startup/dashboard smoke with an attached testnet bundle ->
   startup guard exit **2**, `startup_allowed=false`,
   `live_trading_authorized=false`, `places_orders=false`,
-  `phase6.state=blocked`, and the dashboard's `Startup continuity artifact
-  verification` evidence row is `ok` with the same manifest path/SHA-256 as
-  readiness `continuity_artifacts[0]`.
+  `phase6.state=blocked`, and the dashboard's `Readiness live-risk ADR
+  SHA-256 match` evidence row is `ok` with the same SHA-256 as the startup
+  ADR artifact.
 
 On 2026-06-29, after making dashboard snapshot freshness thresholds configurable:
 

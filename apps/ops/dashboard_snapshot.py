@@ -1611,6 +1611,7 @@ def _phase6_report_evidence(
             readiness_gate,
             label="Readiness report artifact",
         ),
+        _readiness_live_risk_adr_match_item(readiness_gate),
         _startup_continuity_artifact_verification_item(readiness_gate),
         _promotion_review_evidence_item(
             startup_promotion_gate,
@@ -1703,6 +1704,38 @@ def _continuity_artifacts_evidence_item(
         "sha256": _optional_str(artifacts[0].get("sha256"))
         if isinstance(artifacts[0], dict)
         else None,
+    }
+
+
+def _readiness_live_risk_adr_match_item(
+    readiness_gate: Any,
+) -> dict[str, str | None]:
+    if not isinstance(readiness_gate, dict):
+        return {
+            "label": "Readiness live-risk ADR SHA-256 match",
+            "status": "missing",
+            "detail": "Readiness report gate evidence is not recorded.",
+            "path": None,
+            "sha256": None,
+            "expected_sha256": None,
+        }
+
+    live_risk_adr = readiness_gate.get("live_risk_adr")
+    live_risk_adr = live_risk_adr if isinstance(live_risk_adr, dict) else {}
+    readiness_sha = _optional_str(live_risk_adr.get("sha256"))
+    expected_sha = _optional_str(readiness_gate.get("expected_live_risk_adr_sha256"))
+    sha_matches = bool(readiness_sha and expected_sha and readiness_sha == expected_sha)
+    return {
+        "label": "Readiness live-risk ADR SHA-256 match",
+        "status": "ok" if sha_matches else "blocked",
+        "detail": (
+            "Readiness report and startup ADR artifact fingerprints match."
+            if sha_matches
+            else "Readiness report ADR fingerprint does not match the startup artifact."
+        ),
+        "path": _optional_str(live_risk_adr.get("path")),
+        "sha256": readiness_sha,
+        "expected_sha256": expected_sha,
     }
 
 
