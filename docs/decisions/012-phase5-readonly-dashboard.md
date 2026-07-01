@@ -56,7 +56,8 @@ Allowed:
 - render AgentAdvice, status, bundle-summary, and monitoring-oriented panels;
 - render passive Prometheus textfile summaries produced by existing runners;
 - render passive summaries of saved `phase6.live_readiness.v1` and
-  `phase6.live_startup_guard.v1` JSON artifacts;
+  `phase6.live_startup_guard.v1` JSON artifacts, including promotion-review
+  fingerprint evidence already present in those artifacts;
 - render links to docs, evidence files, runbooks, and Grafana dashboards without
   treating the frontend as the source of truth;
 - show snapshot age using the freshness thresholds declared by
@@ -95,7 +96,8 @@ Phase 5 entry implementation:
   posture band, guardrail metrics, Phase 6 gate-artifact status, runtime
   health, evidence matrix, bundle ledger, AgentAdvice queue, operator checklist,
   snapshot source audit, watchlist, verification, reference links, boundary
-  ledger, and an English / Simplified Chinese URL language switch.
+  ledger, Phase 6 promotion-review fingerprint evidence summaries, and an
+  English / Simplified Chinese URL language switch.
 - `apps/frontend/app/globals.css` defines the compact dashboard surface.
 
 The first implementation deliberately has no API routes and no client-side

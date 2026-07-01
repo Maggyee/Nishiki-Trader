@@ -535,6 +535,31 @@ select {
     line-height: 1.35;
   }
 
+  .phase6-evidence-list {
+    display: grid;
+    gap: 6px;
+  }
+
+  .phase6-evidence-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 8px;
+    align-items: center;
+    border: 1px solid #e7e5e4;
+    border-radius: 6px;
+    padding: 8px;
+    background: #fff;
+  }
+
+  .phase6-evidence-row span,
+  .phase6-evidence-row small {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: #52525b;
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
   .runtime-run-head {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
@@ -1246,6 +1271,7 @@ select {
   .runtime-summary,
   .phase6-facts,
   .phase6-report-grid,
+  .phase6-evidence-row,
   .signal-facts,
   .signal-run-list {
     grid-template-columns: 1fr;

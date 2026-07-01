@@ -163,6 +163,8 @@ const COPY = {
       authorization: "Authorization",
       path: "Path",
       checks: "checks",
+      evidence: "Evidence",
+      fingerprint: "Fingerprint",
       blockedSummary: "Phase 6 remains closed.",
       reviewSummary: "All attached Phase 6 gate artifacts passed their passive checks.",
     },
@@ -455,6 +457,8 @@ const COPY = {
       authorization: "授权",
       path: "路径",
       checks: "项检查",
+      evidence: "证据",
+      fingerprint: "指纹",
       blockedSummary: "Phase 6 仍然关闭。",
       reviewSummary: "所有已附加 Phase 6 gate artifact 均通过被动检查。",
     },
@@ -913,6 +917,7 @@ function Phase6ReportRow({
   copy: Copy;
 }) {
   const blockers = report.blockers ?? [];
+  const evidence = report.evidence ?? [];
   return (
     <div className="phase6-report" data-status={normalizePhase6Status(report.status)}>
       <div className="phase6-report-head">
@@ -933,6 +938,26 @@ function Phase6ReportRow({
           {copy.phase6.checks}: {formatMaybeNumber(report.checks?.length, language, copy)}
         </span>
       </div>
+      {evidence.length ? (
+        <div className="phase6-evidence-list">
+          {evidence.map((item) => (
+            <div
+              className="phase6-evidence-row"
+              key={`${item.label ?? copy.phase6.evidence}-${item.status ?? "unknown"}`}
+            >
+              <span>
+                {copy.phase6.evidence}: {item.label ?? copy.phase6.evidence}
+              </span>
+              <StatusPill value={item.status ?? "unknown"} copy={copy} />
+              <small>
+                {copy.phase6.fingerprint}:{" "}
+                {formatFingerprint(item.sha256 ?? item.expected_sha256, copy)}
+              </small>
+              <small>{item.detail ?? copy.signal.noReasons}</small>
+            </div>
+          ))}
+        </div>
+      ) : null}
       <small>
         {copy.phase6.path}: {report.path ?? copy.reference.localOnly}
       </small>
@@ -1914,6 +1939,12 @@ function inputStatus(item: SnapshotInputItem): "ok" | "missing" | "manual" {
     return "ok";
   }
   return "missing";
+}
+
+function formatFingerprint(value: string | null | undefined, copy: Copy): string {
+  if (!value) return copy.signal.noReasons;
+  if (value.length <= 20) return value;
+  return `${value.slice(0, 12)}...${value.slice(-6)}`;
 }
 
 function formatConfidence(value: number | undefined, copy: Copy): string {

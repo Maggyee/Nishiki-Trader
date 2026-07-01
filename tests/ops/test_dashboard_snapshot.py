@@ -376,6 +376,11 @@ def test_snapshot_summarizes_phase6_gate_artifacts(tmp_path: Path) -> None:
                 "live_trading_allowed": False,
                 "recommendation": "remain_blocked_before_phase6_live_canary",
                 "blockers": ["live_risk_adr_not_accepted"],
+                "live_promotion_review": {
+                    "accepted": False,
+                    "blocker": "live_canary_promotion_review_required",
+                    "path": None,
+                },
                 "checks": [
                     {
                         "name": "live_risk_adr",
@@ -397,6 +402,20 @@ def test_snapshot_summarizes_phase6_gate_artifacts(tmp_path: Path) -> None:
                 "live_trading_authorized": False,
                 "recommendation": "refuse_live_startup",
                 "blockers": ["first_live_day_runbook_not_accepted"],
+                "evidence": {
+                    "live_readiness_report": {
+                        "live_promotion_review": {
+                            "accepted": False,
+                            "path": None,
+                        },
+                        "expected_live_promotion_review_sha256": None,
+                    },
+                    "live_promotion_review": {
+                        "accepted": False,
+                        "blocker": "live_promotion_review_not_found",
+                        "path": "missing-live-review.md",
+                    },
+                },
                 "checks": [
                     {
                         "name": "first_live_day_runbook",
@@ -425,11 +444,71 @@ def test_snapshot_summarizes_phase6_gate_artifacts(tmp_path: Path) -> None:
     assert phase6["reports"][0]["label"] == "Live readiness"
     assert phase6["reports"][0]["status"] == "blocked"
     assert phase6["reports"][0]["blockers"] == ["live_risk_adr_not_accepted"]
+    assert phase6["reports"][0]["evidence"] == [
+        {
+            "label": "Promotion review artifact",
+            "status": "blocked",
+            "detail": "live_canary_promotion_review_required",
+            "path": None,
+            "sha256": None,
+        }
+    ]
     assert phase6["reports"][1]["label"] == "Live startup guard"
     assert phase6["reports"][1]["status"] == "blocked"
     assert phase6["reports"][1]["checks"][0]["name"] == "first_live_day_runbook"
+    assert phase6["reports"][1]["evidence"][0]["label"] == (
+        "Startup promotion review artifact"
+    )
+    assert phase6["reports"][1]["evidence"][1]["label"] == (
+        "Readiness promotion SHA-256 match"
+    )
     assert "## Phase 6 Gates" in markdown
+    assert "evidence: Promotion review artifact" in markdown
     assert "first_live_day_runbook_not_accepted" in markdown
+
+
+def test_snapshot_blocks_phase6_readiness_without_promotion_fingerprint(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    readiness_path = tmp_path / "old-live-readiness.json"
+    readiness_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "phase6.live_readiness.v1",
+                "source": "freqai_linear_v1",
+                "model_version": "linear-mom-train20240105",
+                "readiness_gate_met": True,
+                "live_trading_allowed": False,
+                "recommendation": "ready_for_manual_live_go_no_go_review",
+                "blockers": [],
+                "checks": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_readiness_report_path=readiness_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    readiness = snapshot["phase6"]["reports"][0]
+    assert readiness["status"] == "blocked"
+    assert "evidence:Promotion review artifact" in readiness["blockers"]
+    assert readiness["evidence"] == [
+        {
+            "label": "Promotion review artifact",
+            "status": "missing",
+            "detail": "Promotion review evidence is not recorded in this artifact.",
+            "path": None,
+            "sha256": None,
+        }
+    ]
+    assert snapshot["phase6"]["state"] == "blocked"
 
 
 def test_snapshot_observability_missing_textfile_dir_is_empty(tmp_path: Path) -> None:

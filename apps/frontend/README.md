@@ -68,6 +68,8 @@ snapshot 路径。默认路径是仓库根目录下的
   freshness 阈值、评估方与加载错误
 - Snapshot Inputs：显示生成 snapshot 时声明的只读输入路径、是否附加、是否存在，
   包括 project status、AgentAdvice DB、bundle、Phase 6 artifact 与 observability textfile
+- Phase 6 Gates：显示已附加 readiness/startup guard artifact 的只读状态、
+  阻塞项、检查数量，以及 promotion review artifact / SHA-256 匹配证据
 - Watchlist / Verification：从 `docs/project-status.md` 解析 blocked/deferred、next steps、latest verification
 - Reference links：文档、证据 ledger、runbook、本地 Grafana 只读看板和其源 JSON
 - Boundary ledger：确认前端相关 live/order mutation flags 仍关闭

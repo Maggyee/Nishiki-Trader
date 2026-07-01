@@ -262,6 +262,12 @@ def render_markdown_snapshot(snapshot: dict[str, Any]) -> str:
             f"blockers={_join_or_none(report.get('blockers') or [])}, "
             f"path=`{report.get('path') or 'not attached'}`"
         )
+        for item in report.get("evidence") or []:
+            lines.append(
+                "  - evidence: "
+                f"{item.get('label')} status=`{item.get('status')}`, "
+                f"sha256=`{item.get('sha256') or item.get('expected_sha256') or 'none'}`"
+            )
 
     lines.extend(["", "## Operator Next Steps", ""])
     for item in status.get("sections", {}).get("next_steps", []):
@@ -1474,6 +1480,7 @@ def _phase6_report_snapshot(
             "recommendation": None,
             "blockers": [f"{gate_field}_report_not_attached"],
             "checks": [],
+            "evidence": [],
         }
     if not path.exists():
         return {
@@ -1492,6 +1499,7 @@ def _phase6_report_snapshot(
             "recommendation": None,
             "blockers": [f"{gate_field}_report_not_found"],
             "checks": [],
+            "evidence": [],
         }
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
@@ -1512,16 +1520,24 @@ def _phase6_report_snapshot(
             "recommendation": None,
             "blockers": [f"invalid_json:{exc.__class__.__name__}"],
             "checks": [],
+            "evidence": [],
         }
 
     blockers = [str(item) for item in payload.get("blockers") or []]
     schema_version = payload.get("schema_version")
     gate_met = payload.get(gate_field) is True
     authorizes_live_trading = payload.get(authorization_field) is True
+    evidence = _phase6_report_evidence(payload=payload, expected_schema=expected_schema)
     if schema_version != expected_schema:
         blockers.append(f"unexpected_schema_version:{schema_version}")
     if authorizes_live_trading:
         blockers.append(f"{authorization_field}_must_remain_false")
+    if gate_met:
+        blockers.extend(
+            f"evidence:{item['label']}"
+            for item in evidence
+            if item.get("status") != "ok"
+        )
     status = "ok" if gate_met and not blockers else "blocked"
     return {
         "label": label,
@@ -1539,7 +1555,94 @@ def _phase6_report_snapshot(
         "recommendation": payload.get("recommendation"),
         "blockers": sorted(dict.fromkeys(blockers)),
         "checks": _compact_phase6_checks(payload.get("checks") or []),
+        "evidence": evidence,
     }
+
+
+def _phase6_report_evidence(
+    *,
+    payload: dict[str, Any],
+    expected_schema: str,
+) -> list[dict[str, str | None]]:
+    if expected_schema == "phase6.live_readiness.v1":
+        return [
+            _promotion_review_evidence_item(
+                payload.get("live_promotion_review"),
+                label="Promotion review artifact",
+            )
+        ]
+    if expected_schema != "phase6.live_startup_guard.v1":
+        return []
+
+    evidence = payload.get("evidence") if isinstance(payload, dict) else None
+    evidence = evidence if isinstance(evidence, dict) else {}
+    readiness_gate = evidence.get("live_readiness_report")
+    readiness_gate = readiness_gate if isinstance(readiness_gate, dict) else {}
+    startup_promotion_gate = evidence.get("live_promotion_review")
+    readiness_promotion_gate = readiness_gate.get("live_promotion_review")
+    readiness_promotion_gate = (
+        readiness_promotion_gate if isinstance(readiness_promotion_gate, dict) else {}
+    )
+    readiness_sha = _optional_str(readiness_promotion_gate.get("sha256"))
+    expected_sha = _optional_str(
+        readiness_gate.get("expected_live_promotion_review_sha256")
+    )
+    sha_matches = bool(readiness_sha and expected_sha and readiness_sha == expected_sha)
+    return [
+        _promotion_review_evidence_item(
+            startup_promotion_gate,
+            label="Startup promotion review artifact",
+        ),
+        {
+            "label": "Readiness promotion SHA-256 match",
+            "status": "ok" if sha_matches else "blocked",
+            "detail": (
+                "Readiness report and startup artifact fingerprints match."
+                if sha_matches
+                else "Readiness report fingerprint does not match the startup artifact."
+            ),
+            "path": None,
+            "sha256": readiness_sha,
+            "expected_sha256": expected_sha,
+        },
+    ]
+
+
+def _promotion_review_evidence_item(
+    gate: Any,
+    *,
+    label: str,
+) -> dict[str, str | None]:
+    if not isinstance(gate, dict):
+        return {
+            "label": label,
+            "status": "missing",
+            "detail": "Promotion review evidence is not recorded in this artifact.",
+            "path": None,
+            "sha256": None,
+        }
+    accepted = gate.get("accepted") is True
+    sha256 = _optional_str(gate.get("sha256"))
+    path = _optional_str(gate.get("path"))
+    blocker = _optional_str(gate.get("blocker"))
+    status = "ok" if accepted and sha256 else "blocked"
+    return {
+        "label": label,
+        "status": status,
+        "detail": (
+            "Promotion review artifact is accepted and fingerprinted."
+            if status == "ok"
+            else blocker or "Promotion review artifact is missing its fingerprint."
+        ),
+        "path": path,
+        "sha256": sha256,
+    }
+
+
+def _optional_str(value: Any) -> str | None:
+    if value is None:
+        return None
+    return str(value)
 
 
 def _compact_phase6_checks(checks: Sequence[Any]) -> list[dict[str, str]]:
