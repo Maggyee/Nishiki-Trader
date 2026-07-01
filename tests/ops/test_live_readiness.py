@@ -13,6 +13,46 @@ REFERENCE_TS_NS = 1_778_760_000_000_000_000
 GIT_CLEAN = GitState(commit="a" * 40, dirty=False)
 
 
+def _live_promotion_text(
+    *,
+    source: str = "freqai_linear_v1",
+    model_version: str = "linear-mom-train20240105",
+    current_stage: str = "testnet_canary",
+    target_stage: str = "live_canary",
+    decision: str = "PROMOTE",
+    decision_allowed: str = "yes",
+    operator: str = "pytest",
+    review_blockers: str = "none",
+    promotion_gate_blockers: str = "none",
+    rationale: str = "signed live promotion evidence",
+) -> str:
+    return "\n".join(
+        [
+            f"# Promotion review - {source} / {model_version}",
+            f"- **Operator**: {operator}",
+            f"- **Decision**: {decision}",
+            f"- **Decision allowed by gates**: {decision_allowed}",
+            "",
+            "## 1. Source / model",
+            f"- source: `{source}`",
+            f"- model_version: `{model_version}`",
+            "",
+            "## 2. Current vs target policy",
+            f"- current_stage: `{current_stage}`",
+            f"- target_stage: `{target_stage}`",
+            "",
+            "## 7. Conclusion",
+            f"- review_blockers: {review_blockers}",
+            f"- promotion_gate_blockers: {promotion_gate_blockers}",
+            f"- decision: **{decision}**",
+            f"- decision_allowed: **{decision_allowed}**",
+            "",
+            "### Rationale",
+            rationale,
+        ]
+    )
+
+
 def _write_status(path: Path) -> None:
     path.write_text(
         "\n".join(
@@ -158,17 +198,7 @@ def test_live_readiness_can_emit_markdown_when_all_evidence_is_present(
     promotion = tmp_path / "live-promotion.md"
     _write_status(status_path)
     _write_live_adr(live_adr, status="Accepted")
-    promotion.write_text(
-        "\n".join(
-            [
-                "decision_allowed: **yes**",
-                "target_stage: live_canary",
-                "source: freqai_linear_v1",
-                "model_version: linear-mom-train20240105",
-            ]
-        ),
-        encoding="utf-8",
-    )
+    promotion.write_text(_live_promotion_text(), encoding="utf-8")
     monkeypatch.setattr(
         live_readiness,
         "load_testnet_continuity_summary",
@@ -197,7 +227,7 @@ def test_live_readiness_can_emit_markdown_when_all_evidence_is_present(
     assert "| live_risk_adr | ok |" in markdown
 
 
-def test_live_readiness_blocks_dirty_git_evidence(
+def test_live_readiness_blocks_imprecise_live_promotion_review(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
@@ -207,16 +237,51 @@ def test_live_readiness_blocks_dirty_git_evidence(
     _write_status(status_path)
     _write_live_adr(live_adr, status="Accepted")
     promotion.write_text(
-        "\n".join(
-            [
-                "decision_allowed: **yes**",
-                "target_stage: live_canary",
-                "source: freqai_linear_v1",
-                "model_version: linear-mom-train20240105",
-            ]
+        _live_promotion_text(
+            current_stage="paper_simulated",
+            target_stage="testnet_canary",
+            rationale=(
+                "This rationale mentions live_canary and testnet_canary, but "
+                "the structured stage fields are not the live transition."
+            ),
         ),
         encoding="utf-8",
     )
+    monkeypatch.setattr(
+        live_readiness,
+        "load_testnet_continuity_summary",
+        lambda bundle_dirs, **kwargs: _continuity_summary(gate_met=True),
+    )
+
+    report = live_readiness.build_live_readiness_report(
+        project_status_path=status_path,
+        live_risk_adr_path=live_adr,
+        continuity_bundle_dirs=[tmp_path / "bundle-1"],
+        source="freqai_linear_v1",
+        model_version="linear-mom-train20240105",
+        live_promotion_review_path=promotion,
+        starting_capital_usdt=250,
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    assert report.readiness_gate_met is False
+    assert "live_canary_promotion_review_invalid" in report.blockers
+    source_check = next(check for check in report.checks if check.name == "source_model")
+    assert "current_stage" in source_check.detail
+    assert "target_stage" in source_check.detail
+
+
+def test_live_readiness_blocks_dirty_git_evidence(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    live_adr = tmp_path / "013-phase6-live-risk-gate.md"
+    promotion = tmp_path / "live-promotion.md"
+    _write_status(status_path)
+    _write_live_adr(live_adr, status="Accepted")
+    promotion.write_text(_live_promotion_text(), encoding="utf-8")
     monkeypatch.setattr(
         live_readiness,
         "load_testnet_continuity_summary",
@@ -249,17 +314,7 @@ def test_live_readiness_blocks_non_spot_or_leveraged_scope(
     promotion = tmp_path / "live-promotion.md"
     _write_status(status_path)
     _write_live_adr(live_adr, status="Accepted")
-    promotion.write_text(
-        "\n".join(
-            [
-                "decision_allowed: **yes**",
-                "target_stage: live_canary",
-                "source: freqai_linear_v1",
-                "model_version: linear-mom-train20240105",
-            ]
-        ),
-        encoding="utf-8",
-    )
+    promotion.write_text(_live_promotion_text(), encoding="utf-8")
     monkeypatch.setattr(
         live_readiness,
         "load_testnet_continuity_summary",

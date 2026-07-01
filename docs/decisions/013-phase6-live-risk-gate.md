@@ -43,6 +43,10 @@ Phase 6 entry requires all of the following evidence, in this order:
    status from Draft to Accepted only after human go/no-go review.
 3. A signed `promotion_review.py` artifact for the exact
    `(source, model_version)` moving `testnet_canary -> live_canary`.
+   The artifact must be structured JSON or the standard Markdown form with
+   `decision=promote`, `decision_allowed=yes`, non-empty `operator`,
+   `review_blockers=none`, and `promotion_gate_blockers=none`; incidental text
+   mentions of stage names do not count.
 4. A declared starting capital between 100 and 500 USDT, spot-only, no margin,
    no leverage.
 5. An accepted operator runbook for the first live day, including:
@@ -114,6 +118,10 @@ startup preflight reader for a future live runner. It consumes a saved
 `phase6.live_readiness.v1` JSON report plus the live-risk ADR, live-canary
 promotion review, first-live-day runbook, capital declaration, live SourcePolicy
 fields, live market scope, explicit `--allow-live-credentials`, and git state.
+It parses the promotion review as `promotion_review.py` JSON or Markdown fields
+and requires exact `source`, `model_version`, `current_stage=testnet_canary`,
+`target_stage=live_canary`, `decision=promote`, `decision_allowed=yes`,
+non-empty `operator`, and no review or promotion gate blockers.
 It also rejects any saved readiness report whose passive boundary flags are not
 all closed, whose recorded git commit does not match the startup guard's
 current clean commit, or whose `generated_at_ns` is missing, in the future, or
@@ -177,7 +185,9 @@ A future live runner must refuse startup unless:
 - the saved readiness report has `generated_at_ns` and is no older than the
   guard's configured maximum age, default 24 hours;
 - a live-canary promotion review exists for the exact source/model transition
-  `testnet_canary -> live_canary`;
+  `testnet_canary -> live_canary`, with `decision=promote`,
+  `decision_allowed=yes`, a non-empty operator, and no review or promotion gate
+  blockers;
 - starting capital is declared and within 100-500 USDT;
 - market scope is declared as Binance Spot only, no margin, and no leverage;
 - `SourcePolicy.dry_run=false`;

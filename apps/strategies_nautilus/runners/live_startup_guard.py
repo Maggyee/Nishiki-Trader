@@ -20,6 +20,10 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
+from apps.strategies_nautilus.runners.promotion_review_artifact import (
+    evaluate_live_canary_promotion_review,
+)
+
 MODE_LIVE = "live"
 KIND_LIVE = "live"
 DATA_MODE_EXCHANGE_WS = "exchange_ws"
@@ -606,33 +610,21 @@ def _promotion_review_gate(settings: LiveStartupSettings) -> dict[str, Any]:
             "blocker": "live_promotion_review_not_found",
             "detail": f"{path} does not exist.",
         }
-    text = path.read_text(encoding="utf-8")
-    lowered = text.lower()
-    checks = {
-        "decision_allowed": (
-            "decision_allowed: **yes**" in lowered
-            or "decision_allowed=true" in lowered
-            or "decision_allowed: true" in lowered
-        ),
-        "source": settings.source in text,
-        "model_version": settings.model_version in text,
-        "current_stage": "current_stage" in lowered and "testnet_canary" in lowered,
-        "target_stage": "target_stage" in lowered and "live_canary" in lowered,
-    }
-    missing = [name for name, ok in checks.items() if not ok]
-    if missing:
+    gate = evaluate_live_canary_promotion_review(
+        path,
+        source=settings.source,
+        model_version=settings.model_version,
+    )
+    if not gate["accepted"]:
         return {
-            "path": str(path),
+            **gate,
             "accepted": False,
             "blocker": "live_promotion_review_invalid",
-            "detail": "Promotion review failed checks: " + ", ".join(missing),
-            "missing": missing,
         }
     return {
-        "path": str(path),
+        **gate,
         "accepted": True,
         "blocker": "",
-        "detail": f"{path} contains a signed testnet_canary -> live_canary review.",
     }
 
 

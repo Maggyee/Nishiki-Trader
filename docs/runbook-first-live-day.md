@@ -23,6 +23,11 @@ runbook is Accepted, and the live startup guard passes.
 - Market scope is explicitly Binance Spot only: `market_type=spot`,
   `margin_enabled=false`, and `max_leverage=1.0`.
 - SourcePolicy is `dry_run=False` and `position_pct_multiplier <= 0.1`.
+- The live promotion review artifact is the standard `promotion_review.py`
+  JSON or Markdown form with exact source/model,
+  `current_stage=testnet_canary`, `target_stage=live_canary`,
+  `decision=promote`, `decision_allowed=yes`, non-empty `operator`, and no
+  review or promotion gate blockers.
 - The live credential env names are declared, but credential values are not
   written to disk.
 
@@ -33,11 +38,14 @@ runbook is Accepted, and the live startup guard passes.
 2. Confirm the saved readiness evidence has `generated_at_ns` and was generated
    within the last 24 hours unless the operator explicitly chose a wider
    `--max-readiness-report-age-seconds` window.
-3. Confirm the live credential key-prefix audit plan: record only the API key
+3. Confirm the live promotion review fields exactly match the intended
+   `testnet_canary -> live_canary` transition; do not accept incidental stage
+   mentions in rationale text as evidence.
+4. Confirm the live credential key-prefix audit plan: record only the API key
    prefix in runtime logs; never write the full API key or secret.
-4. Confirm Binance Spot only: no margin, no futures, no leverage.
-5. Confirm the operator has the exchange web UI open before startup.
-6. Confirm a manual exchange fallback is available: if the runner or emergency
+5. Confirm Binance Spot only: no margin, no futures, no leverage.
+6. Confirm the operator has the exchange web UI open before startup.
+7. Confirm a manual exchange fallback is available: if the runner or emergency
    tooling fails, manually cancel all open Spot orders and sell residual BTC to
    return the account to USDT/flat.
 

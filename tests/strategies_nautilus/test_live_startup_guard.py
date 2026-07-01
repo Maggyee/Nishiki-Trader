@@ -20,6 +20,46 @@ REFERENCE_TS_NS = time.time_ns()
 GIT_CLEAN = GitState(commit="a" * 40, dirty=False)
 
 
+def _live_promotion_text(
+    *,
+    source: str = SOURCE,
+    model_version: str = MODEL_VERSION,
+    current_stage: str = "testnet_canary",
+    target_stage: str = "live_canary",
+    decision: str = "PROMOTE",
+    decision_allowed: str = "yes",
+    operator: str = "pytest",
+    review_blockers: str = "none",
+    promotion_gate_blockers: str = "none",
+    rationale: str = "signed live promotion evidence",
+) -> str:
+    return "\n".join(
+        [
+            f"# Promotion review - {source} / {model_version}",
+            f"- **Operator**: {operator}",
+            f"- **Decision**: {decision}",
+            f"- **Decision allowed by gates**: {decision_allowed}",
+            "",
+            "## 1. Source / model",
+            f"- source: `{source}`",
+            f"- model_version: `{model_version}`",
+            "",
+            "## 2. Current vs target policy",
+            f"- current_stage: `{current_stage}`",
+            f"- target_stage: `{target_stage}`",
+            "",
+            "## 7. Conclusion",
+            f"- review_blockers: {review_blockers}",
+            f"- promotion_gate_blockers: {promotion_gate_blockers}",
+            f"- decision: **{decision}**",
+            f"- decision_allowed: **{decision_allowed}**",
+            "",
+            "### Rationale",
+            rationale,
+        ]
+    )
+
+
 def _settings(tmp_path: Path, **overrides) -> LiveStartupSettings:
     paths = {
         "readiness": tmp_path / "live-readiness.json",
@@ -106,19 +146,7 @@ def _write_evidence(
         ),
         encoding="utf-8",
     )
-    promotion.write_text(
-        "\n".join(
-            [
-                "# Promotion review",
-                "decision_allowed: **yes**",
-                f"source: {SOURCE}",
-                f"model_version: {MODEL_VERSION}",
-                "current_stage: testnet_canary",
-                "target_stage: live_canary",
-            ]
-        ),
-        encoding="utf-8",
-    )
+    promotion.write_text(_live_promotion_text(), encoding="utf-8")
     runbook.write_text(
         "\n".join(
             [
@@ -386,6 +414,83 @@ def test_live_startup_guard_blocks_unaccepted_runbook(tmp_path: Path) -> None:
 
     assert report.startup_allowed is False
     assert "first_live_day_runbook_not_accepted" in report.blockers
+
+
+def test_live_startup_guard_blocks_promotion_review_with_only_stage_mentions(
+    tmp_path: Path,
+) -> None:
+    paths = _write_evidence(tmp_path)
+    paths["promotion"].write_text(
+        _live_promotion_text(
+            current_stage="paper_simulated",
+            target_stage="testnet_canary",
+            rationale=(
+                "This rationale mentions live_canary and testnet_canary but the "
+                "structured stage fields are not the live transition."
+            ),
+        ),
+        encoding="utf-8",
+    )
+
+    report = build_live_startup_guard_report(
+        _settings(tmp_path, live_promotion_review_path=paths["promotion"]),
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    promotion = report.evidence["live_promotion_review"]
+    assert report.startup_allowed is False
+    assert "live_promotion_review_invalid" in report.blockers
+    assert "current_stage" in promotion["problems"]
+    assert "target_stage" in promotion["problems"]
+
+
+def test_live_startup_guard_blocks_non_promote_live_review(tmp_path: Path) -> None:
+    paths = _write_evidence(tmp_path)
+    paths["promotion"].write_text(
+        _live_promotion_text(decision="HOLD"),
+        encoding="utf-8",
+    )
+
+    report = build_live_startup_guard_report(
+        _settings(tmp_path, live_promotion_review_path=paths["promotion"]),
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    promotion = report.evidence["live_promotion_review"]
+    assert report.startup_allowed is False
+    assert "live_promotion_review_invalid" in report.blockers
+    assert "decision" in promotion["problems"]
+
+
+def test_live_startup_guard_accepts_json_promotion_review(tmp_path: Path) -> None:
+    paths = _write_evidence(tmp_path)
+    paths["promotion"].write_text(
+        json.dumps(
+            {
+                "source": SOURCE,
+                "model_version": MODEL_VERSION,
+                "current_stage": "testnet_canary",
+                "target_stage": "live_canary",
+                "decision": "promote",
+                "decision_allowed": True,
+                "operator": "pytest",
+                "review_blockers": [],
+                "promotion_gate_blockers": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    report = build_live_startup_guard_report(
+        _settings(tmp_path, live_promotion_review_path=paths["promotion"]),
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    assert report.startup_allowed is True
+    assert report.evidence["live_promotion_review"]["accepted"] is True
 
 
 def test_live_startup_guard_cli_outputs_json_and_exit_code(

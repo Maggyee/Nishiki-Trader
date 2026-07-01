@@ -16,6 +16,9 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
+from apps.strategies_nautilus.runners.promotion_review_artifact import (
+    evaluate_live_canary_promotion_review,
+)
 from apps.strategies_nautilus.runners.report_testnet_bundle import (
     load_testnet_continuity_summary,
 )
@@ -426,31 +429,17 @@ def _promotion_review_gate(
             "blocker": "live_canary_promotion_review_not_found",
             "detail": f"{path} does not exist.",
         }
-    text = path.read_text(encoding="utf-8")
-    lowered = text.lower()
-    has_decision_allowed = (
-        "decision_allowed: **yes**" in lowered
-        or "decision_allowed=true" in lowered
-        or "decision_allowed: true" in lowered
+    gate = evaluate_live_canary_promotion_review(
+        path,
+        source=source,
+        model_version=model_version,
     )
-    has_source = source in text
-    has_model = model_version in text
-    has_live_stage = "live_canary" in text
-    if has_decision_allowed and has_source and has_model and has_live_stage:
-        return {
-            "path": str(path),
-            "accepted": True,
-            "blocker": "",
-            "detail": f"{path} contains a signed live-canary promotion review.",
-        }
+    if gate["accepted"]:
+        return gate
     return {
-        "path": str(path),
+        **gate,
         "accepted": False,
         "blocker": "live_canary_promotion_review_invalid",
-        "detail": (
-            "Promotion review must mention decision_allowed, live_canary, "
-            "source, and model_version."
-        ),
     }
 
 
