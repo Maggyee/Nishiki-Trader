@@ -149,6 +149,14 @@ def _write_evidence(
                     "strict_continuity": "14/14",
                 },
                 "continuity_summary": {"required_gate_met": True},
+                "continuity_artifacts": [
+                    {
+                        "bundle_dir": "data/testnet/run-1",
+                        "manifest_path": "data/testnet/run-1/run_manifest.json",
+                        "exists": True,
+                        "sha256": "e" * 64,
+                    }
+                ],
                 "capital_plan": {
                     "starting_capital_usdt": 100.0,
                     "within_live_canary_range": True,
@@ -475,6 +483,26 @@ def test_live_startup_guard_blocks_readiness_report_without_source_document_fing
     assert "live_readiness_report_gate_not_met" in report.blockers
     assert "project_status_sha256" in readiness["problems"]
     assert "live_risk_adr_sha256" in readiness["problems"]
+
+
+def test_live_startup_guard_blocks_readiness_report_without_continuity_artifacts(
+    tmp_path: Path,
+) -> None:
+    paths = _write_evidence(tmp_path)
+    payload = json.loads(paths["readiness"].read_text(encoding="utf-8"))
+    payload.pop("continuity_artifacts")
+    paths["readiness"].write_text(json.dumps(payload), encoding="utf-8")
+
+    report = build_live_startup_guard_report(
+        _settings(tmp_path, live_readiness_report_path=paths["readiness"]),
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    readiness = report.evidence["live_readiness_report"]
+    assert report.startup_allowed is False
+    assert "live_readiness_report_gate_not_met" in report.blockers
+    assert "testnet_continuity_artifacts" in readiness["problems"]
 
 
 def test_live_startup_guard_blocks_readiness_report_from_different_live_risk_adr(

@@ -70,6 +70,7 @@ class LiveReadinessReport:
     live_promotion_review: dict[str, Any] | None
     git: dict[str, Any]
     continuity_summary: dict[str, Any] | None
+    continuity_artifacts: list[dict[str, Any]]
     capital_plan: dict[str, Any]
     market_scope: dict[str, Any]
     boundaries: dict[str, bool]
@@ -153,7 +154,11 @@ def build_live_readiness_report(
 
     continuity_summary = None
     bundle_dirs = continuity_bundle_dirs or []
+    continuity_artifacts = _continuity_artifacts(bundle_dirs)
     if bundle_dirs:
+        continuity_artifact_hashes_present = all(
+            bool(artifact.get("sha256")) for artifact in continuity_artifacts
+        )
         summary = load_testnet_continuity_summary(
             bundle_dirs,
             min_clean_hours_per_day=min_clean_hours_per_day,
@@ -172,6 +177,19 @@ def build_live_readiness_report(
                     ),
                 )
             )
+            checks.append(
+                _check(
+                    "testnet_continuity_artifacts",
+                    "ok" if continuity_artifact_hashes_present else "blocked",
+                    (
+                        "Continuity bundle manifest fingerprints are recorded."
+                        if continuity_artifact_hashes_present
+                        else "Every continuity bundle must expose a run_manifest.json fingerprint."
+                    ),
+                )
+            )
+            if not continuity_artifact_hashes_present:
+                blockers.append("testnet_continuity_artifact_fingerprint_missing")
         else:
             continuity_blockers = [
                 str(item) for item in continuity_summary.get("blockers", [])
@@ -285,6 +303,7 @@ def build_live_readiness_report(
         live_promotion_review=promotion_gate,
         git=git,
         continuity_summary=continuity_summary,
+        continuity_artifacts=continuity_artifacts,
         capital_plan=capital_plan,
         market_scope=market_scope,
         boundaries={
@@ -355,6 +374,23 @@ def _live_risk_adr_gate(path: Path) -> dict[str, Any]:
         "status": status,
         "accepted": status.lower().startswith("accepted"),
     }
+
+
+def _continuity_artifacts(bundle_dirs: list[Path]) -> list[dict[str, Any]]:
+    artifacts: list[dict[str, Any]] = []
+    for bundle_dir in bundle_dirs:
+        manifest_path = bundle_dir / "run_manifest.json"
+        exists = manifest_path.exists()
+        raw = manifest_path.read_bytes() if exists else b""
+        artifacts.append(
+            {
+                "bundle_dir": str(bundle_dir),
+                "manifest_path": str(manifest_path),
+                "exists": exists,
+                "sha256": hashlib.sha256(raw).hexdigest() if exists else None,
+            }
+        )
+    return artifacts
 
 
 def _capital_plan_gate(starting_capital_usdt: float | None) -> dict[str, Any]:

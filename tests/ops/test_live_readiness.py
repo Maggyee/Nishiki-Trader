@@ -82,6 +82,16 @@ def _write_live_adr(path: Path, *, status: str) -> None:
     )
 
 
+def _write_bundle_manifest(bundle_dir: Path) -> Path:
+    bundle_dir.mkdir(parents=True, exist_ok=True)
+    manifest = bundle_dir / "run_manifest.json"
+    manifest.write_text(
+        json.dumps({"kind": "testnet", "run_id": bundle_dir.name}),
+        encoding="utf-8",
+    )
+    return manifest
+
+
 def _continuity_summary(*, gate_met: bool) -> ContinuitySummary:
     return ContinuitySummary(
         bundle_dirs=["data/testnet/run-1"],
@@ -207,6 +217,8 @@ def test_live_readiness_can_emit_markdown_when_all_evidence_is_present(
     status_path = tmp_path / "project-status.md"
     live_adr = tmp_path / "013-phase6-live-risk-gate.md"
     promotion = tmp_path / "live-promotion.md"
+    bundle_dir = tmp_path / "bundle-1"
+    manifest = _write_bundle_manifest(bundle_dir)
     _write_status(status_path)
     _write_live_adr(live_adr, status="Accepted")
     promotion.write_text(_live_promotion_text(), encoding="utf-8")
@@ -219,7 +231,7 @@ def test_live_readiness_can_emit_markdown_when_all_evidence_is_present(
     report = live_readiness.build_live_readiness_report(
         project_status_path=status_path,
         live_risk_adr_path=live_adr,
-        continuity_bundle_dirs=[tmp_path / "bundle-1"],
+        continuity_bundle_dirs=[bundle_dir],
         source="freqai_linear_v1",
         model_version="linear-mom-train20240105",
         live_promotion_review_path=promotion,
@@ -242,6 +254,14 @@ def test_live_readiness_can_emit_markdown_when_all_evidence_is_present(
     assert report.live_risk_adr["sha256"] == hashlib.sha256(
         live_adr.read_bytes()
     ).hexdigest()
+    assert report.continuity_artifacts == [
+        {
+            "bundle_dir": str(bundle_dir),
+            "manifest_path": str(manifest),
+            "exists": True,
+            "sha256": hashlib.sha256(manifest.read_bytes()).hexdigest(),
+        }
+    ]
     assert report.market_scope["spot_only_no_margin_no_leverage"] is True
     assert "# Phase 6 Live Readiness" in markdown
     assert "live_trading_allowed: false" in markdown
@@ -255,6 +275,8 @@ def test_live_readiness_blocks_imprecise_live_promotion_review(
     status_path = tmp_path / "project-status.md"
     live_adr = tmp_path / "013-phase6-live-risk-gate.md"
     promotion = tmp_path / "live-promotion.md"
+    bundle_dir = tmp_path / "bundle-1"
+    _write_bundle_manifest(bundle_dir)
     _write_status(status_path)
     _write_live_adr(live_adr, status="Accepted")
     promotion.write_text(
@@ -277,7 +299,7 @@ def test_live_readiness_blocks_imprecise_live_promotion_review(
     report = live_readiness.build_live_readiness_report(
         project_status_path=status_path,
         live_risk_adr_path=live_adr,
-        continuity_bundle_dirs=[tmp_path / "bundle-1"],
+        continuity_bundle_dirs=[bundle_dir],
         source="freqai_linear_v1",
         model_version="linear-mom-train20240105",
         live_promotion_review_path=promotion,
@@ -293,13 +315,14 @@ def test_live_readiness_blocks_imprecise_live_promotion_review(
     assert "target_stage" in source_check.detail
 
 
-def test_live_readiness_blocks_dirty_git_evidence(
+def test_live_readiness_blocks_missing_continuity_manifest_fingerprint(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
     status_path = tmp_path / "project-status.md"
     live_adr = tmp_path / "013-phase6-live-risk-gate.md"
     promotion = tmp_path / "live-promotion.md"
+    bundle_dir = tmp_path / "bundle-without-manifest"
     _write_status(status_path)
     _write_live_adr(live_adr, status="Accepted")
     promotion.write_text(_live_promotion_text(), encoding="utf-8")
@@ -312,7 +335,49 @@ def test_live_readiness_blocks_dirty_git_evidence(
     report = live_readiness.build_live_readiness_report(
         project_status_path=status_path,
         live_risk_adr_path=live_adr,
-        continuity_bundle_dirs=[tmp_path / "bundle-1"],
+        continuity_bundle_dirs=[bundle_dir],
+        source="freqai_linear_v1",
+        model_version="linear-mom-train20240105",
+        live_promotion_review_path=promotion,
+        starting_capital_usdt=250,
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    assert report.readiness_gate_met is False
+    assert "testnet_continuity_artifact_fingerprint_missing" in report.blockers
+    assert report.continuity_artifacts == [
+        {
+            "bundle_dir": str(bundle_dir),
+            "manifest_path": str(bundle_dir / "run_manifest.json"),
+            "exists": False,
+            "sha256": None,
+        }
+    ]
+
+
+def test_live_readiness_blocks_dirty_git_evidence(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    live_adr = tmp_path / "013-phase6-live-risk-gate.md"
+    promotion = tmp_path / "live-promotion.md"
+    bundle_dir = tmp_path / "bundle-1"
+    _write_bundle_manifest(bundle_dir)
+    _write_status(status_path)
+    _write_live_adr(live_adr, status="Accepted")
+    promotion.write_text(_live_promotion_text(), encoding="utf-8")
+    monkeypatch.setattr(
+        live_readiness,
+        "load_testnet_continuity_summary",
+        lambda bundle_dirs, **kwargs: _continuity_summary(gate_met=True),
+    )
+
+    report = live_readiness.build_live_readiness_report(
+        project_status_path=status_path,
+        live_risk_adr_path=live_adr,
+        continuity_bundle_dirs=[bundle_dir],
         source="freqai_linear_v1",
         model_version="linear-mom-train20240105",
         live_promotion_review_path=promotion,
@@ -333,6 +398,8 @@ def test_live_readiness_blocks_non_spot_or_leveraged_scope(
     status_path = tmp_path / "project-status.md"
     live_adr = tmp_path / "013-phase6-live-risk-gate.md"
     promotion = tmp_path / "live-promotion.md"
+    bundle_dir = tmp_path / "bundle-1"
+    _write_bundle_manifest(bundle_dir)
     _write_status(status_path)
     _write_live_adr(live_adr, status="Accepted")
     promotion.write_text(_live_promotion_text(), encoding="utf-8")
@@ -345,7 +412,7 @@ def test_live_readiness_blocks_non_spot_or_leveraged_scope(
     report = live_readiness.build_live_readiness_report(
         project_status_path=status_path,
         live_risk_adr_path=live_adr,
-        continuity_bundle_dirs=[tmp_path / "bundle-1"],
+        continuity_bundle_dirs=[bundle_dir],
         source="freqai_linear_v1",
         model_version="linear-mom-train20240105",
         live_promotion_review_path=promotion,

@@ -385,6 +385,13 @@ def test_snapshot_summarizes_phase6_gate_artifacts(tmp_path: Path) -> None:
                     "sha256": "f" * 64,
                     "accepted": False,
                 },
+                "continuity_artifacts": [
+                    {
+                        "bundle_dir": "data/testnet/run-1",
+                        "manifest_path": "data/testnet/run-1/run_manifest.json",
+                        "sha256": "g" * 64,
+                    }
+                ],
                 "live_promotion_review": {
                     "accepted": False,
                     "blocker": "live_canary_promotion_review_required",
@@ -481,6 +488,13 @@ def test_snapshot_summarizes_phase6_gate_artifacts(tmp_path: Path) -> None:
             "sha256": "f" * 64,
         },
         {
+            "label": "Continuity bundle artifacts",
+            "status": "ok",
+            "detail": "1 continuity bundle manifest fingerprints recorded.",
+            "path": "data/testnet/run-1/run_manifest.json",
+            "sha256": "g" * 64,
+        },
+        {
             "label": "Promotion review artifact",
             "status": "blocked",
             "detail": "live_canary_promotion_review_required",
@@ -539,6 +553,13 @@ def test_snapshot_blocks_phase6_readiness_without_promotion_fingerprint(
                     "sha256": "c" * 64,
                     "accepted": True,
                 },
+                "continuity_artifacts": [
+                    {
+                        "bundle_dir": "data/testnet/run-1",
+                        "manifest_path": "data/testnet/run-1/run_manifest.json",
+                        "sha256": "d" * 64,
+                    }
+                ],
                 "checks": [],
             }
         ),
@@ -569,6 +590,13 @@ def test_snapshot_blocks_phase6_readiness_without_promotion_fingerprint(
             "detail": "Artifact fingerprint is recorded.",
             "path": "docs/decisions/013-phase6-live-risk-gate.md",
             "sha256": "c" * 64,
+        },
+        {
+            "label": "Continuity bundle artifacts",
+            "status": "ok",
+            "detail": "1 continuity bundle manifest fingerprints recorded.",
+            "path": "data/testnet/run-1/run_manifest.json",
+            "sha256": "d" * 64,
         },
         {
             "label": "Promotion review artifact",
@@ -607,6 +635,13 @@ def test_snapshot_blocks_phase6_readiness_without_source_document_fingerprints(
                     "path": "live-promotion.md",
                     "sha256": "a" * 64,
                 },
+                "continuity_artifacts": [
+                    {
+                        "bundle_dir": "data/testnet/run-1",
+                        "manifest_path": "data/testnet/run-1/run_manifest.json",
+                        "sha256": "b" * 64,
+                    }
+                ],
                 "checks": [],
             }
         ),
@@ -636,6 +671,62 @@ def test_snapshot_blocks_phase6_readiness_without_source_document_fingerprints(
         "status": "blocked",
         "detail": "Artifact fingerprint is not recorded.",
         "path": "docs/decisions/013-phase6-live-risk-gate.md",
+        "sha256": None,
+    }
+    assert snapshot["phase6"]["state"] == "blocked"
+
+
+def test_snapshot_blocks_phase6_readiness_without_continuity_fingerprints(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    readiness_path = tmp_path / "old-live-readiness.json"
+    readiness_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "phase6.live_readiness.v1",
+                "source": "freqai_linear_v1",
+                "model_version": "linear-mom-train20240105",
+                "readiness_gate_met": True,
+                "live_trading_allowed": False,
+                "recommendation": "ready_for_manual_live_go_no_go_review",
+                "blockers": [],
+                "project_status": {
+                    "path": "docs/project-status.md",
+                    "sha256": "b" * 64,
+                },
+                "live_risk_adr": {
+                    "path": "docs/decisions/013-phase6-live-risk-gate.md",
+                    "sha256": "c" * 64,
+                    "accepted": True,
+                },
+                "live_promotion_review": {
+                    "accepted": True,
+                    "path": "live-promotion.md",
+                    "sha256": "a" * 64,
+                },
+                "checks": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_readiness_report_path=readiness_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    readiness = snapshot["phase6"]["reports"][0]
+    assert readiness["status"] == "blocked"
+    assert "evidence:Continuity bundle artifacts" in readiness["blockers"]
+    assert readiness["evidence"][2] == {
+        "label": "Continuity bundle artifacts",
+        "status": "missing",
+        "detail": "Continuity bundle artifact fingerprints are not recorded.",
+        "path": None,
         "sha256": None,
     }
     assert snapshot["phase6"]["state"] == "blocked"

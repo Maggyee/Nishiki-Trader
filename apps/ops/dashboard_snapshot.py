@@ -1574,6 +1574,10 @@ def _phase6_report_evidence(
                 payload.get("live_risk_adr"),
                 label="Readiness live-risk ADR artifact",
             ),
+            _continuity_artifacts_evidence_item(
+                payload.get("continuity_artifacts"),
+                label="Continuity bundle artifacts",
+            ),
             _promotion_review_evidence_item(
                 payload.get("live_promotion_review"),
                 label="Promotion review artifact",
@@ -1656,6 +1660,48 @@ def _artifact_evidence_item(
         ),
         "path": path,
         "sha256": sha256,
+    }
+
+
+def _continuity_artifacts_evidence_item(
+    artifacts: Any,
+    *,
+    label: str,
+) -> dict[str, str | None]:
+    if not isinstance(artifacts, list) or not artifacts:
+        return {
+            "label": label,
+            "status": "missing",
+            "detail": "Continuity bundle artifact fingerprints are not recorded.",
+            "path": None,
+            "sha256": None,
+        }
+    missing = [
+        item
+        for item in artifacts
+        if not isinstance(item, dict) or not _optional_str(item.get("sha256"))
+    ]
+    first_path = next(
+        (
+            _optional_str(item.get("manifest_path"))
+            for item in artifacts
+            if isinstance(item, dict) and item.get("manifest_path")
+        ),
+        None,
+    )
+    status = "ok" if not missing else "blocked"
+    return {
+        "label": label,
+        "status": status,
+        "detail": (
+            f"{len(artifacts)} continuity bundle manifest fingerprints recorded."
+            if status == "ok"
+            else "One or more continuity bundle fingerprints are missing."
+        ),
+        "path": first_path,
+        "sha256": _optional_str(artifacts[0].get("sha256"))
+        if isinstance(artifacts[0], dict)
+        else None,
     }
 
 

@@ -516,6 +516,11 @@ def _live_readiness_report_gate(
     continuity = payload.get("continuity_summary") or {}
     if continuity.get("required_gate_met") is not True:
         problems.append("testnet_continuity")
+    continuity_artifacts = payload.get("continuity_artifacts")
+    if continuity.get("required_gate_met") is True and not _artifact_list_has_hashes(
+        continuity_artifacts
+    ):
+        problems.append("testnet_continuity_artifacts")
     capital_plan = payload.get("capital_plan") or {}
     if capital_plan.get("within_live_canary_range") is not True:
         problems.append("capital_plan")
@@ -585,6 +590,7 @@ def _live_readiness_report_gate(
             "opened_boundaries": opened_boundaries,
             "freshness": freshness,
             "project_status": project_status,
+            "continuity_artifacts": continuity_artifacts,
             "live_risk_adr": live_risk_adr,
             "expected_live_risk_adr_sha256": expected_live_risk_adr_sha256,
             "live_promotion_review": live_promotion_review,
@@ -598,6 +604,7 @@ def _live_readiness_report_gate(
         "detail": f"{path} proves the passive live-readiness gate and is fresh.",
         "freshness": freshness,
         "project_status": project_status,
+        "continuity_artifacts": continuity_artifacts,
         "live_risk_adr": live_risk_adr,
         "expected_live_risk_adr_sha256": expected_live_risk_adr_sha256,
         "live_promotion_review": live_promotion_review,
@@ -676,6 +683,12 @@ def _promotion_review_sha256_or_none(path: Path) -> str | None:
         return promotion_review_sha256(path)
     except OSError:
         return None
+
+
+def _artifact_list_has_hashes(value: Any) -> bool:
+    if not isinstance(value, list) or not value:
+        return False
+    return all(isinstance(item, dict) and bool(item.get("sha256")) for item in value)
 
 
 def _file_sha256_or_none(path: Path) -> str | None:

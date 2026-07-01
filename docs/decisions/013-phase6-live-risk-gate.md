@@ -98,6 +98,8 @@ emits `phase6.live_readiness.v1` JSON or Markdown from:
 - the git commit and dirty/clean state at report generation time.
 - SHA-256 fingerprints for the exact project-status and live-risk ADR bytes
   the readiness report consumed.
+- SHA-256 fingerprints for every supplied testnet continuity bundle
+  `run_manifest.json` artifact.
 - the SHA-256 fingerprint of the exact live promotion-review artifact bytes
   when that artifact is present and parseable.
 
@@ -195,6 +197,8 @@ A future live runner must refuse startup unless:
 - a saved `phase6.live_readiness.v1` report proves the 14-day continuity gate
   and has no blockers, was generated from a clean git tree, and records the
   same commit as startup preflight;
+- the saved readiness report records SHA-256 fingerprints for every testnet
+  continuity bundle manifest used to prove the 14-day continuity gate;
 - the saved readiness report has `generated_at_ns` and is no older than the
   guard's configured maximum age, default 24 hours;
 - the saved readiness report records project-status and live-risk ADR
