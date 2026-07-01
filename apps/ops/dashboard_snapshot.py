@@ -1633,6 +1633,7 @@ def _phase6_report_evidence(
             first_live_day_runbook_gate,
             label="First live day runbook artifact",
         ),
+        _readiness_freshness_evidence_item(readiness_gate),
     ]
 
 
@@ -1799,6 +1800,46 @@ def _startup_continuity_artifact_verification_item(
         "detail": f"{len(artifacts)} continuity bundle manifest bytes verified.",
         "path": first_path,
         "sha256": first_sha256,
+    }
+
+
+def _readiness_freshness_evidence_item(
+    readiness_gate: Any,
+) -> dict[str, str | None]:
+    if not isinstance(readiness_gate, dict):
+        return {
+            "label": "Readiness freshness window",
+            "status": "missing",
+            "detail": "Readiness report gate evidence is not recorded.",
+            "path": None,
+            "sha256": None,
+        }
+
+    freshness = readiness_gate.get("freshness")
+    if not isinstance(freshness, dict):
+        return {
+            "label": "Readiness freshness window",
+            "status": "missing",
+            "detail": "Startup guard did not record readiness freshness evidence.",
+            "path": _optional_str(readiness_gate.get("path")),
+            "sha256": _optional_str(readiness_gate.get("sha256")),
+        }
+
+    problems = freshness.get("problems")
+    problems = problems if isinstance(problems, list) else []
+    fresh = freshness.get("fresh") is True and not problems
+    age = _optional_str(freshness.get("age_seconds"))
+    max_age = _optional_str(freshness.get("max_age_seconds"))
+    return {
+        "label": "Readiness freshness window",
+        "status": "ok" if fresh else "blocked",
+        "detail": (
+            f"Readiness report age {age}s is within max {max_age}s."
+            if fresh
+            else "Startup guard reported: " + _join_or_none(problems)
+        ),
+        "path": _optional_str(readiness_gate.get("path")),
+        "sha256": _optional_str(readiness_gate.get("sha256")),
     }
 
 

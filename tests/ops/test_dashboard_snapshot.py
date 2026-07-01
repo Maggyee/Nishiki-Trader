@@ -427,6 +427,12 @@ def test_snapshot_summarizes_phase6_gate_artifacts(tmp_path: Path) -> None:
                     "live_readiness_report": {
                         "path": str(readiness_path),
                         "sha256": "b" * 64,
+                        "freshness": {
+                            "fresh": True,
+                            "problems": [],
+                            "age_seconds": 60.0,
+                            "max_age_seconds": 86400.0,
+                        },
                         "live_risk_adr": {
                             "path": "docs/decisions/013-phase6-live-risk-gate.md",
                             "sha256": "c" * 64,
@@ -548,6 +554,13 @@ def test_snapshot_summarizes_phase6_gate_artifacts(tmp_path: Path) -> None:
         "First live day runbook artifact"
     )
     assert phase6["reports"][1]["evidence"][6]["sha256"] == "d" * 64
+    assert phase6["reports"][1]["evidence"][7] == {
+        "label": "Readiness freshness window",
+        "status": "ok",
+        "detail": "Readiness report age 60.0s is within max 86400.0s.",
+        "path": str(readiness_path),
+        "sha256": "b" * 64,
+    }
     assert "## Phase 6 Gates" in markdown
     assert "evidence: Promotion review artifact" in markdown
     assert "first_live_day_runbook_not_accepted" in markdown
@@ -980,6 +993,94 @@ def test_snapshot_blocks_phase6_startup_with_different_readiness_live_risk_adr(
         "path": "013-phase6-live-risk-gate.md",
         "sha256": "d" * 64,
         "expected_sha256": "b" * 64,
+    }
+    assert snapshot["phase6"]["state"] == "blocked"
+
+
+def test_snapshot_blocks_phase6_startup_with_stale_readiness_freshness(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    guard_path = tmp_path / "live-startup-guard.json"
+    guard_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "phase6.live_startup_guard.v1",
+                "source": "freqai_linear_v1",
+                "model_version": "linear-mom-train20240105",
+                "startup_allowed": True,
+                "live_trading_authorized": False,
+                "recommendation": "startup_preflight_passed_for_future_live_runner",
+                "blockers": [],
+                "evidence": {
+                    "live_risk_adr": {
+                        "path": "013-phase6-live-risk-gate.md",
+                        "sha256": "b" * 64,
+                    },
+                    "live_readiness_report": {
+                        "path": "live-readiness.json",
+                        "sha256": "c" * 64,
+                        "freshness": {
+                            "fresh": False,
+                            "problems": ["readiness_report_stale"],
+                            "age_seconds": 90000.0,
+                            "max_age_seconds": 86400.0,
+                        },
+                        "live_risk_adr": {
+                            "path": "013-phase6-live-risk-gate.md",
+                            "sha256": "b" * 64,
+                        },
+                        "expected_live_risk_adr_sha256": "b" * 64,
+                        "continuity_artifacts": [
+                            {
+                                "bundle_dir": "data/testnet/run-1",
+                                "manifest_path": (
+                                    "data/testnet/run-1/run_manifest.json"
+                                ),
+                                "sha256": "d" * 64,
+                            }
+                        ],
+                        "continuity_artifact_problems": [],
+                        "live_promotion_review": {
+                            "accepted": True,
+                            "path": "live-promotion.md",
+                            "sha256": "a" * 64,
+                        },
+                        "expected_live_promotion_review_sha256": "a" * 64,
+                    },
+                    "live_promotion_review": {
+                        "accepted": True,
+                        "path": "live-promotion.md",
+                        "sha256": "a" * 64,
+                    },
+                    "first_live_day_runbook": {
+                        "path": "runbook-first-live-day.md",
+                        "sha256": "e" * 64,
+                    },
+                },
+                "checks": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_startup_guard_report_path=guard_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    startup_guard = snapshot["phase6"]["reports"][1]
+    assert startup_guard["status"] == "blocked"
+    assert "evidence:Readiness freshness window" in startup_guard["blockers"]
+    assert startup_guard["evidence"][7] == {
+        "label": "Readiness freshness window",
+        "status": "blocked",
+        "detail": "Startup guard reported: readiness_report_stale",
+        "path": "live-readiness.json",
+        "sha256": "c" * 64,
     }
     assert snapshot["phase6"]["state"] == "blocked"
 
