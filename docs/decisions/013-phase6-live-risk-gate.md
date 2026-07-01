@@ -52,7 +52,8 @@ Phase 6 entry requires all of the following evidence, in this order:
    - first-hour observation cadence;
    - post-run retro template.
 6. A startup guard that refuses live mode unless all required evidence paths are
-   supplied, the git tree is clean, and `--allow-live-credentials` is explicit.
+   supplied, the git tree is clean, the saved readiness report is fresh, and
+   `--allow-live-credentials` is explicit.
 
 Until every item is satisfied, Phase 6 remains closed and the live path remains
 blocked.
@@ -114,9 +115,12 @@ startup preflight reader for a future live runner. It consumes a saved
 promotion review, first-live-day runbook, capital declaration, live SourcePolicy
 fields, live market scope, explicit `--allow-live-credentials`, and git state.
 It also rejects any saved readiness report whose passive boundary flags are not
-all closed or whose recorded git commit does not match the startup guard's
-current clean commit. It returns exit code 2 when the future live runner must
-refuse startup.
+all closed, whose recorded git commit does not match the startup guard's
+current clean commit, or whose `generated_at_ns` is missing, in the future, or
+older than the guard's maximum accepted age. The default maximum age is 24
+hours, overrideable with `--max-readiness-report-age-seconds` only when the
+operator intentionally widens the evidence window. It returns exit code 2 when
+the future live runner must refuse startup.
 
 The startup guard still does not load live credentials, inspect credential
 values, build a Nautilus node, connect to Binance, mutate `SourcePolicy`, write
@@ -137,6 +141,7 @@ UV_CACHE_DIR=/tmp/uv-cache uv run python -m \
   --starting-capital-usdt 100 \
   --market-type spot \
   --max-leverage 1 \
+  --max-readiness-report-age-seconds 86400 \
   --live-readiness-report-path docs/retros/<phase6-live-readiness>.json \
   --live-promotion-review-path docs/retros/<live-canary-promotion-review>.md \
   --first-live-day-runbook-path docs/runbook-first-live-day.md \
@@ -169,6 +174,8 @@ A future live runner must refuse startup unless:
 - a saved `phase6.live_readiness.v1` report proves the 14-day continuity gate
   and has no blockers, was generated from a clean git tree, and records the
   same commit as startup preflight;
+- the saved readiness report has `generated_at_ns` and is no older than the
+  guard's configured maximum age, default 24 hours;
 - a live-canary promotion review exists for the exact source/model transition
   `testnet_canary -> live_canary`;
 - starting capital is declared and within 100-500 USDT;

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import time
 from pathlib import Path
 
 from apps.strategies_nautilus.runners.live_startup_guard import (
@@ -15,7 +16,7 @@ from apps.strategies_nautilus.runners.live_startup_guard import (
 
 SOURCE = "freqai_linear_v1"
 MODEL_VERSION = "linear-mom-train20240105"
-REFERENCE_TS_NS = 1_778_760_000_000_000_000
+REFERENCE_TS_NS = time.time_ns()
 GIT_CLEAN = GitState(commit="a" * 40, dirty=False)
 
 
@@ -48,7 +49,12 @@ def _settings(tmp_path: Path, **overrides) -> LiveStartupSettings:
     return LiveStartupSettings(**values)
 
 
-def _write_evidence(tmp_path: Path, *, runbook_status: str = "Accepted") -> dict[str, Path]:
+def _write_evidence(
+    tmp_path: Path,
+    *,
+    runbook_status: str = "Accepted",
+    generated_at_ns: int = REFERENCE_TS_NS,
+) -> dict[str, Path]:
     readiness = tmp_path / "live-readiness.json"
     adr = tmp_path / "013-phase6-live-risk-gate.md"
     promotion = tmp_path / "live-promotion.md"
@@ -57,6 +63,7 @@ def _write_evidence(tmp_path: Path, *, runbook_status: str = "Accepted") -> dict
         json.dumps(
             {
                 "schema_version": "phase6.live_readiness.v1",
+                "generated_at_ns": generated_at_ns,
                 "source": SOURCE,
                 "model_version": MODEL_VERSION,
                 "readiness_gate_met": True,
@@ -215,6 +222,66 @@ def test_live_startup_guard_blocks_readiness_report_from_different_commit(
     assert report.startup_allowed is False
     assert "live_readiness_report_gate_not_met" in report.blockers
     assert "readiness_git_commit" in report.evidence["live_readiness_report"]["problems"]
+
+
+def test_live_startup_guard_blocks_stale_readiness_report(
+    tmp_path: Path,
+) -> None:
+    two_days_ns = 2 * 24 * 60 * 60 * 1_000_000_000
+    paths = _write_evidence(tmp_path, generated_at_ns=REFERENCE_TS_NS - two_days_ns)
+
+    report = build_live_startup_guard_report(
+        _settings(tmp_path, live_readiness_report_path=paths["readiness"]),
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    readiness = report.evidence["live_readiness_report"]
+    assert report.startup_allowed is False
+    assert "live_readiness_report_gate_not_met" in report.blockers
+    assert "readiness_report_stale" in readiness["problems"]
+    assert readiness["freshness"]["fresh"] is False
+    assert readiness["freshness"]["age_seconds"] == 2 * 24 * 60 * 60
+
+
+def test_live_startup_guard_blocks_future_readiness_report(
+    tmp_path: Path,
+) -> None:
+    one_minute_ns = 60 * 1_000_000_000
+    paths = _write_evidence(tmp_path, generated_at_ns=REFERENCE_TS_NS + one_minute_ns)
+
+    report = build_live_startup_guard_report(
+        _settings(tmp_path, live_readiness_report_path=paths["readiness"]),
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    readiness = report.evidence["live_readiness_report"]
+    assert report.startup_allowed is False
+    assert "live_readiness_report_gate_not_met" in report.blockers
+    assert "readiness_generated_in_future" in readiness["problems"]
+    assert readiness["freshness"]["fresh"] is False
+
+
+def test_live_startup_guard_blocks_readiness_report_without_generated_at_ns(
+    tmp_path: Path,
+) -> None:
+    paths = _write_evidence(tmp_path)
+    payload = json.loads(paths["readiness"].read_text(encoding="utf-8"))
+    payload.pop("generated_at_ns")
+    paths["readiness"].write_text(json.dumps(payload), encoding="utf-8")
+
+    report = build_live_startup_guard_report(
+        _settings(tmp_path, live_readiness_report_path=paths["readiness"]),
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    readiness = report.evidence["live_readiness_report"]
+    assert report.startup_allowed is False
+    assert "live_readiness_report_gate_not_met" in report.blockers
+    assert "readiness_generated_at_ns" in readiness["problems"]
+    assert readiness["freshness"]["report_generated_at_ns"] is None
 
 
 def test_live_startup_guard_blocks_dirty_readiness_report(

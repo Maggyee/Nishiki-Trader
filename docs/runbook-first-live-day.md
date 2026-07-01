@@ -17,7 +17,8 @@ runbook is Accepted, and the live startup guard passes.
   `readiness_gate_met=true`, `live_trading_allowed=false`, and
   `git.dirty=false`.
 - `apps.strategies_nautilus.runners.live_startup_guard` passes against that
-  saved readiness report at the same git commit.
+  saved readiness report at the same git commit and within the guard's default
+  24 hour readiness-evidence freshness window.
 - Starting capital is declared between 100 and 500 USDT.
 - Market scope is explicitly Binance Spot only: `market_type=spot`,
   `margin_enabled=false`, and `max_leverage=1.0`.
@@ -29,11 +30,14 @@ runbook is Accepted, and the live startup guard passes.
 
 1. Confirm `git status --short --branch` is clean and `git rev-parse HEAD`
    matches the commit recorded in the saved readiness evidence.
-2. Confirm the live credential key-prefix audit plan: record only the API key
+2. Confirm the saved readiness evidence has `generated_at_ns` and was generated
+   within the last 24 hours unless the operator explicitly chose a wider
+   `--max-readiness-report-age-seconds` window.
+3. Confirm the live credential key-prefix audit plan: record only the API key
    prefix in runtime logs; never write the full API key or secret.
-3. Confirm Binance Spot only: no margin, no futures, no leverage.
-4. Confirm the operator has the exchange web UI open before startup.
-5. Confirm a manual exchange fallback is available: if the runner or emergency
+4. Confirm Binance Spot only: no margin, no futures, no leverage.
+5. Confirm the operator has the exchange web UI open before startup.
+6. Confirm a manual exchange fallback is available: if the runner or emergency
    tooling fails, manually cancel all open Spot orders and sell residual BTC to
    return the account to USDT/flat.
 
@@ -52,6 +56,7 @@ uv run python -m apps.strategies_nautilus.runners.live_startup_guard \
   --starting-capital-usdt 100 \
   --market-type spot \
   --max-leverage 1 \
+  --max-readiness-report-age-seconds 86400 \
   --live-readiness-report-path docs/retros/<phase6-live-readiness>.json \
   --live-promotion-review-path docs/retros/<live-canary-promotion-review>.md \
   --first-live-day-runbook-path docs/runbook-first-live-day.md \

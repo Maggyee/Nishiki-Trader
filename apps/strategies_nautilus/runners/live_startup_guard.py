@@ -28,6 +28,7 @@ SCHEMA_VERSION = "phase6.live_startup_guard.v1"
 READINESS_SCHEMA_VERSION = "phase6.live_readiness.v1"
 DEFAULT_LIVE_RISK_ADR_PATH = Path("docs/decisions/013-phase6-live-risk-gate.md")
 DEFAULT_FIRST_LIVE_DAY_RUNBOOK_PATH = Path("docs/runbook-first-live-day.md")
+DEFAULT_MAX_READINESS_REPORT_AGE_SECONDS = 24 * 60 * 60
 REQUIRED_LIVE_CREDENTIAL_ENV_NAMES = (
     "BINANCE_LIVE_API_KEY",
     "BINANCE_LIVE_API_SECRET",
@@ -70,6 +71,7 @@ class LiveStartupSettings:
     market_type: str = "spot"
     margin_enabled: bool = False
     max_leverage: float = 1.0
+    max_readiness_report_age_seconds: float = DEFAULT_MAX_READINESS_REPORT_AGE_SECONDS
 
 
 @dataclass(frozen=True)
@@ -183,7 +185,11 @@ def build_live_startup_guard_report(
     if not adr_gate["accepted"]:
         blockers.append("live_risk_adr_not_accepted")
 
-    readiness_gate = _live_readiness_report_gate(settings, git_state=state)
+    readiness_gate = _live_readiness_report_gate(
+        settings,
+        git_state=state,
+        generated_at_ns=generated_ns,
+    )
     evidence["live_readiness_report"] = readiness_gate
     checks.append(
         _check(
@@ -447,6 +453,7 @@ def _live_readiness_report_gate(
     settings: LiveStartupSettings,
     *,
     git_state: GitState,
+    generated_at_ns: int,
 ) -> dict[str, Any]:
     path = settings.live_readiness_report_path
     if not path.exists():
@@ -467,6 +474,12 @@ def _live_readiness_report_gate(
         }
 
     problems: list[str] = []
+    freshness = _readiness_report_freshness(
+        payload.get("generated_at_ns"),
+        guard_generated_at_ns=generated_at_ns,
+        max_age_seconds=settings.max_readiness_report_age_seconds,
+    )
+    problems.extend(str(item) for item in freshness["problems"])
     if payload.get("schema_version") != READINESS_SCHEMA_VERSION:
         problems.append("schema_version")
     if payload.get("source") != settings.source:
@@ -536,12 +549,51 @@ def _live_readiness_report_gate(
             "detail": "Live readiness report failed checks: " + ", ".join(problems),
             "problems": problems,
             "opened_boundaries": opened_boundaries,
+            "freshness": freshness,
         }
     return {
         "path": str(path),
         "accepted": True,
         "blocker": "",
-        "detail": f"{path} proves the passive live-readiness gate.",
+        "detail": f"{path} proves the passive live-readiness gate and is fresh.",
+        "freshness": freshness,
+    }
+
+
+def _readiness_report_freshness(
+    report_generated_at_ns: Any,
+    *,
+    guard_generated_at_ns: int,
+    max_age_seconds: float,
+) -> dict[str, Any]:
+    problems: list[str] = []
+    report_generated_ns: int | None
+    if isinstance(report_generated_at_ns, bool):
+        report_generated_ns = None
+    else:
+        try:
+            report_generated_ns = int(report_generated_at_ns)
+        except (TypeError, ValueError):
+            report_generated_ns = None
+    if report_generated_ns is None:
+        problems.append("readiness_generated_at_ns")
+        age_seconds = None
+    else:
+        age_seconds = (guard_generated_at_ns - report_generated_ns) / 1_000_000_000
+    if max_age_seconds <= 0:
+        problems.append("max_readiness_report_age_seconds")
+    elif age_seconds is not None:
+        if age_seconds < 0:
+            problems.append("readiness_generated_in_future")
+        elif age_seconds > max_age_seconds:
+            problems.append("readiness_report_stale")
+    return {
+        "report_generated_at_ns": report_generated_ns,
+        "guard_generated_at_ns": guard_generated_at_ns,
+        "age_seconds": age_seconds,
+        "max_age_seconds": max_age_seconds,
+        "fresh": not problems,
+        "problems": problems,
     }
 
 
@@ -682,6 +734,15 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--market-type", default="spot")
     parser.add_argument("--margin-enabled", action="store_true")
     parser.add_argument("--max-leverage", type=float, default=1.0)
+    parser.add_argument(
+        "--max-readiness-report-age-seconds",
+        type=float,
+        default=DEFAULT_MAX_READINESS_REPORT_AGE_SECONDS,
+        help=(
+            "Maximum accepted age for the saved phase6.live_readiness.v1 report "
+            "before live startup must refuse."
+        ),
+    )
     parser.add_argument("--live-readiness-report-path", type=Path, required=True)
     parser.add_argument("--live-promotion-review-path", type=Path, required=True)
     parser.add_argument(
@@ -736,6 +797,7 @@ def main(
         market_type=args.market_type,
         margin_enabled=bool(args.margin_enabled),
         max_leverage=float(args.max_leverage),
+        max_readiness_report_age_seconds=float(args.max_readiness_report_age_seconds),
     )
     report = build_live_startup_guard_report(settings, git_state=git_state)
     if args.markdown:
