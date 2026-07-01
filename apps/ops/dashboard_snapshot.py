@@ -1611,6 +1611,7 @@ def _phase6_report_evidence(
             readiness_gate,
             label="Readiness report artifact",
         ),
+        _startup_continuity_artifact_verification_item(readiness_gate),
         _promotion_review_evidence_item(
             startup_promotion_gate,
             label="Startup promotion review artifact",
@@ -1702,6 +1703,69 @@ def _continuity_artifacts_evidence_item(
         "sha256": _optional_str(artifacts[0].get("sha256"))
         if isinstance(artifacts[0], dict)
         else None,
+    }
+
+
+def _startup_continuity_artifact_verification_item(
+    readiness_gate: Any,
+) -> dict[str, str | None]:
+    if not isinstance(readiness_gate, dict):
+        return {
+            "label": "Startup continuity artifact verification",
+            "status": "missing",
+            "detail": "Readiness report gate evidence is not recorded.",
+            "path": None,
+            "sha256": None,
+        }
+
+    artifacts = readiness_gate.get("continuity_artifacts")
+    problems = readiness_gate.get("continuity_artifact_problems")
+    first_path = None
+    first_sha256 = None
+    if isinstance(artifacts, list):
+        first_path = next(
+            (
+                _optional_str(item.get("manifest_path"))
+                for item in artifacts
+                if isinstance(item, dict) and item.get("manifest_path")
+            ),
+            None,
+        )
+        first_sha256 = (
+            _optional_str(artifacts[0].get("sha256"))
+            if artifacts and isinstance(artifacts[0], dict)
+            else None
+        )
+    if not isinstance(problems, list):
+        return {
+            "label": "Startup continuity artifact verification",
+            "status": "missing",
+            "detail": "Startup guard did not record continuity artifact verification.",
+            "path": first_path,
+            "sha256": first_sha256,
+        }
+    if problems:
+        return {
+            "label": "Startup continuity artifact verification",
+            "status": "blocked",
+            "detail": "Startup guard reported: " + _join_or_none(problems),
+            "path": first_path,
+            "sha256": first_sha256,
+        }
+    if not isinstance(artifacts, list) or not artifacts:
+        return {
+            "label": "Startup continuity artifact verification",
+            "status": "blocked",
+            "detail": "Startup guard did not record continuity artifact inputs.",
+            "path": None,
+            "sha256": None,
+        }
+    return {
+        "label": "Startup continuity artifact verification",
+        "status": "ok",
+        "detail": f"{len(artifacts)} continuity bundle manifest bytes verified.",
+        "path": first_path,
+        "sha256": first_sha256,
     }
 
 
