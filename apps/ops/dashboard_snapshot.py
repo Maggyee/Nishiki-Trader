@@ -1634,6 +1634,7 @@ def _phase6_report_evidence(
             label="First live day runbook artifact",
         ),
         _readiness_freshness_evidence_item(readiness_gate),
+        _readiness_git_evidence_item(readiness_gate),
     ]
 
 
@@ -1840,6 +1841,64 @@ def _readiness_freshness_evidence_item(
         ),
         "path": _optional_str(readiness_gate.get("path")),
         "sha256": _optional_str(readiness_gate.get("sha256")),
+    }
+
+
+def _readiness_git_evidence_item(
+    readiness_gate: Any,
+) -> dict[str, str | None]:
+    if not isinstance(readiness_gate, dict):
+        return {
+            "label": "Readiness git commit match",
+            "status": "missing",
+            "detail": "Readiness report gate evidence is not recorded.",
+            "path": None,
+            "sha256": None,
+        }
+
+    readiness_git = readiness_gate.get("readiness_git")
+    if not isinstance(readiness_git, dict):
+        return {
+            "label": "Readiness git commit match",
+            "status": "missing",
+            "detail": "Startup guard did not record readiness git evidence.",
+            "path": _optional_str(readiness_gate.get("path")),
+            "sha256": None,
+        }
+
+    readiness_commit = _optional_str(readiness_git.get("commit"))
+    expected_commit = _optional_str(readiness_gate.get("expected_git_commit"))
+    readiness_dirty = readiness_git.get("dirty")
+    if readiness_dirty is not False:
+        return {
+            "label": "Readiness git commit match",
+            "status": "blocked",
+            "detail": "Readiness report git evidence is dirty.",
+            "path": _optional_str(readiness_gate.get("path")),
+            "sha256": None,
+        }
+    if not readiness_commit or not expected_commit:
+        return {
+            "label": "Readiness git commit match",
+            "status": "blocked",
+            "detail": "Startup guard did not record both git commits.",
+            "path": _optional_str(readiness_gate.get("path")),
+            "sha256": None,
+        }
+    if readiness_commit != expected_commit:
+        return {
+            "label": "Readiness git commit match",
+            "status": "blocked",
+            "detail": "Readiness report git commit does not match startup preflight.",
+            "path": _optional_str(readiness_gate.get("path")),
+            "sha256": None,
+        }
+    return {
+        "label": "Readiness git commit match",
+        "status": "ok",
+        "detail": "Readiness report git commit matches startup preflight and is clean.",
+        "path": _optional_str(readiness_gate.get("path")),
+        "sha256": None,
     }
 
 

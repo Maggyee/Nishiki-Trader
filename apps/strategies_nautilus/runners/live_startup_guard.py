@@ -469,6 +469,9 @@ def _live_readiness_report_gate(
         return {
             "path": str(path),
             "sha256": None,
+            "readiness_git": None,
+            "expected_git_commit": git_state.commit,
+            "expected_git_dirty": False,
             "accepted": False,
             "blocker": "live_readiness_report_not_found",
             "detail": f"{path} does not exist.",
@@ -481,6 +484,9 @@ def _live_readiness_report_gate(
         return {
             "path": str(path),
             "sha256": artifact_sha256,
+            "readiness_git": None,
+            "expected_git_commit": git_state.commit,
+            "expected_git_dirty": False,
             "accepted": False,
             "blocker": "live_readiness_report_invalid_json",
             "detail": f"{path} is not valid JSON: {exc}",
@@ -505,7 +511,8 @@ def _live_readiness_report_gate(
         problems.append("live_trading_allowed_must_remain_false")
     if payload.get("blockers"):
         problems.append("blockers_must_be_empty")
-    report_git = payload.get("git") or {}
+    report_git = payload.get("git")
+    report_git = report_git if isinstance(report_git, dict) else {}
     if report_git.get("dirty") is not False:
         problems.append("readiness_git_dirty")
     if report_git.get("commit") != git_state.commit:
@@ -587,6 +594,9 @@ def _live_readiness_report_gate(
         return {
             "path": str(path),
             "sha256": artifact_sha256,
+            "readiness_git": report_git,
+            "expected_git_commit": git_state.commit,
+            "expected_git_dirty": False,
             "accepted": False,
             "blocker": "live_readiness_report_gate_not_met",
             "detail": "Live readiness report failed checks: " + ", ".join(problems),
@@ -604,6 +614,9 @@ def _live_readiness_report_gate(
     return {
         "path": str(path),
         "sha256": artifact_sha256,
+        "readiness_git": report_git,
+        "expected_git_commit": git_state.commit,
+        "expected_git_dirty": False,
         "accepted": True,
         "blocker": "",
         "detail": f"{path} proves the passive live-readiness gate and is fresh.",

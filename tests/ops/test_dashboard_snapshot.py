@@ -433,6 +433,12 @@ def test_snapshot_summarizes_phase6_gate_artifacts(tmp_path: Path) -> None:
                             "age_seconds": 60.0,
                             "max_age_seconds": 86400.0,
                         },
+                        "readiness_git": {
+                            "commit": "a" * 40,
+                            "dirty": False,
+                        },
+                        "expected_git_commit": "a" * 40,
+                        "expected_git_dirty": False,
                         "live_risk_adr": {
                             "path": "docs/decisions/013-phase6-live-risk-gate.md",
                             "sha256": "c" * 64,
@@ -560,6 +566,15 @@ def test_snapshot_summarizes_phase6_gate_artifacts(tmp_path: Path) -> None:
         "detail": "Readiness report age 60.0s is within max 86400.0s.",
         "path": str(readiness_path),
         "sha256": "b" * 64,
+    }
+    assert phase6["reports"][1]["evidence"][8] == {
+        "label": "Readiness git commit match",
+        "status": "ok",
+        "detail": (
+            "Readiness report git commit matches startup preflight and is clean."
+        ),
+        "path": str(readiness_path),
+        "sha256": None,
     }
     assert "## Phase 6 Gates" in markdown
     assert "evidence: Promotion review artifact" in markdown
@@ -765,6 +780,150 @@ def test_snapshot_blocks_phase6_readiness_without_continuity_fingerprints(
         "status": "missing",
         "detail": "Continuity bundle artifact fingerprints are not recorded.",
         "path": None,
+        "sha256": None,
+    }
+    assert snapshot["phase6"]["state"] == "blocked"
+
+
+def _write_passing_startup_guard_report_with_readiness_git(
+    path: Path,
+    *,
+    readiness_git: dict[str, object],
+    expected_git_commit: str = "b" * 40,
+) -> None:
+    path.write_text(
+        json.dumps(
+            {
+                "schema_version": "phase6.live_startup_guard.v1",
+                "source": "freqai_linear_v1",
+                "model_version": "linear-mom-train20240105",
+                "startup_allowed": True,
+                "live_trading_authorized": False,
+                "recommendation": "startup_preflight_passed_for_future_live_runner",
+                "blockers": [],
+                "evidence": {
+                    "live_risk_adr": {
+                        "path": "013-phase6-live-risk-gate.md",
+                        "sha256": "b" * 64,
+                    },
+                    "live_readiness_report": {
+                        "path": "live-readiness.json",
+                        "sha256": "c" * 64,
+                        "freshness": {
+                            "fresh": True,
+                            "problems": [],
+                            "age_seconds": 60.0,
+                            "max_age_seconds": 86400.0,
+                        },
+                        "readiness_git": readiness_git,
+                        "expected_git_commit": expected_git_commit,
+                        "expected_git_dirty": False,
+                        "live_risk_adr": {
+                            "path": "013-phase6-live-risk-gate.md",
+                            "sha256": "b" * 64,
+                        },
+                        "expected_live_risk_adr_sha256": "b" * 64,
+                        "continuity_artifacts": [
+                            {
+                                "bundle_dir": "data/testnet/run-1",
+                                "manifest_path": (
+                                    "data/testnet/run-1/run_manifest.json"
+                                ),
+                                "sha256": "d" * 64,
+                            }
+                        ],
+                        "continuity_artifact_problems": [],
+                        "live_promotion_review": {
+                            "accepted": True,
+                            "path": "live-promotion.md",
+                            "sha256": "a" * 64,
+                        },
+                        "expected_live_promotion_review_sha256": "a" * 64,
+                    },
+                    "live_promotion_review": {
+                        "accepted": True,
+                        "path": "live-promotion.md",
+                        "sha256": "a" * 64,
+                    },
+                    "first_live_day_runbook": {
+                        "path": "runbook-first-live-day.md",
+                        "sha256": "e" * 64,
+                    },
+                },
+                "checks": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
+def test_snapshot_blocks_phase6_startup_with_different_readiness_git_commit(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    guard_path = tmp_path / "live-startup-guard.json"
+    _write_passing_startup_guard_report_with_readiness_git(
+        guard_path,
+        readiness_git={
+            "commit": "d" * 40,
+            "dirty": False,
+        },
+        expected_git_commit="b" * 40,
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_startup_guard_report_path=guard_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    startup_guard = snapshot["phase6"]["reports"][1]
+    assert startup_guard["status"] == "blocked"
+    assert "evidence:Readiness git commit match" in startup_guard["blockers"]
+    assert startup_guard["evidence"][8] == {
+        "label": "Readiness git commit match",
+        "status": "blocked",
+        "detail": (
+            "Readiness report git commit does not match startup preflight."
+        ),
+        "path": "live-readiness.json",
+        "sha256": None,
+    }
+    assert snapshot["phase6"]["state"] == "blocked"
+
+
+def test_snapshot_blocks_phase6_startup_with_dirty_readiness_git(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    guard_path = tmp_path / "live-startup-guard.json"
+    _write_passing_startup_guard_report_with_readiness_git(
+        guard_path,
+        readiness_git={
+            "commit": "b" * 40,
+            "dirty": True,
+        },
+        expected_git_commit="b" * 40,
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_startup_guard_report_path=guard_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    startup_guard = snapshot["phase6"]["reports"][1]
+    assert startup_guard["status"] == "blocked"
+    assert "evidence:Readiness git commit match" in startup_guard["blockers"]
+    assert startup_guard["evidence"][8] == {
+        "label": "Readiness git commit match",
+        "status": "blocked",
+        "detail": "Readiness report git evidence is dirty.",
+        "path": "live-readiness.json",
         "sha256": None,
     }
     assert snapshot["phase6"]["state"] == "blocked"

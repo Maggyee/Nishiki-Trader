@@ -275,6 +275,15 @@ def test_live_startup_guard_passes_with_complete_evidence(tmp_path: Path) -> Non
     assert report.evidence["live_readiness_report"]["sha256"] == hashlib.sha256(
         settings.live_readiness_report_path.read_bytes()
     ).hexdigest()
+    assert report.evidence["live_readiness_report"]["readiness_git"] == {
+        "commit": "a" * 40,
+        "dirty": False,
+    }
+    assert (
+        report.evidence["live_readiness_report"]["expected_git_commit"]
+        == "a" * 40
+    )
+    assert report.evidence["live_readiness_report"]["expected_git_dirty"] is False
     assert report.evidence["live_risk_adr"]["sha256"] == hashlib.sha256(
         settings.live_risk_adr_path.read_bytes()
     ).hexdigest()
@@ -350,6 +359,14 @@ def test_live_startup_guard_blocks_readiness_report_from_different_commit(
     assert report.startup_allowed is False
     assert "live_readiness_report_gate_not_met" in report.blockers
     assert "readiness_git_commit" in report.evidence["live_readiness_report"]["problems"]
+    assert report.evidence["live_readiness_report"]["readiness_git"] == {
+        "commit": "b" * 40,
+        "dirty": False,
+    }
+    assert (
+        report.evidence["live_readiness_report"]["expected_git_commit"]
+        == "a" * 40
+    )
 
 
 def test_live_startup_guard_blocks_stale_readiness_report(
@@ -428,6 +445,14 @@ def test_live_startup_guard_blocks_dirty_readiness_report(
     assert report.startup_allowed is False
     assert "live_readiness_report_gate_not_met" in report.blockers
     assert "readiness_git_dirty" in report.evidence["live_readiness_report"]["problems"]
+    assert report.evidence["live_readiness_report"]["readiness_git"] == {
+        "commit": "a" * 40,
+        "dirty": True,
+    }
+    assert (
+        report.evidence["live_readiness_report"]["expected_git_commit"]
+        == "a" * 40
+    )
 
 
 def test_live_startup_guard_blocks_malformed_readiness_capital(
