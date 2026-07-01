@@ -99,7 +99,8 @@ emits `phase6.live_readiness.v1` JSON or Markdown from:
 - SHA-256 fingerprints for the exact project-status and live-risk ADR bytes
   the readiness report consumed.
 - SHA-256 fingerprints for every supplied testnet continuity bundle
-  `run_manifest.json` artifact.
+  `run_manifest.json` artifact, including the manifest path the startup guard
+  must reread.
 - the SHA-256 fingerprint of the exact live promotion-review artifact bytes
   when that artifact is present and parseable.
 
@@ -132,8 +133,10 @@ It also rejects any saved readiness report whose passive boundary flags are not
 all closed, whose recorded git commit does not match the startup guard's
 current clean commit, whose recorded live-risk ADR SHA-256 does not match the
 ADR artifact supplied to startup, whose recorded live promotion-review SHA-256
-does not match the artifact supplied to startup, or whose `generated_at_ns` is
-missing, in the future, or older than the guard's maximum accepted age. The
+does not match the artifact supplied to startup, whose recorded continuity
+bundle manifest SHA-256 does not match the current local manifest bytes, or
+whose `generated_at_ns` is missing, in the future, or older than the guard's
+maximum accepted age. The
 default maximum age is 24 hours, overrideable with
 `--max-readiness-report-age-seconds` only when the operator intentionally
 widens the evidence window. It returns exit code 2 when the future live runner
@@ -199,6 +202,8 @@ A future live runner must refuse startup unless:
   same commit as startup preflight;
 - the saved readiness report records SHA-256 fingerprints for every testnet
   continuity bundle manifest used to prove the 14-day continuity gate;
+- every recorded continuity bundle `manifest_path` exists locally at startup
+  and hashes to the readiness report's recorded SHA-256;
 - the saved readiness report has `generated_at_ns` and is no older than the
   guard's configured maximum age, default 24 hours;
 - the saved readiness report records project-status and live-risk ADR

@@ -517,10 +517,14 @@ def _live_readiness_report_gate(
     if continuity.get("required_gate_met") is not True:
         problems.append("testnet_continuity")
     continuity_artifacts = payload.get("continuity_artifacts")
-    if continuity.get("required_gate_met") is True and not _artifact_list_has_hashes(
-        continuity_artifacts
-    ):
-        problems.append("testnet_continuity_artifacts")
+    continuity_artifact_problems = []
+    if continuity.get("required_gate_met") is True:
+        continuity_artifact_problems = _continuity_artifact_problems(
+            continuity_artifacts,
+            repo_root=settings.repo_root,
+        )
+        if continuity_artifact_problems:
+            problems.append("testnet_continuity_artifacts")
     capital_plan = payload.get("capital_plan") or {}
     if capital_plan.get("within_live_canary_range") is not True:
         problems.append("capital_plan")
@@ -591,6 +595,7 @@ def _live_readiness_report_gate(
             "freshness": freshness,
             "project_status": project_status,
             "continuity_artifacts": continuity_artifacts,
+            "continuity_artifact_problems": continuity_artifact_problems,
             "live_risk_adr": live_risk_adr,
             "expected_live_risk_adr_sha256": expected_live_risk_adr_sha256,
             "live_promotion_review": live_promotion_review,
@@ -605,6 +610,7 @@ def _live_readiness_report_gate(
         "freshness": freshness,
         "project_status": project_status,
         "continuity_artifacts": continuity_artifacts,
+        "continuity_artifact_problems": continuity_artifact_problems,
         "live_risk_adr": live_risk_adr,
         "expected_live_risk_adr_sha256": expected_live_risk_adr_sha256,
         "live_promotion_review": live_promotion_review,
@@ -685,10 +691,35 @@ def _promotion_review_sha256_or_none(path: Path) -> str | None:
         return None
 
 
-def _artifact_list_has_hashes(value: Any) -> bool:
+def _continuity_artifact_problems(value: Any, *, repo_root: Path) -> list[str]:
     if not isinstance(value, list) or not value:
-        return False
-    return all(isinstance(item, dict) and bool(item.get("sha256")) for item in value)
+        return ["continuity_artifacts_missing"]
+
+    problems: list[str] = []
+    for item in value:
+        if not isinstance(item, dict):
+            problems.append("continuity_artifact_invalid")
+            continue
+        recorded_sha256 = item.get("sha256")
+        if not isinstance(recorded_sha256, str) or not recorded_sha256:
+            problems.append("continuity_artifact_sha256")
+        if item.get("exists") is not True:
+            problems.append("continuity_artifact_exists")
+
+        manifest_path_raw = item.get("manifest_path")
+        if not isinstance(manifest_path_raw, str) or not manifest_path_raw.strip():
+            problems.append("continuity_artifact_manifest_path")
+            continue
+        manifest_path = Path(manifest_path_raw)
+        if not manifest_path.is_absolute():
+            manifest_path = repo_root / manifest_path
+        actual_sha256 = _file_sha256_or_none(manifest_path)
+        if actual_sha256 is None:
+            problems.append("continuity_artifact_manifest_not_found")
+        elif recorded_sha256 and actual_sha256 != recorded_sha256:
+            problems.append("continuity_artifact_sha256_mismatch")
+
+    return sorted(dict.fromkeys(problems))
 
 
 def _file_sha256_or_none(path: Path) -> str | None:

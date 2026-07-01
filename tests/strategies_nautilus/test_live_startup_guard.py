@@ -104,6 +104,23 @@ def _write_evidence(
     adr = tmp_path / "013-phase6-live-risk-gate.md"
     promotion = tmp_path / "live-promotion.md"
     runbook = tmp_path / "runbook-first-live-day.md"
+    bundle_dir = tmp_path / "testnet-run-1"
+    bundle_dir.mkdir(parents=True, exist_ok=True)
+    manifest = bundle_dir / "run_manifest.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "schema_version": "testnet.run_manifest.v1",
+                "kind": "testnet",
+                "run_id": "testnet-run-1",
+                "source": SOURCE,
+                "model_version": MODEL_VERSION,
+            },
+            sort_keys=True,
+        ),
+        encoding="utf-8",
+    )
+    manifest_sha256 = hashlib.sha256(manifest.read_bytes()).hexdigest()
     promotion_text = _live_promotion_text()
     promotion.write_text(promotion_text, encoding="utf-8")
     adr_text = "\n".join(
@@ -151,10 +168,10 @@ def _write_evidence(
                 "continuity_summary": {"required_gate_met": True},
                 "continuity_artifacts": [
                     {
-                        "bundle_dir": "data/testnet/run-1",
-                        "manifest_path": "data/testnet/run-1/run_manifest.json",
+                        "bundle_dir": str(bundle_dir),
+                        "manifest_path": str(manifest),
                         "exists": True,
-                        "sha256": "e" * 64,
+                        "sha256": manifest_sha256,
                     }
                 ],
                 "capital_plan": {
@@ -198,6 +215,8 @@ def _write_evidence(
         "adr": adr,
         "promotion": promotion,
         "runbook": runbook,
+        "bundle": bundle_dir,
+        "manifest": manifest,
     }
 
 
@@ -266,6 +285,13 @@ def test_live_startup_guard_passes_with_complete_evidence(tmp_path: Path) -> Non
         report.evidence["live_readiness_report"]["project_status"]["sha256"]
         == "f" * 64
     )
+    assert (
+        report.evidence["live_readiness_report"]["continuity_artifacts"][0]["sha256"]
+        == hashlib.sha256(
+            (tmp_path / "testnet-run-1" / "run_manifest.json").read_bytes()
+        ).hexdigest()
+    )
+    assert report.evidence["live_readiness_report"]["continuity_artifact_problems"] == []
     assert (
         report.evidence["live_readiness_report"]["expected_live_risk_adr_sha256"]
         == report.evidence["live_risk_adr"]["sha256"]
@@ -503,6 +529,54 @@ def test_live_startup_guard_blocks_readiness_report_without_continuity_artifacts
     assert report.startup_allowed is False
     assert "live_readiness_report_gate_not_met" in report.blockers
     assert "testnet_continuity_artifacts" in readiness["problems"]
+    assert "continuity_artifacts_missing" in readiness["continuity_artifact_problems"]
+
+
+def test_live_startup_guard_blocks_readiness_report_with_missing_continuity_manifest(
+    tmp_path: Path,
+) -> None:
+    paths = _write_evidence(tmp_path)
+    paths["manifest"].unlink()
+
+    report = build_live_startup_guard_report(
+        _settings(tmp_path, live_readiness_report_path=paths["readiness"]),
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    readiness = report.evidence["live_readiness_report"]
+    assert report.startup_allowed is False
+    assert "live_readiness_report_gate_not_met" in report.blockers
+    assert "testnet_continuity_artifacts" in readiness["problems"]
+    assert (
+        "continuity_artifact_manifest_not_found"
+        in readiness["continuity_artifact_problems"]
+    )
+
+
+def test_live_startup_guard_blocks_readiness_report_with_changed_continuity_manifest(
+    tmp_path: Path,
+) -> None:
+    paths = _write_evidence(tmp_path)
+    paths["manifest"].write_text(
+        json.dumps({"run_id": "testnet-run-1", "tampered": True}),
+        encoding="utf-8",
+    )
+
+    report = build_live_startup_guard_report(
+        _settings(tmp_path, live_readiness_report_path=paths["readiness"]),
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    readiness = report.evidence["live_readiness_report"]
+    assert report.startup_allowed is False
+    assert "live_readiness_report_gate_not_met" in report.blockers
+    assert "testnet_continuity_artifacts" in readiness["problems"]
+    assert (
+        "continuity_artifact_sha256_mismatch"
+        in readiness["continuity_artifact_problems"]
+    )
 
 
 def test_live_startup_guard_blocks_readiness_report_from_different_live_risk_adr(

@@ -18,12 +18,14 @@ runbook is Accepted, and the live startup guard passes.
   `git.dirty=false`; its `project_status.sha256`, `live_risk_adr.sha256`, and
   `live_promotion_review.sha256` identify the project status, ADR, and live
   promotion review artifacts used at startup, and its `continuity_artifacts`
-  list fingerprints every testnet bundle manifest used to prove continuity.
+  list fingerprints every testnet bundle manifest used to prove continuity,
+  including the manifest paths the startup guard must reread.
 - `apps.strategies_nautilus.runners.live_startup_guard` passes against that
   saved readiness report at the same git commit and within the guard's default
   24 hour readiness-evidence freshness window; the startup guard report records
   the SHA-256 of the saved readiness report, live-risk ADR, and first-live-day
-  runbook artifacts it consumed.
+  runbook artifacts it consumed, and verifies every recorded continuity
+  manifest path still hashes to the readiness report's recorded SHA-256.
 - Starting capital is declared between 100 and 500 USDT.
 - Market scope is explicitly Binance Spot only: `market_type=spot`,
   `margin_enabled=false`, and `max_leverage=1.0`.
@@ -50,9 +52,10 @@ runbook is Accepted, and the live startup guard passes.
 4. Confirm the startup guard report's
    `live_readiness_report.expected_live_risk_adr_sha256` equals
    `live_risk_adr.sha256`.
-5. Confirm the saved readiness report has a non-empty `continuity_artifacts`
-   list and every entry has a `sha256` for the corresponding
-   `run_manifest.json`.
+5. Confirm the startup guard report has
+   `live_readiness_report.continuity_artifact_problems=[]` and every saved
+   readiness `continuity_artifacts[*].manifest_path` still exists with a local
+   SHA-256 equal to its recorded `sha256`.
 6. Confirm the live promotion review fields exactly match the intended
    `testnet_canary -> live_canary` transition; do not accept incidental stage
    mentions in rationale text as evidence.
