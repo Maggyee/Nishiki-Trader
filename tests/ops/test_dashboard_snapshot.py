@@ -113,6 +113,37 @@ def test_snapshot_reads_project_status_and_agent_advice(tmp_path: Path) -> None:
         "stale_after_seconds": 3600.0,
         "evaluated_by": "dashboard_reader",
     }
+    assert snapshot["snapshot_inputs"]["boundaries"] == {
+        "reads_only": True,
+        "loads_exchange_credentials": False,
+        "starts_runtime": False,
+        "writes_signal_event": False,
+        "mutates_source_policy": False,
+        "places_orders": False,
+    }
+    input_items = {
+        item["category"]: item
+        for item in snapshot["snapshot_inputs"]["items"]
+        if item["category"] in {"project_status", "agent_advice"}
+    }
+    assert input_items["project_status"] == {
+        "label": "Project status",
+        "category": "project_status",
+        "kind": "file",
+        "path": str(status_path),
+        "required": True,
+        "attached": True,
+        "exists": True,
+    }
+    assert input_items["agent_advice"] == {
+        "label": "AgentAdvice database",
+        "category": "agent_advice",
+        "kind": "sqlite",
+        "path": str(db),
+        "required": False,
+        "attached": True,
+        "exists": True,
+    }
     assert snapshot["boundaries"] == {
         "live_path_allowed": False,
         "signal_event_write_allowed": False,
@@ -520,6 +551,8 @@ def test_markdown_snapshot_renders_observability_runs(tmp_path: Path) -> None:
     out = dashboard_snapshot.render_markdown_snapshot(snapshot)
 
     assert "## Observability Textfiles" in out
+    assert "## Snapshot Inputs" in out
+    assert "| Project status | `project_status` | true | true |" in out
     assert "`run-1`" in out
     assert "| `run-1` | healthy | 30.0 | true | n/a | n/a | 0 | n/a |" in out
 
@@ -563,6 +596,8 @@ def test_snapshot_wraps_passive_bundle_reports(
     _write_status(status_path)
     paper_dir = tmp_path / "paper-run"
     testnet_dir = tmp_path / "testnet-run"
+    paper_dir.mkdir()
+    testnet_dir.mkdir()
 
     monkeypatch.setattr(
         dashboard_snapshot,
@@ -652,6 +687,13 @@ def test_snapshot_wraps_passive_bundle_reports(
     assert snapshot["paper_bundles"][0]["fills"] == 4
     assert snapshot["testnet_bundles"][0]["run_id"] == "testnet-1"
     assert snapshot["testnet_bundles"][0]["clean_for_retro"] is True
+    assert snapshot["snapshot_inputs"]["counts"]["attached"] >= 4
+    input_items = {
+        (item["category"], item["path"]): item
+        for item in snapshot["snapshot_inputs"]["items"]
+    }
+    assert input_items[("paper_bundle", str(paper_dir))]["exists"] is True
+    assert input_items[("testnet_bundle", str(testnet_dir))]["exists"] is True
     assert snapshot["ops_status"]["counts"]["paper_promotion_blockers"] == 1
     assert snapshot["ops_status"]["state"] == "attention"
     assert snapshot["signal_summary"]["bundle_count"] == 2

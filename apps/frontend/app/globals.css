@@ -888,6 +888,11 @@ select {
     border-left-color: var(--amber);
   }
 
+  .snapshot-audit-row[data-status="manual"] {
+    grid-template-columns: minmax(92px, 0.34fr) minmax(0, 1fr) auto;
+    border-left-color: #a1a1aa;
+  }
+
   .snapshot-audit-row[data-muted="true"] {
     border-left-color: #a1a1aa;
   }
@@ -917,6 +922,12 @@ select {
       ui-monospace,
       monospace;
     line-height: 1.35;
+  }
+
+  .snapshot-input-copy {
+    display: grid;
+    min-width: 0;
+    gap: 3px;
   }
 
   .boundary-list {
@@ -1246,7 +1257,8 @@ select {
 
   .snapshot-audit-row,
   .snapshot-audit-row[data-status="ok"],
-  .snapshot-audit-row[data-status="missing"] {
+  .snapshot-audit-row[data-status="missing"],
+  .snapshot-audit-row[data-status="manual"] {
     grid-template-columns: 1fr;
   }
 

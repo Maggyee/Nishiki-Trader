@@ -7,6 +7,7 @@ import {
   type Phase6Snapshot,
   type ReferenceLink,
   type SignalReasonCount,
+  type SnapshotInputItem,
   type SignalSummary,
   type TestnetBundle,
   loadDashboardSnapshot,
@@ -77,6 +78,7 @@ const COPY = {
       referenceLinks: "Reference Links",
       boundaryLedger: "Boundary Ledger",
       snapshotSource: "Snapshot Source",
+      snapshotInputs: "Snapshot Inputs",
     },
     evidence: {
       paperBundles: "Paper bundles",
@@ -230,6 +232,20 @@ const COPY = {
       error: "Load error",
       noError: "No load error",
     },
+    snapshotInputs: {
+      attached: "attached",
+      existing: "existing",
+      source: "Source",
+      category: "Category",
+      kind: "Kind",
+      path: "Path",
+      required: "required",
+      optional: "optional",
+      notAttached: "not attached",
+      exists: "exists",
+      missing: "missing",
+      noInputs: "No snapshot input audit is present.",
+    },
     boundaries: {
       live_path_allowed: "Live path",
       signal_event_write_allowed: "SignalEvent writes",
@@ -354,6 +370,7 @@ const COPY = {
       referenceLinks: "参考链接",
       boundaryLedger: "边界账本",
       snapshotSource: "快照来源",
+      snapshotInputs: "快照输入",
     },
     evidence: {
       paperBundles: "Paper bundle",
@@ -507,6 +524,20 @@ const COPY = {
       error: "加载错误",
       noError: "无加载错误",
     },
+    snapshotInputs: {
+      attached: "已附加",
+      existing: "存在",
+      source: "来源",
+      category: "类别",
+      kind: "类型",
+      path: "路径",
+      required: "必需",
+      optional: "可选",
+      notAttached: "未附加",
+      exists: "存在",
+      missing: "缺失",
+      noInputs: "当前快照没有输入审计。",
+    },
     boundaries: {
       live_path_allowed: "实盘路径",
       signal_event_write_allowed: "SignalEvent 写入",
@@ -627,6 +658,7 @@ export default async function DashboardPage({
           <aside className="grid content-start gap-4">
             <ChecklistPanel items={snapshot.operator_checklist ?? []} copy={copy} />
             <SnapshotSourcePanel snapshot={snapshot} copy={copy} />
+            <SnapshotInputsPanel snapshot={snapshot} copy={copy} />
             <WatchlistPanel
               blocked={sections.blocked_deferred ?? []}
               nextSteps={sections.next_steps ?? []}
@@ -1452,6 +1484,59 @@ function SnapshotAuditRow({ label, value, muted = false }: { label: string; valu
   );
 }
 
+function SnapshotInputsPanel({ snapshot, copy }: { snapshot: DashboardSnapshot; copy: Copy }) {
+  const inputs = snapshot.snapshot_inputs ?? {};
+  const items = inputs.items ?? [];
+  const counts = inputs.counts ?? {};
+  return (
+    <section className="panel">
+      <div className="section-head">
+        <h2>{copy.sections.snapshotInputs}</h2>
+        <span>
+          {counts.existing ?? 0}/{counts.attached ?? 0} {copy.snapshotInputs.existing}
+        </span>
+      </div>
+      <div className="snapshot-audit-list">
+        {items.length ? (
+          items.map((item) => (
+            <SnapshotInputRow
+              item={item}
+              copy={copy}
+              key={`${item.category ?? "input"}-${item.path ?? item.label ?? "none"}`}
+            />
+          ))
+        ) : (
+          <div className="snapshot-audit-row" data-muted="true">
+            <span>{copy.snapshotInputs.source}</span>
+            <strong>{copy.snapshotInputs.noInputs}</strong>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function SnapshotInputRow({ item, copy }: { item: SnapshotInputItem; copy: Copy }) {
+  const status = inputStatus(item);
+  const requirement = item.required ? copy.snapshotInputs.required : copy.snapshotInputs.optional;
+  return (
+    <div className="snapshot-audit-row" data-status={status} data-muted={String(!item.attached)}>
+      <span>{item.category ?? copy.snapshotInputs.category}</span>
+      <div className="snapshot-input-copy">
+        <strong>{item.label ?? copy.snapshotInputs.source}</strong>
+        <code>
+          {item.path ?? copy.snapshotInputs.notAttached}
+          {" | "}
+          {item.kind ?? copy.snapshotInputs.kind}
+          {" | "}
+          {requirement}
+        </code>
+      </div>
+      <StatusPill value={status} copy={copy} />
+    </div>
+  );
+}
+
 function WatchlistPanel({
   blocked,
   nextSteps,
@@ -1819,6 +1904,16 @@ function formatBoolean(value: boolean | null | undefined, copy: Copy): string {
     return copy.boundary.closed;
   }
   return copy.common.unknown;
+}
+
+function inputStatus(item: SnapshotInputItem): "ok" | "missing" | "manual" {
+  if (!item.attached) {
+    return "manual";
+  }
+  if (item.exists) {
+    return "ok";
+  }
+  return "missing";
 }
 
 function formatConfidence(value: number | undefined, copy: Copy): string {

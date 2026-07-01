@@ -66,6 +66,8 @@ snapshot 路径。默认路径是仓库根目录下的
 - Operator checklist：刷新 snapshot、边界检查、AgentAdvice 审阅、连续性阻塞、SourcePolicy 流程
 - Snapshot Source：显示当前页面读取的 snapshot 路径、加载状态、生成时间、
   freshness 阈值、评估方与加载错误
+- Snapshot Inputs：显示生成 snapshot 时声明的只读输入路径、是否附加、是否存在，
+  包括 project status、AgentAdvice DB、bundle、Phase 6 artifact 与 observability textfile
 - Watchlist / Verification：从 `docs/project-status.md` 解析 blocked/deferred、next steps、latest verification
 - Reference links：文档、证据 ledger、runbook、本地 Grafana 只读看板和其源 JSON
 - Boundary ledger：确认前端相关 live/order mutation flags 仍关闭

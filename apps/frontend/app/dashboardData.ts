@@ -176,10 +176,27 @@ export type SnapshotFreshness = {
   evaluated_by?: string;
 };
 
+export type SnapshotInputItem = {
+  label?: string;
+  category?: string;
+  kind?: string;
+  path?: string | null;
+  required?: boolean;
+  attached?: boolean;
+  exists?: boolean;
+};
+
+export type SnapshotInputs = {
+  items?: SnapshotInputItem[];
+  counts?: Record<string, number>;
+  boundaries?: Record<string, boolean>;
+};
+
 export type DashboardSnapshot = {
   schema_version?: string;
   generated_at_ns?: number | string | null;
   snapshot_freshness?: SnapshotFreshness;
+  snapshot_inputs?: SnapshotInputs;
   boundaries?: Record<string, boolean>;
   project_status?: {
     last_updated?: string | null;
@@ -259,6 +276,43 @@ function fallbackSnapshot(snapshotPath: string, error: unknown): DashboardSnapsh
       warning_after_seconds: 900,
       stale_after_seconds: 3600,
       evaluated_by: "dashboard_reader",
+    },
+    snapshot_inputs: {
+      items: [
+        {
+          label: "Project status",
+          category: "project_status",
+          kind: "file",
+          path: "docs/project-status.md",
+          required: true,
+          attached: false,
+          exists: false,
+        },
+        {
+          label: "Dashboard snapshot file",
+          category: "dashboard_snapshot",
+          kind: "json",
+          path: snapshotPath,
+          required: true,
+          attached: true,
+          exists: false,
+        },
+      ],
+      counts: {
+        total: 2,
+        attached: 1,
+        existing: 0,
+        missing_attached: 1,
+        required_missing: 2,
+      },
+      boundaries: {
+        reads_only: true,
+        loads_exchange_credentials: false,
+        starts_runtime: false,
+        writes_signal_event: false,
+        mutates_source_policy: false,
+        places_orders: false,
+      },
     },
     boundaries: {
       live_path_allowed: false,

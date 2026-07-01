@@ -185,6 +185,15 @@ def build_dashboard_snapshot(
         live_readiness_report_path=phase6_live_readiness_report_path,
         live_startup_guard_report_path=phase6_live_startup_guard_report_path,
     )
+    snapshot_inputs = _snapshot_inputs(
+        project_status_path=project_status_path,
+        agent_advice_db_path=agent_advice_db_path,
+        paper_bundle_dirs=paper_bundle_dirs,
+        testnet_bundle_dirs=testnet_bundle_dirs,
+        phase6_live_readiness_report_path=phase6_live_readiness_report_path,
+        phase6_live_startup_guard_report_path=phase6_live_startup_guard_report_path,
+        observability_textfile_dir=observability_textfile_dir,
+    )
     return {
         "schema_version": SNAPSHOT_SCHEMA_VERSION,
         "generated_at_ns": generated_ns,
@@ -193,6 +202,7 @@ def build_dashboard_snapshot(
             warning_after_seconds=snapshot_warning_after_seconds,
             stale_after_seconds=snapshot_stale_after_seconds,
         ),
+        "snapshot_inputs": snapshot_inputs,
         "boundaries": boundaries,
         "project_status": project_status,
         "agent_advice": agent_advice,
@@ -266,6 +276,28 @@ def render_markdown_snapshot(snapshot: dict[str, Any]) -> str:
     )
     for item in status.get("sections", {}).get("blocked_deferred", []):
         lines.append(f"- {item}")
+
+    snapshot_inputs = snapshot.get("snapshot_inputs") or {}
+    input_items = snapshot_inputs.get("items") or []
+    if input_items:
+        lines.extend(
+            [
+                "",
+                "## Snapshot Inputs",
+                "",
+                "| label | category | attached | exists | path |",
+                "|---|---|---:|---:|---|",
+            ]
+        )
+        for item in input_items:
+            lines.append(
+                "| "
+                f"{_markdown_cell(str(item.get('label') or 'unknown'))} | "
+                f"`{_markdown_cell(str(item.get('category') or 'unknown'))}` | "
+                f"{_format_optional_bool(item.get('attached'))} | "
+                f"{_format_optional_bool(item.get('exists'))} | "
+                f"`{_markdown_cell(str(item.get('path') or 'n/a'))}` |"
+            )
 
     observability = snapshot.get("observability") or {}
     if observability:
@@ -505,6 +537,125 @@ def _snapshot_freshness_policy(
         "warning_after_seconds": float(warning_after_seconds),
         "stale_after_seconds": float(stale_after_seconds),
         "evaluated_by": "dashboard_reader",
+    }
+
+
+def _snapshot_inputs(
+    *,
+    project_status_path: Path,
+    agent_advice_db_path: Path,
+    paper_bundle_dirs: Sequence[Path],
+    testnet_bundle_dirs: Sequence[Path],
+    phase6_live_readiness_report_path: Path | None,
+    phase6_live_startup_guard_report_path: Path | None,
+    observability_textfile_dir: Path | None,
+) -> dict[str, Any]:
+    items = [
+        _input_item(
+            label="Project status",
+            category="project_status",
+            kind="file",
+            path=project_status_path,
+            required=True,
+            attached=True,
+        ),
+        _input_item(
+            label="AgentAdvice database",
+            category="agent_advice",
+            kind="sqlite",
+            path=agent_advice_db_path,
+            required=False,
+            attached=True,
+        ),
+        *[
+            _input_item(
+                label=f"Paper bundle {index}",
+                category="paper_bundle",
+                kind="directory",
+                path=path,
+                required=False,
+                attached=True,
+            )
+            for index, path in enumerate(paper_bundle_dirs, start=1)
+        ],
+        *[
+            _input_item(
+                label=f"Testnet bundle {index}",
+                category="testnet_bundle",
+                kind="directory",
+                path=path,
+                required=False,
+                attached=True,
+            )
+            for index, path in enumerate(testnet_bundle_dirs, start=1)
+        ],
+        _input_item(
+            label="Phase 6 live readiness report",
+            category="phase6_live_readiness",
+            kind="json",
+            path=phase6_live_readiness_report_path,
+            required=False,
+            attached=phase6_live_readiness_report_path is not None,
+        ),
+        _input_item(
+            label="Phase 6 live startup guard report",
+            category="phase6_live_startup_guard",
+            kind="json",
+            path=phase6_live_startup_guard_report_path,
+            required=False,
+            attached=phase6_live_startup_guard_report_path is not None,
+        ),
+        _input_item(
+            label="Observability textfile directory",
+            category="observability_textfiles",
+            kind="directory",
+            path=observability_textfile_dir,
+            required=False,
+            attached=observability_textfile_dir is not None,
+        ),
+    ]
+    attached_items = [item for item in items if item["attached"]]
+    return {
+        "items": items,
+        "counts": {
+            "total": len(items),
+            "attached": len(attached_items),
+            "existing": sum(1 for item in attached_items if item["exists"]),
+            "missing_attached": sum(
+                1 for item in attached_items if not item["exists"]
+            ),
+            "required_missing": sum(
+                1 for item in items if item["required"] and not item["exists"]
+            ),
+        },
+        "boundaries": {
+            "reads_only": True,
+            "loads_exchange_credentials": False,
+            "starts_runtime": False,
+            "writes_signal_event": False,
+            "mutates_source_policy": False,
+            "places_orders": False,
+        },
+    }
+
+
+def _input_item(
+    *,
+    label: str,
+    category: str,
+    kind: str,
+    path: Path | None,
+    required: bool,
+    attached: bool,
+) -> dict[str, Any]:
+    return {
+        "label": label,
+        "category": category,
+        "kind": kind,
+        "path": str(path) if path is not None else None,
+        "required": required,
+        "attached": attached,
+        "exists": bool(path.exists()) if path is not None else False,
     }
 
 
