@@ -88,6 +88,8 @@ emits `phase6.live_readiness.v1` JSON or Markdown from:
   continuity reader;
 - an optional live-canary promotion-review artifact path;
 - an explicit starting-capital declaration.
+- an explicit market-scope declaration, which must remain Binance Spot only,
+  no margin, and max leverage 1.0.
 
 The tool is audit-only. It never loads exchange credentials, starts a runtime,
 changes `SourcePolicy`, writes `SignalEvent`, places orders, or authorizes live
@@ -100,6 +102,8 @@ UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.ops.live_readiness \
   --source freqai_linear_v1 \
   --model-version linear-mom-train20240105 \
   --starting-capital-usdt 100 \
+  --market-type spot \
+  --max-leverage 1 \
   --markdown
 ```
 
@@ -107,8 +111,10 @@ UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.ops.live_readiness \
 startup preflight reader for a future live runner. It consumes a saved
 `phase6.live_readiness.v1` JSON report plus the live-risk ADR, live-canary
 promotion review, first-live-day runbook, capital declaration, live SourcePolicy
-fields, explicit `--allow-live-credentials`, and git state. It returns exit code
-2 when the future live runner must refuse startup.
+fields, live market scope, explicit `--allow-live-credentials`, and git state.
+It also rejects any saved readiness report whose passive boundary flags are not
+all closed. It returns exit code 2 when the future live runner must refuse
+startup.
 
 The startup guard still does not load live credentials, inspect credential
 values, build a Nautilus node, connect to Binance, mutate `SourcePolicy`, write
@@ -127,6 +133,8 @@ UV_CACHE_DIR=/tmp/uv-cache uv run python -m \
   --model-version linear-mom-train20240105 \
   --policy-position-pct-multiplier 0.1 \
   --starting-capital-usdt 100 \
+  --market-type spot \
+  --max-leverage 1 \
   --live-readiness-report-path docs/retros/<phase6-live-readiness>.json \
   --live-promotion-review-path docs/retros/<live-canary-promotion-review>.md \
   --first-live-day-runbook-path docs/runbook-first-live-day.md \
@@ -141,6 +149,8 @@ UV_CACHE_DIR=/tmp/uv-cache uv run python -m apps.ops.live_readiness \
   --source freqai_linear_v1 \
   --model-version linear-mom-train20240105 \
   --starting-capital-usdt 100 \
+  --market-type spot \
+  --max-leverage 1 \
   --continuity-bundle data/testnet/<run_id-1> \
   --continuity-bundle data/testnet/<run_id-N> \
   --markdown
@@ -159,6 +169,7 @@ A future live runner must refuse startup unless:
 - a live-canary promotion review exists for the exact source/model transition
   `testnet_canary -> live_canary`;
 - starting capital is declared and within 100-500 USDT;
+- market scope is declared as Binance Spot only, no margin, and no leverage;
 - `SourcePolicy.dry_run=false`;
 - `SourcePolicy.position_pct_multiplier <= 0.1`;
 - an accepted first-live-day runbook exists;

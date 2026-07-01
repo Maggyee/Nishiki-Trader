@@ -67,7 +67,21 @@ def _write_evidence(tmp_path: Path, *, runbook_status: str = "Accepted") -> dict
                     "starting_capital_usdt": 100.0,
                     "within_live_canary_range": True,
                 },
+                "market_scope": {
+                    "market_type": "spot",
+                    "margin_enabled": False,
+                    "max_leverage": 1.0,
+                    "spot_only_no_margin_no_leverage": True,
+                },
                 "live_risk_adr": {"accepted": True},
+                "boundaries": {
+                    "starts_runtime": False,
+                    "loads_exchange_credentials": False,
+                    "mutates_source_policy": False,
+                    "writes_signal_event": False,
+                    "places_orders": False,
+                    "authorizes_live_trading": False,
+                },
             }
         ),
         encoding="utf-8",
@@ -129,6 +143,14 @@ def test_live_startup_guard_passes_with_complete_evidence(tmp_path: Path) -> Non
     assert report.live_trading_authorized is False
     assert report.recommendation == "startup_preflight_passed_for_future_live_runner"
     assert report.blockers == []
+    assert report.market_scope == {
+        "market_type": "spot",
+        "margin_enabled": False,
+        "max_leverage": 1.0,
+        "spot_only_no_margin_no_leverage": True,
+        "blockers": [],
+        "detail": "Market scope is Binance Spot only, no margin, no leverage.",
+    }
     assert report.boundaries == {
         "starts_runtime": False,
         "loads_exchange_credentials": False,
@@ -188,6 +210,46 @@ def test_live_startup_guard_blocks_malformed_readiness_capital(
 
     assert report.startup_allowed is False
     assert "live_readiness_report_gate_not_met" in report.blockers
+
+
+def test_live_startup_guard_blocks_readiness_report_with_open_boundary(
+    tmp_path: Path,
+) -> None:
+    paths = _write_evidence(tmp_path)
+    payload = json.loads(paths["readiness"].read_text(encoding="utf-8"))
+    payload["boundaries"]["places_orders"] = True
+    paths["readiness"].write_text(json.dumps(payload), encoding="utf-8")
+
+    report = build_live_startup_guard_report(
+        _settings(tmp_path, live_readiness_report_path=paths["readiness"]),
+        git_state=GIT_CLEAN,
+    )
+
+    assert report.startup_allowed is False
+    assert "live_readiness_report_gate_not_met" in report.blockers
+    assert "readiness_boundaries" in report.evidence["live_readiness_report"]["problems"]
+    assert report.evidence["live_readiness_report"]["opened_boundaries"] == [
+        "places_orders"
+    ]
+
+
+def test_live_startup_guard_blocks_non_spot_or_leveraged_scope(
+    tmp_path: Path,
+) -> None:
+    report = build_live_startup_guard_report(
+        _settings(
+            tmp_path,
+            market_type="margin",
+            margin_enabled=True,
+            max_leverage=2.0,
+        ),
+        git_state=GIT_CLEAN,
+    )
+
+    assert report.startup_allowed is False
+    assert "market_type_must_be_spot" in report.blockers
+    assert "margin_must_be_disabled" in report.blockers
+    assert "leverage_must_be_one" in report.blockers
 
 
 def test_live_startup_guard_blocks_policy_outside_live_canary_bounds(

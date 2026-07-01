@@ -87,6 +87,14 @@ def test_live_readiness_blocks_without_continuity_or_accepted_adr(tmp_path: Path
     assert "live_risk_adr_not_accepted" in report.blockers
     assert "testnet_continuity_evidence_missing" in report.blockers
     assert "live_canary_promotion_review_required" in report.blockers
+    assert report.market_scope == {
+        "market_type": "spot",
+        "margin_enabled": False,
+        "max_leverage": 1.0,
+        "spot_only_no_margin_no_leverage": True,
+        "blockers": [],
+        "detail": "Market scope is Binance Spot only, no margin, no leverage.",
+    }
     assert report.boundaries == {
         "starts_runtime": False,
         "loads_exchange_credentials": False,
@@ -127,6 +135,7 @@ def test_live_readiness_uses_passive_continuity_summary(
     assert "testnet_continuity:current_qualified_streak_days=0<required=14" in (
         report.blockers
     )
+    assert report.market_scope["spot_only_no_margin_no_leverage"] is True
     assert report.live_risk_adr["status"] == "Draft"
     assert "live_risk_adr_not_accepted" in report.blockers
 
@@ -172,9 +181,57 @@ def test_live_readiness_can_emit_markdown_when_all_evidence_is_present(
     assert report.readiness_gate_met is True
     assert report.live_trading_allowed is False
     assert report.recommendation == "ready_for_manual_live_go_no_go_review"
+    assert report.market_scope["spot_only_no_margin_no_leverage"] is True
     assert "# Phase 6 Live Readiness" in markdown
     assert "live_trading_allowed: false" in markdown
     assert "| live_risk_adr | ok |" in markdown
+
+
+def test_live_readiness_blocks_non_spot_or_leveraged_scope(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    live_adr = tmp_path / "013-phase6-live-risk-gate.md"
+    promotion = tmp_path / "live-promotion.md"
+    _write_status(status_path)
+    _write_live_adr(live_adr, status="Accepted")
+    promotion.write_text(
+        "\n".join(
+            [
+                "decision_allowed: **yes**",
+                "target_stage: live_canary",
+                "source: freqai_linear_v1",
+                "model_version: linear-mom-train20240105",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        live_readiness,
+        "load_testnet_continuity_summary",
+        lambda bundle_dirs, **kwargs: _continuity_summary(gate_met=True),
+    )
+
+    report = live_readiness.build_live_readiness_report(
+        project_status_path=status_path,
+        live_risk_adr_path=live_adr,
+        continuity_bundle_dirs=[tmp_path / "bundle-1"],
+        source="freqai_linear_v1",
+        model_version="linear-mom-train20240105",
+        live_promotion_review_path=promotion,
+        starting_capital_usdt=250,
+        market_type="margin",
+        margin_enabled=True,
+        max_leverage=2.0,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    assert report.readiness_gate_met is False
+    assert report.market_scope["spot_only_no_margin_no_leverage"] is False
+    assert "market_type_must_be_spot" in report.blockers
+    assert "margin_must_be_disabled" in report.blockers
+    assert "leverage_must_be_one" in report.blockers
 
 
 def test_live_readiness_cli_outputs_json(tmp_path: Path, capsys) -> None:

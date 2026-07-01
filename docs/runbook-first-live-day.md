@@ -18,6 +18,8 @@ runbook is Accepted, and the live startup guard passes.
 - `apps.strategies_nautilus.runners.live_startup_guard` passes against that
   saved readiness report.
 - Starting capital is declared between 100 and 500 USDT.
+- Market scope is explicitly Binance Spot only: `market_type=spot`,
+  `margin_enabled=false`, and `max_leverage=1.0`.
 - SourcePolicy is `dry_run=False` and `position_pct_multiplier <= 0.1`.
 - The live credential env names are declared, but credential values are not
   written to disk.
@@ -47,6 +49,8 @@ uv run python -m apps.strategies_nautilus.runners.live_startup_guard \
   --model-version linear-mom-train20240105 \
   --policy-position-pct-multiplier 0.1 \
   --starting-capital-usdt 100 \
+  --market-type spot \
+  --max-leverage 1 \
   --live-readiness-report-path docs/retros/<phase6-live-readiness>.json \
   --live-promotion-review-path docs/retros/<live-canary-promotion-review>.md \
   --first-live-day-runbook-path docs/runbook-first-live-day.md \

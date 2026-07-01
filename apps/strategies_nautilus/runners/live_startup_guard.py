@@ -67,6 +67,9 @@ class LiveStartupSettings:
     repo_root: Path = Path(".")
     operator: str = "nishiki"
     credential_env_names: tuple[str, ...] = REQUIRED_LIVE_CREDENTIAL_ENV_NAMES
+    market_type: str = "spot"
+    margin_enabled: bool = False
+    max_leverage: float = 1.0
 
 
 @dataclass(frozen=True)
@@ -95,6 +98,7 @@ class LiveStartupGuardReport:
     git: dict[str, Any]
     evidence: dict[str, Any]
     capital_plan: dict[str, Any]
+    market_scope: dict[str, Any]
     source_policy: dict[str, Any]
     credential_boundary: dict[str, Any]
     boundaries: dict[str, bool]
@@ -141,6 +145,16 @@ def build_live_startup_guard_report(
     )
     if not capital_plan["within_live_canary_range"]:
         blockers.append(str(capital_plan["blocker"]))
+
+    market_scope = _market_scope_gate(settings)
+    checks.append(
+        _check(
+            "market_scope",
+            "ok" if market_scope["spot_only_no_margin_no_leverage"] else "blocked",
+            market_scope["detail"],
+        )
+    )
+    blockers.extend(str(item) for item in market_scope["blockers"])
 
     source_policy = _source_policy_gate(settings)
     checks.append(
@@ -229,6 +243,7 @@ def build_live_startup_guard_report(
         git={"commit": state.commit, "dirty": state.dirty},
         evidence=evidence,
         capital_plan=capital_plan,
+        market_scope=market_scope,
         source_policy=source_policy,
         credential_boundary=credential_boundary,
         boundaries={
@@ -392,6 +407,30 @@ def _source_policy_gate(settings: LiveStartupSettings) -> dict[str, Any]:
     }
 
 
+def _market_scope_gate(settings: LiveStartupSettings) -> dict[str, Any]:
+    normalized_market_type = settings.market_type.strip().lower()
+    blockers: list[str] = []
+    if normalized_market_type != "spot":
+        blockers.append("market_type_must_be_spot")
+    if settings.margin_enabled:
+        blockers.append("margin_must_be_disabled")
+    if settings.max_leverage != 1.0:
+        blockers.append("leverage_must_be_one")
+    accepted = not blockers
+    return {
+        "market_type": normalized_market_type,
+        "margin_enabled": settings.margin_enabled,
+        "max_leverage": settings.max_leverage,
+        "spot_only_no_margin_no_leverage": accepted,
+        "blockers": blockers,
+        "detail": (
+            "Market scope is Binance Spot only, no margin, no leverage."
+            if accepted
+            else "Phase 6 live canary requires spot-only, no margin, and max_leverage=1.0."
+        ),
+    }
+
+
 def _live_risk_adr_gate(path: Path) -> dict[str, Any]:
     exists = path.exists()
     text = path.read_text(encoding="utf-8") if exists else ""
@@ -449,6 +488,34 @@ def _live_readiness_report_gate(settings: LiveStartupSettings) -> dict[str, Any]
         report_capital_float = None
     if report_capital_float != settings.starting_capital_usdt:
         problems.append("starting_capital_usdt")
+    market_scope = payload.get("market_scope") or {}
+    if market_scope.get("spot_only_no_margin_no_leverage") is not True:
+        problems.append("market_scope")
+    if market_scope.get("market_type") != settings.market_type.strip().lower():
+        problems.append("market_type")
+    if market_scope.get("margin_enabled") is not settings.margin_enabled:
+        problems.append("margin_enabled")
+    try:
+        report_max_leverage = float(market_scope.get("max_leverage"))
+    except (TypeError, ValueError):
+        report_max_leverage = None
+    if report_max_leverage != settings.max_leverage:
+        problems.append("max_leverage")
+    boundaries = payload.get("boundaries") or {}
+    opened_boundaries = [
+        key
+        for key in (
+            "starts_runtime",
+            "loads_exchange_credentials",
+            "mutates_source_policy",
+            "writes_signal_event",
+            "places_orders",
+            "authorizes_live_trading",
+        )
+        if boundaries.get(key) is not False
+    ]
+    if opened_boundaries:
+        problems.append("readiness_boundaries")
     live_risk_adr = payload.get("live_risk_adr") or {}
     if live_risk_adr.get("accepted") is not True:
         problems.append("live_risk_adr")
@@ -459,6 +526,7 @@ def _live_readiness_report_gate(settings: LiveStartupSettings) -> dict[str, Any]
             "blocker": "live_readiness_report_gate_not_met",
             "detail": "Live readiness report failed checks: " + ", ".join(problems),
             "problems": problems,
+            "opened_boundaries": opened_boundaries,
         }
     return {
         "path": str(path),
@@ -602,6 +670,9 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--policy-dry-run", action="store_true")
     parser.add_argument("--policy-position-pct-multiplier", type=float, required=True)
     parser.add_argument("--starting-capital-usdt", type=float, required=True)
+    parser.add_argument("--market-type", default="spot")
+    parser.add_argument("--margin-enabled", action="store_true")
+    parser.add_argument("--max-leverage", type=float, default=1.0)
     parser.add_argument("--live-readiness-report-path", type=Path, required=True)
     parser.add_argument("--live-promotion-review-path", type=Path, required=True)
     parser.add_argument(
@@ -653,6 +724,9 @@ def main(
         credential_env_names=tuple(
             args.credential_env_names or REQUIRED_LIVE_CREDENTIAL_ENV_NAMES
         ),
+        market_type=args.market_type,
+        margin_enabled=bool(args.margin_enabled),
+        max_leverage=float(args.max_leverage),
     )
     report = build_live_startup_guard_report(settings, git_state=git_state)
     if args.markdown:
