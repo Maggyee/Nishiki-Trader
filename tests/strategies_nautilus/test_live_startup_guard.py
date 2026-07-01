@@ -106,6 +106,27 @@ def _write_evidence(
     runbook = tmp_path / "runbook-first-live-day.md"
     promotion_text = _live_promotion_text()
     promotion.write_text(promotion_text, encoding="utf-8")
+    adr_text = "\n".join(
+        [
+            "# ADR-013: Phase 6 Live Risk Gate",
+            "- **Status**: Accepted",
+        ]
+    )
+    adr.write_text(adr_text, encoding="utf-8")
+    runbook.write_text(
+        "\n".join(
+            [
+                "# First Live Day Runbook",
+                f"- **Status**: {runbook_status}",
+                "credential key-prefix audit",
+                "emergency flatten",
+                "manual exchange fallback",
+                "first-hour observation",
+                "post-run retro",
+            ]
+        ),
+        encoding="utf-8",
+    )
     readiness.write_text(
         json.dumps(
             {
@@ -120,6 +141,13 @@ def _write_evidence(
                     "commit": "a" * 40,
                     "dirty": False,
                 },
+                "project_status": {
+                    "path": "docs/project-status.md",
+                    "exists": True,
+                    "sha256": "f" * 64,
+                    "live_trading_blocked": True,
+                    "strict_continuity": "14/14",
+                },
                 "continuity_summary": {"required_gate_met": True},
                 "capital_plan": {
                     "starting_capital_usdt": 100.0,
@@ -131,7 +159,13 @@ def _write_evidence(
                     "max_leverage": 1.0,
                     "spot_only_no_margin_no_leverage": True,
                 },
-                "live_risk_adr": {"accepted": True},
+                "live_risk_adr": {
+                    "path": str(adr),
+                    "exists": True,
+                    "sha256": _text_sha256(adr_text),
+                    "status": "Accepted",
+                    "accepted": True,
+                },
                 "live_promotion_review": {
                     "path": str(promotion),
                     "sha256": _text_sha256(promotion_text),
@@ -148,29 +182,6 @@ def _write_evidence(
                     "authorizes_live_trading": False,
                 },
             }
-        ),
-        encoding="utf-8",
-    )
-    adr.write_text(
-        "\n".join(
-            [
-                "# ADR-013: Phase 6 Live Risk Gate",
-                "- **Status**: Accepted",
-            ]
-        ),
-        encoding="utf-8",
-    )
-    runbook.write_text(
-        "\n".join(
-            [
-                "# First Live Day Runbook",
-                f"- **Status**: {runbook_status}",
-                "credential key-prefix audit",
-                "emergency flatten",
-                "manual exchange fallback",
-                "first-hour observation",
-                "post-run retro",
-            ]
         ),
         encoding="utf-8",
     )
@@ -243,6 +254,14 @@ def test_live_startup_guard_passes_with_complete_evidence(tmp_path: Path) -> Non
     assert report.evidence["first_live_day_runbook"]["sha256"] == hashlib.sha256(
         settings.first_live_day_runbook_path.read_bytes()
     ).hexdigest()
+    assert (
+        report.evidence["live_readiness_report"]["project_status"]["sha256"]
+        == "f" * 64
+    )
+    assert (
+        report.evidence["live_readiness_report"]["expected_live_risk_adr_sha256"]
+        == report.evidence["live_risk_adr"]["sha256"]
+    )
     assert (
         report.evidence["live_readiness_report"][
             "expected_live_promotion_review_sha256"
@@ -434,6 +453,59 @@ def test_live_startup_guard_blocks_readiness_report_without_promotion_fingerprin
     assert "live_readiness_report_gate_not_met" in report.blockers
     assert "live_promotion_review" in readiness["problems"]
     assert "live_promotion_review_sha256" in readiness["problems"]
+
+
+def test_live_startup_guard_blocks_readiness_report_without_source_document_fingerprints(
+    tmp_path: Path,
+) -> None:
+    paths = _write_evidence(tmp_path)
+    payload = json.loads(paths["readiness"].read_text(encoding="utf-8"))
+    payload["project_status"].pop("sha256")
+    payload["live_risk_adr"].pop("sha256")
+    paths["readiness"].write_text(json.dumps(payload), encoding="utf-8")
+
+    report = build_live_startup_guard_report(
+        _settings(tmp_path, live_readiness_report_path=paths["readiness"]),
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    readiness = report.evidence["live_readiness_report"]
+    assert report.startup_allowed is False
+    assert "live_readiness_report_gate_not_met" in report.blockers
+    assert "project_status_sha256" in readiness["problems"]
+    assert "live_risk_adr_sha256" in readiness["problems"]
+
+
+def test_live_startup_guard_blocks_readiness_report_from_different_live_risk_adr(
+    tmp_path: Path,
+) -> None:
+    paths = _write_evidence(tmp_path)
+    paths["adr"].write_text(
+        "\n".join(
+            [
+                "# ADR-013: Phase 6 Live Risk Gate",
+                "- **Status**: Accepted",
+                "Different operator-reviewed bytes.",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    report = build_live_startup_guard_report(
+        _settings(tmp_path, live_readiness_report_path=paths["readiness"]),
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    readiness = report.evidence["live_readiness_report"]
+    assert report.startup_allowed is False
+    assert "live_readiness_report_gate_not_met" in report.blockers
+    assert "live_risk_adr_sha256" in readiness["problems"]
+    assert (
+        readiness["expected_live_risk_adr_sha256"]
+        == report.evidence["live_risk_adr"]["sha256"]
+    )
 
 
 def test_live_startup_guard_blocks_readiness_report_with_different_promotion_artifact(

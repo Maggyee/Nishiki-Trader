@@ -15,8 +15,9 @@ runbook is Accepted, and the live startup guard passes.
 - ADR-013 status is Accepted after a human go/no-go review.
 - `apps.ops.live_readiness` produced a saved JSON report with
   `readiness_gate_met=true`, `live_trading_allowed=false`, and
-  `git.dirty=false`; its `live_promotion_review.sha256` matches the live
-  promotion review artifact used at startup.
+  `git.dirty=false`; its `project_status.sha256`, `live_risk_adr.sha256`, and
+  `live_promotion_review.sha256` identify the project status, ADR, and live
+  promotion review artifacts used at startup.
 - `apps.strategies_nautilus.runners.live_startup_guard` passes against that
   saved readiness report at the same git commit and within the guard's default
   24 hour readiness-evidence freshness window; the startup guard report records
@@ -45,17 +46,20 @@ runbook is Accepted, and the live startup guard passes.
    `live_risk_adr.sha256`, and `first_live_day_runbook.sha256` identify the
    exact saved readiness report, ADR, and runbook artifacts supplied to
    startup.
-4. Confirm the live promotion review fields exactly match the intended
+4. Confirm the startup guard report's
+   `live_readiness_report.expected_live_risk_adr_sha256` equals
+   `live_risk_adr.sha256`.
+5. Confirm the live promotion review fields exactly match the intended
    `testnet_canary -> live_canary` transition; do not accept incidental stage
    mentions in rationale text as evidence.
-5. Confirm the saved readiness report's `live_promotion_review.sha256` equals
+6. Confirm the saved readiness report's `live_promotion_review.sha256` equals
    the SHA-256 of the live promotion review artifact supplied to the startup
    guard.
-6. Confirm the live credential key-prefix audit plan: record only the API key
+7. Confirm the live credential key-prefix audit plan: record only the API key
    prefix in runtime logs; never write the full API key or secret.
-7. Confirm Binance Spot only: no margin, no futures, no leverage.
-8. Confirm the operator has the exchange web UI open before startup.
-9. Confirm a manual exchange fallback is available: if the runner or emergency
+8. Confirm Binance Spot only: no margin, no futures, no leverage.
+9. Confirm the operator has the exchange web UI open before startup.
+10. Confirm a manual exchange fallback is available: if the runner or emergency
    tooling fails, manually cancel all open Spot orders and sell residual BTC to
    return the account to USDT/flat.
 

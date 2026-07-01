@@ -96,6 +96,8 @@ emits `phase6.live_readiness.v1` JSON or Markdown from:
 - an explicit market-scope declaration, which must remain Binance Spot only,
   no margin, and max leverage 1.0.
 - the git commit and dirty/clean state at report generation time.
+- SHA-256 fingerprints for the exact project-status and live-risk ADR bytes
+  the readiness report consumed.
 - the SHA-256 fingerprint of the exact live promotion-review artifact bytes
   when that artifact is present and parseable.
 
@@ -126,10 +128,11 @@ and requires exact `source`, `model_version`, `current_stage=testnet_canary`,
 non-empty `operator`, and no review or promotion gate blockers.
 It also rejects any saved readiness report whose passive boundary flags are not
 all closed, whose recorded git commit does not match the startup guard's
-current clean commit, whose recorded live promotion-review SHA-256 does not
-match the artifact supplied to startup, or whose `generated_at_ns` is missing,
-in the future, or older than the guard's maximum accepted age. The default
-maximum age is 24 hours, overrideable with
+current clean commit, whose recorded live-risk ADR SHA-256 does not match the
+ADR artifact supplied to startup, whose recorded live promotion-review SHA-256
+does not match the artifact supplied to startup, or whose `generated_at_ns` is
+missing, in the future, or older than the guard's maximum accepted age. The
+default maximum age is 24 hours, overrideable with
 `--max-readiness-report-age-seconds` only when the operator intentionally
 widens the evidence window. It returns exit code 2 when the future live runner
 must refuse startup.
@@ -194,6 +197,10 @@ A future live runner must refuse startup unless:
   same commit as startup preflight;
 - the saved readiness report has `generated_at_ns` and is no older than the
   guard's configured maximum age, default 24 hours;
+- the saved readiness report records project-status and live-risk ADR
+  SHA-256 fingerprints;
+- the saved readiness report's recorded live-risk ADR SHA-256 exactly matches
+  the live-risk ADR artifact supplied to the startup guard;
 - the startup-guard report records the SHA-256 fingerprint of the saved
   readiness report artifact it consumed;
 - the startup-guard report records SHA-256 fingerprints for the live-risk ADR

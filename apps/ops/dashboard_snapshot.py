@@ -1566,6 +1566,14 @@ def _phase6_report_evidence(
 ) -> list[dict[str, str | None]]:
     if expected_schema == "phase6.live_readiness.v1":
         return [
+            _artifact_evidence_item(
+                payload.get("project_status"),
+                label="Project status artifact",
+            ),
+            _artifact_evidence_item(
+                payload.get("live_risk_adr"),
+                label="Readiness live-risk ADR artifact",
+            ),
             _promotion_review_evidence_item(
                 payload.get("live_promotion_review"),
                 label="Promotion review artifact",

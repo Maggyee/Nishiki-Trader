@@ -8,6 +8,7 @@ trading by itself.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import subprocess
@@ -324,11 +325,14 @@ def render_markdown_report(report: LiveReadinessReport) -> str:
 
 def _project_status_gate(path: Path) -> dict[str, Any]:
     exists = path.exists()
-    text = path.read_text(encoding="utf-8") if exists else ""
+    raw = path.read_bytes() if exists else b""
+    artifact_sha256 = hashlib.sha256(raw).hexdigest() if exists else None
+    text = raw.decode("utf-8") if exists else ""
     lowered = text.lower()
     return {
         "path": str(path),
         "exists": exists,
+        "sha256": artifact_sha256,
         "live_trading_blocked": (
             "no live trading" in lowered
             or "live trading still blocked" in lowered
@@ -340,11 +344,14 @@ def _project_status_gate(path: Path) -> dict[str, Any]:
 
 def _live_risk_adr_gate(path: Path) -> dict[str, Any]:
     exists = path.exists()
-    text = path.read_text(encoding="utf-8") if exists else ""
+    raw = path.read_bytes() if exists else b""
+    artifact_sha256 = hashlib.sha256(raw).hexdigest() if exists else None
+    text = raw.decode("utf-8") if exists else ""
     status = _adr_status(text)
     return {
         "path": str(path),
         "exists": exists,
+        "sha256": artifact_sha256,
         "status": status,
         "accepted": status.lower().startswith("accepted"),
     }

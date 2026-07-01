@@ -510,6 +510,9 @@ def _live_readiness_report_gate(
         problems.append("readiness_git_dirty")
     if report_git.get("commit") != git_state.commit:
         problems.append("readiness_git_commit")
+    project_status = payload.get("project_status") or {}
+    if not project_status.get("sha256"):
+        problems.append("project_status_sha256")
     continuity = payload.get("continuity_summary") or {}
     if continuity.get("required_gate_met") is not True:
         problems.append("testnet_continuity")
@@ -552,8 +555,14 @@ def _live_readiness_report_gate(
     if opened_boundaries:
         problems.append("readiness_boundaries")
     live_risk_adr = payload.get("live_risk_adr") or {}
+    expected_live_risk_adr_sha256 = _file_sha256_or_none(settings.live_risk_adr_path)
     if live_risk_adr.get("accepted") is not True:
         problems.append("live_risk_adr")
+    if (
+        expected_live_risk_adr_sha256 is None
+        or live_risk_adr.get("sha256") != expected_live_risk_adr_sha256
+    ):
+        problems.append("live_risk_adr_sha256")
     live_promotion_review = payload.get("live_promotion_review") or {}
     expected_promotion_review_sha256 = _promotion_review_sha256_or_none(
         settings.live_promotion_review_path
@@ -575,6 +584,9 @@ def _live_readiness_report_gate(
             "problems": problems,
             "opened_boundaries": opened_boundaries,
             "freshness": freshness,
+            "project_status": project_status,
+            "live_risk_adr": live_risk_adr,
+            "expected_live_risk_adr_sha256": expected_live_risk_adr_sha256,
             "live_promotion_review": live_promotion_review,
             "expected_live_promotion_review_sha256": expected_promotion_review_sha256,
         }
@@ -585,6 +597,9 @@ def _live_readiness_report_gate(
         "blocker": "",
         "detail": f"{path} proves the passive live-readiness gate and is fresh.",
         "freshness": freshness,
+        "project_status": project_status,
+        "live_risk_adr": live_risk_adr,
+        "expected_live_risk_adr_sha256": expected_live_risk_adr_sha256,
         "live_promotion_review": live_promotion_review,
         "expected_live_promotion_review_sha256": expected_promotion_review_sha256,
     }
@@ -659,6 +674,15 @@ def _promotion_review_sha256_or_none(path: Path) -> str | None:
         return None
     try:
         return promotion_review_sha256(path)
+    except OSError:
+        return None
+
+
+def _file_sha256_or_none(path: Path) -> str | None:
+    if not path.exists():
+        return None
+    try:
+        return hashlib.sha256(path.read_bytes()).hexdigest()
     except OSError:
         return None
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -126,6 +127,10 @@ def test_live_readiness_blocks_without_continuity_or_accepted_adr(tmp_path: Path
     assert report.schema_version == "phase6.live_readiness.v1"
     assert report.live_trading_allowed is False
     assert report.readiness_gate_met is False
+    assert report.project_status["sha256"] == hashlib.sha256(
+        status_path.read_bytes()
+    ).hexdigest()
+    assert report.live_risk_adr["sha256"] is None
     assert report.recommendation == "remain_blocked_before_phase6_live_canary"
     assert "live_risk_adr_not_accepted" in report.blockers
     assert "testnet_continuity_evidence_missing" in report.blockers
@@ -231,6 +236,12 @@ def test_live_readiness_can_emit_markdown_when_all_evidence_is_present(
     assert report.live_promotion_review["accepted"] is True
     assert report.live_promotion_review["path"] == str(promotion)
     assert len(report.live_promotion_review["sha256"]) == 64
+    assert report.project_status["sha256"] == hashlib.sha256(
+        status_path.read_bytes()
+    ).hexdigest()
+    assert report.live_risk_adr["sha256"] == hashlib.sha256(
+        live_adr.read_bytes()
+    ).hexdigest()
     assert report.market_scope["spot_only_no_margin_no_leverage"] is True
     assert "# Phase 6 Live Readiness" in markdown
     assert "live_trading_allowed: false" in markdown
