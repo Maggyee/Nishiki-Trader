@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import subprocess
 import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -44,6 +45,12 @@ class ReadinessCheck:
 
 
 @dataclass(frozen=True)
+class GitState:
+    commit: str
+    dirty: bool
+
+
+@dataclass(frozen=True)
 class LiveReadinessReport:
     schema_version: str
     generated_at_ns: int
@@ -56,6 +63,7 @@ class LiveReadinessReport:
     checks: list[ReadinessCheck]
     project_status: dict[str, Any]
     live_risk_adr: dict[str, Any]
+    git: dict[str, Any]
     continuity_summary: dict[str, Any] | None
     capital_plan: dict[str, Any]
     market_scope: dict[str, Any]
@@ -76,6 +84,8 @@ def build_live_readiness_report(
     max_leverage: float = 1.0,
     min_clean_hours_per_day: float = 6.0,
     required_consecutive_days: int = 14,
+    repo_root: Path = Path("."),
+    git_state: GitState | None = None,
     generated_at_ns: int | None = None,
 ) -> LiveReadinessReport:
     generated_ns = time.time_ns() if generated_at_ns is None else generated_at_ns
@@ -96,6 +106,26 @@ def build_live_readiness_report(
     )
     if not project_status["live_trading_blocked"]:
         blockers.append("project_status_live_trading_not_blocked")
+
+    state = git_state or _git_state(repo_root)
+    git = {
+        "commit": state.commit,
+        "dirty": state.dirty,
+        "repo_root": str(repo_root),
+    }
+    checks.append(
+        _check(
+            "git_clean",
+            "ok" if not state.dirty else "blocked",
+            (
+                f"Git tree is clean at {state.commit}."
+                if not state.dirty
+                else "Live-readiness evidence must be generated from a clean git tree."
+            ),
+        )
+    )
+    if state.dirty:
+        blockers.append("git_dirty")
 
     live_risk_adr = _live_risk_adr_gate(live_risk_adr_path)
     if live_risk_adr["accepted"]:
@@ -246,6 +276,7 @@ def build_live_readiness_report(
         checks=checks,
         project_status=project_status,
         live_risk_adr=live_risk_adr,
+        git=git,
         continuity_summary=continuity_summary,
         capital_plan=capital_plan,
         market_scope=market_scope,
@@ -435,6 +466,23 @@ def _strict_streak(text: str) -> str | None:
     return match.group("value") if match else None
 
 
+def _git_state(repo_root: Path) -> GitState:
+    commit = _git_output(["git", "rev-parse", "HEAD"], repo_root)
+    status = _git_output(["git", "status", "--porcelain"], repo_root)
+    return GitState(commit=commit, dirty=bool(status.strip()))
+
+
+def _git_output(args: list[str], cwd: Path) -> str:
+    result = subprocess.run(
+        args,
+        cwd=cwd,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return result.stdout.strip()
+
+
 def _check(name: str, status: str, detail: str) -> ReadinessCheck:
     return ReadinessCheck(name=name, status=status, detail=detail)
 
@@ -484,6 +532,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-leverage", type=float, default=1.0)
     parser.add_argument("--min-clean-hours-per-day", type=float, default=6.0)
     parser.add_argument("--required-consecutive-days", type=int, default=14)
+    parser.add_argument("--repo-root", type=Path, default=Path("."))
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--markdown", action="store_true")
     return parser
@@ -505,6 +554,7 @@ def main(argv: list[str] | None = None) -> int:
         max_leverage=float(args.max_leverage),
         min_clean_hours_per_day=args.min_clean_hours_per_day,
         required_consecutive_days=args.required_consecutive_days,
+        repo_root=args.repo_root,
     )
     if args.markdown:
         print(render_markdown_report(report))

@@ -14,9 +14,10 @@ runbook is Accepted, and the live startup guard passes.
 
 - ADR-013 status is Accepted after a human go/no-go review.
 - `apps.ops.live_readiness` produced a saved JSON report with
-  `readiness_gate_met=true` and `live_trading_allowed=false`.
+  `readiness_gate_met=true`, `live_trading_allowed=false`, and
+  `git.dirty=false`.
 - `apps.strategies_nautilus.runners.live_startup_guard` passes against that
-  saved readiness report.
+  saved readiness report at the same git commit.
 - Starting capital is declared between 100 and 500 USDT.
 - Market scope is explicitly Binance Spot only: `market_type=spot`,
   `margin_enabled=false`, and `max_leverage=1.0`.
@@ -26,8 +27,8 @@ runbook is Accepted, and the live startup guard passes.
 
 ## Preflight
 
-1. Confirm `git status --short --branch` is clean and points at the commit
-   referenced by the saved readiness evidence.
+1. Confirm `git status --short --branch` is clean and `git rev-parse HEAD`
+   matches the commit recorded in the saved readiness evidence.
 2. Confirm the live credential key-prefix audit plan: record only the API key
    prefix in runtime logs; never write the full API key or secret.
 3. Confirm Binance Spot only: no margin, no futures, no leverage.

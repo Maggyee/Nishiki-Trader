@@ -183,7 +183,7 @@ def build_live_startup_guard_report(
     if not adr_gate["accepted"]:
         blockers.append("live_risk_adr_not_accepted")
 
-    readiness_gate = _live_readiness_report_gate(settings)
+    readiness_gate = _live_readiness_report_gate(settings, git_state=state)
     evidence["live_readiness_report"] = readiness_gate
     checks.append(
         _check(
@@ -443,7 +443,11 @@ def _live_risk_adr_gate(path: Path) -> dict[str, Any]:
     }
 
 
-def _live_readiness_report_gate(settings: LiveStartupSettings) -> dict[str, Any]:
+def _live_readiness_report_gate(
+    settings: LiveStartupSettings,
+    *,
+    git_state: GitState,
+) -> dict[str, Any]:
     path = settings.live_readiness_report_path
     if not path.exists():
         return {
@@ -475,6 +479,11 @@ def _live_readiness_report_gate(settings: LiveStartupSettings) -> dict[str, Any]
         problems.append("live_trading_allowed_must_remain_false")
     if payload.get("blockers"):
         problems.append("blockers_must_be_empty")
+    report_git = payload.get("git") or {}
+    if report_git.get("dirty") is not False:
+        problems.append("readiness_git_dirty")
+    if report_git.get("commit") != git_state.commit:
+        problems.append("readiness_git_commit")
     continuity = payload.get("continuity_summary") or {}
     if continuity.get("required_gate_met") is not True:
         problems.append("testnet_continuity")

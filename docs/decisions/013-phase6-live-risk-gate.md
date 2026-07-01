@@ -90,6 +90,7 @@ emits `phase6.live_readiness.v1` JSON or Markdown from:
 - an explicit starting-capital declaration.
 - an explicit market-scope declaration, which must remain Binance Spot only,
   no margin, and max leverage 1.0.
+- the git commit and dirty/clean state at report generation time.
 
 The tool is audit-only. It never loads exchange credentials, starts a runtime,
 changes `SourcePolicy`, writes `SignalEvent`, places orders, or authorizes live
@@ -113,8 +114,9 @@ startup preflight reader for a future live runner. It consumes a saved
 promotion review, first-live-day runbook, capital declaration, live SourcePolicy
 fields, live market scope, explicit `--allow-live-credentials`, and git state.
 It also rejects any saved readiness report whose passive boundary flags are not
-all closed. It returns exit code 2 when the future live runner must refuse
-startup.
+all closed or whose recorded git commit does not match the startup guard's
+current clean commit. It returns exit code 2 when the future live runner must
+refuse startup.
 
 The startup guard still does not load live credentials, inspect credential
 values, build a Nautilus node, connect to Binance, mutate `SourcePolicy`, write
@@ -165,7 +167,8 @@ A future live runner must refuse startup unless:
 - git status is clean and matches the committed evidence;
 - this ADR or its successor is Accepted;
 - a saved `phase6.live_readiness.v1` report proves the 14-day continuity gate
-  and has no blockers;
+  and has no blockers, was generated from a clean git tree, and records the
+  same commit as startup preflight;
 - a live-canary promotion review exists for the exact source/model transition
   `testnet_canary -> live_canary`;
 - starting capital is declared and within 100-500 USDT;

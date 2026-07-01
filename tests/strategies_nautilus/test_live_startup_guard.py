@@ -62,6 +62,10 @@ def _write_evidence(tmp_path: Path, *, runbook_status: str = "Accepted") -> dict
                 "readiness_gate_met": True,
                 "live_trading_allowed": False,
                 "blockers": [],
+                "git": {
+                    "commit": "a" * 40,
+                    "dirty": False,
+                },
                 "continuity_summary": {"required_gate_met": True},
                 "capital_plan": {
                     "starting_capital_usdt": 100.0,
@@ -193,6 +197,42 @@ def test_live_startup_guard_blocks_readiness_report_that_is_not_ready(
 
     assert report.startup_allowed is False
     assert "live_readiness_report_gate_not_met" in report.blockers
+
+
+def test_live_startup_guard_blocks_readiness_report_from_different_commit(
+    tmp_path: Path,
+) -> None:
+    paths = _write_evidence(tmp_path)
+    payload = json.loads(paths["readiness"].read_text(encoding="utf-8"))
+    payload["git"]["commit"] = "b" * 40
+    paths["readiness"].write_text(json.dumps(payload), encoding="utf-8")
+
+    report = build_live_startup_guard_report(
+        _settings(tmp_path, live_readiness_report_path=paths["readiness"]),
+        git_state=GIT_CLEAN,
+    )
+
+    assert report.startup_allowed is False
+    assert "live_readiness_report_gate_not_met" in report.blockers
+    assert "readiness_git_commit" in report.evidence["live_readiness_report"]["problems"]
+
+
+def test_live_startup_guard_blocks_dirty_readiness_report(
+    tmp_path: Path,
+) -> None:
+    paths = _write_evidence(tmp_path)
+    payload = json.loads(paths["readiness"].read_text(encoding="utf-8"))
+    payload["git"]["dirty"] = True
+    paths["readiness"].write_text(json.dumps(payload), encoding="utf-8")
+
+    report = build_live_startup_guard_report(
+        _settings(tmp_path, live_readiness_report_path=paths["readiness"]),
+        git_state=GIT_CLEAN,
+    )
+
+    assert report.startup_allowed is False
+    assert "live_readiness_report_gate_not_met" in report.blockers
+    assert "readiness_git_dirty" in report.evidence["live_readiness_report"]["problems"]
 
 
 def test_live_startup_guard_blocks_malformed_readiness_capital(

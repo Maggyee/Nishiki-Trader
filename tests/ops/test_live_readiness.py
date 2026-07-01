@@ -4,11 +4,13 @@ import json
 from pathlib import Path
 
 from apps.ops import live_readiness
+from apps.ops.live_readiness import GitState
 from apps.strategies_nautilus.runners.report_testnet_bundle import (
     TestnetContinuitySummary as ContinuitySummary,
 )
 
 REFERENCE_TS_NS = 1_778_760_000_000_000_000
+GIT_CLEAN = GitState(commit="a" * 40, dirty=False)
 
 
 def _write_status(path: Path) -> None:
@@ -77,6 +79,7 @@ def test_live_readiness_blocks_without_continuity_or_accepted_adr(tmp_path: Path
         source="freqai_linear_v1",
         model_version="linear-mom-train20240105",
         starting_capital_usdt=100,
+        git_state=GIT_CLEAN,
         generated_at_ns=REFERENCE_TS_NS,
     )
 
@@ -87,6 +90,11 @@ def test_live_readiness_blocks_without_continuity_or_accepted_adr(tmp_path: Path
     assert "live_risk_adr_not_accepted" in report.blockers
     assert "testnet_continuity_evidence_missing" in report.blockers
     assert "live_canary_promotion_review_required" in report.blockers
+    assert report.git == {
+        "commit": "a" * 40,
+        "dirty": False,
+        "repo_root": ".",
+    }
     assert report.market_scope == {
         "market_type": "spot",
         "margin_enabled": False,
@@ -127,6 +135,7 @@ def test_live_readiness_uses_passive_continuity_summary(
         source="freqai_linear_v1",
         model_version="linear-mom-train20240105",
         starting_capital_usdt=100,
+        git_state=GIT_CLEAN,
         generated_at_ns=REFERENCE_TS_NS,
     )
 
@@ -174,6 +183,7 @@ def test_live_readiness_can_emit_markdown_when_all_evidence_is_present(
         model_version="linear-mom-train20240105",
         live_promotion_review_path=promotion,
         starting_capital_usdt=250,
+        git_state=GIT_CLEAN,
         generated_at_ns=REFERENCE_TS_NS,
     )
     markdown = live_readiness.render_markdown_report(report)
@@ -185,6 +195,49 @@ def test_live_readiness_can_emit_markdown_when_all_evidence_is_present(
     assert "# Phase 6 Live Readiness" in markdown
     assert "live_trading_allowed: false" in markdown
     assert "| live_risk_adr | ok |" in markdown
+
+
+def test_live_readiness_blocks_dirty_git_evidence(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    live_adr = tmp_path / "013-phase6-live-risk-gate.md"
+    promotion = tmp_path / "live-promotion.md"
+    _write_status(status_path)
+    _write_live_adr(live_adr, status="Accepted")
+    promotion.write_text(
+        "\n".join(
+            [
+                "decision_allowed: **yes**",
+                "target_stage: live_canary",
+                "source: freqai_linear_v1",
+                "model_version: linear-mom-train20240105",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        live_readiness,
+        "load_testnet_continuity_summary",
+        lambda bundle_dirs, **kwargs: _continuity_summary(gate_met=True),
+    )
+
+    report = live_readiness.build_live_readiness_report(
+        project_status_path=status_path,
+        live_risk_adr_path=live_adr,
+        continuity_bundle_dirs=[tmp_path / "bundle-1"],
+        source="freqai_linear_v1",
+        model_version="linear-mom-train20240105",
+        live_promotion_review_path=promotion,
+        starting_capital_usdt=250,
+        git_state=GitState(commit="a" * 40, dirty=True),
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    assert report.readiness_gate_met is False
+    assert report.git["dirty"] is True
+    assert "git_dirty" in report.blockers
 
 
 def test_live_readiness_blocks_non_spot_or_leveraged_scope(
@@ -224,6 +277,7 @@ def test_live_readiness_blocks_non_spot_or_leveraged_scope(
         market_type="margin",
         margin_enabled=True,
         max_leverage=2.0,
+        git_state=GIT_CLEAN,
         generated_at_ns=REFERENCE_TS_NS,
     )
 

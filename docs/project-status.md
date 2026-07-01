@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-07-01 (Phase 6 market-scope gate hardening)
+- **Last updated**: 2026-07-01 (Phase 6 git-evidence gate hardening)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
-- **Current objective**: Phase 5 remains the active implemented phase. ADR-013, `apps.ops.live_readiness`, and `apps.strategies_nautilus.runners.live_startup_guard` define passive Phase 6 live-readiness and startup-refusal gates, including spot-only/no-margin/no-leverage market-scope checks and startup-guard cross-checks that saved readiness artifacts kept passive boundary flags closed. `dashboard.snapshot.v1` can summarize saved `phase6.live_readiness.v1` / `phase6.live_startup_guard.v1` artifacts for read-only operator visibility. Phase 6 is still closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired. ADR-012, `apps.ops.dashboard_snapshot`, `infra/grafana/dashboards/signals-overview.json`, and `apps/frontend` continue to define the read-only operations console consuming `dashboard.snapshot.v1` with runtime health, AgentAdvice, passive paper/testnet summaries, source/model Grafana drill-down links, snapshot freshness status with generator-configurable thresholds, snapshot source/input audit, signal/rejection/freshness/evidence summaries, observability, reference links, and Phase 6 blocker summaries. Agents and frontend still cannot write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or enter the order path. Keep `freqai_linear_v1 / linear-mom-train20240105` at `hold @ testnet_canary` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. No live trading without ADR-013 acceptance, the ADR-001 capital ladder gate, and the ADR-008 14-day continuity gate.
+- **Current objective**: Phase 5 remains the active implemented phase. ADR-013, `apps.ops.live_readiness`, and `apps.strategies_nautilus.runners.live_startup_guard` define passive Phase 6 live-readiness and startup-refusal gates, including spot-only/no-margin/no-leverage market-scope checks, clean git evidence capture, and startup-guard cross-checks that saved readiness artifacts kept passive boundary flags closed and were generated from the same clean commit. `dashboard.snapshot.v1` can summarize saved `phase6.live_readiness.v1` / `phase6.live_startup_guard.v1` artifacts for read-only operator visibility. Phase 6 is still closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired. ADR-012, `apps.ops.dashboard_snapshot`, `infra/grafana/dashboards/signals-overview.json`, and `apps/frontend` continue to define the read-only operations console consuming `dashboard.snapshot.v1` with runtime health, AgentAdvice, passive paper/testnet summaries, source/model Grafana drill-down links, snapshot freshness status with generator-configurable thresholds, snapshot source/input audit, signal/rejection/freshness/evidence summaries, observability, reference links, and Phase 6 blocker summaries. Agents and frontend still cannot write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or enter the order path. Keep `freqai_linear_v1 / linear-mom-train20240105` at `hold @ testnet_canary` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. No live trading without ADR-013 acceptance, the ADR-001 capital ladder gate, and the ADR-008 14-day continuity gate.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -147,16 +147,16 @@ Immediate focus:
 
 ## Latest Verification
 
-On 2026-07-01, after hardening the passive Phase 6 market-scope gate:
+On 2026-07-01, after hardening passive Phase 6 git evidence:
 
-- `phase6.live_readiness.v1` now records and blocks on `market_scope`: Phase 6 live canary must remain Binance Spot only, `margin_enabled=false`, and `max_leverage=1.0`.
-- `phase6.live_startup_guard.v1` now checks its own market-scope declaration and rejects any saved live-readiness artifact that reports non-spot/margin/leverage or opens passive boundaries such as `starts_runtime`, `loads_exchange_credentials`, `writes_signal_event`, `mutates_source_policy`, `places_orders`, or `authorizes_live_trading`.
-- ADR-013 and `docs/runbook-first-live-day.md` now document the market-scope CLI fields. Both documents remain non-authorizing; ADR-013 is Draft and the runbook is Draft.
+- `phase6.live_readiness.v1` now records `git.commit`, `git.dirty`, and `repo_root`, and the readiness gate blocks when generated from a dirty git tree.
+- `phase6.live_startup_guard.v1` now rejects saved readiness artifacts whose recorded git state is dirty or whose commit differs from the startup guard's current clean commit.
+- ADR-013 and `docs/runbook-first-live-day.md` now document that saved readiness evidence must be generated from a clean git tree and match the startup preflight commit.
 - The change remains passive: it does not load credentials, build or start Nautilus, connect to Binance, write `SignalEvent`, mutate `SourcePolicy`, place orders, add a live runner, or authorize live trading.
-- `TMPDIR=/tmp UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/ops/test_live_readiness.py tests/strategies_nautilus/test_live_startup_guard.py -q` -> **16 passed**.
+- `TMPDIR=/tmp UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/ops/test_live_readiness.py tests/strategies_nautilus/test_live_startup_guard.py -q` -> **19 passed**.
 - `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check apps tests docs infra` -> clean.
-- Current blocked readiness smoke with `--market-type spot --max-leverage 1` -> `readiness_gate_met=false`, `live_trading_allowed=false`, `market_scope.spot_only_no_margin_no_leverage=true`, and blockers remain live promotion missing, ADR-013 Draft, and testnet continuity evidence missing.
-- Current startup-guard smoke with that blocked readiness report -> exit **2**, `startup_allowed=false`, `live_trading_authorized=false`, and blockers include Draft ADR-013, Draft first-live-day runbook, missing live promotion review, failed readiness gate, and dirty git.
+- Current blocked readiness smoke with `--market-type spot --max-leverage 1` -> `readiness_gate_met=false`, `live_trading_allowed=false`, `git.dirty=true`, `places_orders=false`, and blockers include `git_dirty`, missing live promotion, ADR-013 Draft, and testnet continuity evidence missing.
+- Current startup-guard smoke with that blocked readiness report -> exit **2**, `startup_allowed=false`, `live_trading_authorized=false`, `git_clean=blocked`, and readiness failure includes `readiness_git_dirty`.
 
 On 2026-06-29, after making dashboard snapshot freshness thresholds configurable:
 
