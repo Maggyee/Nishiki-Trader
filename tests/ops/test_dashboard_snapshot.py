@@ -403,6 +403,11 @@ def test_snapshot_summarizes_phase6_gate_artifacts(tmp_path: Path) -> None:
                 "recommendation": "refuse_live_startup",
                 "blockers": ["first_live_day_runbook_not_accepted"],
                 "evidence": {
+                    "live_risk_adr": {
+                        "path": "docs/decisions/013-phase6-live-risk-gate.md",
+                        "sha256": "c" * 64,
+                        "accepted": False,
+                    },
                     "live_readiness_report": {
                         "path": str(readiness_path),
                         "sha256": "b" * 64,
@@ -416,6 +421,11 @@ def test_snapshot_summarizes_phase6_gate_artifacts(tmp_path: Path) -> None:
                         "accepted": False,
                         "blocker": "live_promotion_review_not_found",
                         "path": "missing-live-review.md",
+                    },
+                    "first_live_day_runbook": {
+                        "path": "docs/runbook-first-live-day.md",
+                        "sha256": "d" * 64,
+                        "accepted": False,
                     },
                 },
                 "checks": [
@@ -459,15 +469,23 @@ def test_snapshot_summarizes_phase6_gate_artifacts(tmp_path: Path) -> None:
     assert phase6["reports"][1]["status"] == "blocked"
     assert phase6["reports"][1]["checks"][0]["name"] == "first_live_day_runbook"
     assert phase6["reports"][1]["evidence"][0]["label"] == (
+        "Live-risk ADR artifact"
+    )
+    assert phase6["reports"][1]["evidence"][0]["sha256"] == "c" * 64
+    assert phase6["reports"][1]["evidence"][1]["label"] == (
         "Readiness report artifact"
     )
-    assert phase6["reports"][1]["evidence"][0]["sha256"] == "b" * 64
-    assert phase6["reports"][1]["evidence"][1]["label"] == (
+    assert phase6["reports"][1]["evidence"][1]["sha256"] == "b" * 64
+    assert phase6["reports"][1]["evidence"][2]["label"] == (
         "Startup promotion review artifact"
     )
-    assert phase6["reports"][1]["evidence"][2]["label"] == (
+    assert phase6["reports"][1]["evidence"][3]["label"] == (
         "Readiness promotion SHA-256 match"
     )
+    assert phase6["reports"][1]["evidence"][4]["label"] == (
+        "First live day runbook artifact"
+    )
+    assert phase6["reports"][1]["evidence"][4]["sha256"] == "d" * 64
     assert "## Phase 6 Gates" in markdown
     assert "evidence: Promotion review artifact" in markdown
     assert "first_live_day_runbook_not_accepted" in markdown
@@ -534,6 +552,10 @@ def test_snapshot_blocks_phase6_startup_without_readiness_artifact_fingerprint(
                 "recommendation": "startup_preflight_passed_for_future_live_runner",
                 "blockers": [],
                 "evidence": {
+                    "live_risk_adr": {
+                        "path": "013-phase6-live-risk-gate.md",
+                        "sha256": "b" * 64,
+                    },
                     "live_readiness_report": {
                         "path": "live-readiness.json",
                         "live_promotion_review": {
@@ -547,6 +569,10 @@ def test_snapshot_blocks_phase6_startup_without_readiness_artifact_fingerprint(
                         "accepted": True,
                         "path": "live-promotion.md",
                         "sha256": "a" * 64,
+                    },
+                    "first_live_day_runbook": {
+                        "path": "runbook-first-live-day.md",
+                        "sha256": "c" * 64,
                     },
                 },
                 "checks": [],
@@ -565,11 +591,84 @@ def test_snapshot_blocks_phase6_startup_without_readiness_artifact_fingerprint(
     startup_guard = snapshot["phase6"]["reports"][1]
     assert startup_guard["status"] == "blocked"
     assert "evidence:Readiness report artifact" in startup_guard["blockers"]
-    assert startup_guard["evidence"][0] == {
+    assert startup_guard["evidence"][1] == {
         "label": "Readiness report artifact",
         "status": "blocked",
         "detail": "Artifact fingerprint is not recorded.",
         "path": "live-readiness.json",
+        "sha256": None,
+    }
+    assert snapshot["phase6"]["state"] == "blocked"
+
+
+def test_snapshot_blocks_phase6_startup_without_operator_document_fingerprints(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    guard_path = tmp_path / "old-live-startup-guard.json"
+    guard_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "phase6.live_startup_guard.v1",
+                "source": "freqai_linear_v1",
+                "model_version": "linear-mom-train20240105",
+                "startup_allowed": True,
+                "live_trading_authorized": False,
+                "recommendation": "startup_preflight_passed_for_future_live_runner",
+                "blockers": [],
+                "evidence": {
+                    "live_risk_adr": {
+                        "path": "013-phase6-live-risk-gate.md",
+                    },
+                    "live_readiness_report": {
+                        "path": "live-readiness.json",
+                        "sha256": "b" * 64,
+                        "live_promotion_review": {
+                            "accepted": True,
+                            "path": "live-promotion.md",
+                            "sha256": "a" * 64,
+                        },
+                        "expected_live_promotion_review_sha256": "a" * 64,
+                    },
+                    "live_promotion_review": {
+                        "accepted": True,
+                        "path": "live-promotion.md",
+                        "sha256": "a" * 64,
+                    },
+                    "first_live_day_runbook": {
+                        "path": "runbook-first-live-day.md",
+                    },
+                },
+                "checks": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_startup_guard_report_path=guard_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    startup_guard = snapshot["phase6"]["reports"][1]
+    assert startup_guard["status"] == "blocked"
+    assert "evidence:Live-risk ADR artifact" in startup_guard["blockers"]
+    assert "evidence:First live day runbook artifact" in startup_guard["blockers"]
+    assert startup_guard["evidence"][0] == {
+        "label": "Live-risk ADR artifact",
+        "status": "blocked",
+        "detail": "Artifact fingerprint is not recorded.",
+        "path": "013-phase6-live-risk-gate.md",
+        "sha256": None,
+    }
+    assert startup_guard["evidence"][4] == {
+        "label": "First live day runbook artifact",
+        "status": "blocked",
+        "detail": "Artifact fingerprint is not recorded.",
+        "path": "runbook-first-live-day.md",
         "sha256": None,
     }
     assert snapshot["phase6"]["state"] == "blocked"

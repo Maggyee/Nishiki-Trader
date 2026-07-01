@@ -135,7 +135,10 @@ widens the evidence window. It returns exit code 2 when the future live runner
 must refuse startup.
 The startup-guard report records the SHA-256 of the saved readiness report
 artifact it actually read, so dashboard and retro review can identify the exact
-preflight input bytes.
+preflight input bytes. It also records the SHA-256 fingerprints of the
+live-risk ADR and first-live-day runbook artifacts it read, so an operator can
+prove the startup decision was made against the intended human-review
+documents.
 
 The startup guard still does not load live credentials, inspect credential
 values, build a Nautilus node, connect to Binance, mutate `SourcePolicy`, write
@@ -193,6 +196,8 @@ A future live runner must refuse startup unless:
   guard's configured maximum age, default 24 hours;
 - the startup-guard report records the SHA-256 fingerprint of the saved
   readiness report artifact it consumed;
+- the startup-guard report records SHA-256 fingerprints for the live-risk ADR
+  and first-live-day runbook artifacts it consumed;
 - the saved readiness report records `live_promotion_review.sha256`, and that
   SHA-256 exactly matches the live promotion-review artifact supplied to the
   startup guard;

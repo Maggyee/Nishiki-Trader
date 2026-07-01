@@ -1576,9 +1576,11 @@ def _phase6_report_evidence(
 
     evidence = payload.get("evidence") if isinstance(payload, dict) else None
     evidence = evidence if isinstance(evidence, dict) else {}
+    live_risk_adr_gate = evidence.get("live_risk_adr")
     readiness_gate = evidence.get("live_readiness_report")
     readiness_gate = readiness_gate if isinstance(readiness_gate, dict) else {}
     startup_promotion_gate = evidence.get("live_promotion_review")
+    first_live_day_runbook_gate = evidence.get("first_live_day_runbook")
     readiness_promotion_gate = readiness_gate.get("live_promotion_review")
     readiness_promotion_gate = (
         readiness_promotion_gate if isinstance(readiness_promotion_gate, dict) else {}
@@ -1589,6 +1591,10 @@ def _phase6_report_evidence(
     )
     sha_matches = bool(readiness_sha and expected_sha and readiness_sha == expected_sha)
     return [
+        _artifact_evidence_item(
+            live_risk_adr_gate,
+            label="Live-risk ADR artifact",
+        ),
         _artifact_evidence_item(
             readiness_gate,
             label="Readiness report artifact",
@@ -1609,6 +1615,10 @@ def _phase6_report_evidence(
             "sha256": readiness_sha,
             "expected_sha256": expected_sha,
         },
+        _artifact_evidence_item(
+            first_live_day_runbook_gate,
+            label="First live day runbook artifact",
+        ),
     ]
 
 

@@ -445,11 +445,14 @@ def _market_scope_gate(settings: LiveStartupSettings) -> dict[str, Any]:
 
 def _live_risk_adr_gate(path: Path) -> dict[str, Any]:
     exists = path.exists()
-    text = path.read_text(encoding="utf-8") if exists else ""
+    raw = path.read_bytes() if exists else b""
+    artifact_sha256 = hashlib.sha256(raw).hexdigest() if exists else None
+    text = raw.decode("utf-8") if exists else ""
     status = _document_status(text)
     return {
         "path": str(path),
         "exists": exists,
+        "sha256": artifact_sha256,
         "status": status,
         "accepted": status.lower().startswith("accepted"),
     }
@@ -664,11 +667,14 @@ def _first_live_day_runbook_gate(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {
             "path": str(path),
+            "sha256": None,
             "accepted": False,
             "blocker": "first_live_day_runbook_not_found",
             "detail": f"{path} does not exist.",
         }
-    text = path.read_text(encoding="utf-8")
+    raw = path.read_bytes()
+    artifact_sha256 = hashlib.sha256(raw).hexdigest()
+    text = raw.decode("utf-8")
     lowered = text.lower()
     status = _document_status(text)
     missing_sections = [
@@ -685,6 +691,7 @@ def _first_live_day_runbook_gate(path: Path) -> dict[str, Any]:
     if not status.lower().startswith("accepted"):
         return {
             "path": str(path),
+            "sha256": artifact_sha256,
             "accepted": False,
             "blocker": "first_live_day_runbook_not_accepted",
             "detail": f"{path} status is {status!r}.",
@@ -694,6 +701,7 @@ def _first_live_day_runbook_gate(path: Path) -> dict[str, Any]:
     if missing_sections:
         return {
             "path": str(path),
+            "sha256": artifact_sha256,
             "accepted": False,
             "blocker": "first_live_day_runbook_incomplete",
             "detail": "Runbook missing required sections: "
@@ -703,6 +711,7 @@ def _first_live_day_runbook_gate(path: Path) -> dict[str, Any]:
         }
     return {
         "path": str(path),
+        "sha256": artifact_sha256,
         "accepted": True,
         "blocker": "",
         "detail": f"{path} is accepted and includes first-live-day safety sections.",

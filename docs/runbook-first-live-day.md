@@ -20,7 +20,8 @@ runbook is Accepted, and the live startup guard passes.
 - `apps.strategies_nautilus.runners.live_startup_guard` passes against that
   saved readiness report at the same git commit and within the guard's default
   24 hour readiness-evidence freshness window; the startup guard report records
-  the SHA-256 of the saved readiness report artifact it consumed.
+  the SHA-256 of the saved readiness report, live-risk ADR, and first-live-day
+  runbook artifacts it consumed.
 - Starting capital is declared between 100 and 500 USDT.
 - Market scope is explicitly Binance Spot only: `market_type=spot`,
   `margin_enabled=false`, and `max_leverage=1.0`.
@@ -40,8 +41,10 @@ runbook is Accepted, and the live startup guard passes.
 2. Confirm the saved readiness evidence has `generated_at_ns` and was generated
    within the last 24 hours unless the operator explicitly chose a wider
    `--max-readiness-report-age-seconds` window.
-3. Confirm the startup guard report's `live_readiness_report.sha256` identifies
-   the exact saved readiness report artifact supplied to startup.
+3. Confirm the startup guard report's `live_readiness_report.sha256`,
+   `live_risk_adr.sha256`, and `first_live_day_runbook.sha256` identify the
+   exact saved readiness report, ADR, and runbook artifacts supplied to
+   startup.
 4. Confirm the live promotion review fields exactly match the intended
    `testnet_canary -> live_canary` transition; do not accept incidental stage
    mentions in rationale text as evidence.
