@@ -23,9 +23,10 @@ runbook is Accepted, and the live startup guard passes.
 - `apps.strategies_nautilus.runners.live_startup_guard` passes against that
   saved readiness report at the same git commit and within the guard's default
   24 hour readiness-evidence freshness window; the startup guard report records
-  the SHA-256 of the saved readiness report, live-risk ADR, and first-live-day
-  runbook artifacts it consumed, and verifies every recorded continuity
-  manifest path still hashes to the readiness report's recorded SHA-256.
+  the SHA-256 of the saved readiness report, the startup-side project-status
+  artifact, live-risk ADR, and first-live-day runbook artifacts it consumed,
+  and verifies every recorded continuity manifest path still hashes to the
+  readiness report's recorded SHA-256.
 - Starting capital is declared between 100 and 500 USDT.
 - Market scope is explicitly Binance Spot only: `market_type=spot`,
   `margin_enabled=false`, and `max_leverage=1.0`.
@@ -46,27 +47,31 @@ runbook is Accepted, and the live startup guard passes.
    within the last 24 hours unless the operator explicitly chose a wider
    `--max-readiness-report-age-seconds` window.
 3. Confirm the startup guard report's `live_readiness_report.sha256`,
+   `live_readiness_report.expected_project_status_sha256`,
    `live_risk_adr.sha256`, and `first_live_day_runbook.sha256` identify the
-   exact saved readiness report, ADR, and runbook artifacts supplied to
-   startup.
+   exact saved readiness report, project-status, ADR, and runbook artifacts
+   supplied to startup.
 4. Confirm the startup guard report's
+   `live_readiness_report.expected_project_status_sha256` equals
+   `live_readiness_report.project_status.sha256`.
+5. Confirm the startup guard report's
    `live_readiness_report.expected_live_risk_adr_sha256` equals
    `live_risk_adr.sha256`.
-5. Confirm the startup guard report has
+6. Confirm the startup guard report has
    `live_readiness_report.continuity_artifact_problems=[]` and every saved
    readiness `continuity_artifacts[*].manifest_path` still exists with a local
    SHA-256 equal to its recorded `sha256`.
-6. Confirm the live promotion review fields exactly match the intended
+7. Confirm the live promotion review fields exactly match the intended
    `testnet_canary -> live_canary` transition; do not accept incidental stage
    mentions in rationale text as evidence.
-7. Confirm the saved readiness report's `live_promotion_review.sha256` equals
+8. Confirm the saved readiness report's `live_promotion_review.sha256` equals
    the SHA-256 of the live promotion review artifact supplied to the startup
    guard.
-8. Confirm the live credential key-prefix audit plan: record only the API key
+9. Confirm the live credential key-prefix audit plan: record only the API key
    prefix in runtime logs; never write the full API key or secret.
-9. Confirm Binance Spot only: no margin, no futures, no leverage.
-10. Confirm the operator has the exchange web UI open before startup.
-11. Confirm a manual exchange fallback is available: if the runner or emergency
+10. Confirm Binance Spot only: no margin, no futures, no leverage.
+11. Confirm the operator has the exchange web UI open before startup.
+12. Confirm a manual exchange fallback is available: if the runner or emergency
    tooling fails, manually cancel all open Spot orders and sell residual BTC to
    return the account to USDT/flat.
 

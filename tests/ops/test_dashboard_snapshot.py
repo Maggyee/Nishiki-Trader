@@ -439,6 +439,11 @@ def test_snapshot_summarizes_phase6_gate_artifacts(tmp_path: Path) -> None:
                         },
                         "expected_git_commit": "a" * 40,
                         "expected_git_dirty": False,
+                        "project_status": {
+                            "path": "docs/project-status.md",
+                            "sha256": "e" * 64,
+                        },
+                        "expected_project_status_sha256": "e" * 64,
                         "live_risk_adr": {
                             "path": "docs/decisions/013-phase6-live-risk-gate.md",
                             "sha256": "c" * 64,
@@ -575,6 +580,16 @@ def test_snapshot_summarizes_phase6_gate_artifacts(tmp_path: Path) -> None:
         ),
         "path": str(readiness_path),
         "sha256": None,
+    }
+    assert phase6["reports"][1]["evidence"][9] == {
+        "label": "Readiness project-status SHA-256 match",
+        "status": "ok",
+        "detail": (
+            "Readiness report and startup project-status artifact fingerprints match."
+        ),
+        "path": "docs/project-status.md",
+        "sha256": "e" * 64,
+        "expected_sha256": "e" * 64,
     }
     assert "## Phase 6 Gates" in markdown
     assert "evidence: Promotion review artifact" in markdown
@@ -790,6 +805,8 @@ def _write_passing_startup_guard_report_with_readiness_git(
     *,
     readiness_git: dict[str, object],
     expected_git_commit: str = "b" * 40,
+    readiness_project_status_sha256: str = "f" * 64,
+    expected_project_status_sha256: str = "f" * 64,
 ) -> None:
     path.write_text(
         json.dumps(
@@ -818,6 +835,13 @@ def _write_passing_startup_guard_report_with_readiness_git(
                         "readiness_git": readiness_git,
                         "expected_git_commit": expected_git_commit,
                         "expected_git_dirty": False,
+                        "project_status": {
+                            "path": "docs/project-status.md",
+                            "sha256": readiness_project_status_sha256,
+                        },
+                        "expected_project_status_sha256": (
+                            expected_project_status_sha256
+                        ),
                         "live_risk_adr": {
                             "path": "013-phase6-live-risk-gate.md",
                             "sha256": "b" * 64,
@@ -925,6 +949,49 @@ def test_snapshot_blocks_phase6_startup_with_dirty_readiness_git(
         "detail": "Readiness report git evidence is dirty.",
         "path": "live-readiness.json",
         "sha256": None,
+    }
+    assert snapshot["phase6"]["state"] == "blocked"
+
+
+def test_snapshot_blocks_phase6_startup_with_different_readiness_project_status(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    guard_path = tmp_path / "live-startup-guard.json"
+    _write_passing_startup_guard_report_with_readiness_git(
+        guard_path,
+        readiness_git={
+            "commit": "b" * 40,
+            "dirty": False,
+        },
+        expected_git_commit="b" * 40,
+        readiness_project_status_sha256="d" * 64,
+        expected_project_status_sha256="f" * 64,
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_startup_guard_report_path=guard_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    startup_guard = snapshot["phase6"]["reports"][1]
+    assert startup_guard["status"] == "blocked"
+    assert (
+        "evidence:Readiness project-status SHA-256 match"
+        in startup_guard["blockers"]
+    )
+    assert startup_guard["evidence"][9] == {
+        "label": "Readiness project-status SHA-256 match",
+        "status": "blocked",
+        "detail": (
+            "Readiness report project-status fingerprint does not match the startup artifact."
+        ),
+        "path": "docs/project-status.md",
+        "sha256": "d" * 64,
+        "expected_sha256": "f" * 64,
     }
     assert snapshot["phase6"]["state"] == "blocked"
 

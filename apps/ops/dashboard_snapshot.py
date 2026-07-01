@@ -1635,6 +1635,7 @@ def _phase6_report_evidence(
         ),
         _readiness_freshness_evidence_item(readiness_gate),
         _readiness_git_evidence_item(readiness_gate),
+        _readiness_project_status_match_item(readiness_gate),
     ]
 
 
@@ -1899,6 +1900,41 @@ def _readiness_git_evidence_item(
         "detail": "Readiness report git commit matches startup preflight and is clean.",
         "path": _optional_str(readiness_gate.get("path")),
         "sha256": None,
+    }
+
+
+def _readiness_project_status_match_item(
+    readiness_gate: Any,
+) -> dict[str, str | None]:
+    label = "Readiness project-status SHA-256 match"
+    if not isinstance(readiness_gate, dict):
+        return {
+            "label": label,
+            "status": "missing",
+            "detail": "Readiness report gate evidence is not recorded.",
+            "path": None,
+            "sha256": None,
+            "expected_sha256": None,
+        }
+
+    project_status = readiness_gate.get("project_status")
+    project_status = project_status if isinstance(project_status, dict) else {}
+    readiness_sha = _optional_str(project_status.get("sha256"))
+    expected_sha = _optional_str(
+        readiness_gate.get("expected_project_status_sha256")
+    )
+    sha_matches = bool(readiness_sha and expected_sha and readiness_sha == expected_sha)
+    return {
+        "label": label,
+        "status": "ok" if sha_matches else "blocked",
+        "detail": (
+            "Readiness report and startup project-status artifact fingerprints match."
+            if sha_matches
+            else "Readiness report project-status fingerprint does not match the startup artifact."
+        ),
+        "path": _optional_str(project_status.get("path")),
+        "sha256": readiness_sha,
+        "expected_sha256": expected_sha,
     }
 
 

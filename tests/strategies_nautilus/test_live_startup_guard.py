@@ -68,6 +68,7 @@ def _live_promotion_text(
 def _settings(tmp_path: Path, **overrides) -> LiveStartupSettings:
     paths = {
         "readiness": tmp_path / "live-readiness.json",
+        "project_status": tmp_path / "project-status.md",
         "adr": tmp_path / "013-phase6-live-risk-gate.md",
         "promotion": tmp_path / "live-promotion.md",
         "runbook": tmp_path / "runbook-first-live-day.md",
@@ -86,6 +87,7 @@ def _settings(tmp_path: Path, **overrides) -> LiveStartupSettings:
         "live_readiness_report_path": paths["readiness"],
         "live_promotion_review_path": paths["promotion"],
         "first_live_day_runbook_path": paths["runbook"],
+        "project_status_path": paths["project_status"],
         "live_risk_adr_path": paths["adr"],
         "repo_root": tmp_path,
         "operator": "pytest",
@@ -101,6 +103,7 @@ def _write_evidence(
     generated_at_ns: int = REFERENCE_TS_NS,
 ) -> dict[str, Path]:
     readiness = tmp_path / "live-readiness.json"
+    project_status = tmp_path / "project-status.md"
     adr = tmp_path / "013-phase6-live-risk-gate.md"
     promotion = tmp_path / "live-promotion.md"
     runbook = tmp_path / "runbook-first-live-day.md"
@@ -123,6 +126,14 @@ def _write_evidence(
     manifest_sha256 = hashlib.sha256(manifest.read_bytes()).hexdigest()
     promotion_text = _live_promotion_text()
     promotion.write_text(promotion_text, encoding="utf-8")
+    project_status_text = "\n".join(
+        [
+            "# Project Status",
+            "- **Current phase**: Phase 5 entry",
+            "- **Current objective**: Phase 6 remains blocked.",
+        ]
+    )
+    project_status.write_text(project_status_text, encoding="utf-8")
     adr_text = "\n".join(
         [
             "# ADR-013: Phase 6 Live Risk Gate",
@@ -159,9 +170,9 @@ def _write_evidence(
                     "dirty": False,
                 },
                 "project_status": {
-                    "path": "docs/project-status.md",
+                    "path": str(project_status),
                     "exists": True,
-                    "sha256": "f" * 64,
+                    "sha256": _text_sha256(project_status_text),
                     "live_trading_blocked": True,
                     "strict_continuity": "14/14",
                 },
@@ -212,6 +223,7 @@ def _write_evidence(
     )
     return {
         "readiness": readiness,
+        "project_status": project_status,
         "adr": adr,
         "promotion": promotion,
         "runbook": runbook,
@@ -292,7 +304,15 @@ def test_live_startup_guard_passes_with_complete_evidence(tmp_path: Path) -> Non
     ).hexdigest()
     assert (
         report.evidence["live_readiness_report"]["project_status"]["sha256"]
-        == "f" * 64
+        == hashlib.sha256(settings.project_status_path.read_bytes()).hexdigest()
+    )
+    assert (
+        report.evidence["live_readiness_report"]["expected_project_status_sha256"]
+        == hashlib.sha256(settings.project_status_path.read_bytes()).hexdigest()
+    )
+    assert (
+        report.evidence["live_readiness_report"]["expected_project_status_path"]
+        == str(settings.project_status_path)
     )
     assert (
         report.evidence["live_readiness_report"]["continuity_artifacts"][0]["sha256"]
@@ -534,6 +554,30 @@ def test_live_startup_guard_blocks_readiness_report_without_source_document_fing
     assert "live_readiness_report_gate_not_met" in report.blockers
     assert "project_status_sha256" in readiness["problems"]
     assert "live_risk_adr_sha256" in readiness["problems"]
+
+
+def test_live_startup_guard_blocks_readiness_report_with_changed_project_status(
+    tmp_path: Path,
+) -> None:
+    paths = _write_evidence(tmp_path)
+    paths["project_status"].write_text(
+        "# Project Status\n- **Current phase**: Phase 6 entry attempt\n",
+        encoding="utf-8",
+    )
+
+    report = build_live_startup_guard_report(
+        _settings(tmp_path, live_readiness_report_path=paths["readiness"]),
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    readiness = report.evidence["live_readiness_report"]
+    assert report.startup_allowed is False
+    assert "live_readiness_report_gate_not_met" in report.blockers
+    assert "project_status_sha256" in readiness["problems"]
+    assert readiness["project_status"]["sha256"] != readiness[
+        "expected_project_status_sha256"
+    ]
 
 
 def test_live_startup_guard_blocks_readiness_report_without_continuity_artifacts(
@@ -812,6 +856,8 @@ def test_live_startup_guard_cli_outputs_json_and_exit_code(
             str(paths["promotion"]),
             "--first-live-day-runbook-path",
             str(paths["runbook"]),
+            "--project-status-path",
+            str(paths["project_status"]),
             "--live-risk-adr-path",
             str(paths["adr"]),
             "--repo-root",

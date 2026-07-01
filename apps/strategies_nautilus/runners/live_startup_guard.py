@@ -32,6 +32,7 @@ DATA_MODE_EXCHANGE_WS = "exchange_ws"
 ORDER_MODE_EXCHANGE_LIVE = "exchange_live"
 SCHEMA_VERSION = "phase6.live_startup_guard.v1"
 READINESS_SCHEMA_VERSION = "phase6.live_readiness.v1"
+DEFAULT_PROJECT_STATUS_PATH = Path("docs/project-status.md")
 DEFAULT_LIVE_RISK_ADR_PATH = Path("docs/decisions/013-phase6-live-risk-gate.md")
 DEFAULT_FIRST_LIVE_DAY_RUNBOOK_PATH = Path("docs/runbook-first-live-day.md")
 DEFAULT_MAX_READINESS_REPORT_AGE_SECONDS = 24 * 60 * 60
@@ -70,6 +71,7 @@ class LiveStartupSettings:
     live_readiness_report_path: Path
     live_promotion_review_path: Path
     first_live_day_runbook_path: Path
+    project_status_path: Path = DEFAULT_PROJECT_STATUS_PATH
     live_risk_adr_path: Path = DEFAULT_LIVE_RISK_ADR_PATH
     repo_root: Path = Path(".")
     operator: str = "nishiki"
@@ -472,6 +474,10 @@ def _live_readiness_report_gate(
             "readiness_git": None,
             "expected_git_commit": git_state.commit,
             "expected_git_dirty": False,
+            "expected_project_status_sha256": _file_sha256_or_none(
+                settings.project_status_path
+            ),
+            "expected_project_status_path": str(settings.project_status_path),
             "accepted": False,
             "blocker": "live_readiness_report_not_found",
             "detail": f"{path} does not exist.",
@@ -487,6 +493,10 @@ def _live_readiness_report_gate(
             "readiness_git": None,
             "expected_git_commit": git_state.commit,
             "expected_git_dirty": False,
+            "expected_project_status_sha256": _file_sha256_or_none(
+                settings.project_status_path
+            ),
+            "expected_project_status_path": str(settings.project_status_path),
             "accepted": False,
             "blocker": "live_readiness_report_invalid_json",
             "detail": f"{path} is not valid JSON: {exc}",
@@ -517,8 +527,15 @@ def _live_readiness_report_gate(
         problems.append("readiness_git_dirty")
     if report_git.get("commit") != git_state.commit:
         problems.append("readiness_git_commit")
-    project_status = payload.get("project_status") or {}
-    if not project_status.get("sha256"):
+    project_status = payload.get("project_status")
+    project_status = project_status if isinstance(project_status, dict) else {}
+    expected_project_status_sha256 = _file_sha256_or_none(settings.project_status_path)
+    project_status_sha256 = project_status.get("sha256")
+    if (
+        not project_status_sha256
+        or expected_project_status_sha256 is None
+        or project_status_sha256 != expected_project_status_sha256
+    ):
         problems.append("project_status_sha256")
     continuity = payload.get("continuity_summary") or {}
     if continuity.get("required_gate_met") is not True:
@@ -597,6 +614,8 @@ def _live_readiness_report_gate(
             "readiness_git": report_git,
             "expected_git_commit": git_state.commit,
             "expected_git_dirty": False,
+            "expected_project_status_sha256": expected_project_status_sha256,
+            "expected_project_status_path": str(settings.project_status_path),
             "accepted": False,
             "blocker": "live_readiness_report_gate_not_met",
             "detail": "Live readiness report failed checks: " + ", ".join(problems),
@@ -617,6 +636,8 @@ def _live_readiness_report_gate(
         "readiness_git": report_git,
         "expected_git_commit": git_state.commit,
         "expected_git_dirty": False,
+        "expected_project_status_sha256": expected_project_status_sha256,
+        "expected_project_status_path": str(settings.project_status_path),
         "accepted": True,
         "blocker": "",
         "detail": f"{path} proves the passive live-readiness gate and is fresh.",
@@ -865,6 +886,11 @@ def _build_parser() -> argparse.ArgumentParser:
         default=DEFAULT_FIRST_LIVE_DAY_RUNBOOK_PATH,
     )
     parser.add_argument(
+        "--project-status-path",
+        type=Path,
+        default=DEFAULT_PROJECT_STATUS_PATH,
+    )
+    parser.add_argument(
         "--live-risk-adr-path",
         type=Path,
         default=DEFAULT_LIVE_RISK_ADR_PATH,
@@ -902,6 +928,7 @@ def main(
         live_readiness_report_path=args.live_readiness_report_path,
         live_promotion_review_path=args.live_promotion_review_path,
         first_live_day_runbook_path=args.first_live_day_runbook_path,
+        project_status_path=args.project_status_path,
         live_risk_adr_path=args.live_risk_adr_path,
         repo_root=args.repo_root,
         operator=args.operator,

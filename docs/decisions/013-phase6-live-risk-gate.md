@@ -131,12 +131,13 @@ and requires exact `source`, `model_version`, `current_stage=testnet_canary`,
 non-empty `operator`, and no review or promotion gate blockers.
 It also rejects any saved readiness report whose passive boundary flags are not
 all closed, whose recorded git commit does not match the startup guard's
-current clean commit, whose recorded live-risk ADR SHA-256 does not match the
-ADR artifact supplied to startup, whose recorded live promotion-review SHA-256
-does not match the artifact supplied to startup, whose recorded continuity
-bundle manifest SHA-256 does not match the current local manifest bytes, or
-whose `generated_at_ns` is missing, in the future, or older than the guard's
-maximum accepted age. The
+current clean commit, whose recorded project-status SHA-256 does not match the
+project-status artifact supplied to startup, whose recorded live-risk ADR
+SHA-256 does not match the ADR artifact supplied to startup, whose recorded
+live promotion-review SHA-256 does not match the artifact supplied to startup,
+whose recorded continuity bundle manifest SHA-256 does not match the current
+local manifest bytes, or whose `generated_at_ns` is missing, in the future, or
+older than the guard's maximum accepted age. The
 default maximum age is 24 hours, overrideable with
 `--max-readiness-report-age-seconds` only when the operator intentionally
 widens the evidence window. It returns exit code 2 when the future live runner
@@ -148,10 +149,12 @@ live-risk ADR and first-live-day runbook artifacts it read, so an operator can
 prove the startup decision was made against the intended human-review
 documents.
 
-The startup guard still does not load live credentials, inspect credential
-values, build a Nautilus node, connect to Binance, mutate `SourcePolicy`, write
-`SignalEvent`, place orders, or authorize live trading. It only defines the
-startup refusal contract before those capabilities exist.
+The startup-guard report records the startup-side project-status SHA-256 it
+expected the readiness report to match. The startup guard still does not load
+live credentials, inspect credential values, build a Nautilus node, connect to
+Binance, mutate `SourcePolicy`, write `SignalEvent`, place orders, or
+authorize live trading. It only defines the startup refusal contract before
+those capabilities exist.
 
 Current blocked example:
 
@@ -208,6 +211,8 @@ A future live runner must refuse startup unless:
   guard's configured maximum age, default 24 hours;
 - the saved readiness report records project-status and live-risk ADR
   SHA-256 fingerprints;
+- the saved readiness report's recorded project-status SHA-256 exactly matches
+  the project-status artifact supplied to the startup guard;
 - the saved readiness report's recorded live-risk ADR SHA-256 exactly matches
   the live-risk ADR artifact supplied to the startup guard;
 - the startup-guard report records the SHA-256 fingerprint of the saved
