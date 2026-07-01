@@ -66,6 +66,7 @@ class LiveReadinessReport:
     checks: list[ReadinessCheck]
     project_status: dict[str, Any]
     live_risk_adr: dict[str, Any]
+    live_promotion_review: dict[str, Any] | None
     git: dict[str, Any]
     continuity_summary: dict[str, Any] | None
     capital_plan: dict[str, Any]
@@ -94,6 +95,7 @@ def build_live_readiness_report(
     generated_ns = time.time_ns() if generated_at_ns is None else generated_at_ns
     checks: list[ReadinessCheck] = []
     blockers: list[str] = []
+    promotion_gate: dict[str, Any] | None = None
 
     project_status = _project_status_gate(project_status_path)
     checks.append(
@@ -279,6 +281,7 @@ def build_live_readiness_report(
         checks=checks,
         project_status=project_status,
         live_risk_adr=live_risk_adr,
+        live_promotion_review=promotion_gate,
         git=git,
         continuity_summary=continuity_summary,
         capital_plan=capital_plan,

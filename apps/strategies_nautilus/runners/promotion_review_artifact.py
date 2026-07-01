@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from pathlib import Path
@@ -20,7 +21,9 @@ def evaluate_live_canary_promotion_review(
 ) -> dict[str, Any]:
     """Validate a promotion_review artifact for testnet_canary -> live_canary."""
 
-    text = path.read_text(encoding="utf-8")
+    raw = path.read_bytes()
+    artifact_sha256 = hashlib.sha256(raw).hexdigest()
+    text = raw.decode("utf-8")
     fields, parse_error = _promotion_fields(text)
     problems: list[str] = []
     if parse_error:
@@ -47,6 +50,7 @@ def evaluate_live_canary_promotion_review(
     accepted = not problems
     return {
         "path": str(path),
+        "sha256": artifact_sha256,
         "accepted": accepted,
         "blocker": "" if accepted else "live_promotion_review_invalid",
         "detail": (
@@ -57,6 +61,12 @@ def evaluate_live_canary_promotion_review(
         "problems": problems,
         "fields": fields,
     }
+
+
+def promotion_review_sha256(path: Path) -> str:
+    """Return the SHA-256 fingerprint for the exact artifact bytes."""
+
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def _promotion_fields(text: str) -> tuple[dict[str, Any], str | None]:
@@ -163,4 +173,5 @@ __all__ = [
     "EXPECTED_LIVE_DECISION",
     "EXPECTED_LIVE_TARGET_STAGE",
     "evaluate_live_canary_promotion_review",
+    "promotion_review_sha256",
 ]

@@ -96,6 +96,8 @@ emits `phase6.live_readiness.v1` JSON or Markdown from:
 - an explicit market-scope declaration, which must remain Binance Spot only,
   no margin, and max leverage 1.0.
 - the git commit and dirty/clean state at report generation time.
+- the SHA-256 fingerprint of the exact live promotion-review artifact bytes
+  when that artifact is present and parseable.
 
 The tool is audit-only. It never loads exchange credentials, starts a runtime,
 changes `SourcePolicy`, writes `SignalEvent`, places orders, or authorizes live
@@ -124,11 +126,13 @@ and requires exact `source`, `model_version`, `current_stage=testnet_canary`,
 non-empty `operator`, and no review or promotion gate blockers.
 It also rejects any saved readiness report whose passive boundary flags are not
 all closed, whose recorded git commit does not match the startup guard's
-current clean commit, or whose `generated_at_ns` is missing, in the future, or
-older than the guard's maximum accepted age. The default maximum age is 24
-hours, overrideable with `--max-readiness-report-age-seconds` only when the
-operator intentionally widens the evidence window. It returns exit code 2 when
-the future live runner must refuse startup.
+current clean commit, whose recorded live promotion-review SHA-256 does not
+match the artifact supplied to startup, or whose `generated_at_ns` is missing,
+in the future, or older than the guard's maximum accepted age. The default
+maximum age is 24 hours, overrideable with
+`--max-readiness-report-age-seconds` only when the operator intentionally
+widens the evidence window. It returns exit code 2 when the future live runner
+must refuse startup.
 
 The startup guard still does not load live credentials, inspect credential
 values, build a Nautilus node, connect to Binance, mutate `SourcePolicy`, write
@@ -184,6 +188,9 @@ A future live runner must refuse startup unless:
   same commit as startup preflight;
 - the saved readiness report has `generated_at_ns` and is no older than the
   guard's configured maximum age, default 24 hours;
+- the saved readiness report records `live_promotion_review.sha256`, and that
+  SHA-256 exactly matches the live promotion-review artifact supplied to the
+  startup guard;
 - a live-canary promotion review exists for the exact source/model transition
   `testnet_canary -> live_canary`, with `decision=promote`,
   `decision_allowed=yes`, a non-empty operator, and no review or promotion gate

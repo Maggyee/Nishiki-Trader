@@ -15,7 +15,8 @@ runbook is Accepted, and the live startup guard passes.
 - ADR-013 status is Accepted after a human go/no-go review.
 - `apps.ops.live_readiness` produced a saved JSON report with
   `readiness_gate_met=true`, `live_trading_allowed=false`, and
-  `git.dirty=false`.
+  `git.dirty=false`; its `live_promotion_review.sha256` matches the live
+  promotion review artifact used at startup.
 - `apps.strategies_nautilus.runners.live_startup_guard` passes against that
   saved readiness report at the same git commit and within the guard's default
   24 hour readiness-evidence freshness window.
@@ -41,11 +42,14 @@ runbook is Accepted, and the live startup guard passes.
 3. Confirm the live promotion review fields exactly match the intended
    `testnet_canary -> live_canary` transition; do not accept incidental stage
    mentions in rationale text as evidence.
-4. Confirm the live credential key-prefix audit plan: record only the API key
+4. Confirm the saved readiness report's `live_promotion_review.sha256` equals
+   the SHA-256 of the live promotion review artifact supplied to the startup
+   guard.
+5. Confirm the live credential key-prefix audit plan: record only the API key
    prefix in runtime logs; never write the full API key or secret.
-5. Confirm Binance Spot only: no margin, no futures, no leverage.
-6. Confirm the operator has the exchange web UI open before startup.
-7. Confirm a manual exchange fallback is available: if the runner or emergency
+6. Confirm Binance Spot only: no margin, no futures, no leverage.
+7. Confirm the operator has the exchange web UI open before startup.
+8. Confirm a manual exchange fallback is available: if the runner or emergency
    tooling fails, manually cancel all open Spot orders and sell residual BTC to
    return the account to USDT/flat.
 

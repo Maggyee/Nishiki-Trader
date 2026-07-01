@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import time
 from pathlib import Path
@@ -18,6 +19,10 @@ SOURCE = "freqai_linear_v1"
 MODEL_VERSION = "linear-mom-train20240105"
 REFERENCE_TS_NS = time.time_ns()
 GIT_CLEAN = GitState(commit="a" * 40, dirty=False)
+
+
+def _text_sha256(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
 def _live_promotion_text(
@@ -99,6 +104,8 @@ def _write_evidence(
     adr = tmp_path / "013-phase6-live-risk-gate.md"
     promotion = tmp_path / "live-promotion.md"
     runbook = tmp_path / "runbook-first-live-day.md"
+    promotion_text = _live_promotion_text()
+    promotion.write_text(promotion_text, encoding="utf-8")
     readiness.write_text(
         json.dumps(
             {
@@ -125,6 +132,13 @@ def _write_evidence(
                     "spot_only_no_margin_no_leverage": True,
                 },
                 "live_risk_adr": {"accepted": True},
+                "live_promotion_review": {
+                    "path": str(promotion),
+                    "sha256": _text_sha256(promotion_text),
+                    "accepted": True,
+                    "blocker": "",
+                    "problems": [],
+                },
                 "boundaries": {
                     "starts_runtime": False,
                     "loads_exchange_credentials": False,
@@ -146,7 +160,6 @@ def _write_evidence(
         ),
         encoding="utf-8",
     )
-    promotion.write_text(_live_promotion_text(), encoding="utf-8")
     runbook.write_text(
         "\n".join(
             [
@@ -167,6 +180,24 @@ def _write_evidence(
         "promotion": promotion,
         "runbook": runbook,
     }
+
+
+def _replace_promotion(
+    paths: dict[str, Path],
+    text: str,
+    *,
+    readiness_accepted: bool = True,
+) -> None:
+    paths["promotion"].write_text(text, encoding="utf-8")
+    payload = json.loads(paths["readiness"].read_text(encoding="utf-8"))
+    payload["live_promotion_review"] = {
+        "path": str(paths["promotion"]),
+        "sha256": _text_sha256(text),
+        "accepted": readiness_accepted,
+        "blocker": "" if readiness_accepted else "live_canary_promotion_review_invalid",
+        "problems": [] if readiness_accepted else ["test_fixture_invalid"],
+    }
+    paths["readiness"].write_text(json.dumps(payload), encoding="utf-8")
 
 
 def test_live_startup_guard_passes_with_complete_evidence(tmp_path: Path) -> None:
@@ -202,6 +233,12 @@ def test_live_startup_guard_passes_with_complete_evidence(tmp_path: Path) -> Non
         "authorizes_live_trading": False,
     }
     assert report.credential_boundary["values_inspected"] is False
+    assert (
+        report.evidence["live_readiness_report"][
+            "expected_live_promotion_review_sha256"
+        ]
+        == report.evidence["live_promotion_review"]["sha256"]
+    )
     assert "BINANCE_LIVE_API_SECRET" in rendered
     assert "not-a-secret-value" not in rendered
 
@@ -368,6 +405,52 @@ def test_live_startup_guard_blocks_readiness_report_with_open_boundary(
     ]
 
 
+def test_live_startup_guard_blocks_readiness_report_without_promotion_fingerprint(
+    tmp_path: Path,
+) -> None:
+    paths = _write_evidence(tmp_path)
+    payload = json.loads(paths["readiness"].read_text(encoding="utf-8"))
+    payload.pop("live_promotion_review")
+    paths["readiness"].write_text(json.dumps(payload), encoding="utf-8")
+
+    report = build_live_startup_guard_report(
+        _settings(tmp_path, live_readiness_report_path=paths["readiness"]),
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    readiness = report.evidence["live_readiness_report"]
+    assert report.startup_allowed is False
+    assert "live_readiness_report_gate_not_met" in report.blockers
+    assert "live_promotion_review" in readiness["problems"]
+    assert "live_promotion_review_sha256" in readiness["problems"]
+
+
+def test_live_startup_guard_blocks_readiness_report_with_different_promotion_artifact(
+    tmp_path: Path,
+) -> None:
+    paths = _write_evidence(tmp_path)
+    paths["promotion"].write_text(
+        _live_promotion_text(
+            operator="replacement-reviewer",
+            rationale="a different signed artifact with otherwise valid fields",
+        ),
+        encoding="utf-8",
+    )
+
+    report = build_live_startup_guard_report(
+        _settings(tmp_path, live_readiness_report_path=paths["readiness"]),
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    readiness = report.evidence["live_readiness_report"]
+    assert report.startup_allowed is False
+    assert "live_readiness_report_gate_not_met" in report.blockers
+    assert "live_promotion_review_sha256" in readiness["problems"]
+    assert report.evidence["live_promotion_review"]["accepted"] is True
+
+
 def test_live_startup_guard_blocks_non_spot_or_leveraged_scope(
     tmp_path: Path,
 ) -> None:
@@ -420,7 +503,8 @@ def test_live_startup_guard_blocks_promotion_review_with_only_stage_mentions(
     tmp_path: Path,
 ) -> None:
     paths = _write_evidence(tmp_path)
-    paths["promotion"].write_text(
+    _replace_promotion(
+        paths,
         _live_promotion_text(
             current_stage="paper_simulated",
             target_stage="testnet_canary",
@@ -429,7 +513,6 @@ def test_live_startup_guard_blocks_promotion_review_with_only_stage_mentions(
                 "structured stage fields are not the live transition."
             ),
         ),
-        encoding="utf-8",
     )
 
     report = build_live_startup_guard_report(
@@ -447,9 +530,9 @@ def test_live_startup_guard_blocks_promotion_review_with_only_stage_mentions(
 
 def test_live_startup_guard_blocks_non_promote_live_review(tmp_path: Path) -> None:
     paths = _write_evidence(tmp_path)
-    paths["promotion"].write_text(
+    _replace_promotion(
+        paths,
         _live_promotion_text(decision="HOLD"),
-        encoding="utf-8",
     )
 
     report = build_live_startup_guard_report(
@@ -466,7 +549,8 @@ def test_live_startup_guard_blocks_non_promote_live_review(tmp_path: Path) -> No
 
 def test_live_startup_guard_accepts_json_promotion_review(tmp_path: Path) -> None:
     paths = _write_evidence(tmp_path)
-    paths["promotion"].write_text(
+    _replace_promotion(
+        paths,
         json.dumps(
             {
                 "source": SOURCE,
@@ -480,7 +564,6 @@ def test_live_startup_guard_accepts_json_promotion_review(tmp_path: Path) -> Non
                 "promotion_gate_blockers": [],
             }
         ),
-        encoding="utf-8",
     )
 
     report = build_live_startup_guard_report(

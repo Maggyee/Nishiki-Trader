@@ -130,6 +130,12 @@ def test_live_readiness_blocks_without_continuity_or_accepted_adr(tmp_path: Path
     assert "live_risk_adr_not_accepted" in report.blockers
     assert "testnet_continuity_evidence_missing" in report.blockers
     assert "live_canary_promotion_review_required" in report.blockers
+    assert report.live_promotion_review == {
+        "path": None,
+        "accepted": False,
+        "blocker": "live_canary_promotion_review_required",
+        "detail": "A signed live-canary promotion_review artifact is required.",
+    }
     assert report.git == {
         "commit": "a" * 40,
         "dirty": False,
@@ -221,6 +227,10 @@ def test_live_readiness_can_emit_markdown_when_all_evidence_is_present(
     assert report.readiness_gate_met is True
     assert report.live_trading_allowed is False
     assert report.recommendation == "ready_for_manual_live_go_no_go_review"
+    assert report.live_promotion_review is not None
+    assert report.live_promotion_review["accepted"] is True
+    assert report.live_promotion_review["path"] == str(promotion)
+    assert len(report.live_promotion_review["sha256"]) == 64
     assert report.market_scope["spot_only_no_margin_no_leverage"] is True
     assert "# Phase 6 Live Readiness" in markdown
     assert "live_trading_allowed: false" in markdown

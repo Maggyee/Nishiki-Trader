@@ -22,6 +22,7 @@ from typing import Any
 
 from apps.strategies_nautilus.runners.promotion_review_artifact import (
     evaluate_live_canary_promotion_review,
+    promotion_review_sha256,
 )
 
 MODE_LIVE = "live"
@@ -545,6 +546,17 @@ def _live_readiness_report_gate(
     live_risk_adr = payload.get("live_risk_adr") or {}
     if live_risk_adr.get("accepted") is not True:
         problems.append("live_risk_adr")
+    live_promotion_review = payload.get("live_promotion_review") or {}
+    expected_promotion_review_sha256 = _promotion_review_sha256_or_none(
+        settings.live_promotion_review_path
+    )
+    if live_promotion_review.get("accepted") is not True:
+        problems.append("live_promotion_review")
+    if (
+        expected_promotion_review_sha256 is None
+        or live_promotion_review.get("sha256") != expected_promotion_review_sha256
+    ):
+        problems.append("live_promotion_review_sha256")
     if problems:
         return {
             "path": str(path),
@@ -554,6 +566,8 @@ def _live_readiness_report_gate(
             "problems": problems,
             "opened_boundaries": opened_boundaries,
             "freshness": freshness,
+            "live_promotion_review": live_promotion_review,
+            "expected_live_promotion_review_sha256": expected_promotion_review_sha256,
         }
     return {
         "path": str(path),
@@ -561,6 +575,8 @@ def _live_readiness_report_gate(
         "blocker": "",
         "detail": f"{path} proves the passive live-readiness gate and is fresh.",
         "freshness": freshness,
+        "live_promotion_review": live_promotion_review,
+        "expected_live_promotion_review_sha256": expected_promotion_review_sha256,
     }
 
 
@@ -626,6 +642,15 @@ def _promotion_review_gate(settings: LiveStartupSettings) -> dict[str, Any]:
         "accepted": True,
         "blocker": "",
     }
+
+
+def _promotion_review_sha256_or_none(path: Path) -> str | None:
+    if not path.exists():
+        return None
+    try:
+        return promotion_review_sha256(path)
+    except OSError:
+        return None
 
 
 def _first_live_day_runbook_gate(path: Path) -> dict[str, Any]:
