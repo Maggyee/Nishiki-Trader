@@ -59,6 +59,7 @@ _PHASE6_REQUIRED_LIVE_CREDENTIAL_ENV_NAMES = (
 )
 _PHASE6_MIN_LIVE_CANARY_CAPITAL_USDT = 100.0
 _PHASE6_MAX_LIVE_CANARY_CAPITAL_USDT = 500.0
+_PHASE6_REQUIRED_TESTNET_CONTINUITY_DAYS = 14
 _PHASE6_GIT_COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 
 _STATUS_FIELD_RE = re.compile(
@@ -1613,6 +1614,12 @@ def _phase6_report_snapshot(
             )
         )
         blockers.extend(
+            _phase6_readiness_continuity_blockers(
+                payload,
+                expected_schema=expected_schema,
+            )
+        )
+        blockers.extend(
             _phase6_startup_runtime_blockers(
                 payload,
                 expected_schema=expected_schema,
@@ -2223,6 +2230,53 @@ def _phase6_readiness_git_blockers(
     return sorted(dict.fromkeys(blockers))
 
 
+def _phase6_readiness_continuity_blockers(
+    payload: dict[str, Any],
+    *,
+    expected_schema: str,
+) -> list[str]:
+    if expected_schema != "phase6.live_readiness.v1":
+        return []
+
+    summary = payload.get("continuity_summary")
+    if not isinstance(summary, dict):
+        return ["continuity_summary:missing"]
+
+    blockers: list[str] = []
+    if summary.get("required_gate_met") is not True:
+        blockers.append("continuity_summary:required_gate_not_met")
+
+    required_days = _phase6_int(summary.get("required_consecutive_days"))
+    current_streak_days = _phase6_int(
+        summary.get("current_qualified_streak_days")
+    )
+    if (
+        required_days is None
+        or required_days < _PHASE6_REQUIRED_TESTNET_CONTINUITY_DAYS
+    ):
+        blockers.append("continuity_summary:required_consecutive_days")
+    if current_streak_days is None:
+        blockers.append("continuity_summary:current_qualified_streak_days")
+    elif required_days is not None and current_streak_days < required_days:
+        blockers.append("continuity_summary:streak_below_required")
+
+    kill_switch_alerts = _phase6_int(summary.get("kill_switch_alerts"))
+    if kill_switch_alerts != 0:
+        blockers.append("continuity_summary:kill_switch_alerts")
+
+    emergency_flatten_alerts = _phase6_int(
+        summary.get("emergency_flatten_completed_alerts")
+    )
+    if emergency_flatten_alerts != 0:
+        blockers.append("continuity_summary:emergency_flatten_completed_alerts")
+
+    restart_drift_days = summary.get("restart_drift_days")
+    if not isinstance(restart_drift_days, list) or restart_drift_days:
+        blockers.append("continuity_summary:restart_drift_days")
+
+    return sorted(dict.fromkeys(blockers))
+
+
 def _phase6_startup_runtime_blockers(
     payload: dict[str, Any],
     *,
@@ -2268,6 +2322,26 @@ def _phase6_float(value: Any) -> float | None:
     if not math.isfinite(parsed):
         return None
     return parsed
+
+
+def _phase6_int(value: Any) -> int | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        if not math.isfinite(value) or not value.is_integer():
+            return None
+        return int(value)
+    if isinstance(value, str):
+        stripped = value.strip()
+        if not stripped:
+            return None
+        try:
+            return int(stripped, 10)
+        except ValueError:
+            return None
+    return None
 
 
 def _phase6_contains_required_names(value: Any) -> bool:

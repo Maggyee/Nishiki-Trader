@@ -46,6 +46,14 @@ PHASE6_VALID_MARKET_SCOPE = {
     "max_leverage": 1.0,
     "spot_only_no_margin_no_leverage": True,
 }
+PHASE6_VALID_CONTINUITY_SUMMARY = {
+    "required_gate_met": True,
+    "current_qualified_streak_days": 14,
+    "required_consecutive_days": 14,
+    "kill_switch_alerts": 0,
+    "emergency_flatten_completed_alerts": 0,
+    "restart_drift_days": [],
+}
 PHASE6_CLEAN_GIT = {
     "commit": "b" * 40,
     "dirty": False,
@@ -875,6 +883,7 @@ def test_snapshot_blocks_phase6_readiness_with_blocked_internal_check(
                         "sha256": "d" * 64,
                     }
                 ],
+                "continuity_summary": PHASE6_VALID_CONTINUITY_SUMMARY,
                 "live_promotion_review": {
                     "accepted": True,
                     "path": "live-promotion.md",
@@ -945,6 +954,7 @@ def test_snapshot_blocks_phase6_readiness_with_open_boundary_flag(
                         "sha256": "d" * 64,
                     }
                 ],
+                "continuity_summary": PHASE6_VALID_CONTINUITY_SUMMARY,
                 "live_promotion_review": {
                     "accepted": True,
                     "path": "live-promotion.md",
@@ -1009,6 +1019,7 @@ def test_snapshot_blocks_phase6_readiness_without_git_evidence(
                         "sha256": "d" * 64,
                     }
                 ],
+                "continuity_summary": PHASE6_VALID_CONTINUITY_SUMMARY,
                 "live_promotion_review": {
                     "accepted": True,
                     "path": "live-promotion.md",
@@ -1069,6 +1080,7 @@ def test_snapshot_blocks_phase6_readiness_with_dirty_git_evidence(
                         "sha256": "d" * 64,
                     }
                 ],
+                "continuity_summary": PHASE6_VALID_CONTINUITY_SUMMARY,
                 "live_promotion_review": {
                     "accepted": True,
                     "path": "live-promotion.md",
@@ -1097,6 +1109,144 @@ def test_snapshot_blocks_phase6_readiness_with_dirty_git_evidence(
     readiness = snapshot["phase6"]["reports"][0]
     assert readiness["status"] == "blocked"
     assert readiness["blockers"] == ["git:dirty"]
+    assert snapshot["phase6"]["state"] == "blocked"
+
+
+def test_snapshot_blocks_phase6_readiness_without_continuity_summary(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    readiness_path = tmp_path / "missing-continuity-summary-live-readiness.json"
+    readiness_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "phase6.live_readiness.v1",
+                "source": "freqai_linear_v1",
+                "model_version": "linear-mom-train20240105",
+                "generated_at_ns": REFERENCE_TS_NS,
+                "readiness_gate_met": True,
+                "live_trading_allowed": False,
+                "recommendation": "ready_for_manual_live_go_no_go_review",
+                "blockers": [],
+                "project_status": {
+                    "path": "docs/project-status.md",
+                    "sha256": "b" * 64,
+                },
+                "live_risk_adr": {
+                    "path": "docs/decisions/013-phase6-live-risk-gate.md",
+                    "sha256": "c" * 64,
+                    "accepted": True,
+                },
+                "continuity_artifacts": [
+                    {
+                        "bundle_dir": "data/testnet/run-1",
+                        "manifest_path": "data/testnet/run-1/run_manifest.json",
+                        "sha256": "d" * 64,
+                    }
+                ],
+                "live_promotion_review": {
+                    "accepted": True,
+                    "path": "live-promotion.md",
+                    "sha256": "a" * 64,
+                },
+                "capital_plan": PHASE6_VALID_CAPITAL_PLAN,
+                "market_scope": PHASE6_VALID_MARKET_SCOPE,
+                "git": PHASE6_CLEAN_GIT,
+                "checks": [],
+                "boundaries": PHASE6_READINESS_CLOSED_BOUNDARIES,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_readiness_report_path=readiness_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    readiness = snapshot["phase6"]["reports"][0]
+    assert readiness["status"] == "blocked"
+    assert readiness["blockers"] == ["continuity_summary:missing"]
+    assert snapshot["phase6"]["state"] == "blocked"
+
+
+def test_snapshot_blocks_phase6_readiness_with_failed_continuity_summary(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    readiness_path = tmp_path / "failed-continuity-summary-live-readiness.json"
+    readiness_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "phase6.live_readiness.v1",
+                "source": "freqai_linear_v1",
+                "model_version": "linear-mom-train20240105",
+                "generated_at_ns": REFERENCE_TS_NS,
+                "readiness_gate_met": True,
+                "live_trading_allowed": False,
+                "recommendation": "ready_for_manual_live_go_no_go_review",
+                "blockers": [],
+                "project_status": {
+                    "path": "docs/project-status.md",
+                    "sha256": "b" * 64,
+                },
+                "live_risk_adr": {
+                    "path": "docs/decisions/013-phase6-live-risk-gate.md",
+                    "sha256": "c" * 64,
+                    "accepted": True,
+                },
+                "continuity_artifacts": [
+                    {
+                        "bundle_dir": "data/testnet/run-1",
+                        "manifest_path": "data/testnet/run-1/run_manifest.json",
+                        "sha256": "d" * 64,
+                    }
+                ],
+                "continuity_summary": {
+                    **PHASE6_VALID_CONTINUITY_SUMMARY,
+                    "required_gate_met": False,
+                    "current_qualified_streak_days": 12,
+                    "required_consecutive_days": 13,
+                    "kill_switch_alerts": 1,
+                    "emergency_flatten_completed_alerts": 1,
+                    "restart_drift_days": ["2026-05-30"],
+                },
+                "live_promotion_review": {
+                    "accepted": True,
+                    "path": "live-promotion.md",
+                    "sha256": "a" * 64,
+                },
+                "capital_plan": PHASE6_VALID_CAPITAL_PLAN,
+                "market_scope": PHASE6_VALID_MARKET_SCOPE,
+                "git": PHASE6_CLEAN_GIT,
+                "checks": [],
+                "boundaries": PHASE6_READINESS_CLOSED_BOUNDARIES,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_readiness_report_path=readiness_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    readiness = snapshot["phase6"]["reports"][0]
+    assert readiness["status"] == "blocked"
+    assert readiness["blockers"] == [
+        "continuity_summary:emergency_flatten_completed_alerts",
+        "continuity_summary:kill_switch_alerts",
+        "continuity_summary:required_consecutive_days",
+        "continuity_summary:required_gate_not_met",
+        "continuity_summary:restart_drift_days",
+        "continuity_summary:streak_below_required",
+    ]
     assert snapshot["phase6"]["state"] == "blocked"
 
 
@@ -1133,6 +1283,7 @@ def test_snapshot_blocks_phase6_readiness_without_capital_plan(
                         "sha256": "d" * 64,
                     }
                 ],
+                "continuity_summary": PHASE6_VALID_CONTINUITY_SUMMARY,
                 "live_promotion_review": {
                     "accepted": True,
                     "path": "live-promotion.md",
@@ -1193,6 +1344,7 @@ def test_snapshot_blocks_phase6_readiness_with_leveraged_market_scope(
                         "sha256": "d" * 64,
                     }
                 ],
+                "continuity_summary": PHASE6_VALID_CONTINUITY_SUMMARY,
                 "live_promotion_review": {
                     "accepted": True,
                     "path": "live-promotion.md",
@@ -1260,6 +1412,7 @@ def test_snapshot_blocks_phase6_readiness_without_generated_at_ns(
                         "sha256": "d" * 64,
                     }
                 ],
+                "continuity_summary": PHASE6_VALID_CONTINUITY_SUMMARY,
                 "live_promotion_review": {
                     "accepted": True,
                     "path": "live-promotion.md",
