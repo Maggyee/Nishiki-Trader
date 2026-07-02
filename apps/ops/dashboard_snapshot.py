@@ -57,6 +57,8 @@ _PHASE6_REQUIRED_LIVE_CREDENTIAL_ENV_NAMES = (
     "BINANCE_LIVE_API_KEY",
     "BINANCE_LIVE_API_SECRET",
 )
+_PHASE6_MIN_LIVE_CANARY_CAPITAL_USDT = 100.0
+_PHASE6_MAX_LIVE_CANARY_CAPITAL_USDT = 500.0
 
 _STATUS_FIELD_RE = re.compile(
     r"^- \*\*(?P<key>Last updated|Current phase|Current objective)\*\*:\s*(?P<value>.+)$",
@@ -1598,6 +1600,12 @@ def _phase6_report_snapshot(
             )
         )
         blockers.extend(
+            _phase6_readiness_scope_blockers(
+                payload,
+                expected_schema=expected_schema,
+            )
+        )
+        blockers.extend(
             _phase6_startup_runtime_blockers(
                 payload,
                 expected_schema=expected_schema,
@@ -2143,6 +2151,48 @@ def _phase6_boundary_blockers(
     return sorted(dict.fromkeys(blockers))
 
 
+def _phase6_readiness_scope_blockers(
+    payload: dict[str, Any],
+    *,
+    expected_schema: str,
+) -> list[str]:
+    if expected_schema != "phase6.live_readiness.v1":
+        return []
+
+    blockers: list[str] = []
+    capital_plan = payload.get("capital_plan")
+    if not isinstance(capital_plan, dict):
+        blockers.append("capital_plan:missing")
+    else:
+        starting_capital = _phase6_float(capital_plan.get("starting_capital_usdt"))
+        if capital_plan.get("within_live_canary_range") is not True:
+            blockers.append("capital_plan:outside_live_canary_range")
+        if starting_capital is None:
+            blockers.append("capital_plan:starting_capital_usdt")
+        elif not (
+            _PHASE6_MIN_LIVE_CANARY_CAPITAL_USDT
+            <= starting_capital
+            <= _PHASE6_MAX_LIVE_CANARY_CAPITAL_USDT
+        ):
+            blockers.append("capital_plan:outside_live_canary_range")
+
+    market_scope = payload.get("market_scope")
+    if not isinstance(market_scope, dict):
+        blockers.append("market_scope:missing")
+    else:
+        max_leverage = _phase6_float(market_scope.get("max_leverage"))
+        if market_scope.get("spot_only_no_margin_no_leverage") is not True:
+            blockers.append("market_scope:not_spot_only_no_margin_no_leverage")
+        if market_scope.get("market_type") != "spot":
+            blockers.append("market_scope:market_type")
+        if market_scope.get("margin_enabled") is not False:
+            blockers.append("market_scope:margin_enabled")
+        if max_leverage != 1.0:
+            blockers.append("market_scope:max_leverage")
+
+    return sorted(dict.fromkeys(blockers))
+
+
 def _phase6_startup_runtime_blockers(
     payload: dict[str, Any],
     *,
@@ -2176,6 +2226,18 @@ def _phase6_startup_runtime_blockers(
         blockers.append("credential_boundary:key_prefix_recorded")
 
     return sorted(dict.fromkeys(blockers))
+
+
+def _phase6_float(value: Any) -> float | None:
+    if isinstance(value, bool):
+        return None
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(parsed):
+        return None
+    return parsed
 
 
 def _phase6_contains_required_names(value: Any) -> bool:
