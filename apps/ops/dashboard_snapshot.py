@@ -1627,6 +1627,12 @@ def _phase6_report_snapshot(
             )
         )
         blockers.extend(
+            _phase6_startup_git_blockers(
+                payload,
+                expected_schema=expected_schema,
+            )
+        )
+        blockers.extend(
             _phase6_startup_scope_blockers(
                 payload,
                 expected_schema=expected_schema,
@@ -2240,7 +2246,14 @@ def _phase6_readiness_git_blockers(
 ) -> list[str]:
     if expected_schema != "phase6.live_readiness.v1":
         return []
+    return _phase6_clean_git_blockers(payload)
 
+
+def _phase6_clean_git_blockers(
+    payload: dict[str, Any],
+    *,
+    expected_commit: str | None = None,
+) -> list[str]:
     git = payload.get("git")
     if not isinstance(git, dict):
         return ["git:missing"]
@@ -2251,9 +2264,29 @@ def _phase6_readiness_git_blockers(
         blockers.append("git:commit_missing")
     elif _PHASE6_GIT_COMMIT_RE.fullmatch(commit) is None:
         blockers.append("git:commit_invalid")
+    elif expected_commit and commit != expected_commit:
+        blockers.append("git:commit_mismatch")
     if git.get("dirty") is not False:
         blockers.append("git:dirty")
     return sorted(dict.fromkeys(blockers))
+
+
+def _phase6_startup_git_blockers(
+    payload: dict[str, Any],
+    *,
+    expected_schema: str,
+) -> list[str]:
+    if expected_schema != "phase6.live_startup_guard.v1":
+        return []
+
+    evidence = payload.get("evidence")
+    evidence = evidence if isinstance(evidence, dict) else {}
+    readiness_gate = evidence.get("live_readiness_report")
+    readiness_gate = readiness_gate if isinstance(readiness_gate, dict) else {}
+    expected_commit = _optional_str(readiness_gate.get("expected_git_commit"))
+    if expected_commit and _PHASE6_GIT_COMMIT_RE.fullmatch(expected_commit) is None:
+        expected_commit = None
+    return _phase6_clean_git_blockers(payload, expected_commit=expected_commit)
 
 
 def _phase6_readiness_continuity_blockers(

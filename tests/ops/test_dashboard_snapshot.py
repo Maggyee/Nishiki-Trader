@@ -1468,9 +1468,11 @@ def _write_passing_startup_guard_report_with_readiness_git(
     capital_plan_overrides: dict[str, object] | None = None,
     market_scope_overrides: dict[str, object] | None = None,
     source_policy_overrides: dict[str, object] | None = None,
+    startup_git_overrides: dict[str, object] | None = None,
     include_capital_plan: bool = True,
     include_market_scope: bool = True,
     include_source_policy: bool = True,
+    include_startup_git: bool = True,
 ) -> None:
     runtime_fields = {
         "mode": "live",
@@ -1505,6 +1507,11 @@ def _write_passing_startup_guard_report_with_readiness_git(
         **PHASE6_VALID_MARKET_SCOPE,
         **(market_scope_overrides or {}),
     }
+    startup_git = {
+        "commit": expected_git_commit,
+        "dirty": False,
+        **(startup_git_overrides or {}),
+    }
     path.write_text(
         json.dumps(
             {
@@ -1517,6 +1524,7 @@ def _write_passing_startup_guard_report_with_readiness_git(
                 "live_trading_authorized": False,
                 "recommendation": "startup_preflight_passed_for_future_live_runner",
                 "blockers": [],
+                **({"git": startup_git} if include_startup_git else {}),
                 "evidence": {
                     "live_risk_adr": {
                         "path": "013-phase6-live-risk-gate.md",
@@ -1673,6 +1681,70 @@ def test_snapshot_blocks_phase6_startup_with_dirty_readiness_git(
         "path": "live-readiness.json",
         "sha256": None,
     }
+    assert snapshot["phase6"]["state"] == "blocked"
+
+
+def test_snapshot_blocks_phase6_startup_without_git_evidence(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    guard_path = tmp_path / "live-startup-guard.json"
+    _write_passing_startup_guard_report_with_readiness_git(
+        guard_path,
+        readiness_git={
+            "commit": "b" * 40,
+            "dirty": False,
+        },
+        expected_git_commit="b" * 40,
+        include_startup_git=False,
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_startup_guard_report_path=guard_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    startup_guard = snapshot["phase6"]["reports"][1]
+    assert startup_guard["status"] == "blocked"
+    assert startup_guard["blockers"] == ["git:missing"]
+    assert snapshot["phase6"]["state"] == "blocked"
+
+
+def test_snapshot_blocks_phase6_startup_with_dirty_git_evidence(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    guard_path = tmp_path / "live-startup-guard.json"
+    _write_passing_startup_guard_report_with_readiness_git(
+        guard_path,
+        readiness_git={
+            "commit": "b" * 40,
+            "dirty": False,
+        },
+        expected_git_commit="b" * 40,
+        startup_git_overrides={
+            "commit": "c" * 40,
+            "dirty": True,
+        },
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_startup_guard_report_path=guard_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    startup_guard = snapshot["phase6"]["reports"][1]
+    assert startup_guard["status"] == "blocked"
+    assert startup_guard["blockers"] == [
+        "git:commit_mismatch",
+        "git:dirty",
+    ]
     assert snapshot["phase6"]["state"] == "blocked"
 
 
