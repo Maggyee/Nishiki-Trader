@@ -1603,6 +1603,12 @@ def _phase6_report_snapshot(
             )
         )
         blockers.extend(
+            _phase6_source_model_blockers(
+                payload,
+                expected_schema=expected_schema,
+            )
+        )
+        blockers.extend(
             _phase6_readiness_scope_blockers(
                 payload,
                 expected_schema=expected_schema,
@@ -1721,7 +1727,7 @@ def _phase6_report_evidence(
             live_risk_adr_gate,
             label="Live-risk ADR artifact",
         ),
-        _artifact_evidence_item(
+        _readiness_report_artifact_evidence_item(
             readiness_gate,
             label="Readiness report artifact",
         ),
@@ -1811,6 +1817,39 @@ def _accepted_artifact_evidence_item(
             if document_status
             else "Artifact is not accepted."
         )
+    return {
+        "label": label,
+        "status": status,
+        "detail": detail,
+        "path": path,
+        "sha256": sha256,
+    }
+
+
+def _readiness_report_artifact_evidence_item(
+    gate: Any,
+    *,
+    label: str,
+) -> dict[str, str | None]:
+    if not isinstance(gate, dict):
+        return {
+            "label": label,
+            "status": "missing",
+            "detail": "Readiness report evidence is not recorded in this report.",
+            "path": None,
+            "sha256": None,
+        }
+    sha256 = _optional_str(gate.get("sha256"))
+    path = _optional_str(gate.get("path"))
+    accepted = gate.get("accepted") is True
+    blocker = _optional_str(gate.get("blocker"))
+    status = "ok" if accepted and sha256 else "blocked"
+    if status == "ok":
+        detail = "Readiness report gate is accepted and fingerprinted."
+    elif not sha256:
+        detail = "Artifact fingerprint is not recorded."
+    else:
+        detail = blocker or "Readiness report gate is not accepted."
     return {
         "label": label,
         "status": status,
@@ -2184,6 +2223,25 @@ def _phase6_boundary_blockers(
     return sorted(dict.fromkeys(blockers))
 
 
+def _phase6_source_model_blockers(
+    payload: dict[str, Any],
+    *,
+    expected_schema: str,
+) -> list[str]:
+    if expected_schema not in {
+        "phase6.live_readiness.v1",
+        "phase6.live_startup_guard.v1",
+    }:
+        return []
+
+    blockers: list[str] = []
+    if not _phase6_non_empty_string(payload.get("source")):
+        blockers.append("source_model:source")
+    if not _phase6_non_empty_string(payload.get("model_version")):
+        blockers.append("source_model:model_version")
+    return blockers
+
+
 def _phase6_readiness_scope_blockers(
     payload: dict[str, Any],
     *,
@@ -2445,6 +2503,10 @@ def _phase6_contains_required_names(value: Any) -> bool:
         return False
     names = {item for item in value if isinstance(item, str)}
     return all(name in names for name in _PHASE6_REQUIRED_LIVE_CREDENTIAL_ENV_NAMES)
+
+
+def _phase6_non_empty_string(value: Any) -> bool:
+    return isinstance(value, str) and bool(value.strip())
 
 
 def _phase6_report_generated_at_ns(value: Any) -> int | None:
