@@ -46,6 +46,17 @@ _PHASE6_STARTUP_GUARD_BOUNDARY_KEYS = (
     "places_orders",
     "authorizes_live_trading",
 )
+_PHASE6_STARTUP_RUNTIME_FIELDS = {
+    "mode": "live",
+    "kind": "live",
+    "runtime_mode": "live",
+    "runtime_data_mode": "exchange_ws",
+    "runtime_order_mode": "exchange_live",
+}
+_PHASE6_REQUIRED_LIVE_CREDENTIAL_ENV_NAMES = (
+    "BINANCE_LIVE_API_KEY",
+    "BINANCE_LIVE_API_SECRET",
+)
 
 _STATUS_FIELD_RE = re.compile(
     r"^- \*\*(?P<key>Last updated|Current phase|Current objective)\*\*:\s*(?P<value>.+)$",
@@ -1586,6 +1597,12 @@ def _phase6_report_snapshot(
                 expected_schema=expected_schema,
             )
         )
+        blockers.extend(
+            _phase6_startup_runtime_blockers(
+                payload,
+                expected_schema=expected_schema,
+            )
+        )
         blockers.extend(_phase6_check_blockers(raw_checks))
         blockers.extend(
             f"evidence:{item['label']}"
@@ -2124,6 +2141,48 @@ def _phase6_boundary_blockers(
         if key not in required_keys and value is True
     )
     return sorted(dict.fromkeys(blockers))
+
+
+def _phase6_startup_runtime_blockers(
+    payload: dict[str, Any],
+    *,
+    expected_schema: str,
+) -> list[str]:
+    if expected_schema != "phase6.live_startup_guard.v1":
+        return []
+
+    blockers = [
+        f"runtime:{key}"
+        for key, expected_value in _PHASE6_STARTUP_RUNTIME_FIELDS.items()
+        if payload.get(key) != expected_value
+    ]
+
+    credential_boundary = payload.get("credential_boundary")
+    if not isinstance(credential_boundary, dict):
+        blockers.append("credential_boundary:missing")
+        return sorted(dict.fromkeys(blockers))
+
+    if not _phase6_contains_required_names(
+        credential_boundary.get("credential_env_names")
+    ):
+        blockers.append("credential_boundary:credential_env_names")
+    if not _phase6_contains_required_names(
+        credential_boundary.get("required_credential_env_names")
+    ):
+        blockers.append("credential_boundary:required_credential_env_names")
+    if credential_boundary.get("values_inspected") is not False:
+        blockers.append("credential_boundary:values_inspected")
+    if credential_boundary.get("key_prefix_recorded") is not False:
+        blockers.append("credential_boundary:key_prefix_recorded")
+
+    return sorted(dict.fromkeys(blockers))
+
+
+def _phase6_contains_required_names(value: Any) -> bool:
+    if not isinstance(value, list):
+        return False
+    names = {item for item in value if isinstance(item, str)}
+    return all(name in names for name in _PHASE6_REQUIRED_LIVE_CREDENTIAL_ENV_NAMES)
 
 
 def _phase6_report_generated_at_ns(value: Any) -> int | None:

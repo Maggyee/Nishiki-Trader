@@ -1028,11 +1028,35 @@ def _write_passing_startup_guard_report_with_readiness_git(
     checks: list[dict[str, str]] | None = None,
     boundaries: dict[str, bool] | None = None,
     generated_at_ns: object = REFERENCE_TS_NS,
+    runtime_overrides: dict[str, object] | None = None,
+    credential_boundary_overrides: dict[str, object] | None = None,
 ) -> None:
+    runtime_fields = {
+        "mode": "live",
+        "kind": "live",
+        "runtime_mode": "live",
+        "runtime_data_mode": "exchange_ws",
+        "runtime_order_mode": "exchange_live",
+    }
+    runtime_fields.update(runtime_overrides or {})
+    credential_boundary = {
+        "credential_env_names": [
+            "BINANCE_LIVE_API_KEY",
+            "BINANCE_LIVE_API_SECRET",
+        ],
+        "required_credential_env_names": [
+            "BINANCE_LIVE_API_KEY",
+            "BINANCE_LIVE_API_SECRET",
+        ],
+        "values_inspected": False,
+        "key_prefix_recorded": False,
+    }
+    credential_boundary.update(credential_boundary_overrides or {})
     path.write_text(
         json.dumps(
             {
                 "schema_version": "phase6.live_startup_guard.v1",
+                **runtime_fields,
                 "source": "freqai_linear_v1",
                 "model_version": "linear-mom-train20240105",
                 "generated_at_ns": generated_at_ns,
@@ -1103,6 +1127,7 @@ def _write_passing_startup_guard_report_with_readiness_git(
                         ),
                     },
                 },
+                "credential_boundary": credential_boundary,
                 "checks": checks or [],
                 "boundaries": boundaries or PHASE6_STARTUP_CLOSED_BOUNDARIES,
             }
@@ -1369,6 +1394,64 @@ def test_snapshot_blocks_phase6_startup_with_open_boundary_flag(
     startup_guard = snapshot["phase6"]["reports"][1]
     assert startup_guard["status"] == "blocked"
     assert startup_guard["blockers"] == ["boundary:connects_exchange"]
+    assert snapshot["phase6"]["state"] == "blocked"
+
+
+def test_snapshot_blocks_phase6_startup_with_wrong_runtime_identity(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    guard_path = tmp_path / "live-startup-guard.json"
+    _write_passing_startup_guard_report_with_readiness_git(
+        guard_path,
+        readiness_git={
+            "commit": "b" * 40,
+            "dirty": False,
+        },
+        expected_git_commit="b" * 40,
+        runtime_overrides={"runtime_order_mode": "simulated"},
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_startup_guard_report_path=guard_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    startup_guard = snapshot["phase6"]["reports"][1]
+    assert startup_guard["status"] == "blocked"
+    assert startup_guard["blockers"] == ["runtime:runtime_order_mode"]
+    assert snapshot["phase6"]["state"] == "blocked"
+
+
+def test_snapshot_blocks_phase6_startup_with_credential_values_inspected(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    guard_path = tmp_path / "live-startup-guard.json"
+    _write_passing_startup_guard_report_with_readiness_git(
+        guard_path,
+        readiness_git={
+            "commit": "b" * 40,
+            "dirty": False,
+        },
+        expected_git_commit="b" * 40,
+        credential_boundary_overrides={"values_inspected": True},
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_startup_guard_report_path=guard_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    startup_guard = snapshot["phase6"]["reports"][1]
+    assert startup_guard["status"] == "blocked"
+    assert startup_guard["blockers"] == ["credential_boundary:values_inspected"]
     assert snapshot["phase6"]["state"] == "blocked"
 
 
