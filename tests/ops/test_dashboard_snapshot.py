@@ -908,6 +908,7 @@ def test_snapshot_blocks_phase6_readiness_with_open_boundary_flag(
                 "schema_version": "phase6.live_readiness.v1",
                 "source": "freqai_linear_v1",
                 "model_version": "linear-mom-train20240105",
+                "generated_at_ns": REFERENCE_TS_NS,
                 "readiness_gate_met": True,
                 "live_trading_allowed": False,
                 "recommendation": "ready_for_manual_live_go_no_go_review",
@@ -956,6 +957,65 @@ def test_snapshot_blocks_phase6_readiness_with_open_boundary_flag(
     assert snapshot["phase6"]["state"] == "blocked"
 
 
+def test_snapshot_blocks_phase6_readiness_without_generated_at_ns(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    readiness_path = tmp_path / "missing-generated-at-live-readiness.json"
+    readiness_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "phase6.live_readiness.v1",
+                "source": "freqai_linear_v1",
+                "model_version": "linear-mom-train20240105",
+                "readiness_gate_met": True,
+                "live_trading_allowed": False,
+                "recommendation": "ready_for_manual_live_go_no_go_review",
+                "blockers": [],
+                "project_status": {
+                    "path": "docs/project-status.md",
+                    "sha256": "b" * 64,
+                },
+                "live_risk_adr": {
+                    "path": "docs/decisions/013-phase6-live-risk-gate.md",
+                    "sha256": "c" * 64,
+                    "accepted": True,
+                },
+                "continuity_artifacts": [
+                    {
+                        "bundle_dir": "data/testnet/run-1",
+                        "manifest_path": "data/testnet/run-1/run_manifest.json",
+                        "sha256": "d" * 64,
+                    }
+                ],
+                "live_promotion_review": {
+                    "accepted": True,
+                    "path": "live-promotion.md",
+                    "sha256": "a" * 64,
+                },
+                "checks": [],
+                "boundaries": PHASE6_READINESS_CLOSED_BOUNDARIES,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_readiness_report_path=readiness_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    readiness = snapshot["phase6"]["reports"][0]
+    assert readiness["status"] == "blocked"
+    assert readiness["generated_at_ns"] is None
+    assert readiness["report_age_seconds"] is None
+    assert readiness["blockers"] == ["generated_at_ns_missing"]
+    assert snapshot["phase6"]["state"] == "blocked"
+
+
 def _write_passing_startup_guard_report_with_readiness_git(
     path: Path,
     *,
@@ -967,6 +1027,7 @@ def _write_passing_startup_guard_report_with_readiness_git(
     first_live_day_runbook_accepted: bool = True,
     checks: list[dict[str, str]] | None = None,
     boundaries: dict[str, bool] | None = None,
+    generated_at_ns: object = REFERENCE_TS_NS,
 ) -> None:
     path.write_text(
         json.dumps(
@@ -974,6 +1035,7 @@ def _write_passing_startup_guard_report_with_readiness_git(
                 "schema_version": "phase6.live_startup_guard.v1",
                 "source": "freqai_linear_v1",
                 "model_version": "linear-mom-train20240105",
+                "generated_at_ns": generated_at_ns,
                 "startup_allowed": True,
                 "live_trading_authorized": False,
                 "recommendation": "startup_preflight_passed_for_future_live_runner",
@@ -1307,6 +1369,69 @@ def test_snapshot_blocks_phase6_startup_with_open_boundary_flag(
     startup_guard = snapshot["phase6"]["reports"][1]
     assert startup_guard["status"] == "blocked"
     assert startup_guard["blockers"] == ["boundary:connects_exchange"]
+    assert snapshot["phase6"]["state"] == "blocked"
+
+
+def test_snapshot_blocks_phase6_startup_with_future_generated_at_ns(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    guard_path = tmp_path / "live-startup-guard.json"
+    future_generated_at_ns = REFERENCE_TS_NS + 1_000_000_000
+    _write_passing_startup_guard_report_with_readiness_git(
+        guard_path,
+        readiness_git={
+            "commit": "b" * 40,
+            "dirty": False,
+        },
+        expected_git_commit="b" * 40,
+        generated_at_ns=future_generated_at_ns,
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_startup_guard_report_path=guard_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    startup_guard = snapshot["phase6"]["reports"][1]
+    assert startup_guard["status"] == "blocked"
+    assert startup_guard["generated_at_ns"] == future_generated_at_ns
+    assert startup_guard["report_age_seconds"] == -1.0
+    assert startup_guard["blockers"] == ["generated_at_ns_in_future"]
+    assert snapshot["phase6"]["state"] == "blocked"
+
+
+def test_snapshot_blocks_phase6_startup_with_invalid_generated_at_ns(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    guard_path = tmp_path / "live-startup-guard.json"
+    _write_passing_startup_guard_report_with_readiness_git(
+        guard_path,
+        readiness_git={
+            "commit": "b" * 40,
+            "dirty": False,
+        },
+        expected_git_commit="b" * 40,
+        generated_at_ns="not-a-nanosecond-timestamp",
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_startup_guard_report_path=guard_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    startup_guard = snapshot["phase6"]["reports"][1]
+    assert startup_guard["status"] == "blocked"
+    assert startup_guard["generated_at_ns"] is None
+    assert startup_guard["report_age_seconds"] is None
+    assert startup_guard["blockers"] == ["generated_at_ns_invalid"]
     assert snapshot["phase6"]["state"] == "blocked"
 
 

@@ -203,6 +203,7 @@ def build_dashboard_snapshot(
     phase6 = _phase6_snapshot(
         live_readiness_report_path=phase6_live_readiness_report_path,
         live_startup_guard_report_path=phase6_live_startup_guard_report_path,
+        generated_at_ns=generated_ns,
     )
     snapshot_inputs = _snapshot_inputs(
         project_status_path=project_status_path,
@@ -1432,6 +1433,7 @@ def _phase6_snapshot(
     *,
     live_readiness_report_path: Path | None,
     live_startup_guard_report_path: Path | None,
+    generated_at_ns: int,
 ) -> dict[str, Any]:
     readiness = _phase6_report_snapshot(
         label="Live readiness",
@@ -1439,6 +1441,7 @@ def _phase6_snapshot(
         expected_schema="phase6.live_readiness.v1",
         gate_field="readiness_gate_met",
         authorization_field="live_trading_allowed",
+        generated_at_ns=generated_at_ns,
     )
     startup_guard = _phase6_report_snapshot(
         label="Live startup guard",
@@ -1446,6 +1449,7 @@ def _phase6_snapshot(
         expected_schema="phase6.live_startup_guard.v1",
         gate_field="startup_allowed",
         authorization_field="live_trading_authorized",
+        generated_at_ns=generated_at_ns,
     )
     reports = [readiness, startup_guard]
     blocker_count = sum(len(report.get("blockers") or []) for report in reports)
@@ -1481,6 +1485,7 @@ def _phase6_report_snapshot(
     expected_schema: str,
     gate_field: str,
     authorization_field: str,
+    generated_at_ns: int,
 ) -> dict[str, Any]:
     if path is None:
         return {
@@ -1497,6 +1502,8 @@ def _phase6_report_snapshot(
             "source": None,
             "model_version": None,
             "recommendation": None,
+            "generated_at_ns": None,
+            "report_age_seconds": None,
             "blockers": [f"{gate_field}_report_not_attached"],
             "checks": [],
             "evidence": [],
@@ -1516,6 +1523,8 @@ def _phase6_report_snapshot(
             "source": None,
             "model_version": None,
             "recommendation": None,
+            "generated_at_ns": None,
+            "report_age_seconds": None,
             "blockers": [f"{gate_field}_report_not_found"],
             "checks": [],
             "evidence": [],
@@ -1537,6 +1546,8 @@ def _phase6_report_snapshot(
             "source": None,
             "model_version": None,
             "recommendation": None,
+            "generated_at_ns": None,
+            "report_age_seconds": None,
             "blockers": [f"invalid_json:{exc.__class__.__name__}"],
             "checks": [],
             "evidence": [],
@@ -1546,6 +1557,14 @@ def _phase6_report_snapshot(
     schema_version = payload.get("schema_version")
     gate_met = payload.get(gate_field) is True
     authorizes_live_trading = payload.get(authorization_field) is True
+    report_generated_at_ns = _phase6_report_generated_at_ns(
+        payload.get("generated_at_ns")
+    )
+    report_age_seconds = (
+        (generated_at_ns - report_generated_at_ns) / 1_000_000_000
+        if report_generated_at_ns is not None
+        else None
+    )
     raw_checks = payload.get("checks")
     checks = _compact_phase6_checks(raw_checks or [])
     evidence = _phase6_report_evidence(payload=payload, expected_schema=expected_schema)
@@ -1554,6 +1573,13 @@ def _phase6_report_snapshot(
     if authorizes_live_trading:
         blockers.append(f"{authorization_field}_must_remain_false")
     if gate_met:
+        blockers.extend(
+            _phase6_generated_at_blockers(
+                payload.get("generated_at_ns"),
+                report_generated_at_ns=report_generated_at_ns,
+                snapshot_generated_at_ns=generated_at_ns,
+            )
+        )
         blockers.extend(
             _phase6_boundary_blockers(
                 payload.get("boundaries"),
@@ -1581,6 +1607,8 @@ def _phase6_report_snapshot(
         "source": payload.get("source"),
         "model_version": payload.get("model_version"),
         "recommendation": payload.get("recommendation"),
+        "generated_at_ns": report_generated_at_ns,
+        "report_age_seconds": report_age_seconds,
         "blockers": sorted(dict.fromkeys(blockers)),
         "checks": checks,
         "evidence": evidence,
@@ -2096,6 +2124,35 @@ def _phase6_boundary_blockers(
         if key not in required_keys and value is True
     )
     return sorted(dict.fromkeys(blockers))
+
+
+def _phase6_report_generated_at_ns(value: Any) -> int | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value if value >= 0 else None
+    if not isinstance(value, str):
+        return None
+    try:
+        generated_at_ns = int(value)
+    except ValueError:
+        return None
+    return generated_at_ns if generated_at_ns >= 0 else None
+
+
+def _phase6_generated_at_blockers(
+    value: Any,
+    *,
+    report_generated_at_ns: int | None,
+    snapshot_generated_at_ns: int,
+) -> list[str]:
+    if value is None:
+        return ["generated_at_ns_missing"]
+    if report_generated_at_ns is None:
+        return ["generated_at_ns_invalid"]
+    if report_generated_at_ns > snapshot_generated_at_ns:
+        return ["generated_at_ns_in_future"]
+    return []
 
 
 def _phase6_summary_lines(reports: Sequence[dict[str, Any]]) -> list[str]:
