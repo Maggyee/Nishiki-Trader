@@ -1527,12 +1527,15 @@ def _phase6_report_snapshot(
     schema_version = payload.get("schema_version")
     gate_met = payload.get(gate_field) is True
     authorizes_live_trading = payload.get(authorization_field) is True
+    raw_checks = payload.get("checks")
+    checks = _compact_phase6_checks(raw_checks or [])
     evidence = _phase6_report_evidence(payload=payload, expected_schema=expected_schema)
     if schema_version != expected_schema:
         blockers.append(f"unexpected_schema_version:{schema_version}")
     if authorizes_live_trading:
         blockers.append(f"{authorization_field}_must_remain_false")
     if gate_met:
+        blockers.extend(_phase6_check_blockers(raw_checks))
         blockers.extend(
             f"evidence:{item['label']}"
             for item in evidence
@@ -1554,7 +1557,7 @@ def _phase6_report_snapshot(
         "model_version": payload.get("model_version"),
         "recommendation": payload.get("recommendation"),
         "blockers": sorted(dict.fromkeys(blockers)),
-        "checks": _compact_phase6_checks(payload.get("checks") or []),
+        "checks": checks,
         "evidence": evidence,
     }
 
@@ -2026,6 +2029,20 @@ def _compact_phase6_checks(checks: Sequence[Any]) -> list[dict[str, str]]:
             }
         )
     return compact[:8]
+
+
+def _phase6_check_blockers(checks: Any) -> list[str]:
+    if not isinstance(checks, list):
+        return []
+    blockers: list[str] = []
+    for check in checks:
+        if not isinstance(check, dict):
+            continue
+        status = str(check.get("status") or "unknown")
+        if status == "ok":
+            continue
+        blockers.append(f"check:{check.get('name') or 'unknown'}")
+    return blockers
 
 
 def _phase6_summary_lines(reports: Sequence[dict[str, Any]]) -> list[str]:

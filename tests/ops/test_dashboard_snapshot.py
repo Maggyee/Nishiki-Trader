@@ -808,6 +808,75 @@ def test_snapshot_blocks_phase6_readiness_without_continuity_fingerprints(
     assert snapshot["phase6"]["state"] == "blocked"
 
 
+def test_snapshot_blocks_phase6_readiness_with_blocked_internal_check(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    readiness_path = tmp_path / "inconsistent-live-readiness.json"
+    readiness_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "phase6.live_readiness.v1",
+                "source": "freqai_linear_v1",
+                "model_version": "linear-mom-train20240105",
+                "readiness_gate_met": True,
+                "live_trading_allowed": False,
+                "recommendation": "ready_for_manual_live_go_no_go_review",
+                "blockers": [],
+                "project_status": {
+                    "path": "docs/project-status.md",
+                    "sha256": "b" * 64,
+                },
+                "live_risk_adr": {
+                    "path": "docs/decisions/013-phase6-live-risk-gate.md",
+                    "sha256": "c" * 64,
+                    "accepted": True,
+                },
+                "continuity_artifacts": [
+                    {
+                        "bundle_dir": "data/testnet/run-1",
+                        "manifest_path": "data/testnet/run-1/run_manifest.json",
+                        "sha256": "d" * 64,
+                    }
+                ],
+                "live_promotion_review": {
+                    "accepted": True,
+                    "path": "live-promotion.md",
+                    "sha256": "a" * 64,
+                },
+                "checks": [
+                    {
+                        "name": "capital_ladder",
+                        "status": "blocked",
+                        "detail": "Starting capital is outside range.",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_readiness_report_path=readiness_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    readiness = snapshot["phase6"]["reports"][0]
+    assert readiness["status"] == "blocked"
+    assert "check:capital_ladder" in readiness["blockers"]
+    assert readiness["checks"] == [
+        {
+            "name": "capital_ladder",
+            "status": "blocked",
+            "detail": "Starting capital is outside range.",
+        }
+    ]
+    assert snapshot["phase6"]["state"] == "blocked"
+
+
 def _write_passing_startup_guard_report_with_readiness_git(
     path: Path,
     *,
@@ -817,6 +886,7 @@ def _write_passing_startup_guard_report_with_readiness_git(
     expected_project_status_sha256: str = "f" * 64,
     live_risk_adr_accepted: bool = True,
     first_live_day_runbook_accepted: bool = True,
+    checks: list[dict[str, str]] | None = None,
 ) -> None:
     path.write_text(
         json.dumps(
@@ -891,7 +961,7 @@ def _write_passing_startup_guard_report_with_readiness_git(
                         ),
                     },
                 },
-                "checks": [],
+                "checks": checks or [],
             }
         ),
         encoding="utf-8",
@@ -1082,6 +1152,48 @@ def test_snapshot_blocks_phase6_startup_with_unaccepted_first_live_day_runbook(
         "path": "runbook-first-live-day.md",
         "sha256": "e" * 64,
     }
+    assert snapshot["phase6"]["state"] == "blocked"
+
+
+def test_snapshot_blocks_phase6_startup_with_blocked_internal_check(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    guard_path = tmp_path / "live-startup-guard.json"
+    _write_passing_startup_guard_report_with_readiness_git(
+        guard_path,
+        readiness_git={
+            "commit": "b" * 40,
+            "dirty": False,
+        },
+        expected_git_commit="b" * 40,
+        checks=[
+            {
+                "name": "source_policy",
+                "status": "blocked",
+                "detail": "SourcePolicy is outside live-canary bounds.",
+            }
+        ],
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_startup_guard_report_path=guard_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    startup_guard = snapshot["phase6"]["reports"][1]
+    assert startup_guard["status"] == "blocked"
+    assert "check:source_policy" in startup_guard["blockers"]
+    assert startup_guard["checks"] == [
+        {
+            "name": "source_policy",
+            "status": "blocked",
+            "detail": "SourcePolicy is outside live-canary bounds.",
+        }
+    ]
     assert snapshot["phase6"]["state"] == "blocked"
 
 
