@@ -240,7 +240,9 @@ def build_live_readiness_report(
     )
     blockers.extend(str(item) for item in market_scope["blockers"])
 
-    if not source:
+    source_declared = _has_text(source)
+    model_version_declared = _has_text(model_version)
+    if not source_declared:
         blockers.append("source_not_declared")
         checks.append(
             _check(
@@ -249,7 +251,7 @@ def build_live_readiness_report(
                 "Source must be explicitly declared for live readiness review.",
             )
         )
-    elif not model_version:
+    elif not model_version_declared:
         blockers.append("model_version_not_declared")
         checks.append(
             _check(
@@ -520,6 +522,10 @@ def _git_output(args: list[str], cwd: Path) -> str:
 
 def _check(name: str, status: str, detail: str) -> ReadinessCheck:
     return ReadinessCheck(name=name, status=status, detail=detail)
+
+
+def _has_text(value: str | None) -> bool:
+    return bool(value and value.strip())
 
 
 def _to_jsonable_dict(value: Any) -> dict[str, Any]:

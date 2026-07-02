@@ -322,9 +322,9 @@ def _check_operator_intent(
     checks: list[StartupGuardCheck],
     blockers: list[str],
 ) -> None:
-    if not settings.source:
+    if not _has_text(settings.source):
         blockers.append("source_not_declared")
-    if not settings.model_version:
+    if not _has_text(settings.model_version):
         blockers.append("model_version_not_declared")
     if settings.allow_live_credentials:
         checks.append(
@@ -848,6 +848,10 @@ def _git_output(args: list[str], cwd: Path) -> str:
 
 def _check(name: str, status: str, detail: str) -> StartupGuardCheck:
     return StartupGuardCheck(name=name, status=status, detail=detail)
+
+
+def _has_text(value: str | None) -> bool:
+    return bool(value and value.strip())
 
 
 def _markdown_cell(value: str) -> str:

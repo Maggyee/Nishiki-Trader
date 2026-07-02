@@ -345,6 +345,18 @@ def test_live_startup_guard_blocks_dirty_git(tmp_path: Path) -> None:
     assert "git_dirty" in report.blockers
 
 
+def test_live_startup_guard_blocks_blank_source_identity(tmp_path: Path) -> None:
+    report = build_live_startup_guard_report(
+        _settings(tmp_path, source="   ", model_version="\t"),
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    assert report.startup_allowed is False
+    assert "source_not_declared" in report.blockers
+    assert "model_version_not_declared" in report.blockers
+
+
 def test_live_startup_guard_blocks_readiness_report_that_is_not_ready(
     tmp_path: Path,
 ) -> None:

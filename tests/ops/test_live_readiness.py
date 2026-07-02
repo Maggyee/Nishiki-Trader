@@ -210,6 +210,56 @@ def test_live_readiness_uses_passive_continuity_summary(
     assert "live_risk_adr_not_accepted" in report.blockers
 
 
+def test_live_readiness_blocks_blank_source_identity(tmp_path: Path) -> None:
+    status_path = tmp_path / "project-status.md"
+    live_adr = tmp_path / "013-phase6-live-risk-gate.md"
+    _write_status(status_path)
+    _write_live_adr(live_adr, status="Draft")
+
+    report = live_readiness.build_live_readiness_report(
+        project_status_path=status_path,
+        live_risk_adr_path=live_adr,
+        continuity_bundle_dirs=[],
+        source="   ",
+        model_version="\t",
+        starting_capital_usdt=100,
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    source_check = next(check for check in report.checks if check.name == "source_model")
+    assert report.readiness_gate_met is False
+    assert "source_not_declared" in report.blockers
+    assert source_check.status == "blocked"
+    assert "Source must be explicitly declared" in source_check.detail
+    assert report.live_promotion_review is None
+
+
+def test_live_readiness_blocks_blank_model_identity(tmp_path: Path) -> None:
+    status_path = tmp_path / "project-status.md"
+    live_adr = tmp_path / "013-phase6-live-risk-gate.md"
+    _write_status(status_path)
+    _write_live_adr(live_adr, status="Draft")
+
+    report = live_readiness.build_live_readiness_report(
+        project_status_path=status_path,
+        live_risk_adr_path=live_adr,
+        continuity_bundle_dirs=[],
+        source="freqai_linear_v1",
+        model_version="\t",
+        starting_capital_usdt=100,
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    source_check = next(check for check in report.checks if check.name == "source_model")
+    assert report.readiness_gate_met is False
+    assert "model_version_not_declared" in report.blockers
+    assert source_check.status == "blocked"
+    assert "Model version must be explicitly declared" in source_check.detail
+    assert report.live_promotion_review is None
+
+
 def test_live_readiness_can_emit_markdown_when_all_evidence_is_present(
     tmp_path: Path,
     monkeypatch,
