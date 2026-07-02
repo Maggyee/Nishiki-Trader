@@ -60,6 +60,7 @@ _PHASE6_REQUIRED_LIVE_CREDENTIAL_ENV_NAMES = (
 _PHASE6_MIN_LIVE_CANARY_CAPITAL_USDT = 100.0
 _PHASE6_MAX_LIVE_CANARY_CAPITAL_USDT = 500.0
 _PHASE6_REQUIRED_TESTNET_CONTINUITY_DAYS = 14
+_PHASE6_MAX_LIVE_CANARY_POLICY_MULTIPLIER = 0.1
 _PHASE6_GIT_COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 
 _STATUS_FIELD_RE = re.compile(
@@ -1625,6 +1626,12 @@ def _phase6_report_snapshot(
                 expected_schema=expected_schema,
             )
         )
+        blockers.extend(
+            _phase6_startup_source_policy_blockers(
+                payload,
+                expected_schema=expected_schema,
+            )
+        )
         blockers.extend(_phase6_check_blockers(raw_checks))
         blockers.extend(
             f"evidence:{item['label']}"
@@ -2308,6 +2315,43 @@ def _phase6_startup_runtime_blockers(
         blockers.append("credential_boundary:values_inspected")
     if credential_boundary.get("key_prefix_recorded") is not False:
         blockers.append("credential_boundary:key_prefix_recorded")
+
+    return sorted(dict.fromkeys(blockers))
+
+
+def _phase6_startup_source_policy_blockers(
+    payload: dict[str, Any],
+    *,
+    expected_schema: str,
+) -> list[str]:
+    if expected_schema != "phase6.live_startup_guard.v1":
+        return []
+
+    source_policy = payload.get("source_policy")
+    if not isinstance(source_policy, dict):
+        return ["source_policy:missing"]
+
+    blockers: list[str] = []
+    if source_policy.get("dry_run") is not False:
+        blockers.append("source_policy:dry_run")
+    if source_policy.get("within_live_canary_bounds") is not True:
+        blockers.append("source_policy:outside_live_canary_bounds")
+
+    position_pct_multiplier = _phase6_float(
+        source_policy.get("position_pct_multiplier")
+    )
+    if position_pct_multiplier is None or not (
+        0.0
+        <= position_pct_multiplier
+        <= _PHASE6_MAX_LIVE_CANARY_POLICY_MULTIPLIER
+    ):
+        blockers.append("source_policy:position_pct_multiplier")
+
+    max_live_canary_multiplier = _phase6_float(
+        source_policy.get("max_live_canary_multiplier")
+    )
+    if max_live_canary_multiplier != _PHASE6_MAX_LIVE_CANARY_POLICY_MULTIPLIER:
+        blockers.append("source_policy:max_live_canary_multiplier")
 
     return sorted(dict.fromkeys(blockers))
 

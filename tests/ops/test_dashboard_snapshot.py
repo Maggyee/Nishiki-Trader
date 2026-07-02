@@ -46,6 +46,14 @@ PHASE6_VALID_MARKET_SCOPE = {
     "max_leverage": 1.0,
     "spot_only_no_margin_no_leverage": True,
 }
+PHASE6_VALID_SOURCE_POLICY = {
+    "dry_run": False,
+    "position_pct_multiplier": 0.1,
+    "max_live_canary_multiplier": 0.1,
+    "within_live_canary_bounds": True,
+    "blockers": [],
+    "detail": "SourcePolicy is within live-canary bounds.",
+}
 PHASE6_VALID_CONTINUITY_SUMMARY = {
     "required_gate_met": True,
     "current_qualified_streak_days": 14,
@@ -1457,6 +1465,8 @@ def _write_passing_startup_guard_report_with_readiness_git(
     generated_at_ns: object = REFERENCE_TS_NS,
     runtime_overrides: dict[str, object] | None = None,
     credential_boundary_overrides: dict[str, object] | None = None,
+    source_policy_overrides: dict[str, object] | None = None,
+    include_source_policy: bool = True,
 ) -> None:
     runtime_fields = {
         "mode": "live",
@@ -1479,6 +1489,10 @@ def _write_passing_startup_guard_report_with_readiness_git(
         "key_prefix_recorded": False,
     }
     credential_boundary.update(credential_boundary_overrides or {})
+    source_policy = {
+        **PHASE6_VALID_SOURCE_POLICY,
+        **(source_policy_overrides or {}),
+    }
     path.write_text(
         json.dumps(
             {
@@ -1555,6 +1569,11 @@ def _write_passing_startup_guard_report_with_readiness_git(
                     },
                 },
                 "credential_boundary": credential_boundary,
+                **(
+                    {"source_policy": source_policy}
+                    if include_source_policy
+                    else {}
+                ),
                 "checks": checks or [],
                 "boundaries": boundaries or PHASE6_STARTUP_CLOSED_BOUNDARIES,
             }
@@ -1788,6 +1807,72 @@ def test_snapshot_blocks_phase6_startup_with_blocked_internal_check(
             "status": "blocked",
             "detail": "SourcePolicy is outside live-canary bounds.",
         }
+    ]
+    assert snapshot["phase6"]["state"] == "blocked"
+
+
+def test_snapshot_blocks_phase6_startup_without_source_policy_evidence(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    guard_path = tmp_path / "live-startup-guard.json"
+    _write_passing_startup_guard_report_with_readiness_git(
+        guard_path,
+        readiness_git={
+            "commit": "b" * 40,
+            "dirty": False,
+        },
+        expected_git_commit="b" * 40,
+        include_source_policy=False,
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_startup_guard_report_path=guard_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    startup_guard = snapshot["phase6"]["reports"][1]
+    assert startup_guard["status"] == "blocked"
+    assert startup_guard["blockers"] == ["source_policy:missing"]
+    assert snapshot["phase6"]["state"] == "blocked"
+
+
+def test_snapshot_blocks_phase6_startup_with_source_policy_outside_bounds(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    guard_path = tmp_path / "live-startup-guard.json"
+    _write_passing_startup_guard_report_with_readiness_git(
+        guard_path,
+        readiness_git={
+            "commit": "b" * 40,
+            "dirty": False,
+        },
+        expected_git_commit="b" * 40,
+        source_policy_overrides={
+            "dry_run": True,
+            "position_pct_multiplier": 0.11,
+            "within_live_canary_bounds": False,
+        },
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_startup_guard_report_path=guard_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    startup_guard = snapshot["phase6"]["reports"][1]
+    assert startup_guard["status"] == "blocked"
+    assert startup_guard["blockers"] == [
+        "source_policy:dry_run",
+        "source_policy:outside_live_canary_bounds",
+        "source_policy:position_pct_multiplier",
     ]
     assert snapshot["phase6"]["state"] == "blocked"
 
