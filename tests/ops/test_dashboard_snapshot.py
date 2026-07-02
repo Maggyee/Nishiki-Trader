@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -1516,6 +1517,60 @@ def test_snapshot_blocks_phase6_readiness_without_source_model_identity(
     assert snapshot["phase6"]["state"] == "blocked"
 
 
+def _write_passing_readiness_report(
+    path: Path,
+    *,
+    source: str = "freqai_linear_v1",
+    model_version: str = "linear-mom-train20240105",
+    git_commit: str = "b" * 40,
+) -> None:
+    path.write_text(
+        json.dumps(
+            {
+                "schema_version": "phase6.live_readiness.v1",
+                "source": source,
+                "model_version": model_version,
+                "generated_at_ns": REFERENCE_TS_NS,
+                "readiness_gate_met": True,
+                "live_trading_allowed": False,
+                "recommendation": "ready_for_manual_live_go_no_go_review",
+                "blockers": [],
+                "project_status": {
+                    "path": "docs/project-status.md",
+                    "sha256": "b" * 64,
+                },
+                "live_risk_adr": {
+                    "path": "docs/decisions/013-phase6-live-risk-gate.md",
+                    "sha256": "c" * 64,
+                    "accepted": True,
+                },
+                "continuity_artifacts": [
+                    {
+                        "bundle_dir": "data/testnet/run-1",
+                        "manifest_path": "data/testnet/run-1/run_manifest.json",
+                        "sha256": "d" * 64,
+                    }
+                ],
+                "continuity_summary": PHASE6_VALID_CONTINUITY_SUMMARY,
+                "live_promotion_review": {
+                    "accepted": True,
+                    "path": "live-promotion.md",
+                    "sha256": "a" * 64,
+                },
+                "capital_plan": PHASE6_VALID_CAPITAL_PLAN,
+                "market_scope": PHASE6_VALID_MARKET_SCOPE,
+                "git": {
+                    "commit": git_commit,
+                    "dirty": False,
+                },
+                "checks": [],
+                "boundaries": PHASE6_READINESS_CLOSED_BOUNDARIES,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
 def _write_passing_startup_guard_report_with_readiness_git(
     path: Path,
     *,
@@ -1816,6 +1871,90 @@ def test_snapshot_blocks_phase6_startup_with_dirty_git_evidence(
     assert startup_guard["blockers"] == [
         "git:commit_mismatch",
         "git:dirty",
+    ]
+    assert snapshot["phase6"]["state"] == "blocked"
+
+
+def test_snapshot_blocks_phase6_startup_when_attached_readiness_sha_differs(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    readiness_path = tmp_path / "attached-live-readiness.json"
+    guard_path = tmp_path / "live-startup-guard.json"
+    _write_passing_readiness_report(
+        readiness_path,
+        git_commit="b" * 40,
+    )
+    _write_passing_startup_guard_report_with_readiness_git(
+        guard_path,
+        readiness_git={
+            "commit": "b" * 40,
+            "dirty": False,
+        },
+        expected_git_commit="b" * 40,
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_readiness_report_path=readiness_path,
+        phase6_live_startup_guard_report_path=guard_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    readiness, startup_guard = snapshot["phase6"]["reports"]
+    assert readiness["status"] == "ok"
+    assert readiness["report_sha256"] == hashlib.sha256(
+        readiness_path.read_bytes()
+    ).hexdigest()
+    assert startup_guard["status"] == "blocked"
+    assert startup_guard["blockers"] == ["cross_report:readiness_sha256"]
+    assert snapshot["phase6"]["state"] == "blocked"
+
+
+def test_snapshot_blocks_phase6_startup_when_attached_report_source_differs(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    readiness_path = tmp_path / "attached-live-readiness.json"
+    guard_path = tmp_path / "live-startup-guard.json"
+    _write_passing_readiness_report(
+        readiness_path,
+        source="freqai_linear_v1",
+        model_version="linear-mom-train20240105",
+        git_commit="b" * 40,
+    )
+    readiness_sha256 = hashlib.sha256(readiness_path.read_bytes()).hexdigest()
+    _write_passing_startup_guard_report_with_readiness_git(
+        guard_path,
+        readiness_git={
+            "commit": "b" * 40,
+            "dirty": False,
+        },
+        expected_git_commit="b" * 40,
+    )
+    payload = json.loads(guard_path.read_text(encoding="utf-8"))
+    payload["source"] = "freqai_other_v1"
+    payload["model_version"] = "other-model"
+    payload["evidence"]["live_readiness_report"]["sha256"] = readiness_sha256
+    guard_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_readiness_report_path=readiness_path,
+        phase6_live_startup_guard_report_path=guard_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    readiness, startup_guard = snapshot["phase6"]["reports"]
+    assert readiness["status"] == "ok"
+    assert startup_guard["status"] == "blocked"
+    assert startup_guard["blockers"] == [
+        "cross_report:model_version",
+        "cross_report:source",
     ]
     assert snapshot["phase6"]["state"] == "blocked"
 

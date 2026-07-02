@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import re
@@ -1467,6 +1468,7 @@ def _phase6_snapshot(
         authorization_field="live_trading_authorized",
         generated_at_ns=generated_at_ns,
     )
+    _phase6_apply_cross_report_blockers(readiness, startup_guard)
     reports = [readiness, startup_guard]
     blocker_count = sum(len(report.get("blockers") or []) for report in reports)
     missing_count = sum(1 for report in reports if report.get("status") == "missing")
@@ -1520,6 +1522,7 @@ def _phase6_report_snapshot(
             "recommendation": None,
             "generated_at_ns": None,
             "report_age_seconds": None,
+            "report_sha256": None,
             "blockers": [f"{gate_field}_report_not_attached"],
             "checks": [],
             "evidence": [],
@@ -1541,12 +1544,15 @@ def _phase6_report_snapshot(
             "recommendation": None,
             "generated_at_ns": None,
             "report_age_seconds": None,
+            "report_sha256": None,
             "blockers": [f"{gate_field}_report_not_found"],
             "checks": [],
             "evidence": [],
         }
+    raw = path.read_bytes()
+    report_sha256 = hashlib.sha256(raw).hexdigest()
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload = json.loads(raw.decode("utf-8"))
     except json.JSONDecodeError as exc:
         return {
             "label": label,
@@ -1564,6 +1570,7 @@ def _phase6_report_snapshot(
             "recommendation": None,
             "generated_at_ns": None,
             "report_age_seconds": None,
+            "report_sha256": report_sha256,
             "blockers": [f"invalid_json:{exc.__class__.__name__}"],
             "checks": [],
             "evidence": [],
@@ -1673,10 +1680,66 @@ def _phase6_report_snapshot(
         "recommendation": payload.get("recommendation"),
         "generated_at_ns": report_generated_at_ns,
         "report_age_seconds": report_age_seconds,
+        "report_sha256": report_sha256,
         "blockers": sorted(dict.fromkeys(blockers)),
         "checks": checks,
         "evidence": evidence,
     }
+
+
+def _phase6_apply_cross_report_blockers(
+    readiness: dict[str, Any],
+    startup_guard: dict[str, Any],
+) -> None:
+    if startup_guard.get("gate_met") is not True:
+        return
+    if readiness.get("attached") is not True or readiness.get("exists") is not True:
+        return
+    if readiness.get("schema_version") != "phase6.live_readiness.v1":
+        return
+
+    blockers: list[str] = []
+    readiness_source = _optional_str(readiness.get("source"))
+    startup_source = _optional_str(startup_guard.get("source"))
+    readiness_model = _optional_str(readiness.get("model_version"))
+    startup_model = _optional_str(startup_guard.get("model_version"))
+    if readiness_source and startup_source and readiness_source != startup_source:
+        blockers.append("cross_report:source")
+    if readiness_model and startup_model and readiness_model != startup_model:
+        blockers.append("cross_report:model_version")
+
+    attached_readiness_sha = _optional_str(readiness.get("report_sha256"))
+    startup_readiness_sha = _phase6_evidence_sha256(
+        startup_guard,
+        label="Readiness report artifact",
+    )
+    if attached_readiness_sha and startup_readiness_sha:
+        if attached_readiness_sha != startup_readiness_sha:
+            blockers.append("cross_report:readiness_sha256")
+    else:
+        blockers.append("cross_report:readiness_sha256")
+
+    if not blockers:
+        return
+
+    startup_guard["blockers"] = sorted(
+        dict.fromkeys([*(startup_guard.get("blockers") or []), *blockers])
+    )
+    startup_guard["status"] = "blocked"
+
+
+def _phase6_evidence_sha256(
+    report: dict[str, Any],
+    *,
+    label: str,
+) -> str | None:
+    evidence = report.get("evidence")
+    if not isinstance(evidence, list):
+        return None
+    for item in evidence:
+        if isinstance(item, dict) and item.get("label") == label:
+            return _optional_str(item.get("sha256"))
+    return None
 
 
 def _phase6_report_evidence(
