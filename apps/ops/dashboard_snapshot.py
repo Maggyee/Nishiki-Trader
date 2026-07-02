@@ -1627,6 +1627,12 @@ def _phase6_report_snapshot(
             )
         )
         blockers.extend(
+            _phase6_startup_scope_blockers(
+                payload,
+                expected_schema=expected_schema,
+            )
+        )
+        blockers.extend(
             _phase6_startup_source_policy_blockers(
                 payload,
                 expected_schema=expected_schema,
@@ -2179,7 +2185,10 @@ def _phase6_readiness_scope_blockers(
 ) -> list[str]:
     if expected_schema != "phase6.live_readiness.v1":
         return []
+    return _phase6_live_canary_scope_blockers(payload)
 
+
+def _phase6_live_canary_scope_blockers(payload: dict[str, Any]) -> list[str]:
     blockers: list[str] = []
     capital_plan = payload.get("capital_plan")
     if not isinstance(capital_plan, dict):
@@ -2212,6 +2221,16 @@ def _phase6_readiness_scope_blockers(
             blockers.append("market_scope:max_leverage")
 
     return sorted(dict.fromkeys(blockers))
+
+
+def _phase6_startup_scope_blockers(
+    payload: dict[str, Any],
+    *,
+    expected_schema: str,
+) -> list[str]:
+    if expected_schema != "phase6.live_startup_guard.v1":
+        return []
+    return _phase6_live_canary_scope_blockers(payload)
 
 
 def _phase6_readiness_git_blockers(

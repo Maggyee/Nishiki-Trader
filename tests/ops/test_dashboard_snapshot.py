@@ -1465,7 +1465,11 @@ def _write_passing_startup_guard_report_with_readiness_git(
     generated_at_ns: object = REFERENCE_TS_NS,
     runtime_overrides: dict[str, object] | None = None,
     credential_boundary_overrides: dict[str, object] | None = None,
+    capital_plan_overrides: dict[str, object] | None = None,
+    market_scope_overrides: dict[str, object] | None = None,
     source_policy_overrides: dict[str, object] | None = None,
+    include_capital_plan: bool = True,
+    include_market_scope: bool = True,
     include_source_policy: bool = True,
 ) -> None:
     runtime_fields = {
@@ -1492,6 +1496,14 @@ def _write_passing_startup_guard_report_with_readiness_git(
     source_policy = {
         **PHASE6_VALID_SOURCE_POLICY,
         **(source_policy_overrides or {}),
+    }
+    capital_plan = {
+        **PHASE6_VALID_CAPITAL_PLAN,
+        **(capital_plan_overrides or {}),
+    }
+    market_scope = {
+        **PHASE6_VALID_MARKET_SCOPE,
+        **(market_scope_overrides or {}),
     }
     path.write_text(
         json.dumps(
@@ -1569,6 +1581,16 @@ def _write_passing_startup_guard_report_with_readiness_git(
                     },
                 },
                 "credential_boundary": credential_boundary,
+                **(
+                    {"capital_plan": capital_plan}
+                    if include_capital_plan
+                    else {}
+                ),
+                **(
+                    {"market_scope": market_scope}
+                    if include_market_scope
+                    else {}
+                ),
                 **(
                     {"source_policy": source_policy}
                     if include_source_policy
@@ -1873,6 +1895,70 @@ def test_snapshot_blocks_phase6_startup_with_source_policy_outside_bounds(
         "source_policy:dry_run",
         "source_policy:outside_live_canary_bounds",
         "source_policy:position_pct_multiplier",
+    ]
+    assert snapshot["phase6"]["state"] == "blocked"
+
+
+def test_snapshot_blocks_phase6_startup_without_capital_plan(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    guard_path = tmp_path / "live-startup-guard.json"
+    _write_passing_startup_guard_report_with_readiness_git(
+        guard_path,
+        readiness_git={
+            "commit": "b" * 40,
+            "dirty": False,
+        },
+        expected_git_commit="b" * 40,
+        include_capital_plan=False,
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_startup_guard_report_path=guard_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    startup_guard = snapshot["phase6"]["reports"][1]
+    assert startup_guard["status"] == "blocked"
+    assert startup_guard["blockers"] == ["capital_plan:missing"]
+    assert snapshot["phase6"]["state"] == "blocked"
+
+
+def test_snapshot_blocks_phase6_startup_with_leveraged_market_scope(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    guard_path = tmp_path / "live-startup-guard.json"
+    _write_passing_startup_guard_report_with_readiness_git(
+        guard_path,
+        readiness_git={
+            "commit": "b" * 40,
+            "dirty": False,
+        },
+        expected_git_commit="b" * 40,
+        market_scope_overrides={
+            "max_leverage": 2.0,
+            "spot_only_no_margin_no_leverage": False,
+        },
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_startup_guard_report_path=guard_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    startup_guard = snapshot["phase6"]["reports"][1]
+    assert startup_guard["status"] == "blocked"
+    assert startup_guard["blockers"] == [
+        "market_scope:max_leverage",
+        "market_scope:not_spot_only_no_margin_no_leverage",
     ]
     assert snapshot["phase6"]["state"] == "blocked"
 
