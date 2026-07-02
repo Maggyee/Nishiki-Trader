@@ -59,6 +59,7 @@ _PHASE6_REQUIRED_LIVE_CREDENTIAL_ENV_NAMES = (
 )
 _PHASE6_MIN_LIVE_CANARY_CAPITAL_USDT = 100.0
 _PHASE6_MAX_LIVE_CANARY_CAPITAL_USDT = 500.0
+_PHASE6_GIT_COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 
 _STATUS_FIELD_RE = re.compile(
     r"^- \*\*(?P<key>Last updated|Current phase|Current objective)\*\*:\s*(?P<value>.+)$",
@@ -1606,6 +1607,12 @@ def _phase6_report_snapshot(
             )
         )
         blockers.extend(
+            _phase6_readiness_git_blockers(
+                payload,
+                expected_schema=expected_schema,
+            )
+        )
+        blockers.extend(
             _phase6_startup_runtime_blockers(
                 payload,
                 expected_schema=expected_schema,
@@ -2190,6 +2197,29 @@ def _phase6_readiness_scope_blockers(
         if max_leverage != 1.0:
             blockers.append("market_scope:max_leverage")
 
+    return sorted(dict.fromkeys(blockers))
+
+
+def _phase6_readiness_git_blockers(
+    payload: dict[str, Any],
+    *,
+    expected_schema: str,
+) -> list[str]:
+    if expected_schema != "phase6.live_readiness.v1":
+        return []
+
+    git = payload.get("git")
+    if not isinstance(git, dict):
+        return ["git:missing"]
+
+    blockers: list[str] = []
+    commit = git.get("commit")
+    if not isinstance(commit, str) or not commit:
+        blockers.append("git:commit_missing")
+    elif _PHASE6_GIT_COMMIT_RE.fullmatch(commit) is None:
+        blockers.append("git:commit_invalid")
+    if git.get("dirty") is not False:
+        blockers.append("git:dirty")
     return sorted(dict.fromkeys(blockers))
 
 

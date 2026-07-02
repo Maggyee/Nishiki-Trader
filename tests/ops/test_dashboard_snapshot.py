@@ -46,6 +46,10 @@ PHASE6_VALID_MARKET_SCOPE = {
     "max_leverage": 1.0,
     "spot_only_no_margin_no_leverage": True,
 }
+PHASE6_CLEAN_GIT = {
+    "commit": "b" * 40,
+    "dirty": False,
+}
 
 
 def _write_status(path: Path) -> None:
@@ -948,6 +952,7 @@ def test_snapshot_blocks_phase6_readiness_with_open_boundary_flag(
                 },
                 "capital_plan": PHASE6_VALID_CAPITAL_PLAN,
                 "market_scope": PHASE6_VALID_MARKET_SCOPE,
+                "git": PHASE6_CLEAN_GIT,
                 "checks": [],
                 "boundaries": {
                     **PHASE6_READINESS_CLOSED_BOUNDARIES,
@@ -968,6 +973,130 @@ def test_snapshot_blocks_phase6_readiness_with_open_boundary_flag(
     readiness = snapshot["phase6"]["reports"][0]
     assert readiness["status"] == "blocked"
     assert readiness["blockers"] == ["boundary:places_orders"]
+    assert snapshot["phase6"]["state"] == "blocked"
+
+
+def test_snapshot_blocks_phase6_readiness_without_git_evidence(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    readiness_path = tmp_path / "missing-git-live-readiness.json"
+    readiness_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "phase6.live_readiness.v1",
+                "source": "freqai_linear_v1",
+                "model_version": "linear-mom-train20240105",
+                "generated_at_ns": REFERENCE_TS_NS,
+                "readiness_gate_met": True,
+                "live_trading_allowed": False,
+                "recommendation": "ready_for_manual_live_go_no_go_review",
+                "blockers": [],
+                "project_status": {
+                    "path": "docs/project-status.md",
+                    "sha256": "b" * 64,
+                },
+                "live_risk_adr": {
+                    "path": "docs/decisions/013-phase6-live-risk-gate.md",
+                    "sha256": "c" * 64,
+                    "accepted": True,
+                },
+                "continuity_artifacts": [
+                    {
+                        "bundle_dir": "data/testnet/run-1",
+                        "manifest_path": "data/testnet/run-1/run_manifest.json",
+                        "sha256": "d" * 64,
+                    }
+                ],
+                "live_promotion_review": {
+                    "accepted": True,
+                    "path": "live-promotion.md",
+                    "sha256": "a" * 64,
+                },
+                "capital_plan": PHASE6_VALID_CAPITAL_PLAN,
+                "market_scope": PHASE6_VALID_MARKET_SCOPE,
+                "checks": [],
+                "boundaries": PHASE6_READINESS_CLOSED_BOUNDARIES,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_readiness_report_path=readiness_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    readiness = snapshot["phase6"]["reports"][0]
+    assert readiness["status"] == "blocked"
+    assert readiness["blockers"] == ["git:missing"]
+    assert snapshot["phase6"]["state"] == "blocked"
+
+
+def test_snapshot_blocks_phase6_readiness_with_dirty_git_evidence(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    readiness_path = tmp_path / "dirty-git-live-readiness.json"
+    readiness_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "phase6.live_readiness.v1",
+                "source": "freqai_linear_v1",
+                "model_version": "linear-mom-train20240105",
+                "generated_at_ns": REFERENCE_TS_NS,
+                "readiness_gate_met": True,
+                "live_trading_allowed": False,
+                "recommendation": "ready_for_manual_live_go_no_go_review",
+                "blockers": [],
+                "project_status": {
+                    "path": "docs/project-status.md",
+                    "sha256": "b" * 64,
+                },
+                "live_risk_adr": {
+                    "path": "docs/decisions/013-phase6-live-risk-gate.md",
+                    "sha256": "c" * 64,
+                    "accepted": True,
+                },
+                "continuity_artifacts": [
+                    {
+                        "bundle_dir": "data/testnet/run-1",
+                        "manifest_path": "data/testnet/run-1/run_manifest.json",
+                        "sha256": "d" * 64,
+                    }
+                ],
+                "live_promotion_review": {
+                    "accepted": True,
+                    "path": "live-promotion.md",
+                    "sha256": "a" * 64,
+                },
+                "capital_plan": PHASE6_VALID_CAPITAL_PLAN,
+                "market_scope": PHASE6_VALID_MARKET_SCOPE,
+                "git": {
+                    "commit": "b" * 40,
+                    "dirty": True,
+                },
+                "checks": [],
+                "boundaries": PHASE6_READINESS_CLOSED_BOUNDARIES,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_readiness_report_path=readiness_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    readiness = snapshot["phase6"]["reports"][0]
+    assert readiness["status"] == "blocked"
+    assert readiness["blockers"] == ["git:dirty"]
     assert snapshot["phase6"]["state"] == "blocked"
 
 
@@ -1010,6 +1139,7 @@ def test_snapshot_blocks_phase6_readiness_without_capital_plan(
                     "sha256": "a" * 64,
                 },
                 "market_scope": PHASE6_VALID_MARKET_SCOPE,
+                "git": PHASE6_CLEAN_GIT,
                 "checks": [],
                 "boundaries": PHASE6_READINESS_CLOSED_BOUNDARIES,
             }
@@ -1074,6 +1204,7 @@ def test_snapshot_blocks_phase6_readiness_with_leveraged_market_scope(
                     "max_leverage": 2.0,
                     "spot_only_no_margin_no_leverage": False,
                 },
+                "git": PHASE6_CLEAN_GIT,
                 "checks": [],
                 "boundaries": PHASE6_READINESS_CLOSED_BOUNDARIES,
             }
@@ -1136,6 +1267,7 @@ def test_snapshot_blocks_phase6_readiness_without_generated_at_ns(
                 },
                 "capital_plan": PHASE6_VALID_CAPITAL_PLAN,
                 "market_scope": PHASE6_VALID_MARKET_SCOPE,
+                "git": PHASE6_CLEAN_GIT,
                 "checks": [],
                 "boundaries": PHASE6_READINESS_CLOSED_BOUNDARIES,
             }
