@@ -1603,7 +1603,7 @@ def _phase6_report_evidence(
     )
     sha_matches = bool(readiness_sha and expected_sha and readiness_sha == expected_sha)
     return [
-        _artifact_evidence_item(
+        _accepted_artifact_evidence_item(
             live_risk_adr_gate,
             label="Live-risk ADR artifact",
         ),
@@ -1629,7 +1629,7 @@ def _phase6_report_evidence(
             "sha256": readiness_sha,
             "expected_sha256": expected_sha,
         },
-        _artifact_evidence_item(
+        _accepted_artifact_evidence_item(
             first_live_day_runbook_gate,
             label="First live day runbook artifact",
         ),
@@ -1663,6 +1663,44 @@ def _artifact_evidence_item(
             if status == "ok"
             else "Artifact fingerprint is not recorded."
         ),
+        "path": path,
+        "sha256": sha256,
+    }
+
+
+def _accepted_artifact_evidence_item(
+    gate: Any,
+    *,
+    label: str,
+) -> dict[str, str | None]:
+    if not isinstance(gate, dict):
+        return {
+            "label": label,
+            "status": "missing",
+            "detail": "Artifact evidence is not recorded in this report.",
+            "path": None,
+            "sha256": None,
+        }
+    sha256 = _optional_str(gate.get("sha256"))
+    path = _optional_str(gate.get("path"))
+    accepted = gate.get("accepted") is True
+    blocker = _optional_str(gate.get("blocker"))
+    document_status = _optional_str(gate.get("status"))
+    status = "ok" if accepted and sha256 else "blocked"
+    if status == "ok":
+        detail = "Artifact is accepted and fingerprinted."
+    elif not sha256:
+        detail = "Artifact fingerprint is not recorded."
+    else:
+        detail = blocker or (
+            f"Artifact status is {document_status}."
+            if document_status
+            else "Artifact is not accepted."
+        )
+    return {
+        "label": label,
+        "status": status,
+        "detail": detail,
         "path": path,
         "sha256": sha256,
     }

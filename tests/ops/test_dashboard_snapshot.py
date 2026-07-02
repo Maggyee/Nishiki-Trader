@@ -540,6 +540,10 @@ def test_snapshot_summarizes_phase6_gate_artifacts(tmp_path: Path) -> None:
     assert phase6["reports"][1]["evidence"][0]["label"] == (
         "Live-risk ADR artifact"
     )
+    assert phase6["reports"][1]["evidence"][0]["status"] == "blocked"
+    assert phase6["reports"][1]["evidence"][0]["detail"] == (
+        "Artifact is not accepted."
+    )
     assert phase6["reports"][1]["evidence"][0]["sha256"] == "c" * 64
     assert phase6["reports"][1]["evidence"][1]["label"] == (
         "Readiness report artifact"
@@ -563,6 +567,10 @@ def test_snapshot_summarizes_phase6_gate_artifacts(tmp_path: Path) -> None:
     )
     assert phase6["reports"][1]["evidence"][6]["label"] == (
         "First live day runbook artifact"
+    )
+    assert phase6["reports"][1]["evidence"][6]["status"] == "blocked"
+    assert phase6["reports"][1]["evidence"][6]["detail"] == (
+        "Artifact is not accepted."
     )
     assert phase6["reports"][1]["evidence"][6]["sha256"] == "d" * 64
     assert phase6["reports"][1]["evidence"][7] == {
@@ -807,6 +815,8 @@ def _write_passing_startup_guard_report_with_readiness_git(
     expected_git_commit: str = "b" * 40,
     readiness_project_status_sha256: str = "f" * 64,
     expected_project_status_sha256: str = "f" * 64,
+    live_risk_adr_accepted: bool = True,
+    first_live_day_runbook_accepted: bool = True,
 ) -> None:
     path.write_text(
         json.dumps(
@@ -822,6 +832,7 @@ def _write_passing_startup_guard_report_with_readiness_git(
                     "live_risk_adr": {
                         "path": "013-phase6-live-risk-gate.md",
                         "sha256": "b" * 64,
+                        "accepted": live_risk_adr_accepted,
                     },
                     "live_readiness_report": {
                         "path": "live-readiness.json",
@@ -872,6 +883,12 @@ def _write_passing_startup_guard_report_with_readiness_git(
                     "first_live_day_runbook": {
                         "path": "runbook-first-live-day.md",
                         "sha256": "e" * 64,
+                        "accepted": first_live_day_runbook_accepted,
+                        "blocker": (
+                            ""
+                            if first_live_day_runbook_accepted
+                            else "first_live_day_runbook_not_accepted"
+                        ),
                     },
                 },
                 "checks": [],
@@ -996,6 +1013,78 @@ def test_snapshot_blocks_phase6_startup_with_different_readiness_project_status(
     assert snapshot["phase6"]["state"] == "blocked"
 
 
+def test_snapshot_blocks_phase6_startup_with_unaccepted_live_risk_adr_artifact(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    guard_path = tmp_path / "live-startup-guard.json"
+    _write_passing_startup_guard_report_with_readiness_git(
+        guard_path,
+        readiness_git={
+            "commit": "b" * 40,
+            "dirty": False,
+        },
+        expected_git_commit="b" * 40,
+        live_risk_adr_accepted=False,
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_startup_guard_report_path=guard_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    startup_guard = snapshot["phase6"]["reports"][1]
+    assert startup_guard["status"] == "blocked"
+    assert "evidence:Live-risk ADR artifact" in startup_guard["blockers"]
+    assert startup_guard["evidence"][0] == {
+        "label": "Live-risk ADR artifact",
+        "status": "blocked",
+        "detail": "Artifact is not accepted.",
+        "path": "013-phase6-live-risk-gate.md",
+        "sha256": "b" * 64,
+    }
+    assert snapshot["phase6"]["state"] == "blocked"
+
+
+def test_snapshot_blocks_phase6_startup_with_unaccepted_first_live_day_runbook(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    guard_path = tmp_path / "live-startup-guard.json"
+    _write_passing_startup_guard_report_with_readiness_git(
+        guard_path,
+        readiness_git={
+            "commit": "b" * 40,
+            "dirty": False,
+        },
+        expected_git_commit="b" * 40,
+        first_live_day_runbook_accepted=False,
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_startup_guard_report_path=guard_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    startup_guard = snapshot["phase6"]["reports"][1]
+    assert startup_guard["status"] == "blocked"
+    assert "evidence:First live day runbook artifact" in startup_guard["blockers"]
+    assert startup_guard["evidence"][6] == {
+        "label": "First live day runbook artifact",
+        "status": "blocked",
+        "detail": "first_live_day_runbook_not_accepted",
+        "path": "runbook-first-live-day.md",
+        "sha256": "e" * 64,
+    }
+    assert snapshot["phase6"]["state"] == "blocked"
+
+
 def test_snapshot_blocks_phase6_startup_without_readiness_artifact_fingerprint(
     tmp_path: Path,
 ) -> None:
@@ -1016,6 +1105,7 @@ def test_snapshot_blocks_phase6_startup_without_readiness_artifact_fingerprint(
                     "live_risk_adr": {
                         "path": "013-phase6-live-risk-gate.md",
                         "sha256": "b" * 64,
+                        "accepted": True,
                     },
                     "live_readiness_report": {
                         "path": "live-readiness.json",
@@ -1034,6 +1124,7 @@ def test_snapshot_blocks_phase6_startup_without_readiness_artifact_fingerprint(
                     "first_live_day_runbook": {
                         "path": "runbook-first-live-day.md",
                         "sha256": "c" * 64,
+                        "accepted": True,
                     },
                 },
                 "checks": [],
@@ -1155,6 +1246,7 @@ def test_snapshot_blocks_phase6_startup_with_different_readiness_live_risk_adr(
                     "live_risk_adr": {
                         "path": "013-phase6-live-risk-gate.md",
                         "sha256": "b" * 64,
+                        "accepted": True,
                     },
                     "live_readiness_report": {
                         "path": "live-readiness.json",
@@ -1189,6 +1281,7 @@ def test_snapshot_blocks_phase6_startup_with_different_readiness_live_risk_adr(
                     "first_live_day_runbook": {
                         "path": "runbook-first-live-day.md",
                         "sha256": "f" * 64,
+                        "accepted": True,
                     },
                 },
                 "checks": [],
@@ -1243,6 +1336,7 @@ def test_snapshot_blocks_phase6_startup_with_stale_readiness_freshness(
                     "live_risk_adr": {
                         "path": "013-phase6-live-risk-gate.md",
                         "sha256": "b" * 64,
+                        "accepted": True,
                     },
                     "live_readiness_report": {
                         "path": "live-readiness.json",
@@ -1283,6 +1377,7 @@ def test_snapshot_blocks_phase6_startup_with_stale_readiness_freshness(
                     "first_live_day_runbook": {
                         "path": "runbook-first-live-day.md",
                         "sha256": "e" * 64,
+                        "accepted": True,
                     },
                 },
                 "checks": [],
@@ -1331,6 +1426,7 @@ def test_snapshot_blocks_phase6_startup_with_continuity_artifact_problems(
                     "live_risk_adr": {
                         "path": "013-phase6-live-risk-gate.md",
                         "sha256": "b" * 64,
+                        "accepted": True,
                     },
                     "live_readiness_report": {
                         "path": "live-readiness.json",
@@ -1367,6 +1463,7 @@ def test_snapshot_blocks_phase6_startup_with_continuity_artifact_problems(
                     "first_live_day_runbook": {
                         "path": "runbook-first-live-day.md",
                         "sha256": "e" * 64,
+                        "accepted": True,
                     },
                 },
                 "checks": [],
