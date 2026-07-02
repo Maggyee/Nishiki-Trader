@@ -15,6 +15,25 @@ PAPER_FIRST_SIGNAL_TS_NS = REFERENCE_TS_NS - 600_000_000_000
 PAPER_LAST_SIGNAL_TS_NS = REFERENCE_TS_NS - 300_000_000_000
 TESTNET_FIRST_SIGNAL_TS_NS = REFERENCE_TS_NS - 120_000_000_000
 TESTNET_LAST_SIGNAL_TS_NS = REFERENCE_TS_NS - 60_000_000_000
+PHASE6_READINESS_CLOSED_BOUNDARIES = {
+    "starts_runtime": False,
+    "loads_exchange_credentials": False,
+    "mutates_source_policy": False,
+    "writes_signal_event": False,
+    "places_orders": False,
+    "authorizes_live_trading": False,
+}
+PHASE6_STARTUP_CLOSED_BOUNDARIES = {
+    "starts_runtime": False,
+    "loads_exchange_credentials": False,
+    "reads_exchange_credential_values": False,
+    "builds_nautilus_node": False,
+    "connects_exchange": False,
+    "mutates_source_policy": False,
+    "writes_signal_event": False,
+    "places_orders": False,
+    "authorizes_live_trading": False,
+}
 
 
 def _write_status(path: Path) -> None:
@@ -877,6 +896,66 @@ def test_snapshot_blocks_phase6_readiness_with_blocked_internal_check(
     assert snapshot["phase6"]["state"] == "blocked"
 
 
+def test_snapshot_blocks_phase6_readiness_with_open_boundary_flag(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    readiness_path = tmp_path / "boundary-open-live-readiness.json"
+    readiness_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "phase6.live_readiness.v1",
+                "source": "freqai_linear_v1",
+                "model_version": "linear-mom-train20240105",
+                "readiness_gate_met": True,
+                "live_trading_allowed": False,
+                "recommendation": "ready_for_manual_live_go_no_go_review",
+                "blockers": [],
+                "project_status": {
+                    "path": "docs/project-status.md",
+                    "sha256": "b" * 64,
+                },
+                "live_risk_adr": {
+                    "path": "docs/decisions/013-phase6-live-risk-gate.md",
+                    "sha256": "c" * 64,
+                    "accepted": True,
+                },
+                "continuity_artifacts": [
+                    {
+                        "bundle_dir": "data/testnet/run-1",
+                        "manifest_path": "data/testnet/run-1/run_manifest.json",
+                        "sha256": "d" * 64,
+                    }
+                ],
+                "live_promotion_review": {
+                    "accepted": True,
+                    "path": "live-promotion.md",
+                    "sha256": "a" * 64,
+                },
+                "checks": [],
+                "boundaries": {
+                    **PHASE6_READINESS_CLOSED_BOUNDARIES,
+                    "places_orders": True,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_readiness_report_path=readiness_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    readiness = snapshot["phase6"]["reports"][0]
+    assert readiness["status"] == "blocked"
+    assert readiness["blockers"] == ["boundary:places_orders"]
+    assert snapshot["phase6"]["state"] == "blocked"
+
+
 def _write_passing_startup_guard_report_with_readiness_git(
     path: Path,
     *,
@@ -887,6 +966,7 @@ def _write_passing_startup_guard_report_with_readiness_git(
     live_risk_adr_accepted: bool = True,
     first_live_day_runbook_accepted: bool = True,
     checks: list[dict[str, str]] | None = None,
+    boundaries: dict[str, bool] | None = None,
 ) -> None:
     path.write_text(
         json.dumps(
@@ -962,6 +1042,7 @@ def _write_passing_startup_guard_report_with_readiness_git(
                     },
                 },
                 "checks": checks or [],
+                "boundaries": boundaries or PHASE6_STARTUP_CLOSED_BOUNDARIES,
             }
         ),
         encoding="utf-8",
@@ -1194,6 +1275,38 @@ def test_snapshot_blocks_phase6_startup_with_blocked_internal_check(
             "detail": "SourcePolicy is outside live-canary bounds.",
         }
     ]
+    assert snapshot["phase6"]["state"] == "blocked"
+
+
+def test_snapshot_blocks_phase6_startup_with_open_boundary_flag(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    guard_path = tmp_path / "live-startup-guard.json"
+    _write_passing_startup_guard_report_with_readiness_git(
+        guard_path,
+        readiness_git={
+            "commit": "b" * 40,
+            "dirty": False,
+        },
+        expected_git_commit="b" * 40,
+        boundaries={
+            **PHASE6_STARTUP_CLOSED_BOUNDARIES,
+            "connects_exchange": True,
+        },
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_startup_guard_report_path=guard_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    startup_guard = snapshot["phase6"]["reports"][1]
+    assert startup_guard["status"] == "blocked"
+    assert startup_guard["blockers"] == ["boundary:connects_exchange"]
     assert snapshot["phase6"]["state"] == "blocked"
 
 

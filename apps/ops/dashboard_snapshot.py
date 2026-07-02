@@ -27,6 +27,25 @@ DEFAULT_OBSERVABILITY_STALE_AFTER_SECONDS = 120.0
 DEFAULT_SNAPSHOT_WARNING_AFTER_SECONDS = 15 * 60.0
 DEFAULT_SNAPSHOT_STALE_AFTER_SECONDS = 60 * 60.0
 SNAPSHOT_SCHEMA_VERSION = "dashboard.snapshot.v1"
+_PHASE6_READINESS_BOUNDARY_KEYS = (
+    "starts_runtime",
+    "loads_exchange_credentials",
+    "mutates_source_policy",
+    "writes_signal_event",
+    "places_orders",
+    "authorizes_live_trading",
+)
+_PHASE6_STARTUP_GUARD_BOUNDARY_KEYS = (
+    "starts_runtime",
+    "loads_exchange_credentials",
+    "reads_exchange_credential_values",
+    "builds_nautilus_node",
+    "connects_exchange",
+    "mutates_source_policy",
+    "writes_signal_event",
+    "places_orders",
+    "authorizes_live_trading",
+)
 
 _STATUS_FIELD_RE = re.compile(
     r"^- \*\*(?P<key>Last updated|Current phase|Current objective)\*\*:\s*(?P<value>.+)$",
@@ -1535,6 +1554,12 @@ def _phase6_report_snapshot(
     if authorizes_live_trading:
         blockers.append(f"{authorization_field}_must_remain_false")
     if gate_met:
+        blockers.extend(
+            _phase6_boundary_blockers(
+                payload.get("boundaries"),
+                expected_schema=expected_schema,
+            )
+        )
         blockers.extend(_phase6_check_blockers(raw_checks))
         blockers.extend(
             f"evidence:{item['label']}"
@@ -2043,6 +2068,34 @@ def _phase6_check_blockers(checks: Any) -> list[str]:
             continue
         blockers.append(f"check:{check.get('name') or 'unknown'}")
     return blockers
+
+
+def _phase6_boundary_blockers(
+    boundaries: Any,
+    *,
+    expected_schema: str,
+) -> list[str]:
+    if expected_schema == "phase6.live_readiness.v1":
+        required_keys = _PHASE6_READINESS_BOUNDARY_KEYS
+    elif expected_schema == "phase6.live_startup_guard.v1":
+        required_keys = _PHASE6_STARTUP_GUARD_BOUNDARY_KEYS
+    else:
+        return []
+
+    if not isinstance(boundaries, dict):
+        return ["boundary:missing"]
+
+    blockers = [
+        f"boundary:{key}"
+        for key in required_keys
+        if boundaries.get(key) is not False
+    ]
+    blockers.extend(
+        f"boundary:{key}"
+        for key, value in boundaries.items()
+        if key not in required_keys and value is True
+    )
+    return sorted(dict.fromkeys(blockers))
 
 
 def _phase6_summary_lines(reports: Sequence[dict[str, Any]]) -> list[str]:
