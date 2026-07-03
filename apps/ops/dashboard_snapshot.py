@@ -557,6 +557,14 @@ def _validate_snapshot_freshness_thresholds(
     warning_after_seconds: float,
     stale_after_seconds: float,
 ) -> None:
+    warning_after_seconds = _snapshot_freshness_threshold(
+        "snapshot_warning_after_seconds",
+        warning_after_seconds,
+    )
+    stale_after_seconds = _snapshot_freshness_threshold(
+        "snapshot_stale_after_seconds",
+        stale_after_seconds,
+    )
     if warning_after_seconds <= 0:
         raise ValueError("snapshot_warning_after_seconds must be positive")
     if stale_after_seconds <= 0:
@@ -566,6 +574,16 @@ def _validate_snapshot_freshness_thresholds(
             "snapshot_stale_after_seconds must be greater than "
             "snapshot_warning_after_seconds"
         )
+
+
+def _snapshot_freshness_threshold(name: str, value: float) -> float:
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        raise ValueError(f"{name} must be numeric") from None
+    if not math.isfinite(parsed):
+        raise ValueError(f"{name} must be finite")
+    return parsed
 
 
 def _snapshot_freshness_policy(

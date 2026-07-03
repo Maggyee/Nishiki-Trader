@@ -266,6 +266,12 @@ def test_snapshot_freshness_thresholds_can_be_configured(tmp_path: Path) -> None
 @pytest.mark.parametrize(
     ("warning_after_seconds", "stale_after_seconds", "message"),
     [
+        (float("nan"), 60, "snapshot_warning_after_seconds must be finite"),
+        (float("inf"), 60, "snapshot_warning_after_seconds must be finite"),
+        (float("-inf"), 60, "snapshot_warning_after_seconds must be finite"),
+        (60, float("nan"), "snapshot_stale_after_seconds must be finite"),
+        (60, float("inf"), "snapshot_stale_after_seconds must be finite"),
+        (60, float("-inf"), "snapshot_stale_after_seconds must be finite"),
         (0, 60, "snapshot_warning_after_seconds must be positive"),
         (60, 0, "snapshot_stale_after_seconds must be positive"),
         (60, 60, "snapshot_stale_after_seconds must be greater"),
