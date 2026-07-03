@@ -467,14 +467,15 @@ def _live_risk_adr_gate(path: Path) -> dict[str, Any]:
     exists = path.exists()
     raw = path.read_bytes() if exists else b""
     artifact_sha256 = hashlib.sha256(raw).hexdigest() if exists else None
-    text = raw.decode("utf-8") if exists else ""
+    text, decode_error = _decode_utf8(raw) if exists else ("", None)
     status = _document_status(text)
     return {
         "path": str(path),
         "exists": exists,
         "sha256": artifact_sha256,
-        "status": status,
-        "accepted": status.lower().startswith("accepted"),
+        "decode_error": decode_error,
+        "status": "invalid_utf8" if decode_error else status,
+        "accepted": decode_error is None and status.lower().startswith("accepted"),
     }
 
 
@@ -913,6 +914,13 @@ def _finite_int(value: Any) -> int:
     return int(value)
 
 
+def _decode_utf8(raw: bytes) -> tuple[str, str | None]:
+    try:
+        return raw.decode("utf-8"), None
+    except UnicodeDecodeError as exc:
+        return "", str(exc)
+
+
 def _first_live_day_runbook_gate(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {
@@ -924,7 +932,18 @@ def _first_live_day_runbook_gate(path: Path) -> dict[str, Any]:
         }
     raw = path.read_bytes()
     artifact_sha256 = hashlib.sha256(raw).hexdigest()
-    text = raw.decode("utf-8")
+    text, decode_error = _decode_utf8(raw)
+    if decode_error:
+        return {
+            "path": str(path),
+            "sha256": artifact_sha256,
+            "accepted": False,
+            "blocker": "first_live_day_runbook_invalid_utf8",
+            "detail": f"{path} is not valid UTF-8: {decode_error}",
+            "missing_sections": [],
+            "status": "invalid_utf8",
+            "decode_error": decode_error,
+        }
     lowered = text.lower()
     status = _document_status(text)
     missing_sections = [

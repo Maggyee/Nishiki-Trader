@@ -888,6 +888,30 @@ def test_live_startup_guard_blocks_readiness_report_from_different_live_risk_adr
     )
 
 
+def test_live_startup_guard_blocks_invalid_utf8_live_risk_adr(
+    tmp_path: Path,
+) -> None:
+    paths = _write_evidence(tmp_path)
+    paths["adr"].write_bytes(b"\xff\xfe")
+
+    report = build_live_startup_guard_report(
+        _settings(tmp_path, live_risk_adr_path=paths["adr"]),
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+    encoded = json.dumps(asdict(report), allow_nan=False, sort_keys=True)
+    adr = report.evidence["live_risk_adr"]
+
+    assert report.startup_allowed is False
+    assert "live_risk_adr_not_accepted" in report.blockers
+    assert adr["sha256"] == hashlib.sha256(b"\xff\xfe").hexdigest()
+    assert adr["decode_error"]
+    assert adr["status"] == "invalid_utf8"
+    assert adr["accepted"] is False
+    assert "NaN" not in encoded
+    assert "Infinity" not in encoded
+
+
 def test_live_startup_guard_blocks_readiness_report_with_different_promotion_artifact(
     tmp_path: Path,
 ) -> None:
@@ -990,6 +1014,28 @@ def test_live_startup_guard_blocks_unaccepted_runbook(tmp_path: Path) -> None:
 
     assert report.startup_allowed is False
     assert "first_live_day_runbook_not_accepted" in report.blockers
+
+
+def test_live_startup_guard_blocks_invalid_utf8_runbook(tmp_path: Path) -> None:
+    paths = _write_evidence(tmp_path)
+    paths["runbook"].write_bytes(b"\xff\xfe")
+
+    report = build_live_startup_guard_report(
+        _settings(tmp_path, first_live_day_runbook_path=paths["runbook"]),
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+    encoded = json.dumps(asdict(report), allow_nan=False, sort_keys=True)
+    runbook = report.evidence["first_live_day_runbook"]
+
+    assert report.startup_allowed is False
+    assert "first_live_day_runbook_invalid_utf8" in report.blockers
+    assert runbook["sha256"] == hashlib.sha256(b"\xff\xfe").hexdigest()
+    assert runbook["decode_error"]
+    assert runbook["status"] == "invalid_utf8"
+    assert runbook["accepted"] is False
+    assert "NaN" not in encoded
+    assert "Infinity" not in encoded
 
 
 def test_live_startup_guard_blocks_promotion_review_with_only_stage_mentions(

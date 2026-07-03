@@ -175,6 +175,41 @@ def test_live_readiness_blocks_without_continuity_or_accepted_adr(tmp_path: Path
     }
 
 
+def test_live_readiness_blocks_invalid_utf8_source_documents(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    live_adr = tmp_path / "013-phase6-live-risk-gate.md"
+    status_path.write_bytes(b"\xff\xfe")
+    live_adr.write_bytes(b"\xff\xfe")
+
+    report = live_readiness.build_live_readiness_report(
+        project_status_path=status_path,
+        live_risk_adr_path=live_adr,
+        continuity_bundle_dirs=[],
+        source="freqai_linear_v1",
+        model_version="linear-mom-train20240105",
+        starting_capital_usdt=100,
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+    encoded = json.dumps(asdict(report), allow_nan=False, sort_keys=True)
+
+    assert report.readiness_gate_met is False
+    assert "project_status_invalid_utf8" in report.blockers
+    assert "project_status_live_trading_not_blocked" in report.blockers
+    assert "live_risk_adr_not_accepted" in report.blockers
+    assert report.project_status["sha256"] == hashlib.sha256(b"\xff\xfe").hexdigest()
+    assert report.project_status["decode_error"]
+    assert report.project_status["live_trading_blocked"] is False
+    assert report.live_risk_adr["sha256"] == hashlib.sha256(b"\xff\xfe").hexdigest()
+    assert report.live_risk_adr["decode_error"]
+    assert report.live_risk_adr["status"] == "invalid_utf8"
+    assert report.live_risk_adr["accepted"] is False
+    assert "NaN" not in encoded
+    assert "Infinity" not in encoded
+
+
 def test_live_readiness_uses_passive_continuity_summary(
     tmp_path: Path,
     monkeypatch,

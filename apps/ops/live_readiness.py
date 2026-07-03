@@ -114,6 +114,8 @@ def build_live_readiness_report(
             ),
         )
     )
+    if project_status.get("decode_error"):
+        blockers.append("project_status_invalid_utf8")
     if not project_status["live_trading_blocked"]:
         blockers.append("project_status_live_trading_not_blocked")
 
@@ -371,16 +373,20 @@ def _project_status_gate(path: Path) -> dict[str, Any]:
     exists = path.exists()
     raw = path.read_bytes() if exists else b""
     artifact_sha256 = hashlib.sha256(raw).hexdigest() if exists else None
-    text = raw.decode("utf-8") if exists else ""
+    text, decode_error = _decode_utf8(raw) if exists else ("", None)
     lowered = text.lower()
     return {
         "path": str(path),
         "exists": exists,
         "sha256": artifact_sha256,
+        "decode_error": decode_error,
         "live_trading_blocked": (
-            "no live trading" in lowered
-            or "live trading still blocked" in lowered
-            or ("实盘交易" in text and "blocked" in lowered)
+            decode_error is None
+            and (
+                "no live trading" in lowered
+                or "live trading still blocked" in lowered
+                or ("实盘交易" in text and "blocked" in lowered)
+            )
         ),
         "strict_continuity": _strict_streak(text),
     }
@@ -390,15 +396,23 @@ def _live_risk_adr_gate(path: Path) -> dict[str, Any]:
     exists = path.exists()
     raw = path.read_bytes() if exists else b""
     artifact_sha256 = hashlib.sha256(raw).hexdigest() if exists else None
-    text = raw.decode("utf-8") if exists else ""
+    text, decode_error = _decode_utf8(raw) if exists else ("", None)
     status = _adr_status(text)
     return {
         "path": str(path),
         "exists": exists,
         "sha256": artifact_sha256,
-        "status": status,
-        "accepted": status.lower().startswith("accepted"),
+        "decode_error": decode_error,
+        "status": "invalid_utf8" if decode_error else status,
+        "accepted": decode_error is None and status.lower().startswith("accepted"),
     }
+
+
+def _decode_utf8(raw: bytes) -> tuple[str, str | None]:
+    try:
+        return raw.decode("utf-8"), None
+    except UnicodeDecodeError as exc:
+        return "", str(exc)
 
 
 def _continuity_artifacts(bundle_dirs: list[Path]) -> list[dict[str, Any]]:
