@@ -1552,8 +1552,11 @@ def _phase6_report_snapshot(
     raw = path.read_bytes()
     report_sha256 = hashlib.sha256(raw).hexdigest()
     try:
-        payload = json.loads(raw.decode("utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        payload = json.loads(
+            raw.decode("utf-8"),
+            parse_constant=_reject_non_standard_json_constant,
+        )
+    except (UnicodeDecodeError, ValueError, json.JSONDecodeError) as exc:
         return {
             "label": label,
             "path": str(path),
@@ -2549,6 +2552,10 @@ def _phase6_startup_source_policy_blockers(
         blockers.append("source_policy:max_live_canary_multiplier")
 
     return sorted(dict.fromkeys(blockers))
+
+
+def _reject_non_standard_json_constant(value: str) -> None:
+    raise ValueError(f"non-standard JSON constant: {value}")
 
 
 def _phase6_float(value: Any) -> float | None:

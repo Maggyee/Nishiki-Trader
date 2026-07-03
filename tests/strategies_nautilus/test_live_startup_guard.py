@@ -522,6 +522,29 @@ def test_live_startup_guard_blocks_non_object_readiness_report(
     assert "readiness_report_object" in readiness["detail"]
 
 
+def test_live_startup_guard_blocks_non_standard_readiness_json_constant(
+    tmp_path: Path,
+) -> None:
+    paths = _write_evidence(tmp_path)
+    paths["readiness"].write_text(
+        '{"schema_version":"phase6.live_readiness.v1","generated_at_ns":NaN}',
+        encoding="utf-8",
+    )
+
+    report = build_live_startup_guard_report(
+        _settings(tmp_path, live_readiness_report_path=paths["readiness"]),
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    readiness = report.evidence["live_readiness_report"]
+    assert report.startup_allowed is False
+    assert "live_readiness_report_invalid_json" in report.blockers
+    assert readiness["accepted"] is False
+    assert readiness["blocker"] == "live_readiness_report_invalid_json"
+    assert "non-standard JSON constant: NaN" in readiness["detail"]
+
+
 def test_live_startup_guard_blocks_wrong_shape_readiness_sections(
     tmp_path: Path,
 ) -> None:
@@ -770,8 +793,8 @@ def test_live_startup_guard_blocks_non_finite_readiness_continuity_numbers(
 ) -> None:
     paths = _write_evidence(tmp_path)
     payload = json.loads(paths["readiness"].read_text(encoding="utf-8"))
-    payload["continuity_summary"]["required_consecutive_days"] = float("inf")
-    payload["continuity_summary"]["current_qualified_streak_days"] = float("inf")
+    payload["continuity_summary"]["required_consecutive_days"] = "Infinity"
+    payload["continuity_summary"]["current_qualified_streak_days"] = "NaN"
     paths["readiness"].write_text(json.dumps(payload), encoding="utf-8")
 
     report = build_live_startup_guard_report(

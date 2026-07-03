@@ -503,8 +503,11 @@ def _live_readiness_report_gate(
     raw = path.read_bytes()
     artifact_sha256 = hashlib.sha256(raw).hexdigest()
     try:
-        payload = json.loads(raw.decode("utf-8"))
-    except json.JSONDecodeError as exc:
+        payload = json.loads(
+            raw.decode("utf-8"),
+            parse_constant=_reject_non_standard_json_constant,
+        )
+    except (UnicodeDecodeError, ValueError, json.JSONDecodeError) as exc:
         return {
             "path": str(path),
             "sha256": artifact_sha256,
@@ -875,6 +878,10 @@ def _optional_dict(
         return value
     problems.append(problem)
     return {}
+
+
+def _reject_non_standard_json_constant(value: str) -> None:
+    raise ValueError(f"non-standard JSON constant: {value}")
 
 
 def _int_or_none(value: Any) -> int | None:

@@ -437,6 +437,33 @@ def test_snapshot_marks_non_object_phase6_report_invalid(tmp_path: Path) -> None
     assert snapshot["phase6"]["state"] == "blocked"
 
 
+def test_snapshot_marks_non_standard_phase6_json_constant_invalid(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    readiness_path = tmp_path / "live-readiness.json"
+    readiness_path.write_text(
+        '{"schema_version":"phase6.live_readiness.v1","generated_at_ns":NaN}',
+        encoding="utf-8",
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_readiness_report_path=readiness_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    readiness = snapshot["phase6"]["reports"][0]
+    assert readiness["status"] == "invalid"
+    assert readiness["report_sha256"] == hashlib.sha256(
+        readiness_path.read_bytes()
+    ).hexdigest()
+    assert readiness["blockers"] == ["invalid_json:ValueError"]
+    assert snapshot["phase6"]["counts"]["invalid_report_count"] == 1
+
+
 def test_snapshot_summarizes_phase6_gate_artifacts(tmp_path: Path) -> None:
     status_path = tmp_path / "project-status.md"
     _write_status(status_path)
