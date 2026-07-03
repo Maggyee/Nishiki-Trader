@@ -380,13 +380,23 @@ def _credential_boundary(
 
 
 def _capital_plan(starting_capital_usdt: float) -> dict[str, Any]:
+    capital = _finite_float(starting_capital_usdt)
+    if capital is None:
+        return {
+            "starting_capital_usdt": None,
+            "min_live_canary_capital_usdt": MIN_LIVE_CANARY_CAPITAL_USDT,
+            "max_live_canary_capital_usdt": MAX_LIVE_CANARY_CAPITAL_USDT,
+            "within_live_canary_range": False,
+            "blocker": "starting_capital_not_finite",
+            "detail": "Starting capital must be a finite USDT amount.",
+        }
     within_range = (
         MIN_LIVE_CANARY_CAPITAL_USDT
-        <= starting_capital_usdt
+        <= capital
         <= MAX_LIVE_CANARY_CAPITAL_USDT
     )
     return {
-        "starting_capital_usdt": starting_capital_usdt,
+        "starting_capital_usdt": capital,
         "min_live_canary_capital_usdt": MIN_LIVE_CANARY_CAPITAL_USDT,
         "max_live_canary_capital_usdt": MAX_LIVE_CANARY_CAPITAL_USDT,
         "within_live_canary_range": within_range,
@@ -405,20 +415,23 @@ def _capital_plan(starting_capital_usdt: float) -> dict[str, Any]:
 
 def _source_policy_gate(settings: LiveStartupSettings) -> dict[str, Any]:
     blockers: list[str] = []
+    multiplier = _finite_float(settings.policy_position_pct_multiplier)
     if settings.policy_dry_run:
         blockers.append("policy_must_not_be_dry_run_for_live_canary")
-    if not 0.0 <= settings.policy_position_pct_multiplier <= LIVE_CANARY_MAX_MULTIPLIER:
+    if multiplier is None:
+        blockers.append("policy_multiplier_must_be_finite")
+    elif not 0.0 <= multiplier <= LIVE_CANARY_MAX_MULTIPLIER:
         blockers.append("policy_multiplier_outside_live_canary_bounds")
     return {
         "dry_run": settings.policy_dry_run,
-        "position_pct_multiplier": settings.policy_position_pct_multiplier,
+        "position_pct_multiplier": multiplier,
         "max_live_canary_multiplier": LIVE_CANARY_MAX_MULTIPLIER,
         "within_live_canary_bounds": not blockers,
         "blockers": blockers,
         "detail": (
             "SourcePolicy is within live-canary bounds."
             if not blockers
-            else "SourcePolicy must be dry_run=False and position_pct_multiplier <= 0.1."
+            else "SourcePolicy must be dry_run=False with a finite position_pct_multiplier <= 0.1."
         ),
     }
 
@@ -426,17 +439,20 @@ def _source_policy_gate(settings: LiveStartupSettings) -> dict[str, Any]:
 def _market_scope_gate(settings: LiveStartupSettings) -> dict[str, Any]:
     normalized_market_type = settings.market_type.strip().lower()
     blockers: list[str] = []
+    leverage = _finite_float(settings.max_leverage)
     if normalized_market_type != "spot":
         blockers.append("market_type_must_be_spot")
     if settings.margin_enabled:
         blockers.append("margin_must_be_disabled")
-    if settings.max_leverage != 1.0:
+    if leverage is None:
+        blockers.append("leverage_must_be_finite")
+    elif leverage != 1.0:
         blockers.append("leverage_must_be_one")
     accepted = not blockers
     return {
         "market_type": normalized_market_type,
         "margin_enabled": settings.margin_enabled,
-        "max_leverage": settings.max_leverage,
+        "max_leverage": leverage,
         "spot_only_no_margin_no_leverage": accepted,
         "blockers": blockers,
         "detail": (
@@ -723,18 +739,19 @@ def _readiness_report_freshness(
         age_seconds = None
     else:
         age_seconds = (guard_generated_at_ns - report_generated_ns) / 1_000_000_000
-    if not math.isfinite(max_age_seconds) or max_age_seconds <= 0:
+    max_age_seconds_finite = _finite_float(max_age_seconds)
+    if max_age_seconds_finite is None or max_age_seconds_finite <= 0:
         problems.append("max_readiness_report_age_seconds")
     elif age_seconds is not None:
         if age_seconds < 0:
             problems.append("readiness_generated_in_future")
-        elif age_seconds > max_age_seconds:
+        elif age_seconds > max_age_seconds_finite:
             problems.append("readiness_report_stale")
     return {
         "report_generated_at_ns": report_generated_ns,
         "guard_generated_at_ns": guard_generated_at_ns,
         "age_seconds": age_seconds,
-        "max_age_seconds": max_age_seconds,
+        "max_age_seconds": max_age_seconds_finite,
         "fresh": not problems,
         "problems": problems,
     }
@@ -871,6 +888,16 @@ def _int_or_none(value: Any) -> int | None:
         return int(value)
     except (TypeError, ValueError, OverflowError):
         return None
+
+
+def _finite_float(value: Any) -> float | None:
+    if isinstance(value, bool):
+        return None
+    try:
+        candidate = float(value)
+    except (TypeError, ValueError, OverflowError):
+        return None
+    return candidate if math.isfinite(candidate) else None
 
 
 def _finite_int(value: Any) -> int:
@@ -1062,7 +1089,7 @@ def main(
     if args.markdown:
         print(render_markdown_report(report))
     else:
-        print(json.dumps(asdict(report), indent=2, sort_keys=True))
+        print(json.dumps(asdict(report), allow_nan=False, indent=2, sort_keys=True))
     return EXIT_OK if report.startup_allowed else EXIT_STARTUP_VALIDATION
 
 

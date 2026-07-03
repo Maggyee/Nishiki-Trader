@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import time
+from dataclasses import asdict
 from pathlib import Path
 
 from apps.strategies_nautilus.runners.live_startup_guard import (
@@ -499,6 +500,7 @@ def test_live_startup_guard_blocks_non_finite_readiness_freshness_window(
     assert "live_readiness_report_gate_not_met" in report.blockers
     assert "max_readiness_report_age_seconds" in readiness["problems"]
     assert readiness["freshness"]["fresh"] is False
+    assert readiness["freshness"]["max_age_seconds"] is None
 
 
 def test_live_startup_guard_blocks_non_object_readiness_report(
@@ -905,6 +907,37 @@ def test_live_startup_guard_blocks_non_spot_or_leveraged_scope(
     assert "market_type_must_be_spot" in report.blockers
     assert "margin_must_be_disabled" in report.blockers
     assert "leverage_must_be_one" in report.blockers
+
+
+def test_live_startup_guard_blocks_non_finite_numeric_inputs_with_strict_json(
+    tmp_path: Path,
+) -> None:
+    report = build_live_startup_guard_report(
+        _settings(
+            tmp_path,
+            starting_capital_usdt=float("nan"),
+            max_leverage=float("inf"),
+            policy_position_pct_multiplier=float("nan"),
+            max_readiness_report_age_seconds=float("inf"),
+        ),
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+    encoded = json.dumps(asdict(report), allow_nan=False, sort_keys=True)
+    readiness = report.evidence["live_readiness_report"]
+
+    assert report.startup_allowed is False
+    assert "starting_capital_not_finite" in report.blockers
+    assert "leverage_must_be_finite" in report.blockers
+    assert "policy_multiplier_must_be_finite" in report.blockers
+    assert "live_readiness_report_gate_not_met" in report.blockers
+    assert "max_readiness_report_age_seconds" in readiness["problems"]
+    assert report.capital_plan["starting_capital_usdt"] is None
+    assert report.market_scope["max_leverage"] is None
+    assert report.source_policy["position_pct_multiplier"] is None
+    assert readiness["freshness"]["max_age_seconds"] is None
+    assert "NaN" not in encoded
+    assert "Infinity" not in encoded
 
 
 def test_live_startup_guard_blocks_policy_outside_live_canary_bounds(

@@ -463,13 +463,23 @@ def _capital_plan_gate(starting_capital_usdt: float | None) -> dict[str, Any]:
             "blocker": "starting_capital_not_declared",
             "detail": "Starting capital must be explicitly declared.",
         }
+    capital = _finite_float(starting_capital_usdt)
+    if capital is None:
+        return {
+            "starting_capital_usdt": None,
+            "min_live_canary_capital_usdt": MIN_LIVE_CANARY_CAPITAL_USDT,
+            "max_live_canary_capital_usdt": MAX_LIVE_CANARY_CAPITAL_USDT,
+            "within_live_canary_range": False,
+            "blocker": "starting_capital_not_finite",
+            "detail": "Starting capital must be a finite USDT amount.",
+        }
     within_range = (
         MIN_LIVE_CANARY_CAPITAL_USDT
-        <= starting_capital_usdt
+        <= capital
         <= MAX_LIVE_CANARY_CAPITAL_USDT
     )
     return {
-        "starting_capital_usdt": starting_capital_usdt,
+        "starting_capital_usdt": capital,
         "min_live_canary_capital_usdt": MIN_LIVE_CANARY_CAPITAL_USDT,
         "max_live_canary_capital_usdt": MAX_LIVE_CANARY_CAPITAL_USDT,
         "within_live_canary_range": within_range,
@@ -494,17 +504,20 @@ def _market_scope_gate(
 ) -> dict[str, Any]:
     normalized_market_type = market_type.strip().lower()
     blockers: list[str] = []
+    leverage = _finite_float(max_leverage)
     if normalized_market_type != "spot":
         blockers.append("market_type_must_be_spot")
     if margin_enabled:
         blockers.append("margin_must_be_disabled")
-    if max_leverage != 1.0:
+    if leverage is None:
+        blockers.append("leverage_must_be_finite")
+    elif leverage != 1.0:
         blockers.append("leverage_must_be_one")
     accepted = not blockers
     return {
         "market_type": normalized_market_type,
         "margin_enabled": margin_enabled,
-        "max_leverage": max_leverage,
+        "max_leverage": leverage,
         "spot_only_no_margin_no_leverage": accepted,
         "blockers": blockers,
         "detail": (
@@ -677,7 +690,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.markdown:
         print(render_markdown_report(report))
     else:
-        print(json.dumps(asdict(report), indent=2, sort_keys=True))
+        print(json.dumps(asdict(report), allow_nan=False, indent=2, sort_keys=True))
     return 0
 
 
