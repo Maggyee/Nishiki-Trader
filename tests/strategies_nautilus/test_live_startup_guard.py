@@ -176,7 +176,25 @@ def _write_evidence(
                     "live_trading_blocked": True,
                     "strict_continuity": "14/14",
                 },
-                "continuity_summary": {"required_gate_met": True},
+                "continuity_summary": {
+                    "bundle_dirs": [str(bundle_dir)],
+                    "min_clean_hours_per_day": 6.0,
+                    "required_consecutive_days": 14,
+                    "day_count": 14,
+                    "qualified_day_count": 14,
+                    "longest_qualified_streak_days": 14,
+                    "current_qualified_streak_days": 14,
+                    "required_gate_met": True,
+                    "total_exchange_error_count": 0,
+                    "total_ws_reconnect_count": 0,
+                    "max_restart_sequence": 0,
+                    "restart_drift_days": [],
+                    "kill_switch_alerts": 0,
+                    "emergency_flatten_completed_alerts": 0,
+                    "blockers": [],
+                    "days": [],
+                    "recommendation": "ready_for_live_risk_adr_review",
+                },
                 "continuity_artifacts": [
                     {
                         "bundle_dir": str(bundle_dir),
@@ -667,6 +685,60 @@ def test_live_startup_guard_blocks_readiness_report_without_continuity_artifacts
     assert "live_readiness_report_gate_not_met" in report.blockers
     assert "testnet_continuity_artifacts" in readiness["problems"]
     assert "continuity_artifacts_missing" in readiness["continuity_artifact_problems"]
+
+
+def test_live_startup_guard_blocks_readiness_report_with_minimal_continuity_claim(
+    tmp_path: Path,
+) -> None:
+    paths = _write_evidence(tmp_path)
+    payload = json.loads(paths["readiness"].read_text(encoding="utf-8"))
+    payload["continuity_summary"] = {"required_gate_met": True}
+    paths["readiness"].write_text(json.dumps(payload), encoding="utf-8")
+
+    report = build_live_startup_guard_report(
+        _settings(tmp_path, live_readiness_report_path=paths["readiness"]),
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    readiness = report.evidence["live_readiness_report"]
+    assert report.startup_allowed is False
+    assert "live_readiness_report_gate_not_met" in report.blockers
+    assert "testnet_continuity_required_days" in readiness["problems"]
+    assert "testnet_continuity_current_streak" in readiness["problems"]
+    assert "testnet_continuity_kill_switch_alerts" in readiness["problems"]
+    assert "testnet_continuity_emergency_flatten_alerts" in readiness["problems"]
+    assert "testnet_continuity_restart_drift_days" in readiness["problems"]
+
+
+def test_live_startup_guard_blocks_readiness_report_with_continuity_risk_events(
+    tmp_path: Path,
+) -> None:
+    paths = _write_evidence(tmp_path)
+    payload = json.loads(paths["readiness"].read_text(encoding="utf-8"))
+    payload["continuity_summary"]["current_qualified_streak_days"] = 13
+    payload["continuity_summary"]["kill_switch_alerts"] = 1
+    payload["continuity_summary"]["emergency_flatten_completed_alerts"] = 1
+    payload["continuity_summary"]["restart_drift_days"] = ["2026-06-01"]
+    payload["continuity_summary"]["blockers"] = [
+        "current_qualified_streak_days=13<required=14"
+    ]
+    paths["readiness"].write_text(json.dumps(payload), encoding="utf-8")
+
+    report = build_live_startup_guard_report(
+        _settings(tmp_path, live_readiness_report_path=paths["readiness"]),
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    readiness = report.evidence["live_readiness_report"]
+    assert report.startup_allowed is False
+    assert "live_readiness_report_gate_not_met" in report.blockers
+    assert "testnet_continuity_current_streak" in readiness["problems"]
+    assert "testnet_continuity_kill_switch_alerts" in readiness["problems"]
+    assert "testnet_continuity_emergency_flatten_alerts" in readiness["problems"]
+    assert "testnet_continuity_restart_drift_days" in readiness["problems"]
+    assert "testnet_continuity_blockers" in readiness["problems"]
 
 
 def test_live_startup_guard_blocks_readiness_report_with_missing_continuity_manifest(

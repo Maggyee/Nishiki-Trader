@@ -43,6 +43,7 @@ REQUIRED_LIVE_CREDENTIAL_ENV_NAMES = (
 MIN_LIVE_CANARY_CAPITAL_USDT = 100.0
 MAX_LIVE_CANARY_CAPITAL_USDT = 500.0
 LIVE_CANARY_MAX_MULTIPLIER = 0.1
+REQUIRED_TESTNET_CONTINUITY_DAYS = 14
 EXIT_OK = 0
 EXIT_STARTUP_VALIDATION = 2
 
@@ -567,6 +568,7 @@ def _live_readiness_report_gate(
     )
     if continuity.get("required_gate_met") is not True:
         problems.append("testnet_continuity")
+    problems.extend(_continuity_summary_problems(continuity))
     continuity_artifacts = payload.get("continuity_artifacts")
     continuity_artifact_problems = []
     if continuity.get("required_gate_met") is True:
@@ -737,6 +739,36 @@ def _readiness_report_freshness(
     }
 
 
+def _continuity_summary_problems(continuity: dict[str, Any]) -> list[str]:
+    problems: list[str] = []
+    required_days = _int_or_none(continuity.get("required_consecutive_days"))
+    current_streak = _int_or_none(continuity.get("current_qualified_streak_days"))
+    if required_days is None or required_days < REQUIRED_TESTNET_CONTINUITY_DAYS:
+        problems.append("testnet_continuity_required_days")
+    required_streak = max(required_days or 0, REQUIRED_TESTNET_CONTINUITY_DAYS)
+    if current_streak is None or current_streak < required_streak:
+        problems.append("testnet_continuity_current_streak")
+
+    kill_switch_alerts = _int_or_none(continuity.get("kill_switch_alerts"))
+    if kill_switch_alerts != 0:
+        problems.append("testnet_continuity_kill_switch_alerts")
+
+    emergency_flatten_alerts = _int_or_none(
+        continuity.get("emergency_flatten_completed_alerts")
+    )
+    if emergency_flatten_alerts != 0:
+        problems.append("testnet_continuity_emergency_flatten_alerts")
+
+    restart_drift_days = continuity.get("restart_drift_days")
+    if not isinstance(restart_drift_days, list) or restart_drift_days:
+        problems.append("testnet_continuity_restart_drift_days")
+
+    blockers = continuity.get("blockers")
+    if blockers not in (None, []):
+        problems.append("testnet_continuity_blockers")
+    return problems
+
+
 def _promotion_review_gate(settings: LiveStartupSettings) -> dict[str, Any]:
     path = settings.live_promotion_review_path
     if not path.exists():
@@ -825,6 +857,15 @@ def _optional_dict(
         return value
     problems.append(problem)
     return {}
+
+
+def _int_or_none(value: Any) -> int | None:
+    if isinstance(value, bool):
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def _first_live_day_runbook_gate(path: Path) -> dict[str, Any]:
