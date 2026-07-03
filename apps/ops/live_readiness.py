@@ -10,6 +10,8 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
+import operator
 import re
 import subprocess
 import time
@@ -29,6 +31,7 @@ DEFAULT_LIVE_RISK_ADR_PATH = Path("docs/decisions/013-phase6-live-risk-gate.md")
 SCHEMA_VERSION = "phase6.live_readiness.v1"
 MIN_LIVE_CANARY_CAPITAL_USDT = 100.0
 MAX_LIVE_CANARY_CAPITAL_USDT = 500.0
+REQUIRED_TESTNET_CONTINUITY_DAYS = 14
 
 _STATUS_RE = re.compile(
     r"^- \*\*(?:Status|状态)\*\*[:：]\s*(?P<value>.+)$",
@@ -155,7 +158,19 @@ def build_live_readiness_report(
     continuity_summary = None
     bundle_dirs = continuity_bundle_dirs or []
     continuity_artifacts = _continuity_artifacts(bundle_dirs)
-    if bundle_dirs:
+    continuity_config = _continuity_config_gate(
+        min_clean_hours_per_day=min_clean_hours_per_day,
+        required_consecutive_days=required_consecutive_days,
+    )
+    checks.append(
+        _check(
+            "testnet_continuity_config",
+            "ok" if continuity_config["accepted"] else "blocked",
+            str(continuity_config["detail"]),
+        )
+    )
+    blockers.extend(str(item) for item in continuity_config["blockers"])
+    if bundle_dirs and continuity_config["accepted"]:
         continuity_artifact_hashes_present = all(
             bool(artifact.get("sha256")) for artifact in continuity_artifacts
         )
@@ -205,6 +220,14 @@ def build_live_readiness_report(
                     or "Continuity summary did not meet the required gate.",
                 )
             )
+    elif bundle_dirs:
+        checks.append(
+            _check(
+                "testnet_continuity",
+                "blocked",
+                "Continuity summary was not loaded because continuity review parameters are invalid.",
+            )
+        )
     else:
         blockers.append("testnet_continuity_evidence_missing")
         checks.append(
@@ -395,6 +418,41 @@ def _continuity_artifacts(bundle_dirs: list[Path]) -> list[dict[str, Any]]:
     return artifacts
 
 
+def _continuity_config_gate(
+    *,
+    min_clean_hours_per_day: float,
+    required_consecutive_days: int,
+) -> dict[str, Any]:
+    blockers: list[str] = []
+    details: list[str] = []
+
+    clean_hours = _finite_float(min_clean_hours_per_day)
+    if clean_hours is None or clean_hours <= 0:
+        blockers.append("testnet_continuity_min_clean_hours_invalid")
+        details.append("min_clean_hours_per_day must be finite and > 0.")
+
+    required_days = _int_or_none(required_consecutive_days)
+    if required_days is None or required_days <= 0:
+        blockers.append("testnet_continuity_required_days_invalid")
+        details.append("required_consecutive_days must be a positive integer.")
+    elif required_days < REQUIRED_TESTNET_CONTINUITY_DAYS:
+        blockers.append("testnet_continuity_required_days_below_phase6_minimum")
+        details.append(
+            "required_consecutive_days must be at least 14 for Phase 6 live readiness."
+        )
+
+    accepted = not blockers
+    return {
+        "accepted": accepted,
+        "blockers": blockers,
+        "detail": (
+            "Continuity review parameters preserve the 14-day Phase 6 minimum."
+            if accepted
+            else " ".join(details)
+        ),
+    }
+
+
 def _capital_plan_gate(starting_capital_usdt: float | None) -> dict[str, Any]:
     if starting_capital_usdt is None:
         return {
@@ -526,6 +584,25 @@ def _check(name: str, status: str, detail: str) -> ReadinessCheck:
 
 def _has_text(value: str | None) -> bool:
     return bool(value and value.strip())
+
+
+def _finite_float(value: Any) -> float | None:
+    if isinstance(value, bool):
+        return None
+    try:
+        candidate = float(value)
+    except (TypeError, ValueError, OverflowError):
+        return None
+    return candidate if math.isfinite(candidate) else None
+
+
+def _int_or_none(value: Any) -> int | None:
+    if isinstance(value, bool):
+        return None
+    try:
+        return operator.index(value)
+    except TypeError:
+        return None
 
 
 def _to_jsonable_dict(value: Any) -> dict[str, Any]:

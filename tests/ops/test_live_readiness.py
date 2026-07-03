@@ -210,6 +210,101 @@ def test_live_readiness_uses_passive_continuity_summary(
     assert "live_risk_adr_not_accepted" in report.blockers
 
 
+def test_live_readiness_blocks_continuity_required_days_below_phase6_minimum(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    live_adr = tmp_path / "013-phase6-live-risk-gate.md"
+    promotion = tmp_path / "live-promotion.md"
+    bundle_dir = tmp_path / "bundle-1"
+    _write_status(status_path)
+    _write_live_adr(live_adr, status="Accepted")
+    promotion.write_text(_live_promotion_text(), encoding="utf-8")
+    _write_bundle_manifest(bundle_dir)
+
+    def fail_if_loaded(*args, **kwargs):
+        raise AssertionError("continuity summary should not load invalid config")
+
+    monkeypatch.setattr(
+        live_readiness,
+        "load_testnet_continuity_summary",
+        fail_if_loaded,
+    )
+
+    report = live_readiness.build_live_readiness_report(
+        project_status_path=status_path,
+        live_risk_adr_path=live_adr,
+        continuity_bundle_dirs=[bundle_dir],
+        source="freqai_linear_v1",
+        model_version="linear-mom-train20240105",
+        live_promotion_review_path=promotion,
+        starting_capital_usdt=250,
+        required_consecutive_days=1,
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    config_check = next(
+        check for check in report.checks if check.name == "testnet_continuity_config"
+    )
+    continuity_check = next(
+        check for check in report.checks if check.name == "testnet_continuity"
+    )
+    assert report.readiness_gate_met is False
+    assert report.continuity_summary is None
+    assert "testnet_continuity_required_days_below_phase6_minimum" in report.blockers
+    assert config_check.status == "blocked"
+    assert "at least 14" in config_check.detail
+    assert continuity_check.status == "blocked"
+    assert "not loaded" in continuity_check.detail
+
+
+def test_live_readiness_blocks_invalid_continuity_clean_hours_without_loader(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    live_adr = tmp_path / "013-phase6-live-risk-gate.md"
+    promotion = tmp_path / "live-promotion.md"
+    bundle_dir = tmp_path / "bundle-1"
+    _write_status(status_path)
+    _write_live_adr(live_adr, status="Accepted")
+    promotion.write_text(_live_promotion_text(), encoding="utf-8")
+    _write_bundle_manifest(bundle_dir)
+
+    def fail_if_loaded(*args, **kwargs):
+        raise AssertionError("continuity summary should not load invalid config")
+
+    monkeypatch.setattr(
+        live_readiness,
+        "load_testnet_continuity_summary",
+        fail_if_loaded,
+    )
+
+    report = live_readiness.build_live_readiness_report(
+        project_status_path=status_path,
+        live_risk_adr_path=live_adr,
+        continuity_bundle_dirs=[bundle_dir],
+        source="freqai_linear_v1",
+        model_version="linear-mom-train20240105",
+        live_promotion_review_path=promotion,
+        starting_capital_usdt=250,
+        min_clean_hours_per_day=0,
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    config_check = next(
+        check for check in report.checks if check.name == "testnet_continuity_config"
+    )
+    assert report.readiness_gate_met is False
+    assert report.continuity_summary is None
+    assert "testnet_continuity_min_clean_hours_invalid" in report.blockers
+    assert config_check.status == "blocked"
+    assert "finite and > 0" in config_check.detail
+
+
 def test_live_readiness_blocks_blank_source_identity(tmp_path: Path) -> None:
     status_path = tmp_path / "project-status.md"
     live_adr = tmp_path / "013-phase6-live-risk-gate.md"
