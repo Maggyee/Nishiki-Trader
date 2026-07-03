@@ -1553,7 +1553,7 @@ def _phase6_report_snapshot(
     report_sha256 = hashlib.sha256(raw).hexdigest()
     try:
         payload = json.loads(raw.decode("utf-8"))
-    except json.JSONDecodeError as exc:
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
         return {
             "label": label,
             "path": str(path),
@@ -1572,6 +1572,28 @@ def _phase6_report_snapshot(
             "report_age_seconds": None,
             "report_sha256": report_sha256,
             "blockers": [f"invalid_json:{exc.__class__.__name__}"],
+            "checks": [],
+            "evidence": [],
+        }
+    if not isinstance(payload, dict):
+        return {
+            "label": label,
+            "path": str(path),
+            "attached": True,
+            "exists": True,
+            "schema_version": None,
+            "status": "invalid",
+            "gate_field": gate_field,
+            "gate_met": False,
+            "authorization_field": authorization_field,
+            "authorizes_live_trading": False,
+            "source": None,
+            "model_version": None,
+            "recommendation": None,
+            "generated_at_ns": None,
+            "report_age_seconds": None,
+            "report_sha256": report_sha256,
+            "blockers": [f"invalid_report_object:{type(payload).__name__}"],
             "checks": [],
             "evidence": [],
         }
