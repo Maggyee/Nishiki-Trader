@@ -461,6 +461,62 @@ def test_live_startup_guard_blocks_readiness_report_without_generated_at_ns(
     assert readiness["freshness"]["report_generated_at_ns"] is None
 
 
+def test_live_startup_guard_blocks_non_object_readiness_report(
+    tmp_path: Path,
+) -> None:
+    paths = _write_evidence(tmp_path)
+    paths["readiness"].write_text(json.dumps(["not", "an", "object"]), encoding="utf-8")
+
+    report = build_live_startup_guard_report(
+        _settings(tmp_path, live_readiness_report_path=paths["readiness"]),
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    readiness = report.evidence["live_readiness_report"]
+    assert report.startup_allowed is False
+    assert "live_readiness_report_gate_not_met" in report.blockers
+    assert readiness["problems"] == ["readiness_report_object"]
+    assert "readiness_report_object" in readiness["detail"]
+
+
+def test_live_startup_guard_blocks_wrong_shape_readiness_sections(
+    tmp_path: Path,
+) -> None:
+    paths = _write_evidence(tmp_path)
+    payload = json.loads(paths["readiness"].read_text(encoding="utf-8"))
+    payload["git"] = "not-a-git-object"
+    payload["project_status"] = "not-a-project-status-object"
+    payload["continuity_summary"] = "not-a-continuity-object"
+    payload["capital_plan"] = "not-a-capital-plan-object"
+    payload["market_scope"] = "not-a-market-scope-object"
+    payload["boundaries"] = "not-a-boundary-object"
+    payload["live_risk_adr"] = "not-an-adr-object"
+    payload["live_promotion_review"] = "not-a-promotion-object"
+    paths["readiness"].write_text(json.dumps(payload), encoding="utf-8")
+
+    report = build_live_startup_guard_report(
+        _settings(tmp_path, live_readiness_report_path=paths["readiness"]),
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    problems = report.evidence["live_readiness_report"]["problems"]
+    assert report.startup_allowed is False
+    assert "live_readiness_report_gate_not_met" in report.blockers
+    for problem in (
+        "readiness_git",
+        "project_status",
+        "continuity_summary",
+        "capital_plan",
+        "market_scope",
+        "readiness_boundaries",
+        "live_risk_adr",
+        "live_promotion_review",
+    ):
+        assert problem in problems
+
+
 def test_live_startup_guard_blocks_dirty_readiness_report(
     tmp_path: Path,
 ) -> None:

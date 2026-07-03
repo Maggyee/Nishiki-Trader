@@ -501,6 +501,23 @@ def _live_readiness_report_gate(
             "blocker": "live_readiness_report_invalid_json",
             "detail": f"{path} is not valid JSON: {exc}",
         }
+    if not isinstance(payload, dict):
+        expected_project_status_sha256 = _file_sha256_or_none(
+            settings.project_status_path
+        )
+        return {
+            "path": str(path),
+            "sha256": artifact_sha256,
+            "readiness_git": None,
+            "expected_git_commit": git_state.commit,
+            "expected_git_dirty": False,
+            "expected_project_status_sha256": expected_project_status_sha256,
+            "expected_project_status_path": str(settings.project_status_path),
+            "accepted": False,
+            "blocker": "live_readiness_report_gate_not_met",
+            "detail": "Live readiness report failed checks: readiness_report_object",
+            "problems": ["readiness_report_object"],
+        }
 
     problems: list[str] = []
     freshness = _readiness_report_freshness(
@@ -521,14 +538,20 @@ def _live_readiness_report_gate(
         problems.append("live_trading_allowed_must_remain_false")
     if payload.get("blockers"):
         problems.append("blockers_must_be_empty")
-    report_git = payload.get("git")
-    report_git = report_git if isinstance(report_git, dict) else {}
+    report_git = _optional_dict(
+        payload.get("git"),
+        problem="readiness_git",
+        problems=problems,
+    )
     if report_git.get("dirty") is not False:
         problems.append("readiness_git_dirty")
     if report_git.get("commit") != git_state.commit:
         problems.append("readiness_git_commit")
-    project_status = payload.get("project_status")
-    project_status = project_status if isinstance(project_status, dict) else {}
+    project_status = _optional_dict(
+        payload.get("project_status"),
+        problem="project_status",
+        problems=problems,
+    )
     expected_project_status_sha256 = _file_sha256_or_none(settings.project_status_path)
     project_status_sha256 = project_status.get("sha256")
     if (
@@ -537,7 +560,11 @@ def _live_readiness_report_gate(
         or project_status_sha256 != expected_project_status_sha256
     ):
         problems.append("project_status_sha256")
-    continuity = payload.get("continuity_summary") or {}
+    continuity = _optional_dict(
+        payload.get("continuity_summary"),
+        problem="continuity_summary",
+        problems=problems,
+    )
     if continuity.get("required_gate_met") is not True:
         problems.append("testnet_continuity")
     continuity_artifacts = payload.get("continuity_artifacts")
@@ -549,7 +576,11 @@ def _live_readiness_report_gate(
         )
         if continuity_artifact_problems:
             problems.append("testnet_continuity_artifacts")
-    capital_plan = payload.get("capital_plan") or {}
+    capital_plan = _optional_dict(
+        payload.get("capital_plan"),
+        problem="capital_plan",
+        problems=problems,
+    )
     if capital_plan.get("within_live_canary_range") is not True:
         problems.append("capital_plan")
     report_capital = capital_plan.get("starting_capital_usdt")
@@ -559,7 +590,11 @@ def _live_readiness_report_gate(
         report_capital_float = None
     if report_capital_float != settings.starting_capital_usdt:
         problems.append("starting_capital_usdt")
-    market_scope = payload.get("market_scope") or {}
+    market_scope = _optional_dict(
+        payload.get("market_scope"),
+        problem="market_scope",
+        problems=problems,
+    )
     if market_scope.get("spot_only_no_margin_no_leverage") is not True:
         problems.append("market_scope")
     if market_scope.get("market_type") != settings.market_type.strip().lower():
@@ -572,7 +607,11 @@ def _live_readiness_report_gate(
         report_max_leverage = None
     if report_max_leverage != settings.max_leverage:
         problems.append("max_leverage")
-    boundaries = payload.get("boundaries") or {}
+    boundaries = _optional_dict(
+        payload.get("boundaries"),
+        problem="readiness_boundaries",
+        problems=problems,
+    )
     opened_boundaries = [
         key
         for key in (
@@ -587,7 +626,11 @@ def _live_readiness_report_gate(
     ]
     if opened_boundaries:
         problems.append("readiness_boundaries")
-    live_risk_adr = payload.get("live_risk_adr") or {}
+    live_risk_adr = _optional_dict(
+        payload.get("live_risk_adr"),
+        problem="live_risk_adr",
+        problems=problems,
+    )
     expected_live_risk_adr_sha256 = _file_sha256_or_none(settings.live_risk_adr_path)
     if live_risk_adr.get("accepted") is not True:
         problems.append("live_risk_adr")
@@ -596,7 +639,11 @@ def _live_readiness_report_gate(
         or live_risk_adr.get("sha256") != expected_live_risk_adr_sha256
     ):
         problems.append("live_risk_adr_sha256")
-    live_promotion_review = payload.get("live_promotion_review") or {}
+    live_promotion_review = _optional_dict(
+        payload.get("live_promotion_review"),
+        problem="live_promotion_review",
+        problems=problems,
+    )
     expected_promotion_review_sha256 = _promotion_review_sha256_or_none(
         settings.live_promotion_review_path
     )
@@ -607,6 +654,7 @@ def _live_readiness_report_gate(
         or live_promotion_review.get("sha256") != expected_promotion_review_sha256
     ):
         problems.append("live_promotion_review_sha256")
+    problems = list(dict.fromkeys(problems))
     if problems:
         return {
             "path": str(path),
@@ -763,6 +811,20 @@ def _file_sha256_or_none(path: Path) -> str | None:
         return hashlib.sha256(path.read_bytes()).hexdigest()
     except OSError:
         return None
+
+
+def _optional_dict(
+    value: Any,
+    *,
+    problem: str,
+    problems: list[str],
+) -> dict[str, Any]:
+    if value is None:
+        return {}
+    if isinstance(value, dict):
+        return value
+    problems.append(problem)
+    return {}
 
 
 def _first_live_day_runbook_gate(path: Path) -> dict[str, Any]:
