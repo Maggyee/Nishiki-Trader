@@ -1086,6 +1086,45 @@ def test_live_startup_guard_blocks_non_promote_live_review(tmp_path: Path) -> No
     assert "decision" in promotion["problems"]
 
 
+def test_live_startup_guard_blocks_non_standard_json_promotion_review(
+    tmp_path: Path,
+) -> None:
+    paths = _write_evidence(tmp_path)
+    _replace_promotion(
+        paths,
+        json.dumps(
+            {
+                "source": SOURCE,
+                "model_version": MODEL_VERSION,
+                "current_stage": "testnet_canary",
+                "target_stage": "live_canary",
+                "decision": "promote",
+                "decision_allowed": True,
+                "operator": "pytest",
+                "review_blockers": [],
+                "promotion_gate_blockers": [],
+            }
+        ).replace('"pytest"', "NaN"),
+    )
+
+    report = build_live_startup_guard_report(
+        _settings(tmp_path, live_promotion_review_path=paths["promotion"]),
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+    encoded = json.dumps(asdict(report), allow_nan=False, sort_keys=True)
+    promotion = report.evidence["live_promotion_review"]
+
+    assert report.startup_allowed is False
+    assert "live_promotion_review_invalid" in report.blockers
+    assert any(
+        problem.startswith("invalid_json:non-standard JSON constant: NaN")
+        for problem in promotion["problems"]
+    )
+    assert promotion["fields"] == {}
+    assert json.loads(encoded)["startup_allowed"] is False
+
+
 def test_live_startup_guard_accepts_json_promotion_review(tmp_path: Path) -> None:
     paths = _write_evidence(tmp_path)
     _replace_promotion(

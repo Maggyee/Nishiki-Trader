@@ -526,6 +526,49 @@ def test_live_readiness_blocks_imprecise_live_promotion_review(
     assert "target_stage" in source_check.detail
 
 
+def test_live_readiness_blocks_invalid_utf8_live_promotion_review(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    live_adr = tmp_path / "013-phase6-live-risk-gate.md"
+    promotion = tmp_path / "live-promotion.md"
+    bundle_dir = tmp_path / "bundle-1"
+    _write_bundle_manifest(bundle_dir)
+    _write_status(status_path)
+    _write_live_adr(live_adr, status="Accepted")
+    promotion.write_bytes(b"\xff\xfe")
+    monkeypatch.setattr(
+        live_readiness,
+        "load_testnet_continuity_summary",
+        lambda bundle_dirs, **kwargs: _continuity_summary(gate_met=True),
+    )
+
+    report = live_readiness.build_live_readiness_report(
+        project_status_path=status_path,
+        live_risk_adr_path=live_adr,
+        continuity_bundle_dirs=[bundle_dir],
+        source="freqai_linear_v1",
+        model_version="linear-mom-train20240105",
+        live_promotion_review_path=promotion,
+        starting_capital_usdt=250,
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+    encoded = json.dumps(asdict(report), allow_nan=False, sort_keys=True)
+
+    assert report.readiness_gate_met is False
+    assert "live_canary_promotion_review_invalid" in report.blockers
+    assert report.live_promotion_review is not None
+    assert report.live_promotion_review["sha256"] == hashlib.sha256(
+        b"\xff\xfe"
+    ).hexdigest()
+    assert report.live_promotion_review["decode_error"]
+    assert report.live_promotion_review["problems"] == ["invalid_utf8"]
+    assert "NaN" not in encoded
+    assert "Infinity" not in encoded
+
+
 def test_live_readiness_blocks_missing_continuity_manifest_fingerprint(
     tmp_path: Path,
     monkeypatch,

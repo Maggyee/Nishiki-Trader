@@ -23,7 +23,19 @@ def evaluate_live_canary_promotion_review(
 
     raw = path.read_bytes()
     artifact_sha256 = hashlib.sha256(raw).hexdigest()
-    text = raw.decode("utf-8")
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        return {
+            "path": str(path),
+            "sha256": artifact_sha256,
+            "accepted": False,
+            "blocker": "live_promotion_review_invalid",
+            "detail": f"Promotion review is not valid UTF-8: {exc}",
+            "problems": ["invalid_utf8"],
+            "fields": {},
+            "decode_error": str(exc),
+        }
     fields, parse_error = _promotion_fields(text)
     problems: list[str] = []
     if parse_error:
@@ -73,11 +85,19 @@ def _promotion_fields(text: str) -> tuple[dict[str, Any], str | None]:
     stripped = text.lstrip()
     if stripped.startswith("{"):
         try:
-            payload = json.loads(text)
-        except json.JSONDecodeError as exc:
-            return {}, f"invalid_json:{exc.msg}"
+            payload = json.loads(
+                text,
+                parse_constant=_reject_non_standard_json_constant,
+            )
+        except ValueError as exc:
+            message = getattr(exc, "msg", str(exc))
+            return {}, f"invalid_json:{message}"
         return _json_fields(payload), None
     return _markdown_fields(text), None
+
+
+def _reject_non_standard_json_constant(value: str) -> None:
+    raise ValueError(f"non-standard JSON constant: {value}")
 
 
 def _json_fields(payload: Any) -> dict[str, Any]:
