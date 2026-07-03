@@ -479,6 +479,28 @@ def test_live_startup_guard_blocks_readiness_report_without_generated_at_ns(
     assert readiness["freshness"]["report_generated_at_ns"] is None
 
 
+def test_live_startup_guard_blocks_non_finite_readiness_freshness_window(
+    tmp_path: Path,
+) -> None:
+    paths = _write_evidence(tmp_path)
+
+    report = build_live_startup_guard_report(
+        _settings(
+            tmp_path,
+            live_readiness_report_path=paths["readiness"],
+            max_readiness_report_age_seconds=float("nan"),
+        ),
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    readiness = report.evidence["live_readiness_report"]
+    assert report.startup_allowed is False
+    assert "live_readiness_report_gate_not_met" in report.blockers
+    assert "max_readiness_report_age_seconds" in readiness["problems"]
+    assert readiness["freshness"]["fresh"] is False
+
+
 def test_live_startup_guard_blocks_non_object_readiness_report(
     tmp_path: Path,
 ) -> None:
@@ -739,6 +761,28 @@ def test_live_startup_guard_blocks_readiness_report_with_continuity_risk_events(
     assert "testnet_continuity_emergency_flatten_alerts" in readiness["problems"]
     assert "testnet_continuity_restart_drift_days" in readiness["problems"]
     assert "testnet_continuity_blockers" in readiness["problems"]
+
+
+def test_live_startup_guard_blocks_non_finite_readiness_continuity_numbers(
+    tmp_path: Path,
+) -> None:
+    paths = _write_evidence(tmp_path)
+    payload = json.loads(paths["readiness"].read_text(encoding="utf-8"))
+    payload["continuity_summary"]["required_consecutive_days"] = float("inf")
+    payload["continuity_summary"]["current_qualified_streak_days"] = float("inf")
+    paths["readiness"].write_text(json.dumps(payload), encoding="utf-8")
+
+    report = build_live_startup_guard_report(
+        _settings(tmp_path, live_readiness_report_path=paths["readiness"]),
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    readiness = report.evidence["live_readiness_report"]
+    assert report.startup_allowed is False
+    assert "live_readiness_report_gate_not_met" in report.blockers
+    assert "testnet_continuity_required_days" in readiness["problems"]
+    assert "testnet_continuity_current_streak" in readiness["problems"]
 
 
 def test_live_startup_guard_blocks_readiness_report_with_missing_continuity_manifest(

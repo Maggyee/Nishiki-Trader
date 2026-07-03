@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import re
 import subprocess
 import time
@@ -714,15 +715,15 @@ def _readiness_report_freshness(
         report_generated_ns = None
     else:
         try:
-            report_generated_ns = int(report_generated_at_ns)
-        except (TypeError, ValueError):
+            report_generated_ns = _finite_int(report_generated_at_ns)
+        except (TypeError, ValueError, OverflowError):
             report_generated_ns = None
     if report_generated_ns is None:
         problems.append("readiness_generated_at_ns")
         age_seconds = None
     else:
         age_seconds = (guard_generated_at_ns - report_generated_ns) / 1_000_000_000
-    if max_age_seconds <= 0:
+    if not math.isfinite(max_age_seconds) or max_age_seconds <= 0:
         problems.append("max_readiness_report_age_seconds")
     elif age_seconds is not None:
         if age_seconds < 0:
@@ -862,10 +863,20 @@ def _optional_dict(
 def _int_or_none(value: Any) -> int | None:
     if isinstance(value, bool):
         return None
+    if isinstance(value, float):
+        if not math.isfinite(value) or not value.is_integer():
+            return None
+        return int(value)
     try:
         return int(value)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         return None
+
+
+def _finite_int(value: Any) -> int:
+    if isinstance(value, float) and not math.isfinite(value):
+        raise ValueError("not finite")
+    return int(value)
 
 
 def _first_live_day_runbook_gate(path: Path) -> dict[str, Any]:
