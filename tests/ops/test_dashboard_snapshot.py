@@ -3082,11 +3082,38 @@ def test_cli_outputs_json(tmp_path: Path, capsys) -> None:
     )
 
     assert rc == 0
-    out = json.loads(capsys.readouterr().out)
+    raw = capsys.readouterr().out
+    assert "NaN" not in raw
+    assert "Infinity" not in raw
+    out = json.loads(raw)
     assert out["agent_advice"]["latest"][0]["advice_id"] == "advice-1"
     assert out["snapshot_freshness"]["warning_after_seconds"] == 45.0
     assert out["snapshot_freshness"]["stale_after_seconds"] == 180.0
     assert out["reference_links"][0]["href"] is None
+
+
+def test_cli_rejects_non_standard_json_output(monkeypatch, tmp_path: Path) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+
+    monkeypatch.setattr(
+        dashboard_snapshot,
+        "build_dashboard_snapshot",
+        lambda **kwargs: {
+            "schema_version": "dashboard.snapshot.v1",
+            "bad": float("nan"),
+        },
+    )
+
+    with pytest.raises(ValueError, match="Out of range float values"):
+        dashboard_snapshot.main(
+            [
+                "--project-status-path",
+                str(status_path),
+                "--agent-advice-db",
+                str(tmp_path / "missing.db"),
+            ]
+        )
 
 
 def test_snapshot_wraps_passive_bundle_reports(

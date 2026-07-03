@@ -3029,7 +3029,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.markdown:
         sys.stdout.write(render_markdown_snapshot(snapshot) + "\n")
     else:
-        sys.stdout.write(json.dumps(snapshot, indent=2, sort_keys=True) + "\n")
+        sys.stdout.write(
+            json.dumps(snapshot, allow_nan=False, indent=2, sort_keys=True) + "\n"
+        )
     return 0
 
 
