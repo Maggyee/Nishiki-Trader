@@ -357,11 +357,13 @@ def _credential_boundary(
     checks: list[StartupGuardCheck],
     blockers: list[str],
 ) -> dict[str, Any]:
-    env_names = tuple(settings.credential_env_names)
+    env_names, invalid_count, unknown_count = _credential_env_names(
+        settings.credential_env_names
+    )
     missing = [
         name for name in REQUIRED_LIVE_CREDENTIAL_ENV_NAMES if name not in env_names
     ]
-    accepted = not missing
+    accepted = not missing and invalid_count == 0 and unknown_count == 0
     checks.append(
         _check(
             "credential_boundary",
@@ -369,16 +371,25 @@ def _credential_boundary(
             (
                 "Credential env names are declared; values are not inspected."
                 if accepted
-                else "Missing required live credential env names: "
-                + ", ".join(missing)
+                else _credential_boundary_detail(
+                    missing=missing,
+                    invalid_count=invalid_count,
+                    unknown_count=unknown_count,
+                )
             ),
         )
     )
     if missing:
         blockers.append("credential_env_names_missing")
+    if invalid_count:
+        blockers.append("credential_env_names_invalid")
+    if unknown_count:
+        blockers.append("credential_env_names_unknown")
     return {
         "credential_env_names": list(env_names),
         "required_credential_env_names": list(REQUIRED_LIVE_CREDENTIAL_ENV_NAMES),
+        "invalid_credential_env_name_count": invalid_count,
+        "unknown_credential_env_name_count": unknown_count,
         "values_inspected": False,
         "key_prefix_recorded": False,
     }
@@ -1049,6 +1060,51 @@ def _has_text(value: Any) -> bool:
 
 def _bool_or_none(value: Any) -> bool | None:
     return value if isinstance(value, bool) else None
+
+
+def _credential_env_names(value: Any) -> tuple[tuple[str, ...], int, int]:
+    if isinstance(value, str | bytes):
+        return (), 1, 0
+    try:
+        raw_names = tuple(value)
+    except TypeError:
+        return (), 1, 0
+
+    allowed = set(REQUIRED_LIVE_CREDENTIAL_ENV_NAMES)
+    env_names: list[str] = []
+    invalid_count = 0
+    unknown_count = 0
+    for item in raw_names:
+        name = _text_or_none(item)
+        if name is None:
+            invalid_count += 1
+            continue
+        if name not in allowed:
+            unknown_count += 1
+            continue
+        if name not in env_names:
+            env_names.append(name)
+    return tuple(env_names), invalid_count, unknown_count
+
+
+def _credential_boundary_detail(
+    *,
+    missing: list[str],
+    invalid_count: int,
+    unknown_count: int,
+) -> str:
+    details: list[str] = []
+    if missing:
+        details.append(
+            "missing required live credential env names: " + ", ".join(missing)
+        )
+    if invalid_count:
+        details.append(f"{invalid_count} credential env name value(s) were not text")
+    if unknown_count:
+        details.append(
+            f"{unknown_count} unknown credential env name(s) were supplied but not echoed"
+        )
+    return "; ".join(details)
 
 
 def _markdown_cell(value: str) -> str:

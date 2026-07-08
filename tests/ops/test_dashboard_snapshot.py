@@ -1669,6 +1669,8 @@ def _write_passing_startup_guard_report_with_readiness_git(
             "BINANCE_LIVE_API_KEY",
             "BINANCE_LIVE_API_SECRET",
         ],
+        "invalid_credential_env_name_count": 0,
+        "unknown_credential_env_name_count": 0,
         "values_inspected": False,
         "key_prefix_recorded": False,
     }
@@ -2425,6 +2427,37 @@ def test_snapshot_blocks_phase6_startup_with_credential_values_inspected(
     startup_guard = snapshot["phase6"]["reports"][1]
     assert startup_guard["status"] == "blocked"
     assert startup_guard["blockers"] == ["credential_boundary:values_inspected"]
+    assert snapshot["phase6"]["state"] == "blocked"
+
+
+def test_snapshot_blocks_phase6_startup_with_unknown_credential_env_name_count(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    guard_path = tmp_path / "live-startup-guard.json"
+    _write_passing_startup_guard_report_with_readiness_git(
+        guard_path,
+        readiness_git={
+            "commit": "b" * 40,
+            "dirty": False,
+        },
+        expected_git_commit="b" * 40,
+        credential_boundary_overrides={"unknown_credential_env_name_count": 1},
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_startup_guard_report_path=guard_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    startup_guard = snapshot["phase6"]["reports"][1]
+    assert startup_guard["status"] == "blocked"
+    assert startup_guard["blockers"] == [
+        "credential_boundary:unknown_credential_env_name_count"
+    ]
     assert snapshot["phase6"]["state"] == "blocked"
 
 

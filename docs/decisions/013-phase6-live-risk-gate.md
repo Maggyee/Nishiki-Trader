@@ -155,6 +155,11 @@ live credentials, inspect credential values, build a Nautilus node, connect to
 Binance, mutate `SourcePolicy`, write `SignalEvent`, place orders, or
 authorize live trading. It only defines the startup refusal contract before
 those capabilities exist.
+The credential-boundary report only echoes the required live credential
+environment variable names (`BINANCE_LIVE_API_KEY` and
+`BINANCE_LIVE_API_SECRET`). Unknown or non-text credential-name inputs are
+counted and blocked without echoing their raw values, so an accidentally
+supplied credential value is not written into the passive report.
 
 Current blocked example:
 

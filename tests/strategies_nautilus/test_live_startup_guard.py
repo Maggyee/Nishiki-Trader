@@ -424,6 +424,38 @@ def test_live_startup_guard_blocks_non_boolean_control_flags(
     assert "Infinity" not in encoded
 
 
+def test_live_startup_guard_redacts_unknown_credential_env_names(
+    tmp_path: Path,
+) -> None:
+    secret_like_value = "not-a-credential-env-name-secret-value"
+
+    report = build_live_startup_guard_report(
+        _settings(
+            tmp_path,
+            credential_env_names=(
+                "BINANCE_LIVE_API_KEY",
+                "BINANCE_LIVE_API_SECRET",
+                secret_like_value,
+                object(),
+            ),
+        ),
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+    encoded = json.dumps(asdict(report), allow_nan=False, sort_keys=True)
+
+    assert report.startup_allowed is False
+    assert "credential_env_names_invalid" in report.blockers
+    assert "credential_env_names_unknown" in report.blockers
+    assert report.credential_boundary["credential_env_names"] == [
+        "BINANCE_LIVE_API_KEY",
+        "BINANCE_LIVE_API_SECRET",
+    ]
+    assert report.credential_boundary["invalid_credential_env_name_count"] == 1
+    assert report.credential_boundary["unknown_credential_env_name_count"] == 1
+    assert secret_like_value not in encoded
+
+
 def test_live_startup_guard_blocks_readiness_report_that_is_not_ready(
     tmp_path: Path,
 ) -> None:

@@ -2531,6 +2531,10 @@ def _phase6_startup_runtime_blockers(
         blockers.append("credential_boundary:values_inspected")
     if credential_boundary.get("key_prefix_recorded") is not False:
         blockers.append("credential_boundary:key_prefix_recorded")
+    if _phase6_int(credential_boundary.get("invalid_credential_env_name_count")) != 0:
+        blockers.append("credential_boundary:invalid_credential_env_name_count")
+    if _phase6_int(credential_boundary.get("unknown_credential_env_name_count")) != 0:
+        blockers.append("credential_boundary:unknown_credential_env_name_count")
 
     return sorted(dict.fromkeys(blockers))
 
