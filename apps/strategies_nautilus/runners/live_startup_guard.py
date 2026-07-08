@@ -94,7 +94,7 @@ class StartupGuardCheck:
 @dataclass(frozen=True)
 class LiveStartupGuardReport:
     schema_version: str
-    generated_at_ns: int
+    generated_at_ns: int | None
     mode: str | None
     kind: str | None
     runtime_mode: str
@@ -124,9 +124,25 @@ def build_live_startup_guard_report(
 ) -> LiveStartupGuardReport:
     """Build a structured live startup preflight report."""
 
-    generated_ns = time.time_ns() if generated_at_ns is None else generated_at_ns
+    generated_ns = (
+        time.time_ns()
+        if generated_at_ns is None
+        else _timestamp_ns_or_none(generated_at_ns)
+    )
+    generated_at_ns_invalid = generated_at_ns is not None and generated_ns is None
+    guard_generated_ns = generated_ns if generated_ns is not None else time.time_ns()
     checks: list[StartupGuardCheck] = []
     blockers: list[str] = []
+
+    if generated_at_ns_invalid:
+        blockers.append("generated_at_ns_invalid")
+        checks.append(
+            _check(
+                "generated_at_ns",
+                "blocked",
+                "generated_at_ns must be a non-negative integer nanosecond timestamp.",
+            )
+        )
 
     _check_mode_kind(settings, checks, blockers)
     _check_operator_intent(settings, checks, blockers)
@@ -198,7 +214,7 @@ def build_live_startup_guard_report(
     readiness_gate = _live_readiness_report_gate(
         settings,
         git_state=state,
-        generated_at_ns=generated_ns,
+        generated_at_ns=guard_generated_ns,
     )
     evidence["live_readiness_report"] = readiness_gate
     checks.append(
@@ -931,6 +947,11 @@ def _int_or_none(value: Any) -> int | None:
         return int(value)
     except (TypeError, ValueError, OverflowError):
         return None
+
+
+def _timestamp_ns_or_none(value: Any) -> int | None:
+    timestamp_ns = _int_or_none(value)
+    return timestamp_ns if timestamp_ns is not None and timestamp_ns >= 0 else None
 
 
 def _finite_float(value: Any) -> float | None:

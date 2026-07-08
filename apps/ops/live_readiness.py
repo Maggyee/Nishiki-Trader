@@ -60,7 +60,7 @@ class GitState:
 @dataclass(frozen=True)
 class LiveReadinessReport:
     schema_version: str
-    generated_at_ns: int
+    generated_at_ns: int | None
     source: str | None
     model_version: str | None
     readiness_gate_met: bool
@@ -97,12 +97,27 @@ def build_live_readiness_report(
     git_state: GitState | None = None,
     generated_at_ns: int | None = None,
 ) -> LiveReadinessReport:
-    generated_ns = time.time_ns() if generated_at_ns is None else generated_at_ns
+    generated_ns = (
+        time.time_ns()
+        if generated_at_ns is None
+        else _timestamp_ns_or_none(generated_at_ns)
+    )
+    generated_at_ns_invalid = generated_at_ns is not None and generated_ns is None
     source_text = _text_or_none(source)
     model_version_text = _text_or_none(model_version)
     checks: list[ReadinessCheck] = []
     blockers: list[str] = []
     promotion_gate: dict[str, Any] | None = None
+
+    if generated_at_ns_invalid:
+        blockers.append("generated_at_ns_invalid")
+        checks.append(
+            _check(
+                "generated_at_ns",
+                "blocked",
+                "generated_at_ns must be a non-negative integer nanosecond timestamp.",
+            )
+        )
 
     project_status = _project_status_gate(project_status_path)
     checks.append(
@@ -649,6 +664,11 @@ def _int_or_none(value: Any) -> int | None:
         return operator.index(value)
     except TypeError:
         return None
+
+
+def _timestamp_ns_or_none(value: Any) -> int | None:
+    timestamp_ns = _int_or_none(value)
+    return timestamp_ns if timestamp_ns is not None and timestamp_ns >= 0 else None
 
 
 def _to_jsonable_dict(value: Any) -> dict[str, Any]:

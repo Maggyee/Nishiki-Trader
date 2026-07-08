@@ -422,6 +422,27 @@ def test_live_startup_guard_report_sanitizes_non_text_mode_kind(
     assert "Infinity" not in encoded
 
 
+def test_live_startup_guard_blocks_invalid_generated_at_ns_with_strict_json(
+    tmp_path: Path,
+) -> None:
+    report = build_live_startup_guard_report(
+        _settings(tmp_path),
+        git_state=GIT_CLEAN,
+        generated_at_ns=-1,
+    )
+    encoded = json.dumps(asdict(report), allow_nan=False, sort_keys=True)
+
+    assert report.startup_allowed is False
+    assert report.generated_at_ns is None
+    assert "generated_at_ns_invalid" in report.blockers
+    assert (
+        report.evidence["live_readiness_report"]["freshness"]["guard_generated_at_ns"]
+        is not None
+    )
+    assert "NaN" not in encoded
+    assert "Infinity" not in encoded
+
+
 def test_live_startup_guard_blocks_non_boolean_control_flags(
     tmp_path: Path,
 ) -> None:

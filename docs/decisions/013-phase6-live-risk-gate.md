@@ -110,6 +110,9 @@ trading by itself.
 Top-level identity fields such as `source` and `model_version` are emitted only
 as stripped text or `null`, so malformed programmatic inputs cannot make a
 blocked readiness report fail strict JSON serialization.
+The top-level `generated_at_ns` field is emitted only as a non-negative integer
+nanosecond timestamp or `null`; invalid explicit timestamps block the report
+instead of leaking `NaN` or other non-standard JSON.
 
 Example blocked review:
 
@@ -161,6 +164,9 @@ those capabilities exist.
 Its top-level `mode`, `kind`, `source`, and `model_version` fields are emitted
 only as stripped text or `null`, so malformed programmatic inputs remain
 audit-visible blockers instead of breaking strict JSON report generation.
+Its top-level `generated_at_ns` follows the same non-negative integer-or-null
+rule; invalid explicit timestamps block startup while preserving strict JSON
+serialization.
 The credential-boundary report only echoes the required live credential
 environment variable names (`BINANCE_LIVE_API_KEY` and
 `BINANCE_LIVE_API_SECRET`). Unknown or non-text credential-name inputs are
