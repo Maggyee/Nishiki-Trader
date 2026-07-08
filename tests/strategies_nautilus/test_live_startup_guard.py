@@ -397,6 +397,33 @@ def test_live_startup_guard_blocks_non_text_identity_and_market_type(
     assert "Infinity" not in encoded
 
 
+def test_live_startup_guard_blocks_non_boolean_control_flags(
+    tmp_path: Path,
+) -> None:
+    report = build_live_startup_guard_report(
+        _settings(
+            tmp_path,
+            allow_live_credentials=1,
+            policy_dry_run=0,
+            margin_enabled=0,
+        ),
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+    encoded = json.dumps(asdict(report), allow_nan=False, sort_keys=True)
+
+    assert report.startup_allowed is False
+    assert "allow_live_credentials_must_be_boolean" in report.blockers
+    assert "policy_dry_run_must_be_boolean" in report.blockers
+    assert "margin_enabled_must_be_boolean" in report.blockers
+    assert report.source_policy["dry_run"] is None
+    assert report.market_scope["margin_enabled"] is None
+    assert report.evidence["live_readiness_report"]["accepted"] is False
+    assert "margin_enabled" in report.evidence["live_readiness_report"]["problems"]
+    assert "NaN" not in encoded
+    assert "Infinity" not in encoded
+
+
 def test_live_startup_guard_blocks_readiness_report_that_is_not_ready(
     tmp_path: Path,
 ) -> None:

@@ -513,18 +513,21 @@ def _capital_plan_gate(starting_capital_usdt: float | None) -> dict[str, Any]:
 def _market_scope_gate(
     *,
     market_type: Any,
-    margin_enabled: bool,
+    margin_enabled: Any,
     max_leverage: float,
 ) -> dict[str, Any]:
     market_type_text = _text_or_none(market_type)
     normalized_market_type = market_type_text.lower() if market_type_text else None
+    margin_enabled_flag = _bool_or_none(margin_enabled)
     blockers: list[str] = []
     leverage = _finite_float(max_leverage)
     if normalized_market_type is None:
         blockers.append("market_type_must_be_text")
     elif normalized_market_type != "spot":
         blockers.append("market_type_must_be_spot")
-    if margin_enabled:
+    if margin_enabled_flag is None:
+        blockers.append("margin_enabled_must_be_boolean")
+    elif margin_enabled_flag:
         blockers.append("margin_must_be_disabled")
     if leverage is None:
         blockers.append("leverage_must_be_finite")
@@ -533,7 +536,7 @@ def _market_scope_gate(
     accepted = not blockers
     return {
         "market_type": normalized_market_type,
-        "margin_enabled": margin_enabled,
+        "margin_enabled": margin_enabled_flag,
         "max_leverage": leverage,
         "spot_only_no_margin_no_leverage": accepted,
         "blockers": blockers,
@@ -621,6 +624,10 @@ def _text_or_none(value: Any) -> str | None:
 
 def _has_text(value: Any) -> bool:
     return _text_or_none(value) is not None
+
+
+def _bool_or_none(value: Any) -> bool | None:
+    return value if isinstance(value, bool) else None
 
 
 def _finite_float(value: Any) -> float | None:

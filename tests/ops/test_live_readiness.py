@@ -400,6 +400,32 @@ def test_live_readiness_blocks_non_text_identity_and_market_type(
     assert "Infinity" not in encoded
 
 
+def test_live_readiness_blocks_non_boolean_margin_flag(tmp_path: Path) -> None:
+    status_path = tmp_path / "project-status.md"
+    live_adr = tmp_path / "013-phase6-live-risk-gate.md"
+    _write_status(status_path)
+    _write_live_adr(live_adr, status="Draft")
+
+    report = live_readiness.build_live_readiness_report(
+        project_status_path=status_path,
+        live_risk_adr_path=live_adr,
+        continuity_bundle_dirs=[],
+        source="freqai_linear_v1",
+        model_version="linear-mom-train20240105",
+        starting_capital_usdt=100,
+        margin_enabled=0,
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+    encoded = json.dumps(asdict(report), allow_nan=False, sort_keys=True)
+
+    assert report.readiness_gate_met is False
+    assert "margin_enabled_must_be_boolean" in report.blockers
+    assert report.market_scope["margin_enabled"] is None
+    assert "NaN" not in encoded
+    assert "Infinity" not in encoded
+
+
 def test_live_readiness_blocks_blank_source_identity(tmp_path: Path) -> None:
     status_path = tmp_path / "project-status.md"
     live_adr = tmp_path / "013-phase6-live-risk-gate.md"

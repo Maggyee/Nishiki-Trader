@@ -328,7 +328,8 @@ def _check_operator_intent(
         blockers.append("source_not_declared")
     if not _has_text(settings.model_version):
         blockers.append("model_version_not_declared")
-    if settings.allow_live_credentials:
+    allow_live_credentials = _bool_or_none(settings.allow_live_credentials)
+    if allow_live_credentials is True:
         checks.append(
             _check(
                 "operator_intent",
@@ -344,7 +345,11 @@ def _check_operator_intent(
             "--allow-live-credentials is required before a live runner may load credentials.",
         )
     )
-    blockers.append("allow_live_credentials_required")
+    blockers.append(
+        "allow_live_credentials_must_be_boolean"
+        if allow_live_credentials is None
+        else "allow_live_credentials_required"
+    )
 
 
 def _credential_boundary(
@@ -416,14 +421,17 @@ def _capital_plan(starting_capital_usdt: float) -> dict[str, Any]:
 def _source_policy_gate(settings: LiveStartupSettings) -> dict[str, Any]:
     blockers: list[str] = []
     multiplier = _finite_float(settings.policy_position_pct_multiplier)
-    if settings.policy_dry_run:
+    dry_run = _bool_or_none(settings.policy_dry_run)
+    if dry_run is None:
+        blockers.append("policy_dry_run_must_be_boolean")
+    elif dry_run:
         blockers.append("policy_must_not_be_dry_run_for_live_canary")
     if multiplier is None:
         blockers.append("policy_multiplier_must_be_finite")
     elif not 0.0 <= multiplier <= LIVE_CANARY_MAX_MULTIPLIER:
         blockers.append("policy_multiplier_outside_live_canary_bounds")
     return {
-        "dry_run": settings.policy_dry_run,
+        "dry_run": dry_run,
         "position_pct_multiplier": multiplier,
         "max_live_canary_multiplier": LIVE_CANARY_MAX_MULTIPLIER,
         "within_live_canary_bounds": not blockers,
@@ -439,13 +447,16 @@ def _source_policy_gate(settings: LiveStartupSettings) -> dict[str, Any]:
 def _market_scope_gate(settings: LiveStartupSettings) -> dict[str, Any]:
     market_type_text = _text_or_none(settings.market_type)
     normalized_market_type = market_type_text.lower() if market_type_text else None
+    margin_enabled = _bool_or_none(settings.margin_enabled)
     blockers: list[str] = []
     leverage = _finite_float(settings.max_leverage)
     if normalized_market_type is None:
         blockers.append("market_type_must_be_text")
     elif normalized_market_type != "spot":
         blockers.append("market_type_must_be_spot")
-    if settings.margin_enabled:
+    if margin_enabled is None:
+        blockers.append("margin_enabled_must_be_boolean")
+    elif margin_enabled:
         blockers.append("margin_must_be_disabled")
     if leverage is None:
         blockers.append("leverage_must_be_finite")
@@ -454,7 +465,7 @@ def _market_scope_gate(settings: LiveStartupSettings) -> dict[str, Any]:
     accepted = not blockers
     return {
         "market_type": normalized_market_type,
-        "margin_enabled": settings.margin_enabled,
+        "margin_enabled": margin_enabled,
         "max_leverage": leverage,
         "spot_only_no_margin_no_leverage": accepted,
         "blockers": blockers,
@@ -629,7 +640,8 @@ def _live_readiness_report_gate(
     )
     if market_scope.get("market_type") != normalized_settings_market_type:
         problems.append("market_type")
-    if market_scope.get("margin_enabled") is not settings.margin_enabled:
+    settings_margin_enabled = _bool_or_none(settings.margin_enabled)
+    if market_scope.get("margin_enabled") is not settings_margin_enabled:
         problems.append("margin_enabled")
     try:
         report_max_leverage = float(market_scope.get("max_leverage"))
@@ -1033,6 +1045,10 @@ def _text_or_none(value: Any) -> str | None:
 
 def _has_text(value: Any) -> bool:
     return _text_or_none(value) is not None
+
+
+def _bool_or_none(value: Any) -> bool | None:
+    return value if isinstance(value, bool) else None
 
 
 def _markdown_cell(value: str) -> str:
