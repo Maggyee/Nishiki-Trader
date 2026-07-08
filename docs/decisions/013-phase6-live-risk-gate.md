@@ -113,6 +113,9 @@ blocked readiness report fail strict JSON serialization.
 The top-level `generated_at_ns` field is emitted only as a non-negative integer
 nanosecond timestamp or `null`; invalid explicit timestamps block the report
 instead of leaking `NaN` or other non-standard JSON.
+Git evidence fields are emitted only as stripped text-or-`null` `commit` and
+boolean-or-`null` `dirty` state; invalid injected values block readiness instead
+of relying on Python truthiness or writing non-JSON-safe evidence.
 
 Example blocked review:
 
@@ -167,6 +170,10 @@ audit-visible blockers instead of breaking strict JSON report generation.
 Its top-level `generated_at_ns` follows the same non-negative integer-or-null
 rule; invalid explicit timestamps block startup while preserving strict JSON
 serialization.
+Its startup-side git evidence follows the same text-or-`null` commit and
+boolean-or-`null` dirty-state contract. Invalid git evidence blocks startup,
+and the expected commit recorded for readiness-report comparison is sanitized
+before it is emitted in the startup-guard report.
 The credential-boundary report only echoes the required live credential
 environment variable names (`BINANCE_LIVE_API_KEY` and
 `BINANCE_LIVE_API_SECRET`). Unknown or non-text credential-name inputs are

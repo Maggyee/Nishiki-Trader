@@ -364,6 +364,27 @@ def test_live_startup_guard_blocks_dirty_git(tmp_path: Path) -> None:
     assert "git_dirty" in report.blockers
 
 
+def test_live_startup_guard_blocks_invalid_git_evidence_with_strict_json(
+    tmp_path: Path,
+) -> None:
+    report = build_live_startup_guard_report(
+        _settings(tmp_path),
+        git_state=GitState(commit=object(), dirty=0),
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+    encoded = json.dumps(asdict(report), allow_nan=False, sort_keys=True)
+    readiness_gate = report.evidence["live_readiness_report"]
+
+    assert report.startup_allowed is False
+    assert report.git == {"commit": None, "dirty": None}
+    assert "git_commit_invalid" in report.blockers
+    assert "git_dirty_state_invalid" in report.blockers
+    assert readiness_gate["expected_git_commit"] is None
+    assert "readiness_git_commit" in readiness_gate["problems"]
+    assert "NaN" not in encoded
+    assert "Infinity" not in encoded
+
+
 def test_live_startup_guard_blocks_blank_source_identity(tmp_path: Path) -> None:
     report = build_live_startup_guard_report(
         _settings(tmp_path, source="   ", model_version="\t"),

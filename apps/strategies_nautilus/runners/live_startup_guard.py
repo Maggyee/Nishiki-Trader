@@ -149,19 +149,18 @@ def build_live_startup_guard_report(
     credential_boundary = _credential_boundary(settings, checks, blockers)
 
     state = git_state or _git_state(settings.repo_root)
+    git, git_blockers = _git_evidence(state)
     checks.append(
         _check(
             "git_clean",
-            "ok" if not state.dirty else "blocked",
-            (
-                f"Git tree is clean at {state.commit}."
-                if not state.dirty
-                else "Live startup requires a clean git worktree."
+            "ok" if not git_blockers else "blocked",
+            _git_clean_detail(
+                git,
+                dirty_detail="Live startup requires a clean git worktree.",
             ),
         )
     )
-    if state.dirty:
-        blockers.append("git_dirty")
+    blockers.extend(git_blockers)
 
     capital_plan = _capital_plan(settings.starting_capital_usdt)
     checks.append(
@@ -272,7 +271,7 @@ def build_live_startup_guard_report(
         ),
         blockers=blockers,
         checks=checks,
-        git={"commit": state.commit, "dirty": state.dirty},
+        git=git,
         evidence=evidence,
         capital_plan=capital_plan,
         market_scope=market_scope,
@@ -530,12 +529,13 @@ def _live_readiness_report_gate(
     generated_at_ns: int,
 ) -> dict[str, Any]:
     path = settings.live_readiness_report_path
+    expected_git_commit = _text_or_none(getattr(git_state, "commit", None))
     if not path.exists():
         return {
             "path": str(path),
             "sha256": None,
             "readiness_git": None,
-            "expected_git_commit": git_state.commit,
+            "expected_git_commit": expected_git_commit,
             "expected_git_dirty": False,
             "expected_project_status_sha256": _file_sha256_or_none(
                 settings.project_status_path
@@ -557,7 +557,7 @@ def _live_readiness_report_gate(
             "path": str(path),
             "sha256": artifact_sha256,
             "readiness_git": None,
-            "expected_git_commit": git_state.commit,
+            "expected_git_commit": expected_git_commit,
             "expected_git_dirty": False,
             "expected_project_status_sha256": _file_sha256_or_none(
                 settings.project_status_path
@@ -575,7 +575,7 @@ def _live_readiness_report_gate(
             "path": str(path),
             "sha256": artifact_sha256,
             "readiness_git": None,
-            "expected_git_commit": git_state.commit,
+            "expected_git_commit": expected_git_commit,
             "expected_git_dirty": False,
             "expected_project_status_sha256": expected_project_status_sha256,
             "expected_project_status_path": str(settings.project_status_path),
@@ -613,7 +613,7 @@ def _live_readiness_report_gate(
     )
     if report_git.get("dirty") is not False:
         problems.append("readiness_git_dirty")
-    if report_git.get("commit") != git_state.commit:
+    if report_git.get("commit") != expected_git_commit:
         problems.append("readiness_git_commit")
     project_status = _optional_dict(
         payload.get("project_status"),
@@ -734,7 +734,7 @@ def _live_readiness_report_gate(
             "path": str(path),
             "sha256": artifact_sha256,
             "readiness_git": report_git,
-            "expected_git_commit": git_state.commit,
+            "expected_git_commit": expected_git_commit,
             "expected_git_dirty": False,
             "expected_project_status_sha256": expected_project_status_sha256,
             "expected_project_status_path": str(settings.project_status_path),
@@ -756,7 +756,7 @@ def _live_readiness_report_gate(
         "path": str(path),
         "sha256": artifact_sha256,
         "readiness_git": report_git,
-        "expected_git_commit": git_state.commit,
+        "expected_git_commit": expected_git_commit,
         "expected_git_dirty": False,
         "expected_project_status_sha256": expected_project_status_sha256,
         "expected_project_status_path": str(settings.project_status_path),
@@ -1056,6 +1056,33 @@ def _git_state(repo_root: Path) -> GitState:
     commit = _git_output(["git", "rev-parse", "HEAD"], repo_root)
     status = _git_output(["git", "status", "--porcelain"], repo_root)
     return GitState(commit=commit, dirty=bool(status.strip()))
+
+
+def _git_evidence(state: GitState) -> tuple[dict[str, Any], list[str]]:
+    commit = _text_or_none(getattr(state, "commit", None))
+    dirty = _bool_or_none(getattr(state, "dirty", None))
+    blockers: list[str] = []
+    if commit is None:
+        blockers.append("git_commit_invalid")
+    if dirty is None:
+        blockers.append("git_dirty_state_invalid")
+    elif dirty:
+        blockers.append("git_dirty")
+    return {"commit": commit, "dirty": dirty}, blockers
+
+
+def _git_clean_detail(git: dict[str, Any], *, dirty_detail: str) -> str:
+    commit = git.get("commit")
+    dirty = git.get("dirty")
+    if commit is not None and dirty is False:
+        return f"Git tree is clean at {commit}."
+    if dirty is True:
+        return dirty_detail
+    if commit is None and dirty is None:
+        return "Git commit must be text and git dirty state must be a boolean."
+    if commit is None:
+        return "Git commit must be text."
+    return "Git dirty state must be a boolean."
 
 
 def _git_output(args: list[str], cwd: Path) -> str:
