@@ -297,6 +297,28 @@ def test_snapshot_freshness_thresholds_reject_invalid_values(
         )
 
 
+@pytest.mark.parametrize(
+    "generated_at_ns",
+    [True, -1, "1778760000000000000", 1.5, float("nan")],
+)
+def test_snapshot_rejects_invalid_generated_at_ns(
+    tmp_path: Path,
+    generated_at_ns: object,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+
+    with pytest.raises(
+        ValueError,
+        match="generated_at_ns must be a non-negative integer nanosecond timestamp",
+    ):
+        dashboard_snapshot.build_dashboard_snapshot(
+            project_status_path=status_path,
+            agent_advice_db_path=tmp_path / "missing.db",
+            generated_at_ns=generated_at_ns,
+        )
+
+
 def test_snapshot_missing_advice_db_is_empty(tmp_path: Path) -> None:
     status_path = tmp_path / "project-status.md"
     _write_status(status_path)

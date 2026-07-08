@@ -43,6 +43,9 @@ Grafana drill-down links. The snapshot may include a freshness policy so the
 frontend can show whether the loaded local snapshot is fresh, aging, or stale
 without refreshing it automatically. If the file is absent, it renders a
 fallback read-only state so build and local smoke checks remain deterministic.
+`dashboard.snapshot.v1.generated_at_ns` is emitted only as a non-negative
+integer nanosecond timestamp; malformed programmatic timestamps are rejected
+before snapshot generation so JSON output remains strict standard JSON.
 
 Language selection is read-only URL state. The dashboard may render English or
 Simplified Chinese UI chrome through `?lang=en` / `?lang=zh-CN`; this does not

@@ -187,7 +187,7 @@ def build_dashboard_snapshot(
         stale_after_seconds=snapshot_stale_after_seconds,
     )
 
-    generated_ns = time.time_ns() if generated_at_ns is None else generated_at_ns
+    generated_ns = _snapshot_generated_at_ns(generated_at_ns)
     boundaries = {
         "live_path_allowed": False,
         "signal_event_write_allowed": False,
@@ -585,6 +585,20 @@ def _snapshot_freshness_threshold(name: str, value: float) -> float:
     if not math.isfinite(parsed):
         raise ValueError(f"{name} must be finite")
     return parsed
+
+
+def _snapshot_generated_at_ns(value: Any) -> int:
+    if value is None:
+        return time.time_ns()
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise ValueError(
+            "generated_at_ns must be a non-negative integer nanosecond timestamp"
+        )
+    if value < 0:
+        raise ValueError(
+            "generated_at_ns must be a non-negative integer nanosecond timestamp"
+        )
+    return value
 
 
 def _snapshot_freshness_policy(
