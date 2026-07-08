@@ -431,11 +431,13 @@ function fallbackSnapshot(snapshotPath: string, error: unknown): DashboardSnapsh
       counts: {
         boundary_open_count: 0,
         recorded_advice: 0,
+        agent_advice_error_count: 0,
         paper_bundle_count: 0,
         testnet_bundle_count: 0,
         paper_review_blockers: 0,
         paper_promotion_blockers: 0,
         testnet_review_blockers: 0,
+        observability_issue_count: 0,
       },
       summary: [
         "No snapshot file was loaded.",

@@ -52,7 +52,8 @@ treats the live gate as unknown/attention instead of crashing or treating
 malformed operator-document bytes as proof that live trading is blocked.
 If the AgentAdvice SQLite database or passive Prometheus textfiles are
 corrupt, the snapshot records degraded read-only input state and reports
-operator attention instead of hiding the issue or entering any mutation path.
+operator attention; the frontend first-viewport metrics include those degraded
+input counts instead of hiding the issue or entering any mutation path.
 
 Language selection is read-only URL state. The dashboard may render English or
 Simplified Chinese UI chrome through `?lang=en` / `?lang=zh-CN`; this does not

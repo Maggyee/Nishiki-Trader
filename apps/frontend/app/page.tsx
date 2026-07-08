@@ -57,7 +57,7 @@ const COPY = {
       agentAdvice: "AgentAdvice",
       evidenceInputs: "Evidence Inputs",
       blockers: "Blockers",
-      blockersDetail: "review, promotion, and boundary blockers",
+      blockersDetail: "review, promotion, boundary, and input issues",
       orderPath: "Order Path",
       sealed: "sealed",
       liveGateBlocked: "Live gate blocked",
@@ -298,6 +298,8 @@ const COPY = {
         "Read-only operations are guarded; live trading remains blocked.",
       "A dashboard or agent boundary is open.": "A dashboard or agent boundary is open.",
       "Review blockers exist in attached evidence.": "Review blockers exist in attached evidence.",
+      "AgentAdvice database could not be read.": "AgentAdvice database could not be read.",
+      "Observability textfiles need review.": "Observability textfiles need review.",
       "Live gate state is not explicitly blocked.":
         "Live gate state is not explicitly blocked.",
       "Live trading is blocked by ADR gates.": "Live trading is blocked by ADR gates.",
@@ -305,6 +307,8 @@ const COPY = {
         "Live trading gate is not explicitly blocked in project status.",
       "All dashboard/agent mutation boundaries are closed.":
         "All dashboard/agent mutation boundaries are closed.",
+      "AgentAdvice database could not be read; review queue is unknown.":
+        "AgentAdvice database could not be read; review queue is unknown.",
       "No recorded AgentAdvice rows in the snapshot.":
         "No recorded AgentAdvice rows in the snapshot.",
       "Strict continuity is 0/14; do not claim live readiness.":
@@ -351,7 +355,7 @@ const COPY = {
       agentAdvice: "AgentAdvice",
       evidenceInputs: "证据输入",
       blockers: "阻塞项",
-      blockersDetail: "审阅、promotion 与边界阻塞",
+      blockersDetail: "审阅、promotion、边界与输入异常",
       orderPath: "订单路径",
       sealed: "已封闭",
       liveGateBlocked: "实盘闸门已阻塞",
@@ -592,12 +596,16 @@ const COPY = {
         "只读运维状态受控；实盘交易仍保持阻塞。",
       "A dashboard or agent boundary is open.": "有 dashboard 或 agent 边界被打开。",
       "Review blockers exist in attached evidence.": "附加证据中存在需要审阅的阻塞项。",
+      "AgentAdvice database could not be read.": "无法读取 AgentAdvice 数据库。",
+      "Observability textfiles need review.": "观测 textfile 需要审阅。",
       "Live gate state is not explicitly blocked.": "实盘闸门未明确处于阻塞状态。",
       "Live trading is blocked by ADR gates.": "实盘交易被 ADR gate 阻塞。",
       "Live trading gate is not explicitly blocked in project status.":
         "项目状态里没有明确阻塞实盘闸门。",
       "All dashboard/agent mutation boundaries are closed.":
         "所有 dashboard / agent 写入边界都保持关闭。",
+      "AgentAdvice database could not be read; review queue is unknown.":
+        "无法读取 AgentAdvice 数据库；审阅队列状态未知。",
       "No recorded AgentAdvice rows in the snapshot.": "快照中没有待审阅的 AgentAdvice 记录。",
       "Strict continuity is 0/14; do not claim live readiness.":
         "严格连续性为 0/14；不能声称已具备实盘条件。",
@@ -803,6 +811,7 @@ function StatusGrid({
   const advice = snapshot.agent_advice ?? {};
   const counts = snapshot.ops_status?.counts ?? {};
   const recordedAdvice = counts.recorded_advice ?? 0;
+  const adviceReadError = (counts.agent_advice_error_count ?? 0) > 0;
   const paperBundleCount = counts.paper_bundle_count ?? 0;
   const testnetBundleCount = counts.testnet_bundle_count ?? 0;
   const blockers = totalBlockers(counts);
@@ -810,9 +819,13 @@ function StatusGrid({
     <section className="grid gap-3 md:grid-cols-4">
       <Metric
         label={copy.metrics.agentAdvice}
-        value={formatCount(advice.total, language)}
-        detail={formatAdviceDetail(Object.keys(advice.by_type ?? {}).length, recordedAdvice, language, copy)}
-        tone={recordedAdvice ? "amber" : "blue"}
+        value={adviceReadError ? copy.common.unknown : formatCount(advice.total, language)}
+        detail={
+          adviceReadError
+            ? localizeKnown("AgentAdvice database could not be read; review queue is unknown.", copy)
+            : formatAdviceDetail(Object.keys(advice.by_type ?? {}).length, recordedAdvice, language, copy)
+        }
+        tone={adviceReadError || recordedAdvice ? "amber" : "blue"}
       />
       <Metric
         label={copy.metrics.evidenceInputs}
@@ -1761,9 +1774,11 @@ function localizeStatus(value: string | undefined | null, copy: Copy): string {
 function totalBlockers(counts: Record<string, number>): number {
   return (
     (counts.boundary_open_count ?? 0) +
+    (counts.agent_advice_error_count ?? 0) +
     (counts.paper_review_blockers ?? 0) +
     (counts.paper_promotion_blockers ?? 0) +
-    (counts.testnet_review_blockers ?? 0)
+    (counts.testnet_review_blockers ?? 0) +
+    (counts.observability_issue_count ?? 0)
   );
 }
 
