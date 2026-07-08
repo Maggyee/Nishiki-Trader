@@ -376,6 +376,27 @@ def test_live_startup_guard_blocks_blank_source_identity(tmp_path: Path) -> None
     assert "model_version_not_declared" in report.blockers
 
 
+def test_live_startup_guard_blocks_non_text_identity_and_market_type(
+    tmp_path: Path,
+) -> None:
+    report = build_live_startup_guard_report(
+        _settings(tmp_path, source=123, model_version=["linear"], market_type=123),
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+    encoded = json.dumps(asdict(report), allow_nan=False, sort_keys=True)
+
+    assert report.startup_allowed is False
+    assert "source_not_declared" in report.blockers
+    assert "model_version_not_declared" in report.blockers
+    assert "market_type_must_be_text" in report.blockers
+    assert report.market_scope["market_type"] is None
+    assert report.evidence["live_readiness_report"]["accepted"] is False
+    assert "market_type" in report.evidence["live_readiness_report"]["problems"]
+    assert "NaN" not in encoded
+    assert "Infinity" not in encoded
+
+
 def test_live_startup_guard_blocks_readiness_report_that_is_not_ready(
     tmp_path: Path,
 ) -> None:

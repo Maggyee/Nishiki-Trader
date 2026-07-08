@@ -437,10 +437,13 @@ def _source_policy_gate(settings: LiveStartupSettings) -> dict[str, Any]:
 
 
 def _market_scope_gate(settings: LiveStartupSettings) -> dict[str, Any]:
-    normalized_market_type = settings.market_type.strip().lower()
+    market_type_text = _text_or_none(settings.market_type)
+    normalized_market_type = market_type_text.lower() if market_type_text else None
     blockers: list[str] = []
     leverage = _finite_float(settings.max_leverage)
-    if normalized_market_type != "spot":
+    if normalized_market_type is None:
+        blockers.append("market_type_must_be_text")
+    elif normalized_market_type != "spot":
         blockers.append("market_type_must_be_spot")
     if settings.margin_enabled:
         blockers.append("margin_must_be_disabled")
@@ -620,7 +623,11 @@ def _live_readiness_report_gate(
     )
     if market_scope.get("spot_only_no_margin_no_leverage") is not True:
         problems.append("market_scope")
-    if market_scope.get("market_type") != settings.market_type.strip().lower():
+    settings_market_type = _text_or_none(settings.market_type)
+    normalized_settings_market_type = (
+        settings_market_type.lower() if settings_market_type else None
+    )
+    if market_scope.get("market_type") != normalized_settings_market_type:
         problems.append("market_type")
     if market_scope.get("margin_enabled") is not settings.margin_enabled:
         problems.append("margin_enabled")
@@ -1017,8 +1024,15 @@ def _check(name: str, status: str, detail: str) -> StartupGuardCheck:
     return StartupGuardCheck(name=name, status=status, detail=detail)
 
 
-def _has_text(value: str | None) -> bool:
-    return bool(value and value.strip())
+def _text_or_none(value: Any) -> str | None:
+    if not isinstance(value, str):
+        return None
+    stripped = value.strip()
+    return stripped if stripped else None
+
+
+def _has_text(value: Any) -> bool:
+    return _text_or_none(value) is not None
 
 
 def _markdown_cell(value: str) -> str:

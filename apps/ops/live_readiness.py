@@ -512,14 +512,17 @@ def _capital_plan_gate(starting_capital_usdt: float | None) -> dict[str, Any]:
 
 def _market_scope_gate(
     *,
-    market_type: str,
+    market_type: Any,
     margin_enabled: bool,
     max_leverage: float,
 ) -> dict[str, Any]:
-    normalized_market_type = market_type.strip().lower()
+    market_type_text = _text_or_none(market_type)
+    normalized_market_type = market_type_text.lower() if market_type_text else None
     blockers: list[str] = []
     leverage = _finite_float(max_leverage)
-    if normalized_market_type != "spot":
+    if normalized_market_type is None:
+        blockers.append("market_type_must_be_text")
+    elif normalized_market_type != "spot":
         blockers.append("market_type_must_be_spot")
     if margin_enabled:
         blockers.append("margin_must_be_disabled")
@@ -609,8 +612,15 @@ def _check(name: str, status: str, detail: str) -> ReadinessCheck:
     return ReadinessCheck(name=name, status=status, detail=detail)
 
 
-def _has_text(value: str | None) -> bool:
-    return bool(value and value.strip())
+def _text_or_none(value: Any) -> str | None:
+    if not isinstance(value, str):
+        return None
+    stripped = value.strip()
+    return stripped if stripped else None
+
+
+def _has_text(value: Any) -> bool:
+    return _text_or_none(value) is not None
 
 
 def _finite_float(value: Any) -> float | None:
