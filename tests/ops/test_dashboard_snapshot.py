@@ -498,7 +498,7 @@ def test_snapshot_summarizes_phase6_gate_artifacts(tmp_path: Path) -> None:
                     {
                         "bundle_dir": "data/testnet/run-1",
                         "manifest_path": "data/testnet/run-1/run_manifest.json",
-                        "sha256": "g" * 64,
+                        "sha256": "1" * 64,
                     }
                 ],
                 "live_promotion_review": {
@@ -564,7 +564,7 @@ def test_snapshot_summarizes_phase6_gate_artifacts(tmp_path: Path) -> None:
                                 "manifest_path": (
                                     "data/testnet/run-1/run_manifest.json"
                                 ),
-                                "sha256": "g" * 64,
+                                "sha256": "1" * 64,
                             }
                         ],
                         "continuity_artifact_problems": [],
@@ -633,7 +633,7 @@ def test_snapshot_summarizes_phase6_gate_artifacts(tmp_path: Path) -> None:
             "status": "ok",
             "detail": "1 continuity bundle manifest fingerprints recorded.",
             "path": "data/testnet/run-1/run_manifest.json",
-            "sha256": "g" * 64,
+            "sha256": "1" * 64,
         },
         {
             "label": "Promotion review artifact",
@@ -667,7 +667,7 @@ def test_snapshot_summarizes_phase6_gate_artifacts(tmp_path: Path) -> None:
         "Startup continuity artifact verification"
     )
     assert phase6["reports"][1]["evidence"][3]["status"] == "ok"
-    assert phase6["reports"][1]["evidence"][3]["sha256"] == "g" * 64
+    assert phase6["reports"][1]["evidence"][3]["sha256"] == "1" * 64
     assert phase6["reports"][1]["evidence"][4]["label"] == (
         "Startup promotion review artifact"
     )
@@ -1628,6 +1628,37 @@ def _write_passing_readiness_report(
     )
 
 
+def test_snapshot_blocks_phase6_readiness_with_non_text_artifact_fingerprint(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    readiness_path = tmp_path / "live-readiness.json"
+    _write_passing_readiness_report(readiness_path)
+    payload = json.loads(readiness_path.read_text(encoding="utf-8"))
+    payload["project_status"]["sha256"] = 123
+    readiness_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_readiness_report_path=readiness_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    readiness = snapshot["phase6"]["reports"][0]
+    assert readiness["status"] == "blocked"
+    assert "evidence:Project status artifact" in readiness["blockers"]
+    assert readiness["evidence"][0] == {
+        "label": "Project status artifact",
+        "status": "blocked",
+        "detail": "Artifact fingerprint is not recorded.",
+        "path": "docs/project-status.md",
+        "sha256": None,
+    }
+    assert snapshot["phase6"]["state"] == "blocked"
+
+
 def _write_passing_startup_guard_report_with_readiness_git(
     path: Path,
     *,
@@ -1796,6 +1827,126 @@ def _write_passing_startup_guard_report_with_readiness_git(
         ),
         encoding="utf-8",
     )
+
+
+def test_snapshot_blocks_phase6_startup_with_non_text_readiness_fingerprint(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    guard_path = tmp_path / "live-startup-guard.json"
+    _write_passing_startup_guard_report_with_readiness_git(
+        guard_path,
+        readiness_git={
+            "commit": "b" * 40,
+            "dirty": False,
+        },
+        expected_git_commit="b" * 40,
+    )
+    payload = json.loads(guard_path.read_text(encoding="utf-8"))
+    payload["evidence"]["live_readiness_report"]["sha256"] = 123
+    guard_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_startup_guard_report_path=guard_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    startup_guard = snapshot["phase6"]["reports"][1]
+    assert startup_guard["status"] == "blocked"
+    assert "evidence:Readiness report artifact" in startup_guard["blockers"]
+    assert startup_guard["evidence"][1] == {
+        "label": "Readiness report artifact",
+        "status": "blocked",
+        "detail": "Artifact fingerprint is not recorded.",
+        "path": "live-readiness.json",
+        "sha256": None,
+    }
+    assert snapshot["phase6"]["state"] == "blocked"
+
+
+def test_snapshot_blocks_phase6_startup_with_invalid_readiness_git_commit_type(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    guard_path = tmp_path / "live-startup-guard.json"
+    _write_passing_startup_guard_report_with_readiness_git(
+        guard_path,
+        readiness_git={
+            "commit": "b" * 40,
+            "dirty": False,
+        },
+        expected_git_commit="b" * 40,
+    )
+    payload = json.loads(guard_path.read_text(encoding="utf-8"))
+    readiness_gate = payload["evidence"]["live_readiness_report"]
+    readiness_gate["readiness_git"]["commit"] = 123
+    readiness_gate["expected_git_commit"] = 123
+    guard_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_startup_guard_report_path=guard_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    startup_guard = snapshot["phase6"]["reports"][1]
+    assert startup_guard["status"] == "blocked"
+    assert "evidence:Readiness git commit match" in startup_guard["blockers"]
+    assert startup_guard["evidence"][8] == {
+        "label": "Readiness git commit match",
+        "status": "blocked",
+        "detail": "Startup guard did not record both git commits.",
+        "path": "live-readiness.json",
+        "sha256": None,
+    }
+    assert snapshot["phase6"]["state"] == "blocked"
+
+
+def test_snapshot_blocks_phase6_startup_with_non_text_continuity_fingerprint(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    guard_path = tmp_path / "live-startup-guard.json"
+    _write_passing_startup_guard_report_with_readiness_git(
+        guard_path,
+        readiness_git={
+            "commit": "b" * 40,
+            "dirty": False,
+        },
+        expected_git_commit="b" * 40,
+    )
+    payload = json.loads(guard_path.read_text(encoding="utf-8"))
+    payload["evidence"]["live_readiness_report"]["continuity_artifacts"][0][
+        "sha256"
+    ] = 123
+    guard_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        phase6_live_startup_guard_report_path=guard_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    startup_guard = snapshot["phase6"]["reports"][1]
+    assert startup_guard["status"] == "blocked"
+    assert "evidence:Startup continuity artifact verification" in startup_guard[
+        "blockers"
+    ]
+    assert startup_guard["evidence"][3] == {
+        "label": "Startup continuity artifact verification",
+        "status": "blocked",
+        "detail": "Startup guard did not record valid continuity artifact fingerprints.",
+        "path": "data/testnet/run-1/run_manifest.json",
+        "sha256": None,
+    }
+    assert snapshot["phase6"]["state"] == "blocked"
 
 
 def test_snapshot_blocks_phase6_startup_with_different_readiness_git_commit(

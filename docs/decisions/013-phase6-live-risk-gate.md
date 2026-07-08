@@ -180,6 +180,12 @@ environment variable names (`BINANCE_LIVE_API_KEY` and
 counted and blocked without echoing their raw values, so an accidentally
 supplied credential value is not written into the passive report.
 
+`dashboard.snapshot.v1` is also conservative when reading saved Phase 6
+reports: artifact fingerprints only count as evidence when they are canonical
+SHA-256 hex strings, git commits only count when they are 40-character hex
+commits, and malformed saved values block the read-only evidence row instead
+of being stringified into an apparently valid artifact.
+
 Current blocked example:
 
 ```bash

@@ -63,6 +63,7 @@ _PHASE6_MAX_LIVE_CANARY_CAPITAL_USDT = 500.0
 _PHASE6_REQUIRED_TESTNET_CONTINUITY_DAYS = 14
 _PHASE6_MAX_LIVE_CANARY_POLICY_MULTIPLIER = 0.1
 _PHASE6_GIT_COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
+_PHASE6_SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
 _STATUS_FIELD_RE = re.compile(
     r"^- \*\*(?P<key>Last updated|Current phase|Current objective)\*\*:\s*(?P<value>.+)$",
@@ -1718,8 +1719,8 @@ def _phase6_report_snapshot(
         "gate_met": gate_met,
         "authorization_field": authorization_field,
         "authorizes_live_trading": authorizes_live_trading,
-        "source": payload.get("source"),
-        "model_version": payload.get("model_version"),
+        "source": _phase6_text(payload.get("source")),
+        "model_version": _phase6_text(payload.get("model_version")),
         "recommendation": payload.get("recommendation"),
         "generated_at_ns": report_generated_at_ns,
         "report_age_seconds": report_age_seconds,
@@ -1742,16 +1743,16 @@ def _phase6_apply_cross_report_blockers(
         return
 
     blockers: list[str] = []
-    readiness_source = _optional_str(readiness.get("source"))
-    startup_source = _optional_str(startup_guard.get("source"))
-    readiness_model = _optional_str(readiness.get("model_version"))
-    startup_model = _optional_str(startup_guard.get("model_version"))
+    readiness_source = _phase6_text(readiness.get("source"))
+    startup_source = _phase6_text(startup_guard.get("source"))
+    readiness_model = _phase6_text(readiness.get("model_version"))
+    startup_model = _phase6_text(startup_guard.get("model_version"))
     if readiness_source and startup_source and readiness_source != startup_source:
         blockers.append("cross_report:source")
     if readiness_model and startup_model and readiness_model != startup_model:
         blockers.append("cross_report:model_version")
 
-    attached_readiness_sha = _optional_str(readiness.get("report_sha256"))
+    attached_readiness_sha = _phase6_sha256(readiness.get("report_sha256"))
     startup_readiness_sha = _phase6_evidence_sha256(
         startup_guard,
         label="Readiness report artifact",
@@ -1781,7 +1782,7 @@ def _phase6_evidence_sha256(
         return None
     for item in evidence:
         if isinstance(item, dict) and item.get("label") == label:
-            return _optional_str(item.get("sha256"))
+            return _phase6_sha256(item.get("sha256"))
     return None
 
 
@@ -1823,8 +1824,8 @@ def _phase6_report_evidence(
     readiness_promotion_gate = (
         readiness_promotion_gate if isinstance(readiness_promotion_gate, dict) else {}
     )
-    readiness_sha = _optional_str(readiness_promotion_gate.get("sha256"))
-    expected_sha = _optional_str(
+    readiness_sha = _phase6_sha256(readiness_promotion_gate.get("sha256"))
+    expected_sha = _phase6_sha256(
         readiness_gate.get("expected_live_promotion_review_sha256")
     )
     sha_matches = bool(readiness_sha and expected_sha and readiness_sha == expected_sha)
@@ -1878,8 +1879,8 @@ def _artifact_evidence_item(
             "path": None,
             "sha256": None,
         }
-    sha256 = _optional_str(gate.get("sha256"))
-    path = _optional_str(gate.get("path"))
+    sha256 = _phase6_sha256(gate.get("sha256"))
+    path = _phase6_text(gate.get("path"))
     status = "ok" if sha256 else "blocked"
     return {
         "label": label,
@@ -1907,11 +1908,11 @@ def _accepted_artifact_evidence_item(
             "path": None,
             "sha256": None,
         }
-    sha256 = _optional_str(gate.get("sha256"))
-    path = _optional_str(gate.get("path"))
+    sha256 = _phase6_sha256(gate.get("sha256"))
+    path = _phase6_text(gate.get("path"))
     accepted = gate.get("accepted") is True
-    blocker = _optional_str(gate.get("blocker"))
-    document_status = _optional_str(gate.get("status"))
+    blocker = _phase6_text(gate.get("blocker"))
+    document_status = _phase6_text(gate.get("status"))
     status = "ok" if accepted and sha256 else "blocked"
     if status == "ok":
         detail = "Artifact is accepted and fingerprinted."
@@ -1945,10 +1946,10 @@ def _readiness_report_artifact_evidence_item(
             "path": None,
             "sha256": None,
         }
-    sha256 = _optional_str(gate.get("sha256"))
-    path = _optional_str(gate.get("path"))
+    sha256 = _phase6_sha256(gate.get("sha256"))
+    path = _phase6_text(gate.get("path"))
     accepted = gate.get("accepted") is True
-    blocker = _optional_str(gate.get("blocker"))
+    blocker = _phase6_text(gate.get("blocker"))
     status = "ok" if accepted and sha256 else "blocked"
     if status == "ok":
         detail = "Readiness report gate is accepted and fingerprinted."
@@ -1981,11 +1982,11 @@ def _continuity_artifacts_evidence_item(
     missing = [
         item
         for item in artifacts
-        if not isinstance(item, dict) or not _optional_str(item.get("sha256"))
+        if not isinstance(item, dict) or not _phase6_sha256(item.get("sha256"))
     ]
     first_path = next(
         (
-            _optional_str(item.get("manifest_path"))
+            _phase6_text(item.get("manifest_path"))
             for item in artifacts
             if isinstance(item, dict) and item.get("manifest_path")
         ),
@@ -2001,7 +2002,7 @@ def _continuity_artifacts_evidence_item(
             else "One or more continuity bundle fingerprints are missing."
         ),
         "path": first_path,
-        "sha256": _optional_str(artifacts[0].get("sha256"))
+        "sha256": _phase6_sha256(artifacts[0].get("sha256"))
         if isinstance(artifacts[0], dict)
         else None,
     }
@@ -2022,8 +2023,8 @@ def _readiness_live_risk_adr_match_item(
 
     live_risk_adr = readiness_gate.get("live_risk_adr")
     live_risk_adr = live_risk_adr if isinstance(live_risk_adr, dict) else {}
-    readiness_sha = _optional_str(live_risk_adr.get("sha256"))
-    expected_sha = _optional_str(readiness_gate.get("expected_live_risk_adr_sha256"))
+    readiness_sha = _phase6_sha256(live_risk_adr.get("sha256"))
+    expected_sha = _phase6_sha256(readiness_gate.get("expected_live_risk_adr_sha256"))
     sha_matches = bool(readiness_sha and expected_sha and readiness_sha == expected_sha)
     return {
         "label": "Readiness live-risk ADR SHA-256 match",
@@ -2033,7 +2034,7 @@ def _readiness_live_risk_adr_match_item(
             if sha_matches
             else "Readiness report ADR fingerprint does not match the startup artifact."
         ),
-        "path": _optional_str(live_risk_adr.get("path")),
+        "path": _phase6_text(live_risk_adr.get("path")),
         "sha256": readiness_sha,
         "expected_sha256": expected_sha,
     }
@@ -2058,14 +2059,14 @@ def _startup_continuity_artifact_verification_item(
     if isinstance(artifacts, list):
         first_path = next(
             (
-                _optional_str(item.get("manifest_path"))
+                _phase6_text(item.get("manifest_path"))
                 for item in artifacts
                 if isinstance(item, dict) and item.get("manifest_path")
             ),
             None,
         )
         first_sha256 = (
-            _optional_str(artifacts[0].get("sha256"))
+            _phase6_sha256(artifacts[0].get("sha256"))
             if artifacts and isinstance(artifacts[0], dict)
             else None
         )
@@ -2092,6 +2093,19 @@ def _startup_continuity_artifact_verification_item(
             "detail": "Startup guard did not record continuity artifact inputs.",
             "path": None,
             "sha256": None,
+        }
+    missing_fingerprints = [
+        item
+        for item in artifacts
+        if not isinstance(item, dict) or not _phase6_sha256(item.get("sha256"))
+    ]
+    if missing_fingerprints:
+        return {
+            "label": "Startup continuity artifact verification",
+            "status": "blocked",
+            "detail": "Startup guard did not record valid continuity artifact fingerprints.",
+            "path": first_path,
+            "sha256": first_sha256,
         }
     return {
         "label": "Startup continuity artifact verification",
@@ -2120,8 +2134,8 @@ def _readiness_freshness_evidence_item(
             "label": "Readiness freshness window",
             "status": "missing",
             "detail": "Startup guard did not record readiness freshness evidence.",
-            "path": _optional_str(readiness_gate.get("path")),
-            "sha256": _optional_str(readiness_gate.get("sha256")),
+            "path": _phase6_text(readiness_gate.get("path")),
+            "sha256": _phase6_sha256(readiness_gate.get("sha256")),
         }
 
     problems = freshness.get("problems")
@@ -2137,8 +2151,8 @@ def _readiness_freshness_evidence_item(
             if fresh
             else "Startup guard reported: " + _join_or_none(problems)
         ),
-        "path": _optional_str(readiness_gate.get("path")),
-        "sha256": _optional_str(readiness_gate.get("sha256")),
+        "path": _phase6_text(readiness_gate.get("path")),
+        "sha256": _phase6_sha256(readiness_gate.get("sha256")),
     }
 
 
@@ -2160,19 +2174,19 @@ def _readiness_git_evidence_item(
             "label": "Readiness git commit match",
             "status": "missing",
             "detail": "Startup guard did not record readiness git evidence.",
-            "path": _optional_str(readiness_gate.get("path")),
+            "path": _phase6_text(readiness_gate.get("path")),
             "sha256": None,
         }
 
-    readiness_commit = _optional_str(readiness_git.get("commit"))
-    expected_commit = _optional_str(readiness_gate.get("expected_git_commit"))
+    readiness_commit = _phase6_git_commit(readiness_git.get("commit"))
+    expected_commit = _phase6_git_commit(readiness_gate.get("expected_git_commit"))
     readiness_dirty = readiness_git.get("dirty")
     if readiness_dirty is not False:
         return {
             "label": "Readiness git commit match",
             "status": "blocked",
             "detail": "Readiness report git evidence is dirty.",
-            "path": _optional_str(readiness_gate.get("path")),
+            "path": _phase6_text(readiness_gate.get("path")),
             "sha256": None,
         }
     if not readiness_commit or not expected_commit:
@@ -2180,7 +2194,7 @@ def _readiness_git_evidence_item(
             "label": "Readiness git commit match",
             "status": "blocked",
             "detail": "Startup guard did not record both git commits.",
-            "path": _optional_str(readiness_gate.get("path")),
+            "path": _phase6_text(readiness_gate.get("path")),
             "sha256": None,
         }
     if readiness_commit != expected_commit:
@@ -2188,14 +2202,14 @@ def _readiness_git_evidence_item(
             "label": "Readiness git commit match",
             "status": "blocked",
             "detail": "Readiness report git commit does not match startup preflight.",
-            "path": _optional_str(readiness_gate.get("path")),
+            "path": _phase6_text(readiness_gate.get("path")),
             "sha256": None,
         }
     return {
         "label": "Readiness git commit match",
         "status": "ok",
         "detail": "Readiness report git commit matches startup preflight and is clean.",
-        "path": _optional_str(readiness_gate.get("path")),
+        "path": _phase6_text(readiness_gate.get("path")),
         "sha256": None,
     }
 
@@ -2216,8 +2230,8 @@ def _readiness_project_status_match_item(
 
     project_status = readiness_gate.get("project_status")
     project_status = project_status if isinstance(project_status, dict) else {}
-    readiness_sha = _optional_str(project_status.get("sha256"))
-    expected_sha = _optional_str(
+    readiness_sha = _phase6_sha256(project_status.get("sha256"))
+    expected_sha = _phase6_sha256(
         readiness_gate.get("expected_project_status_sha256")
     )
     sha_matches = bool(readiness_sha and expected_sha and readiness_sha == expected_sha)
@@ -2229,7 +2243,7 @@ def _readiness_project_status_match_item(
             if sha_matches
             else "Readiness report project-status fingerprint does not match the startup artifact."
         ),
-        "path": _optional_str(project_status.get("path")),
+        "path": _phase6_text(project_status.get("path")),
         "sha256": readiness_sha,
         "expected_sha256": expected_sha,
     }
@@ -2249,9 +2263,9 @@ def _promotion_review_evidence_item(
             "sha256": None,
         }
     accepted = gate.get("accepted") is True
-    sha256 = _optional_str(gate.get("sha256"))
-    path = _optional_str(gate.get("path"))
-    blocker = _optional_str(gate.get("blocker"))
+    sha256 = _phase6_sha256(gate.get("sha256"))
+    path = _phase6_text(gate.get("path"))
+    blocker = _phase6_text(gate.get("blocker"))
     status = "ok" if accepted and sha256 else "blocked"
     return {
         "label": label,
@@ -2270,6 +2284,27 @@ def _optional_str(value: Any) -> str | None:
     if value is None:
         return None
     return str(value)
+
+
+def _phase6_text(value: Any) -> str | None:
+    if not isinstance(value, str):
+        return None
+    stripped = value.strip()
+    return stripped if stripped else None
+
+
+def _phase6_sha256(value: Any) -> str | None:
+    text = _phase6_text(value)
+    if text is None:
+        return None
+    return text if _PHASE6_SHA256_RE.fullmatch(text) else None
+
+
+def _phase6_git_commit(value: Any) -> str | None:
+    text = _phase6_text(value)
+    if text is None:
+        return None
+    return text if _PHASE6_GIT_COMMIT_RE.fullmatch(text) else None
 
 
 def _compact_phase6_checks(checks: Sequence[Any]) -> list[dict[str, str]]:
@@ -2447,9 +2482,7 @@ def _phase6_startup_git_blockers(
     evidence = evidence if isinstance(evidence, dict) else {}
     readiness_gate = evidence.get("live_readiness_report")
     readiness_gate = readiness_gate if isinstance(readiness_gate, dict) else {}
-    expected_commit = _optional_str(readiness_gate.get("expected_git_commit"))
-    if expected_commit and _PHASE6_GIT_COMMIT_RE.fullmatch(expected_commit) is None:
-        expected_commit = None
+    expected_commit = _phase6_git_commit(readiness_gate.get("expected_git_commit"))
     return _phase6_clean_git_blockers(payload, expected_commit=expected_commit)
 
 
