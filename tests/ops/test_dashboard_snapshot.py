@@ -376,6 +376,39 @@ def test_snapshot_missing_advice_db_is_empty(tmp_path: Path) -> None:
     assert snapshot["agent_advice"]["latest"] == []
 
 
+def test_snapshot_marks_corrupt_advice_db_as_attention(tmp_path: Path) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    db = tmp_path / "advice.db"
+    db.write_bytes(b"not a sqlite database")
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=db,
+        observability_textfile_dir=None,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    assert snapshot["agent_advice"]["db_exists"] is True
+    assert snapshot["agent_advice"]["total"] == 0
+    assert snapshot["agent_advice"]["latest"] == []
+    assert snapshot["agent_advice"]["error"]
+    assert snapshot["ops_status"]["state"] == "attention"
+    assert snapshot["ops_status"]["headline"] == (
+        "AgentAdvice database could not be read."
+    )
+    assert snapshot["ops_status"]["counts"]["agent_advice_error_count"] == 1
+    assert (
+        "AgentAdvice database could not be read; review queue is unknown."
+        in snapshot["ops_status"]["summary"]
+    )
+    assert snapshot["operator_checklist"][2]["status"] == "warn"
+    assert snapshot["operator_checklist"][2]["detail"] == (
+        "AgentAdvice database could not be read; review queue is unknown."
+    )
+    json.dumps(snapshot, allow_nan=False)
+
+
 def test_markdown_snapshot_renders_boundary_and_advice(tmp_path: Path) -> None:
     status_path = tmp_path / "project-status.md"
     _write_status(status_path)
@@ -3283,6 +3316,42 @@ def test_snapshot_reads_prometheus_textfile_observability(tmp_path: Path) -> Non
     assert latest["last_signal_age_seconds"] == 15.0
     assert latest["alerts_by_kind"] == {"ws_disconnected": 2}
     assert latest["exchange_error_total"] == 1
+
+
+def test_snapshot_marks_invalid_utf8_observability_textfile_as_attention(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    obs_dir = tmp_path / "observability"
+    obs_dir.mkdir()
+    (obs_dir / "testnet-run-bad.prom").write_bytes(b"\xff\xfe")
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        observability_textfile_dir=obs_dir,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    observability = snapshot["observability"]
+    assert observability["exists"] is True
+    assert observability["file_count"] == 1
+    assert observability["counts"]["run_count"] == 1
+    assert observability["counts"]["attention_count"] == 1
+    assert observability["counts"]["parse_error_count"] == 1
+    assert observability["latest"]["run_id"] == "run-bad"
+    assert observability["latest"]["state"] == "attention"
+    assert observability["latest"]["state_reason"] == "parse_errors_present"
+    assert observability["latest"]["parse_errors"] == ["invalid_utf8:invalid start byte"]
+    assert snapshot["ops_status"]["state"] == "attention"
+    assert snapshot["ops_status"]["headline"] == "Observability textfiles need review."
+    assert snapshot["ops_status"]["counts"]["observability_issue_count"] == 1
+    assert (
+        "1 observability run(s) need review."
+        in snapshot["ops_status"]["summary"]
+    )
+    json.dumps(snapshot, allow_nan=False)
 
 
 def test_markdown_snapshot_renders_observability_runs(tmp_path: Path) -> None:

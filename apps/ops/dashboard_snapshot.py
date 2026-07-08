@@ -211,12 +211,18 @@ def build_dashboard_snapshot(
         grafana_base_url=grafana_base_url,
         repo_browser_base_url=repo_browser_base_url,
     )
+    observability = _observability_snapshot(
+        observability_textfile_dir,
+        generated_at_ns=generated_ns,
+        limit=observability_limit,
+    )
     ops_status = _ops_status_snapshot(
         project_status=project_status,
         boundaries=boundaries,
         agent_advice=agent_advice,
         paper_bundles=paper_bundles,
         testnet_bundles=testnet_bundles,
+        observability=observability,
     )
     phase6 = _phase6_snapshot(
         live_readiness_report_path=phase6_live_readiness_report_path,
@@ -249,11 +255,7 @@ def build_dashboard_snapshot(
         "signal_summary": signal_summary,
         "phase6": phase6,
         "ops_status": ops_status,
-        "observability": _observability_snapshot(
-            observability_textfile_dir,
-            generated_at_ns=generated_ns,
-            limit=observability_limit,
-        ),
+        "observability": observability,
         "reference_links": _reference_links(
             grafana_base_url=grafana_base_url,
             repo_browser_base_url=repo_browser_base_url,
@@ -1378,6 +1380,8 @@ def _parse_prometheus_textfile(
     parse_errors: list[str] = []
     try:
         lines = path.read_text(encoding="utf-8").splitlines()
+    except UnicodeDecodeError as exc:
+        return {}, [f"invalid_utf8:{exc.reason}"]
     except OSError as exc:
         return {}, [f"read_failed:{exc.__class__.__name__}"]
 
@@ -2791,6 +2795,7 @@ def _ops_status_snapshot(
     agent_advice: dict[str, Any],
     paper_bundles: list[dict[str, Any]],
     testnet_bundles: list[dict[str, Any]],
+    observability: dict[str, Any],
 ) -> dict[str, Any]:
     boundary_open_count = sum(1 for value in boundaries.values() if value)
     paper_blockers = sum(len(bundle.get("review_blockers") or []) for bundle in paper_bundles)
@@ -2801,15 +2806,27 @@ def _ops_status_snapshot(
         len(bundle.get("promotion_blockers") or []) for bundle in paper_bundles
     )
     recorded_advice = int(agent_advice.get("by_status", {}).get("recorded", 0))
+    agent_advice_error = str(agent_advice.get("error") or "")
+    agent_advice_error_count = 1 if agent_advice_error else 0
+    observability_counts = observability.get("counts") or {}
+    observability_issue_count = int(observability_counts.get("attention_count", 0)) + int(
+        observability_counts.get("stale_count", 0)
+    )
     live_blocked = bool(project_status.get("live_trading_blocked", True))
     strict_continuity = project_status.get("strict_continuity")
 
     if boundary_open_count:
         state = "breach"
         headline = "A dashboard or agent boundary is open."
+    elif agent_advice_error_count:
+        state = "attention"
+        headline = "AgentAdvice database could not be read."
     elif paper_blockers or testnet_blockers or promotion_blockers:
         state = "attention"
         headline = "Review blockers exist in attached evidence."
+    elif observability_issue_count:
+        state = "attention"
+        headline = "Observability textfiles need review."
     elif not live_blocked:
         state = "attention"
         headline = "Live gate state is not explicitly blocked."
@@ -2825,20 +2842,24 @@ def _ops_status_snapshot(
         "counts": {
             "boundary_open_count": boundary_open_count,
             "recorded_advice": recorded_advice,
+            "agent_advice_error_count": agent_advice_error_count,
             "paper_bundle_count": len(paper_bundles),
             "testnet_bundle_count": len(testnet_bundles),
             "paper_review_blockers": paper_blockers,
             "paper_promotion_blockers": promotion_blockers,
             "testnet_review_blockers": testnet_blockers,
+            "observability_issue_count": observability_issue_count,
         },
         "summary": _ops_summary_lines(
             live_blocked=live_blocked,
             boundary_open_count=boundary_open_count,
             strict_continuity=strict_continuity,
             recorded_advice=recorded_advice,
+            agent_advice_error=agent_advice_error,
             paper_blockers=paper_blockers,
             testnet_blockers=testnet_blockers,
             promotion_blockers=promotion_blockers,
+            observability_issue_count=observability_issue_count,
         ),
     }
 
@@ -2849,9 +2870,11 @@ def _ops_summary_lines(
     boundary_open_count: int,
     strict_continuity: str | None,
     recorded_advice: int,
+    agent_advice_error: str,
     paper_blockers: int,
     testnet_blockers: int,
     promotion_blockers: int,
+    observability_issue_count: int,
 ) -> list[str]:
     lines = [
         "Live trading is blocked by ADR gates."
@@ -2865,6 +2888,8 @@ def _ops_summary_lines(
     ]
     if strict_continuity:
         lines.append(f"Strict testnet continuity remains {strict_continuity}.")
+    if agent_advice_error:
+        lines.append("AgentAdvice database could not be read; review queue is unknown.")
     if recorded_advice:
         lines.append(f"{recorded_advice} AgentAdvice rows still await human review.")
     if paper_blockers or testnet_blockers or promotion_blockers:
@@ -2873,6 +2898,10 @@ def _ops_summary_lines(
             f"paper_review={paper_blockers}, "
             f"paper_promotion={promotion_blockers}, "
             f"testnet_review={testnet_blockers}."
+        )
+    if observability_issue_count:
+        lines.append(
+            f"{observability_issue_count} observability run(s) need review."
         )
     return lines
 
@@ -2886,6 +2915,7 @@ def _operator_checklist(
 ) -> list[dict[str, str]]:
     boundary_open_count = int(ops_status["counts"]["boundary_open_count"])
     recorded_advice = int(agent_advice.get("by_status", {}).get("recorded", 0))
+    agent_advice_error = str(agent_advice.get("error") or "")
     strict_continuity = project_status.get("strict_continuity") or "unknown"
     return [
         {
@@ -2900,11 +2930,15 @@ def _operator_checklist(
         },
         {
             "label": "Review AgentAdvice queue",
-            "status": "warn" if recorded_advice else "ok",
+            "status": "warn" if agent_advice_error or recorded_advice else "ok",
             "detail": (
-                f"{recorded_advice} recorded rows need review."
-                if recorded_advice
-                else "No recorded AgentAdvice rows in the snapshot."
+                "AgentAdvice database could not be read; review queue is unknown."
+                if agent_advice_error
+                else (
+                    f"{recorded_advice} recorded rows need review."
+                    if recorded_advice
+                    else "No recorded AgentAdvice rows in the snapshot."
+                )
             ),
         },
         {
