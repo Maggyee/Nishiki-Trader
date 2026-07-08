@@ -3639,6 +3639,78 @@ def test_snapshot_wraps_passive_bundle_reports(
     ]
 
 
+def test_snapshot_degrades_invalid_passive_bundle_reports(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    paper_dir = tmp_path / "paper-run"
+    testnet_dir = tmp_path / "testnet-run"
+    paper_dir.mkdir()
+    testnet_dir.mkdir()
+
+    def raise_paper_error(path: Path) -> None:
+        raise ValueError(f"{path.name} manifest is broken")
+
+    def raise_testnet_error(path: Path) -> None:
+        raise RuntimeError(f"{path.name} manifest is broken")
+
+    monkeypatch.setattr(
+        dashboard_snapshot,
+        "load_paper_bundle_report",
+        raise_paper_error,
+    )
+    monkeypatch.setattr(
+        dashboard_snapshot,
+        "load_testnet_bundle_report",
+        raise_testnet_error,
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        paper_bundle_dirs=(paper_dir,),
+        testnet_bundle_dirs=(testnet_dir,),
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+    markdown = dashboard_snapshot.render_markdown_snapshot(snapshot)
+
+    paper = snapshot["paper_bundles"][0]
+    assert paper["run_id"] == "paper-run"
+    assert paper["signal_rows"] == 0
+    assert paper["fills"] == 0
+    assert paper["recommendation"] == "invalid_bundle_report"
+    assert paper["review_blockers"] == ["invalid_paper_bundle:ValueError"]
+    assert paper["promotion_blockers"] == ["invalid_paper_bundle:ValueError"]
+    assert "paper-run manifest is broken" in paper["load_error"]
+
+    testnet = snapshot["testnet_bundles"][0]
+    assert testnet["run_id"] == "testnet-run"
+    assert testnet["clean_for_retro"] is False
+    assert testnet["heartbeat_count"] == 0
+    assert testnet["fills"] == 0
+    assert testnet["recommendation"] == "invalid_bundle_report"
+    assert testnet["review_blockers"] == ["invalid_testnet_bundle:RuntimeError"]
+    assert "testnet-run manifest is broken" in testnet["load_error"]
+
+    assert snapshot["ops_status"]["state"] == "attention"
+    assert snapshot["ops_status"]["headline"] == (
+        "Review blockers exist in attached evidence."
+    )
+    assert snapshot["ops_status"]["counts"]["paper_review_blockers"] == 1
+    assert snapshot["ops_status"]["counts"]["paper_promotion_blockers"] == 1
+    assert snapshot["ops_status"]["counts"]["testnet_review_blockers"] == 1
+    assert snapshot["signal_summary"]["bundle_count"] == 2
+    assert snapshot["signal_summary"]["signal_rows"] == 0
+    assert snapshot["signal_summary"]["by_kind"]["paper"]["bundle_count"] == 1
+    assert snapshot["signal_summary"]["by_kind"]["testnet"]["bundle_count"] == 1
+    assert "invalid_bundle_report" in markdown
+    assert "invalid_paper_bundle:ValueError" in markdown
+    assert "invalid_testnet_bundle:RuntimeError" in markdown
+    json.dumps(snapshot, allow_nan=False)
+
+
 def test_signals_overview_dashboard_filters_by_model_version() -> None:
     dashboard_path = Path("infra/grafana/dashboards/signals-overview.json")
     dashboard = json.loads(dashboard_path.read_text(encoding="utf-8"))

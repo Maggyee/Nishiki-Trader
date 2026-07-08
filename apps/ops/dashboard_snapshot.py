@@ -196,14 +196,8 @@ def build_dashboard_snapshot(
     }
     project_status = _project_status_snapshot(project_status_path)
     agent_advice = _agent_advice_snapshot(agent_advice_db_path, limit=advice_limit)
-    paper_bundles = [
-        _compact_paper_report(load_paper_bundle_report(path))
-        for path in paper_bundle_dirs
-    ]
-    testnet_bundles = [
-        _compact_testnet_report(load_testnet_bundle_report(path))
-        for path in testnet_bundle_dirs
-    ]
+    paper_bundles = [_paper_bundle_snapshot(path) for path in paper_bundle_dirs]
+    testnet_bundles = [_testnet_bundle_snapshot(path) for path in testnet_bundle_dirs]
     signal_summary = _signal_summary_snapshot(
         paper_bundles=paper_bundles,
         testnet_bundles=testnet_bundles,
@@ -833,6 +827,43 @@ def _agent_advice_snapshot(path: Path, *, limit: int) -> dict[str, Any]:
     return base
 
 
+def _paper_bundle_snapshot(path: Path) -> dict[str, Any]:
+    try:
+        return _compact_paper_report(load_paper_bundle_report(path))
+    except Exception as exc:
+        blocker = _bundle_load_blocker("invalid_paper_bundle", exc)
+        return {
+            "bundle_dir": str(path),
+            "run_id": path.name or "unknown",
+            "kind": "paper",
+            "git_dirty": None,
+            "source": None,
+            "model_version": None,
+            "signal_rows": 0,
+            "first_signal_ts_event_ns": None,
+            "last_signal_ts_event_ns": None,
+            "accepted_signals": 0,
+            "skipped_signals": 0,
+            "dry_run_signals": 0,
+            "expired_signals": 0,
+            "unauthorized_signals": 0,
+            "signal_lag_signals": 0,
+            "kill_switch_signals": 0,
+            "data_gap_signals": 0,
+            "decision_counts": {},
+            "reason_counts": {},
+            "fills": 0,
+            "positions": 0,
+            "pnl_total_by_currency": {},
+            "max_drawdown_pct_by_currency": {},
+            "eligible_for_review": False,
+            "review_blockers": [blocker],
+            "promotion_blockers": [blocker],
+            "recommendation": "invalid_bundle_report",
+            "load_error": _bundle_load_error(exc),
+        }
+
+
 def _compact_paper_report(report: Any) -> dict[str, Any]:
     return {
         "bundle_dir": report.bundle_dir,
@@ -863,6 +894,45 @@ def _compact_paper_report(report: Any) -> dict[str, Any]:
         "promotion_blockers": report.promotion_blockers,
         "recommendation": report.recommendation,
     }
+
+
+def _testnet_bundle_snapshot(path: Path) -> dict[str, Any]:
+    try:
+        return _compact_testnet_report(load_testnet_bundle_report(path))
+    except Exception as exc:
+        blocker = _bundle_load_blocker("invalid_testnet_bundle", exc)
+        return {
+            "bundle_dir": str(path),
+            "run_id": path.name or "unknown",
+            "kind": "testnet",
+            "git_dirty": None,
+            "source": None,
+            "model_version": None,
+            "clean_for_retro": False,
+            "elapsed_seconds": 0.0,
+            "heartbeat_count": 0,
+            "alert_count": 0,
+            "orders": 0,
+            "fills": 0,
+            "positions": 0,
+            "lineage_rows": 0,
+            "first_signal_ts_event_ns": None,
+            "last_signal_ts_event_ns": None,
+            "accepted_signals": 0,
+            "skipped_signals": 0,
+            "lineage_rows_with_order_ids": 0,
+            "lineage_rows_with_fill_ids": 0,
+            "lineage_rows_with_position_id": 0,
+            "decision_counts": {},
+            "reason_counts": {},
+            "final_position_sides": {},
+            "realized_pnl_total": 0.0,
+            "max_ws_reconnect_count": 0,
+            "max_exchange_error_count": 0,
+            "review_blockers": [blocker],
+            "recommendation": "invalid_bundle_report",
+            "load_error": _bundle_load_error(exc),
+        }
 
 
 def _compact_testnet_report(report: Any) -> dict[str, Any]:
@@ -900,6 +970,14 @@ def _compact_testnet_report(report: Any) -> dict[str, Any]:
         "review_blockers": report.review_blockers,
         "recommendation": report.recommendation,
     }
+
+
+def _bundle_load_blocker(prefix: str, exc: Exception) -> str:
+    return f"{prefix}:{exc.__class__.__name__}"
+
+
+def _bundle_load_error(exc: Exception) -> str:
+    return str(exc)[:500]
 
 
 def _signal_summary_snapshot(

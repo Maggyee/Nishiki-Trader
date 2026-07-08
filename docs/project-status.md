@@ -1,7 +1,7 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-07-08 (frontend degraded input visibility)
+- **Last updated**: 2026-07-08 (dashboard passive bundle degradation handling)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
 - **Current objective**: Phase 5 remains the active implemented phase. ADR-013, `apps.ops.live_readiness`, and `apps.strategies_nautilus.runners.live_startup_guard` define passive Phase 6 live-readiness and startup-refusal gates, including spot-only/no-margin/no-leverage market-scope checks, exact live promotion-review field parsing, project-status / live-risk ADR / testnet continuity bundle manifest / promotion-review artifact SHA-256 capture in readiness reports, clean git evidence capture, and startup-guard cross-checks that saved readiness artifacts kept passive boundary flags closed, were generated from the same clean commit, referenced the same project-status / live-risk ADR / promotion-review artifact bytes, carried continuity bundle manifest fingerprints whose manifest paths still hash to the recorded bytes, and are fresh by `generated_at_ns` (default max age 24h). Startup guard reports record SHA-256 fingerprints for the saved readiness report, live-risk ADR, first-live-day runbook artifacts, readiness-vs-startup project-status SHA inputs, readiness-vs-startup live-risk ADR SHA inputs, readiness freshness-window evidence, readiness-vs-startup git commit/clean evidence, startup-side continuity manifest byte verification, and startup-side operator-document accepted states they consumed. `dashboard.snapshot.v1` can summarize saved `phase6.live_readiness.v1` / `phase6.live_startup_guard.v1` artifacts for read-only operator visibility, including required source/model identity, project-status, live-risk ADR, continuity bundle manifests, readiness continuity-summary / clean-git / capital-range / market-scope blocker checks, startup clean-git / capital-range / market-scope / SourcePolicy / continuity byte verification / runtime / credential-boundary blocker checks, accepted-and-fingerprinted readiness artifact evidence, readiness-vs-startup project-status SHA match, readiness-vs-startup ADR SHA match, readiness freshness window, readiness-vs-startup git commit match, attached readiness-report SHA matching against the startup-consumed readiness artifact, cross-report source/model matching, promotion-review artifact, promotion SHA-256 match, startup-side live-risk ADR / first-live-day runbook accepted-and-fingerprinted evidence, non-ok internal check statuses, open passive boundary flags, and missing/invalid/future report generation timestamps already present in those saved reports. Phase 6 is still closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired. ADR-012, `apps.ops.dashboard_snapshot`, `infra/grafana/dashboards/signals-overview.json`, and `apps/frontend` continue to define the read-only operations console consuming `dashboard.snapshot.v1` with runtime health, AgentAdvice, passive paper/testnet summaries, source/model Grafana drill-down links, snapshot freshness status with generator-configurable thresholds, snapshot source/input audit, signal/rejection/freshness/evidence summaries, observability, reference links, and Phase 6 blocker summaries. Agents and frontend still cannot write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or enter the order path. Keep `freqai_linear_v1 / linear-mom-train20240105` at `hold @ testnet_canary` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. No live trading without ADR-013 acceptance, the ADR-001 capital ladder gate, and the ADR-008 14-day continuity gate.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
@@ -159,7 +159,8 @@ evidence handling, top-level report identity sanitization, generated-at
 timestamp sanitization, git evidence sanitization, dashboard evidence
 fingerprint sanitization, dashboard snapshot timestamp sanitization,
 dashboard project-status UTF-8 handling, dashboard passive input degradation
-handling, and frontend degraded input visibility:
+handling, frontend degraded input visibility, and dashboard passive bundle
+degradation handling:
 
 - `dashboard.snapshot.v1` CLI JSON output now uses strict standard JSON and
   refuses to emit non-standard `NaN` / `Infinity` values if a future passive
@@ -194,6 +195,10 @@ handling, and frontend degraded input visibility:
   `observability_issue_count` in the first-viewport Blockers metric, and marks
   the AgentAdvice summary unknown when the snapshot says the advice database
   could not be read.
+- `dashboard.snapshot.v1` now converts optional paper/testnet bundle report
+  loader failures into invalid bundle rows with `review_blockers` instead of
+  aborting snapshot generation, so attached passive evidence stays visible as
+  blocked input.
 - `apps.ops.live_readiness` and
   `apps.strategies_nautilus.runners.live_startup_guard` now normalize
   non-finite live-canary numeric inputs (`starting_capital_usdt`,
@@ -321,7 +326,7 @@ handling, and frontend degraded input visibility:
   does not run a live runner, load credentials, build or start Nautilus,
   connect to Binance, write `SignalEvent`, mutate `SourcePolicy`, place
   orders, or authorize live trading.
-- `TMPDIR=/tmp UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/ops/test_live_readiness.py tests/strategies_nautilus/test_live_startup_guard.py tests/ops/test_dashboard_snapshot.py -q` -> **143 passed**.
+- `TMPDIR=/tmp UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/ops/test_live_readiness.py tests/strategies_nautilus/test_live_startup_guard.py tests/ops/test_dashboard_snapshot.py -q` -> **144 passed**.
 - `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check apps tests docs infra` -> clean.
 - `npm --prefix apps/frontend run typecheck` -> clean.
 - `npm --prefix apps/frontend run build` -> clean Next.js production build.
