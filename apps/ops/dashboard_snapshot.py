@@ -514,20 +514,29 @@ def _project_status_snapshot(path: Path) -> dict[str, Any]:
         return {
             "path": str(path),
             "exists": False,
+            "decode_error": None,
             "last_updated": None,
             "current_phase": None,
             "current_objective": None,
             "live_trading_blocked": True,
             "strict_continuity": None,
-            "sections": {
-                "immediate_focus": [],
-                "next_steps": [],
-                "blocked_deferred": [],
-                "latest_verification": [],
-            },
+            "sections": _empty_project_status_sections(),
         }
 
-    text = path.read_text(encoding="utf-8")
+    text, decode_error = _decode_utf8(path.read_bytes())
+    if decode_error:
+        return {
+            "path": str(path),
+            "exists": True,
+            "decode_error": decode_error,
+            "last_updated": None,
+            "current_phase": None,
+            "current_objective": None,
+            "live_trading_blocked": False,
+            "strict_continuity": None,
+            "sections": _empty_project_status_sections(),
+        }
+
     fields = {
         _normalize_status_key(match.group("key")): match.group("value").strip()
         for match in _STATUS_FIELD_RE.finditer(text)
@@ -536,6 +545,7 @@ def _project_status_snapshot(path: Path) -> dict[str, Any]:
     return {
         "path": str(path),
         "exists": True,
+        "decode_error": None,
         "last_updated": fields.get("last_updated"),
         "current_phase": fields.get("current_phase"),
         "current_objective": fields.get("current_objective"),
@@ -550,6 +560,22 @@ def _project_status_snapshot(path: Path) -> dict[str, Any]:
             "blocked_deferred": _bullet_section_items(text, "Blocked / Deferred"),
             "latest_verification": _latest_verification_items(text),
         },
+    }
+
+
+def _decode_utf8(raw: bytes) -> tuple[str, str | None]:
+    try:
+        return raw.decode("utf-8"), None
+    except UnicodeDecodeError as exc:
+        return "", str(exc)
+
+
+def _empty_project_status_sections() -> dict[str, list[str]]:
+    return {
+        "immediate_focus": [],
+        "next_steps": [],
+        "blocked_deferred": [],
+        "latest_verification": [],
     }
 
 

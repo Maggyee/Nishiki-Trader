@@ -240,6 +240,48 @@ def test_snapshot_reads_project_status_and_agent_advice(tmp_path: Path) -> None:
     assert snapshot["agent_advice"]["latest"][1]["review_decision"] == "accepted"
 
 
+def test_snapshot_degrades_invalid_utf8_project_status(tmp_path: Path) -> None:
+    status_path = tmp_path / "project-status.md"
+    status_path.write_bytes(b"\xff\xfeinvalid project status")
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+    markdown = dashboard_snapshot.render_markdown_snapshot(snapshot)
+
+    project_status = snapshot["project_status"]
+    assert project_status["path"] == str(status_path)
+    assert project_status["exists"] is True
+    assert project_status["decode_error"].startswith(
+        "'utf-8' codec can't decode byte 0xff"
+    )
+    assert project_status["last_updated"] is None
+    assert project_status["current_phase"] is None
+    assert project_status["current_objective"] is None
+    assert project_status["live_trading_blocked"] is False
+    assert project_status["strict_continuity"] is None
+    assert project_status["sections"] == {
+        "immediate_focus": [],
+        "next_steps": [],
+        "blocked_deferred": [],
+        "latest_verification": [],
+    }
+    assert snapshot["ops_status"]["state"] == "attention"
+    assert snapshot["ops_status"]["live_gate"] == "unknown"
+    assert (
+        "Live trading gate is not explicitly blocked in project status."
+        in snapshot["ops_status"]["summary"]
+    )
+    assert snapshot["operator_checklist"][3]["detail"] == (
+        "Strict continuity is unknown; do not claim live readiness."
+    )
+    assert "ops_state: `attention`" in markdown
+    assert "live_trading_blocked: false" in markdown
+    json.dumps(snapshot, allow_nan=False)
+
+
 def test_snapshot_freshness_thresholds_can_be_configured(tmp_path: Path) -> None:
     status_path = tmp_path / "project-status.md"
     _write_status(status_path)
