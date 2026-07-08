@@ -95,13 +95,13 @@ class StartupGuardCheck:
 class LiveStartupGuardReport:
     schema_version: str
     generated_at_ns: int
-    mode: str
-    kind: str
+    mode: str | None
+    kind: str | None
     runtime_mode: str
     runtime_data_mode: str
     runtime_order_mode: str
-    source: str
-    model_version: str
+    source: str | None
+    model_version: str | None
     startup_allowed: bool
     live_trading_authorized: bool
     recommendation: str
@@ -240,13 +240,13 @@ def build_live_startup_guard_report(
     return LiveStartupGuardReport(
         schema_version=SCHEMA_VERSION,
         generated_at_ns=generated_ns,
-        mode=settings.mode,
-        kind=settings.kind,
+        mode=_text_or_none(settings.mode),
+        kind=_text_or_none(settings.kind),
         runtime_mode=MODE_LIVE,
         runtime_data_mode=DATA_MODE_EXCHANGE_WS,
         runtime_order_mode=ORDER_MODE_EXCHANGE_LIVE,
-        source=settings.source,
-        model_version=settings.model_version,
+        source=_text_or_none(settings.source),
+        model_version=_text_or_none(settings.model_version),
         startup_allowed=startup_allowed,
         live_trading_authorized=False,
         recommendation=(
@@ -278,11 +278,14 @@ def build_live_startup_guard_report(
 
 def render_markdown_report(report: LiveStartupGuardReport) -> str:
     blockers = ", ".join(report.blockers) if report.blockers else "none"
+    source_model = (
+        f"{report.source or 'unknown'} / {report.model_version or 'unknown'}"
+    )
     lines = [
         "# Phase 6 Live Startup Guard",
         "",
         f"- schema_version: `{report.schema_version}`",
-        f"- source_model: `{report.source} / {report.model_version}`",
+        f"- source_model: `{source_model}`",
         f"- startup_allowed: {str(report.startup_allowed).lower()}",
         f"- live_trading_authorized: {str(report.live_trading_authorized).lower()}",
         f"- recommendation: `{report.recommendation}`",
@@ -575,9 +578,11 @@ def _live_readiness_report_gate(
     problems.extend(str(item) for item in freshness["problems"])
     if payload.get("schema_version") != READINESS_SCHEMA_VERSION:
         problems.append("schema_version")
-    if payload.get("source") != settings.source:
+    settings_source = _text_or_none(settings.source)
+    settings_model_version = _text_or_none(settings.model_version)
+    if payload.get("source") != settings_source:
         problems.append("source")
-    if payload.get("model_version") != settings.model_version:
+    if payload.get("model_version") != settings_model_version:
         problems.append("model_version")
     if payload.get("readiness_gate_met") is not True:
         problems.append("readiness_gate_met")
@@ -832,8 +837,8 @@ def _promotion_review_gate(settings: LiveStartupSettings) -> dict[str, Any]:
         }
     gate = evaluate_live_canary_promotion_review(
         path,
-        source=settings.source,
-        model_version=settings.model_version,
+        source=_text_or_none(settings.source),
+        model_version=_text_or_none(settings.model_version),
     )
     if not gate["accepted"]:
         return {

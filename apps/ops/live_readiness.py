@@ -98,6 +98,8 @@ def build_live_readiness_report(
     generated_at_ns: int | None = None,
 ) -> LiveReadinessReport:
     generated_ns = time.time_ns() if generated_at_ns is None else generated_at_ns
+    source_text = _text_or_none(source)
+    model_version_text = _text_or_none(model_version)
     checks: list[ReadinessCheck] = []
     blockers: list[str] = []
     promotion_gate: dict[str, Any] | None = None
@@ -265,8 +267,8 @@ def build_live_readiness_report(
     )
     blockers.extend(str(item) for item in market_scope["blockers"])
 
-    source_declared = _has_text(source)
-    model_version_declared = _has_text(model_version)
+    source_declared = source_text is not None
+    model_version_declared = model_version_text is not None
     if not source_declared:
         blockers.append("source_not_declared")
         checks.append(
@@ -288,15 +290,15 @@ def build_live_readiness_report(
     else:
         promotion_gate = _promotion_review_gate(
             live_promotion_review_path,
-            source=source,
-            model_version=model_version,
+            source=source_text,
+            model_version=model_version_text,
         )
         if promotion_gate["accepted"]:
             checks.append(
                 _check(
                     "source_model",
                     "ok",
-                    f"{source} / {model_version} has a signed live-canary promotion review.",
+                    f"{source_text} / {model_version_text} has a signed live-canary promotion review.",
                 )
             )
         else:
@@ -314,8 +316,8 @@ def build_live_readiness_report(
     return LiveReadinessReport(
         schema_version=SCHEMA_VERSION,
         generated_at_ns=generated_ns,
-        source=source,
-        model_version=model_version,
+        source=source_text,
+        model_version=model_version_text,
         readiness_gate_met=readiness_gate_met,
         live_trading_allowed=False,
         recommendation=(

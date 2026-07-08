@@ -107,6 +107,9 @@ emits `phase6.live_readiness.v1` JSON or Markdown from:
 The tool is audit-only. It never loads exchange credentials, starts a runtime,
 changes `SourcePolicy`, writes `SignalEvent`, places orders, or authorizes live
 trading by itself.
+Top-level identity fields such as `source` and `model_version` are emitted only
+as stripped text or `null`, so malformed programmatic inputs cannot make a
+blocked readiness report fail strict JSON serialization.
 
 Example blocked review:
 
@@ -155,6 +158,9 @@ live credentials, inspect credential values, build a Nautilus node, connect to
 Binance, mutate `SourcePolicy`, write `SignalEvent`, place orders, or
 authorize live trading. It only defines the startup refusal contract before
 those capabilities exist.
+Its top-level `mode`, `kind`, `source`, and `model_version` fields are emitted
+only as stripped text or `null`, so malformed programmatic inputs remain
+audit-visible blockers instead of breaking strict JSON report generation.
 The credential-boundary report only echoes the required live credential
 environment variable names (`BINANCE_LIVE_API_KEY` and
 `BINANCE_LIVE_API_SECRET`). Unknown or non-text credential-name inputs are

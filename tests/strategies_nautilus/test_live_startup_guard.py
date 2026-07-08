@@ -380,19 +380,44 @@ def test_live_startup_guard_blocks_non_text_identity_and_market_type(
     tmp_path: Path,
 ) -> None:
     report = build_live_startup_guard_report(
-        _settings(tmp_path, source=123, model_version=["linear"], market_type=123),
+        _settings(
+            tmp_path,
+            source=object(),
+            model_version=object(),
+            market_type=object(),
+        ),
         git_state=GIT_CLEAN,
         generated_at_ns=REFERENCE_TS_NS,
     )
     encoded = json.dumps(asdict(report), allow_nan=False, sort_keys=True)
 
     assert report.startup_allowed is False
+    assert report.source is None
+    assert report.model_version is None
     assert "source_not_declared" in report.blockers
     assert "model_version_not_declared" in report.blockers
     assert "market_type_must_be_text" in report.blockers
     assert report.market_scope["market_type"] is None
     assert report.evidence["live_readiness_report"]["accepted"] is False
     assert "market_type" in report.evidence["live_readiness_report"]["problems"]
+    assert "NaN" not in encoded
+    assert "Infinity" not in encoded
+
+
+def test_live_startup_guard_report_sanitizes_non_text_mode_kind(
+    tmp_path: Path,
+) -> None:
+    report = build_live_startup_guard_report(
+        _settings(tmp_path, mode=object(), kind=object()),
+        git_state=GIT_CLEAN,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+    encoded = json.dumps(asdict(report), allow_nan=False, sort_keys=True)
+
+    assert report.startup_allowed is False
+    assert report.mode is None
+    assert report.kind is None
+    assert "mode_kind_not_live" in report.blockers
     assert "NaN" not in encoded
     assert "Infinity" not in encoded
 

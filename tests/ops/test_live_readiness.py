@@ -383,16 +383,18 @@ def test_live_readiness_blocks_non_text_identity_and_market_type(
         project_status_path=status_path,
         live_risk_adr_path=live_adr,
         continuity_bundle_dirs=[],
-        source=123,
-        model_version="linear-mom-train20240105",
+        source=object(),
+        model_version=object(),
         starting_capital_usdt=100,
-        market_type=123,
+        market_type=object(),
         git_state=GIT_CLEAN,
         generated_at_ns=REFERENCE_TS_NS,
     )
     encoded = json.dumps(asdict(report), allow_nan=False, sort_keys=True)
 
     assert report.readiness_gate_met is False
+    assert report.source is None
+    assert report.model_version is None
     assert "source_not_declared" in report.blockers
     assert "market_type_must_be_text" in report.blockers
     assert report.market_scope["market_type"] is None

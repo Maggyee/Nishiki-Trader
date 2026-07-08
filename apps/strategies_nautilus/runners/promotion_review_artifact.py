@@ -16,8 +16,8 @@ EXPECTED_LIVE_DECISION = "promote"
 def evaluate_live_canary_promotion_review(
     path: Path,
     *,
-    source: str,
-    model_version: str,
+    source: Any,
+    model_version: Any,
 ) -> dict[str, Any]:
     """Validate a promotion_review artifact for testnet_canary -> live_canary."""
 
