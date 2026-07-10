@@ -12,6 +12,10 @@ from apps.strategies_freqtrade.research.freqai_linear_walkforward_signals import
     WalkForwardLinearParams,
     generate_walkforward_linear_signals,
 )
+from apps.strategies_freqtrade.research.trend_regime_signals import (
+    TrendRegimeParams,
+    generate_trend_regime_signals,
+)
 
 
 def _hourly_bars(days: int = 100) -> pd.DataFrame:
@@ -107,3 +111,55 @@ def test_breakout_resamples_and_emits_transition_only_long_flat():
         "donchian_exit",
     ]
     assert all(event.side != "sell" for event in events)
+
+
+def _minute_bars_from_hourly_closes(closes: list[float]) -> pd.DataFrame:
+    rows = []
+    start = pd.Timestamp("2024-01-01T00:00:00Z")
+    for bucket, close in enumerate(closes):
+        for minute in range(60):
+            ts = start + pd.Timedelta(minutes=bucket * 60 + minute)
+            rows.append(
+                {
+                    "ts_event": int(ts.value),
+                    "open": close,
+                    "high": close + 0.1,
+                    "low": close - 0.1,
+                    "close": close,
+                    "volume": 1.0,
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def test_trend_regime_is_deterministic_transition_only_and_spot_safe():
+    bars = _minute_bars_from_hourly_closes(
+        [100, 100, 100, 101, 103, 105, 106, 104, 101, 98, 96, 95]
+    )
+    params = TrendRegimeParams(
+        fast_ema_bars=2,
+        slow_ema_bars=4,
+        momentum_bars=2,
+        atr_bars=2,
+        atr_multiplier=0.0,
+    )
+    first = generate_trend_regime_signals(
+        bars,
+        symbol="BTCUSDT",
+        venue="BINANCE",
+        params=params,
+    )
+    second = generate_trend_regime_signals(
+        bars,
+        symbol="BTCUSDT",
+        venue="BINANCE",
+        params=params,
+    )
+
+    assert [event.model_dump() for event in first] == [event.model_dump() for event in second]
+    assert [event.side for event in first] == ["buy", "flat"]
+    assert [event.metadata["trigger"] for event in first] == [
+        "trend_regime_entry",
+        "trend_regime_exit",
+    ]
+    assert all(event.horizon == "1h" and event.ttl_seconds == 3600 for event in first)

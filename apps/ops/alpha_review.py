@@ -25,6 +25,7 @@ ELIGIBLE_SOURCES = frozenset(
     {
         "freqai_linear_walkforward_v1",
         "rule_breakout_v1",
+        "rule_trend_regime_v1",
     }
 )
 CURRENT_SOURCE = "freqai_linear_v1"

@@ -54,6 +54,9 @@ uv run python -m apps.ops.backfill_bars \
 `--date` 与范围参数互斥；范围模式不支持 demo signal 或 `--max-rows`，避免把
 逐日测试选项误当成全年数据策略。
 
+Binance Spot archive 在 2025-01-01 起把 kline 时间戳从毫秒切换为微秒；
+importer 会按数值量级检测 ms/us（并防御性接受 ns），拒绝混合或不合理单位。
+
 对已完成的 backtest/paper bundle 做被动成本审查：
 
 ```bash

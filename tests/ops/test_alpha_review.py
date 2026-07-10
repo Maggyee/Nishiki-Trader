@@ -6,11 +6,15 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from apps.ops.alpha_review import build_alpha_review
+from apps.ops.alpha_review import ELIGIBLE_SOURCES, build_alpha_review
 from apps.strategies_nautilus.result_schema import SCHEMA_VERSION
 from apps.strategies_nautilus.runners.backtest_runner import _write_parquet
 
 MONTHS = ["2024-08", "2024-09", "2024-10", "2024-11", "2024-12"]
+
+
+def test_trend_regime_source_is_eligible_for_conservative_gate():
+    assert "rule_trend_regime_v1" in ELIGIBLE_SOURCES
 
 
 def _write_bundle(

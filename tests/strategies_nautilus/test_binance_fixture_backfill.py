@@ -21,6 +21,15 @@ def _write_sample_binance_zip(path: Path) -> None:
         zf.writestr("BTCUSDT-1m-2024-01-01.csv", "\n".join(rows) + "\n")
 
 
+def _write_microsecond_binance_zip(path: Path) -> None:
+    rows = [
+        "1735689600000000,93000.00,93100.00,92900.00,93050.00,12.0,1735689659999999,0,0,0,0,0",
+        "1735689660000000,93050.00,93200.00,93000.00,93150.00,10.5,1735689719999999,0,0,0,0,0",
+    ]
+    with zipfile.ZipFile(path, mode="w") as zf:
+        zf.writestr("BTCUSDT-1m-2025-01-01.csv", "\n".join(rows) + "\n")
+
+
 def test_backfill_bars_cli_imports_zip_to_catalog_and_demo_signals(
     tmp_path: Path,
     capsys,
@@ -60,3 +69,19 @@ def test_backfill_bars_cli_imports_zip_to_catalog_and_demo_signals(
         model_version="binance-fixture-v1",
     )
     assert [signal.side for signal in signals] == ["buy", "flat", "sell"]
+
+
+def test_backfill_detects_2025_microsecond_spot_timestamps(tmp_path: Path, capsys) -> None:
+    raw_path = tmp_path / "BTCUSDT-1m-2025-01-01.zip"
+    catalog_path = tmp_path / "catalog"
+    _write_microsecond_binance_zip(raw_path)
+
+    assert main(["--raw-path", str(raw_path), "--catalog-path", str(catalog_path)]) == 0
+    result = json.loads(capsys.readouterr().out)
+    bars = ParquetDataCatalog(str(catalog_path.resolve())).bars(
+        bar_types=[result["bar_type"]]
+    )
+
+    assert len(bars) == 2
+    assert int(bars[0].ts_event) == 1_735_689_600_000_000_000
+    assert int(bars[1].ts_event) == 1_735_689_660_000_000_000

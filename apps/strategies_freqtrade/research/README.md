@@ -40,6 +40,10 @@ loop.
   transition-only long/flat candidate.
   `source="rule_breakout_v1"`,
   `model_version="donchian20-10-atr14x0.25-15m"`.
+- `trend_regime_signals.py` — locked low-turnover 1h EMA(24/96), 24h
+  momentum, ATR(14) × 0.5 long/flat hypothesis for the untouched
+  2025-08..2025-12 window. `source="rule_trend_regime_v1"`,
+  `model_version="ema24-96-1h-mom24-atr14x0.5-v1"`.
 - `wall_clock_signal_replay.py` — testnet-canary helper that copies already
   reviewed historical `SignalEvent` rows, re-stamps `ts_event` into future
   wall-clock times, and writes them back to `SignalStore`. It preserves the

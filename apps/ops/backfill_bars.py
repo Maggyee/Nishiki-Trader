@@ -261,6 +261,7 @@ def load_binance_klines(
     if max_rows is not None:
         raw = raw.head(max_rows)
 
+    timestamp_unit = _infer_unix_timestamp_unit(raw["open_time"])
     bars_df = pd.DataFrame(
         {
             "open": pd.to_numeric(raw["open"], errors="raise").to_numpy(),
@@ -269,10 +270,34 @@ def load_binance_klines(
             "close": pd.to_numeric(raw["close"], errors="raise").to_numpy(),
             "volume": pd.to_numeric(raw["volume"], errors="raise").to_numpy(),
         },
-        index=pd.to_datetime(raw["open_time"], unit="ms", utc=True),
+        index=pd.to_datetime(raw["open_time"], unit=timestamp_unit, utc=True),
     )
     bars_df.index.name = "timestamp"
     return BarDataWrangler(bar_type, instrument).process(bars_df)
+
+
+def _infer_unix_timestamp_unit(values: pd.Series) -> str:
+    """Infer Binance archive timestamp precision by integer magnitude.
+
+    Binance Spot archives use milliseconds before 2025 and microseconds from
+    2025-01-01. Nanoseconds are accepted for defensive local fixtures.
+    """
+    minimum = int(values.min())
+    maximum = int(values.max())
+    if minimum < 0:
+        raise ValueError("Binance timestamps must be non-negative")
+    if maximum >= 100_000_000_000_000_000:
+        unit = "ns"
+        lower_bound = 100_000_000_000_000_000
+    elif maximum >= 100_000_000_000_000:
+        unit = "us"
+        lower_bound = 100_000_000_000_000
+    else:
+        unit = "ms"
+        lower_bound = 100_000_000_000
+    if minimum < lower_bound:
+        raise ValueError("mixed or implausible Binance timestamp units")
+    return unit
 
 
 def _read_kline_dataframe(path: Path) -> pd.DataFrame:
