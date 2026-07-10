@@ -18,6 +18,7 @@ from apps.strategies_freqtrade.research.flow_positioning_signals import (
 from apps.strategies_freqtrade.research.multi_asset_rotation_signals import UNIVERSE
 
 SCHEMA_VERSION = "feature.audit.v1"
+FUNDING_GAP_TOLERANCE_HOURS = 8.0 + 1.0 / 60.0
 
 
 def _hash_rows(frame: pd.DataFrame) -> str:
@@ -67,7 +68,7 @@ def build_feature_audit(
             blockers.append(f"funding_days={len(funding_days)}!=expected={expected_days}")
         if funding.index.duplicated().any():
             blockers.append("duplicate_funding_timestamps")
-        if funding_gap_hours > 8.0:
+        if funding_gap_hours > FUNDING_GAP_TOLERANCE_HOURS:
             blockers.append(f"funding_gap_hours={funding_gap_hours}")
         if not np.isfinite(buy_share.to_numpy()).all() or not np.isfinite(funding.to_numpy()).all():
             blockers.append("non_finite_features")
@@ -101,6 +102,7 @@ def build_feature_audit(
             "symbols": list(UNIVERSE),
         },
         "expected_days": expected_days,
+        "funding_gap_tolerance_hours": FUNDING_GAP_TOLERANCE_HOURS,
         "instruments": instruments,
         "alignment": {
             "spot_daily_aligned": spot_aligned,

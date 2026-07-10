@@ -91,9 +91,10 @@ The locked source period is 2024-01-01 through 2025-12-31:
   `.CHECKSUM` files and verify SHA-256 before parsing;
 - reject missing/duplicate/non-finite timestamps or feature values;
 - require exact, aligned daily Spot coverage across the three symbols;
-- require at least one funding observation on every UTC day and no funding gap
-  above eight hours; exact cross-symbol funding timestamps are reported but not
-  required because exchange funding intervals can change by symbol;
+- require at least one funding observation on every UTC day and no semantic
+  funding gap above eight hours; permit at most 60 seconds of archive timestamp
+  publication jitter around the scheduled interval. Exact cross-symbol funding
+  timestamps are reported but not required because intervals can change by symbol;
 - require taker-buy share in [0, 1] and absolute funding rate no greater than
   the defensive 0.10 sanity ceiling;
 - record deterministic Spot-flow and funding fingerprints before signals run.
@@ -143,3 +144,15 @@ No parameter, sign, ranking field, or threshold may change after the first real
 feature value is viewed. A change requires a new model version and a new
 untouched holdout. No tool may mutate SourcePolicy, call promotion review,
 resume testnet, load credentials, or authorize live trading.
+
+## Opened-data audit note
+
+After pre-data commit `6336585`, all 72 locked 2024-2025 funding archives and
+official checksums downloaded successfully. The first 2024 audit found exact
+366-day Spot/funding coverage, 1098 funding rows per asset, no duplicates, and
+identical funding timestamps. It initially failed only because archive funding
+timestamps carry roughly 13 milliseconds of publication jitter, producing a
+measured 8.0000036-hour maximum interval. The audit now permits at most 60
+seconds of timestamp jitter around the locked eight-hour semantic interval while
+still requiring complete daily coverage. No signal formula or model parameter
+changed, and no signal was generated before this audit correction was committed.

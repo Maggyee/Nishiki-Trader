@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-07-10 (flow/positioning study pre-registration)
+- **Last updated**: 2026-07-10 (flow/positioning feature audit in progress)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
-- **Current objective**: Phase 5 remains the active implemented phase and `stop_before_testnet_resume` remains in force. All failed price/OHLCV fingerprints are closed. A new no-search study is now pre-registered around previously uninspected Spot taker-buy flow and USD-M funding crowding: weekly flow continuation rotation, 4h sell-exhaustion reversal, and weekly non-crowded trend rotation. Loaders, official funding checksum download, feature audit, synthetic causal behavior, source/model identities, fixed folds/sizes/costs, portfolio exclusivity, and unchanged robustness gates are locked before computing a real flow feature or downloading funding. 2020-2023 and 2026 remain unconsumed.
+- **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. Flow/positioning rules were locked at pre-data commit `6336585`. All 72 fixed 2024-2025 funding archives passed official checksum verification. The 2024 audit has exact 366-day Spot/funding coverage and 1098 funding rows per symbol; its only initial blocker was ~13ms archive timestamp jitter around the scheduled eight-hour interval. A documented 60-second audit tolerance is implemented and tested without changing signals. Re-run both yearly audits and commit this data-quality correction before signal generation. 2020-2023 and 2026 remain unconsumed.
   Keep the current SourcePolicy unchanged until an explicit `promotion_review.py` decision. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
@@ -124,9 +124,8 @@ Immediate focus:
 
 ## Next Steps
 
-1. Commit and push the three flow/positioning fingerprints, raw-feature loaders, funding checksum downloader, feature audit, and synthetic tests before opening feature data.
-2. Download only 2024-2025 funding archives, verify every official checksum, then run `feature.audit.v1` before generating any signal.
-3. Reuse locked four folds and quantities, run every source/fold/asset twice through Nautilus, and apply the unchanged strict review/tournament gates.
+1. Commit and push the funding timestamp-jitter audit correction, then rerun 2024/2025 `feature.audit.v1`; no signals before both pass.
+2. Reuse locked four folds and quantities, run every source/fold/asset twice through Nautilus, and apply the unchanged strict review/tournament gates.
 4. Import 2020-2023 only for a strict development passer or economic 12-29-position watchlist; keep 2026 untouched unless historical validation fully passes.
 4. Import 2020-2023 only for a development passer or 12-29-position economic watchlist. Keep 2026 untouched unless historical validation fully passes.
 5. Keep the current SourcePolicy unchanged until a human reviews `demote_to_paper_simulated_recommended` and records an actual hold/demote decision with `promotion_review.py`.
