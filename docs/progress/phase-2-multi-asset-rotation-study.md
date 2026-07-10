@@ -1,6 +1,6 @@
 # Phase 2 Multi-Asset Rotation Study
 
-- **Status**: Opened-data development in progress
+- **Status**: Opened-data development complete; no candidate progressed
 - **Locked on**: 2026-07-10
 - **Pre-data commit**: `bd81db8`
 - **Universe**: BTCUSDT, ETHUSDT, SOLUSDT Spot
@@ -161,3 +161,16 @@ The post-guard rerun also exposed a review-only edge case: Nautilus's validated
 zero-row position sidecar omits report-only opening/closing order columns.
 `alpha_review` now permits those absent extras only when the validated positions
 table is empty; a non-empty table missing either column still fails closed.
+
+## Recorded outcome
+
+The clean post-guard batch completed 24 source/fold/asset pairs twice, with exact
+reproducibility, zero shorts/blockers, and portfolio exclusivity in all 12 fold
+reviews. Cross-sectional momentum and market breadth were aggregate-negative.
+ETH/BTC relative value was aggregate-positive under base/stress costs but won
+only 2/4 folds and 7/20 months, had 18 positions, and fell to -3.309221 USDT
+after removing its best base-cost position.
+
+All candidates are rejected, ranking is empty, and recommendation is
+`no_candidate_progresses`. Neither 2020-2023 nor 2026 was consumed. Full report:
+[`2026-07-10-multi-asset-rotation-development-review.md`](../retros/2026-07-10-multi-asset-rotation-development-review.md).
