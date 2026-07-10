@@ -42,3 +42,8 @@ catalog bars，生成已预注册的月度横截面动量、每日市场宽度�
 `SignalEvent v1`。`--start-date/--end-date` 只限制折内决策，之前数据仍可作为不含
 前视的 warm-up；`--dry-run` 不写 SignalStore。该 exporter 不计算仓位、不下单，
 组合互斥和成本结果由 Nautilus bundles 的被动审查器验证。
+
+`research/flow_positioning_signals.py` 是下一轮预注册 exporter：它从 Binance
+Spot 原始 kline 的 quote/taker-buy quote volume 生成周度主动流轮动和 4h 抛售衰竭
+信号，并可结合已校验的 USD-M funding archive 生成拥挤度过滤轮动。三者仍只输出
+long/flat `SignalEvent v1`，最多选择一个现货资产，不交易期货、不编码仓位或订单。

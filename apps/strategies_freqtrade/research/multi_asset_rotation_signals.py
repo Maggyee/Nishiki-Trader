@@ -148,7 +148,11 @@ def _within_decision_window(
     if start_date is not None:
         mask &= index >= pd.Timestamp(start_date, tz="UTC")
     if end_date is not None:
-        mask &= index <= pd.Timestamp(end_date, tz="UTC")
+        end = pd.Timestamp(end_date, tz="UTC")
+        if end == end.normalize():
+            mask &= index < end + pd.Timedelta(days=1)
+        else:
+            mask &= index <= end
     return mask
 
 

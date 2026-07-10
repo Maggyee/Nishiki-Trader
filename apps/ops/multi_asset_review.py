@@ -15,6 +15,9 @@ from apps.ops.alpha_review import SCENARIOS
 
 SCHEMA_VERSION = "multi_asset.review.v1"
 SOURCE_UNIVERSES = {
+    "rule_flow_exhaustion_v1": {"BTCUSDT", "ETHUSDT", "SOLUSDT"},
+    "rule_funding_crowding_rotation_v1": {"BTCUSDT", "ETHUSDT", "SOLUSDT"},
+    "rule_taker_flow_rotation_v1": {"BTCUSDT", "ETHUSDT", "SOLUSDT"},
     "rule_xs_momentum_rotation_v1": {"BTCUSDT", "ETHUSDT", "SOLUSDT"},
     "rule_market_breadth_v1": {"BTCUSDT"},
     "rule_relative_value_rotation_v1": {"BTCUSDT", "ETHUSDT"},

@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-07-10 (multi-asset rotation development rejected)
+- **Last updated**: 2026-07-10 (flow/positioning study pre-registration)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
-- **Current objective**: Phase 5 remains the active implemented phase. The failed BTC-only fingerprints remain closed and `stop_before_testnet_resume` remains in force. The multi-asset study completed 48 clean post-guard bundles and 12 exclusive portfolio fold reviews, but no source passed. Cross-sectional momentum and market breadth were aggregate-negative. ETH/BTC relative value was aggregate-positive but won only 2/4 folds and 7/20 months and became negative after removing its best trade. All three model versions are closed; 2020-2023 and 2026 remain unconsumed. The next research round must add a genuinely different return driver and be pre-registered; it must not tune these opened fingerprints.
+- **Current objective**: Phase 5 remains the active implemented phase and `stop_before_testnet_resume` remains in force. All failed price/OHLCV fingerprints are closed. A new no-search study is now pre-registered around previously uninspected Spot taker-buy flow and USD-M funding crowding: weekly flow continuation rotation, 4h sell-exhaustion reversal, and weekly non-crowded trend rotation. Loaders, official funding checksum download, feature audit, synthetic causal behavior, source/model identities, fixed folds/sizes/costs, portfolio exclusivity, and unchanged robustness gates are locked before computing a real flow feature or downloading funding. 2020-2023 and 2026 remain unconsumed.
   Keep the current SourcePolicy unchanged until an explicit `promotion_review.py` decision. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
@@ -108,14 +108,15 @@ At task finish:
 ## Current Focus
 
 The diverse BTC-only and multi-asset rotation tournaments are complete with
-empty rankings. Preserve 2020-2023 and 2026 holdouts. Define a genuinely new
-economic hypothesis before any further data import or candidate execution.
+empty rankings. Preserve 2020-2023 and 2026 holdouts. Commit the new flow and
+funding-positioning protocol before inspecting feature values or downloading
+funding archives.
 Routine 14-day testnet continuity remains paused, and the Phase 3 strict streak
 remains 0/14.
 
 Immediate focus:
 
-1. Use `docs/retros/2026-07-10-multi-asset-rotation-development-review.md` as the final record. Do not tune or rerun its three rejected model versions.
+1. Use `docs/progress/phase-2-flow-positioning-study.md` as the active locked protocol. Commit and push its implementation before computing Spot flow features or downloading funding archives.
 2. Treat `docs/progress/phase-3-testnet-canary-evidence.md`, `docs/progress/phase-3-testnet-continuity-plan.md`, the 2026-05-30 clean canary retro, the 2026-05-30 duplicate-entry abort retro, the 2026-05-30 post-fix clean retro, and the 2026-06-01 heartbeat-lost retro as the current operational evidence. Do not run more routine canaries unless the operator explicitly resumes live-readiness evidence collection. If canary evidence resumes, use `python -m apps.strategies_nautilus.runners.report_testnet_bundle data/testnet/<run_id>` before writing future manifest-backed canary retros, use `--markdown` with clean bundle directories before updating the clean evidence ledger, and use `--continuity --markdown --min-clean-hours-per-day 6 --required-consecutive-days 14` with every completed manifest-backed bundle in the candidate window before claiming continuity progress. Carry no-manifest aborts manually. Do not open a new `promotion_review` unless an actual policy/stage decision is being made.
 3. Use `docs/decisions/009-agent-advice-audit.md` and `docs/decisions/012-phase5-readonly-dashboard.md` as the active agent/frontend boundaries. Agent/MCP work may write/replay/review `AgentAdvice`; dashboard work may read passive reports, observability textfiles, and AgentAdvice through `dashboard.snapshot.v1`. `TradingAgents/` is available as an ignored read-only upstream reference for future agent role/configuration ideas only; `docs/progress/tradingagents-reference-map.md` is the current safe adaptation map, and `apps.agents.role_profiles` is the first machine-readable AgentAdvice-only role seed. Neither path may write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or encode structured execution directives.
 4. ADR-008 §6.2 Phase 3b, §6.3 Phase 3c-a/b/c, §6.4 Phase 3d, §6.5 Phase 3e, §6.6 Phase 3f stability soak/canary, and the §8 promotion-review patch are all implemented and unit-tested. The `phase_3_not_ready` blocker now only hard-blocks `live_canary` / `live_normal`.
@@ -123,9 +124,10 @@ Immediate focus:
 
 ## Next Steps
 
-1. Stop the multi-asset rotation branch with an empty ranking; do not import 2020-2023 or view 2026 for these rejected fingerprints.
-2. Before another research round, pre-register at most a small number of candidates based on a genuinely new return driver or opportunity set, with a new model version and untouched holdout. Avoid more lookback/threshold variants of the opened price-only rules.
-3. Keep all existing conservative cost, fold consistency, positive-month, leave-best, sample-size, Spot-only, reproducibility, and fail-closed lineage gates.
+1. Commit and push the three flow/positioning fingerprints, raw-feature loaders, funding checksum downloader, feature audit, and synthetic tests before opening feature data.
+2. Download only 2024-2025 funding archives, verify every official checksum, then run `feature.audit.v1` before generating any signal.
+3. Reuse locked four folds and quantities, run every source/fold/asset twice through Nautilus, and apply the unchanged strict review/tournament gates.
+4. Import 2020-2023 only for a strict development passer or economic 12-29-position watchlist; keep 2026 untouched unless historical validation fully passes.
 4. Import 2020-2023 only for a development passer or 12-29-position economic watchlist. Keep 2026 untouched unless historical validation fully passes.
 5. Keep the current SourcePolicy unchanged until a human reviews `demote_to_paper_simulated_recommended` and records an actual hold/demote decision with `promotion_review.py`.
 6. Continue Phase 5 with only read-only dashboard improvements fed by `dashboard.snapshot.v1`; keep the frontend free of API routes and mutation controls until a separate ADR opens a specific workflow.
@@ -148,6 +150,20 @@ Immediate focus:
 - No edits to `freqtrade/` or `nautilus_trader/` unless explicitly requested.
 
 ## Latest Verification
+
+On 2026-07-10, before computing any Spot taker-flow feature or downloading a
+funding archive:
+
+- Locked three new flow/positioning source/model fingerprints, causal windows,
+  one-asset Spot state, four folds, existing mechanical quantities, costs,
+  feature fail-closed rules, unchanged robustness gates, absent 2020-2023
+  historical reserve, and 2026-08..12 future blind.
+- Synthetic tests cover weekly aggressive-buy flow selection, 4h capitulation
+  entry plus 12h/recovered-flow exit, crowded-funding exclusion, raw archive
+  parsing, official checksum enforcement, feature audit, and long/flat output.
+- Full verification: **745 passed, 12 Postgres-dependent skips**; Ruff and
+  `git diff --check` clean. No real feature aggregate/result, funding download,
+  SourcePolicy mutation, credential load, testnet resume, or live action occurred.
 
 On 2026-07-10, after the clean multi-asset development tournament:
 

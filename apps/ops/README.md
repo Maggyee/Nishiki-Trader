@@ -217,6 +217,8 @@ continuity evidence、可选 promotion review artifact、以及显式声明的�
 | `alpha_review.py` | 被动成本情景、月度 alpha 闸门与复现审查 | 2 |
 | `catalog_audit.py` | 被动检查 catalog 完整性、fingerprint 与跨资产对齐 | 2 |
 | `multi_asset_review.py` | 聚合单标成本审查并验证组合持仓互斥 | 2 |
+| `backfill_funding.py` | 下载并校验固定 USD-M 月度 funding 公共归档 | 2 |
+| `feature_audit.py` | 审计 Spot 主动流/funding 完整性和 fingerprint | 2 |
 | `signal_replay.py` | 重放 SQLite 中的历史 signals 跑回测 | 1 |
 | `migrate_sqlite_to_pg.py` | Phase 2 数据迁移 | 2 |
 | `dashboard_snapshot.py` | Phase 4 只读 AgentAdvice / report snapshot | 4 |
