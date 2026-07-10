@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-07-10 (cost-sensitive alpha review implementation)
+- **Last updated**: 2026-07-10 (cost-sensitive alpha blind review complete)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
-- **Current objective**: Phase 5 remains the active implemented phase, but ordinary development is now focused on a cost-sensitive alpha audit before any testnet-continuity restart. `apps.ops.alpha_review` passively evaluates ADR-004/ADR-007 bundles under gross, base (10 bps fee + 2 bps slippage), and stress (10 + 5 bps) scenarios. The existing 152-day `freqai_linear_v1 / linear-mom-train20240105` paper bundle fails both modeled-cost scenarios and carries historical short exposure, so it is not viable for the Spot-only Phase 6 scope without a separate policy decision. Two fixed long/flat candidates are implemented for the locked 2024-08-01..2024-12-31 blind window; clean reproducible evidence runs are the next operating step.
+- **Current objective**: Phase 5 remains the active implemented phase, but ordinary development is now stopped before any testnet-continuity restart because the 2024-08..2024-12 cost-sensitive blind review rejected both fixed long/flat candidates. `freqai_linear_walkforward_v1 / ridge-wf60d-cost30bp-v1` produced only one closed position and lost under base/stress costs; `rule_breakout_v1 / donchian20-10-atr14x0.25-15m` produced 184 positions but lost even before modeled costs and had only 1/5 base-positive months. Same-size buy-and-hold was positive. Full evidence is in `docs/retros/2026-07-10-cost-sensitive-alpha-blind-review.md`. The next entrypoint is a new economic research hypothesis with a new fingerprint and future untouched blind period, not tuning either rejected model against the opened window.
   Keep the current SourcePolicy unchanged until an explicit `promotion_review.py` decision. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
@@ -107,15 +107,15 @@ At task finish:
 
 ## Current Focus
 
-Run the locked five-month, cost-sensitive blind comparison from a committed
-code baseline. Do not tune either candidate after viewing 2024-08..2024-12;
-any parameter change requires a new model version and a future blind window.
-Routine 14-day testnet continuity testing remains paused by the 2026-06-04
-operator decision, and the Phase 3 strict streak remains 0/14.
+Do not tune the rejected walk-forward or breakout fingerprints against the now
+opened 2024-08..2024-12 blind window. Define a new economic hypothesis, a new
+source/model fingerprint, and a future untouched blind period before producing
+another candidate. Routine 14-day testnet continuity testing remains paused,
+and the Phase 3 strict streak remains 0/14.
 
 Immediate focus:
 
-1. Keep `freqai_linear_v1 / linear-mom-train20240105` at its existing signed policy until a human reviews the cost failure and creates an actual `promotion_review.py` demotion/hold decision; `alpha_review` never mutates policy.
+1. Treat `docs/retros/2026-07-10-cost-sensitive-alpha-blind-review.md` as the current alpha decision: neither new candidate enters paper_shadow and testnet continuity stays paused.
 2. Treat `docs/progress/phase-3-testnet-canary-evidence.md`, `docs/progress/phase-3-testnet-continuity-plan.md`, the 2026-05-30 clean canary retro, the 2026-05-30 duplicate-entry abort retro, the 2026-05-30 post-fix clean retro, and the 2026-06-01 heartbeat-lost retro as the current operational evidence. Do not run more routine canaries unless the operator explicitly resumes live-readiness evidence collection. If canary evidence resumes, use `python -m apps.strategies_nautilus.runners.report_testnet_bundle data/testnet/<run_id>` before writing future manifest-backed canary retros, use `--markdown` with clean bundle directories before updating the clean evidence ledger, and use `--continuity --markdown --min-clean-hours-per-day 6 --required-consecutive-days 14` with every completed manifest-backed bundle in the candidate window before claiming continuity progress. Carry no-manifest aborts manually. Do not open a new `promotion_review` unless an actual policy/stage decision is being made.
 3. Use `docs/decisions/009-agent-advice-audit.md` and `docs/decisions/012-phase5-readonly-dashboard.md` as the active agent/frontend boundaries. Agent/MCP work may write/replay/review `AgentAdvice`; dashboard work may read passive reports, observability textfiles, and AgentAdvice through `dashboard.snapshot.v1`. `TradingAgents/` is available as an ignored read-only upstream reference for future agent role/configuration ideas only; `docs/progress/tradingagents-reference-map.md` is the current safe adaptation map, and `apps.agents.role_profiles` is the first machine-readable AgentAdvice-only role seed. Neither path may write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or encode structured execution directives.
 4. ADR-008 §6.2 Phase 3b, §6.3 Phase 3c-a/b/c, §6.4 Phase 3d, §6.5 Phase 3e, §6.6 Phase 3f stability soak/canary, and the §8 promotion-review patch are all implemented and unit-tested. The `phase_3_not_ready` blocker now only hard-blocks `live_canary` / `live_normal`.
@@ -123,8 +123,8 @@ Immediate focus:
 
 ## Next Steps
 
-1. From the committed alpha-tooling baseline, run each blind candidate twice through `SignalStore -> backtest_runner --account-type cash -> alpha_review`, include the same-size buy-and-hold reference, and archive the strict JSON/Markdown evidence.
-2. If neither candidate passes base/stress profitability, 4/5 positive months, 30 closed positions, Spot-only exposure, clean evidence, and reproducibility, stop before resuming testnet and open a new research hypothesis rather than tuning against the blind window.
+1. Open a new research hypothesis before writing another generator; assign a new source/model fingerprint and reserve market data after the development window as untouched evidence.
+2. Keep the current SourcePolicy unchanged until a human reviews `demote_to_paper_simulated_recommended` and records an actual hold/demote decision with `promotion_review.py`.
 3. Continue Phase 5 with only read-only dashboard improvements fed by `dashboard.snapshot.v1`; keep the frontend free of API routes and mutation controls until a separate ADR opens a specific workflow.
 4. If the operator explicitly resumes live-readiness evidence collection, use `docs/progress/phase-3-testnet-continuity-plan.md` and include every completed manifest-backed testnet bundle in the candidate window when running both `report_testnet_bundle --continuity` and `apps.ops.live_readiness`.
 5. Use `promotion_review.py` (not just `report_paper_bundle.py`) as the required ADR-007 §2.6 audit artifact for any actual `SourcePolicy` change. Do **not** run `promotion_review.py hold @ testnet_canary` as a routine ratification of each canary — the canary retros plus the evidence and continuity progress files are the operational record.
@@ -150,6 +150,8 @@ On 2026-07-10, after implementing the cost-sensitive alpha research surface:
 
 - Local BTCUSDT catalog audit -> 527040 1m rows for 2024, 0 duplicates, 0 timestamp gaps.
 - Existing 152-day paper bundle passive review -> gross `+4.873394`, base `-24.218490`, stress `-31.491462` USDT; recommendation `demote_to_paper_simulated_recommended` without policy mutation.
+- Clean blind bundles on git `0aa37ac` -> walk-forward base/stress `-1.129677/-1.186094` USDT with 1 position; breakout base/stress `-39.313136/-47.625248` with 184 positions and 1/5 positive months; same-size buy-and-hold base `+28.752138`.
+- Candidate replay verification -> `compare_backtests` `MATCH` for fills, orders, positions, and signal_lineage on both pairs; every evidence manifest records `git_dirty=false`, `AccountType.CASH`, and commit `0aa37ac`.
 - `TMPDIR=/tmp UV_CACHE_DIR=/tmp/uv-cache uv run pytest -q` -> **701 passed, 12 skipped** (Postgres-dependent tests skipped because the local service was unavailable).
 - `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check apps tests docs infra` -> clean.
 - `git diff --check` -> clean.

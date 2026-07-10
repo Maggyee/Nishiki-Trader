@@ -1129,3 +1129,23 @@ PnL is the final open position's unrealized mark.
   `testnet_canary` with multiplier `0.1`; this v11 bundle is a
   paper_simulated monitoring extension at multiplier `0.2`. It should not be
   used as routine `hold @ testnet_canary` ratification.
+
+---
+
+## 2026-07-10 — cost-sensitive full-year blind review
+
+The catalog now covers all of 2024 (527040 BTCUSDT 1m bars, zero duplicates,
+zero timestamp gaps). Two fixed Spot-only long/flat candidates were evaluated
+on the locked 2024-08-01..2024-12-31 window with 10 bps fees and 2/5 bps
+slippage scenarios:
+
+| source / model | signals in blind bundle | fills / positions | gross PnL | base PnL | stress PnL | base-positive months | result |
+|---|---:|---:|---:|---:|---:|---:|---|
+| `freqai_linear_walkforward_v1 / ridge-wf60d-cost30bp-v1` | 1 | 2 / 1 | -0.904010 | -1.129677 | -1.186094 | 0/5 | fail |
+| `rule_breakout_v1 / donchian20-10-atr14x0.25-15m` | 368 | 368 / 184 | -6.064690 | -39.313136 | -47.625248 | 1/5 | fail |
+
+Both candidates produced zero short positions and reproduced byte-for-byte
+across fills, orders, positions, and signal lineage. Neither enters
+paper_shadow. Same-size buy-and-hold returned +28.752138 USDT under the base
+scenario. Full evidence and hashes:
+[`2026-07-10-cost-sensitive-alpha-blind-review.md`](../retros/2026-07-10-cost-sensitive-alpha-blind-review.md).
