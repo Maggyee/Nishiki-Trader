@@ -276,6 +276,42 @@ def test_runner_replays_filtered_signals_from_store(
     assert result.manifest.signal_source.filter == {"source": "freqai_v1"}
 
 
+def test_runner_skips_same_source_signal_for_different_instrument(
+    tmp_path,
+    btcusdt_instrument,
+    bar_type,
+    signals,
+    signal_store_path,
+    catalog_path,
+    make_payload,
+):
+    cross_asset = SignalEvent.model_validate(
+        make_payload(
+            signal_id="freqai_v1:ETHUSDT:BINANCE:cross-asset",
+            symbol="ETHUSDT",
+            ts_event=BASE_TS_NS + ONE_MIN_NS,
+            side="buy",
+        )
+    )
+    SignalStore(signal_store_path).write(cross_asset)
+    config = _build_config(
+        output_root=tmp_path / "backtests",
+        catalog_path=catalog_path,
+        instrument_id=btcusdt_instrument.id.value,
+        bar_type=bar_type,
+        signal_store_path=signal_store_path,
+    )
+
+    result = run_backtest(config)
+
+    lineage = pd.read_parquet(result.output_dir / "signal_lineage.parquet")
+    mismatch = lineage.loc[lineage["signal_id"] == cross_asset.signal_id].iloc[0]
+    assert mismatch["decision"] == "skip"
+    assert mismatch["reason"] == "instrument_mismatch:ETHUSDT.BINANCE!=BTCUSDT.BINANCE"
+    orders = pd.read_parquet(result.output_dir / "orders.parquet")
+    assert cross_asset.signal_id not in set(orders["signal_id"])
+
+
 def test_signal_ids_round_trip_to_reports(
     tmp_path, btcusdt_instrument, bar_type, signals, signal_store_path, catalog_path
 ):

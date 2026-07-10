@@ -12,7 +12,8 @@ The strategy:
    `SignalEvent`s for the run is loaded into memory at construction time,
    sorted by `(ts_event, signal_id)` for determinism.
 2. On each `Bar`, pops every signal whose `ts_event` is at-or-before the bar
-   time, asks `BaselineSignalStrategy.decide(...)` for an `OrderIntent`, and
+   time, rejects events for a different instrument, asks
+   `BaselineSignalStrategy.decide(...)` for an `OrderIntent`, and
    either submits a market order (`target_long` / `target_short`) or closes
    positions (`target_flat`). `skip` is a no-op. If multiple executable
    signals are due on the same bar, only the first order-submitting intent is
@@ -176,6 +177,26 @@ class BaselineNautilusStrategy(Strategy):
         self._update_daily_risk_state(bar_ns)
         submitted_order_this_bar = False
         for event in self._signal_source.pop_due(bar_ns):
+            expected_symbol = self._params.instrument_id.symbol.value
+            expected_venue = self._params.instrument_id.venue.value
+            if event.symbol != expected_symbol or event.venue != expected_venue:
+                self.lineage.append(
+                    LineageRecord(
+                        signal_id=event.signal_id,
+                        source=event.source,
+                        model_version=event.model_version,
+                        ts_event=int(event.ts_event),
+                        decision="skip",
+                        reason=(
+                            "instrument_mismatch:"
+                            f"{event.symbol}.{event.venue}!="
+                            f"{expected_symbol}.{expected_venue}"
+                        ),
+                        client_order_ids=[],
+                        ts_decision=bar_ns,
+                    )
+                )
+                continue
             intent = self._baseline.decide(event, now_ns=bar_ns)
             lineage_reason = intent.reason
             if (

@@ -1,7 +1,8 @@
 # Phase 2 Multi-Asset Rotation Study
 
-- **Status**: Pre-registered; no ETHUSDT/SOLUSDT data viewed
+- **Status**: Opened-data development in progress
 - **Locked on**: 2026-07-10
+- **Pre-data commit**: `bd81db8`
 - **Universe**: BTCUSDT, ETHUSDT, SOLUSDT Spot
 - **Parameter search**: None
 - **Opened-data development**: 2024-2025 fixed folds
@@ -139,3 +140,19 @@ considered.
 
 No tool may call `promotion_review.py`, change SourcePolicy, resume testnet,
 load credentials, start a live runner, or authorize real trading.
+
+## Opened-data execution note
+
+After commit `bd81db8`, 2024 and 2025 audits passed for all three symbols: exact
+527040/525600 rows, zero duplicate timestamps, zero missing or irregular minute
+steps, and exact cross-asset timestamp alignment. The first single-instrument
+bundle batch was invalidated before tournament scoring because the runner fed
+every same-source event from the shared store to each instrument strategy. For
+example, an ETH runner executed a SOL `buy` lineage row.
+
+This is execution plumbing, not a candidate result. The strategy wrapper now
+fail-closes an event whose `symbol.venue` differs from its configured
+`InstrumentId`, records `decision=skip` plus `instrument_mismatch`, and submits
+no order. No candidate parameter, fold, sizing rule, gate, or holdout changed.
+The invalid bundles remain excluded; development must be rerun from the safety
+fix's clean commit.

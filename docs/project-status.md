@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-07-10 (multi-asset rotation protocol pre-registration)
+- **Last updated**: 2026-07-10 (multi-asset data audit + cross-symbol replay guard)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
-- **Current objective**: Phase 5 remains the active implemented phase. The failed BTC-only fingerprints remain closed and `stop_before_testnet_resume` remains in force. A new no-search study is now pre-registered for BTCUSDT/ETHUSDT/SOLUSDT: 90-day monthly cross-sectional momentum, 2-of-3 market breadth, and weekly ETH/BTC relative value. The implementation, complete-month backfill path, single-asset cost reviews, portfolio exclusivity review, four opened-data folds, mechanical 50 USDT sizing, leave-best test, 30-position pass threshold, and 12-29-position historical-evidence-only watchlist are locked before any ETH/SOL data is viewed. 2020-2023 and 2026 remain unconsumed.
+- **Current objective**: Phase 5 remains the active implemented phase. The failed BTC-only fingerprints remain closed and `stop_before_testnet_resume` remains in force. The multi-asset study was locked at pre-data commit `bd81db8`; 2024-2025 BTC/ETH/SOL catalogs now pass exact row-count, zero-gap, zero-duplicate, fingerprint, and timestamp-alignment audits. The initial bundle batch is invalid evidence because shared-store cross-symbol events reached each single-instrument strategy. A fail-closed `instrument_mismatch` guard is implemented and tested without changing candidate parameters; all scored bundles must be regenerated from its clean commit. 2020-2023 and 2026 remain unconsumed.
   Keep the current SourcePolicy unchanged until an explicit `promotion_review.py` decision. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
@@ -108,14 +108,15 @@ At task finish:
 ## Current Focus
 
 The diverse BTC-only tournament is complete with an empty ranking. Preserve
-2020-2023 and 2026 holdouts for other fingerprints. The multi-asset
-relative-strength/rotation protocol is locked and awaits its pre-data commit.
+2020-2023 and 2026 holdouts for other fingerprints. The multi-asset protocol
+and data audit are complete; regenerate development evidence after the
+cross-symbol replay guard is committed.
 Routine 14-day testnet continuity remains paused, and the Phase 3 strict streak
 remains 0/14.
 
 Immediate focus:
 
-1. Use `docs/progress/phase-2-multi-asset-rotation-study.md` as the locked protocol. Commit and push its implementation before importing ETHUSDT/SOLUSDT, then audit aligned 2024-2025 1m coverage before generating any fold results.
+1. Use `docs/progress/phase-2-multi-asset-rotation-study.md` as the locked protocol and execution ledger. Exclude all pre-guard bundles and regenerate from the clean safety-fix commit.
 2. Treat `docs/progress/phase-3-testnet-canary-evidence.md`, `docs/progress/phase-3-testnet-continuity-plan.md`, the 2026-05-30 clean canary retro, the 2026-05-30 duplicate-entry abort retro, the 2026-05-30 post-fix clean retro, and the 2026-06-01 heartbeat-lost retro as the current operational evidence. Do not run more routine canaries unless the operator explicitly resumes live-readiness evidence collection. If canary evidence resumes, use `python -m apps.strategies_nautilus.runners.report_testnet_bundle data/testnet/<run_id>` before writing future manifest-backed canary retros, use `--markdown` with clean bundle directories before updating the clean evidence ledger, and use `--continuity --markdown --min-clean-hours-per-day 6 --required-consecutive-days 14` with every completed manifest-backed bundle in the candidate window before claiming continuity progress. Carry no-manifest aborts manually. Do not open a new `promotion_review` unless an actual policy/stage decision is being made.
 3. Use `docs/decisions/009-agent-advice-audit.md` and `docs/decisions/012-phase5-readonly-dashboard.md` as the active agent/frontend boundaries. Agent/MCP work may write/replay/review `AgentAdvice`; dashboard work may read passive reports, observability textfiles, and AgentAdvice through `dashboard.snapshot.v1`. `TradingAgents/` is available as an ignored read-only upstream reference for future agent role/configuration ideas only; `docs/progress/tradingagents-reference-map.md` is the current safe adaptation map, and `apps.agents.role_profiles` is the first machine-readable AgentAdvice-only role seed. Neither path may write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or encode structured execution directives.
 4. ADR-008 §6.2 Phase 3b, §6.3 Phase 3c-a/b/c, §6.4 Phase 3d, §6.5 Phase 3e, §6.6 Phase 3f stability soak/canary, and the §8 promotion-review patch are all implemented and unit-tested. The `phase_3_not_ready` blocker now only hard-blocks `live_canary` / `live_normal`.
@@ -123,9 +124,9 @@ Immediate focus:
 
 ## Next Steps
 
-1. Commit and push the locked multi-asset source fingerprints, monthly archive importer, portfolio review, tests, and this status update before downloading any ETHUSDT/SOLUSDT bars.
-2. Import only 2024-2025 ETHUSDT/SOLUSDT monthly 1m archives, then verify exact row counts, zero duplicates/gaps, and timestamp alignment with BTCUSDT.
-3. Compute each symbol/fold quantity mechanically from its first 1m close, generate fold-isolated signals, run duplicate Nautilus backtests, and apply `alpha.review.v1` -> `multi_asset.review.v1` -> `strategy.tournament.v1`.
+1. Commit and push the cross-symbol replay guard, then regenerate every multi-asset development bundle; do not reuse the invalid first batch.
+2. Apply `alpha.review.v1` -> `multi_asset.review.v1` -> `strategy.tournament.v1` only to clean post-fix duplicate runs.
+3. Preserve the locked quantities, signals, folds, models, and gates; the execution correction does not authorize parameter changes.
 4. Import 2020-2023 only for a development passer or 12-29-position economic watchlist. Keep 2026 untouched unless historical validation fully passes.
 5. Keep the current SourcePolicy unchanged until a human reviews `demote_to_paper_simulated_recommended` and records an actual hold/demote decision with `promotion_review.py`.
 6. Continue Phase 5 with only read-only dashboard improvements fed by `dashboard.snapshot.v1`; keep the frontend free of API routes and mutation controls until a separate ADR opens a specific workflow.
@@ -148,6 +149,18 @@ Immediate focus:
 - No edits to `freqtrade/` or `nautilus_trader/` unless explicitly requested.
 
 ## Latest Verification
+
+On 2026-07-10, after invalidating the first multi-asset bundle batch:
+
+- Raw lineage proved the single-instrument runner replayed same-source events
+  for other symbols; those 48 bundles and derived reviews are excluded from all
+  scoring and cannot support a strategy conclusion.
+- `BaselineNautilusStrategy` now records `instrument_mismatch` and skips any
+  SignalEvent whose symbol/venue differs from its configured InstrumentId. An
+  end-to-end test confirms the mismatched signal cannot create an order.
+- Full verification: **734 passed, 12 Postgres-dependent skips**; Ruff and
+  `git diff --check` clean. No strategy parameter, fold, cost, gate, SourcePolicy,
+  credential, testnet, or live authorization changed.
 
 On 2026-07-10, before importing or viewing any ETHUSDT/SOLUSDT bars:
 
