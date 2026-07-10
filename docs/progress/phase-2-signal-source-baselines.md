@@ -1149,3 +1149,23 @@ across fills, orders, positions, and signal lineage. Neither enters
 paper_shadow. Same-size buy-and-hold returned +28.752138 USDT under the base
 scenario. Full evidence and hashes:
 [`2026-07-10-cost-sensitive-alpha-blind-review.md`](../retros/2026-07-10-cost-sensitive-alpha-blind-review.md).
+
+---
+
+## 2026-07-10 — pre-registered trend-regime 2025 blind review
+
+`rule_trend_regime_v1 / ema24-96-1h-mom24-atr14x0.5-v1` was locked in commit
+`b8c7ee2` before any 2025 market data was read. Its 2024-08..12 development
+screen was aggregate-positive (gross/base/stress
+`+16.191970/+10.844598/+9.507755` USDT), so the written protocol allowed the
+future 2025-08..12 blind window to be consumed.
+
+| fills / positions | gross PnL | base PnL | stress PnL | base-positive months | shorts | result |
+|---:|---:|---:|---:|---:|---:|---|
+| 62 / 31 | -13.634510 | -21.238820 | -23.139897 | 1/5 | 0 | `stop_before_testnet_resume` |
+
+The two clean runs matched byte-for-byte across fills, orders, positions, and
+signal lineage, but the candidate failed both profitability gates and the
+4/5-month gate. It does not enter paper_shadow and must not be tuned against
+the opened blind window under the same fingerprint. Full evidence and hashes:
+[`2026-07-10-trend-regime-2025-blind-review.md`](../retros/2026-07-10-trend-regime-2025-blind-review.md).

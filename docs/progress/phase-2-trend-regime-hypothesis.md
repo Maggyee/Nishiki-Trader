@@ -1,6 +1,6 @@
 # Phase 2 Trend-Regime Hypothesis
 
-- **Status**: Locked before reading 2025 market data
+- **Status**: Blind-reviewed and rejected
 - **Locked on**: 2026-07-10
 - **Source/model**: `rule_trend_regime_v1 / ema24-96-1h-mom24-atr14x0.5-v1`
 - **Blind window**: 2025-08-01 00:00 through 2025-12-31 23:59 UTC
@@ -55,3 +55,17 @@ After committing this file and the generator:
 If the candidate fails, do not tune this fingerprint against the opened blind
 window. If it passes profitability but has fewer than 30 positions, record
 `insufficient_evidence` and do not enter paper_shadow.
+
+## Recorded outcome
+
+The 2024 development screen was aggregate-positive and reproducible, so the
+pre-registered protocol allowed the 2025 blind window to be consumed. The
+locked blind result was gross `-13.634510`, base `-21.238820`, and stress
+`-23.139897` USDT, with 1/5 base-positive months, 31 closed positions, zero
+shorts, clean lineage, and exact replay. The final recommendation is
+`stop_before_testnet_resume`.
+
+This fingerprint is closed and must not be tuned against the opened window.
+See
+[`2026-07-10-trend-regime-2025-blind-review.md`](../retros/2026-07-10-trend-regime-2025-blind-review.md)
+for the complete evidence record.
