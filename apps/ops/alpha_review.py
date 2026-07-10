@@ -25,6 +25,7 @@ ELIGIBLE_SOURCES = frozenset(
     {
         "freqai_linear_walkforward_v1",
         "rule_breakout_v1",
+        "rule_pullback_regime_v1",
         "rule_trend_regime_v1",
     }
 )
@@ -91,9 +92,12 @@ def build_alpha_review(
             if float(month["scenarios"]["base"]["net_pnl"]) > 0.0
         )
         positions = int(primary["closed_positions"])
+        base_without_best = float(primary["base_net_without_best_position"])
         gates = {
             "base_net_positive": base_net > 0.0,
             "stress_net_positive": stress_net > 0.0,
+            "base_net_without_best_position": base_without_best,
+            "base_net_without_best_position_positive": base_without_best > 0.0,
             "base_positive_months": positive_months,
             "base_positive_months_required": 4,
             "closed_positions": positions,
@@ -106,6 +110,7 @@ def build_alpha_review(
             is_research_candidate
             and gates["base_net_positive"]
             and gates["stress_net_positive"]
+            and gates["base_net_without_best_position_positive"]
             and positive_months >= 4
             and positions >= 30
             and gates["spot_long_flat_only"]
@@ -202,6 +207,7 @@ def build_alpha_review(
             "positive_months_required": 4,
             "closed_positions_required": 30,
             "base_and_stress_must_be_positive": True,
+            "base_without_best_position_must_be_positive": True,
         },
         "recommendation": recommendation,
         "boundaries": {
@@ -272,6 +278,45 @@ def _analyze_bundle(
     positions_window = positions.loc[position_mask].copy()
     positions_window["_ts"] = position_ts.loc[position_mask].astype("int64")
     positions_window["_pnl"] = position_pnl.loc[position_mask]
+    required_position_columns = {"position_id", "opening_order_id", "closing_order_id"}
+    missing_position_columns = required_position_columns - set(positions_window.columns)
+    if missing_position_columns or "order_id" not in fills:
+        missing = sorted(missing_position_columns | ({"order_id"} - set(fills.columns)))
+        raise ValueError(f"required column missing: {', '.join(missing)}")
+    fills_for_positions = fills.copy()
+    fills_for_positions["_order_id"] = fills["order_id"].astype(str)
+    fills_for_positions["_notional"] = fill_qty.abs() * fill_price.abs()
+    fills_for_positions["_commission"] = fill_commission
+    positions_window["_position_id"] = positions_window["position_id"].astype(str)
+    if positions_window["_position_id"].duplicated().any():
+        blockers.append("duplicate_position_id")
+    position_base_net: list[float] = []
+    concentration_columns = [
+        "_position_id",
+        "_pnl",
+        "opening_order_id",
+        "closing_order_id",
+    ]
+    for position in positions_window[concentration_columns].to_dict("records"):
+        order_ids = {
+            str(position["opening_order_id"]),
+            str(position["closing_order_id"]),
+        }
+        position_fills = fills_for_positions.loc[
+            fills_for_positions["_order_id"].isin(order_ids)
+        ]
+        if position_fills.empty:
+            blockers.append(f"position_without_fills:{position['_position_id']}")
+            continue
+        position_base_net.append(
+            float(position["_pnl"])
+            + float(position_fills["_commission"].sum())
+            - float(position_fills["_notional"].sum()) * 12.0 / 10_000.0
+        )
+    best_position_base_net = max(position_base_net) if position_base_net else 0.0
+    base_net_without_best_position = (
+        float(sum(position_base_net)) - best_position_base_net
+    )
     short_positions = int(
         positions_window.get("side", pd.Series(dtype="string"))
         .astype(str)
@@ -369,6 +414,8 @@ def _analyze_bundle(
         "short_positions": short_positions,
         "invalid_fill_lineage": invalid_fill_lineage,
         "system_exit_fills": system_exit_fills,
+        "best_position_base_net_pnl": best_position_base_net,
+        "base_net_without_best_position": base_net_without_best_position,
         "scenario_metrics": scenario_metrics,
         "monthly_metrics": monthly_metrics,
         "blockers": sorted(set(blockers)),
@@ -484,6 +531,8 @@ def _reproducibility_fingerprint(run: dict[str, Any]) -> str:
         "short_positions": run["short_positions"],
         "scenario_metrics": run["scenario_metrics"],
         "monthly_metrics": run["monthly_metrics"],
+        "best_position_base_net_pnl": run["best_position_base_net_pnl"],
+        "base_net_without_best_position": run["base_net_without_best_position"],
         "blockers": run["blockers"],
     }
     encoded = json.dumps(stable, sort_keys=True, separators=(",", ":"), allow_nan=False)
@@ -564,11 +613,12 @@ def render_markdown(report: dict[str, Any]) -> str:
         "",
         "## Candidates",
         "",
-        "| label | source / model | base net | stress net | positive months | positions | short | reproducible | recommendation | blockers |",
-        "|---|---|---:|---:|---:|---:|---:|---|---|---|",
+        "| label | source / model | base net | base w/o best | stress net | positive months | positions | short | reproducible | recommendation | blockers |",
+        "|---|---|---:|---:|---:|---:|---:|---:|---|---|---|",
     ]
     for candidate in report["candidates"]:
         base = candidate["scenario_metrics"]["base"]["net_pnl"]
+        base_without_best = candidate.get("base_net_without_best_position", 0.0)
         stress = candidate["scenario_metrics"]["stress"]["net_pnl"]
         positive = sum(
             1
@@ -577,7 +627,7 @@ def render_markdown(report: dict[str, Any]) -> str:
         )
         lines.append(
             f"| `{candidate['label']}` | `{candidate['source']} / {candidate['model_version']}` "
-            f"| {base:.8f} | {stress:.8f} | {positive}/5 "
+            f"| {base:.8f} | {base_without_best:.8f} | {stress:.8f} | {positive}/5 "
             f"| {candidate['closed_positions']} | {candidate['short_positions']} "
             f"| {candidate.get('reproducible')} | `{candidate['recommendation']}` "
             f"| {', '.join(candidate.get('blockers') or []) or 'none'} |"

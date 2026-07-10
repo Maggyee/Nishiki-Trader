@@ -44,6 +44,11 @@ loop.
   momentum, ATR(14) × 0.5 long/flat hypothesis for the untouched
   2025-08..2025-12 window. `source="rule_trend_regime_v1"`,
   `model_version="ema24-96-1h-mom24-atr14x0.5-v1"`.
+- `pullback_regime_signals.py` — pre-registered causal previous-day
+  EMA(50/200) risk-on permission plus 1h EMA(24) pullback recovery, bounded
+  ATR giveback, structural invalidation, and 72h failure timeout. Spot
+  long/flat only; no parameter search. `source="rule_pullback_regime_v1"`,
+  `model_version="daily50-200-1h24-pullback-giveback1.25-v1"`.
 - `wall_clock_signal_replay.py` — testnet-canary helper that copies already
   reviewed historical `SignalEvent` rows, re-stamps `ts_event` into future
   wall-clock times, and writes them back to `SignalStore`. It preserves the

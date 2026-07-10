@@ -17,6 +17,10 @@ def test_trend_regime_source_is_eligible_for_conservative_gate():
     assert "rule_trend_regime_v1" in ELIGIBLE_SOURCES
 
 
+def test_pullback_regime_source_is_eligible_for_conservative_gate():
+    assert "rule_pullback_regime_v1" in ELIGIBLE_SOURCES
+
+
 def _write_bundle(
     root: Path,
     name: str,
@@ -56,11 +60,14 @@ def _write_bundle(
                         "currency": "USDT",
                         "ts_event": ts,
                         "signal_id": signal_id,
+                        "position_id": f"position-{signal_id}",
                     }
                 )
             positions.append(
                 {
                     "position_id": f"position-{signal_id}",
+                    "opening_order_id": f"order-{signal_id}-open",
+                    "closing_order_id": f"order-{signal_id}-close",
                     "venue": "BINANCE",
                     "instrument_id": "BTCUSDT.BINANCE",
                     "side": "SHORT" if short else "LONG",
@@ -224,6 +231,35 @@ def test_gate_accepts_exactly_four_positive_months(tmp_path):
     candidate = report["candidates"][0]
     assert candidate["gates"]["base_positive_months"] == 4
     assert candidate["passed"] is True
+
+
+def test_gate_rejects_result_dependent_on_single_best_position(tmp_path):
+    bundles = []
+    for name in ("run1", "run2"):
+        bundle = _write_bundle(
+            tmp_path,
+            name,
+            source="rule_pullback_regime_v1",
+            pnl_per_position=0.13,
+            pnl_by_month=[0.13, 0.13, 0.13, 0.13, 0.0],
+        )
+        positions_path = bundle / "positions.parquet"
+        positions = pd.read_parquet(positions_path)
+        positions.loc[24, "realized_pnl"] = 2.0
+        _write_parquet(positions, positions_path)
+        bundles.append(bundle)
+
+    report = build_alpha_review(
+        [("pullback", bundles[0]), ("pullback", bundles[1])],
+        blind_start="2024-08-01",
+        blind_end="2024-12-31",
+    )
+    candidate = report["candidates"][0]
+
+    assert candidate["gates"]["base_net_positive"] is True
+    assert candidate["gates"]["stress_net_positive"] is True
+    assert candidate["gates"]["base_net_without_best_position_positive"] is False
+    assert candidate["passed"] is False
 
 
 def test_gate_blocks_29_positions(tmp_path):

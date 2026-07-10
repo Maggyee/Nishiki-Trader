@@ -12,6 +12,10 @@ from apps.strategies_freqtrade.research.freqai_linear_walkforward_signals import
     WalkForwardLinearParams,
     generate_walkforward_linear_signals,
 )
+from apps.strategies_freqtrade.research.pullback_regime_signals import (
+    PullbackRegimeParams,
+    generate_pullback_regime_signals,
+)
 from apps.strategies_freqtrade.research.trend_regime_signals import (
     TrendRegimeParams,
     generate_trend_regime_signals,
@@ -163,3 +167,49 @@ def test_trend_regime_is_deterministic_transition_only_and_spot_safe():
         "trend_regime_exit",
     ]
     assert all(event.horizon == "1h" and event.ttl_seconds == 3600 for event in first)
+
+
+def test_pullback_regime_uses_previous_day_and_bounded_giveback():
+    closes = [100.0] * 24 + [102.0] * 24 + [104.0] * 24
+    closes += (
+        [106.0] * 4
+        + [105.0] * 2
+        + [103.0] * 2
+        + [104.0, 105.0, 106.0, 107.0, 109.0, 110.0, 108.0, 106.0]
+        + [106.0] * 8
+    )
+    bars = _minute_bars_from_hourly_closes(closes)
+    params = PullbackRegimeParams(
+        daily_fast_ema_days=2,
+        daily_slow_ema_days=3,
+        hourly_ema_bars=4,
+        atr_bars=2,
+        pullback_arm_hours=6,
+        max_entry_extension_atr=1.5,
+        progress_atr=0.5,
+        giveback_atr=0.5,
+        structural_stop_atr=0.5,
+        failure_timeout_hours=8,
+    )
+
+    first = generate_pullback_regime_signals(
+        bars,
+        symbol="BTCUSDT",
+        venue="BINANCE",
+        params=params,
+    )
+    second = generate_pullback_regime_signals(
+        bars,
+        symbol="BTCUSDT",
+        venue="BINANCE",
+        params=params,
+    )
+
+    assert [event.model_dump() for event in first] == [event.model_dump() for event in second]
+    assert [event.side for event in first] == ["buy", "flat"]
+    assert [event.metadata["trigger"] for event in first] == [
+        "pullback_recovery_entry",
+        "bounded_giveback_exit",
+    ]
+    assert first[0].metadata["regime_close"] == 104.0
+    assert all(event.side != "sell" for event in first)
