@@ -1,6 +1,6 @@
 # Phase 2 Diverse Strategy Tournament
 
-- **Status**: Locked before running any candidate on real catalog data
+- **Status**: Opened-data development complete; no candidate progressed
 - **Locked on**: 2026-07-10
 - **Scope**: Four economically distinct BTCUSDT Spot long/flat candidates
 - **Parameter search**: None
@@ -121,3 +121,16 @@ requires a new untouched holdout.
 
 No tool may automatically call `promotion_review.py`, modify SourcePolicy,
 resume testnet continuity, load credentials, or authorize live trading.
+
+## Recorded outcome
+
+All four candidates were run twice on all four folds from clean
+pre-registration commit `bcee304`. No source passed the tournament. Aggregate
+base PnL was negative for mean reversion and dual momentum. Volatility squeeze
+and volume breakout had positive aggregate base/stress PnL but only 2/4
+profitable folds, 26/37 positions, and negative results after removing the
+single best position.
+
+The ranking is empty, 2020-2023 and 2026 remain unconsumed, and the
+recommendation is `no_candidate_progresses`. Full evidence:
+[`2026-07-10-diverse-strategy-tournament-development.md`](../retros/2026-07-10-diverse-strategy-tournament-development.md).

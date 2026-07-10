@@ -1186,3 +1186,20 @@ opened-data development folds:
 Both run pairs reproduced exactly and stayed Spot long/flat, but neither was
 eligible to consume unseen validation. Full record:
 [`2026-07-10-pullback-regime-development-rejection.md`](../retros/2026-07-10-pullback-regime-development-rejection.md).
+
+---
+
+## 2026-07-10 — four-type no-search tournament
+
+Four sources were locked together in `bcee304` and evaluated on four fixed
+five-month 2024-2025 folds, with duplicate runs for every source/fold pair:
+
+| source family | aggregate gross | aggregate base | aggregate stress | positions | result |
+|---|---:|---:|---:|---:|---|
+| oversold mean reversion | +5.302140 | -12.031668 | -16.365120 | 88 | reject |
+| volatility squeeze | +20.974140 | +15.666855 | +14.340034 | 26 | reject: 2/4 folds, concentration/sample |
+| volume/OBV breakout | +20.651260 | +13.266385 | +11.420167 | 37 | reject: 2/4 folds, concentration/sample |
+| dual momentum | +3.468760 | -0.773624 | -1.834220 | 21 | reject |
+
+The tournament ranking is empty. Full fold evidence and bundle identities:
+[`2026-07-10-diverse-strategy-tournament-development.md`](../retros/2026-07-10-diverse-strategy-tournament-development.md).

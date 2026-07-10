@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-07-10 (diverse-strategy tournament pre-registered)
+- **Last updated**: 2026-07-10 (diverse-strategy tournament development complete)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
-- **Current objective**: Phase 5 remains the active implemented phase while research runs a pre-registered, no-search tournament across four different return hypotheses: 4h oversold mean reversion, 4h volatility-squeeze breakout, 4h price/OBV/volume-confirmed breakout, and daily dual momentum. All use distinct source/model versions and one shared four-fold cost/robustness tournament gate. No candidate has seen real catalog results yet; 2020-2023 remains absent as historical validation and 2026 remains preserved for future blind evidence. The next step is to commit/push all fingerprints before separately backtesting them.
+- **Current objective**: Phase 5 remains the active implemented phase. The pre-registered four-strategy tournament completed 16 duplicate-run fold pairs with exact reproducibility, but no source passed. Mean reversion and dual momentum were cost-negative; volatility squeeze and volume breakout were aggregate-positive but won only 2/4 folds, had 26/37 positions, and became negative after removing their best trade. Their model versions are closed, 2020-2023 and 2026 remain unconsumed, and `stop_before_testnet_resume` remains in force. The active research goal now moves to a pre-registered multi-asset opportunity set rather than another BTC-only threshold variant.
   Keep the current SourcePolicy unchanged until an explicit `promotion_review.py` decision. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
@@ -107,14 +107,15 @@ At task finish:
 
 ## Current Focus
 
-Commit and push all four diverse strategy fingerprints and the tournament gate
-before running real catalog results. Preserve 2020-2023 and 2026 holdouts.
+The diverse BTC-only tournament is complete with an empty ranking. Preserve
+2020-2023 and 2026 holdouts for other fingerprints. Define a multi-asset
+relative-strength/rotation research protocol before downloading new symbols.
 Routine 14-day testnet continuity remains paused, and the Phase 3 strict streak
 remains 0/14.
 
 Immediate focus:
 
-1. Use `docs/progress/phase-2-diverse-strategy-tournament.md` as the immutable protocol. After its clean commit, generate and separately replay all four sources on the four opened-data folds; rank only sources that pass every tournament gate.
+1. Use `docs/retros/2026-07-10-diverse-strategy-tournament-development.md` as the final BTC-only tournament record. The next candidate set must broaden the opportunity set and be locked before importing ETH or another liquid asset.
 2. Treat `docs/progress/phase-3-testnet-canary-evidence.md`, `docs/progress/phase-3-testnet-continuity-plan.md`, the 2026-05-30 clean canary retro, the 2026-05-30 duplicate-entry abort retro, the 2026-05-30 post-fix clean retro, and the 2026-06-01 heartbeat-lost retro as the current operational evidence. Do not run more routine canaries unless the operator explicitly resumes live-readiness evidence collection. If canary evidence resumes, use `python -m apps.strategies_nautilus.runners.report_testnet_bundle data/testnet/<run_id>` before writing future manifest-backed canary retros, use `--markdown` with clean bundle directories before updating the clean evidence ledger, and use `--continuity --markdown --min-clean-hours-per-day 6 --required-consecutive-days 14` with every completed manifest-backed bundle in the candidate window before claiming continuity progress. Carry no-manifest aborts manually. Do not open a new `promotion_review` unless an actual policy/stage decision is being made.
 3. Use `docs/decisions/009-agent-advice-audit.md` and `docs/decisions/012-phase5-readonly-dashboard.md` as the active agent/frontend boundaries. Agent/MCP work may write/replay/review `AgentAdvice`; dashboard work may read passive reports, observability textfiles, and AgentAdvice through `dashboard.snapshot.v1`. `TradingAgents/` is available as an ignored read-only upstream reference for future agent role/configuration ideas only; `docs/progress/tradingagents-reference-map.md` is the current safe adaptation map, and `apps.agents.role_profiles` is the first machine-readable AgentAdvice-only role seed. Neither path may write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or encode structured execution directives.
 4. ADR-008 §6.2 Phase 3b, §6.3 Phase 3c-a/b/c, §6.4 Phase 3d, §6.5 Phase 3e, §6.6 Phase 3f stability soak/canary, and the §8 promotion-review patch are all implemented and unit-tested. The `phase_3_not_ready` blocker now only hard-blocks `live_canary` / `live_normal`.
@@ -122,7 +123,7 @@ Immediate focus:
 
 ## Next Steps
 
-1. Commit/push the four-candidate tournament before reading results, then execute two reproducible runs per source/fold. Do not import 2020-2023 or 2026 unless a source passes opened-data development unchanged.
+1. Pre-register a multi-asset relative-strength/rotation study with cash as an explicit state, fixed symbols, rebalancing horizon, costs, folds, concentration limits, and future blind before downloading new-symbol data.
 2. Keep the current SourcePolicy unchanged until a human reviews `demote_to_paper_simulated_recommended` and records an actual hold/demote decision with `promotion_review.py`.
 3. Continue Phase 5 with only read-only dashboard improvements fed by `dashboard.snapshot.v1`; keep the frontend free of API routes and mutation controls until a separate ADR opens a specific workflow.
 4. If the operator explicitly resumes live-readiness evidence collection, use `docs/progress/phase-3-testnet-continuity-plan.md` and include every completed manifest-backed testnet bundle in the candidate window when running both `report_testnet_bundle --continuity` and `apps.ops.live_readiness`.
@@ -144,6 +145,13 @@ Immediate focus:
 - No edits to `freqtrade/` or `nautilus_trader/` unless explicitly requested.
 
 ## Latest Verification
+
+On 2026-07-10, after the four-type opened-data tournament:
+
+- Pre-registration commit `bcee304`; 32 clean manifests across 16 source/fold pairs, all duplicate comparisons `MATCH`, zero shorts/blockers, and 16 strict `alpha.review.v1` files.
+- Aggregate base/stress PnL: mean reversion `-12.031668/-16.365120`, volatility squeeze `+15.666855/+14.340034`, volume breakout `+13.266385/+11.420167`, dual momentum `-0.773624/-1.834220` USDT.
+- Volatility squeeze and volume breakout still failed: only 2/4 profitable folds, 26/37 positions, and leave-best base `-1.037924/-8.082295`. `strategy.tournament.v1` ranking is empty and recommendation is `no_candidate_progresses`.
+- Strict tournament/review/manifest validation passed; full verification remains **716 passed, 12 Postgres-dependent skips**, Ruff and `git diff --check` clean. No 2020-2023/2026 data or trading-state mutation occurred.
 
 On 2026-07-10, before running any diverse-tournament candidate on real data:
 
