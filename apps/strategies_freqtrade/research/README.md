@@ -49,6 +49,11 @@ loop.
   ATR giveback, structural invalidation, and 72h failure timeout. Spot
   long/flat only; no parameter search. `source="rule_pullback_regime_v1"`,
   `model_version="daily50-200-1h24-pullback-giveback1.25-v1"`.
+- `diverse_strategy_signals.py` — four simultaneously pre-registered,
+  no-search Spot long/flat sources: 4h oversold mean reversion, 4h
+  Bollinger/Keltner squeeze breakout, 4h price/OBV/volume breakout, and daily
+  dual absolute momentum. Select one with `--strategy`; identities and gates
+  are locked in `docs/progress/phase-2-diverse-strategy-tournament.md`.
 - `wall_clock_signal_replay.py` — testnet-canary helper that copies already
   reviewed historical `SignalEvent` rows, re-stamps `ts_event` into future
   wall-clock times, and writes them back to `SignalStore`. It preserves the

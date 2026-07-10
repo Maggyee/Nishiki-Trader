@@ -74,6 +74,10 @@ uv run python -m apps.ops.alpha_review \
 （10 + 5 bps）情景，输出 `alpha.review.v1`。它不启动 Nautilus、不写信号、
 不加载凭证、不改 `SourcePolicy`，也不恢复 testnet continuity。
 
+`strategy_tournament` 被动聚合每个策略的四份严格 `alpha.review.v1` 开发折，
+校验 source/model 和窗口一致性，并应用总成本收益、正收益折、正收益月份、样本量、
+移除最佳单笔、Spot-only 与复现闸门。它只对完整通过者排序，不运行回测或修改交易状态。
+
 生成 Phase 4 只读 dashboard snapshot（JSON 默认输出到 stdout）：
 
 ```bash

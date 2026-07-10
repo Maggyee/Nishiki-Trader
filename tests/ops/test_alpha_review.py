@@ -21,6 +21,15 @@ def test_pullback_regime_source_is_eligible_for_conservative_gate():
     assert "rule_pullback_regime_v1" in ELIGIBLE_SOURCES
 
 
+def test_diverse_strategy_sources_are_eligible_for_conservative_gate():
+    assert {
+        "rule_dual_momentum_v1",
+        "rule_mean_reversion_v1",
+        "rule_vol_squeeze_v1",
+        "rule_volume_breakout_v1",
+    } <= ELIGIBLE_SOURCES
+
+
 def _write_bundle(
     root: Path,
     name: str,
