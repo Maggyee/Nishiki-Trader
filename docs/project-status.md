@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-07-10 (pullback-regime candidate pre-registered)
+- **Last updated**: 2026-07-10 (pullback-regime stopped before unseen validation)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
-- **Current objective**: Phase 5 remains the active implemented phase while research evaluates the newly locked `rule_pullback_regime_v1 / daily50-200-1h24-pullback-giveback1.25-v1`. It uses only the previous completed daily EMA(50/200) state, arms a 1h EMA(24) pullback, enters on bounded recovery, and exits on risk-off, structural failure, 1.25 ATR giveback, or 72h failure timeout. No 2026 data was read while fixing the fingerprint. The next step is to commit/push the pre-registration, then run the unchanged candidate on the opened 2024-08..12 and 2025-08..12 folds; unseen 2026 data remains untouched unless both folds pass every cost, month, sample, concentration, safety, and reproducibility gate.
+- **Current objective**: Phase 5 remains the active implemented phase. The pre-registered `rule_pullback_regime_v1 / daily50-200-1h24-pullback-giveback1.25-v1` failed both opened-data folds: 2024 gross/base `-4.254450/-18.521015` and 2025 `+2.517530/-15.022640` USDT, with 0/5 and 1/5 base-positive months. It is closed without tuning; no 2026 data was imported, so the unseen validation and future blind remain intact. There is no active alpha candidate. The next decision is a research-scope review rather than another nearby BTC-only indicator variant; `stop_before_testnet_resume` remains in force.
   Keep the current SourcePolicy unchanged until an explicit `promotion_review.py` decision. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
@@ -107,13 +107,13 @@ At task finish:
 
 ## Current Focus
 
-Commit and push the locked pullback-regime fingerprint before running it on the
-full catalog. Do not import or inspect 2026 data first. Routine 14-day testnet
-continuity remains paused, and the Phase 3 strict streak remains 0/14.
+The pullback-regime fingerprint is closed. Preserve all 2026 holdouts and do
+not create another nearby EMA/ATR/Donchian threshold variant. Routine 14-day
+testnet continuity remains paused, and the Phase 3 strict streak remains 0/14.
 
 Immediate focus:
 
-1. Use `docs/progress/phase-2-pullback-regime-hypothesis.md` as the immutable candidate specification. After its clean commit, run both opened-data development folds twice and require the new leave-best-position-out base gate in addition to the existing conservative gates.
+1. Use `docs/retros/2026-07-10-pullback-regime-development-rejection.md` as the final candidate record. Before more implementation, decide whether to broaden the economic premise/data universe or pause alpha research while future evidence accumulates.
 2. Treat `docs/progress/phase-3-testnet-canary-evidence.md`, `docs/progress/phase-3-testnet-continuity-plan.md`, the 2026-05-30 clean canary retro, the 2026-05-30 duplicate-entry abort retro, the 2026-05-30 post-fix clean retro, and the 2026-06-01 heartbeat-lost retro as the current operational evidence. Do not run more routine canaries unless the operator explicitly resumes live-readiness evidence collection. If canary evidence resumes, use `python -m apps.strategies_nautilus.runners.report_testnet_bundle data/testnet/<run_id>` before writing future manifest-backed canary retros, use `--markdown` with clean bundle directories before updating the clean evidence ledger, and use `--continuity --markdown --min-clean-hours-per-day 6 --required-consecutive-days 14` with every completed manifest-backed bundle in the candidate window before claiming continuity progress. Carry no-manifest aborts manually. Do not open a new `promotion_review` unless an actual policy/stage decision is being made.
 3. Use `docs/decisions/009-agent-advice-audit.md` and `docs/decisions/012-phase5-readonly-dashboard.md` as the active agent/frontend boundaries. Agent/MCP work may write/replay/review `AgentAdvice`; dashboard work may read passive reports, observability textfiles, and AgentAdvice through `dashboard.snapshot.v1`. `TradingAgents/` is available as an ignored read-only upstream reference for future agent role/configuration ideas only; `docs/progress/tradingagents-reference-map.md` is the current safe adaptation map, and `apps.agents.role_profiles` is the first machine-readable AgentAdvice-only role seed. Neither path may write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or encode structured execution directives.
 4. ADR-008 §6.2 Phase 3b, §6.3 Phase 3c-a/b/c, §6.4 Phase 3d, §6.5 Phase 3e, §6.6 Phase 3f stability soak/canary, and the §8 promotion-review patch are all implemented and unit-tested. The `phase_3_not_ready` blocker now only hard-blocks `live_canary` / `live_normal`.
@@ -121,7 +121,7 @@ Immediate focus:
 
 ## Next Steps
 
-1. Commit/push the locked pullback-regime implementation before reading full-catalog results, then execute the two pre-registered opened-data folds. Stop without importing 2026 data if either fold fails.
+1. Stop before testnet resume and preserve 2026 data. Run a research-scope review before authorizing another candidate; do not tune any rejected model version.
 2. Keep the current SourcePolicy unchanged until a human reviews `demote_to_paper_simulated_recommended` and records an actual hold/demote decision with `promotion_review.py`.
 3. Continue Phase 5 with only read-only dashboard improvements fed by `dashboard.snapshot.v1`; keep the frontend free of API routes and mutation controls until a separate ADR opens a specific workflow.
 4. If the operator explicitly resumes live-readiness evidence collection, use `docs/progress/phase-3-testnet-continuity-plan.md` and include every completed manifest-backed testnet bundle in the candidate window when running both `report_testnet_bundle --continuity` and `apps.ops.live_readiness`.
@@ -143,6 +143,13 @@ Immediate focus:
 - No edits to `freqtrade/` or `nautilus_trader/` unless explicitly requested.
 
 ## Latest Verification
+
+On 2026-07-10, after stopping pullback-regime before unseen validation:
+
+- Fixed opened-data folds on clean preregistration commit `864bf44` -> 2024 gross/base/stress `-4.254450/-18.521015/-22.087657` USDT with 73 positions and 0/5 base-positive months; 2025 `+2.517530/-15.022640/-19.407682` with 64 positions and 1/5.
+- Leave-best-position-out base results were `-23.465132` and `-19.843135`; both folds had zero shorts/blockers and exact duplicate-run `MATCH` across fills, orders, positions, and signal lineage.
+- Strict `alpha.review.v1` validation and clean-manifest checks passed; full verification remains **709 passed, 12 Postgres-dependent skips**, Ruff and `git diff --check` clean.
+- No 2026 data was imported or read, SourcePolicy was not changed, and testnet/live paths were not started.
 
 On 2026-07-10, before reading any 2026 market data:
 

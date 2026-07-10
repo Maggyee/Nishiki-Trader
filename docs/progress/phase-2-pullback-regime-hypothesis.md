@@ -1,6 +1,6 @@
 # Phase 2 Pullback-Regime Hypothesis
 
-- **Status**: Locked before reading any 2026 market data
+- **Status**: Closed after opened-data development failure; 2026 preserved
 - **Locked on**: 2026-07-10
 - **Source/model**: `rule_pullback_regime_v1 / daily50-200-1h24-pullback-giveback1.25-v1`
 - **Unseen validation window**: 2026-01-01 through 2026-05-31 UTC
@@ -115,3 +115,15 @@ a newly locked holdout.
 Passing a backtest gate yields only `eligible_for_paper_shadow_review`; the
 tool must not call `promotion_review.py` or mutate SourcePolicy automatically.
 Until every required stage passes, keep `stop_before_testnet_resume`.
+
+## Recorded outcome
+
+Both opened-data folds failed before any 2026 data was imported. The 2024 fold
+returned gross/base/stress `-4.254450/-18.521015/-22.087657` USDT with 0/5
+base-positive months and 73 positions. The 2025 fold returned
+`+2.517530/-15.022640/-19.407682` with 1/5 base-positive months and 64
+positions. Both leave-best-position-out base results were negative.
+
+The fingerprint is closed, the unseen validation and future blind remain
+unconsumed, and the final recommendation is `stop_before_testnet_resume`. See
+[`2026-07-10-pullback-regime-development-rejection.md`](../retros/2026-07-10-pullback-regime-development-rejection.md).

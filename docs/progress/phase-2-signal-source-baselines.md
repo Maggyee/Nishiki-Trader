@@ -1169,3 +1169,20 @@ signal lineage, but the candidate failed both profitability gates and the
 4/5-month gate. It does not enter paper_shadow and must not be tuned against
 the opened blind window under the same fingerprint. Full evidence and hashes:
 [`2026-07-10-trend-regime-2025-blind-review.md`](../retros/2026-07-10-trend-regime-2025-blind-review.md).
+
+---
+
+## 2026-07-10 — pullback-regime stopped before unseen validation
+
+`rule_pullback_regime_v1 / daily50-200-1h24-pullback-giveback1.25-v1` was
+pre-registered in `864bf44` before any 2026 data was read. It failed both
+opened-data development folds:
+
+| fold | fills / positions | gross | base | stress | base-positive months | base without best |
+|---|---:|---:|---:|---:|---:|---:|
+| 2024-08..12 | 146 / 73 | -4.254450 | -18.521015 | -22.087657 | 0/5 | -23.465132 |
+| 2025-08..12 | 128 / 64 | +2.517530 | -15.022640 | -19.407682 | 1/5 | -19.843135 |
+
+Both run pairs reproduced exactly and stayed Spot long/flat, but neither was
+eligible to consume unseen validation. Full record:
+[`2026-07-10-pullback-regime-development-rejection.md`](../retros/2026-07-10-pullback-regime-development-rejection.md).
