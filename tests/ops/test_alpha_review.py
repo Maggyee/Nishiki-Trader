@@ -6,7 +6,11 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from apps.ops.alpha_review import ELIGIBLE_SOURCES, build_alpha_review
+from apps.ops.alpha_review import (
+    ELIGIBLE_SOURCES,
+    _ensure_concentration_columns,
+    build_alpha_review,
+)
 from apps.strategies_nautilus.result_schema import SCHEMA_VERSION
 from apps.strategies_nautilus.runners.backtest_runner import _write_parquet
 
@@ -36,6 +40,27 @@ def test_multi_asset_sources_are_eligible_for_conservative_gate():
         "rule_relative_value_rotation_v1",
         "rule_xs_momentum_rotation_v1",
     } <= ELIGIBLE_SOURCES
+
+
+def test_empty_validated_positions_allow_absent_report_only_order_columns():
+    positions = pd.DataFrame(
+        columns=["position_id", "closed_ts", "realized_pnl"]
+    )
+    fills = pd.DataFrame(columns=["order_id"])
+
+    _ensure_concentration_columns(positions, fills)
+
+    assert {"opening_order_id", "closing_order_id"} <= set(positions.columns)
+
+
+def test_nonempty_positions_still_fail_closed_on_absent_order_columns():
+    positions = pd.DataFrame(
+        [{"position_id": "p1", "closed_ts": 1, "realized_pnl": 1.0}]
+    )
+    fills = pd.DataFrame(columns=["order_id"])
+
+    with pytest.raises(ValueError, match="closing_order_id, opening_order_id"):
+        _ensure_concentration_columns(positions, fills)
 
 
 def _write_bundle(

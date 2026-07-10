@@ -285,11 +285,7 @@ def _analyze_bundle(
     positions_window = positions.loc[position_mask].copy()
     positions_window["_ts"] = position_ts.loc[position_mask].astype("int64")
     positions_window["_pnl"] = position_pnl.loc[position_mask]
-    required_position_columns = {"position_id", "opening_order_id", "closing_order_id"}
-    missing_position_columns = required_position_columns - set(positions_window.columns)
-    if missing_position_columns or "order_id" not in fills:
-        missing = sorted(missing_position_columns | ({"order_id"} - set(fills.columns)))
-        raise ValueError(f"required column missing: {', '.join(missing)}")
+    _ensure_concentration_columns(positions_window, fills)
     fills_for_positions = fills.copy()
     fills_for_positions["_order_id"] = fills["order_id"].astype(str)
     fills_for_positions["_notional"] = fill_qty.abs() * fill_price.abs()
@@ -427,6 +423,22 @@ def _analyze_bundle(
         "monthly_metrics": monthly_metrics,
         "blockers": sorted(set(blockers)),
     }
+
+
+def _ensure_concentration_columns(
+    positions_window: pd.DataFrame,
+    fills: pd.DataFrame,
+) -> None:
+    """Require order linkage, except absent extras on a validated empty sidecar."""
+    required = {"position_id", "opening_order_id", "closing_order_id"}
+    missing = required - set(positions_window.columns)
+    if missing and positions_window.empty:
+        for column in missing:
+            positions_window[column] = pd.Series(dtype="string")
+        missing = set()
+    if missing or "order_id" not in fills:
+        absent = sorted(missing | ({"order_id"} - set(fills.columns)))
+        raise ValueError(f"required column missing: {', '.join(absent)}")
 
 
 def _buy_and_hold_benchmark(

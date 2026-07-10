@@ -156,3 +156,8 @@ fail-closes an event whose `symbol.venue` differs from its configured
 no order. No candidate parameter, fold, sizing rule, gate, or holdout changed.
 The invalid bundles remain excluded; development must be rerun from the safety
 fix's clean commit.
+
+The post-guard rerun also exposed a review-only edge case: Nautilus's validated
+zero-row position sidecar omits report-only opening/closing order columns.
+`alpha_review` now permits those absent extras only when the validated positions
+table is empty; a non-empty table missing either column still fails closed.
