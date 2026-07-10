@@ -30,8 +30,8 @@ uv run python -m apps.ops.backfill_bars \
   --seed-demo-signals
 ```
 
-当前 fixture importer 只支持 `BTCUSDT.BINANCE` spot。它会生成以下 Nautilus
-命名，供 backtest runner 使用：
+fixture importer 支持锁定研究宇宙 `BTCUSDT`、`ETHUSDT`、`SOLUSDT` Binance
+Spot，并生成对应 Nautilus instrument/bar type 命名供 backtest runner 使用：
 
 - instrument id: `BTCUSDT.BINANCE`
 - bar type: `BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL`
@@ -53,6 +53,32 @@ uv run python -m apps.ops.backfill_bars \
 
 `--date` 与范围参数互斥；范围模式不支持 demo signal 或 `--max-rows`，避免把
 逐日测试选项误当成全年数据策略。
+
+完整自然月也可使用 Binance 月度归档，减少下载请求数：
+
+```bash
+uv run python -m apps.ops.backfill_bars \
+  --download --archive-period monthly \
+  --start-date 2024-01-01 --end-date 2025-12-31 \
+  --symbol ETHUSDT --interval 1m \
+  --raw-output-dir data/raw/binance/spot/monthly/klines \
+  --catalog-path data/catalog
+```
+
+月度模式拒绝不完整自然月，重复运行会复用已有 ZIP 并按 Nautilus 的确定性
+catalog 文件名幂等写入。
+
+下载后使用只读 `catalog_audit` 同时检查精确行数、时间边界、重复、缺口、OHLCV
+fingerprint 和跨资产时间戳对齐；任一条件失败时 CLI 返回非零：
+
+```bash
+uv run python -m apps.ops.catalog_audit \
+  --catalog-path data/catalog \
+  --bar-type BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL \
+  --bar-type ETHUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL \
+  --bar-type SOLUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL \
+  --start-date 2024-01-01 --end-date 2025-12-31
+```
 
 Binance Spot archive 在 2025-01-01 起把 kline 时间戳从毫秒切换为微秒；
 importer 会按数值量级检测 ms/us（并防御性接受 ns），拒绝混合或不合理单位。
@@ -77,6 +103,12 @@ uv run python -m apps.ops.alpha_review \
 `strategy_tournament` 被动聚合每个策略的四份严格 `alpha.review.v1` 开发折，
 校验 source/model 和窗口一致性，并应用总成本收益、正收益折、正收益月份、样本量、
 移除最佳单笔、Spot-only 与复现闸门。它只对完整通过者排序，不运行回测或修改交易状态。
+
+多资产研究先对每个 symbol 产生严格 `alpha.review.v1`，再由
+`apps.ops.multi_asset_review` 汇总成本与月度 PnL，并从原始 lineage 验证同一时刻
+最多持有一个资产。输出 `multi_asset.review.v1` 可交给同一个
+`strategy_tournament`；12-29 个仓位的低频经济通过者只进入历史证据 watchlist，
+不会被排名或进入 paper。
 
 生成 Phase 4 只读 dashboard snapshot（JSON 默认输出到 stdout）：
 
@@ -183,6 +215,8 @@ continuity evidence、可选 promotion review artifact、以及显式声明的�
 | `daily_health.py` | 每日健康检查（数据延迟 / 服务存活 / 仓位漂移） | 1 |
 | `backfill_bars.py` | 从 Binance public klines 导入 K 线到 ParquetDataCatalog | 1 |
 | `alpha_review.py` | 被动成本情景、月度 alpha 闸门与复现审查 | 2 |
+| `catalog_audit.py` | 被动检查 catalog 完整性、fingerprint 与跨资产对齐 | 2 |
+| `multi_asset_review.py` | 聚合单标成本审查并验证组合持仓互斥 | 2 |
 | `signal_replay.py` | 重放 SQLite 中的历史 signals 跑回测 | 1 |
 | `migrate_sqlite_to_pg.py` | Phase 2 数据迁移 | 2 |
 | `dashboard_snapshot.py` | Phase 4 只读 AgentAdvice / report snapshot | 4 |

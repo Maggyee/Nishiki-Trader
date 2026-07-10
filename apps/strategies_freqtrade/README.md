@@ -34,3 +34,11 @@ freqtrade trade \
 - 跑 dry-run 或 producer 模式，**不接真实订单 API**
 - 不在策略代码里调 LLM
 - backtest 用 freqtrade 快筛；真正决定上线的回测在 nautilus（contract §3）
+
+## 多资产研究信号
+
+`research/multi_asset_rotation_signals.py` 读取对齐的 BTCUSDT/ETHUSDT/SOLUSDT
+catalog bars，生成已预注册的月度横截面动量、每日市场宽度或每周 ETH/BTC 相对价值
+`SignalEvent v1`。`--start-date/--end-date` 只限制折内决策，之前数据仍可作为不含
+前视的 warm-up；`--dry-run` 不写 SignalStore。该 exporter 不计算仓位、不下单，
+组合互斥和成本结果由 Nautilus bundles 的被动审查器验证。

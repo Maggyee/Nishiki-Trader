@@ -47,6 +47,40 @@ def _review(
     return path
 
 
+def test_tournament_accepts_multi_asset_review_schema(tmp_path) -> None:
+    entries = []
+    for index in range(4):
+        path = _review(tmp_path, index)
+        payload = json.loads(path.read_text())
+        payload["schema_version"] = "multi_asset.review.v1"
+        path.write_text(json.dumps(payload))
+        entries.append(("rotation", path))
+
+    result = build_tournament(entries)
+
+    assert result["strategies"][0]["classification"] == "development_pass"
+    assert "multi_asset.review.v1" in result["protocol"]["accepted_review_schemas"]
+
+
+def test_low_frequency_multi_asset_watchlist_can_only_add_historical_evidence(
+    tmp_path,
+) -> None:
+    entries = []
+    for index in range(4):
+        path = _review(tmp_path, index, positions=4)
+        payload = json.loads(path.read_text())
+        payload["schema_version"] = "multi_asset.review.v1"
+        path.write_text(json.dumps(payload))
+        entries.append(("rotation", path))
+
+    result = build_tournament(entries)
+
+    assert result["strategies"][0]["classification"] == "development_watchlist"
+    assert result["ranking"] == []
+    assert result["development_watchlist_count"] == 1
+    assert result["recommendation"] == "eligible_for_historical_evidence_only"
+
+
 def test_tournament_passes_robust_four_fold_candidate(tmp_path) -> None:
     entries = [("mean_reversion", _review(tmp_path, index)) for index in range(4)]
 

@@ -14,6 +14,8 @@ EXPECTED_FOLDS = 4
 REQUIRED_PROFITABLE_FOLDS = 3
 REQUIRED_POSITIVE_MONTHS = 12
 REQUIRED_POSITIONS = 120
+MULTI_ASSET_REQUIRED_POSITIONS = 30
+MULTI_ASSET_WATCHLIST_POSITIONS = 12
 
 
 def _strict_load(path: Path) -> dict[str, Any]:
@@ -23,8 +25,9 @@ def _strict_load(path: Path) -> dict[str, Any]:
             ValueError(f"non-standard JSON constant: {value}")
         ),
     )
-    if not isinstance(payload, dict) or payload.get("schema_version") != "alpha.review.v1":
-        raise ValueError(f"{path} is not alpha.review.v1")
+    accepted = {"alpha.review.v1", "multi_asset.review.v1"}
+    if not isinstance(payload, dict) or payload.get("schema_version") not in accepted:
+        raise ValueError(f"{path} is not a supported review: {sorted(accepted)}")
     _assert_finite(payload)
     return payload
 
@@ -67,6 +70,11 @@ def build_tournament(entries: list[tuple[str, Path]]) -> dict[str, Any]:
         }
         if len(sources) != 1 or len(models) != 1 or len(windows) != EXPECTED_FOLDS:
             raise ValueError(f"{label} has inconsistent identity or duplicate windows")
+        review_schemas = {fold[1]["schema_version"] for fold in folds}
+        if len(review_schemas) != 1:
+            raise ValueError(f"{label} mixes single-asset and multi-asset review schemas")
+        multi_asset = review_schemas == {"multi_asset.review.v1"}
+        required_positions = MULTI_ASSET_REQUIRED_POSITIONS if multi_asset else REQUIRED_POSITIONS
 
         scenario_totals = {
             scenario: sum(
@@ -102,7 +110,7 @@ def build_tournament(entries: list[tuple[str, Path]]) -> dict[str, Any]:
             "base_positive_months": positive_months,
             "base_positive_months_required": REQUIRED_POSITIVE_MONTHS,
             "closed_positions": positions,
-            "closed_positions_required": REQUIRED_POSITIONS,
+            "closed_positions_required": required_positions,
             "aggregate_base_without_best_position": scenario_totals["base"]
             - best_position,
             "aggregate_base_without_best_position_positive": scenario_totals["base"]
@@ -120,10 +128,17 @@ def build_tournament(entries: list[tuple[str, Path]]) -> dict[str, Any]:
             and gates["aggregate_base_without_best_position_positive"]
             and evidence_clean
         )
-        development_pass = economic_pass and positions >= REQUIRED_POSITIONS
+        development_pass = economic_pass and positions >= required_positions
+        development_watchlist = bool(
+            multi_asset
+            and economic_pass
+            and MULTI_ASSET_WATCHLIST_POSITIONS <= positions < required_positions
+        )
         classification = (
             "development_pass"
             if development_pass
+            else "development_watchlist"
+            if development_watchlist
             else "insufficient_evidence"
             if economic_pass
             else "reject"
@@ -133,6 +148,7 @@ def build_tournament(entries: list[tuple[str, Path]]) -> dict[str, Any]:
                 "label": label,
                 "source": next(iter(sources)),
                 "model_version": next(iter(models)),
+                "review_schema": next(iter(review_schemas)),
                 "folds": [
                     {
                         "path": str(path),
@@ -153,6 +169,9 @@ def build_tournament(entries: list[tuple[str, Path]]) -> dict[str, Any]:
         )
 
     passers = [strategy for strategy in strategies if strategy["classification"] == "development_pass"]
+    watchlist = [
+        strategy for strategy in strategies if strategy["classification"] == "development_watchlist"
+    ]
     ranking = [
         strategy["label"]
         for strategy in sorted(
@@ -168,17 +187,25 @@ def build_tournament(entries: list[tuple[str, Path]]) -> dict[str, Any]:
     return {
         "schema_version": SCHEMA_VERSION,
         "protocol": {
+            "accepted_review_schemas": ["alpha.review.v1", "multi_asset.review.v1"],
             "expected_folds": EXPECTED_FOLDS,
             "required_profitable_folds": REQUIRED_PROFITABLE_FOLDS,
             "required_positive_months": REQUIRED_POSITIVE_MONTHS,
             "required_positions": REQUIRED_POSITIONS,
+            "multi_asset_required_positions": MULTI_ASSET_REQUIRED_POSITIONS,
+            "multi_asset_watchlist_positions": MULTI_ASSET_WATCHLIST_POSITIONS,
             "parameter_search": False,
         },
         "strategies": strategies,
         "ranking": ranking,
         "development_pass_count": len(passers),
+        "development_watchlist_count": len(watchlist),
         "recommendation": (
-            "eligible_for_historical_validation" if passers else "no_candidate_progresses"
+            "eligible_for_historical_validation"
+            if passers
+            else "eligible_for_historical_evidence_only"
+            if watchlist
+            else "no_candidate_progresses"
         ),
         "boundaries": {
             "diagnostic_only": True,

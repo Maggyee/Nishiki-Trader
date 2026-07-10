@@ -20,11 +20,11 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
-from nautilus_trader.model.currencies import BTC, USDT
+from nautilus_trader.model.currencies import USDT
 from nautilus_trader.model.data import Bar, BarType
 from nautilus_trader.model.identifiers import InstrumentId, Symbol, Venue
 from nautilus_trader.model.instruments import CurrencyPair
-from nautilus_trader.model.objects import Money, Price, Quantity
+from nautilus_trader.model.objects import Currency, Money, Price, Quantity
 from nautilus_trader.persistence.catalog.parquet import ParquetDataCatalog
 from nautilus_trader.persistence.wranglers import BarDataWrangler
 
@@ -32,6 +32,7 @@ from apps.bridge.signal_event import SignalEvent
 from apps.bridge.store import DuplicateSignalError, SignalStore
 
 BINANCE_SPOT_DAILY_BASE_URL = "https://data.binance.vision/data/spot/daily/klines"
+BINANCE_SPOT_MONTHLY_BASE_URL = "https://data.binance.vision/data/spot/monthly/klines"
 
 _BINANCE_KLINE_COLUMNS = [
     "open_time",
@@ -181,6 +182,23 @@ def download_daily_klines(
     return destination
 
 
+def download_monthly_klines(
+    *,
+    symbol: str,
+    interval: str,
+    month: str,
+    output_dir: Path,
+) -> Path:
+    file_name = f"{symbol}-{interval}-{month}.zip"
+    url = f"{BINANCE_SPOT_MONTHLY_BASE_URL}/{symbol}/{interval}/{file_name}"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    destination = output_dir / file_name
+    if destination.exists():
+        return destination
+    urllib.request.urlretrieve(url, destination)  # noqa: S310 - public market data URL.
+    return destination
+
+
 def run_backfill_range(
     *,
     symbol: str,
@@ -190,34 +208,65 @@ def run_backfill_range(
     raw_output_dir: Path,
     catalog_path: Path,
     venue_name: str = "BINANCE",
+    archive_period: str = "daily",
 ) -> BackfillRangeResult:
-    """Download and import an inclusive daily date range.
+    """Download and import an inclusive daily or complete-month date range.
 
-    Existing raw ZIPs are reused by :func:`download_daily_klines`; catalog
-    writes use Nautilus' deterministic daily file names, so repeating the same
-    range is idempotent for the supported daily Binance fixture.
+    Existing raw ZIPs are reused by the download helpers; catalog writes use
+    Nautilus' deterministic file names, so repeating the same range is
+    idempotent for supported Binance fixtures.
     """
     start = _parse_iso_date(start_date, "start_date")
     end = _parse_iso_date(end_date, "end_date")
     if end < start:
         raise ValueError(f"end_date={end_date} is before start_date={start_date}")
 
+    if archive_period not in {"daily", "monthly"}:
+        raise ValueError("archive_period must be daily or monthly")
+
     results: list[BackfillResult] = []
-    current = start
-    while current <= end:
-        results.append(
-            run_backfill(
-                raw_path=None,
-                download=True,
-                symbol=symbol,
-                interval=interval,
-                date=current.isoformat(),
-                raw_output_dir=raw_output_dir,
-                catalog_path=catalog_path,
-                venue_name=venue_name,
+    if archive_period == "daily":
+        current = start
+        while current <= end:
+            results.append(
+                run_backfill(
+                    raw_path=None,
+                    download=True,
+                    symbol=symbol,
+                    interval=interval,
+                    date=current.isoformat(),
+                    raw_output_dir=raw_output_dir,
+                    catalog_path=catalog_path,
+                    venue_name=venue_name,
+                )
             )
-        )
-        current += timedelta(days=1)
+            current += timedelta(days=1)
+    else:
+        if start.day != 1 or (end + timedelta(days=1)).day != 1:
+            raise ValueError("monthly archive range must cover complete calendar months")
+        current = start.replace(day=1)
+        while current <= end:
+            raw_path = download_monthly_klines(
+                symbol=symbol.upper(),
+                interval=interval,
+                month=current.strftime("%Y-%m"),
+                output_dir=raw_output_dir,
+            )
+            results.append(
+                run_backfill(
+                    raw_path=raw_path,
+                    download=False,
+                    symbol=symbol,
+                    interval=interval,
+                    date=None,
+                    raw_output_dir=raw_output_dir,
+                    catalog_path=catalog_path,
+                    venue_name=venue_name,
+                )
+            )
+            current = (current.replace(day=28) + timedelta(days=4)).replace(day=1)
+
+    days_requested = (end - start).days + 1
 
     return BackfillRangeResult(
         catalog_path=str(catalog_path),
@@ -225,8 +274,8 @@ def run_backfill_range(
         interval=interval,
         start_date=start.isoformat(),
         end_date=end.isoformat(),
-        days_requested=(end - start).days + 1,
-        days_imported=len(results),
+        days_requested=days_requested,
+        days_imported=days_requested if archive_period == "monthly" else len(results),
         bars_written=sum(result.bars_written for result in results),
         first_bar_ts_ns=min(result.first_bar_ts_ns for result in results),
         last_bar_ts_ns=max(result.last_bar_ts_ns for result in results),
@@ -370,22 +419,26 @@ def seed_demo_signals_from_bars(
 
 
 def _binance_spot_instrument(*, symbol: str, venue_name: str) -> CurrencyPair:
-    if symbol != "BTCUSDT" or venue_name != "BINANCE":
-        raise ValueError(
-            "only BTCUSDT.BINANCE spot is supported by the Phase 2 fixture importer"
-        )
+    specs = {
+        "BTCUSDT": ("BTC", 6, "0.000001", "9000.000000"),
+        "ETHUSDT": ("ETH", 5, "0.00001", "100000.00000"),
+        "SOLUSDT": ("SOL", 3, "0.001", "1000000.000"),
+    }
+    if symbol not in specs or venue_name != "BINANCE":
+        raise ValueError("supported Binance Spot symbols: BTCUSDT, ETHUSDT, SOLUSDT")
+    base_code, size_precision, size_increment, max_quantity = specs[symbol]
     return CurrencyPair(
-        instrument_id=InstrumentId(symbol=Symbol("BTCUSDT"), venue=Venue("BINANCE")),
-        raw_symbol=Symbol("BTCUSDT"),
-        base_currency=BTC,
+        instrument_id=InstrumentId(symbol=Symbol(symbol), venue=Venue("BINANCE")),
+        raw_symbol=Symbol(symbol),
+        base_currency=Currency.from_str(base_code),
         quote_currency=USDT,
         price_precision=2,
-        size_precision=6,
+        size_precision=size_precision,
         price_increment=Price.from_str("0.01"),
-        size_increment=Quantity.from_str("0.000001"),
+        size_increment=Quantity.from_str(size_increment),
         lot_size=None,
-        max_quantity=Quantity.from_str("9000.000000"),
-        min_quantity=Quantity.from_str("0.000001"),
+        max_quantity=Quantity.from_str(max_quantity),
+        min_quantity=Quantity.from_str(size_increment),
         max_notional=None,
         min_notional=Money.from_str("10.00000000 USDT"),
         max_price=Price.from_str("1000000.00"),
@@ -408,7 +461,7 @@ def _build_parser() -> argparse.ArgumentParser:
     source.add_argument(
         "--download",
         action="store_true",
-        help="Download one daily public Binance kline ZIP before importing",
+        help="Download public Binance kline ZIPs before importing",
     )
     parser.add_argument("--symbol", default="BTCUSDT")
     parser.add_argument("--venue", default="BINANCE")
@@ -417,9 +470,15 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--start-date", help="Inclusive YYYY-MM-DD range start")
     parser.add_argument("--end-date", help="Inclusive YYYY-MM-DD range end")
     parser.add_argument(
+        "--archive-period",
+        choices=("daily", "monthly"),
+        default="daily",
+        help="Use daily archives or complete-month archives for a date range",
+    )
+    parser.add_argument(
         "--raw-output-dir",
         type=Path,
-        default=Path("data/raw/binance/spot/daily/klines"),
+        default=Path("data/raw/binance/spot/klines"),
     )
     parser.add_argument("--catalog-path", type=Path, default=Path("data/catalog"))
     parser.add_argument("--max-rows", type=int, default=None)
@@ -463,6 +522,7 @@ def main(argv: list[str] | None = None) -> int:
                 raw_output_dir=args.raw_output_dir,
                 catalog_path=args.catalog_path,
                 venue_name=args.venue,
+                archive_period=args.archive_period,
             )
         else:
             result = run_backfill(
@@ -492,6 +552,7 @@ __all__ = [
     "BackfillResult",
     "bar_type_for",
     "download_daily_klines",
+    "download_monthly_klines",
     "load_binance_klines",
     "run_backfill",
     "run_backfill_range",

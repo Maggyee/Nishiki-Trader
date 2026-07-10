@@ -30,6 +30,14 @@ def test_diverse_strategy_sources_are_eligible_for_conservative_gate():
     } <= ELIGIBLE_SOURCES
 
 
+def test_multi_asset_sources_are_eligible_for_conservative_gate():
+    assert {
+        "rule_market_breadth_v1",
+        "rule_relative_value_rotation_v1",
+        "rule_xs_momentum_rotation_v1",
+    } <= ELIGIBLE_SOURCES
+
+
 def _write_bundle(
     root: Path,
     name: str,

@@ -28,9 +28,12 @@ ELIGIBLE_SOURCES = frozenset(
         "rule_dual_momentum_v1",
         "rule_mean_reversion_v1",
         "rule_pullback_regime_v1",
+        "rule_market_breadth_v1",
+        "rule_relative_value_rotation_v1",
         "rule_trend_regime_v1",
         "rule_vol_squeeze_v1",
         "rule_volume_breakout_v1",
+        "rule_xs_momentum_rotation_v1",
     }
 )
 CURRENT_SOURCE = "freqai_linear_v1"

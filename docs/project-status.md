@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-07-10 (diverse-strategy tournament development complete)
+- **Last updated**: 2026-07-10 (multi-asset rotation protocol pre-registration)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
-- **Current objective**: Phase 5 remains the active implemented phase. The pre-registered four-strategy tournament completed 16 duplicate-run fold pairs with exact reproducibility, but no source passed. Mean reversion and dual momentum were cost-negative; volatility squeeze and volume breakout were aggregate-positive but won only 2/4 folds, had 26/37 positions, and became negative after removing their best trade. Their model versions are closed, 2020-2023 and 2026 remain unconsumed, and `stop_before_testnet_resume` remains in force. The active research goal now moves to a pre-registered multi-asset opportunity set rather than another BTC-only threshold variant.
+- **Current objective**: Phase 5 remains the active implemented phase. The failed BTC-only fingerprints remain closed and `stop_before_testnet_resume` remains in force. A new no-search study is now pre-registered for BTCUSDT/ETHUSDT/SOLUSDT: 90-day monthly cross-sectional momentum, 2-of-3 market breadth, and weekly ETH/BTC relative value. The implementation, complete-month backfill path, single-asset cost reviews, portfolio exclusivity review, four opened-data folds, mechanical 50 USDT sizing, leave-best test, 30-position pass threshold, and 12-29-position historical-evidence-only watchlist are locked before any ETH/SOL data is viewed. 2020-2023 and 2026 remain unconsumed.
   Keep the current SourcePolicy unchanged until an explicit `promotion_review.py` decision. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
@@ -108,14 +108,14 @@ At task finish:
 ## Current Focus
 
 The diverse BTC-only tournament is complete with an empty ranking. Preserve
-2020-2023 and 2026 holdouts for other fingerprints. Define a multi-asset
-relative-strength/rotation research protocol before downloading new symbols.
+2020-2023 and 2026 holdouts for other fingerprints. The multi-asset
+relative-strength/rotation protocol is locked and awaits its pre-data commit.
 Routine 14-day testnet continuity remains paused, and the Phase 3 strict streak
 remains 0/14.
 
 Immediate focus:
 
-1. Use `docs/retros/2026-07-10-diverse-strategy-tournament-development.md` as the final BTC-only tournament record. The next candidate set must broaden the opportunity set and be locked before importing ETH or another liquid asset.
+1. Use `docs/progress/phase-2-multi-asset-rotation-study.md` as the locked protocol. Commit and push its implementation before importing ETHUSDT/SOLUSDT, then audit aligned 2024-2025 1m coverage before generating any fold results.
 2. Treat `docs/progress/phase-3-testnet-canary-evidence.md`, `docs/progress/phase-3-testnet-continuity-plan.md`, the 2026-05-30 clean canary retro, the 2026-05-30 duplicate-entry abort retro, the 2026-05-30 post-fix clean retro, and the 2026-06-01 heartbeat-lost retro as the current operational evidence. Do not run more routine canaries unless the operator explicitly resumes live-readiness evidence collection. If canary evidence resumes, use `python -m apps.strategies_nautilus.runners.report_testnet_bundle data/testnet/<run_id>` before writing future manifest-backed canary retros, use `--markdown` with clean bundle directories before updating the clean evidence ledger, and use `--continuity --markdown --min-clean-hours-per-day 6 --required-consecutive-days 14` with every completed manifest-backed bundle in the candidate window before claiming continuity progress. Carry no-manifest aborts manually. Do not open a new `promotion_review` unless an actual policy/stage decision is being made.
 3. Use `docs/decisions/009-agent-advice-audit.md` and `docs/decisions/012-phase5-readonly-dashboard.md` as the active agent/frontend boundaries. Agent/MCP work may write/replay/review `AgentAdvice`; dashboard work may read passive reports, observability textfiles, and AgentAdvice through `dashboard.snapshot.v1`. `TradingAgents/` is available as an ignored read-only upstream reference for future agent role/configuration ideas only; `docs/progress/tradingagents-reference-map.md` is the current safe adaptation map, and `apps.agents.role_profiles` is the first machine-readable AgentAdvice-only role seed. Neither path may write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or encode structured execution directives.
 4. ADR-008 §6.2 Phase 3b, §6.3 Phase 3c-a/b/c, §6.4 Phase 3d, §6.5 Phase 3e, §6.6 Phase 3f stability soak/canary, and the §8 promotion-review patch are all implemented and unit-tested. The `phase_3_not_ready` blocker now only hard-blocks `live_canary` / `live_normal`.
@@ -123,14 +123,17 @@ Immediate focus:
 
 ## Next Steps
 
-1. Pre-register a multi-asset relative-strength/rotation study with cash as an explicit state, fixed symbols, rebalancing horizon, costs, folds, concentration limits, and future blind before downloading new-symbol data.
-2. Keep the current SourcePolicy unchanged until a human reviews `demote_to_paper_simulated_recommended` and records an actual hold/demote decision with `promotion_review.py`.
-3. Continue Phase 5 with only read-only dashboard improvements fed by `dashboard.snapshot.v1`; keep the frontend free of API routes and mutation controls until a separate ADR opens a specific workflow.
-4. If the operator explicitly resumes live-readiness evidence collection, use `docs/progress/phase-3-testnet-continuity-plan.md` and include every completed manifest-backed testnet bundle in the candidate window when running both `report_testnet_bundle --continuity` and `apps.ops.live_readiness`.
-5. Use `promotion_review.py` (not just `report_paper_bundle.py`) as the required ADR-007 §2.6 audit artifact for any actual `SourcePolicy` change. Do **not** run `promotion_review.py hold @ testnet_canary` as a routine ratification of each canary — the canary retros plus the evidence and continuity progress files are the operational record.
-6. Keep the `testnet_runner.py` startup guard + connection probe as the first line of defense for any subsequent testnet run: explicit `--allow-real-credentials`, clean git, source/model retro evidence, testnet multiplier cap, key-prefix-only audit, Ed25519-only credentials (HMAC fails Binance Spot WS `session.logon`), and Binance Spot TESTNET-only adapter config. The probe injects credentials into the in-memory `TradingNodeConfig` only and never writes the full key/secret to `logs/runtime.log` or `connection_probe.json`.
-7. Collect additional testnet canary or paper_simulated evidence only when it directly supports a concrete development or promotion question. The v11 paper bundle's expectancy (+0.00491 USDT/trade, 53.6% win rate, -0.003878% max drawdown over 152 days) is weaker than v9, includes a negative April, and only mildly positive May; the parquet-backed canary fill set is still only a few trades. Treat both as operational/monitoring evidence, not alpha.
-8. Decide SQLite -> Postgres / Redis Stream readiness only after backtest, paper, or testnet volume exposes an actual bottleneck.
+1. Commit and push the locked multi-asset source fingerprints, monthly archive importer, portfolio review, tests, and this status update before downloading any ETHUSDT/SOLUSDT bars.
+2. Import only 2024-2025 ETHUSDT/SOLUSDT monthly 1m archives, then verify exact row counts, zero duplicates/gaps, and timestamp alignment with BTCUSDT.
+3. Compute each symbol/fold quantity mechanically from its first 1m close, generate fold-isolated signals, run duplicate Nautilus backtests, and apply `alpha.review.v1` -> `multi_asset.review.v1` -> `strategy.tournament.v1`.
+4. Import 2020-2023 only for a development passer or 12-29-position economic watchlist. Keep 2026 untouched unless historical validation fully passes.
+5. Keep the current SourcePolicy unchanged until a human reviews `demote_to_paper_simulated_recommended` and records an actual hold/demote decision with `promotion_review.py`.
+6. Continue Phase 5 with only read-only dashboard improvements fed by `dashboard.snapshot.v1`; keep the frontend free of API routes and mutation controls until a separate ADR opens a specific workflow.
+7. If the operator explicitly resumes live-readiness evidence collection, use `docs/progress/phase-3-testnet-continuity-plan.md` and include every completed manifest-backed testnet bundle in the candidate window when running both `report_testnet_bundle --continuity` and `apps.ops.live_readiness`.
+8. Use `promotion_review.py` (not just `report_paper_bundle.py`) as the required ADR-007 §2.6 audit artifact for any actual `SourcePolicy` change. Do **not** run `promotion_review.py hold @ testnet_canary` as a routine ratification of each canary — the canary retros plus the evidence and continuity progress files are the operational record.
+9. Keep the `testnet_runner.py` startup guard + connection probe as the first line of defense for any subsequent testnet run: explicit `--allow-real-credentials`, clean git, source/model retro evidence, testnet multiplier cap, key-prefix-only audit, Ed25519-only credentials (HMAC fails Binance Spot WS `session.logon`), and Binance Spot TESTNET-only adapter config. The probe injects credentials into the in-memory `TradingNodeConfig` only and never writes the full key/secret to `logs/runtime.log` or `connection_probe.json`.
+10. Collect additional testnet canary or paper_simulated evidence only when it directly supports a concrete development or promotion question. The v11 paper bundle's expectancy (+0.00491 USDT/trade, 53.6% win rate, -0.003878% max drawdown over 152 days) is weaker than v9, includes a negative April, and only mildly positive May; the parquet-backed canary fill set is still only a few trades. Treat both as operational/monitoring evidence, not alpha.
+11. Decide SQLite -> Postgres / Redis Stream readiness only after backtest, paper, or testnet volume exposes an actual bottleneck.
 
 ## Blocked / Deferred
 
@@ -145,6 +148,22 @@ Immediate focus:
 - No edits to `freqtrade/` or `nautilus_trader/` unless explicitly requested.
 
 ## Latest Verification
+
+On 2026-07-10, before importing or viewing any ETHUSDT/SOLUSDT bars:
+
+- Locked the BTC/ETH/SOL universe, three source/model fingerprints, prior-day
+  causality, fold-local state initialization, four opened-data folds, mechanical
+  50 USDT sizing, cost scenarios, concentration/evidence gates, absent
+  2020-2023 historical reserve, and 2026-08..12 future blind.
+- Added complete-month Binance archive import, deterministic multi-asset signal
+  tests, strict single-asset-to-portfolio cost aggregation, raw-lineage
+  exclusivity checks, and exact catalog coverage/fingerprint/alignment audit.
+- Full verification: **733 passed, 12 Postgres-dependent skips** with Linux
+  `TMPDIR=/tmp`; Ruff and `git diff --check` clean. The default Windows-mounted
+  pytest temp directory was separately confirmed unsuitable for two existing
+  POSIX mode assertions and did not indicate a product failure.
+- No new-symbol market data, credentials, exchange connection, SourcePolicy
+  mutation, testnet resume, or live-path action occurred.
 
 On 2026-07-10, after the four-type opened-data tournament:
 
