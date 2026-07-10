@@ -36,6 +36,7 @@ Read these before any non-trivial work:
 | Adding or comparing a signal source | `docs/progress/phase-2-signal-source-baselines.md` — current demo / rule fingerprints to diff against |
 | Cost-sensitive alpha review or new research candidate | `docs/retros/2026-07-10-cost-sensitive-alpha-blind-review.md`, `docs/progress/phase-2-signal-source-baselines.md`, `apps/ops/alpha_review.py` |
 | Trend-regime hypothesis and opened 2025 blind result | `docs/progress/phase-2-trend-regime-hypothesis.md`, `docs/retros/2026-07-10-trend-regime-2025-blind-review.md`, `apps/strategies_freqtrade/research/trend_regime_signals.py` |
+| Market-regime diagnosis or next alpha hypothesis | `docs/retros/2026-07-10-market-regime-failure-attribution.md`, `notebooks/market_regime_failure_attribution.py` |
 | Detailed historical progress | Relevant file under `docs/progress/` only when current status links it or history is needed |
 | Paper trading, risk rules, testnet, or live trading | `docs/decisions/007-paper-trading-runtime.md`; `docs/decisions/008-phase3-risk-runbook.md` (Draft, gates Phase 3 / testnet) |
 | Testnet continuity or next live-readiness stage | `docs/progress/phase-3-testnet-canary-evidence.md`, `docs/progress/phase-3-testnet-continuity-plan.md`, `docs/runbook-first-testnet-canary.md`, `docs/decisions/008-phase3-risk-runbook.md`, `docs/decisions/013-phase6-live-risk-gate.md`, `apps/ops/live_readiness.py`, `apps/strategies_nautilus/runners/live_startup_guard.py` |

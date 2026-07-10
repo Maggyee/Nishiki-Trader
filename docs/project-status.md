@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-07-10 (trend-regime 2025 blind review completed)
+- **Last updated**: 2026-07-10 (2024-2025 failure attribution completed)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
-- **Current objective**: Phase 5 remains the active implemented phase. The pre-registered `rule_trend_regime_v1 / ema24-96-1h-mom24-atr14x0.5-v1` candidate failed its untouched 2025-08..12 blind gate (gross/base/stress `-13.634510/-21.238820/-23.139897` USDT; 1/5 base-positive months). It is closed without tuning and the research recommendation is `stop_before_testnet_resume`. The next alpha step is to formulate a materially new economic hypothesis and lock a new source/model plus genuinely future blind window before reading that data; there is no active candidate today.
+- **Current objective**: Phase 5 remains the active implemented phase. The 2024-2025 attribution shows that the rejected trend-regime candidate lost its gross edge across regimes, was dependent on one 2024-11 winner, and surrendered cost-covering MFE on 20 blind losers. The next alpha task is to pre-register a materially new causal higher-timeframe risk-on pullback-continuation hypothesis, including a bounded-giveback exit and stricter development robustness gates. No parameters or new source/model are locked yet; `stop_before_testnet_resume` remains in force.
   Keep the current SourcePolicy unchanged until an explicit `promotion_review.py` decision. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
@@ -107,14 +107,15 @@ At task finish:
 
 ## Current Focus
 
-The trend-regime blind review is complete and rejected. Do not tune its EMA,
-momentum, ATR, or exit parameters against the opened 2025 window. Routine
-14-day testnet continuity testing remains paused, and the Phase 3 strict streak
-remains 0/14.
+The failure attribution is complete. Do not tune the rejected fingerprint
+against opened 2025 data. Use the attribution report to specify one materially
+new pullback-continuation hypothesis before importing another validation
+window. Routine 14-day testnet continuity remains paused, and the Phase 3
+strict streak remains 0/14.
 
 Immediate focus:
 
-1. Use `docs/retros/2026-07-10-trend-regime-2025-blind-review.md` as the final record for the closed candidate. Any new candidate needs a materially new hypothesis, new source/model version, and a pre-registered future blind window.
+1. Use `docs/retros/2026-07-10-market-regime-failure-attribution.md` as the diagnostic basis for the next pre-registration. The candidate concept is higher-timeframe risk-on plus pullback recovery, but its exact causal rules, source/model version, development folds, and future blind window still need to be locked before implementation.
 2. Treat `docs/progress/phase-3-testnet-canary-evidence.md`, `docs/progress/phase-3-testnet-continuity-plan.md`, the 2026-05-30 clean canary retro, the 2026-05-30 duplicate-entry abort retro, the 2026-05-30 post-fix clean retro, and the 2026-06-01 heartbeat-lost retro as the current operational evidence. Do not run more routine canaries unless the operator explicitly resumes live-readiness evidence collection. If canary evidence resumes, use `python -m apps.strategies_nautilus.runners.report_testnet_bundle data/testnet/<run_id>` before writing future manifest-backed canary retros, use `--markdown` with clean bundle directories before updating the clean evidence ledger, and use `--continuity --markdown --min-clean-hours-per-day 6 --required-consecutive-days 14` with every completed manifest-backed bundle in the candidate window before claiming continuity progress. Carry no-manifest aborts manually. Do not open a new `promotion_review` unless an actual policy/stage decision is being made.
 3. Use `docs/decisions/009-agent-advice-audit.md` and `docs/decisions/012-phase5-readonly-dashboard.md` as the active agent/frontend boundaries. Agent/MCP work may write/replay/review `AgentAdvice`; dashboard work may read passive reports, observability textfiles, and AgentAdvice through `dashboard.snapshot.v1`. `TradingAgents/` is available as an ignored read-only upstream reference for future agent role/configuration ideas only; `docs/progress/tradingagents-reference-map.md` is the current safe adaptation map, and `apps.agents.role_profiles` is the first machine-readable AgentAdvice-only role seed. Neither path may write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or encode structured execution directives.
 4. ADR-008 §6.2 Phase 3b, §6.3 Phase 3c-a/b/c, §6.4 Phase 3d, §6.5 Phase 3e, §6.6 Phase 3f stability soak/canary, and the §8 promotion-review patch are all implemented and unit-tested. The `phase_3_not_ready` blocker now only hard-blocks `live_canary` / `live_normal`.
@@ -122,7 +123,7 @@ Immediate focus:
 
 ## Next Steps
 
-1. Stop before testnet resume. Draft the next economic hypothesis without reusing the opened 2025 blind months for tuning; pre-register its fingerprint and a genuinely future five-month blind window before importing or inspecting that window.
+1. Write the next candidate pre-registration from the attribution report: causal higher-timeframe risk-on permission, pullback-recovery entry, bounded-giveback/time invalidation, Spot long/flat output, unchanged cost gates, and a locked future five-month blind window. Do not import unseen data until that fingerprint is committed.
 2. Keep the current SourcePolicy unchanged until a human reviews `demote_to_paper_simulated_recommended` and records an actual hold/demote decision with `promotion_review.py`.
 3. Continue Phase 5 with only read-only dashboard improvements fed by `dashboard.snapshot.v1`; keep the frontend free of API routes and mutation controls until a separate ADR opens a specific workflow.
 4. If the operator explicitly resumes live-readiness evidence collection, use `docs/progress/phase-3-testnet-continuity-plan.md` and include every completed manifest-backed testnet bundle in the candidate window when running both `report_testnet_bundle --continuity` and `apps.ops.live_readiness`.
@@ -144,6 +145,14 @@ Immediate focus:
 - No edits to `freqtrade/` or `nautilus_trader/` unless explicitly requested.
 
 ## Latest Verification
+
+On 2026-07-10, after the 2024-2025 market-regime failure attribution:
+
+- Passive analysis covered 1052640 BTCUSDT 1m bars and 60 closed trend-regime positions across the clean development and blind bundles.
+- Development vs blind market return was `+44.79%` vs `-24.29%`; strategy gross PnL was `+16.191970` vs `-13.634510` USDT. Removing the best development position makes development gross/base negative.
+- All 25 blind gross losers had positive MFE; 20 cleared modeled base costs while open before closing negative. The diagnosis remains research-only and does not alter the prior gate conclusion.
+- Two identical analysis runs produced JSON sha256 `b3fce9b52f8d0774029903b1ad7110f2a7752e3c5b72c99cb5c9b598fa1c85ad`.
+- Full verification -> **706 passed, 12 Postgres-dependent skips**; Ruff, strict finite JSON parsing, and `git diff --check` clean.
 
 On 2026-07-10, after completing the pre-registered trend-regime blind review:
 
