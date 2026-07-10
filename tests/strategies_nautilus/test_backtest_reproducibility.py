@@ -22,6 +22,7 @@ import pyarrow as pa
 import pytest
 from nautilus_trader.model.currencies import USDT
 from nautilus_trader.model.data import BarType
+from nautilus_trader.model.enums import AccountType
 from nautilus_trader.model.objects import Money
 from nautilus_trader.persistence.catalog.parquet import ParquetDataCatalog
 from nautilus_trader.persistence.wranglers import BarDataWrangler
@@ -143,6 +144,7 @@ def _build_config(
     bar_type,
     signal_store_path: Path,
     policies: dict[tuple[str, str], SourcePolicy] | None = None,
+    account_type: AccountType = AccountType.MARGIN,
 ) -> BacktestRunnerConfig:
     return BacktestRunnerConfig(
         output_root=output_root,
@@ -168,7 +170,26 @@ def _build_config(
         machine_id="pytest",
         git_commit="0" * 40,
         git_dirty=False,
+        account_type=account_type,
     )
+
+
+def test_cash_account_backtest_records_spot_execution_assumptions(
+    tmp_path, btcusdt_instrument, bar_type, signal_store_path, catalog_path
+):
+    config = _build_config(
+        output_root=tmp_path / "cash-backtests",
+        catalog_path=catalog_path,
+        instrument_id=btcusdt_instrument.id.value,
+        bar_type=bar_type,
+        signal_store_path=signal_store_path,
+        account_type=AccountType.CASH,
+    )
+    result = run_backtest(config)
+
+    params = result.manifest.strategies[0].params
+    assert params["account_type"] == "CASH"
+    assert params["oms_type"] == "NETTING"
 
 
 def test_run_backtest_writes_manifest_and_parquet(

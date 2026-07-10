@@ -312,7 +312,9 @@ def _build_engine(
         oms_type=config.oms_type,
         account_type=config.account_type,
         starting_balances=[config.starting_balance],
-        base_currency=config.base_currency,
+        base_currency=(
+            None if config.account_type == AccountType.CASH else config.base_currency
+        ),
         default_leverage=Decimal(1),
     )
     engine.add_instrument(instrument)
@@ -876,6 +878,8 @@ def _build_manifest(
                         "daily_drawdown_stop_pct": config.baseline_config.daily_drawdown_stop_pct,
                         "trade_size": str(config.trade_size),
                         "seed": config.seed,
+                        "account_type": config.account_type.name,
+                        "oms_type": config.oms_type.name,
                         "policies": _serialize_policies(
                             config.baseline_config.auth.policies
                         ),
@@ -1001,6 +1005,12 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--trade-size", type=Decimal, required=True)
     parser.add_argument("--starting-balance", type=Decimal, required=True)
     parser.add_argument("--base-currency", default="USDT")
+    parser.add_argument(
+        "--account-type",
+        choices=("cash", "margin"),
+        default="margin",
+        help="Backtest venue account type; use cash for Spot-compatible research.",
+    )
     parser.add_argument("--min-confidence", type=float, default=0.55)
     parser.add_argument("--max-position-pct", type=float, default=0.05)
     parser.add_argument("--daily-drawdown-stop-pct", type=float, default=0.05)
@@ -1061,6 +1071,11 @@ def _config_from_args(args: argparse.Namespace) -> BacktestRunnerConfig:
         trader_id=args.trader_id,
         machine_id=args.machine_id,
         seed=args.seed,
+        account_type=(
+            AccountType.CASH
+            if getattr(args, "account_type", "margin") == "cash"
+            else AccountType.MARGIN
+        ),
     )
 
 

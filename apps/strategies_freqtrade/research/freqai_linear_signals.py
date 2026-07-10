@@ -23,7 +23,7 @@ import numpy as np
 import pandas as pd
 
 from apps.bridge.signal_event import SignalEvent
-from apps.bridge.store import DuplicateSignalError, SignalStore
+from apps.bridge.store import SignalStore
 
 DEFAULT_SOURCE = "freqai_linear_v1"
 DEFAULT_MODEL_VERSION = "linear-mom-train20240105"
@@ -421,14 +421,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     store = SignalStore(args.signal_store_path)
-    written = 0
-    skipped = 0
-    for ev in events:
-        try:
-            store.write(ev)
-            written += 1
-        except DuplicateSignalError:
-            skipped += 1
+    written, skipped = store.write_many(events)
     print(f"wrote {written}, skipped {skipped} duplicates into {args.signal_store_path}")
     return 0
 

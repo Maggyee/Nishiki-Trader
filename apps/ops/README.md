@@ -39,6 +39,38 @@ uv run python -m apps.ops.backfill_bars \
 `--seed-demo-signals` 写入的 `manual_research/binance-fixture-v1` 信号只用于
 确认 catalog-backed runner 可以端到端产出 ADR-004 bundle，不代表可交易 alpha。
 
+按包含首尾日期的范围幂等补齐公共历史数据：
+
+```bash
+uv run python -m apps.ops.backfill_bars \
+  --download \
+  --start-date 2024-01-01 \
+  --end-date 2024-12-31 \
+  --symbol BTCUSDT \
+  --interval 1m \
+  --catalog-path data/catalog
+```
+
+`--date` 与范围参数互斥；范围模式不支持 demo signal 或 `--max-rows`，避免把
+逐日测试选项误当成全年数据策略。
+
+对已完成的 backtest/paper bundle 做被动成本审查：
+
+```bash
+uv run python -m apps.ops.alpha_review \
+  --candidate walkforward=data/backtests/<run-id-1> \
+  --candidate walkforward=data/backtests/<run-id-2> \
+  --blind-start 2024-08-01 \
+  --blind-end 2024-12-31 \
+  --catalog-path data/catalog \
+  --bar-type BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL \
+  --markdown
+```
+
+`alpha_review` 固定重算 gross、base（10 bps fee + 2 bps slippage）和 stress
+（10 + 5 bps）情景，输出 `alpha.review.v1`。它不启动 Nautilus、不写信号、
+不加载凭证、不改 `SourcePolicy`，也不恢复 testnet continuity。
+
 生成 Phase 4 只读 dashboard snapshot（JSON 默认输出到 stdout）：
 
 ```bash
@@ -143,6 +175,7 @@ continuity evidence、可选 promotion review artifact、以及显式声明的�
 | `emergency_flatten.py` | 应急一键平仓 + 停策略 | 3 |
 | `daily_health.py` | 每日健康检查（数据延迟 / 服务存活 / 仓位漂移） | 1 |
 | `backfill_bars.py` | 从 Binance public klines 导入 K 线到 ParquetDataCatalog | 1 |
+| `alpha_review.py` | 被动成本情景、月度 alpha 闸门与复现审查 | 2 |
 | `signal_replay.py` | 重放 SQLite 中的历史 signals 跑回测 | 1 |
 | `migrate_sqlite_to_pg.py` | Phase 2 数据迁移 | 2 |
 | `dashboard_snapshot.py` | Phase 4 只读 AgentAdvice / report snapshot | 4 |

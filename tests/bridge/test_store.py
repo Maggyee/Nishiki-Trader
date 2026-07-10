@@ -28,6 +28,22 @@ def test_duplicate_signal_id_rejected(store, signal_event):
     assert len(rows) == 1
 
 
+def test_write_many_commits_batch_and_counts_duplicates(store, make_payload):
+    events = [
+        SignalEvent.model_validate(make_payload(signal_id=f"batch-{index}"))
+        for index in range(3)
+    ]
+    written, duplicates = store.write_many([*events, events[0]], now_ns=123)
+
+    assert (written, duplicates) == (3, 1)
+    assert [event.signal_id for event in store.replay()] == [
+        "batch-0",
+        "batch-1",
+        "batch-2",
+    ]
+    assert {row["created_at"] for row in store.list_by_status("pending")} == {123}
+
+
 def test_mark_consumed_transitions(store, signal_event):
     store.write(signal_event)
     store.mark(signal_event.signal_id, "consumed")

@@ -13,6 +13,8 @@ import json
 import urllib.request
 import zipfile
 from dataclasses import asdict, dataclass
+from datetime import date as Date
+from datetime import timedelta
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
@@ -72,6 +74,21 @@ class BackfillResult:
     demo_signal_duplicates: int = 0
     demo_signal_source: str | None = None
     demo_signal_model_version: str | None = None
+
+
+@dataclass(frozen=True)
+class BackfillRangeResult:
+    catalog_path: str
+    symbol: str
+    interval: str
+    start_date: str
+    end_date: str
+    days_requested: int
+    days_imported: int
+    bars_written: int
+    first_bar_ts_ns: int
+    last_bar_ts_ns: int
+    raw_paths: list[str]
 
 
 def run_backfill(
@@ -162,6 +179,66 @@ def download_daily_klines(
         return destination
     urllib.request.urlretrieve(url, destination)  # noqa: S310 - public market data URL.
     return destination
+
+
+def run_backfill_range(
+    *,
+    symbol: str,
+    interval: str,
+    start_date: str,
+    end_date: str,
+    raw_output_dir: Path,
+    catalog_path: Path,
+    venue_name: str = "BINANCE",
+) -> BackfillRangeResult:
+    """Download and import an inclusive daily date range.
+
+    Existing raw ZIPs are reused by :func:`download_daily_klines`; catalog
+    writes use Nautilus' deterministic daily file names, so repeating the same
+    range is idempotent for the supported daily Binance fixture.
+    """
+    start = _parse_iso_date(start_date, "start_date")
+    end = _parse_iso_date(end_date, "end_date")
+    if end < start:
+        raise ValueError(f"end_date={end_date} is before start_date={start_date}")
+
+    results: list[BackfillResult] = []
+    current = start
+    while current <= end:
+        results.append(
+            run_backfill(
+                raw_path=None,
+                download=True,
+                symbol=symbol,
+                interval=interval,
+                date=current.isoformat(),
+                raw_output_dir=raw_output_dir,
+                catalog_path=catalog_path,
+                venue_name=venue_name,
+            )
+        )
+        current += timedelta(days=1)
+
+    return BackfillRangeResult(
+        catalog_path=str(catalog_path),
+        symbol=symbol.upper(),
+        interval=interval,
+        start_date=start.isoformat(),
+        end_date=end.isoformat(),
+        days_requested=(end - start).days + 1,
+        days_imported=len(results),
+        bars_written=sum(result.bars_written for result in results),
+        first_bar_ts_ns=min(result.first_bar_ts_ns for result in results),
+        last_bar_ts_ns=max(result.last_bar_ts_ns for result in results),
+        raw_paths=[result.raw_path for result in results],
+    )
+
+
+def _parse_iso_date(value: str, field: str) -> Date:
+    try:
+        return Date.fromisoformat(value)
+    except ValueError as exc:
+        raise ValueError(f"{field} must be YYYY-MM-DD, got {value!r}") from exc
 
 
 def load_binance_klines(
@@ -312,6 +389,8 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--venue", default="BINANCE")
     parser.add_argument("--interval", default="1m")
     parser.add_argument("--date", help="YYYY-MM-DD, required with --download")
+    parser.add_argument("--start-date", help="Inclusive YYYY-MM-DD range start")
+    parser.add_argument("--end-date", help="Inclusive YYYY-MM-DD range end")
     parser.add_argument(
         "--raw-output-dir",
         type=Path,
@@ -339,22 +418,44 @@ def main(argv: list[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
     try:
-        result = run_backfill(
-            raw_path=args.raw_path,
-            download=args.download,
-            symbol=args.symbol,
-            interval=args.interval,
-            date=args.date,
-            raw_output_dir=args.raw_output_dir,
-            catalog_path=args.catalog_path,
-            max_rows=args.max_rows,
-            seed_demo_signals=args.seed_demo_signals,
-            signal_store_path=args.signal_store_path,
-            signal_source=args.signal_source,
-            signal_model_version=args.signal_model_version,
-            signal_horizon=args.signal_horizon,
-            venue_name=args.venue,
-        )
+        range_requested = args.start_date is not None or args.end_date is not None
+        if range_requested:
+            if not args.download:
+                raise ValueError("--start-date/--end-date require --download")
+            if args.start_date is None or args.end_date is None:
+                raise ValueError("provide both --start-date and --end-date")
+            if args.date is not None:
+                raise ValueError("--date cannot be combined with a date range")
+            if args.max_rows is not None or args.seed_demo_signals:
+                raise ValueError(
+                    "--max-rows and --seed-demo-signals are not supported for date ranges"
+                )
+            result = run_backfill_range(
+                symbol=args.symbol,
+                interval=args.interval,
+                start_date=args.start_date,
+                end_date=args.end_date,
+                raw_output_dir=args.raw_output_dir,
+                catalog_path=args.catalog_path,
+                venue_name=args.venue,
+            )
+        else:
+            result = run_backfill(
+                raw_path=args.raw_path,
+                download=args.download,
+                symbol=args.symbol,
+                interval=args.interval,
+                date=args.date,
+                raw_output_dir=args.raw_output_dir,
+                catalog_path=args.catalog_path,
+                max_rows=args.max_rows,
+                seed_demo_signals=args.seed_demo_signals,
+                signal_store_path=args.signal_store_path,
+                signal_source=args.signal_source,
+                signal_model_version=args.signal_model_version,
+                signal_horizon=args.signal_horizon,
+                venue_name=args.venue,
+            )
     except Exception as exc:
         parser.exit(2, f"{parser.prog}: error: {exc}\n")
     print(json.dumps(_json_ready(result), indent=2, sort_keys=True))
@@ -362,11 +463,13 @@ def main(argv: list[str] | None = None) -> int:
 
 
 __all__ = [
+    "BackfillRangeResult",
     "BackfillResult",
     "bar_type_for",
     "download_daily_klines",
     "load_binance_klines",
     "run_backfill",
+    "run_backfill_range",
     "seed_demo_signals_from_bars",
 ]
 

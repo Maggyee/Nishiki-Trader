@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sqlite3
 import time
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
@@ -40,6 +40,14 @@ CREATE INDEX IF NOT EXISTS idx_signals_ts_event ON signals(ts_event);
 CREATE INDEX IF NOT EXISTS idx_signals_source_model
     ON signals(source, model_version);
 CREATE INDEX IF NOT EXISTS idx_signals_status ON signals(status);
+"""
+
+_INSERT_SIGNAL_SQL = """
+INSERT INTO signals (
+    signal_id, schema_version, symbol, venue, ts_event,
+    horizon, side, score, confidence, source, model_version,
+    ttl_seconds, raw_json, status, created_at
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)
 """
 
 
@@ -100,6 +108,38 @@ class SignalStore:
                 )
             except sqlite3.IntegrityError as exc:
                 raise DuplicateSignalError(event.signal_id) from exc
+
+    def write_many(
+        self,
+        events: Iterable[SignalEvent],
+        *,
+        now_ns: int | None = None,
+    ) -> tuple[int, int]:
+        """Write a research batch in one transaction.
+
+        Returns ``(written, duplicates)``; duplicate IDs do not abort the
+        remaining batch.
+        """
+        created_at = time.time_ns() if now_ns is None else now_ns
+        written = 0
+        duplicates = 0
+        with self._connect() as conn:
+            conn.execute("BEGIN")
+            try:
+                for event in events:
+                    try:
+                        conn.execute(
+                            _INSERT_SIGNAL_SQL,
+                            _signal_values(event, created_at),
+                        )
+                        written += 1
+                    except sqlite3.IntegrityError:
+                        duplicates += 1
+                conn.execute("COMMIT")
+            except Exception:
+                conn.execute("ROLLBACK")
+                raise
+        return written, duplicates
 
     def mark(
         self,
@@ -252,6 +292,36 @@ class PostgresSignalStore:
             except psycopg.errors.UniqueViolation as exc:
                 raise DuplicateSignalError(event.signal_id) from exc
 
+    def write_many(
+        self,
+        events: Iterable[SignalEvent],
+        *,
+        now_ns: int | None = None,
+    ) -> tuple[int, int]:
+        """Reuse one Postgres connection for a research export batch."""
+        import psycopg
+
+        created_at = time.time_ns() if now_ns is None else now_ns
+        written = 0
+        duplicates = 0
+        with self._connect() as conn:
+            for event in events:
+                try:
+                    conn.execute(
+                        """
+                        INSERT INTO signal_events (
+                            signal_id, schema_version, symbol, venue, ts_event,
+                            horizon, side, score, confidence, source, model_version,
+                            ttl_seconds, raw_json, status, created_at
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'pending', %s)
+                        """,
+                        _signal_values(event, created_at),
+                    )
+                    written += 1
+                except psycopg.errors.UniqueViolation:
+                    duplicates += 1
+        return written, duplicates
+
     def mark(
         self,
         signal_id: str,
@@ -327,6 +397,25 @@ class PostgresSignalStore:
         with self._connect() as conn:
             rows = conn.execute(sql, params).fetchall()
         return [SignalEvent.model_validate_json(row[0]) for row in rows]
+
+
+def _signal_values(event: SignalEvent, created_at: int) -> tuple[object, ...]:
+    return (
+        event.signal_id,
+        event.schema_version,
+        event.symbol,
+        event.venue,
+        event.ts_event,
+        event.horizon,
+        event.side,
+        event.score,
+        event.confidence,
+        event.source,
+        event.model_version,
+        event.ttl_seconds,
+        event.model_dump_json(),
+        created_at,
+    )
 
 
 __all__ = [

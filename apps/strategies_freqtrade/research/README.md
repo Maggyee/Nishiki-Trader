@@ -32,6 +32,14 @@ loop.
   ADR-005 `freqai` family, not the full freqtrade/FreqAI runtime loop yet.
   Default `source="freqai_linear_v1"`,
   `model_version="linear-mom-train20240105"`.
+- `freqai_linear_walkforward_signals.py` — monthly 60-day walk-forward ridge
+  candidate with a 30 bps threshold and long/flat Spot targets only.
+  `source="freqai_linear_walkforward_v1"`,
+  `model_version="ridge-wf60d-cost30bp-v1"`.
+- `breakout_rule_signals.py` — 15m Donchian(20/10) + ATR(14) × 0.25
+  transition-only long/flat candidate.
+  `source="rule_breakout_v1"`,
+  `model_version="donchian20-10-atr14x0.25-15m"`.
 - `wall_clock_signal_replay.py` — testnet-canary helper that copies already
   reviewed historical `SignalEvent` rows, re-stamps `ts_event` into future
   wall-clock times, and writes them back to `SignalStore`. It preserves the
@@ -82,3 +90,8 @@ uv run python -m apps.strategies_freqtrade.research.wall_clock_signal_replay \
 Pass `--dry-run` first to inspect the generated rows without touching the
 store. Run the real write shortly before starting the canary so the runner's
 initial SignalStore cursor is before the restamped `ts_event` values.
+
+The two cost-aware candidate exporters use the same catalog/store arguments as
+the existing generators and support `--dry-run`. They are fixed research
+fingerprints: changing their training window, threshold, Donchian/ATR
+parameters, or blind-test split requires a new `model_version`.
