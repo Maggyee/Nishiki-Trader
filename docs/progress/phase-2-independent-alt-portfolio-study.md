@@ -1,6 +1,6 @@
 # Phase 2 Independent Alt Portfolio Replication Study
 
-- **Status**: Pre-registered; BNB/XRP/ADA price data not viewed
+- **Status**: Opened-data development complete; no candidate progressed
 - **Locked on**: 2026-07-10
 - **Universe**: BNBUSDT, XRPUSDT, ADAUSDT Spot
 - **Candidate count**: Two
@@ -120,3 +120,20 @@ return sign, 90/30-day windows, weekly cadence, concurrency, or risk budget.
 
 No tool may modify SourcePolicy, call promotion review, resume testnet, load
 credentials, trade futures, or authorize live trading.
+
+## Recorded outcome
+
+The post-registration run produced 48 clean Nautilus bundles covering 24
+source/fold/asset pairs twice. Every pair reproduced, all eight portfolio folds
+stayed within their one/three-asset concurrency limits, and no blocker or short
+exposure occurred.
+
+Diversified momentum was aggregate-positive under base/stress costs and stayed
++3.667917 USDT positive after removing its best position, but won only 2/4
+folds, had 4/20 positive months, and closed 27 positions. Low-vol rotation was
+aggregate-negative. Both candidates are rejected; ranking is empty and
+recommendation is `no_candidate_progresses`. Neither 2020-2022 nor 2026 was
+consumed.
+
+Full evidence:
+[`2026-07-10-independent-alt-portfolio-development-review.md`](../retros/2026-07-10-independent-alt-portfolio-development-review.md).

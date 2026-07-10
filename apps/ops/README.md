@@ -220,6 +220,7 @@ continuity evidence、可选 promotion review artifact、以及显式声明的�
 | `backfill_funding.py` | 下载并校验固定 USD-M 月度 funding 公共归档 | 2 |
 | `feature_audit.py` | 审计 Spot 主动流/funding 完整性和 fingerprint | 2 |
 | `daily_archive_audit.py` | 审计日线 warm-up/信号归档完整性与跨资产对齐 | 2 |
+| `research_program_review.py` | 校验累计候选注册表并执行反多重试验停止规则 | 2 |
 | `signal_replay.py` | 重放 SQLite 中的历史 signals 跑回测 | 1 |
 | `migrate_sqlite_to_pg.py` | Phase 2 数据迁移 | 2 |
 | `dashboard_snapshot.py` | Phase 4 只读 AgentAdvice / report snapshot | 4 |

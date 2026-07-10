@@ -1,0 +1,183 @@
+{
+  "schema_version": "research.candidate.registry.v1",
+  "as_of": "2026-07-10",
+  "scope": "Strict cost-sensitive research candidates; benchmarks and frozen references excluded",
+  "candidates": [
+    {
+      "family": "linear_ml",
+      "source": "freqai_linear_walkforward_v1",
+      "model_version": "ridge-wf60d-cost30bp-v1",
+      "classification": "reject",
+      "base_net_pnl": -1.129677,
+      "stress_net_pnl": -1.186094,
+      "closed_positions": 1,
+      "evidence_path": "docs/retros/2026-07-10-cost-sensitive-alpha-blind-review.md",
+      "failure_reasons": ["base_negative", "stress_negative", "insufficient_activity"]
+    },
+    {
+      "family": "breakout",
+      "source": "rule_breakout_v1",
+      "model_version": "donchian20-10-atr14x0.25-15m",
+      "classification": "reject",
+      "base_net_pnl": -39.313136,
+      "stress_net_pnl": -47.625248,
+      "closed_positions": 184,
+      "evidence_path": "docs/retros/2026-07-10-cost-sensitive-alpha-blind-review.md",
+      "failure_reasons": ["gross_negative", "base_negative", "stress_negative"]
+    },
+    {
+      "family": "trend_regime",
+      "source": "rule_trend_regime_v1",
+      "model_version": "ema24-96-1h-mom24-atr14x0.5-v1",
+      "classification": "reject",
+      "base_net_pnl": -21.23882,
+      "stress_net_pnl": -23.139897,
+      "closed_positions": 31,
+      "evidence_path": "docs/retros/2026-07-10-trend-regime-2025-blind-review.md",
+      "failure_reasons": ["blind_base_negative", "blind_stress_negative", "blind_month_instability"]
+    },
+    {
+      "family": "pullback_continuation",
+      "source": "rule_pullback_regime_v1",
+      "model_version": "daily50-200-1h24-pullback-giveback1.25-v1",
+      "classification": "reject",
+      "base_net_pnl": -33.543655,
+      "stress_net_pnl": -41.495339,
+      "closed_positions": 137,
+      "evidence_path": "docs/retros/2026-07-10-pullback-regime-development-rejection.md",
+      "failure_reasons": ["base_negative", "stress_negative", "leave_best_negative"]
+    },
+    {
+      "family": "mean_reversion",
+      "source": "rule_mean_reversion_v1",
+      "model_version": "z20-rsi2-exitmean-time24h-4h-v1",
+      "classification": "reject",
+      "base_net_pnl": -12.031668,
+      "stress_net_pnl": -16.36512,
+      "closed_positions": 88,
+      "evidence_path": "docs/retros/2026-07-10-diverse-strategy-tournament-development.md",
+      "failure_reasons": ["base_negative", "stress_negative", "leave_best_negative"]
+    },
+    {
+      "family": "volatility_breakout",
+      "source": "rule_vol_squeeze_v1",
+      "model_version": "bb20-kc20x1.5-breakout20-chandelier3-4h-v1",
+      "classification": "reject",
+      "base_net_pnl": 15.666855,
+      "stress_net_pnl": 14.340034,
+      "closed_positions": 26,
+      "evidence_path": "docs/retros/2026-07-10-diverse-strategy-tournament-development.md",
+      "failure_reasons": ["profitable_folds_2_of_4", "insufficient_positions", "leave_best_negative"]
+    },
+    {
+      "family": "volume_breakout",
+      "source": "rule_volume_breakout_v1",
+      "model_version": "price20-obv20-volume2x-exit10-4h-v1",
+      "classification": "reject",
+      "base_net_pnl": 13.266385,
+      "stress_net_pnl": 11.420167,
+      "closed_positions": 37,
+      "evidence_path": "docs/retros/2026-07-10-diverse-strategy-tournament-development.md",
+      "failure_reasons": ["profitable_folds_2_of_4", "leave_best_negative"]
+    },
+    {
+      "family": "absolute_momentum",
+      "source": "rule_dual_momentum_v1",
+      "model_version": "ret20-60-positive-1d-v1",
+      "classification": "reject",
+      "base_net_pnl": -0.773624,
+      "stress_net_pnl": -1.83422,
+      "closed_positions": 21,
+      "evidence_path": "docs/retros/2026-07-10-diverse-strategy-tournament-development.md",
+      "failure_reasons": ["base_negative", "stress_negative", "insufficient_positions"]
+    },
+    {
+      "family": "cross_sectional_momentum",
+      "source": "rule_xs_momentum_rotation_v1",
+      "model_version": "btc-eth-sol-ret90-monthly-cash-v1",
+      "classification": "reject",
+      "base_net_pnl": -32.210919,
+      "stress_net_pnl": -32.489414,
+      "closed_positions": 8,
+      "evidence_path": "docs/retros/2026-07-10-multi-asset-rotation-development-review.md",
+      "failure_reasons": ["base_negative", "stress_negative", "insufficient_positions"]
+    },
+    {
+      "family": "market_breadth",
+      "source": "rule_market_breadth_v1",
+      "model_version": "breadth2of3-sma100-btc20-v1",
+      "classification": "reject",
+      "base_net_pnl": -10.027097,
+      "stress_net_pnl": -10.761071,
+      "closed_positions": 21,
+      "evidence_path": "docs/retros/2026-07-10-multi-asset-rotation-development-review.md",
+      "failure_reasons": ["base_negative", "stress_negative", "leave_best_negative"]
+    },
+    {
+      "family": "relative_value",
+      "source": "rule_relative_value_rotation_v1",
+      "model_version": "ethbtc-z20x1.5-weekly-cash-v1",
+      "classification": "reject",
+      "base_net_pnl": 15.989241,
+      "stress_net_pnl": 15.380761,
+      "closed_positions": 18,
+      "evidence_path": "docs/retros/2026-07-10-multi-asset-rotation-development-review.md",
+      "failure_reasons": ["profitable_folds_2_of_4", "positive_months_7_of_20", "leave_best_negative"]
+    },
+    {
+      "family": "taker_flow",
+      "source": "rule_taker_flow_rotation_v1",
+      "model_version": "buyshare7d-ret20-weekly-cash-v1",
+      "classification": "reject",
+      "base_net_pnl": 23.505068,
+      "stress_net_pnl": 22.678201,
+      "closed_positions": 23,
+      "evidence_path": "docs/retros/2026-07-10-flow-positioning-development-review.md",
+      "failure_reasons": ["profitable_folds_2_of_4", "positive_months_7_of_20", "insufficient_positions"]
+    },
+    {
+      "family": "flow_exhaustion",
+      "source": "rule_flow_exhaustion_v1",
+      "model_version": "retq10-180-buyshare0.40-vol2x-exit12h-4h-v1",
+      "classification": "reject",
+      "base_net_pnl": -1.431597,
+      "stress_net_pnl": -1.623924,
+      "closed_positions": 7,
+      "evidence_path": "docs/retros/2026-07-10-flow-positioning-development-review.md",
+      "failure_reasons": ["base_negative", "stress_negative", "insufficient_positions"]
+    },
+    {
+      "family": "funding_crowding",
+      "source": "rule_funding_crowding_rotation_v1",
+      "model_version": "ret90-funding7d-z30lt1.5-weekly-cash-v1",
+      "classification": "reject",
+      "base_net_pnl": -21.591179,
+      "stress_net_pnl": -22.124877,
+      "closed_positions": 15,
+      "evidence_path": "docs/retros/2026-07-10-flow-positioning-development-review.md",
+      "failure_reasons": ["base_negative", "stress_negative", "leave_best_negative"]
+    },
+    {
+      "family": "diversified_momentum",
+      "source": "rule_alt_diversified_momentum_v1",
+      "model_version": "bnb-xrp-ada-ret90-weekly-equal16-v1",
+      "classification": "reject",
+      "base_net_pnl": 44.064632,
+      "stress_net_pnl": 43.795051,
+      "closed_positions": 27,
+      "evidence_path": "docs/retros/2026-07-10-independent-alt-portfolio-development-review.md",
+      "failure_reasons": ["profitable_folds_2_of_4", "positive_months_4_of_20", "insufficient_positions"]
+    },
+    {
+      "family": "low_volatility_rotation",
+      "source": "rule_alt_low_vol_rotation_v1",
+      "model_version": "bnb-xrp-ada-ret90-lowvol30-weekly-cash-v1",
+      "classification": "reject",
+      "base_net_pnl": -25.725617,
+      "stress_net_pnl": -26.278526,
+      "closed_positions": 17,
+      "evidence_path": "docs/retros/2026-07-10-independent-alt-portfolio-development-review.md",
+      "failure_reasons": ["base_negative", "stress_negative", "leave_best_negative"]
+    }
+  ]
+}
