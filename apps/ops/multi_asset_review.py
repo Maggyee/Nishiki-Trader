@@ -15,12 +15,17 @@ from apps.ops.alpha_review import SCENARIOS
 
 SCHEMA_VERSION = "multi_asset.review.v1"
 SOURCE_UNIVERSES = {
+    "rule_alt_diversified_momentum_v1": {"BNBUSDT", "XRPUSDT", "ADAUSDT"},
+    "rule_alt_low_vol_rotation_v1": {"BNBUSDT", "XRPUSDT", "ADAUSDT"},
     "rule_flow_exhaustion_v1": {"BTCUSDT", "ETHUSDT", "SOLUSDT"},
     "rule_funding_crowding_rotation_v1": {"BTCUSDT", "ETHUSDT", "SOLUSDT"},
     "rule_taker_flow_rotation_v1": {"BTCUSDT", "ETHUSDT", "SOLUSDT"},
     "rule_xs_momentum_rotation_v1": {"BTCUSDT", "ETHUSDT", "SOLUSDT"},
     "rule_market_breadth_v1": {"BTCUSDT"},
     "rule_relative_value_rotation_v1": {"BTCUSDT", "ETHUSDT"},
+}
+SOURCE_MAX_CONCURRENT_ASSETS = {
+    "rule_alt_diversified_momentum_v1": 3,
 }
 
 
@@ -118,6 +123,7 @@ def _audit_exclusivity(
     *,
     source: str,
     model_version: str,
+    maximum_allowed_assets: int,
 ) -> dict[str, Any]:
     events: dict[int, list[tuple[str, str]]] = defaultdict(list)
     for symbol, _path, candidate in assets:
@@ -140,6 +146,8 @@ def _audit_exclusivity(
 
     held: set[str] = set()
     overlaps: list[dict[str, Any]] = []
+    limit_violations: list[dict[str, Any]] = []
+    maximum_observed = 0
     for ts_event, rows in sorted(events.items()):
         for symbol, decision in rows:
             if decision == "target_flat":
@@ -147,16 +155,23 @@ def _audit_exclusivity(
         for symbol, decision in rows:
             if decision == "target_long":
                 held.add(symbol)
+        maximum_observed = max(maximum_observed, len(held))
         if len(held) > 1:
             overlaps.append({"ts_event": ts_event, "held_assets": sorted(held)})
+        if len(held) > maximum_allowed_assets:
+            limit_violations.append(
+                {"ts_event": ts_event, "held_assets": sorted(held)}
+            )
     return {
         "event_timestamps": len(events),
-        "maximum_concurrent_assets": max(
-            [len(row["held_assets"]) for row in overlaps] + ([1] if events else [0])
-        ),
+        "maximum_concurrent_assets": maximum_observed,
+        "maximum_allowed_assets": maximum_allowed_assets,
         "overlap_count": len(overlaps),
         "first_overlaps": overlaps[:10],
-        "exclusive": not overlaps,
+        "limit_violation_count": len(limit_violations),
+        "first_limit_violations": limit_violations[:10],
+        "exclusive": maximum_observed <= 1,
+        "within_limit": not limit_violations,
     }
 
 
@@ -208,13 +223,19 @@ def build_multi_asset_review(
     reproducible = all(candidate.get("reproducible") is True for candidate in candidates)
     if not reproducible:
         blockers.append("portfolio_asset_reproducibility_failed")
+    maximum_allowed_assets = SOURCE_MAX_CONCURRENT_ASSETS.get(source, 1)
     exclusivity = _audit_exclusivity(
         [(symbol, path, candidate) for symbol, path, _report, candidate in assets],
         source=source,
         model_version=model_version,
+        maximum_allowed_assets=maximum_allowed_assets,
     )
-    if not exclusivity["exclusive"]:
-        blockers.append("portfolio_asset_overlap")
+    if not exclusivity["within_limit"]:
+        blockers.append(
+            "portfolio_asset_overlap"
+            if maximum_allowed_assets == 1
+            else "portfolio_concurrency_limit_exceeded"
+        )
 
     portfolio_candidate = {
         "label": label,
@@ -260,6 +281,7 @@ def build_multi_asset_review(
             "spot_long_flat_only": portfolio_candidate["short_positions"] == 0,
             "assets_reproducible": reproducible,
             "portfolio_exclusive": exclusivity["exclusive"],
+            "portfolio_concurrency_within_limit": exclusivity["within_limit"],
             "evidence_clean": not blockers,
         },
         "recommendation": "portfolio_fold_ready" if not blockers else "reject_portfolio_evidence",

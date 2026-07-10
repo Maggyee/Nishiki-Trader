@@ -118,3 +118,26 @@ def test_fails_closed_when_asset_positions_overlap(tmp_path) -> None:
     assert candidate["exclusivity"]["exclusive"] is False
     assert "portfolio_asset_overlap" in candidate["blockers"]
     assert result["recommendation"] == "reject_portfolio_evidence"
+
+
+def test_diversified_source_allows_three_concurrent_assets(tmp_path) -> None:
+    source = "rule_alt_diversified_momentum_v1"
+    specs = [
+        (
+            symbol,
+            _asset_review(
+                tmp_path,
+                symbol,
+                [(1, "target_long")],
+                source=source,
+            ),
+        )
+        for symbol in ("BNBUSDT", "XRPUSDT", "ADAUSDT")
+    ]
+
+    result = build_multi_asset_review("diversified", specs)
+
+    candidate = result["candidates"][0]
+    assert candidate["exclusivity"]["maximum_concurrent_assets"] == 3
+    assert candidate["exclusivity"]["within_limit"] is True
+    assert candidate["blockers"] == []

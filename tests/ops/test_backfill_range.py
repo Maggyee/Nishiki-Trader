@@ -108,6 +108,9 @@ def test_monthly_range_requires_complete_calendar_months(start, end, tmp_path):
         ("BTCUSDT", "BTC", 6),
         ("ETHUSDT", "ETH", 5),
         ("SOLUSDT", "SOL", 3),
+        ("BNBUSDT", "BNB", 3),
+        ("XRPUSDT", "XRP", 1),
+        ("ADAUSDT", "ADA", 1),
     ],
 )
 def test_binance_spot_instrument_supports_locked_universe(

@@ -282,10 +282,18 @@ def generate_funding_crowding_rotation(
     return events
 
 
-def load_spot_aggregates(directory: Path, symbol: str, frequency: str) -> pd.DataFrame:
-    paths = sorted(directory.glob(f"{symbol}-1m-*.zip"))
+def load_spot_aggregates(
+    directory: Path,
+    symbol: str,
+    frequency: str,
+    *,
+    source_interval: str = "1m",
+) -> pd.DataFrame:
+    paths = sorted(directory.glob(f"{symbol}-{source_interval}-*.zip"))
     if not paths:
-        raise FileNotFoundError(f"no {symbol} monthly 1m archives in {directory}")
+        raise FileNotFoundError(
+            f"no {symbol} {source_interval} archives in {directory}"
+        )
     rows = []
     for path in paths:
         raw = _read_kline_dataframe(path).iloc[:, : len(_BINANCE_KLINE_COLUMNS)].copy()

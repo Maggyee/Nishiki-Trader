@@ -36,6 +36,8 @@ def test_diverse_strategy_sources_are_eligible_for_conservative_gate():
 
 def test_multi_asset_sources_are_eligible_for_conservative_gate():
     assert {
+        "rule_alt_diversified_momentum_v1",
+        "rule_alt_low_vol_rotation_v1",
         "rule_flow_exhaustion_v1",
         "rule_funding_crowding_rotation_v1",
         "rule_market_breadth_v1",

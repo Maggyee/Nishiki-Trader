@@ -47,3 +47,8 @@ catalog bars，生成已预注册的月度横截面动量、每日市场宽度�
 Spot 原始 kline 的 quote/taker-buy quote volume 生成周度主动流轮动和 4h 抛售衰竭
 信号，并可结合已校验的 USD-M funding archive 生成拥挤度过滤轮动。三者仍只输出
 long/flat `SignalEvent v1`，最多选择一个现货资产，不交易期货、不编码仓位或订单。
+
+`research/alt_portfolio_signals.py` 固定使用此前未打开的 BNB/XRP/ADA 机会集：
+周度独立 90 日绝对动量允许最多三个约 16 USDT 现货持仓；低波动轮动只在正动量
+标的中选择 30 日波动最低者。2023 日线只作 warm-up，2024-2025 才计分。
+`multi_asset_review` 根据 source 预注册的 1/3 资产并发上限审计 lineage。

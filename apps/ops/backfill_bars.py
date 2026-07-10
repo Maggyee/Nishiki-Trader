@@ -420,21 +420,31 @@ def seed_demo_signals_from_bars(
 
 def _binance_spot_instrument(*, symbol: str, venue_name: str) -> CurrencyPair:
     specs = {
-        "BTCUSDT": ("BTC", 6, "0.000001", "9000.000000"),
-        "ETHUSDT": ("ETH", 5, "0.00001", "100000.00000"),
-        "SOLUSDT": ("SOL", 3, "0.001", "1000000.000"),
+        "BTCUSDT": ("BTC", 2, "0.01", 6, "0.000001", "9000.000000"),
+        "ETHUSDT": ("ETH", 2, "0.01", 5, "0.00001", "100000.00000"),
+        "SOLUSDT": ("SOL", 2, "0.01", 3, "0.001", "1000000.000"),
+        "BNBUSDT": ("BNB", 2, "0.01", 3, "0.001", "1000000.000"),
+        "XRPUSDT": ("XRP", 4, "0.0001", 1, "0.1", "100000000.0"),
+        "ADAUSDT": ("ADA", 4, "0.0001", 1, "0.1", "100000000.0"),
     }
     if symbol not in specs or venue_name != "BINANCE":
-        raise ValueError("supported Binance Spot symbols: BTCUSDT, ETHUSDT, SOLUSDT")
-    base_code, size_precision, size_increment, max_quantity = specs[symbol]
+        raise ValueError(f"supported Binance Spot symbols: {', '.join(sorted(specs))}")
+    (
+        base_code,
+        price_precision,
+        price_increment,
+        size_precision,
+        size_increment,
+        max_quantity,
+    ) = specs[symbol]
     return CurrencyPair(
         instrument_id=InstrumentId(symbol=Symbol(symbol), venue=Venue("BINANCE")),
         raw_symbol=Symbol(symbol),
         base_currency=Currency.from_str(base_code),
         quote_currency=USDT,
-        price_precision=2,
+        price_precision=price_precision,
         size_precision=size_precision,
-        price_increment=Price.from_str("0.01"),
+        price_increment=Price.from_str(price_increment),
         size_increment=Quantity.from_str(size_increment),
         lot_size=None,
         max_quantity=Quantity.from_str(max_quantity),
