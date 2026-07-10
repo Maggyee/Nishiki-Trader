@@ -1,6 +1,6 @@
 # Phase 2 Flow and Positioning Study
 
-- **Status**: Pre-registered; feature values not viewed
+- **Status**: Opened-data development complete; no candidate progressed
 - **Locked on**: 2026-07-10
 - **Universe**: BTCUSDT, ETHUSDT, SOLUSDT Spot holdings
 - **New inputs**: Spot taker-buy quote volume and USD-M perpetual funding rate
@@ -156,3 +156,18 @@ measured 8.0000036-hour maximum interval. The audit now permits at most 60
 seconds of timestamp jitter around the locked eight-hour semantic interval while
 still requiring complete daily coverage. No signal formula or model parameter
 changed, and no signal was generated before this audit correction was committed.
+
+## Recorded outcome
+
+The clean tournament completed 72 Nautilus bundles covering 36
+source/fold/asset pairs twice. Every duplicate reproduced, all 12 portfolio
+folds were exclusive and blocker-free, and no short exposure occurred.
+
+Taker-flow rotation was aggregate-positive under base/stress costs but won only
+2/4 folds and 7/20 months, had 23 positions, and is therefore rejected despite
+remaining +2.476147 USDT after removing its best position. Flow exhaustion and
+funding crowding were aggregate-negative. Ranking is empty and recommendation
+is `no_candidate_progresses`; 2020-2023 and 2026 remain untouched.
+
+Full evidence:
+[`2026-07-10-flow-positioning-development-review.md`](../retros/2026-07-10-flow-positioning-development-review.md).
