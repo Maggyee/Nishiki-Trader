@@ -1,7 +1,7 @@
 # Progress Archives
 
 - **Purpose**: Archive detailed implementation history that is too long for `docs/project-status.md`.
-- **Current phase**: Phase 3 entry.
+- **Current phase**: Phase 5 entry.
 - **Boundaries**: This directory is for historical progress snapshots, handoff notes, and phase summaries. It is not the source of truth for current next steps; use `docs/project-status.md` for that.
 - **Next implementation entrypoint**: When `docs/project-status.md` starts accumulating changelog detail, summarize the durable facts there and move the detailed history into a dated or phase-scoped file in this directory.
 
@@ -20,3 +20,6 @@ Current Phase 3 progress files:
   plan and the `report_testnet_bundle --continuity` review command.
 - `tradingagents-reference-map.md` maps the ignored TradingAgents upstream
   checkout to project-safe AgentAdvice-only role/configuration ideas.
+- `phase-5-dashboard-history.md` archives completed read-only dashboard,
+  AgentAdvice input, passive Phase 6 gate, and dashboard hardening history that
+  is too detailed for `docs/project-status.md`.
