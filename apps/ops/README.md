@@ -149,6 +149,19 @@ uv run python -m apps.ops.research_v2_snapshot \
   --verify data/research-v2/raw/<snapshot>.json
 ```
 
+已验证的 basis 快照可转换为候选 generator 的 point-in-time CSV。转换器把
+`ts_event` 延后到抓取后的下一 UTC 日界，拒绝重复日、缺日、未来 observation、
+篡改快照和覆盖写入；qualification 先用 `--dry-run`，不落文件、不生成信号：
+
+```bash
+uv run python -m apps.ops.research_v2_factors \
+  --basis-snapshot data/research-v2/raw/<verified-basis-snapshot>.json \
+  --dry-run
+```
+
+只有连续多日快照齐备后才允许写 `--output-csv`。输出仍是 factor 输入，不是
+SignalEvent，也不计算 return/PnL 或运行 Nautilus。
+
 生成 Phase 4 只读 dashboard snapshot（JSON 默认输出到 stdout）：
 
 ```bash
@@ -262,6 +275,7 @@ continuity evidence、可选 promotion review artifact、以及显式声明的�
 | `research_program_review.py` | 校验累计候选注册表并执行反多重试验停止规则 | 2 |
 | `research_protocol_v2.py` | 校验独立机制预注册、证据分区和不可调参数 | 2 |
 | `research_v2_snapshot.py` | 保存无凭证 provider qualification 不可变快照 | 2 |
+| `research_v2_factors.py` | 把已验证 basis 快照转换为无收益 point-in-time 因子 | 2 |
 | `signal_replay.py` | 重放 SQLite 中的历史 signals 跑回测 | 1 |
 | `migrate_sqlite_to_pg.py` | Phase 2 数据迁移 | 2 |
 | `dashboard_snapshot.py` | Phase 4 只读 AgentAdvice / report snapshot | 4 |

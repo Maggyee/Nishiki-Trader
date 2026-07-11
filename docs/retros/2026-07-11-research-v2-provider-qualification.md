@@ -81,6 +81,12 @@ This qualifies current/next mapping and the forward daily basis interface. The
 public endpoint exposes only recent observations and cannot establish the
 2020-2022 point-in-time replication reserve by itself.
 
+The verified snapshot also passed the PnL-free factor transformer. Its
+retrieval at `2026-07-11T03:04:13.557781Z` maps to a deliberately delayed
+decision timestamp of `2026-07-12T00:00:00Z`. The qualification report contains
+one row and records `returns_loaded=false`, `signals_generated=false`, and
+`pnl_computed=false`. No factor CSV was written during dry-run.
+
 ### Coin Metrics stablecoin liquidity
 
 - Requested locked universe: USDT + USDC
@@ -115,8 +121,9 @@ changed.
 
 - `option_risk_premium`: provider schema qualified; historical archive and
   structural replication pipeline still required.
-- `futures_basis_curve`: provider schema qualified; begin daily forward
-  snapshots and implement a point-in-time factor transformer without PnL.
+- `futures_basis_curve`: provider schema and one-snapshot point-in-time
+  transformation qualified; begin daily forward snapshots and wait for
+  contiguous coverage before any signal-generation qualification.
 - `stablecoin_liquidity`: blocked until licensed transfer-value plus
   point-in-time vintage data exists.
 
