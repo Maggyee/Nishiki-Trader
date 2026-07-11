@@ -1,0 +1,127 @@
+# 2026-07-11 Research Protocol v2 Provider Qualification
+
+- **Status**: Partial pass; two provider schemas qualified, one candidate data
+  route blocked.
+- **Scope**: schema, availability, immutable lineage, and publication-interface
+  qualification only.
+- **PnL accessed**: no.
+- **Trading effect**: none.
+
+## Pre-access lineage
+
+The candidate identities, rules, partitions, and gates were committed and
+pushed in `88c8acb` before any provider response body was fetched. Exact public
+requests and the raw-snapshot contract were committed and pushed in `d18da5c`
+before the first response body was fetched.
+
+Qualification then found three provider/interface facts without computing
+returns:
+
+1. Deribit includes some same-day deep-out-of-the-money options with zero mark
+   price. Rows remain in the immutable raw snapshot, but zero marks are not
+   counted as usable positive-mark surface observations.
+2. Binance COIN-M `exchangeInfo` uses `contractStatus`, not `status`.
+3. Coin Metrics Community returns HTTP 403 for USDT 1d `TxTfrValUSD`.
+
+The first two corrections changed only schema validation and were committed in
+`081ffcc`; candidate signs, thresholds, identities, cost assumptions, evidence
+partitions, and gates did not change. The stablecoin candidate was not switched
+to free `TxCnt` or `AdrActCnt`, because doing so after pre-registration would
+change the economic mechanism.
+
+## Immutable-envelope correction
+
+The first successful option and basis draft files hashed exact HTTP bytes but
+retained only parsed JSON. Their payload hashes could not be independently
+recomputed, so both drafts are excluded from eligible lineage:
+
+- `data/research-v2/raw/options-20260711T030158Z-502612e84038.json`
+- `data/research-v2/raw/basis-20260711T030158Z-44b61231ae6f.json`
+
+Commit `4b2b8fb` corrected the envelope before replacement collection. Eligible
+snapshots retain exact response bytes as base64 and independently verify:
+
+- raw-byte SHA-256;
+- raw JSON equals the stored parsed payload;
+- provider-specific audit summary;
+- canonical envelope SHA-256;
+- vintage id and filename hash prefix;
+- all read-only/no-PnL boundaries.
+
+Tests deliberately mutate the parsed payload and confirm verification fails.
+
+## Qualified snapshots
+
+### Deribit BTC options
+
+- Path: `data/research-v2/raw/options-20260711T030413Z-6f136e6e5808.json`
+- Snapshot SHA-256:
+  `sha256:6f136e6e58081c06bd5f7ead7108d4aaff88052c8e1bfd23b794646e90311b9c`
+- Contracts: 876
+- Expiries: 12
+- Two-sided positive-mark contracts: 797
+- Zero-mark contracts retained but ineligible: 9
+- Offline verification: `valid=true`
+
+This qualifies the current-surface schema and forward immutable collection. It
+does not provide a historical point-in-time surface and does not yet implement
+the structural expected-return replication required by the candidate.
+
+### Binance COIN-M quarterly basis
+
+- Path: `data/research-v2/raw/basis-20260711T030413Z-5254aac625b5.json`
+- Snapshot SHA-256:
+  `sha256:5254aac625b56c353c580663655241376dae3de332f5ab1a2c5dd65fd3ee329b`
+- Current quarter: `BTCUSD_260925`
+- Next quarter: `BTCUSD_261225`
+- Contract state: `TRADING` for both, with ordered future delivery dates
+- Offline verification: `valid=true`
+
+This qualifies current/next mapping and the forward daily basis interface. The
+public endpoint exposes only recent observations and cannot establish the
+2020-2022 point-in-time replication reserve by itself.
+
+### Coin Metrics stablecoin liquidity
+
+- Requested locked universe: USDT + USDC
+- Requested locked metrics: `SplyCur` + `TxTfrValUSD`, daily
+- Result: HTTP 403 because USDT `TxTfrValUSD` is not available on Community
+  credentials
+- Snapshot: none
+- Decision: `blocked_provider_entitlement`; no metric substitution
+
+The public catalog shows Community coverage for supply, transaction count, and
+active addresses, but those are not the pre-registered transfer-value factor.
+Historical replication also requires genuine point-in-time vintages rather
+than a present-day revised history.
+
+## Boundary audit
+
+Both qualified snapshots record:
+
+```text
+credentials_loaded=false
+pnl_computed=false
+signal_store_written=false
+nautilus_run=false
+source_policy_mutated=false
+```
+
+No SignalEvent was generated, no backtest was run, no historical reserve or
+future blind was opened, no credentials were loaded, and no testnet/live state
+changed.
+
+## Decision and next entrypoint
+
+- `option_risk_premium`: provider schema qualified; historical archive and
+  structural replication pipeline still required.
+- `futures_basis_curve`: provider schema qualified; begin daily forward
+  snapshots and implement a point-in-time factor transformer without PnL.
+- `stablecoin_liquidity`: blocked until licensed transfer-value plus
+  point-in-time vintage data exists.
+
+No candidate is yet usable or eligible for historical replication. Keep the
+2020-2022 reserve closed. The next safe implementation is a passive directory
+audit plus factor transformer for the two qualified snapshot families, followed
+by repeated July schema/freshness collection; it must still not compute returns
+or strategy PnL.
