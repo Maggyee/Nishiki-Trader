@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-07-11 (Research Protocol v2 pre-registered)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
-- **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry remains frozen at 16 rejects and an empty selected set. Research Protocol v2 now pre-registers exactly three independently motivated, research-only candidates—option risk premium, fixed-expiry futures basis curve, and point-in-time stablecoin liquidity—before any real factor body or PnL is accessed. Their credential-free Deribit/Binance COIN-M/Coin Metrics qualification endpoints and immutable raw-snapshot envelope are also locked before response access. Opened 2023-2025 data is diagnostic-only, 2020-2022 is a one-opening replication reserve, July 2026 is pipeline-qualification-only with PnL forbidden, and 2026-08..12 remains the final future blind. No grid search, failed-model retuning, PnL-selected ensemble, policy change, or testnet resume is allowed.
+- **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry remains frozen at 16 rejects and an empty selected set. Research Protocol v2 pre-registers exactly three independently motivated, research-only candidates—option risk premium, fixed-expiry futures basis curve, and point-in-time stablecoin liquidity—with locked credential-free provider requests and immutable snapshots. July schema qualification found two non-economic corrections (Deribit may report zero-mark same-day options; Binance uses `contractStatus`) and one real data blocker: Coin Metrics Community does not authorize USDT `TxTfrValUSD`, so the stablecoin candidate remains blocked rather than substituting a different activity metric. Opened 2023-2025 data is diagnostic-only, 2020-2022 remains unconsumed, July 2026 has PnL forbidden, and 2026-08..12 remains the final future blind. No grid search, failed-model retuning, PnL-selected ensemble, policy change, or testnet resume is allowed.
   Keep the current SourcePolicy unchanged until an explicit `promotion_review.py` decision. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
@@ -125,7 +125,7 @@ Immediate focus:
 ## Next Steps
 
 1. Commit the locked Research Protocol v2 provider contract and credential-free immutable snapshot collector before downloading or viewing any response body.
-2. Collect July 2026 option-surface, fixed-expiry basis, and stablecoin qualification snapshots; audit only schema, publication lag, lineage, and freshness with PnL access disabled.
+2. Complete and audit July 2026 option-surface and fixed-expiry basis snapshots. Keep stablecoin blocked until licensed `TxTfrValUSD` point-in-time access exists; do not substitute `TxCnt` or active-address metrics after pre-registration.
 3. Open the 2020-2022 replication reserve exactly once only after all three pipelines pass qualification on a clean commit; evaluate all three with the locked Nautilus/cost/gate protocol and no result-driven changes.
 4. Keep SourcePolicy unchanged and testnet/live blocked; only a candidate that later passes both historical replication and the 2026-08..12 final blind may enter paper_shadow review.
 5. Keep the current SourcePolicy unchanged until a human reviews `demote_to_paper_simulated_recommended` and records an actual hold/demote decision with `promotion_review.py`.
@@ -163,6 +163,10 @@ On 2026-07-11, before accessing any real Research Protocol v2 factor body:
   response access. Fixture tests cover option schema/liquidity, current/next
   delivery mapping, stablecoin universe/metrics, July-only bounds, and
   no-overwrite behavior; six provider tests passed.
+- First qualification requests computed no PnL and wrote no invalid snapshot.
+  They exposed zero-mark Deribit rows, Binance `contractStatus`, and a Coin
+  Metrics Community 403 for USDT `TxTfrValUSD`; the first two are schema-only
+  corrections and the third is a fail-closed provider-entitlement blocker.
 - Verification: 23 targeted tests and the full **777-test** suite passed, with
   12 Postgres-dependent skips; Ruff, `git diff --check`, and protocol
   fingerprint validation passed. No real factor value, return, credential,

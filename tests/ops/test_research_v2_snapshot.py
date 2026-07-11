@@ -43,7 +43,7 @@ def _option_payload() -> dict:
                 "base_currency": "BTC",
                 "quote_currency": "USD",
                 "creation_timestamp": 1780000000000,
-                "mark_price": 0.02,
+                "mark_price": 0.0,
                 "mark_iv": 60.0,
                 "underlying_price": 100100.0,
                 "underlying_index": "BTC-25SEP26",
@@ -89,14 +89,14 @@ def _basis_payloads() -> dict[str, bytes]:
                         "pair": "BTCUSD",
                         "symbol": "BTCUSD_260925",
                         "contractType": "CURRENT_QUARTER",
-                        "status": "TRADING",
+                        "contractStatus": "TRADING",
                         "deliveryDate": 1790294400000,
                     },
                     {
                         "pair": "BTCUSD",
                         "symbol": "BTCUSD_261225",
                         "contractType": "NEXT_QUARTER",
-                        "status": "TRADING",
+                        "contractStatus": "TRADING",
                         "deliveryDate": 1798156800000,
                     },
                 ]
@@ -150,7 +150,12 @@ def test_option_snapshot_is_immutable_and_records_only_schema_audit(tmp_path: Pa
     )
 
     assert path.exists()
-    assert envelope["audit"] == {"row_count": 2, "expiry_count": 2, "two_sided_count": 1}
+    assert envelope["audit"] == {
+        "row_count": 2,
+        "expiry_count": 2,
+        "two_sided_positive_mark_count": 1,
+        "zero_mark_count": 1,
+    }
     assert envelope["snapshot_sha256"].startswith("sha256:")
     assert envelope["requests"][0]["payload_sha256"].startswith("sha256:")
     assert envelope["boundaries"]["pnl_computed"] is False

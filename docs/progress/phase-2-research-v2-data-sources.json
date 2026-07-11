@@ -71,7 +71,7 @@
         "timestamp",
         "symbol",
         "deliveryDate",
-        "status"
+        "contractStatus"
       ],
       "qualification_use": "current/next contract mapping, price/basis schema, expiry lineage and immutable snapshot only",
       "replication_limitation": "The public basis endpoint exposes only the latest 30 days; 2020-2022 remains blocked until official archives or an immutable licensed archive are sourced.",
@@ -105,6 +105,23 @@
       "documentation": "https://docs.coinmetrics.io/api/v4/"
     }
   },
+  "qualification_findings": [
+    {
+      "provider": "Deribit",
+      "finding": "Current option summaries can include same-day deep-out-of-the-money contracts with mark_price equal to zero.",
+      "handling": "Preserve the row and count it as zero_mark_count, but exclude it from two_sided_positive_mark_count. No strategy sign, threshold, or PnL rule changed."
+    },
+    {
+      "provider": "Binance COIN-M Futures",
+      "finding": "The current exchangeInfo response names the trading-state field contractStatus rather than status.",
+      "handling": "Validate contractStatus=TRADING. Endpoint, pair, contract types, factor rule, and dates are unchanged."
+    },
+    {
+      "provider": "Coin Metrics Community API",
+      "finding": "TxTfrValUSD at 1d for USDT is not available with community credentials; the endpoint returns HTTP 403.",
+      "handling": "Keep the transfer-volume factor contract unchanged and mark stablecoin qualification blocked pending licensed point-in-time data. Do not substitute transaction count or active-address metrics after pre-registration."
+    }
+  ],
   "boundaries": {
     "credentials_loaded": false,
     "pnl_computed": false,

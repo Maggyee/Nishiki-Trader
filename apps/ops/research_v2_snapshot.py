@@ -115,6 +115,16 @@ def _finite_positive(value: Any, field: str) -> float:
     return number
 
 
+def _finite_nonnegative(value: Any, field: str) -> float:
+    try:
+        number = float(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{field} must be numeric") from exc
+    if not math.isfinite(number) or number < 0.0:
+        raise ValueError(f"{field} must be finite and non-negative")
+    return number
+
+
 def _validate_options(payloads: dict[str, Any]) -> dict[str, Any]:
     payload = payloads["btc_option_book_summaries"]
     if not isinstance(payload, dict) or payload.get("jsonrpc") != "2.0":
@@ -124,6 +134,7 @@ def _validate_options(payloads: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("Deribit option result must be a non-empty list")
     expiries: set[str] = set()
     liquid = 0
+    zero_mark = 0
     for row in rows:
         if not isinstance(row, dict):
             raise ValueError("Deribit option rows must be objects")
@@ -133,15 +144,27 @@ def _validate_options(payloads: dict[str, Any]) -> dict[str, Any]:
         if row.get("base_currency") != "BTC":
             raise ValueError(f"option {name} has wrong base_currency")
         _finite_positive(row.get("creation_timestamp"), f"{name}.creation_timestamp")
-        _finite_positive(row.get("mark_price"), f"{name}.mark_price")
-        _finite_positive(row.get("mark_iv"), f"{name}.mark_iv")
+        mark_price = _finite_nonnegative(row.get("mark_price"), f"{name}.mark_price")
+        mark_iv = _finite_nonnegative(row.get("mark_iv"), f"{name}.mark_iv")
         _finite_positive(row.get("underlying_price"), f"{name}.underlying_price")
         if row.get("underlying_index") in (None, ""):
             raise ValueError(f"{name}.underlying_index is missing")
-        if row.get("bid_price") is not None and row.get("ask_price") is not None:
+        if mark_price == 0.0:
+            zero_mark += 1
+        if (
+            mark_price > 0.0
+            and mark_iv > 0.0
+            and row.get("bid_price") is not None
+            and row.get("ask_price") is not None
+        ):
             liquid += 1
         expiries.add(name.split("-")[1])
-    return {"row_count": len(rows), "expiry_count": len(expiries), "two_sided_count": liquid}
+    return {
+        "row_count": len(rows),
+        "expiry_count": len(expiries),
+        "two_sided_positive_mark_count": liquid,
+        "zero_mark_count": zero_mark,
+    }
 
 
 def _validate_basis(payloads: dict[str, Any], *, retrieved_at: datetime) -> dict[str, Any]:
@@ -174,7 +197,7 @@ def _validate_basis(payloads: dict[str, Any], *, retrieved_at: datetime) -> dict
         if not isinstance(row, dict) or row.get("pair") != "BTCUSD":
             continue
         contract_type = row.get("contractType")
-        if contract_type not in summaries or row.get("status") != "TRADING":
+        if contract_type not in summaries or row.get("contractStatus") != "TRADING":
             continue
         delivery = int(_finite_positive(row.get("deliveryDate"), "deliveryDate"))
         if delivery <= now_ms:

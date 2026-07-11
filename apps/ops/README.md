@@ -137,6 +137,10 @@ uv run python -m apps.ops.research_v2_snapshot \
 basis 和 Coin Metrics 当前可修订历史都不能单独证明 2020-2022 point-in-time
 复制集。
 
+Qualification 已确认 Community tier 不提供 USDT 1d `TxTfrValUSD`。稳定币
+collector 因此保持 fail closed，直到取得该锁定指标的许可 point-in-time 数据；
+不得因为 `TxCnt` / `AdrActCnt` 免费可用就替换预注册的传输金额机制。
+
 生成 Phase 4 只读 dashboard snapshot（JSON 默认输出到 stdout）：
 
 ```bash
