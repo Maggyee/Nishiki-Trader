@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import hashlib
 import json
 import math
@@ -33,6 +34,14 @@ class RequestSpec:
 
 
 Fetch = Callable[[str], bytes]
+
+_BOUNDARIES = {
+    "credentials_loaded": False,
+    "pnl_computed": False,
+    "signal_store_written": False,
+    "nautilus_run": False,
+    "source_policy_mutated": False,
+}
 
 
 def _fetch(url: str) -> bytes:
@@ -272,6 +281,7 @@ def collect_snapshot(
                 "name": spec.name,
                 "url": spec.full_url,
                 "payload_sha256": f"sha256:{hashlib.sha256(raw).hexdigest()}",
+                "payload_raw_base64": base64.b64encode(raw).decode("ascii"),
                 "payload": payload,
             }
         )
@@ -291,13 +301,7 @@ def collect_snapshot(
         "provider_contract": str(PROVIDER_CONTRACT),
         "requests": requests,
         "audit": audit,
-        "boundaries": {
-            "credentials_loaded": False,
-            "pnl_computed": False,
-            "signal_store_written": False,
-            "nautilus_run": False,
-            "source_policy_mutated": False,
-        },
+        "boundaries": dict(_BOUNDARIES),
     }
     canonical = json.dumps(core, sort_keys=True, separators=(",", ":"))
     snapshot_hash = f"sha256:{hashlib.sha256(canonical.encode()).hexdigest()}"
@@ -315,9 +319,89 @@ def collect_snapshot(
     return path, envelope
 
 
+def verify_snapshot(path: Path) -> dict[str, Any]:
+    envelope = json.loads(path.read_text())
+    if not isinstance(envelope, dict) or envelope.get("schema_version") != SCHEMA_VERSION:
+        raise ValueError("snapshot must be a research.raw_snapshot.v1 object")
+    kind = envelope.get("kind")
+    if kind not in {"options", "basis", "stablecoin"}:
+        raise ValueError("snapshot kind is invalid")
+    if envelope.get("provider_contract") != str(PROVIDER_CONTRACT):
+        raise ValueError("snapshot provider contract path drifted")
+    if envelope.get("boundaries") != _BOUNDARIES:
+        raise ValueError("snapshot boundaries are missing or unsafe")
+    try:
+        retrieved_at = datetime.fromisoformat(
+            str(envelope["retrieved_at"]).replace("Z", "+00:00")
+        )
+    except (KeyError, ValueError) as exc:
+        raise ValueError("snapshot retrieved_at is invalid") from exc
+    if retrieved_at.tzinfo is None:
+        raise ValueError("snapshot retrieved_at must be timezone-aware")
+
+    requests = envelope.get("requests")
+    if not isinstance(requests, list) or not requests:
+        raise ValueError("snapshot requests must be a non-empty list")
+    payloads: dict[str, Any] = {}
+    for request in requests:
+        if not isinstance(request, dict):
+            raise ValueError("snapshot request entries must be objects")
+        name = str(request.get("name", ""))
+        if not name or name in payloads:
+            raise ValueError("snapshot request names must be unique and non-empty")
+        try:
+            raw = base64.b64decode(request["payload_raw_base64"], validate=True)
+        except (KeyError, ValueError) as exc:
+            raise ValueError(f"{name} raw payload is missing or invalid base64") from exc
+        expected_payload_hash = f"sha256:{hashlib.sha256(raw).hexdigest()}"
+        if request.get("payload_sha256") != expected_payload_hash:
+            raise ValueError(f"{name} raw payload hash mismatch")
+        try:
+            parsed = json.loads(raw)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"{name} raw payload is invalid JSON") from exc
+        if parsed != request.get("payload"):
+            raise ValueError(f"{name} parsed payload differs from raw bytes")
+        payloads[name] = parsed
+
+    if kind == "options":
+        audit = _validate_options(payloads)
+    elif kind == "basis":
+        audit = _validate_basis(payloads, retrieved_at=retrieved_at)
+    else:
+        audit = _validate_stablecoin(payloads)
+    if envelope.get("audit") != audit:
+        raise ValueError("snapshot audit summary differs from raw payload")
+
+    core = {
+        key: value
+        for key, value in envelope.items()
+        if key not in {"vintage_id", "snapshot_sha256"}
+    }
+    canonical = json.dumps(core, sort_keys=True, separators=(",", ":"))
+    snapshot_hash = f"sha256:{hashlib.sha256(canonical.encode()).hexdigest()}"
+    if envelope.get("snapshot_sha256") != snapshot_hash:
+        raise ValueError("snapshot envelope hash mismatch")
+    expected_vintage = f"{kind}:{envelope['retrieved_at']}:{snapshot_hash[7:19]}"
+    if envelope.get("vintage_id") != expected_vintage:
+        raise ValueError("snapshot vintage_id does not match the envelope hash")
+    if snapshot_hash[7:19] not in path.name:
+        raise ValueError("snapshot filename does not contain its hash prefix")
+    return {
+        "path": str(path),
+        "kind": kind,
+        "vintage_id": expected_vintage,
+        "snapshot_sha256": snapshot_hash,
+        "audit": audit,
+        "boundaries": dict(_BOUNDARIES),
+        "valid": True,
+    }
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--kind", choices=("options", "basis", "stablecoin"), required=True)
+    parser.add_argument("--kind", choices=("options", "basis", "stablecoin"))
+    parser.add_argument("--verify", type=Path)
     parser.add_argument("--output-dir", type=Path, default=Path("data/research-v2/raw"))
     parser.add_argument("--start-date")
     parser.add_argument("--end-date")
@@ -326,6 +410,13 @@ def _parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
+    if args.verify is not None:
+        if args.kind or args.start_date or args.end_date:
+            raise SystemExit("--verify cannot be combined with collection arguments")
+        print(json.dumps(verify_snapshot(args.verify), indent=2, sort_keys=True))
+        return 0
+    if args.kind is None:
+        raise SystemExit("--kind is required unless --verify is used")
     path, envelope = collect_snapshot(
         args.kind,
         output_dir=args.output_dir,

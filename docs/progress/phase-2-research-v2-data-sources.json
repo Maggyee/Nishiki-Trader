@@ -12,6 +12,7 @@
       "requests"
     ],
     "payload_hash": "sha256 of exact HTTP response bytes",
+    "raw_payload_storage": "base64 of exact HTTP response bytes, verified against payload_hash and parsed JSON",
     "snapshot_hash": "sha256 of canonical envelope before snapshot_sha256 and vintage_id",
     "overwrite_forbidden": true
   },
@@ -120,6 +121,11 @@
       "provider": "Coin Metrics Community API",
       "finding": "TxTfrValUSD at 1d for USDT is not available with community credentials; the endpoint returns HTTP 403.",
       "handling": "Keep the transfer-volume factor contract unchanged and mark stablecoin qualification blocked pending licensed point-in-time data. Do not substitute transaction count or active-address metrics after pre-registration."
+    },
+    {
+      "provider": "Snapshot envelope",
+      "finding": "The first two successful qualification drafts hashed exact HTTP bytes but retained only parsed JSON, so the payload hashes could not be recomputed offline.",
+      "handling": "Exclude those drafts from eligible lineage. Store exact bytes as base64, verify raw hash, parsed equality, audit summary, envelope hash, vintage id, and filename before accepting replacement snapshots."
     }
   ],
   "boundaries": {

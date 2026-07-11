@@ -167,7 +167,11 @@ On 2026-07-11, before accessing any real Research Protocol v2 factor body:
   They exposed zero-mark Deribit rows, Binance `contractStatus`, and a Coin
   Metrics Community 403 for USDT `TxTfrValUSD`; the first two are schema-only
   corrections and the third is a fail-closed provider-entitlement blocker.
-- Verification: 23 targeted tests and the full **777-test** suite passed, with
+- The first successful option/basis draft files are explicitly ineligible
+  because their exact HTTP bytes were hashed but not retained. The replacement
+  envelope stores exact bytes as base64 and verifies raw/parsed/audit/envelope/
+  vintage/filename hashes; tamper tests fail closed.
+- Verification: 25 targeted tests and the full **779-test** suite passed, with
   12 Postgres-dependent skips; Ruff, `git diff --check`, and protocol
   fingerprint validation passed. No real factor value, return, credential,
   SignalStore, Nautilus run, policy, testnet, or live state was consumed or

@@ -10,6 +10,7 @@ from apps.ops.research_v2_snapshot import (
     PROVIDER_CONTRACT,
     build_requests,
     collect_snapshot,
+    verify_snapshot,
 )
 
 NOW = datetime(2026, 7, 11, 8, 0, tzinfo=UTC)
@@ -158,6 +159,7 @@ def test_option_snapshot_is_immutable_and_records_only_schema_audit(tmp_path: Pa
     }
     assert envelope["snapshot_sha256"].startswith("sha256:")
     assert envelope["requests"][0]["payload_sha256"].startswith("sha256:")
+    assert envelope["requests"][0]["payload_raw_base64"]
     assert envelope["boundaries"]["pnl_computed"] is False
     assert envelope["boundaries"]["signal_store_written"] is False
 
@@ -168,6 +170,38 @@ def test_option_snapshot_is_immutable_and_records_only_schema_audit(tmp_path: Pa
             fetch=lambda _: _bytes(_option_payload()),
             now=NOW,
         )
+
+
+def test_snapshot_verifier_recomputes_raw_parsed_audit_and_envelope_hashes(
+    tmp_path: Path,
+) -> None:
+    path, envelope = collect_snapshot(
+        "options",
+        output_dir=tmp_path,
+        fetch=lambda _: _bytes(_option_payload()),
+        now=NOW,
+    )
+
+    review = verify_snapshot(path)
+
+    assert review["valid"] is True
+    assert review["snapshot_sha256"] == envelope["snapshot_sha256"]
+    assert review["boundaries"]["pnl_computed"] is False
+
+
+def test_snapshot_verifier_rejects_raw_and_parsed_tampering(tmp_path: Path) -> None:
+    path, _ = collect_snapshot(
+        "options",
+        output_dir=tmp_path,
+        fetch=lambda _: _bytes(_option_payload()),
+        now=NOW,
+    )
+    payload = json.loads(path.read_text())
+    payload["requests"][0]["payload"]["result"][0]["mark_iv"] = 999.0
+    path.write_text(json.dumps(payload))
+
+    with pytest.raises(ValueError, match="differs from raw bytes"):
+        verify_snapshot(path)
 
 
 def test_option_snapshot_fails_closed_on_unexplained_instrument_or_missing_iv(tmp_path: Path) -> None:

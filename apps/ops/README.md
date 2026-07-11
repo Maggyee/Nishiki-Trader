@@ -141,6 +141,14 @@ Qualification 已确认 Community tier 不提供 USDT 1d `TxTfrValUSD`。稳定�
 collector 因此保持 fail closed，直到取得该锁定指标的许可 point-in-time 数据；
 不得因为 `TxCnt` / `AdrActCnt` 免费可用就替换预注册的传输金额机制。
 
+成功采集后必须离线重算原始响应、解析结果、audit 摘要、envelope、vintage id
+和文件名中的全部哈希；缺少 exact-byte base64 的早期草稿不合格：
+
+```bash
+uv run python -m apps.ops.research_v2_snapshot \
+  --verify data/research-v2/raw/<snapshot>.json
+```
+
 生成 Phase 4 只读 dashboard snapshot（JSON 默认输出到 stdout）：
 
 ```bash
