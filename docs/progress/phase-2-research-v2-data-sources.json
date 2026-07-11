@@ -1,0 +1,117 @@
+{
+  "schema_version": "research.data_sources.v2",
+  "frozen_at": "2026-07-11T00:00:00Z",
+  "status": "provider_contract_locked_before_response_body_access",
+  "snapshot_envelope": {
+    "schema_version": "research.raw_snapshot.v1",
+    "required_fields": [
+      "kind",
+      "retrieved_at",
+      "vintage_id",
+      "snapshot_sha256",
+      "requests"
+    ],
+    "payload_hash": "sha256 of exact HTTP response bytes",
+    "snapshot_hash": "sha256 of canonical envelope before snapshot_sha256 and vintage_id",
+    "overwrite_forbidden": true
+  },
+  "providers": {
+    "options": {
+      "provider": "Deribit",
+      "authentication": "none",
+      "requests": [
+        {
+          "name": "btc_option_book_summaries",
+          "url": "https://www.deribit.com/api/v2/public/get_book_summary_by_currency",
+          "params": {"currency": "BTC", "kind": "option"}
+        }
+      ],
+      "locked_fields": [
+        "instrument_name",
+        "creation_timestamp",
+        "mark_price",
+        "mark_iv",
+        "underlying_price",
+        "underlying_index",
+        "interest_rate",
+        "bid_price",
+        "ask_price",
+        "open_interest"
+      ],
+      "qualification_use": "current surface schema, liquidity coverage, publication timestamp and immutable lineage only",
+      "replication_limitation": "Public current summaries are not a historical point-in-time surface; 2020-2022 remains blocked until an immutable archived surface is sourced.",
+      "documentation": "https://docs.deribit.com/api-reference/market-data/public-get_book_summary_by_currency"
+    },
+    "basis": {
+      "provider": "Binance COIN-M Futures",
+      "authentication": "none",
+      "requests": [
+        {
+          "name": "current_quarter_basis",
+          "url": "https://dapi.binance.com/futures/data/basis",
+          "params": {"pair": "BTCUSD", "contractType": "CURRENT_QUARTER", "period": "1d", "limit": 1}
+        },
+        {
+          "name": "next_quarter_basis",
+          "url": "https://dapi.binance.com/futures/data/basis",
+          "params": {"pair": "BTCUSD", "contractType": "NEXT_QUARTER", "period": "1d", "limit": 1}
+        },
+        {
+          "name": "coin_m_exchange_info",
+          "url": "https://dapi.binance.com/dapi/v1/exchangeInfo",
+          "params": {}
+        }
+      ],
+      "locked_fields": [
+        "pair",
+        "contractType",
+        "indexPrice",
+        "futuresPrice",
+        "annualizedBasisRate",
+        "timestamp",
+        "symbol",
+        "deliveryDate",
+        "status"
+      ],
+      "qualification_use": "current/next contract mapping, price/basis schema, expiry lineage and immutable snapshot only",
+      "replication_limitation": "The public basis endpoint exposes only the latest 30 days; 2020-2022 remains blocked until official archives or an immutable licensed archive are sourced.",
+      "documentation": "https://developers.binance.com/legacy-docs/derivatives/coin-margined-futures/market-data/rest-api/Basis"
+    },
+    "stablecoin": {
+      "provider": "Coin Metrics Community API",
+      "authentication": "none",
+      "asset_universe": ["usdt", "usdc"],
+      "metrics": ["SplyCur", "TxTfrValUSD"],
+      "requests": [
+        {
+          "name": "stablecoin_asset_metrics",
+          "url": "https://community-api.coinmetrics.io/v4/timeseries/asset-metrics",
+          "params": {
+            "assets": "usdt,usdc",
+            "metrics": "SplyCur,TxTfrValUSD",
+            "frequency": "1d",
+            "page_size": 10000
+          }
+        }
+      ],
+      "locked_fields": [
+        "asset",
+        "time",
+        "SplyCur",
+        "TxTfrValUSD"
+      ],
+      "qualification_use": "July 2026 metric coverage, status/publication metadata when supplied, and immutable daily snapshots only",
+      "replication_limitation": "A current API history may be revised; 2020-2022 is ineligible unless the provider supplies point-in-time vintages or archived responses prove what was available then.",
+      "documentation": "https://docs.coinmetrics.io/api/v4/"
+    }
+  },
+  "boundaries": {
+    "credentials_loaded": false,
+    "pnl_computed": false,
+    "signal_store_written": false,
+    "nautilus_run": false,
+    "source_policy_mutated": false,
+    "testnet_resumed": false,
+    "live_path_touched": false
+  }
+}

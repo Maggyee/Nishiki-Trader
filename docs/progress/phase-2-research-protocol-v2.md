@@ -5,6 +5,7 @@
 - **Machine contract**: `docs/progress/phase-2-research-protocol-v2.json`
 - **Status**: pre-registered; implementation and synthetic validation only.
 - **Trading effect**: none.
+- **Provider contract**: `docs/progress/phase-2-research-v2-data-sources.json`.
 
 ## Why research may resume
 
@@ -62,6 +63,12 @@ within numerical tolerance. This makes an unexplained vendor score fail closed.
 Stablecoin history must be genuine point-in-time vintages. A present-day API
 response that rewrites historical classifications is invalid even if its rows
 look complete.
+
+The provider contract deliberately separates forward qualification from
+historical eligibility. Current Deribit summaries, Binance's latest-30-day
+basis API, and a present-day Coin Metrics history may be snapshotted from July
+2026 onward, but none is allowed to stand in for the 2020-2022 point-in-time
+replication reserve.
 
 ## Candidate rules
 

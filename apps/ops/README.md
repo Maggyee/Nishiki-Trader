@@ -121,6 +121,22 @@ uv run python -m apps.ops.research_protocol_v2
 该命令只读预注册 JSON 并输出 canonical SHA-256；不读取因子数据、收益、凭证或
 SignalStore，不运行 Nautilus，也不修改 SourcePolicy。
 
+预注册提交后，使用无凭证的一次性 collector 保存 July 2026 provider
+qualification 快照。每份响应保留原始 payload、请求 URL、payload SHA-256、
+snapshot SHA-256 和 vintage id；同一文件名禁止覆盖：
+
+```bash
+uv run python -m apps.ops.research_v2_snapshot --kind options
+uv run python -m apps.ops.research_v2_snapshot --kind basis
+uv run python -m apps.ops.research_v2_snapshot \
+  --kind stablecoin --start-date 2026-07-01 --end-date 2026-07-10
+```
+
+这些快照只能审计 schema、覆盖率、发布时间和 lineage；collector 明确记录
+`pnl_computed=false`，不会派生收益或信号。Deribit 当前曲面、Binance 最近30天
+basis 和 Coin Metrics 当前可修订历史都不能单独证明 2020-2022 point-in-time
+复制集。
+
 生成 Phase 4 只读 dashboard snapshot（JSON 默认输出到 stdout）：
 
 ```bash
@@ -233,6 +249,7 @@ continuity evidence、可选 promotion review artifact、以及显式声明的�
 | `daily_archive_audit.py` | 审计日线 warm-up/信号归档完整性与跨资产对齐 | 2 |
 | `research_program_review.py` | 校验累计候选注册表并执行反多重试验停止规则 | 2 |
 | `research_protocol_v2.py` | 校验独立机制预注册、证据分区和不可调参数 | 2 |
+| `research_v2_snapshot.py` | 保存无凭证 provider qualification 不可变快照 | 2 |
 | `signal_replay.py` | 重放 SQLite 中的历史 signals 跑回测 | 1 |
 | `migrate_sqlite_to_pg.py` | Phase 2 数据迁移 | 2 |
 | `dashboard_snapshot.py` | Phase 4 只读 AgentAdvice / report snapshot | 4 |

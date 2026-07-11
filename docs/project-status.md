@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-07-11 (Research Protocol v2 pre-registered)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
-- **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry remains frozen at 16 rejects and an empty selected set. Research Protocol v2 now pre-registers exactly three independently motivated, research-only candidates—option risk premium, fixed-expiry futures basis curve, and point-in-time stablecoin liquidity—before any real factor body or PnL is accessed. Opened 2023-2025 data is diagnostic-only, 2020-2022 is a one-opening replication reserve, July 2026 is pipeline-qualification-only with PnL forbidden, and 2026-08..12 remains the final future blind. No grid search, failed-model retuning, PnL-selected ensemble, policy change, or testnet resume is allowed.
+- **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry remains frozen at 16 rejects and an empty selected set. Research Protocol v2 now pre-registers exactly three independently motivated, research-only candidates—option risk premium, fixed-expiry futures basis curve, and point-in-time stablecoin liquidity—before any real factor body or PnL is accessed. Their credential-free Deribit/Binance COIN-M/Coin Metrics qualification endpoints and immutable raw-snapshot envelope are also locked before response access. Opened 2023-2025 data is diagnostic-only, 2020-2022 is a one-opening replication reserve, July 2026 is pipeline-qualification-only with PnL forbidden, and 2026-08..12 remains the final future blind. No grid search, failed-model retuning, PnL-selected ensemble, policy change, or testnet resume is allowed.
   Keep the current SourcePolicy unchanged until an explicit `promotion_review.py` decision. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
@@ -124,8 +124,8 @@ Immediate focus:
 
 ## Next Steps
 
-1. Commit the Research Protocol v2 pre-registration before downloading or viewing any real option-surface, fixed-expiry basis, or point-in-time stablecoin factor body.
-2. Build provider-specific point-in-time ingestion and immutable snapshot audits; use July 2026 only for schema, publication-lag, lineage, and freshness qualification with PnL access disabled.
+1. Commit the locked Research Protocol v2 provider contract and credential-free immutable snapshot collector before downloading or viewing any response body.
+2. Collect July 2026 option-surface, fixed-expiry basis, and stablecoin qualification snapshots; audit only schema, publication lag, lineage, and freshness with PnL access disabled.
 3. Open the 2020-2022 replication reserve exactly once only after all three pipelines pass qualification on a clean commit; evaluate all three with the locked Nautilus/cost/gate protocol and no result-driven changes.
 4. Keep SourcePolicy unchanged and testnet/live blocked; only a candidate that later passes both historical replication and the 2026-08..12 final blind may enter paper_shadow review.
 5. Keep the current SourcePolicy unchanged until a human reviews `demote_to_paper_simulated_recommended` and records an actual hold/demote decision with `promotion_review.py`.
@@ -159,7 +159,11 @@ On 2026-07-11, before accessing any real Research Protocol v2 factor body:
 - Point-in-time generators fail closed on publication lookahead, missing daily
   observations, duplicates, invalid snapshot/spec hashes, non-finite values,
   unexplained option-factor decomposition, and invalid futures maturities.
-- Verification: 17 targeted tests and the full **771-test** suite passed, with
+- Locked exact public provider requests and immutable snapshot hashes before
+  response access. Fixture tests cover option schema/liquidity, current/next
+  delivery mapping, stablecoin universe/metrics, July-only bounds, and
+  no-overwrite behavior; six provider tests passed.
+- Verification: 23 targeted tests and the full **777-test** suite passed, with
   12 Postgres-dependent skips; Ruff, `git diff --check`, and protocol
   fingerprint validation passed. No real factor value, return, credential,
   SignalStore, Nautilus run, policy, testnet, or live state was consumed or

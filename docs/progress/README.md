@@ -17,6 +17,9 @@ Current Phase 3 progress files:
 - `phase-2-research-protocol-v2.md` and its JSON contract lock the three
   independent-mechanism candidates, point-in-time data rules, evidence
   partitions, costs, and anti-overfit gates before real factor access.
+- `phase-2-research-v2-data-sources.json` locks credential-free Deribit,
+  Binance COIN-M, and Coin Metrics qualification endpoints plus the immutable
+  raw-snapshot envelope before any response body is fetched.
 
 - `phase-3-testnet-canary-evidence.md` records the testnet session ledger and
   bundle evidence summary.
