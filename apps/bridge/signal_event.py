@@ -3,8 +3,9 @@ from __future__ import annotations
 import re
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from apps.bridge.side_semantics import side_score_conflict_reason
 from apps.bridge.time_utils import ensure_ns
 
 SCHEMA_VERSION = "signal.v1"
@@ -49,3 +50,10 @@ class SignalEvent(BaseModel):
                 f"{SOURCE_FAMILIES} and variant is lowercase a-z0-9_ (ADR-005 §2.1)"
             )
         return v
+
+    @model_validator(mode="after")
+    def _side_score_consistent(self) -> SignalEvent:
+        reason = side_score_conflict_reason(self.side, self.score)
+        if reason is not None:
+            raise ValueError(reason)
+        return self

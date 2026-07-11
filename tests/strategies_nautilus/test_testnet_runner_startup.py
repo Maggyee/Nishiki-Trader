@@ -1146,6 +1146,81 @@ def test_long_run_restart_reconciliation_allows_clean_restart(tmp_path):
     }
 
 
+def test_long_run_restart_sets_signal_cursor_from_previous_processed_until(tmp_path):
+    from decimal import Decimal
+
+    from apps.bridge.store import SignalStore
+    from apps.bridge.validators import Authorization
+    from apps.strategies_nautilus.baseline_nautilus_strategy import (
+        BaselineNautilusStrategy,
+        BaselineNautilusStrategyParams,
+        SignalStorePollingSource,
+    )
+    from apps.strategies_nautilus.baseline_strategy import BaselineStrategyConfig
+
+    _write_retro(tmp_path / "retros")
+    settings = _config(tmp_path)
+    output_root = tmp_path / "data" / "testnet"
+    previous_run_id = "20260518-120000Z-abcdef12"
+    _write_previous_testnet_bundle(output_root, run_id=previous_run_id)
+    run_settings = _long_run_settings(
+        tmp_path,
+        output_root=output_root,
+        max_run_seconds=0.02,
+        previous_run_id=previous_run_id,
+        restart_reason="planned process restart",
+        enable_strategy_execution=True,
+    )
+    base = datetime(2026, 5, 18, 13, 0, 0, tzinfo=UTC)
+
+    signal_store = SignalStore(tmp_path / "signals.db")
+    source = SignalStorePollingSource(
+        store=signal_store,
+        source=SOURCE,
+        model_version=MODEL_VERSION,
+        cursor_ns=9_999,
+    )
+
+    def register_one_strategy(node):
+        strategy = BaselineNautilusStrategy(
+            params=BaselineNautilusStrategyParams(
+                instrument_id=__import__("nautilus_trader.model.identifiers", fromlist=["InstrumentId"]).InstrumentId.from_str("BTCUSDT.BINANCE"),
+                bar_type=__import__("nautilus_trader.model.data", fromlist=["BarType"]).BarType.from_str("BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL"),
+                baseline_config=BaselineStrategyConfig(
+                    venue="BINANCE",
+                    auth=Authorization(
+                        allowed_sources=frozenset({SOURCE}),
+                        allowed_model_versions=frozenset({MODEL_VERSION}),
+                    ),
+                ),
+                trade_size=Decimal("0.001"),
+                equity_currency=__import__("nautilus_trader.model.objects", fromlist=["Currency"]).Currency.from_str("USDT"),
+                signal_source=source,
+            )
+        )
+        node.trader.strategies.append(strategy)
+
+    result = run_long_running_testnet(
+        settings,
+        run_settings,
+        env=VALID_ENV,
+        git_state=GIT_CLEAN,
+        node_factory=lambda cfg: _StrategyBlockingFakeNode(cfg),
+        clock=_frozen_clock(base),
+        telemetry_reader=lambda: TestnetRuntimeTelemetry(ts=base, daily_pnl=0.0),
+        flatten_runner=lambda settings: pytest.fail("flatten should not run"),
+        restart_exchange_factory=lambda run_id: _FakeRestartExchange(),
+        register_strategies=register_one_strategy,
+        run_id="20260518-130000Z-12345678",
+    )
+
+    assert result.exit_code == 0
+    assert source.cursor_ns == 1_716_038_400_000_000_001
+    assert result.runtime["resume_from_ns"] == 1_716_038_400_000_000_001
+
+
+
+
 def test_long_run_restart_drift_exits_3_and_writes_alert(tmp_path):
     _write_retro(tmp_path / "retros")
     settings = _config(tmp_path)

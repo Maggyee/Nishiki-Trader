@@ -3,6 +3,7 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass, field
 
+from apps.bridge.side_semantics import side_score_conflict_reason
 from apps.bridge.signal_event import SCHEMA_VERSION, SOURCE_FAMILIES, SignalEvent
 
 WILDCARD = "*"
@@ -27,6 +28,14 @@ class UnauthorizedSourceError(ValidationError):
 
 class UnauthorizedModelError(ValidationError):
     code = "unauthorized_model"
+
+
+class SideScoreConflictError(ValidationError):
+    code = "side_score_conflict"
+
+
+class VenueMismatchError(ValidationError):
+    code = "venue_mismatch"
 
 
 @dataclass(frozen=True)
@@ -135,6 +144,20 @@ def check_authorization(event: SignalEvent, auth: Authorization) -> None:
         )
 
 
+
+def check_side_score(event: SignalEvent) -> None:
+    reason = side_score_conflict_reason(event.side, event.score)
+    if reason is not None:
+        raise SideScoreConflictError(reason)
+
+
+def check_venue(event: SignalEvent, *, venue: str) -> None:
+    if event.venue != venue:
+        raise VenueMismatchError(
+            f"venue={event.venue!r} != expected venue={venue!r}"
+        )
+
+
 def check_freshness(event: SignalEvent, *, now_ns: int | None = None) -> None:
     if is_expired(event, now_ns=now_ns):
         raise ExpiredError(
@@ -148,7 +171,11 @@ def validate(
     auth: Authorization,
     *,
     now_ns: int | None = None,
+    venue: str | None = None,
 ) -> None:
     check_schema(event)
+    check_side_score(event)
     check_authorization(event, auth)
+    if venue is not None:
+        check_venue(event, venue=venue)
     check_freshness(event, now_ns=now_ns)

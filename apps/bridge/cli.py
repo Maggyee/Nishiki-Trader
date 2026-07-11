@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import time
 from pathlib import Path
 
 from apps.bridge.signal_event import SignalEvent
@@ -44,25 +45,44 @@ def _read_events(path: Path) -> list[SignalEvent]:
 def _cmd_write(args: argparse.Namespace) -> int:
     store = SignalStore(args.db)
     events = _read_events(Path(args.input))
+    auth = _load_authorization(args) if _enforce_consumer_policy(args) else None
+    now_ns = time.time_ns() if args.now_ns is None else args.now_ns
     accepted = 0
     duplicates = 0
+    rejected = 0
     for event in events:
+        if auth is not None:
+            try:
+                validate(
+                    event,
+                    auth,
+                    now_ns=now_ns,
+                    venue=args.venue,
+                )
+            except ValidationError as exc:
+                rejected += 1
+                print(f"{event.signal_id}: REJECT {exc.code}: {exc}")
+                continue
         try:
             store.write(event)
             accepted += 1
         except DuplicateSignalError:
             duplicates += 1
-    print(f"wrote {accepted} accepted, {duplicates} duplicates (skipped)")
-    return 0
+    print(
+        f"wrote {accepted} accepted, {duplicates} duplicates (skipped), "
+        f"{rejected} rejected"
+    )
+    return 1 if rejected else 0
 
 
 def _cmd_validate(args: argparse.Namespace) -> int:
     auth = _load_authorization(args)
     events = _read_events(Path(args.input))
+    now_ns = time.time_ns() if args.now_ns is None else args.now_ns
     failures = 0
     for event in events:
         try:
-            validate(event, auth)
+            validate(event, auth, now_ns=now_ns, venue=args.venue or None)
         except ValidationError as exc:
             failures += 1
             print(f"{event.signal_id}: REJECT {exc.code}: {exc}")
@@ -99,6 +119,35 @@ def build_parser() -> argparse.ArgumentParser:
 
     write = sub.add_parser("write", help="Write SignalEvents from a JSON/JSONL file to SQLite")
     write.add_argument("input", help="Path to JSON array or JSONL file")
+    write.add_argument(
+        "--enforce-consumer-policy",
+        action="store_true",
+        help=(
+            "Apply ADR-002 consumer checks before persisting. Requires "
+            "--allowed-sources and --allowed-models."
+        ),
+    )
+    write.add_argument(
+        "--allowed-sources",
+        default="",
+        help="Comma-separated source allowlist used with --enforce-consumer-policy",
+    )
+    write.add_argument(
+        "--allowed-models",
+        default="",
+        help="Comma-separated model_version allowlist used with --enforce-consumer-policy",
+    )
+    write.add_argument(
+        "--venue",
+        default="BINANCE",
+        help="Expected venue when --enforce-consumer-policy is set (default: BINANCE)",
+    )
+    write.add_argument(
+        "--now-ns",
+        type=int,
+        default=None,
+        help="Override current time for ttl checks during write validation",
+    )
     write.set_defaults(func=_cmd_write)
 
     validate_p = sub.add_parser("validate", help="Validate a JSON/JSONL file without writing")
@@ -106,6 +155,17 @@ def build_parser() -> argparse.ArgumentParser:
     validate_p.add_argument("--allowed-sources", default="", help="Comma-separated source allowlist")
     validate_p.add_argument(
         "--allowed-models", default="", help="Comma-separated model_version allowlist"
+    )
+    validate_p.add_argument(
+        "--venue",
+        default="BINANCE",
+        help="Expected consumer venue (default: BINANCE)",
+    )
+    validate_p.add_argument(
+        "--now-ns",
+        type=int,
+        default=None,
+        help="Override current time for ttl checks",
     )
     validate_p.set_defaults(func=_cmd_validate)
 
@@ -129,3 +189,15 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+
+
+def _enforce_consumer_policy(args: argparse.Namespace) -> bool:
+    if not args.enforce_consumer_policy:
+        return False
+    if not args.allowed_sources.strip() or not args.allowed_models.strip():
+        raise SystemExit(
+            "bridge write: --enforce-consumer-policy requires "
+            "--allowed-sources and --allowed-models"
+        )
+    return True

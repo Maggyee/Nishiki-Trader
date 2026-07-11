@@ -321,6 +321,9 @@ def main() -> int:
         base_currency_code="USDT",
         venue="BINANCE",
         position_pct_multiplier=0.1,
+        # When restarting from a previous run, set this to
+        # previous_processed_until_ns + 1 from the prior manifest.
+        initial_cursor_ns=None,
     )
     lineage: list[LineageRecord] = []
     signal_source = build_signal_source(spec)

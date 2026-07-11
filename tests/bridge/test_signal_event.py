@@ -125,3 +125,34 @@ def test_existing_demo_and_rule_sources_pass_under_adr_005(make_payload):
     # remain valid after ADR-005's prefix gate kicks in.
     for source in ("manual_research", "rule_baseline_v1"):
         SignalEvent.model_validate(make_payload(source=source))
+
+
+@pytest.mark.parametrize(
+    ("side", "score"),
+    [
+        ("buy", -0.1),
+        ("sell", 0.1),
+        ("flat", 0.2),
+    ],
+)
+def test_side_score_conflict_rejected(make_payload, side, score):
+    payload = make_payload(side=side, score=score, signal_id=f"conflict-{side}-{score}")
+    with pytest.raises(PydanticValidationError):
+        SignalEvent.model_validate(payload)
+
+
+@pytest.mark.parametrize(
+    ("side", "score"),
+    [
+        ("buy", 0.0),
+        ("sell", 0.0),
+        ("sell", -0.4),
+        ("flat", 0.0),
+    ],
+)
+def test_side_score_boundary_values_accepted(make_payload, side, score):
+    event = SignalEvent.model_validate(
+        make_payload(side=side, score=score, signal_id=f"ok-{side}-{score}")
+    )
+    assert event.side == side
+    assert event.score == score

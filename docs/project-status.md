@@ -1,7 +1,7 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-07-11 (Research Protocol v2 provider qualification)
+- **Last updated**: 2026-07-12 (Bridge validation + testnet restart cursor hardening)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
 - **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry remains frozen at 16 rejects and an empty selected set. Research Protocol v2 has three locked research-only candidates, none yet usable. Paired option/basis forward coverage is `collecting_insufficient_days` at 1/7. Option is `blocked_method_replication` because the structural model's full method text/code is unavailable. Stablecoin is `blocked_provider_entitlement` for USDT `TxTfrValUSD`. Basis current schema/transformation passes, but official archive metadata proves its locked historical reserve is `blocked_incomplete_historical_reserve`: BTCUSD index archives begin 2020-06, so five required 2020 months and checksums do not exist. No price ZIP was opened and the three-year gate was not weakened. Opened 2023-2025 remains diagnostic-only, 2020-2022 PnL remains unconsumed, July 2026 has PnL forbidden, and 2026-08..12 remains the final future blind. No grid search, failed-model retuning, PnL-selected ensemble, policy change, or testnet resume is allowed.
   Keep the current SourcePolicy unchanged until an explicit `promotion_review.py` decision. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
@@ -368,6 +368,16 @@ On 2026-07-10, after archiving completed dashboard / passive Phase 6 history out
 - This is a docs-only maintenance change; it does not write `SignalEvent`, mutate `SourcePolicy`, load credentials, start Nautilus, connect to Binance, place orders, or authorize live trading.
 - Verification for this docs-only change: `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check apps tests docs infra` -> clean; `git diff --check` -> clean.
 - Latest code-path verification remains the 2026-07-08 dashboard hardening sequence archived in `docs/progress/phase-5-dashboard-history.md`: 144 targeted tests passed, ruff clean, frontend typecheck/build clean, and npm audit reported 0 vulnerabilities.
+
+On 2026-07-12, after the full-code review follow-up for bridge and testnet safety:
+
+- `SignalEvent v1` now rejects `side`/`score` conflicts at parse time (`buy` with negative score, `sell` with positive score, `flat` with non-zero score).
+- `bridge write` can optionally apply ADR-002 consumer checks via `--enforce-consumer-policy` with `--allowed-sources` and `--allowed-models`.
+- Long-running testnet restarts now resume `SignalStorePollingSource` from `previous_processed_until_ns + 1` and record `resume_from_ns` in runtime metadata.
+- Targeted verification -> `TMPDIR=.tmp .venv/bin/python -m pytest tests/bridge/test_signal_event.py tests/bridge/test_validators.py tests/bridge/test_cli.py::test_cli_write_enforces_consumer_policy tests/bridge/test_cli.py::test_cli_write_rejects_unauthorized_with_consumer_policy tests/strategies_nautilus/test_testnet_runner_startup.py::test_long_run_restart_sets_signal_cursor_from_previous_processed_until -q` -> **75 passed**.
+- `.venv/bin/ruff check` on touched bridge/testnet files -> clean.
+- No upstream `freqtrade/` or `nautilus_trader/` edits; live trading remains blocked. Testnet execution path behavior is safer on restart when strategy execution is enabled.
+
 
 ## Recent Git Baseline
 

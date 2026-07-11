@@ -351,6 +351,51 @@ class RestartReconciliation:
         }
 
 
+
+def _resume_signal_cursor_ns(
+    restart: RestartReconciliation | None,
+    *,
+    clock_ns: Callable[[], int],
+) -> int | None:
+    """Return the polling cursor for a restarted testnet strategy.
+
+    When a previous run recorded ``processed_until_ns``, the next run must
+    resume from one nanosecond past that point so historical backfills are not
+    re-consumed.
+    """
+    if restart is None:
+        return None
+    previous_processed_until_ns = restart.previous_processed_until_ns
+    if previous_processed_until_ns is None:
+        return None
+    return previous_processed_until_ns + 1
+
+
+def _apply_restart_signal_cursor(
+    node: Any,
+    *,
+    restart: RestartReconciliation | None,
+    clock_ns: Callable[[], int],
+) -> None:
+    """Advance any registered ``SignalStorePollingSource`` to the restart cursor."""
+    cursor_ns = _resume_signal_cursor_ns(restart, clock_ns=clock_ns)
+    if cursor_ns is None:
+        return
+    from apps.strategies_nautilus.baseline_nautilus_strategy import (
+        BaselineNautilusStrategy,
+        SignalStorePollingSource,
+    )
+
+    trader = getattr(node, "trader", None)
+    if trader is None:
+        return
+    for strategy in getattr(trader, "strategies", ()):
+        if not isinstance(strategy, BaselineNautilusStrategy):
+            continue
+        signal_source = getattr(strategy, "_signal_source", None)
+        if isinstance(signal_source, SignalStorePollingSource):
+            signal_source.cursor_ns = cursor_ns
+
 @dataclass(frozen=True)
 class LongRunningTestnetResult:
     startup: StartupCheckResult
@@ -1010,6 +1055,11 @@ def run_long_running_testnet(
                     "actors": actors_registered,
                 },
             )
+            _apply_restart_signal_cursor(
+                node,
+                restart=restart_reconciliation,
+                clock_ns=clock_ns if clock_ns is not None else time.time_ns,
+            )
         else:
             strategies_registered, actors_registered = _trader_counts(node)
             if strategies_registered or actors_registered:
@@ -1259,6 +1309,9 @@ def _base_testnet_runtime(
         )
     if restart is not None:
         runtime.update(restart.runtime_fields())
+        resume_from_ns = _resume_signal_cursor_ns(restart, clock_ns=time.time_ns)
+        if resume_from_ns is not None:
+            runtime["resume_from_ns"] = resume_from_ns
     return runtime
 
 

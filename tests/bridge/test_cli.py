@@ -77,3 +77,51 @@ def test_cli_replay_filters_expired_by_default(tmp_path, signal_payload, capsys)
 
     main(["--db", str(db), "replay", "--now-ns", str(expired_now), "--include-expired"])
     assert capsys.readouterr().out.strip() != ""
+
+
+def test_cli_write_enforces_consumer_policy(tmp_path, signal_payload):
+    inp = tmp_path / "signals.jsonl"
+    _write_jsonl(inp, [signal_payload])
+    db = tmp_path / "signals.db"
+
+    rc = main([
+        "--db", str(db),
+        "write",
+        "--enforce-consumer-policy",
+        "--allowed-sources", "freqai_v1",
+        "--allowed-models", "2026-05-14",
+        "--venue", "BINANCE",
+        "--now-ns", str(signal_payload["ts_event"]),
+        str(inp),
+    ])
+    assert rc == 0
+    conn = sqlite3.connect(db)
+    try:
+        count = conn.execute("SELECT COUNT(*) FROM signals").fetchone()[0]
+    finally:
+        conn.close()
+    assert count == 1
+
+
+def test_cli_write_rejects_unauthorized_with_consumer_policy(tmp_path, make_payload):
+    inp = tmp_path / "signals.jsonl"
+    payload = make_payload(source="llm_rogue", signal_id="rogue-1")
+    _write_jsonl(inp, [payload])
+    db = tmp_path / "signals.db"
+
+    rc = main([
+        "--db", str(db),
+        "write",
+        "--enforce-consumer-policy",
+        "--allowed-sources", "freqai_v1",
+        "--allowed-models", "2026-05-14",
+        "--now-ns", str(payload["ts_event"]),
+        str(inp),
+    ])
+    assert rc == 1
+    conn = sqlite3.connect(db)
+    try:
+        count = conn.execute("SELECT COUNT(*) FROM signals").fetchone()[0]
+    finally:
+        conn.close()
+    assert count == 0

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+from pydantic import ValidationError as PydanticValidationError
 
 from apps.bridge.signal_event import SignalEvent
 from apps.bridge.validators import (
@@ -9,6 +10,7 @@ from apps.bridge.validators import (
     SourcePolicy,
     UnauthorizedModelError,
     UnauthorizedSourceError,
+    VenueMismatchError,
     is_expired,
     validate,
 )
@@ -145,3 +147,14 @@ def test_policy_for_returns_default_when_no_match():
     )
     pol = auth.policy_for("rule_baseline_v1", "ema5-20+rsi14")
     assert pol == SourcePolicy()  # default values
+
+
+def test_side_score_conflict_rejected_by_validate(make_payload, auth):
+    with pytest.raises(PydanticValidationError):
+        SignalEvent.model_validate(make_payload(side="buy", score=-0.2, signal_id="buy-negative"))
+
+
+def test_validate_checks_expected_venue(make_payload, auth):
+    event = SignalEvent.model_validate(make_payload(venue="COINBASE", signal_id="wrong-venue"))
+    with pytest.raises(VenueMismatchError):
+        validate(event, auth, now_ns=event.ts_event, venue="BINANCE")
