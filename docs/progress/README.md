@@ -14,6 +14,10 @@ Rules:
 
 Current Phase 3 progress files:
 
+- `phase-2-research-protocol-v2.md` and its JSON contract lock the three
+  independent-mechanism candidates, point-in-time data rules, evidence
+  partitions, costs, and anti-overfit gates before real factor access.
+
 - `phase-3-testnet-canary-evidence.md` records the testnet session ledger and
   bundle evidence summary.
 - `phase-3-testnet-continuity-plan.md` defines the 14-day continuity tracking

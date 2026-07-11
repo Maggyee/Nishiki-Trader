@@ -54,6 +54,13 @@ loop.
   Bollinger/Keltner squeeze breakout, 4h price/OBV/volume breakout, and daily
   dual absolute momentum. Select one with `--strategy`; identities and gates
   are locked in `docs/progress/phase-2-diverse-strategy-tournament.md`.
+- `independent_mechanism_signals.py` — three Research Protocol v2 daily,
+  point-in-time candidates based on option-implied risk compensation,
+  fixed-expiry futures basis, and stablecoin liquidity. The module rejects
+  publication lookahead, gaps, duplicates, revisions without immutable
+  fingerprints, non-finite factors, and runtime parameter changes. Identities,
+  factor contracts, partitions, and gates are locked in
+  `docs/progress/phase-2-research-protocol-v2.json`.
 - `wall_clock_signal_replay.py` — testnet-canary helper that copies already
   reviewed historical `SignalEvent` rows, re-stamps `ts_event` into future
   wall-clock times, and writes them back to `SignalStore`. It preserves the
@@ -109,3 +116,20 @@ The two cost-aware candidate exporters use the same catalog/store arguments as
 the existing generators and support `--dry-run`. They are fixed research
 fingerprints: changing their training window, threshold, Donchian/ATR
 parameters, or blind-test split requires a new `model_version`.
+
+Research Protocol v2 inputs are daily point-in-time CSV files. Validate the
+protocol before constructing any real factor dataset, then inspect a synthetic
+or pipeline-qualification file without writing SignalStore:
+
+```bash
+uv run python -m apps.ops.research_protocol_v2
+uv run python -m apps.strategies_freqtrade.research.independent_mechanism_signals \
+  --strategy futures_basis_curve \
+  --input-csv data/research-v2/futures-basis.csv \
+  --dry-run
+```
+
+The July 2026 qualification interval permits schema/lineage/freshness checks
+only. Do not inspect PnL, use opened 2023-2025 results for selection, or open
+the 2020-2022 replication reserve before the factor pipeline and checksums are
+complete on a committed tree.

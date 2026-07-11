@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-07-10 (cumulative alpha research stop rule triggered)
+- **Last updated**: 2026-07-11 (Research Protocol v2 pre-registered)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
-- **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The cumulative registry now contains 16 unique strict candidates across 16 economic families, all rejected; there are zero development passers and zero watchlist candidates. The machine-readable research stop rule is triggered: pause new candidate generation until independently justified evidence exists, prohibit opened-sample tuning/PnL-selected ensembles/holdout use for rejected models, and keep testnet stopped. Remaining historical and 2026 holdouts stay unconsumed. The honestly screened strategy set is empty.
+- **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry remains frozen at 16 rejects and an empty selected set. Research Protocol v2 now pre-registers exactly three independently motivated, research-only candidates—option risk premium, fixed-expiry futures basis curve, and point-in-time stablecoin liquidity—before any real factor body or PnL is accessed. Opened 2023-2025 data is diagnostic-only, 2020-2022 is a one-opening replication reserve, July 2026 is pipeline-qualification-only with PnL forbidden, and 2026-08..12 remains the final future blind. No grid search, failed-model retuning, PnL-selected ensemble, policy change, or testnet resume is allowed.
   Keep the current SourcePolicy unchanged until an explicit `promotion_review.py` decision. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
@@ -25,6 +25,7 @@ Detailed history archived so far:
 
 - `docs/progress/phase-0-1-to-phase-2-entry.md`
 - `docs/progress/phase-2-signal-source-baselines.md` — demo vs rule signal-source bundle fingerprints for BTCUSDT 2024-01-01.
+- `docs/progress/phase-2-research-protocol-v2.md` — independent-mechanism pre-registration, point-in-time contract, evidence partitions, and gates.
 - `docs/progress/phase-3-testnet-canary-evidence.md` — Phase 3 testnet canary evidence ledger and paused operating step.
 - `docs/progress/phase-3-testnet-continuity-plan.md` — paused 14-day testnet continuity tracking plan and review command.
 - `docs/progress/phase-5-dashboard-history.md` — completed read-only dashboard, AgentAdvice input, passive Phase 6 gate, and dashboard hardening history.
@@ -115,7 +116,7 @@ remains 0/14.
 
 Immediate focus:
 
-1. Use `docs/retros/2026-07-10-research-program-screening-review.md` and the candidate registry as the current research decision. Do not tune, combine, or rerun rejected models.
+1. Keep the original registry frozen and use `docs/progress/phase-2-research-protocol-v2.json` as the only authorized research resumption. Do not tune, combine, or rerun rejected models; do not change the three new identities, parameters, partitions, or gates after real factor access.
 2. Treat `docs/progress/phase-3-testnet-canary-evidence.md`, `docs/progress/phase-3-testnet-continuity-plan.md`, the 2026-05-30 clean canary retro, the 2026-05-30 duplicate-entry abort retro, the 2026-05-30 post-fix clean retro, and the 2026-06-01 heartbeat-lost retro as the current operational evidence. Do not run more routine canaries unless the operator explicitly resumes live-readiness evidence collection. If canary evidence resumes, use `python -m apps.strategies_nautilus.runners.report_testnet_bundle data/testnet/<run_id>` before writing future manifest-backed canary retros, use `--markdown` with clean bundle directories before updating the clean evidence ledger, and use `--continuity --markdown --min-clean-hours-per-day 6 --required-consecutive-days 14` with every completed manifest-backed bundle in the candidate window before claiming continuity progress. Carry no-manifest aborts manually. Do not open a new `promotion_review` unless an actual policy/stage decision is being made.
 3. Use `docs/decisions/009-agent-advice-audit.md` and `docs/decisions/012-phase5-readonly-dashboard.md` as the active agent/frontend boundaries. Agent/MCP work may write/replay/review `AgentAdvice`; dashboard work may read passive reports, observability textfiles, and AgentAdvice through `dashboard.snapshot.v1`. `TradingAgents/` is available as an ignored read-only upstream reference for future agent role/configuration ideas only; `docs/progress/tradingagents-reference-map.md` is the current safe adaptation map, and `apps.agents.role_profiles` is the first machine-readable AgentAdvice-only role seed. Neither path may write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or encode structured execution directives.
 4. ADR-008 §6.2 Phase 3b, §6.3 Phase 3c-a/b/c, §6.4 Phase 3d, §6.5 Phase 3e, §6.6 Phase 3f stability soak/canary, and the §8 promotion-review patch are all implemented and unit-tested. The `phase_3_not_ready` blocker now only hard-blocks `live_canary` / `live_normal`.
@@ -123,9 +124,10 @@ Immediate focus:
 
 ## Next Steps
 
-1. Keep alpha candidate generation paused; no additional indicator, threshold, symbol-swap, or PnL-selected ensemble experiments on opened samples.
-2. Resume only when a genuinely new data-generating mechanism is justified before access, or when a new future sample has accrued; create a fresh pre-registration then.
-3. Keep SourcePolicy unchanged and testnet/live blocked; no rejected candidate is eligible for historical validation, future blind consumption, or promotion review.
+1. Commit the Research Protocol v2 pre-registration before downloading or viewing any real option-surface, fixed-expiry basis, or point-in-time stablecoin factor body.
+2. Build provider-specific point-in-time ingestion and immutable snapshot audits; use July 2026 only for schema, publication-lag, lineage, and freshness qualification with PnL access disabled.
+3. Open the 2020-2022 replication reserve exactly once only after all three pipelines pass qualification on a clean commit; evaluate all three with the locked Nautilus/cost/gate protocol and no result-driven changes.
+4. Keep SourcePolicy unchanged and testnet/live blocked; only a candidate that later passes both historical replication and the 2026-08..12 final blind may enter paper_shadow review.
 5. Keep the current SourcePolicy unchanged until a human reviews `demote_to_paper_simulated_recommended` and records an actual hold/demote decision with `promotion_review.py`.
 6. Continue Phase 5 with only read-only dashboard improvements fed by `dashboard.snapshot.v1`; keep the frontend free of API routes and mutation controls until a separate ADR opens a specific workflow.
 7. If the operator explicitly resumes live-readiness evidence collection, use `docs/progress/phase-3-testnet-continuity-plan.md` and include every completed manifest-backed testnet bundle in the candidate window when running both `report_testnet_bundle --continuity` and `apps.ops.live_readiness`.
@@ -147,6 +149,21 @@ Immediate focus:
 - No edits to `freqtrade/` or `nautilus_trader/` unless explicitly requested.
 
 ## Latest Verification
+
+On 2026-07-11, before accessing any real Research Protocol v2 factor body:
+
+- Locked exactly three independent research-only identities, immutable
+  parameters/factor fields, 2023-2025 diagnostic exclusion, one-opening
+  2020-2022 replication reserve, July 2026 no-PnL qualification, and the
+  2026-08..12 final future blind.
+- Point-in-time generators fail closed on publication lookahead, missing daily
+  observations, duplicates, invalid snapshot/spec hashes, non-finite values,
+  unexplained option-factor decomposition, and invalid futures maturities.
+- Verification: 17 targeted tests and the full **771-test** suite passed, with
+  12 Postgres-dependent skips; Ruff, `git diff --check`, and protocol
+  fingerprint validation passed. No real factor value, return, credential,
+  SignalStore, Nautilus run, policy, testnet, or live state was consumed or
+  mutated.
 
 On 2026-07-10, after independent-alt replication and cumulative screening:
 

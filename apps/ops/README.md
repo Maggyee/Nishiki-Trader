@@ -110,6 +110,17 @@ uv run python -m apps.ops.alpha_review \
 `strategy_tournament`；12-29 个仓位的低频经济通过者只进入历史证据 watchlist，
 不会被排名或进入 paper。
 
+Research Protocol v2 在接触真实独立因子前锁定三名候选、证据分区、成本、参数、
+数据字段和淘汰闸门。验证器对日期漂移、阈值变更、候选身份漂移、候选数量增加及
+反多重试验保护关闭全部 fail closed：
+
+```bash
+uv run python -m apps.ops.research_protocol_v2
+```
+
+该命令只读预注册 JSON 并输出 canonical SHA-256；不读取因子数据、收益、凭证或
+SignalStore，不运行 Nautilus，也不修改 SourcePolicy。
+
 生成 Phase 4 只读 dashboard snapshot（JSON 默认输出到 stdout）：
 
 ```bash
@@ -221,6 +232,7 @@ continuity evidence、可选 promotion review artifact、以及显式声明的�
 | `feature_audit.py` | 审计 Spot 主动流/funding 完整性和 fingerprint | 2 |
 | `daily_archive_audit.py` | 审计日线 warm-up/信号归档完整性与跨资产对齐 | 2 |
 | `research_program_review.py` | 校验累计候选注册表并执行反多重试验停止规则 | 2 |
+| `research_protocol_v2.py` | 校验独立机制预注册、证据分区和不可调参数 | 2 |
 | `signal_replay.py` | 重放 SQLite 中的历史 signals 跑回测 | 1 |
 | `migrate_sqlite_to_pg.py` | Phase 2 数据迁移 | 2 |
 | `dashboard_snapshot.py` | Phase 4 只读 AgentAdvice / report snapshot | 4 |

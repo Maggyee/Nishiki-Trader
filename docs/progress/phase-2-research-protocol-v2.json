@@ -1,0 +1,159 @@
+{
+  "schema_version": "research.protocol.v2",
+  "frozen_at": "2026-07-11T00:00:00Z",
+  "status": "preregistered_no_real_factor_data_access",
+  "objective": "Test independently motivated data-generating mechanisms without reusing opened samples for parameter selection.",
+  "boundaries": {
+    "opened_diagnostic_only": {
+      "start": "2023-01-01",
+      "end": "2025-12-31",
+      "allowed_use": "data_pipeline_diagnostics_only",
+      "pnl_selection_forbidden": true
+    },
+    "historical_replication_reserve": {
+      "start": "2020-01-01",
+      "end": "2022-12-31",
+      "access_status": "unconsumed",
+      "max_openings": 1
+    },
+    "forward_pipeline_qualification": {
+      "start": "2026-07-01",
+      "end": "2026-07-31",
+      "allowed_use": "schema_lineage_freshness_only",
+      "pnl_access_forbidden": true
+    },
+    "final_future_blind": {
+      "start": "2026-08-01",
+      "end": "2026-12-31",
+      "access_status": "not_started",
+      "parameter_changes_after_open_forbidden": true
+    }
+  },
+  "cost_scenarios": {
+    "gross": {"fee_bps_per_fill": 0.0, "slippage_bps_per_fill": 0.0},
+    "base": {"fee_bps_per_fill": 10.0, "slippage_bps_per_fill": 2.0},
+    "stress": {"fee_bps_per_fill": 10.0, "slippage_bps_per_fill": 5.0}
+  },
+  "shared_execution": {
+    "venue": "BINANCE",
+    "instrument": "BTCUSDT",
+    "account_type": "CASH",
+    "oms_type": "NETTING",
+    "starting_balance_usdt": 100000,
+    "trade_size_btc": 0.001,
+    "position_domain": ["long", "flat"],
+    "fold_initial_state": "flat",
+    "engine": "NautilusTrader"
+  },
+  "gates": {
+    "historical_replication": {
+      "base_net_pnl_gt": 0.0,
+      "stress_net_pnl_gt": 0.0,
+      "positive_calendar_years_at_least": 2,
+      "calendar_years_total": 3,
+      "positive_month_fraction_at_least": 0.5,
+      "closed_positions_at_least": 30,
+      "leave_best_position_base_net_pnl_gt": 0.0
+    },
+    "final_future_blind": {
+      "base_net_pnl_gt": 0.0,
+      "stress_net_pnl_gt": 0.0,
+      "positive_calendar_months_at_least": 4,
+      "calendar_months_total": 5,
+      "closed_positions_at_least": 30
+    },
+    "hard_blockers": [
+      "short_position",
+      "non_point_in_time_input",
+      "duplicate_or_missing_observation",
+      "invalid_lineage",
+      "unexplained_fill",
+      "kill_switch",
+      "non_reproducible_replay"
+    ],
+    "multiple_testing": {
+      "candidate_count_locked": 3,
+      "parameter_grid_search_forbidden": true,
+      "pnl_selected_ensemble_forbidden": true,
+      "failed_candidate_reparameterization_forbidden": true
+    }
+  },
+  "candidates": [
+    {
+      "key": "option_risk_premium",
+      "source": "rule_option_risk_premium_v1",
+      "model_version": "structural-rn-excessret30d-sign-v1",
+      "mechanism": "Option-implied variance, higher-moment and volatility-of-volatility risk compensation.",
+      "decision_frequency": "1D",
+      "parameters": {
+        "expected_excess_return_floor": 0.0,
+        "ttl_seconds": 86400,
+        "confidence": 0.75
+      },
+      "required_factors": [
+        "expected_excess_return_30d",
+        "intercept_contribution",
+        "variance_contribution",
+        "higher_moment_contribution",
+        "vol_of_vol_contribution",
+        "replication_spec_hash"
+      ],
+      "signal_rule": "buy iff expected_excess_return_30d > 0; flat otherwise; emit only on state change",
+      "data_access_status": "not_accessed",
+      "promotion_ceiling": "research_only"
+    },
+    {
+      "key": "futures_basis_curve",
+      "source": "rule_futures_basis_curve_v1",
+      "model_version": "front-next-contango-sign-1d-v1",
+      "mechanism": "Information in the fixed-expiry futures term structure, distinct from perpetual funding.",
+      "decision_frequency": "1D",
+      "parameters": {
+        "minimum_annualized_basis": 0.0,
+        "minimum_curve_slope": 0.0,
+        "ttl_seconds": 86400,
+        "confidence": 0.75
+      },
+      "required_factors": [
+        "spot_price",
+        "front_futures_price",
+        "next_futures_price",
+        "front_days_to_expiry",
+        "next_days_to_expiry"
+      ],
+      "signal_rule": "buy iff both annualized bases are positive and next basis is not below front basis; flat otherwise; emit only on state change",
+      "data_access_status": "not_accessed",
+      "promotion_ceiling": "research_only"
+    },
+    {
+      "key": "stablecoin_liquidity",
+      "source": "rule_stablecoin_liquidity_v1",
+      "model_version": "supply30d-transfer7d-positive-1d-v1",
+      "mechanism": "Point-in-time stablecoin supply expansion confirmed by transfer-activity expansion.",
+      "decision_frequency": "1D",
+      "parameters": {
+        "supply_change_days": 30,
+        "transfer_sum_days": 7,
+        "minimum_supply_change": 0.0,
+        "minimum_transfer_change": 0.0,
+        "ttl_seconds": 86400,
+        "confidence": 0.75
+      },
+      "required_factors": [
+        "stablecoin_supply_total",
+        "stablecoin_transfer_volume"
+      ],
+      "signal_rule": "buy iff 30-day supply change and current-vs-prior 7-day transfer-volume change are both positive; flat otherwise; emit only on state change",
+      "data_access_status": "not_accessed",
+      "promotion_ceiling": "research_only"
+    }
+  ],
+  "boundaries_effect": {
+    "writes_signal_store_during_preregistration": false,
+    "loads_credentials": false,
+    "runs_nautilus": false,
+    "mutates_source_policy": false,
+    "resumes_testnet": false,
+    "touches_live_path": false
+  }
+}
