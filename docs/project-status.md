@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-07-12 (Research Protocol v2 cloud collector ready)
+- **Last updated**: 2026-07-12 (Research Protocol v2 cloud coverage active at 1/7)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
-- **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry remains frozen at 16 rejects and an empty selected set. Research Protocol v2 remains locked and data-blocked (option method replication, stablecoin entitlement, incomplete basis history); its credential-free cloud collector is ready to gather a fresh seven-day option/basis schema and freshness window without PnL. Research Protocol v3 is pre-registered with three new research-only candidates — miner hashrate recovery, USD weakness (DXY), and equity vol relief (VIX) — before any real factor-body access. Opened 2023-2025 remains diagnostic-only, 2020-2022 PnL remains unconsumed, July 2026 has PnL forbidden, and 2026-08..12 remains the final future blind. No grid search, failed-model retuning, PnL-selected ensemble, policy change, or testnet resume is allowed.
+- **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry remains frozen at 16 rejects and an empty selected set. Research Protocol v2 remains locked and data-blocked (option method replication, stablecoin entitlement, incomplete basis history); its fresh credential-free cloud option/basis coverage window is active at 1/7 paired UTC days under collector image `5a8289c`. Research Protocol v3 is pre-registered with three new research-only candidates — miner hashrate recovery, USD weakness (DXY), and equity vol relief (VIX) — before any real factor-body access. Opened 2023-2025 remains diagnostic-only, 2020-2022 PnL remains unconsumed, July 2026 has PnL forbidden, and 2026-08..12 remains the final future blind. No grid search, failed-model retuning, PnL-selected ensemble, policy change, or testnet resume is allowed.
   Keep the current SourcePolicy unchanged until an explicit `promotion_review.py` decision. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
@@ -111,7 +111,7 @@ At task finish:
 
 All completed tournaments have empty rankings and the cumulative stop rule is
 triggered for the original 16 families. Research Protocol v2 remains data-blocked;
-its next bounded operational step is the fresh seven-day cloud coverage collection.
+its fresh cloud coverage attempt is collecting at 1/7 paired UTC days.
 Research Protocol v3 is pre-registered for three independent macro/native
 mechanisms and must stay `not_accessed` until the provider contract is committed
 and synthetic/schema qualification is complete. Routine 14-day testnet continuity
@@ -128,7 +128,7 @@ Immediate focus:
 ## Next Steps
 
 1. Keep Research Protocol v3 pre-registered and unaccessed: validate with `python -m apps.ops.research_protocol_v3`, then build a credential-free immutable snapshot collector for hashrate/DXY/VIX **after** this commit is on a clean tree.
-2. Deploy `infra/research-v2/` at one locked Git SHA and collect a fresh Protocol v2 option/basis pair on seven consecutive UTC days. Treat gaps as operational resets, retain all evidence, and do not open basis historical ZIPs or invent option-method substitutes. Qualify Protocol v3 schemas and publication lag only in July 2026 after its collector is separately implemented from the committed contract.
+2. Let the locked `infra/research-v2/` timer continue from 1/7 to seven consecutive Protocol v2 option/basis UTC days. Treat gaps as operational resets, retain all evidence, do not rebuild the active image, and do not open basis historical ZIPs or invent option-method substitutes. Qualify Protocol v3 schemas and publication lag only in July 2026 after its collector is separately implemented from the committed contract.
 3. Open the 2020-2022 replication reserve exactly once only after a protocol's pipelines pass qualification on a clean commit; evaluate that protocol's locked candidates with the Nautilus/cost/gate protocol and no result-driven changes.
 4. Keep SourcePolicy unchanged and testnet/live blocked; only a candidate that later passes both historical replication and the 2026-08..12 final blind may enter paper_shadow review.
 5. Keep the current SourcePolicy unchanged until a human reviews `demote_to_paper_simulated_recommended` and records an actual hold/demote decision with `promotion_review.py`.
@@ -153,7 +153,7 @@ Immediate focus:
 
 ## Latest Verification
 
-On 2026-07-12, before starting the fresh Protocol v2 cloud window:
+On 2026-07-12, after starting the fresh Protocol v2 cloud window:
 
 - Added the passive `apps.ops.research_v2_daily` orchestration path with a
   per-data-directory lock, same-day idempotency, partial-pair retry, operational
@@ -162,11 +162,20 @@ On 2026-07-12, before starting the fresh Protocol v2 cloud window:
 - Added a minimal non-root/read-only Compose image and a host systemd timer with
   three UTC retry slots. The image carries no credentials, ports, Docker socket,
   trading dependencies, SignalStore, NautilusTrader, or SourcePolicy access.
-- Targeted collector/provider coverage verification passed 23 tests. The ARM64
-  server rendered the Compose configuration and built the pinned Python image.
-  The unrelated full suite remains red because 21 existing strategy tests use
-  positive scores for `flat`/`sell` after the latest SignalEvent validation
-  hardening; this collector does not import or change that path.
+- Targeted collector/provider coverage verification passed 24 tests. The ARM64
+  server rendered the Compose configuration and built/deployed non-root image
+  `5a8289c50f89fb1a2ae9e1aaf5b69a12d2287fcb` from a hash-verified Git archive.
+- The first fresh pair is committed for UTC 2026-07-11 under
+  `attempt-20260711-001`: two verified ledger rows, 1/7 paired days, no gaps,
+  duplicates, unpaired dates, or review blockers. Every no-PnL/no-signal/no-
+  Nautilus/no-policy boundary remains false.
+- The systemd timer is enabled for 03:15/06:15/09:15 UTC. A manual unit replay
+  exited 0 with `already_collected_today` and `network_accessed=false`; the
+  ledger stayed at two rows.
+- The ARM64 build and runtime checks passed. The unrelated full suite remains
+  red because 21 existing strategy tests use positive scores for `flat`/`sell`
+  after the latest SignalEvent validation hardening; this collector does not
+  import or change that path.
 
 On 2026-07-12, before accessing any real Research Protocol v3 factor body:
 
