@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-07-11 (Research Protocol v2 provider qualification)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
-- **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry remains frozen at 16 rejects and an empty selected set. Research Protocol v2 has three locked research-only candidates. Credential-free July qualification produced independently verifiable current snapshots for Deribit BTC options and Binance COIN-M quarterly basis, and the basis snapshot passes a PnL-free next-day transformation. Paired coverage is honestly `collecting_insufficient_days` at 1/7 exact UTC days. The option route is also `blocked_method_replication` because only the paper abstract is publicly retrievable and it is insufficient to reproduce the structural model; no approximate IV rule will be substituted. Coin Metrics Community does not authorize USDT `TxTfrValUSD`, so stablecoin remains `blocked_provider_entitlement`. Opened 2023-2025 data is diagnostic-only, 2020-2022 remains unconsumed, July 2026 has PnL forbidden, and 2026-08..12 remains the final future blind. No grid search, failed-model retuning, PnL-selected ensemble, policy change, or testnet resume is allowed.
+- **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry remains frozen at 16 rejects and an empty selected set. Research Protocol v2 has three locked research-only candidates, none yet usable. Paired option/basis forward coverage is `collecting_insufficient_days` at 1/7. Option is `blocked_method_replication` because the structural model's full method text/code is unavailable. Stablecoin is `blocked_provider_entitlement` for USDT `TxTfrValUSD`. Basis current schema/transformation passes, but official archive metadata proves its locked historical reserve is `blocked_incomplete_historical_reserve`: BTCUSD index archives begin 2020-06, so five required 2020 months and checksums do not exist. No price ZIP was opened and the three-year gate was not weakened. Opened 2023-2025 remains diagnostic-only, 2020-2022 PnL remains unconsumed, July 2026 has PnL forbidden, and 2026-08..12 remains the final future blind. No grid search, failed-model retuning, PnL-selected ensemble, policy change, or testnet resume is allowed.
   Keep the current SourcePolicy unchanged until an explicit `promotion_review.py` decision. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
@@ -125,7 +125,7 @@ Immediate focus:
 ## Next Steps
 
 1. Commit the locked Research Protocol v2 provider contract and credential-free immutable snapshot collector before downloading or viewing any response body.
-2. Continue immutable daily July option/basis snapshots until the fixed paired coverage gate reaches 7/7 consecutive UTC days (current 1/7). Basis transformation is ready. Obtain the complete 37-page option paper or author code before implementing its structural model; keep stablecoin blocked until licensed `TxTfrValUSD` point-in-time access exists.
+2. Continue immutable daily July option/basis snapshots until the fixed paired coverage gate reaches 7/7 consecutive UTC days (current 1/7). Do not open basis historical ZIPs because the locked 36-month metadata gate fails. Obtain the complete option paper/code and licensed stablecoin point-in-time data before those pipelines resume.
 3. Open the 2020-2022 replication reserve exactly once only after all three pipelines pass qualification on a clean commit; evaluate all three with the locked Nautilus/cost/gate protocol and no result-driven changes.
 4. Keep SourcePolicy unchanged and testnet/live blocked; only a candidate that later passes both historical replication and the 2026-08..12 final blind may enter paper_shadow review.
 5. Keep the current SourcePolicy unchanged until a human reviews `demote_to_paper_simulated_recommended` and records an actual hold/demote decision with `promotion_review.py`.
@@ -185,7 +185,12 @@ On 2026-07-11, before accessing any real Research Protocol v2 factor body:
   with one exact option/basis pair, no gaps, duplicates, unpaired dates, or
   integrity blockers. Five coverage tests prove 7-day pass and fail-closed
   gap/duplicate/tamper behavior without prices, returns, signals, or PnL.
-- Verification: 35 targeted tests and the full **789-test** suite passed, with
+- Official Binance S3 metadata audit is
+  `blocked_incomplete_historical_reserve`: index archives start 2020-06 and
+  required 2020-01..05 ZIP/checksum objects are absent. Five metadata tests
+  cover missing/full months, malformed versus non-quarterly prefixes,
+  pagination, and non-positive object size without reading price bodies.
+- Verification: 40 targeted tests and the full **794-test** suite passed, with
   12 Postgres-dependent skips; Ruff, `git diff --check`, and protocol
   fingerprint validation passed. No real factor value, return, credential,
   SignalStore, Nautilus run, policy, testnet, or live state was consumed or

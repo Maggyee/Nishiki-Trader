@@ -126,6 +126,11 @@
       "provider": "Snapshot envelope",
       "finding": "The first two successful qualification drafts hashed exact HTTP bytes but retained only parsed JSON, so the payload hashes could not be recomputed offline.",
       "handling": "Exclude those drafts from eligible lineage. Store exact bytes as base64, verify raw hash, parsed equality, audit summary, envelope hash, vintage id, and filename before accepting replacement snapshots."
+    },
+    {
+      "provider": "Binance public-data S3 archive",
+      "finding": "COIN-M BTCUSD indexPriceKlines 1d monthly metadata begins at 2020-06; locked 2020-01 through 2020-05 ZIP and CHECKSUM objects do not exist.",
+      "handling": "Block the 2020-2022 historical replication before reading ZIP or CHECKSUM bodies. Do not count partial 2020 as a full calendar year, substitute opened 2023, or weaken the locked three-year gate."
     }
   ],
   "boundaries": {

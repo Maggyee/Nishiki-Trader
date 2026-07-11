@@ -91,6 +91,28 @@ This qualifies current/next mapping and the forward daily basis interface. The
 public endpoint exposes only recent observations and cannot establish the
 2020-2022 point-in-time replication reserve by itself.
 
+An official Binance public-data archive metadata audit then tested whether the
+locked reserve could be reconstructed without a vendor. It used S3 LIST key
+and size metadata only and did not read ZIP or CHECKSUM bodies. Findings:
+
+```text
+status=blocked_incomplete_historical_reserve
+required_months=36 (2020-01 through 2022-12)
+first_available_index_month=2020-06
+missing_zip_months=2020-01..2020-05
+missing_checksum_months=2020-01..2020-05
+prices_read=false
+pnl_computed=false
+```
+
+The archive contains 26 valid quarterly BTCUSD contract prefixes, one malformed
+date prefix (`BTCUSD_220631`), and the correctly excluded non-quarterly
+`BTCUSD_PERP` prefix. File keys also persist after contract expiry, so key
+existence alone cannot establish valid rows. The missing first five index
+months already makes the locked three-calendar-year gate impossible; price
+bodies were therefore left unopened. Partial 2020 cannot be relabeled as a
+full year and opened 2023 cannot be substituted.
+
 The verified snapshot also passed the PnL-free factor transformer. Its
 retrieval at `2026-07-11T03:04:13.557781Z` maps to a deliberately delayed
 decision timestamp of `2026-07-12T00:00:00Z`. The qualification report contains
@@ -149,9 +171,10 @@ changed.
 - `option_risk_premium`: provider schema qualified; historical archive and
   full method/code, historical archive, and structural replication pipeline
   still required.
-- `futures_basis_curve`: provider schema and one-snapshot point-in-time
-  transformation qualified; begin daily forward snapshots and wait for
-  contiguous coverage before any signal-generation qualification.
+- `futures_basis_curve`: current provider schema and one-snapshot point-in-time
+  transformation qualified, but historical replication is
+  `blocked_incomplete_historical_reserve`; continue forward snapshots without
+  opening historical price bodies.
 - `stablecoin_liquidity`: blocked until licensed transfer-value plus
   point-in-time vintage data exists.
 

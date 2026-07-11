@@ -174,6 +174,17 @@ uv run python -m apps.ops.research_v2_snapshot_review \
 不足7天时只返回 `collecting_insufficient_days`。该 reviewer 不汇总价格、不加载
 returns、不生成 signals，也不计算 PnL。
 
+在打开2020-2022 basis 历史 ZIP 前，先审计 Binance 官方 S3 key/size 元数据：
+
+```bash
+uv run python -m apps.ops.research_v2_archive_availability
+```
+
+该 gate 只调用 S3 LIST metadata，不读取 ZIP/CHECKSUM 正文。当前结果为
+`blocked_incomplete_historical_reserve`：BTCUSD index 1d 月归档从2020-06才开始，
+锁定的2020-01～05及校验和不存在。禁止把半个2020算作完整年份、改用已打开的
+2023补足，或在 gate 失败后下载价格正文。
+
 生成 Phase 4 只读 dashboard snapshot（JSON 默认输出到 stdout）：
 
 ```bash
@@ -289,6 +300,7 @@ continuity evidence、可选 promotion review artifact、以及显式声明的�
 | `research_v2_snapshot.py` | 保存无凭证 provider qualification 不可变快照 | 2 |
 | `research_v2_factors.py` | 把已验证 basis 快照转换为无收益 point-in-time 因子 | 2 |
 | `research_v2_snapshot_review.py` | 审计期权/basis 多日配对、缺口、重复和篡改 | 2 |
+| `research_v2_archive_availability.py` | 在读取价格前审计 basis 历史归档元数据覆盖 | 2 |
 | `signal_replay.py` | 重放 SQLite 中的历史 signals 跑回测 | 1 |
 | `migrate_sqlite_to_pg.py` | Phase 2 数据迁移 | 2 |
 | `dashboard_snapshot.py` | Phase 4 只读 AgentAdvice / report snapshot | 4 |
