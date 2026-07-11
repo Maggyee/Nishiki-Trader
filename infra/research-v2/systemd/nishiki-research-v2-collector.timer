@@ -1,0 +1,13 @@
+[Unit]
+Description=Retry Nishiki Research Protocol v2 collection three times per UTC day
+
+[Timer]
+OnCalendar=*-*-* 03:15:00 UTC
+OnCalendar=*-*-* 06:15:00 UTC
+OnCalendar=*-*-* 09:15:00 UTC
+Persistent=true
+AccuracySec=1min
+Unit=nishiki-research-v2-collector.service
+
+[Install]
+WantedBy=timers.target

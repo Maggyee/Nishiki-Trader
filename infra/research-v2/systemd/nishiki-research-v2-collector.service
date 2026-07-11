@@ -1,0 +1,16 @@
+[Unit]
+Description=Nishiki Research Protocol v2 daily paired snapshot collector
+Wants=network-online.target
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/nishiki-trader
+EnvironmentFile=/etc/nishiki-trader/research-v2.env
+ExecCondition=/usr/bin/test ! -f /var/lib/nishiki-trader/research-v2/COMPLETE
+ExecStart=/usr/bin/docker compose --env-file /etc/nishiki-trader/research-v2.env -f infra/research-v2/compose.yml run --rm --no-deps collector
+TimeoutStartSec=5min
+Nice=10
+
+[Install]
+WantedBy=multi-user.target
