@@ -19,5 +19,7 @@ COPY apps/ops/research_v2_daily.py /app/apps/ops/research_v2_daily.py
 COPY docs/progress/phase-2-research-v2-data-sources.json \
   /app/docs/progress/phase-2-research-v2-data-sources.json
 
+USER 1002:1002
+
 ENTRYPOINT ["python", "-m", "apps.ops.research_v2_daily"]
 CMD ["--data-dir", "/data/research-v2"]

@@ -186,3 +186,23 @@ def test_lock_contention_is_a_hard_blocker(tmp_path: Path) -> None:
 def test_git_sha_must_be_exact_lowercase_commit() -> None:
     with pytest.raises(ValueError, match="40 lowercase"):
         preflight(Path("unused"), "ABC")
+
+
+def test_cloud_deployment_is_nonroot_readonly_and_stops_after_complete() -> None:
+    dockerfile = Path("infra/research-v2/Dockerfile").read_text()
+    compose = Path("infra/research-v2/compose.yml").read_text()
+    service = Path(
+        "infra/research-v2/systemd/nishiki-research-v2-collector.service"
+    ).read_text()
+    timer = Path("infra/research-v2/systemd/nishiki-research-v2-collector.timer").read_text()
+
+    assert "USER 1002:1002" in dockerfile
+    assert 'user: "${COLLECTOR_UID:-1002}:${COLLECTOR_GID:-1002}"' in compose
+    assert "read_only: true" in compose
+    assert "no-new-privileges:true" in compose
+    assert "cap_drop:" in compose and "- ALL" in compose
+    assert "ports:" not in compose
+    assert "docker.sock" not in compose
+    assert "ExecCondition=/usr/bin/test ! -f" in service
+    assert timer.count("OnCalendar=") == 3
+    assert "Persistent=true" in timer
