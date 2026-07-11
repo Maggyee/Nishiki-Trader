@@ -645,10 +645,10 @@ export default async function DashboardPage({
   const ops = snapshot.ops_status ?? {};
 
   return (
-    <main className="min-h-screen bg-stone-100 text-zinc-950" lang={language === "zh-CN" ? "zh-Hans" : "en"}>
+    <main className="dash-shell" lang={language === "zh-CN" ? "zh-Hans" : "en"}>
       <Header snapshot={snapshot} language={language} copy={copy} />
 
-      <section className="mx-auto grid max-w-[1540px] gap-4 px-4 py-4 sm:px-5">
+      <section className="dash-content mx-auto grid max-w-[1540px] gap-4 px-4 py-5 sm:px-5 lg:py-6">
         <CommandBand snapshot={snapshot} copy={copy} />
 
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(380px,0.55fr)]">
@@ -697,20 +697,16 @@ function Header({
 }) {
   const status = snapshot.project_status ?? {};
   return (
-    <header className="border-b border-zinc-300 bg-white">
+    <header className="site-header">
       <div className="mx-auto flex max-w-[1540px] flex-col gap-3 px-4 py-4 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
         <div className="header-title-block">
           <div>
-            <div className="text-xs font-semibold uppercase tracking-normal text-emerald-700">
-              {copy.brand}
-            </div>
-            <h1 className="mt-1 text-2xl font-semibold tracking-normal text-zinc-950 md:text-3xl">
-              {copy.title}
-            </h1>
+            <div className="brand-kicker">{copy.brand}</div>
+            <h1 className="brand-title">{copy.title}</h1>
           </div>
           <LanguageSwitch language={language} copy={copy} />
         </div>
-        <div className="grid gap-2 text-sm text-zinc-700 sm:grid-cols-2 lg:min-w-[620px]">
+        <div className="grid gap-2 text-sm text-ink-soft sm:grid-cols-2 lg:min-w-[620px]">
           <HeaderFact label={copy.header.snapshot} value={snapshot.schema_version ?? copy.common.unknown} />
           <HeaderFact
             label={copy.header.loaded}
@@ -861,7 +857,7 @@ function Metric({
   tone: "green" | "blue" | "amber" | "red";
 }) {
   return (
-    <article className="panel min-h-[132px]" data-accent={tone}>
+    <article className="panel min-h-[138px]" data-accent={tone}>
       <div className="metric-label">{label}</div>
       <div className="metric-value">{value}</div>
       <div className="metric-detail">{detail}</div>
