@@ -162,6 +162,18 @@ uv run python -m apps.ops.research_v2_factors \
 只有连续多日快照齐备后才允许写 `--output-csv`。输出仍是 factor 输入，不是
 SignalEvent，也不计算 return/PnL 或运行 Nautilus。
 
+期权和 basis 必须逐日成对积累。Coverage reviewer 固定要求至少7个连续 UTC
+日期，每个 kind 每日恰好一份；缺日、重复日、非配对日期或任一快照篡改都会阻塞：
+
+```bash
+uv run python -m apps.ops.research_v2_snapshot_review \
+  --snapshot data/research-v2/raw/options-<day1>.json \
+  --snapshot data/research-v2/raw/basis-<day1>.json
+```
+
+不足7天时只返回 `collecting_insufficient_days`。该 reviewer 不汇总价格、不加载
+returns、不生成 signals，也不计算 PnL。
+
 生成 Phase 4 只读 dashboard snapshot（JSON 默认输出到 stdout）：
 
 ```bash
@@ -276,6 +288,7 @@ continuity evidence、可选 promotion review artifact、以及显式声明的�
 | `research_protocol_v2.py` | 校验独立机制预注册、证据分区和不可调参数 | 2 |
 | `research_v2_snapshot.py` | 保存无凭证 provider qualification 不可变快照 | 2 |
 | `research_v2_factors.py` | 把已验证 basis 快照转换为无收益 point-in-time 因子 | 2 |
+| `research_v2_snapshot_review.py` | 审计期权/basis 多日配对、缺口、重复和篡改 | 2 |
 | `signal_replay.py` | 重放 SQLite 中的历史 signals 跑回测 | 1 |
 | `migrate_sqlite_to_pg.py` | Phase 2 数据迁移 | 2 |
 | `dashboard_snapshot.py` | Phase 4 只读 AgentAdvice / report snapshot | 4 |

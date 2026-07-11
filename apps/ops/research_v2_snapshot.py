@@ -390,6 +390,7 @@ def verify_snapshot(path: Path) -> dict[str, Any]:
     return {
         "path": str(path),
         "kind": kind,
+        "retrieved_at": envelope["retrieved_at"],
         "vintage_id": expected_vintage,
         "snapshot_sha256": snapshot_hash,
         "audit": audit,

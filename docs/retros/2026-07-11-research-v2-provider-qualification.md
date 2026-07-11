@@ -87,6 +87,23 @@ decision timestamp of `2026-07-12T00:00:00Z`. The qualification report contains
 one row and records `returns_loaded=false`, `signals_generated=false`, and
 `pnl_computed=false`. No factor CSV was written during dry-run.
 
+The paired multi-snapshot coverage reviewer also ran against the eligible
+option and basis snapshots. Result:
+
+```text
+status=collecting_insufficient_days
+paired_day_count=1
+minimum_contiguous_days=7
+paired_dates=[2026-07-11]
+blockers=[]
+recommendation=continue_daily_snapshot_collection
+```
+
+Both kinds have exactly one verified snapshot on the same UTC date with no
+internal gap or duplicate. The result is deliberately not a pass. Coverage
+qualification requires seven exact paired consecutive dates and still does not
+authorize signal generation or PnL access.
+
 ### Coin Metrics stablecoin liquidity
 
 - Requested locked universe: USDT + USDC
