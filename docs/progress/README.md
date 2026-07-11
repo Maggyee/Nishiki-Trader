@@ -20,6 +20,12 @@ Current Phase 3 progress files:
 - `phase-2-research-v2-data-sources.json` locks credential-free Deribit,
   Binance COIN-M, and Coin Metrics qualification endpoints plus the immutable
   raw-snapshot envelope before any response body is fetched.
+- `phase-2-research-protocol-v3.md` and its JSON contract lock three new
+  macro/native mechanisms (hashrate recovery, DXY weakness, VIX relief) without
+  reopening rejected v1 families or blocked v2 data routes.
+- `phase-2-research-v3-data-sources.json` locks credential-free Blockchain.com
+  hashrate and Stooq DXY/VIX qualification endpoints before response-body
+  access.
 
 - `phase-3-testnet-canary-evidence.md` records the testnet session ledger and
   bundle evidence summary.

@@ -118,6 +118,13 @@ Research Protocol v2 在接触真实独立因子前锁定三名候选、证据�
 uv run python -m apps.ops.research_protocol_v2
 ```
 
+Research Protocol v3 以同样方式锁定三名新的宏/原生机制候选（算力恢复、DXY
+走弱、VIX 回落），并明确不重开 v1 拒绝族或 v2 被阻塞数据通路：
+
+```bash
+uv run python -m apps.ops.research_protocol_v3
+```
+
 该命令只读预注册 JSON 并输出 canonical SHA-256；不读取因子数据、收益、凭证或
 SignalStore，不运行 Nautilus，也不修改 SourcePolicy。
 
@@ -297,6 +304,7 @@ continuity evidence、可选 promotion review artifact、以及显式声明的�
 | `daily_archive_audit.py` | 审计日线 warm-up/信号归档完整性与跨资产对齐 | 2 |
 | `research_program_review.py` | 校验累计候选注册表并执行反多重试验停止规则 | 2 |
 | `research_protocol_v2.py` | 校验独立机制预注册、证据分区和不可调参数 | 2 |
+| `research_protocol_v3.py` | 校验宏/原生机制预注册、证据分区和不可调参数 | 2 |
 | `research_v2_snapshot.py` | 保存无凭证 provider qualification 不可变快照 | 2 |
 | `research_v2_factors.py` | 把已验证 basis 快照转换为无收益 point-in-time 因子 | 2 |
 | `research_v2_snapshot_review.py` | 审计期权/basis 多日配对、缺口、重复和篡改 | 2 |

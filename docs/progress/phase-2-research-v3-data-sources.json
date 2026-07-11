@@ -1,0 +1,110 @@
+{
+  "schema_version": "research.data_sources.v3",
+  "frozen_at": "2026-07-12T00:00:00Z",
+  "status": "provider_contract_locked_before_response_body_access",
+  "snapshot_envelope": {
+    "schema_version": "research.raw_snapshot.v1",
+    "required_fields": [
+      "kind",
+      "retrieved_at",
+      "vintage_id",
+      "snapshot_sha256",
+      "requests"
+    ],
+    "payload_hash": "sha256 of exact HTTP response bytes",
+    "raw_payload_storage": "base64 of exact HTTP response bytes, verified against payload_hash and parsed payload",
+    "snapshot_hash": "sha256 of canonical envelope before snapshot_sha256 and vintage_id",
+    "overwrite_forbidden": true
+  },
+  "providers": {
+    "hashrate": {
+      "provider": "Blockchain.com Charts API",
+      "authentication": "none",
+      "requests": [
+        {
+          "name": "btc_hash_rate",
+          "url": "https://api.blockchain.info/charts/hash-rate",
+          "params": {
+            "timespan": "30days",
+            "format": "json",
+            "sampled": "false"
+          }
+        }
+      ],
+      "locked_fields": [
+        "status",
+        "name",
+        "unit",
+        "period",
+        "description",
+        "values"
+      ],
+      "value_fields": ["x", "y"],
+      "qualification_use": "current daily hashrate schema, unit, publication lag, and immutable lineage only",
+      "replication_limitation": "A present-day full-history download is not automatically eligible for 2020-2022; historical reserve requires explicit point-in-time availability and immutable fingerprints.",
+      "documentation": "https://www.blockchain.com/explorer/api/charts_api"
+    },
+    "dxy": {
+      "provider": "Stooq daily OHLC",
+      "authentication": "none",
+      "requests": [
+        {
+          "name": "dxy_daily_csv",
+          "url": "https://stooq.com/q/d/l/",
+          "params": {
+            "s": "dx.f",
+            "i": "d"
+          }
+        }
+      ],
+      "locked_fields": [
+        "Date",
+        "Open",
+        "High",
+        "Low",
+        "Close"
+      ],
+      "qualification_use": "current DXY close schema and immutable daily snapshot only",
+      "replication_limitation": "CSV history may be revised; decision timestamps must use completed prior-session closes with available_at no earlier than the next UTC midnight.",
+      "documentation": "https://stooq.com/q/d/?s=dx.f"
+    },
+    "vix": {
+      "provider": "Stooq daily OHLC",
+      "authentication": "none",
+      "requests": [
+        {
+          "name": "vix_daily_csv",
+          "url": "https://stooq.com/q/d/l/",
+          "params": {
+            "s": "^vix",
+            "i": "d"
+          }
+        }
+      ],
+      "locked_fields": [
+        "Date",
+        "Open",
+        "High",
+        "Low",
+        "Close"
+      ],
+      "qualification_use": "current VIX close schema and immutable daily snapshot only",
+      "replication_limitation": "CSV history may be revised; decision timestamps must use completed prior-session closes with available_at no earlier than the next UTC midnight.",
+      "documentation": "https://stooq.com/q/d/?s=%5Evix"
+    }
+  },
+  "publication_lag_contract": {
+    "hashrate": "completed UTC-day network estimate must be available before the decision ts_event that consumes it",
+    "dxy": "previous completed session close; available_at >= next UTC midnight after session date",
+    "vix": "previous completed session close; available_at >= next UTC midnight after session date"
+  },
+  "boundaries": {
+    "credentials_loaded": false,
+    "pnl_computed": false,
+    "signal_store_written": false,
+    "nautilus_run": false,
+    "source_policy_mutated": false,
+    "testnet_resumed": false,
+    "live_path_touched": false
+  }
+}
