@@ -67,6 +67,16 @@ This qualifies the current-surface schema and forward immutable collection. It
 does not provide a historical point-in-time surface and does not yet implement
 the structural expected-return replication required by the candidate.
 
+The public-method availability check found only the abstract, conference
+summaries, and a request-full-text page. Direct SSRN CLI retrieval returned
+HTTP 403, and no author/institution copy or public implementation was found.
+The abstract establishes that the paper uses a flexible structural
+arbitrage-consistent risk-neutral distribution and that higher-order moments
+and volatility-of-volatility matter; it does not disclose enough calibration
+detail to reproduce the model. The option candidate is therefore additionally
+`blocked_method_replication`. No model-free smile fit, ATM-IV threshold, or
+invented coefficient is allowed as a substitute.
+
 ### Binance COIN-M quarterly basis
 
 - Path: `data/research-v2/raw/basis-20260711T030413Z-5254aac625b5.json`
@@ -137,7 +147,8 @@ changed.
 ## Decision and next entrypoint
 
 - `option_risk_premium`: provider schema qualified; historical archive and
-  structural replication pipeline still required.
+  full method/code, historical archive, and structural replication pipeline
+  still required.
 - `futures_basis_curve`: provider schema and one-snapshot point-in-time
   transformation qualified; begin daily forward snapshots and wait for
   contiguous coverage before any signal-generation qualification.
