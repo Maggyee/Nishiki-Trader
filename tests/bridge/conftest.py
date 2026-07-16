@@ -28,6 +28,11 @@ def _payload(**overrides: object) -> dict[str, object]:
         "features_hash": None,
         "metadata": {"timeframe": "15m"},
     }
+    if "score" not in overrides:
+        if overrides.get("side") == "flat":
+            overrides["score"] = 0.0
+        elif overrides.get("side") == "sell":
+            overrides["score"] = -0.73
     base.update(overrides)
     return base
 
