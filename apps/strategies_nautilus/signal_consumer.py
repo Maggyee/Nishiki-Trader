@@ -4,6 +4,8 @@ import logging
 from dataclasses import dataclass
 from typing import Literal
 
+from pydantic import ValidationError as PydanticValidationError
+
 from apps.bridge.signal_event import SignalEvent
 from apps.bridge.store import SignalStore
 from apps.bridge.validators import (
@@ -12,7 +14,6 @@ from apps.bridge.validators import (
     SchemaVersionError,
     UnauthorizedModelError,
     UnauthorizedSourceError,
-    ValidationError,
     check_authorization,
     check_freshness,
     check_schema,
@@ -113,7 +114,7 @@ class SignalConsumer:
         for row in self.store.list_by_status("pending"):
             try:
                 event = SignalEvent.model_validate_json(row["raw_json"])
-            except ValidationError as exc:
+            except PydanticValidationError as exc:
                 self.store.mark(row["signal_id"], "rejected", reason=f"parse_error: {exc}")
                 outcomes.append(
                     ConsumerOutcome(row["signal_id"], "reject_schema", f"parse_error: {exc}")

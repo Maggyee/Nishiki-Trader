@@ -94,13 +94,14 @@ class StaticSignalSource:
 class SignalStorePollingSource:
     """Incremental ``SignalStore`` poller for testnet / live runtime.
 
-    Each ``pop_due(until_ns)`` issues
-    ``store.replay(source=..., model_version=..., since_ns=cursor_ns,
-    until_ns=until_ns)`` and advances ``cursor_ns`` to one nanosecond past
-    the largest ``ts_event`` seen. ``cursor_ns`` should be initialised to
-    the runner start time so historical backfills are not re-consumed on
-    every restart — the operator launcher is responsible for picking that
-    value (typically ``time.time_ns()`` at startup, or
+    Each ``pop_due(until_ns)`` replays from the run's initial lower bound and
+    deduplicates by globally unique ``signal_id``. Keeping the lower bound
+    stable prevents a signal committed late with an older or identical
+    ``ts_event`` from being skipped after the high-water cursor advances.
+    ``cursor_ns`` remains the observable high-water mark and should be
+    initialised to the runner start time so historical backfills are not
+    re-consumed on every restart — the operator launcher is responsible for
+    picking that value (typically ``time.time_ns()`` at startup, or
     ``previous_processed_until_ns + 1`` for a restart).
     """
 
@@ -109,21 +110,35 @@ class SignalStorePollingSource:
     model_version: str
     cursor_ns: int
     last_popped_ns: int | None = None
+    _replay_floor_ns: int = field(init=False, repr=False)
+    _seen_signal_ids: set[str] = field(default_factory=set, init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        self._replay_floor_ns = self.cursor_ns
+
+    def reset_cursor(self, cursor_ns: int) -> None:
+        """Reset the run lower bound without permitting signal re-emission."""
+        self.cursor_ns = cursor_ns
+        self._replay_floor_ns = cursor_ns
 
     def pop_due(self, until_ns: int) -> list[SignalEvent]:
-        if until_ns < self.cursor_ns:
+        if until_ns < self._replay_floor_ns:
             return []
         events = self.store.replay(
             source=self.source,
             model_version=self.model_version,
-            since_ns=self.cursor_ns,
+            since_ns=self._replay_floor_ns,
             until_ns=until_ns,
         )
-        if events:
-            last_ts = max(int(e.ts_event) for e in events)
-            self.cursor_ns = last_ts + 1
-            self.last_popped_ns = last_ts
-        return events
+        new_events = [
+            event for event in events if event.signal_id not in self._seen_signal_ids
+        ]
+        if new_events:
+            self._seen_signal_ids.update(event.signal_id for event in new_events)
+            last_ts = max(int(event.ts_event) for event in new_events)
+            self.cursor_ns = max(self.cursor_ns, last_ts + 1)
+            self.last_popped_ns = max(self.last_popped_ns or last_ts, last_ts)
+        return new_events
 
 SIGNAL_TAG_PREFIX = "signal_id:"
 
@@ -229,8 +244,7 @@ class BaselineNautilusStrategy(Strategy):
             return []
 
         # ADR-006 §2.5: dry-run intents must produce no orders. The lineage
-        # row still records the action + target_position_pct via the caller,
-        # so audits can reconstruct what the strategy would have submitted.
+        # row still records the action so audits retain the decision outcome.
         if intent.dry_run:
             return []
 
@@ -241,6 +255,9 @@ class BaselineNautilusStrategy(Strategy):
         tags = [_signal_tag(intent.signal_id)]
 
         if action == "target_long":
+            quantity = self._scaled_trade_size(intent)
+            if quantity <= 0:
+                return []
             if self.portfolio.is_net_long(self._params.instrument_id):
                 return []
             if self.portfolio.is_net_short(self._params.instrument_id):
@@ -248,13 +265,16 @@ class BaselineNautilusStrategy(Strategy):
             order = self.order_factory.market(
                 instrument_id=self._params.instrument_id,
                 order_side=OrderSide.BUY,
-                quantity=instrument.make_qty(self._params.trade_size),
+                quantity=instrument.make_qty(quantity),
                 tags=tags,
             )
             self.submit_order(order)
             return [order.client_order_id.value]
 
         if action == "target_short":
+            quantity = self._scaled_trade_size(intent)
+            if quantity <= 0:
+                return []
             if self.portfolio.is_net_short(self._params.instrument_id):
                 return []
             if self.portfolio.is_net_long(self._params.instrument_id):
@@ -262,7 +282,7 @@ class BaselineNautilusStrategy(Strategy):
             order = self.order_factory.market(
                 instrument_id=self._params.instrument_id,
                 order_side=OrderSide.SELL,
-                quantity=instrument.make_qty(self._params.trade_size),
+                quantity=instrument.make_qty(quantity),
                 tags=tags,
             )
             self.submit_order(order)
@@ -275,6 +295,13 @@ class BaselineNautilusStrategy(Strategy):
             return []
 
         raise ValueError(f"unknown OrderIntent.action={action!r}")
+
+    def _scaled_trade_size(self, intent: OrderIntent) -> Decimal:
+        max_position_pct = Decimal(str(self._params.baseline_config.max_position_pct))
+        target_position_pct = Decimal(str(abs(intent.target_position_pct)))
+        if max_position_pct <= 0 or target_position_pct <= 0:
+            return Decimal(0)
+        return self._params.trade_size * target_position_pct / max_position_pct
 
     def _update_daily_risk_state(self, now_ns: int) -> None:
         current_day = datetime.fromtimestamp(now_ns / 1_000_000_000, tz=UTC).date()

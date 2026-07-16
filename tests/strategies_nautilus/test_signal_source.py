@@ -125,6 +125,49 @@ def test_polling_source_advances_cursor_past_last_seen_ts(tmp_path: Path):
     assert repeat == []
 
 
+def test_polling_source_returns_signal_inserted_late_at_same_timestamp(
+    tmp_path: Path,
+):
+    store = SignalStore(tmp_path / "signals.db")
+    signal_ts = BASE_NS + 1_000
+    store.write(_event("first", signal_ts), now_ns=0)
+    src = SignalStorePollingSource(
+        store=store,
+        source=SOURCE,
+        model_version=MODEL,
+        cursor_ns=BASE_NS,
+    )
+
+    assert [event.signal_id for event in src.pop_due(signal_ts)] == ["first"]
+
+    store.write(_event("late-same-ts", signal_ts), now_ns=1)
+    assert [
+        event.signal_id for event in src.pop_due(signal_ts + 1_000)
+    ] == ["late-same-ts"]
+    assert src.pop_due(signal_ts + 1_000) == []
+
+
+def test_polling_source_returns_out_of_order_signal_inserted_after_high_water(
+    tmp_path: Path,
+):
+    store = SignalStore(tmp_path / "signals.db")
+    src = SignalStorePollingSource(
+        store=store,
+        source=SOURCE,
+        model_version=MODEL,
+        cursor_ns=BASE_NS,
+    )
+    store.write(_event("newer", BASE_NS + 2_000), now_ns=0)
+    assert [
+        event.signal_id for event in src.pop_due(BASE_NS + 3_000)
+    ] == ["newer"]
+
+    store.write(_event("late-older", BASE_NS + 1_000), now_ns=1)
+    assert [
+        event.signal_id for event in src.pop_due(BASE_NS + 3_000)
+    ] == ["late-older"]
+
+
 def test_polling_source_skips_history_before_initial_cursor(tmp_path: Path):
     store = SignalStore(tmp_path / "signals.db")
     store.write(_event("old1", BASE_NS + 100), now_ns=0)
@@ -159,6 +202,27 @@ def test_polling_source_returns_empty_when_until_before_cursor(tmp_path: Path):
     # mutating cursor.
     assert src.pop_due(until_ns=BASE_NS + 2_000) == []
     assert src.cursor_ns == BASE_NS + 3_000
+
+
+def test_polling_source_reset_cursor_preserves_seen_state(tmp_path: Path):
+    store = SignalStore(tmp_path / "signals.db")
+    store.write(_event("s1", BASE_NS + 1_000), now_ns=0)
+    src = SignalStorePollingSource(
+        store=store,
+        source=SOURCE,
+        model_version=MODEL,
+        cursor_ns=BASE_NS,
+    )
+    assert [event.signal_id for event in src.pop_due(BASE_NS + 2_000)] == ["s1"]
+
+    src.reset_cursor(BASE_NS + 500)
+
+    assert src.cursor_ns == BASE_NS + 500
+    assert src.last_popped_ns == BASE_NS + 1_000
+    assert src.pop_due(BASE_NS + 2_000) == []
+
+    store.write(_event("s2", BASE_NS + 1_500), now_ns=1)
+    assert [event.signal_id for event in src.pop_due(BASE_NS + 2_000)] == ["s2"]
 
 
 @pytest.mark.parametrize("initial_cursor", [-1, 0, BASE_NS])

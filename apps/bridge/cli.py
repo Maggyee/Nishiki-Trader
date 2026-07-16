@@ -187,11 +187,6 @@ def main(argv: list[str] | None = None) -> int:
     return args.func(args)
 
 
-if __name__ == "__main__":
-    raise SystemExit(main())
-
-
-
 def _enforce_consumer_policy(args: argparse.Namespace) -> bool:
     if not args.enforce_consumer_policy:
         return False
@@ -201,3 +196,7 @@ def _enforce_consumer_policy(args: argparse.Namespace) -> bool:
             "--allowed-sources and --allowed-models"
         )
     return True
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

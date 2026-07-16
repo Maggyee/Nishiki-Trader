@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sqlite3
+
 from apps.bridge.signal_event import SignalEvent
 from apps.strategies_nautilus.signal_consumer import (
     ConsumerConfig,
@@ -81,6 +83,32 @@ def test_consume_pending_is_idempotent(store, signal_event, config):
     second = consumer.consume_pending(now_ns=signal_event.ts_event)
     assert [o.decision for o in first] == ["accept"]
     assert second == []  # already consumed; no pending rows left
+
+
+def test_consume_pending_rejects_corrupt_row_and_continues(
+    store, signal_event, make_payload, config
+):
+    later = SignalEvent.model_validate(
+        make_payload(
+            signal_id="valid-after-corrupt",
+            ts_event=signal_event.ts_event + 1,
+        )
+    )
+    store.write(signal_event)
+    store.write(later)
+    with sqlite3.connect(store.path) as conn:
+        conn.execute(
+            "UPDATE signals SET raw_json = '{}' WHERE signal_id = ?",
+            (signal_event.signal_id,),
+        )
+
+    outcomes = SignalConsumer(store, config).consume_pending(now_ns=later.ts_event)
+
+    assert [outcome.decision for outcome in outcomes] == ["reject_schema", "accept"]
+    corrupt_row = store.get(signal_event.signal_id)
+    assert corrupt_row["status"] == "rejected"
+    assert "parse_error" in corrupt_row["reason"]
+    assert store.get(later.signal_id)["status"] == "consumed"
 
 
 def test_consumer_module_has_no_trading_api_calls():

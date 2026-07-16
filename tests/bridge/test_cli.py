@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import subprocess
+import sys
 from pathlib import Path
 
 from apps.bridge.cli import main
@@ -29,6 +31,31 @@ def test_cli_write_then_replay(tmp_path, signal_payload, capsys):
     out = capsys.readouterr().out.strip().splitlines()
     assert len(out) == 1
     assert json.loads(out[0])["signal_id"] == signal_payload["signal_id"]
+
+
+def test_cli_write_module_entrypoint(tmp_path):
+    inp = tmp_path / "empty.jsonl"
+    inp.write_text("", encoding="utf-8")
+    db = tmp_path / "signals.db"
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "apps.bridge.cli",
+            "--db",
+            str(db),
+            "write",
+            str(inp),
+        ],
+        cwd=Path(__file__).resolve().parents[2],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    assert "wrote 0 accepted" in completed.stdout
 
 
 def test_cli_write_dedupes_on_second_run(tmp_path, signal_payload, capsys):

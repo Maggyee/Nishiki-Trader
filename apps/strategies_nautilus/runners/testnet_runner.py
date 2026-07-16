@@ -394,7 +394,7 @@ def _apply_restart_signal_cursor(
             continue
         signal_source = getattr(strategy, "_signal_source", None)
         if isinstance(signal_source, SignalStorePollingSource):
-            signal_source.cursor_ns = cursor_ns
+            signal_source.reset_cursor(cursor_ns)
 
 @dataclass(frozen=True)
 class LongRunningTestnetResult:

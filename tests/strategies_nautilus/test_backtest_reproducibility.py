@@ -743,10 +743,34 @@ def test_multiplier_policy_still_produces_orders(
     )
     result = run_backtest(config)
     assert result.manifest.totals.fills > 0
+    fills = pd.read_parquet(result.output_dir / "fills.parquet")
+    assert set(fills["quantity"].round(7)) == {0.0005}
     # Manifest preserves the policy multiplier for replay.
     pol = result.manifest.strategies[0].params["policies"][0]
     assert pol["position_pct_multiplier"] == 0.5
     assert pol["dry_run"] is False
+
+
+def test_zero_multiplier_policy_submits_no_orders(
+    tmp_path, btcusdt_instrument, bar_type, signal_store_path, catalog_path
+):
+    config = _build_config(
+        output_root=tmp_path / "backtests",
+        catalog_path=catalog_path,
+        instrument_id=btcusdt_instrument.id.value,
+        bar_type=bar_type,
+        signal_store_path=signal_store_path,
+        policies={
+            ("freqai_v1", "2026-05-14"): SourcePolicy(
+                position_pct_multiplier=0.0
+            )
+        },
+    )
+
+    result = run_backtest(config)
+
+    assert result.manifest.totals.orders == 0
+    assert result.manifest.totals.fills == 0
 
 
 def test_empty_policies_omitted_or_empty_list(

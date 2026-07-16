@@ -1,7 +1,7 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-07-16 (v2 cloud coverage 6/7; v3 collector synthetic-ready)
+- **Last updated**: 2026-07-16 (full-code review fixes verified; v2 cloud coverage 6/7; v3 collector synthetic-ready)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
 - **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry remains frozen at 16 rejects and an empty selected set. Research Protocol v2 remains locked and data-blocked (option method replication, stablecoin entitlement, incomplete basis history); its credential-free cloud option/basis coverage window is healthy at 6/7 paired UTC days under collector image `5a8289c`. Research Protocol v3 remains pre-registered with miner hashrate recovery, USD weakness (DXY), and equity vol relief (VIX); its immutable credential-free collector is implemented and synthetic-validated, but no real v3 response body has been accessed. Opened 2023-2025 remains diagnostic-only, 2020-2022 PnL remains unconsumed, July 2026 has PnL forbidden, and 2026-08..12 remains the final future blind. No grid search, failed-model retuning, PnL-selected ensemble, policy change, or testnet resume is allowed.
   Keep the current SourcePolicy unchanged until an explicit `promotion_review.py` decision. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
@@ -120,7 +120,7 @@ remains paused, and the Phase 3 strict streak remains 0/14.
 Immediate focus:
 
 1. Keep the original registry frozen. Keep Protocol v2 locked and data-blocked without retuning. Run only its credential-free seven-day cloud snapshot coverage collector; completion does not authorize factors, signals, or PnL. Use `docs/progress/phase-2-research-protocol-v3.json` as the newest authorized research resumption path. Do not change the three v3 identities, parameters, partitions, or gates after real factor access.
-2. Treat `docs/progress/phase-3-testnet-canary-evidence.md`, `docs/progress/phase-3-testnet-continuity-plan.md`, the 2026-05-30 clean canary retro, the 2026-05-30 duplicate-entry abort retro, the 2026-05-30 post-fix clean retro, and the 2026-06-01 heartbeat-lost retro as the current operational evidence. Do not run more routine canaries unless the operator explicitly resumes live-readiness evidence collection. If canary evidence resumes, use `python -m apps.strategies_nautilus.runners.report_testnet_bundle data/testnet/<run_id>` before writing future manifest-backed canary retros, use `--markdown` with clean bundle directories before updating the clean evidence ledger, and use `--continuity --markdown --min-clean-hours-per-day 6 --required-consecutive-days 14` with every completed manifest-backed bundle in the candidate window before claiming continuity progress. Carry no-manifest aborts manually. Do not open a new `promotion_review` unless an actual policy/stage decision is being made.
+2. Treat `docs/progress/phase-3-testnet-canary-evidence.md`, `docs/progress/phase-3-testnet-continuity-plan.md`, the 2026-05-30 clean canary retro, the 2026-05-30 duplicate-entry abort retro, the 2026-05-30 post-fix clean retro, and the 2026-06-01 heartbeat-lost retro as the current operational evidence. The historical canaries remain valid for connection, lifecycle, lineage, and emergency-path evidence, but not as proof that `SourcePolicy.position_pct_multiplier` scaled the submitted quantity; that execution bug was fixed on 2026-07-16 and any future sizing claim needs post-fix evidence. Do not run more routine canaries unless the operator explicitly resumes live-readiness evidence collection. If canary evidence resumes, use `python -m apps.strategies_nautilus.runners.report_testnet_bundle data/testnet/<run_id>` before writing future manifest-backed canary retros, use `--markdown` with clean bundle directories before updating the clean evidence ledger, and use `--continuity --markdown --min-clean-hours-per-day 6 --required-consecutive-days 14` with every completed manifest-backed bundle in the candidate window before claiming continuity progress. Carry no-manifest aborts manually. Do not open a new `promotion_review` unless an actual policy/stage decision is being made.
 3. Use `docs/decisions/009-agent-advice-audit.md` and `docs/decisions/012-phase5-readonly-dashboard.md` as the active agent/frontend boundaries. Agent/MCP work may write/replay/review `AgentAdvice`; dashboard work may read passive reports, observability textfiles, and AgentAdvice through `dashboard.snapshot.v1`. `TradingAgents/` is available as an ignored read-only upstream reference for future agent role/configuration ideas only; `docs/progress/tradingagents-reference-map.md` is the current safe adaptation map, and `apps.agents.role_profiles` is the first machine-readable AgentAdvice-only role seed. Neither path may write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or encode structured execution directives.
 4. ADR-008 §6.2 Phase 3b, §6.3 Phase 3c-a/b/c, §6.4 Phase 3d, §6.5 Phase 3e, §6.6 Phase 3f stability soak/canary, and the §8 promotion-review patch are all implemented and unit-tested. The `phase_3_not_ready` blocker now only hard-blocks `live_canary` / `live_normal`.
 5. Keep LLM agents and FreqAI out of the order path; `SignalEvent v1 -> NautilusTrader Strategy -> RiskEngine` remains the only bridge.
@@ -152,6 +152,22 @@ Immediate focus:
 - No edits to `freqtrade/` or `nautilus_trader/` unless explicitly requested.
 
 ## Latest Verification
+
+On 2026-07-16, after the full-code review follow-up:
+
+- `BaselineNautilusStrategy` now scales its concrete order quantity by the
+  accepted `OrderIntent.target_position_pct`; multiplier `0.5` submits half the
+  configured trade size and multiplier `0.0` submits no order.
+- `SignalStorePollingSource` replays from the current run's fixed lower bound
+  and deduplicates by `signal_id`, so same-timestamp and older late inserts are
+  consumed once instead of being skipped after the event-time high water moves.
+- The real `python -m apps.bridge.cli ... write` entrypoint is covered, and a
+  corrupt persisted `raw_json` row is rejected without stopping later signals.
+- Targeted verification passed 34 tests. The full suite is **853 passed, 12
+  Postgres-dependent skips**; Ruff and `git diff --check` pass. No credentials,
+  exchange connection, SourcePolicy mutation, testnet resume, or live action
+  occurred. Historical canary bundles remain operational evidence but are not
+  sizing-multiplier evidence.
 
 On 2026-07-16, before any real Research Protocol v3 provider response access:
 
