@@ -3,7 +3,7 @@
 - **Frozen**: 2026-07-12, before accessing any real hashrate, DXY, or VIX factor body.
 - **Machine contract**: `docs/progress/phase-2-research-protocol-v3.json`
 - **Provider contract**: `docs/progress/phase-2-research-v3-data-sources.json`
-- **Status**: pre-registered; synthetic validation only.
+- **Status**: pre-registered; immutable collector implemented and synthetic-validated; real provider bodies remain unaccessed.
 - **Trading effect**: none.
 
 ## Why a new protocol is allowed
@@ -123,6 +123,36 @@ Only a candidate that subsequently passes the locked five-month future blind
 may be considered for `paper_shadow`. This protocol does not change
 `SourcePolicy`, run promotion review, restart testnet, load credentials, or
 authorize live trading.
+
+## Immutable snapshot collector
+
+`apps.ops.research_v3_snapshot` implements the frozen provider contract without
+adding dependencies or importing SignalStore, Freqtrade, NautilusTrader, or a
+credential source. It supports exactly three kinds:
+
+- `hashrate`: Blockchain.com Charts API JSON;
+- `dxy`: Stooq daily CSV for `dx.f`;
+- `vix`: Stooq daily CSV for `^vix`.
+
+The collector retains exact response bytes as base64, hashes the raw bytes,
+stores a parsed copy, validates the provider-specific schema and publication
+lag, hashes the canonical envelope, and refuses overwrite. Offline verification
+recomputes raw/parsed/audit/envelope/vintage/filename lineage. Collection is
+hard-limited to the July 2026 qualification window.
+
+The safe no-network entrypoint is:
+
+```bash
+python -m apps.ops.research_v3_snapshot --kind hashrate --dry-run
+python -m apps.ops.research_v3_snapshot --kind dxy --dry-run
+python -m apps.ops.research_v3_snapshot --kind vix --dry-run
+```
+
+Actual collection omits `--dry-run` and writes under
+`data/research-v3/raw/`; `--verify PATH` performs offline verification. As of
+this implementation commit, only synthetic injected responses and request-plan
+dry-runs have run. No real factor response body, return, signal, or PnL has been
+accessed.
 
 ## Explicit non-goals
 
