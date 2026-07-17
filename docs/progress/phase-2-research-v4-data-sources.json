@@ -1,0 +1,75 @@
+{
+  "schema_version": "research.data_sources.v4",
+  "locked_at": "2026-07-17T11:07:21Z",
+  "status": "provider_recovery_locked_before_direct_csv_access",
+  "snapshot_envelope": {
+    "schema_version": "research.raw_snapshot.v1",
+    "required_fields": [
+      "kind",
+      "retrieved_at",
+      "vintage_id",
+      "snapshot_sha256",
+      "requests"
+    ],
+    "payload_hash": "sha256 of exact HTTP response bytes",
+    "raw_payload_storage": "base64 of exact HTTP response bytes",
+    "snapshot_hash": "sha256 of canonical envelope before snapshot_sha256 and vintage_id",
+    "overwrite_forbidden": true
+  },
+  "providers": {
+    "broad_usd": {
+      "provider": "Federal Reserve Bank of St. Louis FRED graph CSV",
+      "underlying_source": "Board of Governors of the Federal Reserve System H.10",
+      "authentication": "none",
+      "requests": [
+        {
+          "name": "fred_dtwexbgs_july_2026",
+          "url": "https://fred.stlouisfed.org/graph/fredgraph.csv",
+          "params": {
+            "id": "DTWEXBGS",
+            "cosd": "2026-07-01",
+            "coed": "2026-07-31"
+          }
+        }
+      ],
+      "locked_fields": ["observation_date", "DTWEXBGS"],
+      "qualification_use": "July 2026 direct CSV schema, immutable lineage, missing-value behavior, and snapshot-time availability only",
+      "historical_replication_limitation": "A current FRED graph CSV is revision-prone and cannot stand in for 2020-2022 point-in-time vintages.",
+      "documentation": "https://fred.stlouisfed.org/series/DTWEXBGS"
+    },
+    "vix": {
+      "provider": "Federal Reserve Bank of St. Louis FRED graph CSV",
+      "underlying_source": "Cboe Global Markets VIX daily close",
+      "authentication": "none",
+      "requests": [
+        {
+          "name": "fred_vixcls_july_2026",
+          "url": "https://fred.stlouisfed.org/graph/fredgraph.csv",
+          "params": {
+            "id": "VIXCLS",
+            "cosd": "2026-07-01",
+            "coed": "2026-07-31"
+          }
+        }
+      ],
+      "locked_fields": ["observation_date", "VIXCLS"],
+      "qualification_use": "July 2026 direct CSV schema, immutable lineage, missing-value behavior, and snapshot-time availability only",
+      "historical_replication_limitation": "A current FRED graph CSV is revision-prone and cannot stand in for 2020-2022 point-in-time vintages.",
+      "documentation": "https://fred.stlouisfed.org/series/VIXCLS",
+      "underlying_documentation": "https://www.cboe.com/tradable_products/vix/vix_historical_data"
+    }
+  },
+  "publication_lag_contract": {
+    "broad_usd": "retrieved_at is the earliest eligible available_at; a decision may consume the observation only at a later UTC decision boundary",
+    "vix": "retrieved_at is the earliest eligible available_at; a decision may consume the observation only at a later UTC decision boundary"
+  },
+  "boundaries": {
+    "credentials_loaded": false,
+    "pnl_computed": false,
+    "signal_store_written": false,
+    "nautilus_run": false,
+    "source_policy_mutated": false,
+    "testnet_resumed": false,
+    "live_path_touched": false
+  }
+}
