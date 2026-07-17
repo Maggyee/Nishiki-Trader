@@ -18,11 +18,10 @@ from typing import Any
 
 import pandas as pd
 
-from apps.strategies_freqtrade.research.binance_mechanism_signals import ASSETS
-
 SCHEMA_VERSION = "research.raw_snapshot.v2"
 PROVIDER_CONTRACT = Path("docs/progress/phase-2-research-v5-data-sources.json")
 KINDS = ("delivery_curve", "bvol")
+ASSETS = ("BTCUSDT", "ETHUSDT")
 BINANCE_DATA_ROOT = "https://data.binance.vision/data"
 
 _KLINE_COLUMNS = (

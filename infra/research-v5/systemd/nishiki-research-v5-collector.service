@@ -9,7 +9,7 @@ User=nishiki
 Group=nishiki
 WorkingDirectory=/opt/nishiki-trader
 EnvironmentFile=/etc/nishiki-trader/research-v5.env
-ExecStart=/opt/nishiki-trader/.venv/bin/python -m apps.ops.research_v5_daily --data-root ${RESEARCH_V5_DATA_ROOT} --expected-git-commit ${TRADER_GIT_SHA} --repo-root /opt/nishiki-trader
+ExecStart=/usr/bin/docker compose --env-file /etc/nishiki-trader/research-v5.env -f infra/research-v5/compose.yml run --rm --no-deps collector
 TimeoutStartSec=20min
 Nice=10
 

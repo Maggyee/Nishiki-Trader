@@ -12,6 +12,7 @@ def test_daily_dry_run_is_commit_locked_and_offline(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     commit = "a" * 40
+    (tmp_path / ".git").mkdir()
 
     def check_output(command: list[str], **_: object) -> str:
         if command[1:] == ["rev-parse", "HEAD"]:
@@ -42,6 +43,7 @@ def test_daily_dry_run_is_commit_locked_and_offline(
 def test_daily_rejects_commit_mismatch(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    (tmp_path / ".git").mkdir()
     monkeypatch.setattr(
         "apps.ops.research_v5_daily.subprocess.check_output",
         lambda *_args, **_kwargs: f"{'b' * 40}\n",
@@ -61,6 +63,7 @@ def test_daily_rejects_tracked_changes(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     commit = "a" * 40
+    (tmp_path / ".git").mkdir()
     responses = iter((f"{commit}\n", " M apps/ops/research_v5_daily.py\n"))
     monkeypatch.setattr(
         "apps.ops.research_v5_daily.subprocess.check_output",
@@ -68,6 +71,42 @@ def test_daily_rejects_tracked_changes(
     )
 
     with pytest.raises(ValueError, match="tracked working-tree changes"):
+        run_daily_collection(
+            date(2026, 7, 16),
+            data_root=tmp_path / "data",
+            expected_git_commit=commit,
+            repo_root=tmp_path,
+            dry_run=True,
+        )
+
+
+def test_daily_accepts_matching_immutable_image_marker(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    commit = "a" * 40
+    (tmp_path / ".collector-git-sha").write_text(f"{commit}\n")
+    monkeypatch.setenv("TRADER_GIT_SHA", commit)
+
+    report = run_daily_collection(
+        date(2026, 7, 16),
+        data_root=tmp_path / "data",
+        expected_git_commit=commit,
+        repo_root=tmp_path,
+        dry_run=True,
+    )
+
+    assert report["git_commit"] == commit
+    assert report["network_accessed"] is False
+
+
+def test_daily_rejects_image_marker_environment_drift(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    commit = "a" * 40
+    (tmp_path / ".collector-git-sha").write_text(f"{commit}\n")
+    monkeypatch.setenv("TRADER_GIT_SHA", "b" * 40)
+
+    with pytest.raises(ValueError, match="environment differs"):
         run_daily_collection(
             date(2026, 7, 16),
             data_root=tmp_path / "data",

@@ -8,6 +8,7 @@
 - **Next implementation entrypoint**: install the unit files only after the
   locked commit passes cloud dry-run and one-day qualification.
 
-The unit is separate from `nishiki-research-v2-collector.*`. It pins the current
-checkout through `TRADER_GIT_SHA`; commit drift or tracked-file dirt fails
-closed before any network request.
+The unit is separate from `nishiki-research-v2-collector.*`. It invokes the
+dedicated `nishiki-research-v5:<TRADER_GIT_SHA>` one-shot container; the image's
+read-only build marker, environment, and CLI commit must agree before any
+network request. A host-checkout run additionally rejects tracked-file dirt.

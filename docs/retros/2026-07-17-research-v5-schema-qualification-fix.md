@@ -47,7 +47,27 @@ fingerprint hashes do not change.
 
 The correction is covered by millisecond/microsecond/nanosecond archive tests,
 an explicit BVOL intraday-gap test, and the existing duplicated Nautilus
-integration chain. The next action is to push this correction, then rerun all
-four 2026-07-16 qualification snapshots from that new clean commit. Historical
-replication bodies remain forbidden until the four-snapshot qualification and
-offline verification succeed.
+integration chain.
+
+## Corrected local qualification result
+
+Correction commit `4891346f3aa7e94ced7421e2be69b53c36013645` was pushed
+before the rerun. From that clean commit:
+
+- all four 2026-07-16 BTC/ETH curve/BVOL snapshots were created and passed
+  independent offline raw/checksum/audit/envelope verification;
+- a second real collection returned four idempotent successes, created no new
+  vintage, and reported `vintage_conflict_count=0`;
+- BTC/ETH BVOL each contained 86,400 second buckets; their last selected values
+  were 36.8310 and 51.2104 respectively;
+- BTC/ETH Spot 1m qualification wrote 1,440 bars per asset into an isolated v5
+  catalog; passive audit found zero duplicate timestamps, missing intervals, or
+  irregular steps and confirmed cross-asset alignment;
+- no demo or research signal was written, and no return or PnL was computed.
+
+The first cloud preflight used `--network none` and stopped before any request
+because the old v2 minimal image intentionally lacks pandas. v5 therefore gains
+its own commit-labelled, read-only pandas/pyarrow image and keeps its existing
+separate systemd timer. The cloud qualification must be rerun from the clean
+commit containing that image before this protocol may open historical
+replication bodies.

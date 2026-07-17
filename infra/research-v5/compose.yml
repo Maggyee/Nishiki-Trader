@@ -1,0 +1,32 @@
+services:
+  collector:
+    image: "nishiki-research-v5:${TRADER_GIT_SHA:?TRADER_GIT_SHA is required}"
+    pull_policy: never
+    build:
+      context: ../..
+      dockerfile: infra/research-v5/Dockerfile
+      args:
+        TRADER_GIT_SHA: "${TRADER_GIT_SHA:?TRADER_GIT_SHA is required}"
+    user: "${COLLECTOR_UID:-1002}:${COLLECTOR_GID:-1002}"
+    environment:
+      TRADER_GIT_SHA: "${TRADER_GIT_SHA:?TRADER_GIT_SHA is required}"
+    command:
+      - --data-root
+      - /data/research-v5
+      - --expected-git-commit
+      - "${TRADER_GIT_SHA:?TRADER_GIT_SHA is required}"
+      - --repo-root
+      - /app
+    volumes:
+      - "${RESEARCH_V5_DATA_ROOT:-/var/lib/nishiki-trader/research-v5}:/data/research-v5"
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: "no"
+    cpus: 1.0
+    mem_limit: 1g
+    pids_limit: 128
