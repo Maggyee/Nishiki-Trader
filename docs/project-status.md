@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-07-17 (v2 coverage complete; v3 partial pass; v4 provider recovery locked before direct CSV access)
+- **Last updated**: 2026-07-17 (v2 coverage complete; v3 hashrate qualified; v3/v4 macro provider routes blocked)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
-- **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry remains frozen at 16 rejects and an empty selected set. Research Protocol v2 remains locked and data-blocked (option method replication, stablecoin entitlement, incomplete basis history), while its credential-free cloud option/basis coverage window completed cleanly at 7/7 paired UTC days under collector image `5a8289c`. Research Protocol v3 has one valid July hashrate snapshot; its frozen Stooq DXY/VIX routes remain blocked. Protocol v4 separately locks two new FRED provider-recovery identities and July-only CSV requests before direct CSV access; it preserves v3 signs/lookbacks and discloses that documentation search exposed limited current rows without returns or PnL. Opened 2023-2025 remains diagnostic-only, 2020-2022 PnL remains unconsumed, July 2026 has PnL forbidden, and 2026-08..12 remains the final future blind. No in-place provider substitution, grid search, failed-model retuning, PnL-selected ensemble, policy change, or testnet resume is allowed.
+- **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry remains frozen at 16 rejects and an empty selected set. Research Protocol v2 remains locked and data-blocked (option method replication, stablecoin entitlement, incomplete basis history), while its credential-free cloud option/basis coverage window completed cleanly at 7/7 paired UTC days under collector image `5a8289c`. Research Protocol v3 has one valid July hashrate snapshot; its frozen Stooq DXY/VIX routes remain blocked. Protocol v4 separately locked two FRED provider-recovery identities and July-only requests on pre-access commit `62d926f`, but both real routes timed out from cloud and local network paths and produced zero snapshots. No v4 signal generator or further automatic provider substitution is authorized. Opened 2023-2025 remains diagnostic-only, 2020-2022 PnL remains unconsumed, July 2026 has PnL forbidden, and 2026-08..12 remains the final future blind. No in-place provider substitution, grid search, failed-model retuning, PnL-selected ensemble, policy change, or testnet resume is allowed.
   Keep the current SourcePolicy unchanged until an explicit `promotion_review.py` decision. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
@@ -117,14 +117,14 @@ UTC days.
 Research Protocol v3 is pre-registered for three independent macro/native
 mechanisms. Hashrate's first real July schema/lineage snapshot is valid; DXY and
 VIX are blocked at the frozen provider route because Stooq serves a JavaScript
-verification page rather than CSV. Protocol v4 has separately locked two new
-FRED identities and direct July-only CSV requests; real CSV bodies are not yet
-accessed. Routine 14-day testnet continuity remains paused, and the Phase 3
-strict streak remains 0/14.
+verification page rather than CSV. Protocol v4 separately locked two new FRED
+identities, but both direct July-only routes timed out from cloud and local
+paths and wrote zero snapshots. Routine 14-day testnet continuity remains
+paused, and the Phase 3 strict streak remains 0/14.
 
 Immediate focus:
 
-1. Keep the original registry frozen. Keep Protocol v2 locked and data-blocked without retuning; its 7/7 cloud collection is complete and must not restart. Retain the qualified v3 hashrate snapshot and keep both v3 Stooq routes blocked. Use only the separately identified v4 FRED requests for provider recovery; do not change v3 identities or reuse their provider lineage.
+1. Keep the original registry frozen. Keep Protocol v2 locked and data-blocked without retuning; its 7/7 cloud collection is complete and must not restart. Retain the qualified v3 hashrate snapshot. Keep both v3 Stooq and both v4 FRED macro routes blocked; do not implement v4 signals or automatically open another provider-recovery protocol.
 2. Treat `docs/progress/phase-3-testnet-canary-evidence.md`, `docs/progress/phase-3-testnet-continuity-plan.md`, the 2026-05-30 clean canary retro, the 2026-05-30 duplicate-entry abort retro, the 2026-05-30 post-fix clean retro, and the 2026-06-01 heartbeat-lost retro as the current operational evidence. The historical canaries remain valid for connection, lifecycle, lineage, and emergency-path evidence, but not as proof that `SourcePolicy.position_pct_multiplier` scaled the submitted quantity; that execution bug was fixed on 2026-07-16 and any future sizing claim needs post-fix evidence. Do not run more routine canaries unless the operator explicitly resumes live-readiness evidence collection. If canary evidence resumes, use `python -m apps.strategies_nautilus.runners.report_testnet_bundle data/testnet/<run_id>` before writing future manifest-backed canary retros, use `--markdown` with clean bundle directories before updating the clean evidence ledger, and use `--continuity --markdown --min-clean-hours-per-day 6 --required-consecutive-days 14` with every completed manifest-backed bundle in the candidate window before claiming continuity progress. Carry no-manifest aborts manually. Do not open a new `promotion_review` unless an actual policy/stage decision is being made.
 3. Use `docs/decisions/009-agent-advice-audit.md` and `docs/decisions/012-phase5-readonly-dashboard.md` as the active agent/frontend boundaries. Agent/MCP work may write/replay/review `AgentAdvice`; dashboard work may read passive reports, observability textfiles, and AgentAdvice through `dashboard.snapshot.v1`. `TradingAgents/` is available as an ignored read-only upstream reference for future agent role/configuration ideas only; `docs/progress/tradingagents-reference-map.md` is the current safe adaptation map, and `apps.agents.role_profiles` is the first machine-readable AgentAdvice-only role seed. Neither path may write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or encode structured execution directives.
 4. ADR-008 §6.2 Phase 3b, §6.3 Phase 3c-a/b/c, §6.4 Phase 3d, §6.5 Phase 3e, §6.6 Phase 3f stability soak/canary, and the §8 promotion-review patch are all implemented and unit-tested. The `phase_3_not_ready` blocker now only hard-blocks `live_canary` / `live_normal`.
@@ -132,7 +132,7 @@ Immediate focus:
 
 ## Next Steps
 
-1. Commit and push the locked Protocol v4 contract before opening either direct FRED CSV. Then collect one July `broad_usd` and one `vix` schema/lineage snapshot without factors, returns, signals, or PnL; keep v3 immutable.
+1. Preserve the qualified v3 hashrate snapshot and the v4 timeout evidence. Do not retry macro providers automatically; any new route requires independent evidence and explicit review before a new protocol is registered.
 2. Archive and retain the completed Protocol v2 7/7 option/basis evidence. Do not rebuild or restart the completed collector, open basis historical ZIPs, or invent option-method substitutes.
 3. Open the 2020-2022 replication reserve exactly once only after a protocol's pipelines pass qualification on a clean commit; evaluate that protocol's locked candidates with the Nautilus/cost/gate protocol and no result-driven changes.
 4. Keep SourcePolicy unchanged and testnet/live blocked; only a candidate that later passes both historical replication and the 2026-08..12 final blind may enter paper_shadow review.
@@ -157,6 +157,21 @@ Immediate focus:
 - No edits to `freqtrade/` or `nautilus_trader/` unless explicitly requested.
 
 ## Latest Verification
+
+On 2026-07-17, after Protocol v4 provider qualification:
+
+- Pre-access commit `62d926f` was pushed before direct CSV access. Its cloud
+  archive hash, protocol fingerprint, 19 synthetic tests, and both
+  network-disabled dry-runs verified successfully.
+- Both credential-free FRED July GETs timed out while reading the HTTPS response
+  on the cloud path; local execution also produced zero files, and a retained
+  local VIX log records the same 30-second response-read timeout.
+- Cloud and local v4 raw directories contain zero snapshots. No response was
+  accepted as CSV, no factor or signal generator was implemented, and both
+  candidates are `blocked_provider_response_timeout`.
+- No credentials, returns, PnL, SignalStore, Nautilus, SourcePolicy, testnet, or
+  live path was used. Details are in
+  `docs/retros/2026-07-17-research-v4-provider-qualification.md`.
 
 On 2026-07-17, before direct Protocol v4 CSV access:
 

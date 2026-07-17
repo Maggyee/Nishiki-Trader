@@ -4,7 +4,8 @@
 - **Machine contract**: `docs/progress/phase-2-research-protocol-v4.json`
 - **Provider contract**: `docs/progress/phase-2-research-v4-data-sources.json`
 - **Status**: provider-recovery identities and direct CSV requests locked;
-  synthetic validation pending.
+  synthetic validation passed, but both real FRED routes are blocked by response
+  read timeouts from local and cloud network paths.
 - **Trading effect**: none.
 
 ## Why v4 is separate
@@ -60,3 +61,24 @@ final future blind.
 - Do not implement the v4 SignalEvent generator until both direct CSV routes pass.
 - Do not modify v3 identities or retry Stooq through an unregistered challenge.
 - Do not change SourcePolicy, run promotion review, resume testnet, or touch live.
+
+## 2026-07-17 provider qualification result
+
+Pre-registration commit `62d926f` was pushed before either direct CSV GET ran.
+The exact commit was deployed separately on the cloud server from archive
+SHA-256 `56eb5198b4885a5a389c7e21c78325b09ce6dfd25aac349473a5a7b0cf6e4050`.
+Protocol validation and both network-disabled dry-runs passed in the existing
+Python 3.12 read-only research container.
+
+Both real FRED GETs then failed during HTTPS response reading after the fixed
+30-second timeout. The broad USD timeout was reproduced on the cloud path; the
+VIX timeout was reproduced on both cloud and local paths. Earlier local combined
+collection also produced no file. Neither
+`/var/lib/nishiki-trader/research-v4/raw` nor `data/research-v4/raw` contains a
+snapshot.
+
+The result is `blocked_provider_response_timeout` for both v4 candidates. No
+schema, factor, return, signal, or PnL was accepted. Do not implement the v4
+SignalEvent generator or automatically create another provider-recovery
+protocol. Full evidence is in
+`docs/retros/2026-07-17-research-v4-provider-qualification.md`.
