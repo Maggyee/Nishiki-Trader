@@ -68,6 +68,10 @@ The only data sources are unauthenticated Binance public REST and official
 `data.binance.vision` archives. Each archive requires its official checksum.
 The collector preserves exact ZIP/checksum bytes, HTTP metadata,
 `retrieved_at`, content hashes, an audit report, and normalized Parquet.
+July qualification confirmed that Futures 1d archives use the raw header names
+`count` and `taker_buy_volume`, while BVOL uses `BTCBVOL`/`ETHBVOL` in
+`base_asset` and one observation per UTC-second bucket. These schema details do
+not change either candidate rule and are now checked fail closed.
 
 Identical content is idempotent. Changed upstream content creates a separate
 vintage and a comparison-blocking marker; old bytes are never overwritten.

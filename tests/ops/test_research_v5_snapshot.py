@@ -30,7 +30,14 @@ def _response(body: bytes, url: str) -> HttpResponse:
     return HttpResponse(body=body, status=200, final_url=url, headers={"etag": "fixture"})
 
 
-def _fixture_fetch(kind: str, asset: str, day: date, *, unit: str = "ms"):
+def _fixture_fetch(
+    kind: str,
+    asset: str,
+    day: date,
+    *,
+    unit: str = "ms",
+    missing_bvol_second: int | None = None,
+):
     specs = build_requests(kind, asset, day)
     bodies = {}
     multiplier = {"ms": 1, "us": 1_000, "ns": 1_000_000}[unit]
@@ -57,9 +64,17 @@ def _fixture_fetch(kind: str, asset: str, day: date, *, unit: str = "ms"):
             body = _zip_csv(spec.filename.removesuffix(".zip") + ".csv", ",".join(map(str, row)) + "\n")
         else:
             symbol = f"{asset.removesuffix('USDT')}BVOLUSDT"
+            base_asset = f"{asset.removesuffix('USDT')}BVOL"
             rows = [
-                [start_ms * multiplier + offset * 60_000 * multiplier, symbol, asset.removesuffix("USDT"), "USDT", 60 - offset]
-                for offset in range(3)
+                [
+                    start_ms * multiplier + offset * 1_000 * multiplier,
+                    symbol,
+                    base_asset,
+                    "USDT",
+                    60.0 - 2.0 * offset / 86_399,
+                ]
+                for offset in range(86_400)
+                if offset != missing_bvol_second
             ]
             body = _zip_csv(spec.filename.removesuffix(".zip") + ".csv", "\n".join(",".join(map(str, row)) for row in rows) + "\n")
         digest = hashlib.sha256(body).hexdigest()
@@ -172,7 +187,7 @@ def test_bvol_snapshot_selects_last_valid_row_and_applies_historical_lag(tmp_pat
     )
     payload = json.loads(Path(result["path"]).read_text())
 
-    assert result["audit"]["row_count"] == 3
+    assert result["audit"]["row_count"] == 86_400
     assert payload["normalized"]["bvol_index"] == 58.0
     assert payload["normalized"]["available_at"] == "2023-08-03T00:00:00Z"
 
@@ -181,7 +196,7 @@ def test_snapshot_rejects_bad_checksum_and_duplicate_bvol_timestamp(tmp_path: Pa
     day = date(2023, 8, 1)
     specs = build_requests("bvol", "BTCUSDT", day)
     spec = specs[0]
-    body = _zip_csv("bvol.csv", "1690848000000,BTCBVOLUSDT,BTC,USDT,60\n1690848000000,BTCBVOLUSDT,BTC,USDT,59\n")
+    body = _zip_csv("bvol.csv", "1690848000000,BTCBVOLUSDT,BTCBVOL,USDT,60\n1690848000000,BTCBVOLUSDT,BTCBVOL,USDT,59\n")
     digest = hashlib.sha256(body).hexdigest()
     mapping = {
         spec.url: _response(body, spec.url),
@@ -193,6 +208,25 @@ def test_snapshot_rejects_bad_checksum_and_duplicate_bvol_timestamp(tmp_path: Pa
     mapping[f"{spec.url}.CHECKSUM"] = _response(f"{'0' * 64}  {spec.filename}\n".encode(), f"{spec.url}.CHECKSUM")
     with pytest.raises(ValueError, match="checksum mismatch"):
         collect_snapshot("bvol", "BTCUSDT", day, raw_root=tmp_path / "raw2", normalized_root=tmp_path / "normalized2", fetch=lambda url: mapping[url], now=datetime(2026, 7, 17, tzinfo=UTC))
+
+
+def test_bvol_snapshot_rejects_an_intraday_second_gap(tmp_path: Path) -> None:
+    day = date(2023, 8, 1)
+    with pytest.raises(ValueError, match="every UTC second"):
+        collect_snapshot(
+            "bvol",
+            "BTCUSDT",
+            day,
+            raw_root=tmp_path / "raw",
+            normalized_root=tmp_path / "normalized",
+            fetch=_fixture_fetch(
+                "bvol",
+                "BTCUSDT",
+                day,
+                missing_bvol_second=42,
+            ),
+            now=datetime(2026, 7, 17, tzinfo=UTC),
+        )
 
 
 def test_quarter_selection_rolls_at_expiry_boundary() -> None:

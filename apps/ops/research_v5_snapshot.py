@@ -34,8 +34,8 @@ _KLINE_COLUMNS = (
     "volume",
     "close_time",
     "quote_volume",
-    "trades",
-    "taker_buy_base_volume",
+    "count",
+    "taker_buy_volume",
     "taker_buy_quote_volume",
     "ignore",
 )
@@ -302,7 +302,7 @@ def _parse_kline(raw: bytes, *, filename: str, data_day: date) -> dict[str, Any]
 def _parse_bvol(raw: bytes, *, filename: str, data_day: date, asset: str) -> dict[str, Any]:
     rows = _csv_rows(raw, _BVOL_COLUMNS, filename)
     expected_symbol = f"{asset.removesuffix('USDT')}BVOLUSDT"
-    expected_base = asset.removesuffix("USDT")
+    expected_base = f"{asset.removesuffix('USDT')}BVOL"
     timestamps: list[int] = []
     values: list[float] = []
     for index, values_row in enumerate(rows):
@@ -318,6 +318,10 @@ def _parse_bvol(raw: bytes, *, filename: str, data_day: date, asset: str) -> dic
             raise ValueError(f"{filename} BVOL quote asset must be USDT")
         timestamps.append(timestamp)
         values.append(_finite_positive(row["index_value"], f"{filename}.index_value[{index}]"))
+    start_ns = int(datetime.combine(data_day, time.min, UTC).timestamp() * 1e9)
+    second_buckets = [(timestamp - start_ns) // 1_000_000_000 for timestamp in timestamps]
+    if second_buckets != list(range(86_400)):
+        raise ValueError(f"{filename} must contain one observation in every UTC second")
     return {
         "row_count": len(rows),
         "first_calc_time_ns": timestamps[0],

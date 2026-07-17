@@ -39,8 +39,8 @@
         "volume",
         "close_time",
         "quote_volume",
-        "trades",
-        "taker_buy_base_volume",
+        "count",
+        "taker_buy_volume",
         "taker_buy_quote_volume",
         "ignore"
       ]
@@ -51,6 +51,8 @@
       "archive_request": "data/option/daily/BVOLIndex/{symbol}/{symbol}-BVOLIndex-{date}.zip",
       "checksum_suffix": ".CHECKSUM",
       "locked_columns": ["calc_time", "symbol", "base_asset", "quote_asset", "index_value"],
+      "base_asset_values": ["BTCBVOL", "ETHBVOL"],
+      "intraday_completeness": "exactly one increasing observation in every UTC second bucket",
       "daily_selection": "last valid observation of each UTC day",
       "historical_publication_lag_days": 2,
       "future_availability": "no earlier than the first UTC day after actual retrieved_at",

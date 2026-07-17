@@ -18,7 +18,7 @@ from apps.strategies_freqtrade.research.binance_mechanism_signals import (
 
 SCHEMA_VERSION = "research.protocol.v5"
 LOCKED_PROTOCOL_SHA256 = "sha256:1abe832749d1a1926fb4e00c507af3d93b64dbd05e74f488a2c0ed3f242392f2"
-LOCKED_PROVIDER_CONTRACT_SHA256 = "sha256:af77d6850ba03941c35e2e5a7920ea41e6f4785b00627c8e86228a06d27e2f42"
+LOCKED_PROVIDER_CONTRACT_SHA256 = "sha256:7eb70e124ce073a229413342d7d4460a31c995aed3581b057a8e68fb57995db4"
 LOCKED_FINGERPRINTS_SHA256 = "sha256:fba1f3302e2eaa55c0e0bff65d95e4de873667ff0d2462a386fa1a3ce8a61365"
 DEFAULT_PROTOCOL = Path("docs/progress/phase-2-research-protocol-v5.json")
 DEFAULT_SOURCES = Path("docs/progress/phase-2-research-v5-data-sources.json")

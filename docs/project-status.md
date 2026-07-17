@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-07-17 (Protocol v5 pre-registered; historical bodies remain unopened)
+- **Last updated**: 2026-07-17 (Protocol v5 July qualification in progress; historical partitions remain unopened)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
-- **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry remains frozen at 16 rejects and an empty selected set. Research Protocol v2 remains locked and data-blocked, Protocol v3 has one valid July hashrate snapshot with both macro routes blocked, and Protocol v4's two FRED recovery routes timed out without snapshots. Protocol v5 now pre-registers two new Binance-native BTC/ETH identities, immutable public-archive collection, dual-sleeve execution/risk gates, and candidate fingerprints; no curve/BVOL historical body has been opened. The next authorized v5 action, only after the pre-registration commit is pushed, is local then cloud single-day July schema/lineage qualification without PnL. Opened 2023-2025 remains diagnostic-only, July 2026 has PnL forbidden, and 2026-08..12 remains the final future blind. No in-place provider substitution, grid search, failed-model retuning, PnL-selected ensemble, policy change, or testnet resume is allowed.
+- **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry remains frozen at 16 rejects and an empty selected set. Research Protocol v2 remains locked and data-blocked, Protocol v3 has one valid July hashrate snapshot with both macro routes blocked, and Protocol v4's two FRED recovery routes timed out without snapshots. Protocol v5 pre-registers two new Binance-native BTC/ETH identities, immutable public-archive collection, dual-sleeve execution/risk gates, and candidate fingerprints. Pre-access commit `f8437f5` is pushed; its first July-only batch failed closed on official raw-header aliases before writing a snapshot, and the schema-only correction is awaiting a clean commit and four-snapshot rerun. No curve/BVOL historical replication body has been opened. Opened 2023-2025 remains diagnostic-only, July 2026 has PnL forbidden, and 2026-08..12 remains the final future blind. No in-place provider substitution, grid search, failed-model retuning, PnL-selected ensemble, policy change, or testnet resume is allowed.
   Keep the current SourcePolicy unchanged until an explicit `promotion_review.py` decision. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
@@ -123,10 +123,12 @@ identities, but both direct July-only routes timed out from cloud and local
 paths and wrote zero snapshots. Protocol v5 now freezes two Binance-native
 BTC/ETH identities, their point-in-time data contract, immutable archive
 collector, SignalEvent generators, dual-sleeve portfolio audit, and locked
-review gates. No curve or BVOL response body has been opened; the first allowed
-real-data action is a July-only schema/lineage qualification after the clean
-pre-registration commit is pushed. Routine 14-day testnet continuity remains
-paused, and the Phase 3 strict streak remains 0/14.
+review gates. Pre-registration commit `f8437f5` was pushed before access. The
+first 2026-07-16 batch exposed official Futures/BVOL raw-name differences and
+failed before snapshot creation; the candidate rules and fingerprints remain
+unchanged. The schema correction must be pushed before the four July snapshots
+are retried. Routine 14-day testnet continuity remains paused, and the Phase 3
+strict streak remains 0/14.
 
 Immediate focus:
 
@@ -138,7 +140,7 @@ Immediate focus:
 
 ## Next Steps
 
-1. Push the Protocol v5 pre-registration commit before opening any Binance curve/BVOL response body. From that clean commit, run exactly one July UTC-day schema/lineage qualification locally and then on the designated cloud host; record a separate qualification retro and commit before any history is opened.
+1. Push the Protocol v5 raw-schema qualification correction, then rerun exactly one July UTC-day locally from that clean commit. Only after all four snapshots pass offline verification may the same commit be deployed to the designated cloud host; record the final qualification retro before any history is opened.
 2. Only if all four v5 asset/mechanism qualification snapshots pass offline verification, open the frozen historical replication partitions once. Do not inspect returns or PnL during qualification, tune after results, or open the 2026-08..12 future blind before 2027-01-01.
 3. Preserve the qualified v3 hashrate snapshot and the v4 timeout evidence. Do not retry macro providers automatically; any new route requires independent evidence and explicit review before a new protocol is registered.
 4. Archive and retain the completed Protocol v2 7/7 option/basis evidence. Do not rebuild or restart the completed collector, open basis historical ZIPs, or invent option-method substitutes.
@@ -165,6 +167,25 @@ Immediate focus:
 - No edits to `freqtrade/` or `nautilus_trader/` unless explicitly requested.
 
 ## Latest Verification
+
+On 2026-07-17, during Protocol v5 July-only schema qualification:
+
+- Pre-access commit `f8437f5` was pushed before the first real body. Its locked
+  daily dry-run covered all four BTC/ETH curve/BVOL plans with zero network and
+  zero writes.
+- The first real batch failed closed before snapshot creation because official
+  Futures 1d files use `count`/`taker_buy_volume`; the July BVOL schema uses
+  `BTCBVOL`/`ETHBVOL` and exactly one observation per UTC-second bucket.
+- The correction changes only raw-schema validation and the provider-contract
+  hash. Candidate identities, fingerprints, formulas, parameters, partitions,
+  costs, and gates remain unchanged. Thirteen focused protocol/snapshot/full
+  integration tests pass; the full suite is **901 passed, 12
+  Postgres-dependent skips**, and full-repository Ruff and `git diff --check`
+  pass.
+- No historical replication body, return, PnL, credential, signal, Nautilus
+  qualification run, SourcePolicy mutation, testnet resume, or live action
+  occurred. Details are in
+  `docs/retros/2026-07-17-research-v5-schema-qualification-fix.md`.
 
 On 2026-07-17, before any Protocol v5 Binance response body access:
 
