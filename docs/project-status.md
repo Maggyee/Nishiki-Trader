@@ -190,7 +190,11 @@ On 2026-07-17, at Protocol v5 Spot execution lineage qualification:
   fail-closed: one missing curve/BVOL archive no longer prevents the other
   streams from being preserved, while the batch remains incomplete and exits
   nonzero for monitoring.
-- The full suite is **908 passed, 12 Postgres-dependent skips**; full-repository
+- The bulk curve collector now checks the usually unavailable required next
+  contract before downloading index/front bytes. Successful snapshots retain
+  the locked envelope order and identical content identity; missing dates keep
+  the same fail-closed ledger semantics.
+- The full suite is **909 passed, 12 Postgres-dependent skips**; full-repository
   Ruff and `git diff --check` pass. No historical Spot body, signal, return,
   PnL, backtest, credential, policy/testnet/live action, or future-blind data
   was accessed. Details are in

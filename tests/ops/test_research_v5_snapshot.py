@@ -160,6 +160,37 @@ def test_curve_snapshot_checksums_normalizes_and_is_idempotent(tmp_path: Path) -
     assert len(list((tmp_path / "raw" / "delivery_curve" / "BTCUSDT" / day.isoformat()).glob("*/snapshot.json"))) == 1
 
 
+def test_curve_fetches_next_contract_first_but_preserves_locked_envelope_order(
+    tmp_path: Path,
+) -> None:
+    day = date(2021, 8, 1)
+    specs = build_requests("delivery_curve", "BTCUSDT", day)
+    fixture = _fixture_fetch("delivery_curve", "BTCUSDT", day)
+    calls: list[str] = []
+
+    def fetch(url: str) -> HttpResponse:
+        calls.append(url)
+        return fixture(url)
+
+    result = collect_snapshot(
+        "delivery_curve",
+        "BTCUSDT",
+        day,
+        raw_root=tmp_path / "raw",
+        normalized_root=tmp_path / "normalized",
+        fetch=fetch,
+        now=datetime(2026, 7, 17, 10, tzinfo=UTC),
+    )
+    envelope = json.loads(Path(result["path"]).read_text())
+
+    assert calls[:2] == [specs[-1].url, f"{specs[-1].url}.CHECKSUM"]
+    assert [row["role"] for row in envelope["requests"]] == [
+        "index_price",
+        "front_contract",
+        "next_contract",
+    ]
+
+
 def test_snapshot_accepts_nanosecond_archives_and_rejects_http_audit_drift(
     tmp_path: Path,
 ) -> None:

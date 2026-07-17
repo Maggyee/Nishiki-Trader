@@ -34,6 +34,16 @@ the first bad day, so it now records a per-day failure ledger, writes no
 snapshot for the failed date, continues to later dates, and returns nonzero if
 any day failed. This is stricter coverage accounting, not gap tolerance.
 
+During the full curve range, the collector was found to fetch index/front
+bytes before discovering that the required next contract returned 404 on most
+dates. The two range processes were stopped with no incomplete vintage, and
+the fetch order was changed to request `next_contract` first. Successful
+envelopes are still assembled in the locked index/front/next order, so their
+content hash, raw bytes, request plan, formula, and vintage identity do not
+change. A regression test locks both the fail-fast network order and the
+original envelope order. This is a throughput correction only; every missing
+date remains in the failure ledger with desired state `flat`.
+
 ## Boundary audit and next action
 
 No return, PnL, SignalEvent, SignalStore row, Nautilus run, SourcePolicy

@@ -480,11 +480,23 @@ def collect_snapshot(
     retrieved_at = (now or datetime.now(UTC)).astimezone(UTC)
     specs = build_requests(kind, asset, data_day)
     response_rows: list[dict[str, Any]] = []
+    response_by_role: dict[str, dict[str, Any]] = {}
     payloads: dict[str, bytes] = {}
     checksum_payloads: dict[str, bytes] = {}
-    for spec in specs:
-        archive = fetch(spec.url)
-        checksum = fetch(f"{spec.url}.CHECKSUM")
+    fetch_specs = (
+        sorted(specs, key=lambda spec: spec.role != "next_contract")
+        if kind == "delivery_curve"
+        else specs
+    )
+    for spec in fetch_specs:
+        try:
+            archive = fetch(spec.url)
+        except Exception as exc:
+            raise ValueError(f"{spec.role} archive request failed: {exc}") from exc
+        try:
+            checksum = fetch(f"{spec.url}.CHECKSUM")
+        except Exception as exc:
+            raise ValueError(f"{spec.role} checksum request failed: {exc}") from exc
         if archive.status != 200 or not archive.body or checksum.status != 200 or not checksum.body:
             raise ValueError(f"{spec.role} archive/checksum request did not return HTTP 200 bytes")
         expected = _checksum_expected(checksum.body, spec.filename)
@@ -493,23 +505,22 @@ def collect_snapshot(
             raise ValueError(f"official checksum mismatch for {spec.filename}")
         payloads[spec.role] = archive.body
         checksum_payloads[spec.role] = checksum.body
-        response_rows.append(
-            {
-                "role": spec.role,
-                "url": spec.url,
-                "filename": spec.filename,
-                "archive_sha256": actual,
-                "checksum_sha256": _sha256(checksum.body),
-                "http": {
-                    "status": archive.status,
-                    "final_url": archive.final_url,
-                    "headers": dict(sorted(archive.headers.items())),
-                    "checksum_status": checksum.status,
-                    "checksum_final_url": checksum.final_url,
-                    "checksum_headers": dict(sorted(checksum.headers.items())),
-                },
-            }
-        )
+        response_by_role[spec.role] = {
+            "role": spec.role,
+            "url": spec.url,
+            "filename": spec.filename,
+            "archive_sha256": actual,
+            "checksum_sha256": _sha256(checksum.body),
+            "http": {
+                "status": archive.status,
+                "final_url": archive.final_url,
+                "headers": dict(sorted(archive.headers.items())),
+                "checksum_status": checksum.status,
+                "checksum_final_url": checksum.final_url,
+                "checksum_headers": dict(sorted(checksum.headers.items())),
+            },
+        }
+    response_rows = [response_by_role[spec.role] for spec in specs]
     audit, normalized_values = _parse_payloads(kind, asset, data_day, payloads)
     content_core = [
         {key: row[key] for key in ("role", "url", "filename", "archive_sha256", "checksum_sha256")}
