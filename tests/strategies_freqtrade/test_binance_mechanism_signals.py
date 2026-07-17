@@ -12,6 +12,7 @@ from apps.strategies_freqtrade.research.binance_mechanism_signals import (
     candidate_fingerprint,
     generate_bvol_relief_signals,
     generate_curve_carry_signals,
+    main,
 )
 
 SHA = "sha256:" + "a" * 64
@@ -118,3 +119,34 @@ def test_bvol_rejects_duplicate_nonfinite_and_publication_lookahead() -> None:
 def test_v5_parameters_cannot_be_tuned(factory, kwargs) -> None:
     with pytest.raises(ValueError):
         factory(**kwargs)
+
+
+def test_cli_can_isolate_one_asset_signal_store(monkeypatch, capsys) -> None:
+    loaded: list[str] = []
+
+    def fake_load(_root, _candidate, asset):
+        loaded.append(asset)
+        return _bvol_frame([100, 99, 98, 97, 96, 95])
+
+    monkeypatch.setattr(
+        "apps.strategies_freqtrade.research.binance_mechanism_signals.load_normalized_rows",
+        fake_load,
+    )
+
+    assert main(
+        [
+            "--candidate",
+            "bvol_relief",
+            "--asset",
+            "BTCUSDT",
+            "--start-date",
+            "2023-08-01",
+            "--end-date",
+            "2023-08-31",
+            "--dry-run",
+        ]
+    ) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert loaded == ["BTCUSDT"]
+    assert payload["assets"] == ["BTCUSDT"]
+    assert {row["symbol"] for row in payload["signals"]} == {"BTCUSDT"}

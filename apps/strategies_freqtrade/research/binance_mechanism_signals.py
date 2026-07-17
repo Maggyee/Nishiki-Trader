@@ -488,6 +488,11 @@ def load_normalized_rows(root: Path, candidate: str, asset: str) -> pd.DataFrame
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--candidate", choices=sorted(GENERATORS), required=True)
+    parser.add_argument(
+        "--asset",
+        choices=ASSETS,
+        help="generate one isolated asset sleeve; omit only for a combined two-asset store",
+    )
     parser.add_argument("--start-date", required=True)
     parser.add_argument("--end-date", required=True)
     parser.add_argument("--signal-db", type=Path)
@@ -505,7 +510,8 @@ def main(argv: list[str] | None = None) -> int:
     if not args.dry_run and args.signal_db is None:
         raise SystemExit("--signal-db is required unless --dry-run is used")
     events: list[SignalEvent] = []
-    for asset in ASSETS:
+    selected_assets = (args.asset,) if args.asset else ASSETS
+    for asset in selected_assets:
         frame = load_normalized_rows(args.input_root, args.candidate, asset)
         events.extend(
             GENERATORS[args.candidate](
@@ -524,6 +530,7 @@ def main(argv: list[str] | None = None) -> int:
                     "candidate": args.candidate,
                     "source": source,
                     "model_version": model_version,
+                    "assets": list(selected_assets),
                     "features_hash": candidate_features_hash(args.candidate),
                     "signal_count": len(events),
                     "signals": [event.model_dump(mode="json") for event in events[:10]],
@@ -542,6 +549,7 @@ def main(argv: list[str] | None = None) -> int:
                 "candidate": args.candidate,
                 "source": source,
                 "model_version": model_version,
+                "assets": list(selected_assets),
                 "features_hash": candidate_features_hash(args.candidate),
                 "generated": len(events),
                 "written": written,

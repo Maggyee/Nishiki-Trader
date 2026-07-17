@@ -183,7 +183,9 @@ On 2026-07-17, at Protocol v5 historical fast-track opening:
   BVOL file has 86,398 rows and a real grid gap, so the whole day remains flat.
 - Range download now logs a failed date, writes no snapshot for it, continues
   later dates, and returns nonzero if coverage is incomplete. No validation
-  threshold was relaxed. The full suite is **904 passed, 12
+  threshold was relaxed. The v5 signal CLI can now isolate one BTCUSDT or
+  ETHUSDT sleeve into its own SignalStore so duplicated Nautilus fold runs do
+  not mix symbols. The full suite is **905 passed, 12
   Postgres-dependent skips**; full-repository Ruff and `git diff --check` pass.
 - No historical return/PnL, signal, Nautilus run, policy/testnet/live action, or
   future-blind data was accessed. Details are in

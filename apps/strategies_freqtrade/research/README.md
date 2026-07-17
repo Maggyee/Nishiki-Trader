@@ -67,6 +67,9 @@ loop.
   lookbacks are frozen; the module reuses the point-in-time audit helpers and
   rejects runtime tuning. Identities and gates are locked in
   `docs/progress/phase-2-research-protocol-v3.json`.
+- `binance_mechanism_signals.py` — the two Research Protocol v5 Binance-native
+  curve-carry and BVOL-relief generators. The CLI can write both sleeves or
+  isolate one `--asset` in its own SignalStore for independent Nautilus runs.
 - `wall_clock_signal_replay.py` — testnet-canary helper that copies already
   reviewed historical `SignalEvent` rows, re-stamps `ts_event` into future
   wall-clock times, and writes them back to `SignalStore`. It preserves the
@@ -154,3 +157,15 @@ opened 2023-2025 results for selection, or open the 2020-2022 replication
 reserve before the factor pipeline and checksums are complete on a committed
 tree.
 
+Protocol v5 normalized snapshots can be exported into one asset-isolated
+SignalStore. Omit `--asset` only when a combined two-asset store is explicitly
+needed:
+
+```bash
+uv run python -m apps.strategies_freqtrade.research.binance_mechanism_signals \
+  --candidate bvol_relief \
+  --asset BTCUSDT \
+  --start-date 2023-08-01 \
+  --end-date 2023-12-31 \
+  --signal-db data/research-v5/signals/bvol-BTCUSDT-2023-08_12.db
+```
