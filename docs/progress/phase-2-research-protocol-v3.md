@@ -3,7 +3,9 @@
 - **Frozen**: 2026-07-12, before accessing any real hashrate, DXY, or VIX factor body.
 - **Machine contract**: `docs/progress/phase-2-research-protocol-v3.json`
 - **Provider contract**: `docs/progress/phase-2-research-v3-data-sources.json`
-- **Status**: pre-registered; immutable collector implemented and synthetic-validated; real provider bodies remain unaccessed.
+- **Status**: pre-registered; immutable collector implemented; hashrate provider
+  qualified on one real July snapshot; DXY and VIX provider routes blocked by
+  Stooq's JavaScript verification response.
 - **Trading effect**: none.
 
 ## Why a new protocol is allowed
@@ -149,10 +151,35 @@ python -m apps.ops.research_v3_snapshot --kind vix --dry-run
 ```
 
 Actual collection omits `--dry-run` and writes under
-`data/research-v3/raw/`; `--verify PATH` performs offline verification. As of
-this implementation commit, only synthetic injected responses and request-plan
-dry-runs have run. No real factor response body, return, signal, or PnL has been
-accessed.
+`data/research-v3/raw/`; `--verify PATH` performs offline verification.
+
+## 2026-07-17 real-provider qualification
+
+The first authorized July qualification run used the frozen requests on clean
+commit `7afc61d`. It produced exactly one eligible snapshot:
+
+- kind: `hashrate`;
+- path: `data/research-v3/raw/hashrate-20260717T095630Z-3fd819633239.json`;
+- snapshot SHA-256:
+  `sha256:3fd8196332393d5f06ea4ec96ac7d37de76374f7a731c91b52a2bf5f2480a20d`;
+- audit: 30 completed UTC-day rows from 2026-06-17 through 2026-07-16,
+  `Hash Rate TH/s`, daily period;
+- offline verification: `valid=true`.
+
+The frozen DXY and VIX GETs returned HTTP 200 with `text/html` and a JavaScript
+browser-verification page instead of the locked CSV schema. Both collections
+failed before snapshot creation. A browser-style User-Agent produced the same
+response. The verification page's extra POST was not executed because it is
+not part of the frozen one-request provider contract. No alternate symbol,
+provider, URL, or metric was substituted after data access.
+
+This qualifies only hashrate schema, publication timing, and immutable lineage.
+It does not authorize factors, returns, signals, PnL, the 2020-2022 reserve, or
+the 2026-08..12 blind. DXY and VIX remain provider-route blocked unless the
+frozen GET again returns direct CSV; changing the route requires a separately
+pre-registered protocol rather than a v3 in-place correction. Full evidence is
+recorded in
+`docs/retros/2026-07-17-research-v3-provider-qualification.md`.
 
 ## Explicit non-goals
 

@@ -1,7 +1,7 @@
 # 2026-07-11 Research Protocol v2 Provider Qualification
 
-- **Status**: Partial pass; two provider schemas qualified, one candidate data
-  route blocked.
+- **Status**: Forward option/basis coverage qualified at 7/7; one candidate
+  data route remains blocked and no candidate is replication-ready.
 - **Scope**: schema, availability, immutable lineage, and publication-interface
   qualification only.
 - **PnL accessed**: no.
@@ -135,6 +135,37 @@ Both kinds have exactly one verified snapshot on the same UTC date with no
 internal gap or duplicate. The result is deliberately not a pass. Coverage
 qualification requires seven exact paired consecutive dates and still does not
 authorize signal generation or PnL access.
+
+### Seven-day forward coverage completion
+
+The credential-free cloud collector completed the locked forward window on
+2026-07-17 under attempt `attempt-20260711-001` and image/git SHA
+`5a8289c50f89fb1a2ae9e1aaf5b69a12d2287fcb`:
+
+```text
+status=qualification_coverage_pass
+paired_day_count=7
+paired_dates=2026-07-11..2026-07-17
+options_unique_day_count=7
+basis_unique_day_count=7
+ledger_rows=14
+duplicate_dates=[]
+missing_dates=[]
+unpaired_dates=[]
+blockers=[]
+recommendation=factor_pipeline_qualification_allowed_without_pnl
+```
+
+The server wrote `COMPLETE` at `2026-07-17T03:15:10.618077Z`. Later timer
+triggers were skipped by the systemd `ExecCondition`, so no additional network
+or container work ran after completion. The completion record preserves all
+read-only boundaries: prices were not summarized, returns were not loaded, PnL
+was not computed, signals were not generated or written, Nautilus was not run,
+and SourcePolicy was not mutated.
+
+This supersedes only the earlier `collecting_insufficient_days` coverage state.
+It does not remove the option-method replication blocker, the incomplete basis
+historical reserve, or the stablecoin entitlement blocker.
 
 ### Coin Metrics stablecoin liquidity
 
