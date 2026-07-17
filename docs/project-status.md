@@ -174,6 +174,21 @@ Immediate focus:
 
 ## Latest Verification
 
+On 2026-07-17, at Protocol v5 Spot execution lineage qualification:
+
+- Before historical Spot access, commit `8bcdb46` added the missing immutable
+  ZIP/checksum/HTTP/vintage envelope and exact 1,440-minute gate. Commit
+  `d7a2022` then kept idempotent Nautilus catalog messages out of strict JSON.
+- The clean-commit 2026-07-16 BTC/ETH qualification snapshots passed checksum
+  and offline verification, matched the prior July ZIP bytes, and imported
+  1,440 bars each. Catalog audit found zero gaps, duplicates, or irregular
+  steps and complete cross-asset timestamp alignment.
+- The full suite is **907 passed, 12 Postgres-dependent skips**; full-repository
+  Ruff and `git diff --check` pass. No historical Spot body, signal, return,
+  PnL, backtest, credential, policy/testnet/live action, or future-blind data
+  was accessed. Details are in
+  `docs/retros/2026-07-17-research-v5-spot-lineage-qualification.md`.
+
 On 2026-07-17, at Protocol v5 historical fast-track opening:
 
 - Qualification retro commit `e2955d3` was pushed before historical access.
