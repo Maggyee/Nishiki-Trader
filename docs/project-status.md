@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-07-17 (Protocol v5 provider qualification passed; historical fast tracks not yet opened)
+- **Last updated**: 2026-07-17 (Protocol v5 historical fast-track collection opened; no historical PnL yet)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
-- **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry remains frozen at 16 rejects and an empty selected set. Research Protocol v2 remains locked and data-blocked, Protocol v3 has one valid July hashrate snapshot with both macro routes blocked, and Protocol v4's two FRED recovery routes timed out without snapshots. Protocol v5 pre-registers two new Binance-native BTC/ETH identities, immutable public-archive collection, dual-sleeve execution/risk gates, and candidate fingerprints. Local and cloud July qualification now passes on clean collector commit `3d1687b`: four verified/idempotent snapshots, zero conflicts, aligned 1,440-row Spot catalogs, and no PnL. The next authorized action, only after the qualification retro is pushed, is the one-time locked historical fast track. The v5 timer remains disabled, 2026-08..12 remains unopened, and no in-place provider substitution, grid search, failed-model retuning, PnL-selected ensemble, policy change, or testnet resume is allowed.
+- **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry remains frozen at 16 rejects and an empty selected set. Research Protocol v2 remains locked and data-blocked, Protocol v3 has one valid July hashrate snapshot with both macro routes blocked, and Protocol v4's two FRED recovery routes timed out without snapshots. Protocol v5 local/cloud qualification passed and its retro commit `e2955d3` was pushed before historical access. The locked fast-track collection is now open: first complete curve data is 2021-06-18 and first complete BVOL data is 2023-06-22; pre-fold launch gaps remain flat, and an actual 2023-08-01 BVOL gap is rejected rather than filled. Range collection now records bad dates and continues to later valid days, but bulk collection and PnL have not started. The v5 timer is disabled, 2026-08..12 remains unopened, and no provider substitution, retuning, PnL-selected ensemble, policy change, or testnet resume is allowed.
   Keep the current SourcePolicy unchanged until an explicit `promotion_review.py` decision. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
@@ -130,9 +130,11 @@ idempotent local snapshots and a complete aligned Spot catalog. The candidate
 rules and fingerprints remain unchanged. Dedicated image `3d1687b` passed the
 cloud dry-run, four-snapshot collection, offline verification, and idempotent
 rerun with zero conflicts and zero credential environment. Historical fast
-tracks remain unopened until this qualification retro is pushed. Routine
-14-day testnet continuity remains paused, and the Phase 3 strict streak remains
-0/14.
+tracks were opened only after qualification retro `e2955d3` was pushed. The
+first availability audit found launch/warm-up gaps and a real BVOL scoring-day
+gap; strict daily rejection remains in force, while the range CLI must continue
+to later valid dates. Routine 14-day testnet continuity remains paused, and the
+Phase 3 strict streak remains 0/14.
 
 Immediate focus:
 
@@ -144,7 +146,7 @@ Immediate focus:
 
 ## Next Steps
 
-1. Push the final Protocol v5 provider-qualification retro, then open the frozen curve 2021-06..2022-12 and BVOL 2023-06..2025-12 fast-track inputs exactly once. Run only the locked signals, duplicate Nautilus folds, costs, portfolio review, and gates; commit the reports before any future collection is enabled.
+1. Push the Protocol v5 range-continuation/failure-ledger change, then complete the frozen curve 2021-06..2022-12 and BVOL 2023-06..2025-12 collection exactly once. Preserve every missing-day failure as flat, audit scoring-fold coverage, and only then run the locked signals, duplicate Nautilus folds, costs, portfolio review, and gates.
 2. Keep the 2026-08..12 final blind unopened before 2027-01-01. Do not tune after historical results, substitute providers, create a PnL-selected ensemble, enable the v5 timer before fast-track reports, or treat a BVOL diagnostic pass as promotion evidence.
 3. Preserve the qualified v3 hashrate snapshot and the v4 timeout evidence. Do not retry macro providers automatically; any new route requires independent evidence and explicit review before a new protocol is registered.
 4. Archive and retain the completed Protocol v2 7/7 option/basis evidence. Do not rebuild or restart the completed collector, open basis historical ZIPs, or invent option-method substitutes.
@@ -171,6 +173,21 @@ Immediate focus:
 - No edits to `freqtrade/` or `nautilus_trader/` unless explicitly requested.
 
 ## Latest Verification
+
+On 2026-07-17, at Protocol v5 historical fast-track opening:
+
+- Qualification retro commit `e2955d3` was pushed before historical access.
+  Curve requires two listed quarters and first becomes complete on 2021-06-18;
+  BVOL launches with partial days and first becomes complete on 2023-06-22.
+- Valid BTC/ETH snapshots for both first-complete dates passed. The 2023-08-01
+  BVOL file has 86,398 rows and a real grid gap, so the whole day remains flat.
+- Range download now logs a failed date, writes no snapshot for it, continues
+  later dates, and returns nonzero if coverage is incomplete. No validation
+  threshold was relaxed. The full suite is **904 passed, 12
+  Postgres-dependent skips**; full-repository Ruff and `git diff --check` pass.
+- No historical return/PnL, signal, Nautilus run, policy/testnet/live action, or
+  future-blind data was accessed. Details are in
+  `docs/retros/2026-07-17-research-v5-fast-track-collection-start.md`.
 
 On 2026-07-17, after Protocol v5 provider qualification:
 

@@ -128,6 +128,19 @@ uv run python -m apps.ops.research_protocol_v3
 该命令只读预注册 JSON 并输出 canonical SHA-256；不读取因子数据、收益、凭证或
 SignalStore，不运行 Nautilus，也不修改 SourcePolicy。
 
+Research Protocol v5 的 Binance 原生快照 CLI 对范围下载逐 UTC 日 fail closed：
+checksum、404、日内缺口或 schema 失败的日期不写快照并记录
+`desired_state=flat`，但不会阻止后续有效日期被不可变保存。只要存在失败日，范围
+命令最终仍返回非零；调用方必须保留 JSON failure ledger，不能把部分成功误报为
+完整覆盖：
+
+```bash
+uv run python -m apps.ops.research_v5_snapshot \
+  --kind delivery_curve --asset BTCUSDT \
+  --start-date 2021-06-01 --end-date 2022-12-31 \
+  --download
+```
+
 预注册提交后，使用无凭证的一次性 collector 保存 July 2026 provider
 qualification 快照。每份响应保留原始 payload、请求 URL、payload SHA-256、
 snapshot SHA-256 和 vintage id；同一文件名禁止覆盖：

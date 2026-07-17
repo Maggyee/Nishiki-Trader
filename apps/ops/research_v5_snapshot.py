@@ -714,20 +714,48 @@ def main(argv: list[str] | None = None) -> int:
         if args.dry_run:
             print(json.dumps(request_plan(args.kind, args.asset, days), indent=2, sort_keys=True))
             return 0
-        results = [
-            collect_snapshot(
-                args.kind,
-                args.asset,
-                data_day,
-                raw_root=args.raw_root,
-                normalized_root=args.normalized_root,
+        results = []
+        failures = []
+        for data_day in days:
+            try:
+                results.append(
+                    collect_snapshot(
+                        args.kind,
+                        args.asset,
+                        data_day,
+                        raw_root=args.raw_root,
+                        normalized_root=args.normalized_root,
+                    )
+                )
+            except Exception as exc:
+                failures.append(
+                    {
+                        "kind": args.kind,
+                        "asset": args.asset,
+                        "data_date": data_day.isoformat(),
+                        "error": str(exc),
+                        "snapshot_written": False,
+                        "desired_state": "flat",
+                    }
+                )
+        print(
+            json.dumps(
+                {
+                    "snapshots": results,
+                    "failures": failures,
+                    "requested_date_count": len(days),
+                    "valid_snapshot_count": len(results),
+                    "failed_date_count": len(failures),
+                    "complete": not failures,
+                },
+                indent=2,
+                sort_keys=True,
+                allow_nan=False,
             )
-            for data_day in days
-        ]
-        print(json.dumps({"snapshots": results}, indent=2, sort_keys=True, allow_nan=False))
+        )
+        return 2 if failures else 0
     except Exception as exc:
         raise SystemExit(f"research v5 snapshot failed: {exc}") from exc
-    return 0
 
 
 if __name__ == "__main__":

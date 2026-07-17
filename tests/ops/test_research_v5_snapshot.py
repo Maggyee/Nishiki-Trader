@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pytest
 
+import apps.ops.research_v5_snapshot as snapshot_module
 from apps.ops.research_v5_snapshot import (
     HttpResponse,
     build_requests,
@@ -236,3 +237,44 @@ def test_quarter_selection_rolls_at_expiry_boundary() -> None:
     assert before[0][0] == "BTCUSDT_220325"
     assert expiry_day[0][0] == "BTCUSDT_220624"
     assert before[0][1].hour == 8
+
+
+def test_range_download_records_failure_and_continues(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    calls: list[date] = []
+
+    def collect(_kind: str, _asset: str, data_day: date, **_kwargs):
+        calls.append(data_day)
+        if data_day == date(2023, 8, 1):
+            raise ValueError("intraday gap")
+        return {"data_date": data_day.isoformat(), "valid": True}
+
+    monkeypatch.setattr(snapshot_module, "collect_snapshot", collect)
+    result = snapshot_module.main(
+        [
+            "--kind",
+            "bvol",
+            "--asset",
+            "BTCUSDT",
+            "--start-date",
+            "2023-08-01",
+            "--end-date",
+            "2023-08-02",
+            "--download",
+            "--raw-root",
+            str(tmp_path / "raw"),
+            "--normalized-root",
+            str(tmp_path / "normalized"),
+        ]
+    )
+    report = json.loads(capsys.readouterr().out)
+
+    assert result == 2
+    assert calls == [date(2023, 8, 1), date(2023, 8, 2)]
+    assert report["valid_snapshot_count"] == 1
+    assert report["failed_date_count"] == 1
+    assert report["failures"][0]["desired_state"] == "flat"
+    assert report["failures"][0]["snapshot_written"] is False
