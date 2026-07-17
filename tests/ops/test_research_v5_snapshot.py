@@ -14,6 +14,7 @@ from apps.ops.research_v5_snapshot import (
     HttpResponse,
     build_requests,
     collect_snapshot,
+    import_spot_snapshot,
     request_plan,
     select_quarterly_contracts,
     verify_snapshot,
@@ -38,6 +39,7 @@ def _fixture_fetch(
     *,
     unit: str = "ms",
     missing_bvol_second: int | None = None,
+    missing_spot_minute: int | None = None,
 ):
     specs = build_requests(kind, asset, day)
     bodies = {}
@@ -63,7 +65,7 @@ def _fixture_fetch(
                 0,
             ]
             body = _zip_csv(spec.filename.removesuffix(".zip") + ".csv", ",".join(map(str, row)) + "\n")
-        else:
+        elif kind == "bvol":
             symbol = f"{asset.removesuffix('USDT')}BVOLUSDT"
             base_asset = f"{asset.removesuffix('USDT')}BVOL"
             rows = [
@@ -78,6 +80,34 @@ def _fixture_fetch(
                 if offset != missing_bvol_second
             ]
             body = _zip_csv(spec.filename.removesuffix(".zip") + ".csv", "\n".join(",".join(map(str, row)) for row in rows) + "\n")
+        else:
+            rows = []
+            for offset in range(1_440):
+                if offset == missing_spot_minute:
+                    continue
+                open_ms = start_ms + offset * 60_000
+                close_ms = open_ms + 60_000 - 1
+                price = 100.0 + offset / 1_000
+                rows.append(
+                    [
+                        open_ms * multiplier,
+                        price,
+                        price + 1,
+                        price - 1,
+                        price + 0.1,
+                        2,
+                        close_ms * multiplier + close_adjustment,
+                        200,
+                        3,
+                        1,
+                        100,
+                        0,
+                    ]
+                )
+            body = _zip_csv(
+                spec.filename.removesuffix(".zip") + ".csv",
+                "\n".join(",".join(map(str, row)) for row in rows) + "\n",
+            )
         digest = hashlib.sha256(body).hexdigest()
         bodies[spec.url] = body
         bodies[f"{spec.url}.CHECKSUM"] = f"{digest}  {spec.filename}\n".encode()
@@ -225,6 +255,48 @@ def test_bvol_snapshot_rejects_an_intraday_second_gap(tmp_path: Path) -> None:
                 "BTCUSDT",
                 day,
                 missing_bvol_second=42,
+            ),
+            now=datetime(2026, 7, 17, tzinfo=UTC),
+        )
+
+
+def test_spot_snapshot_preserves_checksum_and_imports_verified_catalog(
+    tmp_path: Path,
+) -> None:
+    day = date(2025, 8, 1)
+    result = collect_snapshot(
+        "spot_execution",
+        "BTCUSDT",
+        day,
+        raw_root=tmp_path / "raw",
+        normalized_root=tmp_path / "normalized",
+        fetch=_fixture_fetch("spot_execution", "BTCUSDT", day, unit="us"),
+        now=datetime(2026, 7, 17, tzinfo=UTC),
+    )
+
+    verified = verify_snapshot(Path(result["path"]))
+    imported = import_spot_snapshot(result, tmp_path / "catalog")
+
+    assert verified["audit"]["row_count"] == 1_440
+    assert verified["audit"]["minute_grid_complete"] is True
+    assert imported["bars_written"] == 1_440
+    assert imported["bar_type"] == "BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL"
+
+
+def test_spot_snapshot_rejects_missing_minute(tmp_path: Path) -> None:
+    day = date(2023, 8, 1)
+    with pytest.raises(ValueError, match="exactly 1440 rows"):
+        collect_snapshot(
+            "spot_execution",
+            "ETHUSDT",
+            day,
+            raw_root=tmp_path / "raw",
+            normalized_root=tmp_path / "normalized",
+            fetch=_fixture_fetch(
+                "spot_execution",
+                "ETHUSDT",
+                day,
+                missing_spot_minute=42,
             ),
             now=datetime(2026, 7, 17, tzinfo=UTC),
         )

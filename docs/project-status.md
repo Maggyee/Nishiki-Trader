@@ -185,7 +185,10 @@ On 2026-07-17, at Protocol v5 historical fast-track opening:
   later dates, and returns nonzero if coverage is incomplete. No validation
   threshold was relaxed. The v5 signal CLI can now isolate one BTCUSDT or
   ETHUSDT sleeve into its own SignalStore so duplicated Nautilus fold runs do
-  not mix symbols. The full suite is **905 passed, 12
+  not mix symbols. Before historical Spot execution access, the Spot daily
+  route now also preserves official checksum/HTTP/vintage evidence and imports
+  only an offline-verified 1,440-minute snapshot into the Nautilus catalog.
+  The full suite is **907 passed, 12
   Postgres-dependent skips**; full-repository Ruff and `git diff --check` pass.
 - No historical return/PnL, signal, Nautilus run, policy/testnet/live action, or
   future-blind data was accessed. Details are in

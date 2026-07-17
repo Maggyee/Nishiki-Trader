@@ -141,6 +141,21 @@ uv run python -m apps.ops.research_v5_snapshot \
   --download
 ```
 
+Spot 执行数据必须先走同一个 `research.raw_snapshot.v2` 不可变 envelope，再由
+离线复验通过且无 vintage conflict 的 ZIP 导入 v5 Nautilus catalog。每个 UTC 日
+必须恰好有 1,440 个分钟格；checksum、时间戳或 OHLCV 失败的日期不会写入 catalog：
+
+```bash
+uv run python -m apps.ops.research_v5_snapshot \
+  --kind spot_execution --asset BTCUSDT \
+  --start-date 2023-08-01 --end-date 2023-12-31 \
+  --download \
+  --catalog-path data/research-v5/spot-catalog
+```
+
+Curve/BVOL collector 不会导入 Nautilus，因而云端只读日采集仍不需要交易引擎
+依赖；Nautilus 导入仅在显式选择 `spot_execution` 时延迟加载。
+
 预注册提交后，使用无凭证的一次性 collector 保存 July 2026 provider
 qualification 快照。每份响应保留原始 payload、请求 URL、payload SHA-256、
 snapshot SHA-256 和 vintage id；同一文件名禁止覆盖：

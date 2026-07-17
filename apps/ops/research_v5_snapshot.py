@@ -20,7 +20,7 @@ import pandas as pd
 
 SCHEMA_VERSION = "research.raw_snapshot.v2"
 PROVIDER_CONTRACT = Path("docs/progress/phase-2-research-v5-data-sources.json")
-KINDS = ("delivery_curve", "bvol")
+KINDS = ("delivery_curve", "bvol", "spot_execution")
 ASSETS = ("BTCUSDT", "ETHUSDT")
 BINANCE_DATA_ROOT = "https://data.binance.vision/data"
 
@@ -125,6 +125,10 @@ def build_requests(kind: str, asset: str, data_day: date) -> list[RequestSpec]:
     if asset not in ASSETS:
         raise ValueError(f"asset must be one of {ASSETS}")
     stamp = data_day.isoformat()
+    if kind == "spot_execution":
+        filename = f"{asset}-1m-{stamp}.zip"
+        url = f"{BINANCE_DATA_ROOT}/spot/daily/klines/{asset}/1m/{filename}"
+        return [RequestSpec("spot_klines", url, filename)]
     if kind == "bvol":
         symbol = f"{asset.removesuffix('USDT')}BVOLUSDT"
         filename = f"{symbol}-BVOLIndex-{stamp}.zip"
@@ -274,6 +278,16 @@ def _finite_positive(value: str, field: str) -> float:
     return result
 
 
+def _finite_nonnegative(value: str, field: str) -> float:
+    try:
+        result = float(value)
+    except ValueError as exc:
+        raise ValueError(f"{field} must be numeric") from exc
+    if not math.isfinite(result) or result < 0:
+        raise ValueError(f"{field} must be finite and non-negative")
+    return result
+
+
 def _parse_kline(raw: bytes, *, filename: str, data_day: date) -> dict[str, Any]:
     rows = _csv_rows(raw, _KLINE_COLUMNS, filename)
     if len(rows) != 1:
@@ -330,12 +344,70 @@ def _parse_bvol(raw: bytes, *, filename: str, data_day: date, asset: str) -> dic
     }
 
 
+def _parse_spot_klines(raw: bytes, *, filename: str, data_day: date) -> dict[str, Any]:
+    rows = _csv_rows(raw, _KLINE_COLUMNS, filename)
+    if len(rows) != 1_440:
+        raise ValueError(f"{filename} daily 1m archive must contain exactly 1440 rows")
+    start_ns = int(datetime.combine(data_day, time.min, UTC).timestamp() * 1e9)
+    minute_ns = 60_000_000_000
+    digest = hashlib.sha256()
+    for index, values_row in enumerate(rows):
+        row = dict(zip(_KLINE_COLUMNS, values_row, strict=True))
+        open_ns = _timestamp_ns(row["open_time"], f"{filename}.open_time[{index}]")
+        close_ns = _timestamp_ns(row["close_time"], f"{filename}.close_time[{index}]")
+        expected_open = start_ns + index * minute_ns
+        expected_next = expected_open + minute_ns
+        if open_ns != expected_open or not expected_next - 1_000_000 <= close_ns < expected_next:
+            raise ValueError(f"{filename} must contain one complete row in every UTC minute")
+        prices = {
+            key: _finite_positive(row[key], f"{filename}.{key}[{index}]")
+            for key in ("open", "high", "low", "close")
+        }
+        if prices["low"] > min(prices["open"], prices["close"]) or prices[
+            "high"
+        ] < max(prices["open"], prices["close"]):
+            raise ValueError(f"{filename} OHLC bounds are invalid at row {index}")
+        for key in (
+            "volume",
+            "quote_volume",
+            "taker_buy_volume",
+            "taker_buy_quote_volume",
+        ):
+            _finite_nonnegative(row[key], f"{filename}.{key}[{index}]")
+        try:
+            count = int(row["count"])
+        except ValueError as exc:
+            raise ValueError(f"{filename}.count[{index}] must be an integer") from exc
+        if count < 0:
+            raise ValueError(f"{filename}.count[{index}] must be non-negative")
+        digest.update(("|".join(values_row) + "\n").encode())
+    return {
+        "row_count": len(rows),
+        "first_open_time_ns": start_ns,
+        "last_open_time_ns": start_ns + 1_439 * minute_ns,
+        "minute_grid_complete": True,
+        "canonical_rows_sha256": f"sha256:{digest.hexdigest()}",
+    }
+
+
 def _parse_payloads(
     kind: str,
     asset: str,
     data_day: date,
     payloads: dict[str, bytes],
 ) -> tuple[dict[str, Any], dict[str, Any]]:
+    if kind == "spot_execution":
+        parsed = _parse_spot_klines(
+            payloads["spot_klines"],
+            filename=build_requests(kind, asset, data_day)[0].filename,
+            data_day=data_day,
+        )
+        return parsed, {
+            "row_count": parsed["row_count"],
+            "first_open_time_ns": parsed["first_open_time_ns"],
+            "last_open_time_ns": parsed["last_open_time_ns"],
+            "canonical_rows_sha256": parsed["canonical_rows_sha256"],
+        }
     if kind == "bvol":
         parsed = _parse_bvol(
             payloads["bvol_index"],
@@ -386,7 +458,7 @@ def _parse_payloads(
 
 
 def _available_at(kind: str, data_day: date, retrieved_at: datetime) -> datetime:
-    if kind == "delivery_curve":
+    if kind in {"delivery_curve", "spot_execution"}:
         return datetime.combine(data_day + timedelta(days=1), time.min, UTC)
     if data_day < date(2026, 7, 1):
         return datetime.combine(data_day + timedelta(days=2), time.min, UTC)
@@ -676,6 +748,43 @@ def verify_snapshot(path: Path) -> dict[str, Any]:
     }
 
 
+def import_spot_snapshot(snapshot: dict[str, Any], catalog_path: Path) -> dict[str, Any]:
+    """Import one verified, conflict-free Spot vintage into the Nautilus catalog."""
+
+    if snapshot.get("kind") != "spot_execution":
+        raise ValueError("only spot_execution snapshots can be imported into the catalog")
+    if snapshot.get("result_comparison_blocked") is True:
+        raise ValueError("Spot vintage conflict blocks catalog import")
+    verified = verify_snapshot(Path(str(snapshot["path"])))
+    asset = str(verified["asset"])
+    data_day = date.fromisoformat(str(verified["data_date"]))
+    spec = build_requests("spot_execution", asset, data_day)[0]
+    raw_path = Path(str(verified["path"])).parent / spec.filename
+
+    # Lazy import keeps the lightweight curve/BVOL cloud collector free of the
+    # NautilusTrader runtime dependency.
+    from apps.ops.backfill_bars import run_backfill
+
+    result = run_backfill(
+        raw_path=raw_path,
+        download=False,
+        symbol=asset,
+        interval="1m",
+        date=None,
+        raw_output_dir=raw_path.parent,
+        catalog_path=catalog_path,
+    )
+    if result.bars_written != 1_440:
+        raise ValueError("verified Spot snapshot did not import exactly 1440 bars")
+    return {
+        "catalog_path": result.catalog_path,
+        "bar_type": result.bar_type,
+        "bars_written": result.bars_written,
+        "first_bar_ts_ns": result.first_bar_ts_ns,
+        "last_bar_ts_ns": result.last_bar_ts_ns,
+    }
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--kind", choices=KINDS)
@@ -692,6 +801,12 @@ def _parser() -> argparse.ArgumentParser:
         "--normalized-root",
         type=Path,
         default=Path("data/research-v5/normalized"),
+    )
+    parser.add_argument(
+        "--catalog-path",
+        type=Path,
+        default=Path("data/research-v5/spot-catalog"),
+        help="Nautilus catalog used only by --kind spot_execution",
     )
     return parser
 
@@ -717,16 +832,21 @@ def main(argv: list[str] | None = None) -> int:
         results = []
         failures = []
         for data_day in days:
+            snapshot_result: dict[str, Any] | None = None
             try:
-                results.append(
-                    collect_snapshot(
-                        args.kind,
-                        args.asset,
-                        data_day,
-                        raw_root=args.raw_root,
-                        normalized_root=args.normalized_root,
-                    )
+                snapshot_result = collect_snapshot(
+                    args.kind,
+                    args.asset,
+                    data_day,
+                    raw_root=args.raw_root,
+                    normalized_root=args.normalized_root,
                 )
+                if args.kind == "spot_execution":
+                    snapshot_result["catalog_import"] = import_spot_snapshot(
+                        snapshot_result,
+                        args.catalog_path,
+                    )
+                results.append(snapshot_result)
             except Exception as exc:
                 failures.append(
                     {
@@ -734,8 +854,9 @@ def main(argv: list[str] | None = None) -> int:
                         "asset": args.asset,
                         "data_date": data_day.isoformat(),
                         "error": str(exc),
-                        "snapshot_written": False,
+                        "snapshot_written": snapshot_result is not None,
                         "desired_state": "flat",
+                        "execution_window_usable": False,
                     }
                 )
         print(

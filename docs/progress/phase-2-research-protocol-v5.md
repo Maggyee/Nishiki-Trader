@@ -85,8 +85,11 @@ Dry-run mode performs no network request and writes no file. Collection never
 generates a signal or PnL.
 
 Spot execution data is BTCUSDT/ETHUSDT official 1m archive data imported into
-the existing Nautilus catalog. No Binance key, testnet credential, live
-credential, or third-party/paid dataset is allowed.
+the existing Nautilus catalog. Before import, each daily ZIP and official
+checksum are preserved in the same immutable envelope with HTTP metadata and
+offline verification; only an exact 1,440-minute, conflict-free vintage can be
+written to the catalog. No Binance key, testnet credential, live credential,
+or third-party/paid dataset is allowed.
 
 ## Evidence partitions and review gates
 
