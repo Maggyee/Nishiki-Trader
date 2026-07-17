@@ -114,3 +114,42 @@ def test_daily_rejects_image_marker_environment_drift(
             repo_root=tmp_path,
             dry_run=True,
         )
+
+
+def test_daily_records_one_failure_and_continues_other_streams(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    commit = "a" * 40
+    (tmp_path / ".collector-git-sha").write_text(f"{commit}\n")
+    monkeypatch.setenv("TRADER_GIT_SHA", commit)
+    calls: list[tuple[str, str]] = []
+
+    def collect(kind, asset, _data_day, **_kwargs):
+        calls.append((kind, asset))
+        if (kind, asset) == ("delivery_curve", "BTCUSDT"):
+            raise ValueError("next contract unavailable")
+        return {
+            "kind": kind,
+            "asset": asset,
+            "result_comparison_blocked": False,
+        }
+
+    monkeypatch.setattr("apps.ops.research_v5_daily.collect_snapshot", collect)
+    report = run_daily_collection(
+        date(2026, 7, 16),
+        data_root=tmp_path / "data",
+        expected_git_commit=commit,
+        repo_root=tmp_path,
+    )
+
+    assert calls == [
+        ("delivery_curve", "BTCUSDT"),
+        ("delivery_curve", "ETHUSDT"),
+        ("bvol", "BTCUSDT"),
+        ("bvol", "ETHUSDT"),
+    ]
+    assert report["valid_snapshot_count"] == 3
+    assert report["failed_snapshot_count"] == 1
+    assert report["failures"][0]["desired_state"] == "flat"
+    assert report["complete"] is False
+    assert report["comparison_allowed"] is False

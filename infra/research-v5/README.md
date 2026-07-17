@@ -15,6 +15,11 @@ modify, stop, or reuse the v2 unit, volume, image, or ledger. The data root is
 append-preserving: identical content is idempotent, while an upstream revision
 creates a new vintage and blocks result comparison.
 
+Each daily batch attempts all four asset/dataset streams even when one archive
+is unavailable or invalid. It preserves successful immutable snapshots,
+records every failed stream with `desired_state=flat`, marks the batch
+incomplete, and exits nonzero so systemd monitoring still sees the failure.
+
 Install only after replacing `TRADER_GIT_SHA` with the clean 40-character
 commit that contains the pre-registration:
 
@@ -48,6 +53,6 @@ read-only `.collector-git-sha` must match both `TRADER_GIT_SHA` and the CLI
 argument before any request. It contains pandas/pyarrow for normalized Parquet
 but no Nautilus runtime, signal generator, exchange credential, or order path.
 
-The service/timer remain disabled until the qualification retro authorizes
+The service/timer remain disabled until the fast-track reports authorize
 forward collection. Enabling the timer does not authorize signal generation or
 opening the 2026-08..12 blind PnL.

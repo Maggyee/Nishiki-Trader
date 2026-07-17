@@ -63,25 +63,43 @@ def run_daily_collection(
             "signals_generated": False,
             "pnl_computed": False,
         }
-    results = [
-        collect_snapshot(
-            kind,
-            asset,
-            data_day,
-            raw_root=data_root / "raw",
-            normalized_root=data_root / "normalized",
-        )
-        for kind in ("delivery_curve", "bvol")
-        for asset in ASSETS
-    ]
+    results = []
+    failures = []
+    for kind in ("delivery_curve", "bvol"):
+        for asset in ASSETS:
+            try:
+                results.append(
+                    collect_snapshot(
+                        kind,
+                        asset,
+                        data_day,
+                        raw_root=data_root / "raw",
+                        normalized_root=data_root / "normalized",
+                    )
+                )
+            except Exception as exc:
+                failures.append(
+                    {
+                        "kind": kind,
+                        "asset": asset,
+                        "data_date": data_day.isoformat(),
+                        "error": str(exc),
+                        "snapshot_written": False,
+                        "desired_state": "flat",
+                    }
+                )
     conflicts = [result for result in results if result.get("result_comparison_blocked")]
     return {
         "schema_version": "research.v5.daily_collection.v1",
         "data_date": data_day.isoformat(),
         "git_commit": commit,
         "snapshots": results,
+        "failures": failures,
+        "valid_snapshot_count": len(results),
+        "failed_snapshot_count": len(failures),
+        "complete": not failures,
         "vintage_conflict_count": len(conflicts),
-        "comparison_allowed": not conflicts,
+        "comparison_allowed": not conflicts and not failures,
         "signals_generated": False,
         "pnl_computed": False,
     }
@@ -116,7 +134,7 @@ def main(argv: list[str] | None = None) -> int:
     except Exception as exc:
         parser.exit(2, f"{parser.prog}: error: {exc}\n")
     print(json.dumps(report, indent=2, sort_keys=True, allow_nan=False))
-    return 0
+    return 0 if report.get("complete", True) else 2
 
 
 if __name__ == "__main__":

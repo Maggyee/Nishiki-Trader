@@ -186,7 +186,11 @@ On 2026-07-17, at Protocol v5 Spot execution lineage qualification:
 - Before PnL, the v5 portfolio notional audit was corrected to use the first
   in-fold 1m Spot close rather than the first day's final close. A non-constant
   end-to-end raw-to-review fixture now locks the registered sizing formula.
-- The full suite is **907 passed, 12 Postgres-dependent skips**; full-repository
+- Before future collector deployment, daily collection was made four-stream
+  fail-closed: one missing curve/BVOL archive no longer prevents the other
+  streams from being preserved, while the batch remains incomplete and exits
+  nonzero for monitoring.
+- The full suite is **908 passed, 12 Postgres-dependent skips**; full-repository
   Ruff and `git diff --check` pass. No historical Spot body, signal, return,
   PnL, backtest, credential, policy/testnet/live action, or future-blind data
   was accessed. Details are in
