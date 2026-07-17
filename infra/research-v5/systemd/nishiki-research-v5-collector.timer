@@ -1,0 +1,12 @@
+[Unit]
+Description=Run Nishiki Research Protocol v5 collection with one UTC retry
+
+[Timer]
+OnCalendar=*-*-* 04:15:00 UTC
+OnCalendar=*-*-* 08:15:00 UTC
+Persistent=true
+AccuracySec=1min
+Unit=nishiki-research-v5-collector.service
+
+[Install]
+WantedBy=timers.target

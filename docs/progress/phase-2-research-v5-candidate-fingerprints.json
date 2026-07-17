@@ -1,0 +1,55 @@
+{
+  "schema_version": "research.candidate_fingerprints.v5",
+  "frozen_at": "2026-07-17T11:51:34Z",
+  "status": "locked_before_historical_body_access",
+  "candidates": [
+    {
+      "candidate": "curve_carry",
+      "source": "rule_binance_curve_carry_v1",
+      "model_version": "btc-eth-front-next-positive-steep-daily-v1",
+      "parameters": {
+        "minimum_annualized_basis": 0.0,
+        "minimum_curve_slope": 0.0,
+        "expiry_hour_utc": 8,
+        "ttl_seconds": 86400,
+        "confidence": 0.75
+      },
+      "required_factors": [
+        "index_close",
+        "front_futures_close",
+        "next_futures_close",
+        "front_days_to_expiry",
+        "next_days_to_expiry",
+        "front_contract",
+        "next_contract",
+        "front_expiry",
+        "next_expiry"
+      ],
+      "features_hash": "sha256:7bcfa09d35ad758e35f6ed4c3f4c2fb3764460e4bd65de3877535d3dfb75498f",
+      "candidate_sha256": "sha256:d18ff96cac147a64298c2acbe554544ec5d9f4768c26849b29914cfcd3146fa7"
+    },
+    {
+      "candidate": "bvol_relief",
+      "source": "rule_binance_bvol_relief_v1",
+      "model_version": "btc-eth-bvol5d-negative-daily-lag2-v1",
+      "parameters": {
+        "change_observations": 5,
+        "historical_publication_lag_days": 2,
+        "maximum_change": 0.0,
+        "ttl_seconds": 86400,
+        "confidence": 0.75
+      },
+      "required_factors": ["bvol_index"],
+      "features_hash": "sha256:912dead53e4026830b2418986ccba2d62bbe21a42f8ed3cf7ed1cbfcf20fd3cf",
+      "candidate_sha256": "sha256:e8f219af924b95ca8043fe9e3800c5db5d9d41617816b69b3d7ffa9621d4ce14"
+    }
+  ],
+  "boundaries": {
+    "historical_bodies_accessed": false,
+    "signals_written": false,
+    "pnl_computed": false,
+    "source_policy_mutated": false,
+    "testnet_resumed": false,
+    "live_path_touched": false
+  }
+}

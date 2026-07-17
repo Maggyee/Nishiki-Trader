@@ -1,0 +1,82 @@
+{
+  "schema_version": "research.data_sources.v5",
+  "frozen_at": "2026-07-17T11:51:34Z",
+  "status": "locked_before_historical_body_access",
+  "provider": "Binance",
+  "authentication": "none",
+  "allowed_hosts": ["data.binance.vision", "fapi.binance.com"],
+  "snapshot_envelope": {
+    "schema_version": "research.raw_snapshot.v2",
+    "raw_bytes_preserved": true,
+    "official_checksum_required": true,
+    "http_metadata_preserved": true,
+    "retrieved_at_required": true,
+    "content_hash_required": true,
+    "normalized_format": "Parquet",
+    "overwrite_forbidden": true,
+    "same_content_idempotent": true,
+    "different_content_new_vintage": true,
+    "different_content_blocks_result_comparison": true
+  },
+  "datasets": {
+    "delivery_curve": {
+      "market": "USD-M Futures delivery",
+      "assets": ["BTCUSDT", "ETHUSDT"],
+      "archive_requests": [
+        "data/futures/um/daily/klines/{contract}/1d/{contract}-1d-{date}.zip",
+        "data/futures/um/daily/indexPriceKlines/{asset}/1d/{asset}-1d-{date}.zip"
+      ],
+      "checksum_suffix": ".CHECKSUM",
+      "contract_rule": "nearest two quarterly contracts with suffix-derived expiry strictly after the decision boundary",
+      "expiry_rule": "last Friday of March/June/September/December at 08:00 UTC",
+      "decision_rule": "consume only the previous complete UTC day's closes",
+      "locked_columns": [
+        "open_time",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+        "close_time",
+        "quote_volume",
+        "trades",
+        "taker_buy_base_volume",
+        "taker_buy_quote_volume",
+        "ignore"
+      ]
+    },
+    "bvol": {
+      "market": "Binance Options BVOL Index",
+      "symbols": ["BTCBVOLUSDT", "ETHBVOLUSDT"],
+      "archive_request": "data/option/daily/BVOLIndex/{symbol}/{symbol}-BVOLIndex-{date}.zip",
+      "checksum_suffix": ".CHECKSUM",
+      "locked_columns": ["calc_time", "symbol", "base_asset", "quote_asset", "index_value"],
+      "daily_selection": "last valid observation of each UTC day",
+      "historical_publication_lag_days": 2,
+      "future_availability": "no earlier than the first UTC day after actual retrieved_at",
+      "missing_policy": "no forward fill; desired state is flat"
+    },
+    "spot_execution": {
+      "assets": ["BTCUSDT", "ETHUSDT"],
+      "archive_request": "data/spot/daily/klines/{asset}/1m/{asset}-1m-{date}.zip",
+      "destination": "existing NautilusTrader ParquetDataCatalog",
+      "execution_engine": "NautilusTrader"
+    }
+  },
+  "timestamp_contract": {
+    "timezone": "UTC",
+    "accepted_archive_units": ["milliseconds", "microseconds", "nanoseconds"],
+    "normalized_unit": "nanoseconds",
+    "duplicate_timestamps_forbidden": true,
+    "non_finite_values_forbidden": true
+  },
+  "boundaries": {
+    "credentials_loaded": false,
+    "third_party_data_allowed": false,
+    "pnl_computed_during_collection": false,
+    "signals_generated_during_collection": false,
+    "source_policy_mutated": false,
+    "testnet_resumed": false,
+    "live_path_touched": false
+  }
+}

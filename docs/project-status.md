@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-07-17 (v2 coverage complete; v3 hashrate qualified; v3/v4 macro provider routes blocked)
+- **Last updated**: 2026-07-17 (Protocol v5 pre-registered; historical bodies remain unopened)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
-- **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry remains frozen at 16 rejects and an empty selected set. Research Protocol v2 remains locked and data-blocked (option method replication, stablecoin entitlement, incomplete basis history), while its credential-free cloud option/basis coverage window completed cleanly at 7/7 paired UTC days under collector image `5a8289c`. Research Protocol v3 has one valid July hashrate snapshot; its frozen Stooq DXY/VIX routes remain blocked. Protocol v4 separately locked two FRED provider-recovery identities and July-only requests on pre-access commit `62d926f`, but both real routes timed out from cloud and local network paths and produced zero snapshots. No v4 signal generator or further automatic provider substitution is authorized. Opened 2023-2025 remains diagnostic-only, 2020-2022 PnL remains unconsumed, July 2026 has PnL forbidden, and 2026-08..12 remains the final future blind. No in-place provider substitution, grid search, failed-model retuning, PnL-selected ensemble, policy change, or testnet resume is allowed.
+- **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry remains frozen at 16 rejects and an empty selected set. Research Protocol v2 remains locked and data-blocked, Protocol v3 has one valid July hashrate snapshot with both macro routes blocked, and Protocol v4's two FRED recovery routes timed out without snapshots. Protocol v5 now pre-registers two new Binance-native BTC/ETH identities, immutable public-archive collection, dual-sleeve execution/risk gates, and candidate fingerprints; no curve/BVOL historical body has been opened. The next authorized v5 action, only after the pre-registration commit is pushed, is local then cloud single-day July schema/lineage qualification without PnL. Opened 2023-2025 remains diagnostic-only, July 2026 has PnL forbidden, and 2026-08..12 remains the final future blind. No in-place provider substitution, grid search, failed-model retuning, PnL-selected ensemble, policy change, or testnet resume is allowed.
   Keep the current SourcePolicy unchanged until an explicit `promotion_review.py` decision. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
@@ -28,6 +28,7 @@ Detailed history archived so far:
 - `docs/progress/phase-2-research-protocol-v2.md` — independent-mechanism pre-registration, point-in-time contract, evidence partitions, and gates.
 - `docs/progress/phase-2-research-protocol-v3.md` — macro/native mechanism pre-registration (hashrate, DXY, VIX) without reopening rejected families.
 - `docs/progress/phase-2-research-protocol-v4.md` — separately identified FRED provider recovery for the two v3 macro routes blocked at Stooq.
+- `docs/progress/phase-2-research-protocol-v5.md` — Binance-native BTC/ETH curve-carry and BVOL-relief pre-registration, immutable collection, dual-sleeve review, and future-blind gates.
 - `docs/progress/phase-3-testnet-canary-evidence.md` — Phase 3 testnet canary evidence ledger and paused operating step.
 - `docs/progress/phase-3-testnet-continuity-plan.md` — paused 14-day testnet continuity tracking plan and review command.
 - `docs/progress/phase-5-dashboard-history.md` — completed read-only dashboard, AgentAdvice input, passive Phase 6 gate, and dashboard hardening history.
@@ -119,12 +120,17 @@ mechanisms. Hashrate's first real July schema/lineage snapshot is valid; DXY and
 VIX are blocked at the frozen provider route because Stooq serves a JavaScript
 verification page rather than CSV. Protocol v4 separately locked two new FRED
 identities, but both direct July-only routes timed out from cloud and local
-paths and wrote zero snapshots. Routine 14-day testnet continuity remains
+paths and wrote zero snapshots. Protocol v5 now freezes two Binance-native
+BTC/ETH identities, their point-in-time data contract, immutable archive
+collector, SignalEvent generators, dual-sleeve portfolio audit, and locked
+review gates. No curve or BVOL response body has been opened; the first allowed
+real-data action is a July-only schema/lineage qualification after the clean
+pre-registration commit is pushed. Routine 14-day testnet continuity remains
 paused, and the Phase 3 strict streak remains 0/14.
 
 Immediate focus:
 
-1. Keep the original registry frozen. Keep Protocol v2 locked and data-blocked without retuning; its 7/7 cloud collection is complete and must not restart. Retain the qualified v3 hashrate snapshot. Keep both v3 Stooq and both v4 FRED macro routes blocked; do not implement v4 signals or automatically open another provider-recovery protocol.
+1. Keep the original registry frozen. Keep Protocol v2 locked and data-blocked without retuning; its 7/7 cloud collection is complete and must not restart. Retain the qualified v3 hashrate snapshot. Keep both v3 Stooq and both v4 FRED macro routes blocked; do not implement v4 signals or automatically open another provider-recovery protocol. Keep Protocol v5 historical bodies closed until its pre-registration commit is pushed, then qualify only one July UTC day without returns or PnL.
 2. Treat `docs/progress/phase-3-testnet-canary-evidence.md`, `docs/progress/phase-3-testnet-continuity-plan.md`, the 2026-05-30 clean canary retro, the 2026-05-30 duplicate-entry abort retro, the 2026-05-30 post-fix clean retro, and the 2026-06-01 heartbeat-lost retro as the current operational evidence. The historical canaries remain valid for connection, lifecycle, lineage, and emergency-path evidence, but not as proof that `SourcePolicy.position_pct_multiplier` scaled the submitted quantity; that execution bug was fixed on 2026-07-16 and any future sizing claim needs post-fix evidence. Do not run more routine canaries unless the operator explicitly resumes live-readiness evidence collection. If canary evidence resumes, use `python -m apps.strategies_nautilus.runners.report_testnet_bundle data/testnet/<run_id>` before writing future manifest-backed canary retros, use `--markdown` with clean bundle directories before updating the clean evidence ledger, and use `--continuity --markdown --min-clean-hours-per-day 6 --required-consecutive-days 14` with every completed manifest-backed bundle in the candidate window before claiming continuity progress. Carry no-manifest aborts manually. Do not open a new `promotion_review` unless an actual policy/stage decision is being made.
 3. Use `docs/decisions/009-agent-advice-audit.md` and `docs/decisions/012-phase5-readonly-dashboard.md` as the active agent/frontend boundaries. Agent/MCP work may write/replay/review `AgentAdvice`; dashboard work may read passive reports, observability textfiles, and AgentAdvice through `dashboard.snapshot.v1`. `TradingAgents/` is available as an ignored read-only upstream reference for future agent role/configuration ideas only; `docs/progress/tradingagents-reference-map.md` is the current safe adaptation map, and `apps.agents.role_profiles` is the first machine-readable AgentAdvice-only role seed. Neither path may write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or encode structured execution directives.
 4. ADR-008 §6.2 Phase 3b, §6.3 Phase 3c-a/b/c, §6.4 Phase 3d, §6.5 Phase 3e, §6.6 Phase 3f stability soak/canary, and the §8 promotion-review patch are all implemented and unit-tested. The `phase_3_not_ready` blocker now only hard-blocks `live_canary` / `live_normal`.
@@ -132,17 +138,19 @@ Immediate focus:
 
 ## Next Steps
 
-1. Preserve the qualified v3 hashrate snapshot and the v4 timeout evidence. Do not retry macro providers automatically; any new route requires independent evidence and explicit review before a new protocol is registered.
-2. Archive and retain the completed Protocol v2 7/7 option/basis evidence. Do not rebuild or restart the completed collector, open basis historical ZIPs, or invent option-method substitutes.
-3. Open the 2020-2022 replication reserve exactly once only after a protocol's pipelines pass qualification on a clean commit; evaluate that protocol's locked candidates with the Nautilus/cost/gate protocol and no result-driven changes.
-4. Keep SourcePolicy unchanged and testnet/live blocked; only a candidate that later passes both historical replication and the 2026-08..12 final blind may enter paper_shadow review.
-5. Keep the current SourcePolicy unchanged until a human reviews `demote_to_paper_simulated_recommended` and records an actual hold/demote decision with `promotion_review.py`.
-6. Continue Phase 5 with only read-only dashboard improvements fed by `dashboard.snapshot.v1`; keep the frontend free of API routes and mutation controls until a separate ADR opens a specific workflow.
-7. If the operator explicitly resumes live-readiness evidence collection, use `docs/progress/phase-3-testnet-continuity-plan.md` and include every completed manifest-backed testnet bundle in the candidate window when running both `report_testnet_bundle --continuity` and `apps.ops.live_readiness`.
-8. Use `promotion_review.py` (not just `report_paper_bundle.py`) as the required ADR-007 §2.6 audit artifact for any actual `SourcePolicy` change. Do **not** run `promotion_review.py hold @ testnet_canary` as a routine ratification of each canary — the canary retros plus the evidence and continuity progress files are the operational record.
-9. Keep the `testnet_runner.py` startup guard + connection probe as the first line of defense for any subsequent testnet run: explicit `--allow-real-credentials`, clean git, source/model retro evidence, testnet multiplier cap, key-prefix-only audit, Ed25519-only credentials (HMAC fails Binance Spot WS `session.logon`), and Binance Spot TESTNET-only adapter config. The probe injects credentials into the in-memory `TradingNodeConfig` only and never writes the full key/secret to `logs/runtime.log` or `connection_probe.json`.
-10. Collect additional testnet canary or paper_simulated evidence only when it directly supports a concrete development or promotion question. The v11 paper bundle's expectancy (+0.00491 USDT/trade, 53.6% win rate, -0.003878% max drawdown over 152 days) is weaker than v9, includes a negative April, and only mildly positive May; the parquet-backed canary fill set is still only a few trades. Treat both as operational/monitoring evidence, not alpha.
-11. Decide SQLite -> Postgres / Redis Stream readiness only after backtest, paper, or testnet volume exposes an actual bottleneck.
+1. Push the Protocol v5 pre-registration commit before opening any Binance curve/BVOL response body. From that clean commit, run exactly one July UTC-day schema/lineage qualification locally and then on the designated cloud host; record a separate qualification retro and commit before any history is opened.
+2. Only if all four v5 asset/mechanism qualification snapshots pass offline verification, open the frozen historical replication partitions once. Do not inspect returns or PnL during qualification, tune after results, or open the 2026-08..12 future blind before 2027-01-01.
+3. Preserve the qualified v3 hashrate snapshot and the v4 timeout evidence. Do not retry macro providers automatically; any new route requires independent evidence and explicit review before a new protocol is registered.
+4. Archive and retain the completed Protocol v2 7/7 option/basis evidence. Do not rebuild or restart the completed collector, open basis historical ZIPs, or invent option-method substitutes.
+5. Open the 2020-2022 replication reserve exactly once only after a protocol's pipelines pass qualification on a clean commit; evaluate that protocol's locked candidates with the Nautilus/cost/gate protocol and no result-driven changes.
+6. Keep SourcePolicy unchanged and testnet/live blocked; only a candidate that later passes both historical replication and the 2026-08..12 final blind may enter paper_shadow review.
+7. Keep the current SourcePolicy unchanged until a human reviews `demote_to_paper_simulated_recommended` and records an actual hold/demote decision with `promotion_review.py`.
+8. Continue Phase 5 with only read-only dashboard improvements fed by `dashboard.snapshot.v1`; keep the frontend free of API routes and mutation controls until a separate ADR opens a specific workflow.
+9. If the operator explicitly resumes live-readiness evidence collection, use `docs/progress/phase-3-testnet-continuity-plan.md` and include every completed manifest-backed testnet bundle in the candidate window when running both `report_testnet_bundle --continuity` and `apps.ops.live_readiness`.
+10. Use `promotion_review.py` (not just `report_paper_bundle.py`) as the required ADR-007 §2.6 audit artifact for any actual `SourcePolicy` change. Do **not** run `promotion_review.py hold @ testnet_canary` as a routine ratification of each canary — the canary retros plus the evidence and continuity progress files are the operational record.
+11. Keep the `testnet_runner.py` startup guard + connection probe as the first line of defense for any subsequent testnet run: explicit `--allow-real-credentials`, clean git, source/model retro evidence, testnet multiplier cap, key-prefix-only audit, Ed25519-only credentials (HMAC fails Binance Spot WS `session.logon`), and Binance Spot TESTNET-only adapter config. The probe injects credentials into the in-memory `TradingNodeConfig` only and never writes the full key/secret to `logs/runtime.log` or `connection_probe.json`.
+12. Collect additional testnet canary or paper_simulated evidence only when it directly supports a concrete development or promotion question. The v11 paper bundle's expectancy (+0.00491 USDT/trade, 53.6% win rate, -0.003878% max drawdown over 152 days) is weaker than v9, includes a negative April, and only mildly positive May; the parquet-backed canary fill set is still only a few trades. Treat both as operational/monitoring evidence, not alpha.
+13. Decide SQLite -> Postgres / Redis Stream readiness only after backtest, paper, or testnet volume exposes an actual bottleneck.
 
 ## Blocked / Deferred
 
@@ -157,6 +165,23 @@ Immediate focus:
 - No edits to `freqtrade/` or `nautilus_trader/` unless explicitly requested.
 
 ## Latest Verification
+
+On 2026-07-17, before any Protocol v5 Binance response body access:
+
+- Locked the curve-carry and BVOL-relief candidate identities, BTCUSDT/ETHUSDT
+  universe, prior-UTC-day availability rules, explicit missing-to-flat behavior,
+  partitions, execution assumptions, fingerprints, costs, and dual-sleeve gates.
+- Implemented an offline dry-run/immutable public-archive collector, deterministic
+  SignalEvent v1 generators, portfolio-level daily equity and concurrency audit,
+  `research.v5.review.v1`, and disabled cloud timer templates. The dry-run
+  reports `network_accessed=false` and `data_written=false`.
+- Forty-five focused protocol, collector, signal, end-to-end Nautilus replay,
+  review, multi-asset, alpha, and daily-orchestrator tests pass. The full suite
+  is **900 passed, 12
+  Postgres-dependent skips**; full-repository Ruff and `git diff --check` pass.
+- No Binance response body, historical data, return, PnL, credential,
+  SignalStore write, Nautilus run, SourcePolicy mutation, testnet resume, or live
+  action occurred.
 
 On 2026-07-17, after Protocol v4 provider qualification:
 

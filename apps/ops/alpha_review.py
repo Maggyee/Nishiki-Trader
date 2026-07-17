@@ -26,6 +26,8 @@ ELIGIBLE_SOURCES = frozenset(
         "freqai_linear_walkforward_v1",
         "rule_alt_diversified_momentum_v1",
         "rule_alt_low_vol_rotation_v1",
+        "rule_binance_bvol_relief_v1",
+        "rule_binance_curve_carry_v1",
         "rule_breakout_v1",
         "rule_dual_momentum_v1",
         "rule_flow_exhaustion_v1",

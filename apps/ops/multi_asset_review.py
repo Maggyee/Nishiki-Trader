@@ -6,6 +6,7 @@ import argparse
 import json
 import math
 from collections import defaultdict
+from decimal import ROUND_FLOOR, Decimal
 from pathlib import Path
 from typing import Any
 
@@ -23,9 +24,17 @@ SOURCE_UNIVERSES = {
     "rule_xs_momentum_rotation_v1": {"BTCUSDT", "ETHUSDT", "SOLUSDT"},
     "rule_market_breadth_v1": {"BTCUSDT"},
     "rule_relative_value_rotation_v1": {"BTCUSDT", "ETHUSDT"},
+    "rule_binance_curve_carry_v1": {"BTCUSDT", "ETHUSDT"},
+    "rule_binance_bvol_relief_v1": {"BTCUSDT", "ETHUSDT"},
 }
 SOURCE_MAX_CONCURRENT_ASSETS = {
     "rule_alt_diversified_momentum_v1": 3,
+    "rule_binance_curve_carry_v1": 2,
+    "rule_binance_bvol_relief_v1": 2,
+}
+V5_SOURCES = {
+    "rule_binance_curve_carry_v1",
+    "rule_binance_bvol_relief_v1",
 }
 
 
@@ -175,6 +184,275 @@ def _audit_exclusivity(
     }
 
 
+def _risk_metrics(rows: list[dict[str, Any]], scenario: str) -> dict[str, Any]:
+    equities = [100_000.0]
+    equities.extend(float(row["scenarios"][scenario]["equity"]) for row in rows)
+    peak = equities[0]
+    maximum_drawdown = 0.0
+    for equity in equities:
+        peak = max(peak, equity)
+        maximum_drawdown = min(maximum_drawdown, equity - peak)
+    net_pnl = equities[-1] - equities[0]
+    ratio = net_pnl / abs(maximum_drawdown) if maximum_drawdown < 0.0 else None
+    return {
+        "net_pnl": net_pnl,
+        "max_drawdown_usdt": maximum_drawdown,
+        "max_drawdown_pct": maximum_drawdown / 100_000.0,
+        "net_pnl_to_abs_max_drawdown": ratio,
+    }
+
+
+def _v5_asset_curve(
+    symbol: str,
+    report: dict[str, Any],
+    candidate: dict[str, Any],
+    *,
+    start: str,
+    end: str,
+) -> dict[str, Any]:
+    from nautilus_trader.persistence.catalog.parquet import ParquetDataCatalog
+
+    from apps.strategies_nautilus.result_schema import BacktestManifest
+    from apps.strategies_nautilus.runners.backtest_runner import validate_sidecar_bundle
+
+    bundle = Path(str(candidate["bundle_runs"][0]))
+    validate_sidecar_bundle(bundle)
+    manifest_raw = json.loads(
+        (bundle / "run_manifest.json").read_text(),
+        parse_constant=lambda value: (_ for _ in ()).throw(
+            ValueError(f"non-standard JSON constant: {value}")
+        ),
+    )
+    manifest = BacktestManifest.model_validate(manifest_raw)
+    if manifest.git_dirty:
+        raise ValueError(f"{symbol} v5 bundle is git-dirty")
+    catalog = ParquetDataCatalog(str(Path(manifest.data_catalog.path).resolve()))
+    instrument_id = manifest.data_catalog.instruments[0].id
+    bar_type = manifest.data_catalog.instruments[0].bars
+    instruments = catalog.instruments(instrument_ids=[instrument_id])
+    if len(instruments) != 1:
+        raise ValueError(f"{symbol} catalog must contain exactly one instrument")
+    start_ns = int(pd.Timestamp(start, tz="UTC").value)
+    end_exclusive = int((pd.Timestamp(end, tz="UTC") + pd.Timedelta(days=1)).value)
+    bars = sorted(
+        catalog.bars(bar_types=[bar_type], start=start_ns, end=end_exclusive - 1),
+        key=lambda bar: int(bar.ts_event),
+    )
+    if not bars:
+        raise ValueError(f"{symbol} catalog has no bars in the fold")
+    close_frame = pd.DataFrame(
+        {
+            "ts": [int(bar.ts_event) for bar in bars],
+            "close": [float(bar.close) for bar in bars],
+        }
+    )
+    close_frame["date"] = pd.to_datetime(close_frame["ts"], unit="ns", utc=True).dt.date
+    daily_close = close_frame.groupby("date", sort=True)["close"].last()
+    expected_days = pd.date_range(start, end, freq="1D").date
+    if list(daily_close.index) != list(expected_days):
+        raise ValueError(f"{symbol} v5 catalog has an incomplete daily execution window")
+
+    increment = Decimal(str(float(instruments[0].size_increment)))
+    first_close = Decimal(str(float(daily_close.iloc[0])))
+    expected_size = ((Decimal("50") / first_close) / increment).to_integral_value(
+        rounding=ROUND_FLOOR
+    ) * increment
+    actual_size = Decimal(str(report["inputs"].get("trade_size")))
+    if actual_size != expected_size:
+        raise ValueError(
+            f"{symbol} trade_size={actual_size} differs from frozen fold size {expected_size}"
+        )
+    initial_notional = float(expected_size * first_close)
+    if initial_notional > 50.0:
+        raise ValueError(f"{symbol} initial target notional exceeds 50 USDT")
+
+    fills = pd.read_parquet(bundle / "fills.parquet").copy()
+    required = {"ts_event", "side", "quantity", "price", "commission"}
+    if not required <= set(fills.columns):
+        raise ValueError(f"{symbol} fills are missing required columns")
+    for column in ("ts_event", "quantity", "price", "commission"):
+        fills[column] = pd.to_numeric(fills[column], errors="coerce")
+        if fills[column].isna().any() or not fills[column].map(math.isfinite).all():
+            raise ValueError(f"{symbol} fills.{column} contains a non-finite value")
+    fills = fills.loc[
+        (fills["ts_event"] >= start_ns) & (fills["ts_event"] < end_exclusive)
+    ].sort_values("ts_event", kind="mergesort")
+    fill_rows = fills.to_dict("records")
+    fill_index = 0
+    quantity = 0.0
+    cash = 0.0
+    costs = {scenario["name"]: 0.0 for scenario in SCENARIOS}
+    daily: list[dict[str, Any]] = []
+    for day, close in daily_close.items():
+        boundary = int((pd.Timestamp(day, tz="UTC") + pd.Timedelta(days=1)).value)
+        while fill_index < len(fill_rows) and int(fill_rows[fill_index]["ts_event"]) < boundary:
+            fill = fill_rows[fill_index]
+            side = str(fill["side"]).upper()
+            if "BUY" in side:
+                signed = abs(float(fill["quantity"]))
+            elif "SELL" in side:
+                signed = -abs(float(fill["quantity"]))
+            else:
+                raise ValueError(f"{symbol} fill has unsupported side {fill['side']!r}")
+            notional = abs(float(fill["quantity"]) * float(fill["price"]))
+            quantity += signed
+            cash -= signed * float(fill["price"])
+            for scenario in SCENARIOS:
+                costs[scenario["name"]] += notional * (
+                    float(scenario["fee_bps"]) + float(scenario["slippage_bps"])
+                ) / 10_000.0
+            fill_index += 1
+        gross_pnl = cash + quantity * float(close)
+        daily.append(
+            {
+                "date": day.isoformat(),
+                "close": float(close),
+                "scenarios": {
+                    scenario["name"]: {
+                        "net_pnl": gross_pnl - costs[scenario["name"]],
+                    }
+                    for scenario in SCENARIOS
+                },
+            }
+        )
+
+    benchmark: list[dict[str, Any]] = []
+    entry_notional = float(expected_size * first_close)
+    last_notional = float(expected_size) * float(daily_close.iloc[-1])
+    for index, (day, close) in enumerate(daily_close.items()):
+        gross = float(expected_size) * (float(close) - float(first_close))
+        benchmark.append(
+            {
+                "date": day.isoformat(),
+                "scenarios": {
+                    scenario["name"]: {
+                        "net_pnl": gross
+                        - entry_notional
+                        * (float(scenario["fee_bps"]) + float(scenario["slippage_bps"]))
+                        / 10_000.0
+                        - (
+                            last_notional
+                            * (
+                                float(scenario["fee_bps"])
+                                + float(scenario["slippage_bps"])
+                            )
+                            / 10_000.0
+                            if index == len(daily_close) - 1
+                            else 0.0
+                        )
+                    }
+                    for scenario in SCENARIOS
+                },
+            }
+        )
+    return {
+        "symbol": symbol,
+        "trade_size": float(expected_size),
+        "size_increment": float(increment),
+        "fold_first_close": float(first_close),
+        "initial_target_notional_usdt": initial_notional,
+        "daily": daily,
+        "benchmark_daily": benchmark,
+        "scenario_metrics": candidate["scenario_metrics"],
+    }
+
+
+def _v5_portfolio_evidence(
+    assets: list[tuple[str, Path, dict[str, Any], dict[str, Any]]],
+    *,
+    start: str,
+    end: str,
+) -> dict[str, Any]:
+    curves = [
+        _v5_asset_curve(symbol, report, candidate, start=start, end=end)
+        for symbol, _path, report, candidate in assets
+    ]
+    initial_total = sum(float(curve["initial_target_notional_usdt"]) for curve in curves)
+    if initial_total > 100.0:
+        raise ValueError("v5 combined initial target notional exceeds 100 USDT")
+    dates = [row["date"] for row in curves[0]["daily"]]
+    if any([row["date"] for row in curve["daily"]] != dates for curve in curves[1:]):
+        raise ValueError("v5 asset daily curves do not share the same dates")
+    daily = []
+    benchmark_daily = []
+    for index, day in enumerate(dates):
+        daily.append(
+            {
+                "date": day,
+                "scenarios": {
+                    scenario["name"]: {
+                        "net_pnl": sum(
+                            float(curve["daily"][index]["scenarios"][scenario["name"]]["net_pnl"])
+                            for curve in curves
+                        ),
+                        "equity": 100_000.0
+                        + sum(
+                            float(curve["daily"][index]["scenarios"][scenario["name"]]["net_pnl"])
+                            for curve in curves
+                        ),
+                    }
+                    for scenario in SCENARIOS
+                },
+            }
+        )
+        benchmark_daily.append(
+            {
+                "date": day,
+                "scenarios": {
+                    scenario["name"]: {
+                        "net_pnl": sum(
+                            float(curve["benchmark_daily"][index]["scenarios"][scenario["name"]]["net_pnl"])
+                            for curve in curves
+                        ),
+                        "equity": 100_000.0
+                        + sum(
+                            float(curve["benchmark_daily"][index]["scenarios"][scenario["name"]]["net_pnl"])
+                            for curve in curves
+                        ),
+                    }
+                    for scenario in SCENARIOS
+                },
+            }
+        )
+    return {
+        "notional_audit": {
+            "per_asset_target_usdt": 50.0,
+            "maximum_total_initial_target_usdt": 100.0,
+            "assets": [
+                {
+                    key: curve[key]
+                    for key in (
+                        "symbol",
+                        "trade_size",
+                        "size_increment",
+                        "fold_first_close",
+                        "initial_target_notional_usdt",
+                    )
+                }
+                for curve in curves
+            ],
+            "total_initial_target_notional_usdt": initial_total,
+            "within_limit": initial_total <= 100.0,
+        },
+        "asset_cost_results": {
+            curve["symbol"]: curve["scenario_metrics"] for curve in curves
+        },
+        "daily_portfolio_equity": daily,
+        "risk_metrics": {
+            scenario["name"]: _risk_metrics(daily, scenario["name"])
+            for scenario in SCENARIOS
+        },
+        "benchmark": {
+            "identity": "equal_weight_buy_and_hold_same_size_v1",
+            "daily_portfolio_equity": benchmark_daily,
+            "risk_metrics": {
+                scenario["name"]: _risk_metrics(benchmark_daily, scenario["name"])
+                for scenario in SCENARIOS
+            },
+        },
+    }
+
+
 def build_multi_asset_review(
     label: str,
     asset_specs: list[tuple[str, Path]],
@@ -262,6 +540,11 @@ def build_multi_asset_review(
         "exclusivity": exclusivity,
         "blockers": sorted(set(blockers)),
     }
+    v5_evidence: dict[str, Any] = {}
+    if source in V5_SOURCES:
+        start, end = next(iter(windows))
+        v5_evidence = _v5_portfolio_evidence(assets, start=start, end=end)
+        portfolio_candidate.update(v5_evidence)
     _assert_finite(portfolio_candidate)
     start, end = next(iter(windows))
     return {
@@ -277,11 +560,15 @@ def build_multi_asset_review(
         "cost_scenarios": list(SCENARIOS),
         "candidates": [portfolio_candidate],
         "monthly_metrics": {label: monthly_metrics},
+        **v5_evidence,
         "gates": {
             "spot_long_flat_only": portfolio_candidate["short_positions"] == 0,
             "assets_reproducible": reproducible,
             "portfolio_exclusive": exclusivity["exclusive"],
             "portfolio_concurrency_within_limit": exclusivity["within_limit"],
+            "portfolio_initial_notional_within_limit": (
+                v5_evidence.get("notional_audit", {}).get("within_limit", True)
+            ),
             "evidence_clean": not blockers,
         },
         "recommendation": "portfolio_fold_ready" if not blockers else "reject_portfolio_evidence",
