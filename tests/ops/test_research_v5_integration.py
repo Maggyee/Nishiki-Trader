@@ -112,12 +112,17 @@ def _catalog(
     trade_size = ((Decimal("50") / first_close) / increment).to_integral_value(
         rounding=ROUND_FLOOR
     ) * increment
-    timestamps = pd.date_range(
+    daily_timestamps = pd.date_range(
         pd.Timestamp(start - timedelta(days=1), tz="UTC") + pd.Timedelta(hours=23, minutes=59),
         pd.Timestamp(end + timedelta(days=1), tz="UTC") + pd.Timedelta(hours=23, minutes=59),
         freq="1D",
     )
-    prices = [float(first_close)] * len(timestamps)
+    first_fold_bar = pd.Timestamp(start, tz="UTC")
+    timestamps = daily_timestamps.append(pd.DatetimeIndex([first_fold_bar])).sort_values()
+    prices = [
+        float(first_close) if timestamp == first_fold_bar else float(first_close + 1)
+        for timestamp in timestamps
+    ]
     frame = pd.DataFrame(
         {
             "open": prices,
@@ -243,6 +248,10 @@ def test_v5_raw_to_review_pipeline_is_reproducible(tmp_path: Path) -> None:
         multi = build_multi_asset_review(fold_name, asset_reviews)
         assert multi["candidates"][0]["exclusivity"]["maximum_concurrent_assets"] == 2
         assert multi["candidates"][0]["notional_audit"]["within_limit"] is True
+        assert {
+            row["symbol"]: row["fold_first_close"]
+            for row in multi["candidates"][0]["notional_audit"]["assets"]
+        } == {"BTCUSDT": 50000.0, "ETHUSDT": 4000.0}
         multi_path = fold_root / "multi-asset-review.json"
         multi_path.write_text(
             json.dumps(multi, indent=2, sort_keys=True, allow_nan=False) + "\n",

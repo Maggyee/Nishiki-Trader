@@ -183,6 +183,9 @@ On 2026-07-17, at Protocol v5 Spot execution lineage qualification:
   and offline verification, matched the prior July ZIP bytes, and imported
   1,440 bars each. Catalog audit found zero gaps, duplicates, or irregular
   steps and complete cross-asset timestamp alignment.
+- Before PnL, the v5 portfolio notional audit was corrected to use the first
+  in-fold 1m Spot close rather than the first day's final close. A non-constant
+  end-to-end raw-to-review fixture now locks the registered sizing formula.
 - The full suite is **907 passed, 12 Postgres-dependent skips**; full-repository
   Ruff and `git diff --check` pass. No historical Spot body, signal, return,
   PnL, backtest, credential, policy/testnet/live action, or future-blind data

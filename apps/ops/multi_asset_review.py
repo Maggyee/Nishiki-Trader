@@ -253,7 +253,7 @@ def _v5_asset_curve(
         raise ValueError(f"{symbol} v5 catalog has an incomplete daily execution window")
 
     increment = Decimal(str(float(instruments[0].size_increment)))
-    first_close = Decimal(str(float(daily_close.iloc[0])))
+    first_close = Decimal(str(float(bars[0].close)))
     expected_size = ((Decimal("50") / first_close) / increment).to_integral_value(
         rounding=ROUND_FLOOR
     ) * increment
