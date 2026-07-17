@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import csv
 import hashlib
 import io
@@ -765,15 +766,18 @@ def import_spot_snapshot(snapshot: dict[str, Any], catalog_path: Path) -> dict[s
     # NautilusTrader runtime dependency.
     from apps.ops.backfill_bars import run_backfill
 
-    result = run_backfill(
-        raw_path=raw_path,
-        download=False,
-        symbol=asset,
-        interval="1m",
-        date=None,
-        raw_output_dir=raw_path.parent,
-        catalog_path=catalog_path,
-    )
+    # Nautilus reports idempotent file skips to stdout. Keep the collector's
+    # stdout reserved for its strict JSON ledger.
+    with contextlib.redirect_stdout(io.StringIO()):
+        result = run_backfill(
+            raw_path=raw_path,
+            download=False,
+            symbol=asset,
+            interval="1m",
+            date=None,
+            raw_output_dir=raw_path.parent,
+            catalog_path=catalog_path,
+        )
     if result.bars_written != 1_440:
         raise ValueError("verified Spot snapshot did not import exactly 1440 bars")
     return {

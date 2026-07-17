@@ -262,6 +262,7 @@ def test_bvol_snapshot_rejects_an_intraday_second_gap(tmp_path: Path) -> None:
 
 def test_spot_snapshot_preserves_checksum_and_imports_verified_catalog(
     tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
     day = date(2025, 8, 1)
     result = collect_snapshot(
@@ -276,11 +277,14 @@ def test_spot_snapshot_preserves_checksum_and_imports_verified_catalog(
 
     verified = verify_snapshot(Path(result["path"]))
     imported = import_spot_snapshot(result, tmp_path / "catalog")
+    repeated = import_spot_snapshot(result, tmp_path / "catalog")
 
     assert verified["audit"]["row_count"] == 1_440
     assert verified["audit"]["minute_grid_complete"] is True
     assert imported["bars_written"] == 1_440
     assert imported["bar_type"] == "BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL"
+    assert repeated == imported
+    assert capsys.readouterr().out == ""
 
 
 def test_spot_snapshot_rejects_missing_minute(tmp_path: Path) -> None:
