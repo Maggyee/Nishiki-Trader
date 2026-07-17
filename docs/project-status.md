@@ -166,8 +166,9 @@ provider qualification:
   envelope/vintage/filename verification.
 - The frozen DXY and VIX GETs returned an HTTP 200 JavaScript verification page,
   not CSV. Both failed before snapshot creation; changing User-Agent did not
-  bypass the provider response, and the unregistered verification POST was not
-  executed.
+  bypass the provider response. An isolated cloud-server retry produced the
+  same CSV-structure rejection and zero files; the unregistered verification
+  POST was not executed.
 - All three dry-runs remained no-network/no-write; 15 focused v3 tests passed.
   No credentials, factors, returns, signals, PnL, Nautilus run, SourcePolicy
   mutation, testnet resume, or live action occurred. Detailed evidence is in

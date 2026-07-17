@@ -44,6 +44,17 @@ rejected both responses during CSV structure validation and wrote no DXY or VIX
 snapshot. Repeating the same GET and parameters with a browser-style
 User-Agent did not change the response class.
 
+An independent retry from the cloud server's network path produced the same
+fail-closed result for both frozen GETs. The current `6d29782` collector files
+were deployed separately under `/opt/nishiki-trader-v3-6d29782` from archive
+SHA-256 `cf6af028de2940fb228c49184d23eef4ad02f857ed5ec98f91eff7aa68a539d5`.
+They ran in the existing Python 3.12 image with a read-only root filesystem,
+read-only code mount, dropped capabilities, no credentials, and only
+`/var/lib/nishiki-trader/research-v3/raw` writable. Network-disabled dry-runs
+passed first. The actual DXY and VIX runs each failed at CSV row validation and
+wrote zero files. The completed v2 deployment and evidence directory were not
+changed or restarted.
+
 The page proposed an additional verification POST. It was not executed because
 v3 locks exactly one unauthenticated GET per provider kind. No cookie workflow,
 browser bypass, alternate Stooq host, symbol, provider, or metric was introduced

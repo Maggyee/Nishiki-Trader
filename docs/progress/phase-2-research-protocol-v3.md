@@ -169,9 +169,11 @@ commit `7afc61d`. It produced exactly one eligible snapshot:
 The frozen DXY and VIX GETs returned HTTP 200 with `text/html` and a JavaScript
 browser-verification page instead of the locked CSV schema. Both collections
 failed before snapshot creation. A browser-style User-Agent produced the same
-response. The verification page's extra POST was not executed because it is
-not part of the frozen one-request provider contract. No alternate symbol,
-provider, URL, or metric was substituted after data access.
+response. A second run from the isolated cloud-server network path produced the
+same fail-closed DXY/VIX result and zero snapshot files. The verification page's
+extra POST was not executed because it is not part of the frozen one-request
+provider contract. No alternate symbol, provider, URL, or metric was
+substituted after data access.
 
 This qualifies only hashrate schema, publication timing, and immutable lineage.
 It does not authorize factors, returns, signals, PnL, the 2020-2022 reserve, or
