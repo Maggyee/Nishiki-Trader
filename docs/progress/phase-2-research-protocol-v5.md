@@ -7,6 +7,12 @@
 - **Status**: pre-registered implementation and synthetic validation only.
 - **Trading effect**: none.
 
+July local/cloud provider qualification subsequently passed on clean collector
+commit `3d1687b`, with four verified/idempotent snapshots, a complete aligned
+BTC/ETH Spot catalog, zero vintage conflicts, and no PnL. Qualification details
+are in `docs/retros/2026-07-17-research-v5-provider-qualification.md`; the
+machine contract and candidate fingerprints remain the pre-access originals.
+
 ## Scope and separation from prior research
 
 Protocol v5 starts exactly two new Binance-native candidates for BTCUSDT and

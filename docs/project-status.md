@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-07-17 (Protocol v5 July qualification in progress; historical partitions remain unopened)
+- **Last updated**: 2026-07-17 (Protocol v5 provider qualification passed; historical fast tracks not yet opened)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
-- **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry remains frozen at 16 rejects and an empty selected set. Research Protocol v2 remains locked and data-blocked, Protocol v3 has one valid July hashrate snapshot with both macro routes blocked, and Protocol v4's two FRED recovery routes timed out without snapshots. Protocol v5 pre-registers two new Binance-native BTC/ETH identities, immutable public-archive collection, dual-sleeve execution/risk gates, and candidate fingerprints. Pre-access commit `f8437f5` and raw-schema fix `4891346` are pushed. All four corrected local July snapshots pass offline and idempotence verification; BTC/ETH Spot 1m each pass a 1,440-row aligned catalog audit. The old v2 image failed the first network-disabled cloud preflight because it lacks pandas, so the next action is to push and qualify the dedicated commit-labelled v5 image. No curve/BVOL historical replication body has been opened. Opened 2023-2025 remains diagnostic-only, July 2026 has PnL forbidden, and 2026-08..12 remains the final future blind. No in-place provider substitution, grid search, failed-model retuning, PnL-selected ensemble, policy change, or testnet resume is allowed.
+- **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry remains frozen at 16 rejects and an empty selected set. Research Protocol v2 remains locked and data-blocked, Protocol v3 has one valid July hashrate snapshot with both macro routes blocked, and Protocol v4's two FRED recovery routes timed out without snapshots. Protocol v5 pre-registers two new Binance-native BTC/ETH identities, immutable public-archive collection, dual-sleeve execution/risk gates, and candidate fingerprints. Local and cloud July qualification now passes on clean collector commit `3d1687b`: four verified/idempotent snapshots, zero conflicts, aligned 1,440-row Spot catalogs, and no PnL. The next authorized action, only after the qualification retro is pushed, is the one-time locked historical fast track. The v5 timer remains disabled, 2026-08..12 remains unopened, and no in-place provider substitution, grid search, failed-model retuning, PnL-selected ensemble, policy change, or testnet resume is allowed.
   Keep the current SourcePolicy unchanged until an explicit `promotion_review.py` decision. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
@@ -127,10 +127,12 @@ review gates. Pre-registration commit `f8437f5` was pushed before access. The
 first 2026-07-16 batch exposed official Futures/BVOL raw-name differences and
 failed before snapshot creation; correction `4891346` then produced four valid,
 idempotent local snapshots and a complete aligned Spot catalog. The candidate
-rules and fingerprints remain unchanged. A dedicated v5 image is now required
-because the old v2 image lacks pandas; it must pass cloud dry-run and the same
-single day before historical access. Routine 14-day testnet continuity remains
-paused, and the Phase 3 strict streak remains 0/14.
+rules and fingerprints remain unchanged. Dedicated image `3d1687b` passed the
+cloud dry-run, four-snapshot collection, offline verification, and idempotent
+rerun with zero conflicts and zero credential environment. Historical fast
+tracks remain unopened until this qualification retro is pushed. Routine
+14-day testnet continuity remains paused, and the Phase 3 strict streak remains
+0/14.
 
 Immediate focus:
 
@@ -142,8 +144,8 @@ Immediate focus:
 
 ## Next Steps
 
-1. Push the dedicated Protocol v5 collector image/runtime change, deploy that exact commit to the designated cloud host, and rerun the network-disabled preflight plus exactly one July UTC day. Record the final qualification retro before any history is opened; keep the timer disabled.
-2. Only if all four v5 asset/mechanism qualification snapshots pass offline verification, open the frozen historical replication partitions once. Do not inspect returns or PnL during qualification, tune after results, or open the 2026-08..12 future blind before 2027-01-01.
+1. Push the final Protocol v5 provider-qualification retro, then open the frozen curve 2021-06..2022-12 and BVOL 2023-06..2025-12 fast-track inputs exactly once. Run only the locked signals, duplicate Nautilus folds, costs, portfolio review, and gates; commit the reports before any future collection is enabled.
+2. Keep the 2026-08..12 final blind unopened before 2027-01-01. Do not tune after historical results, substitute providers, create a PnL-selected ensemble, enable the v5 timer before fast-track reports, or treat a BVOL diagnostic pass as promotion evidence.
 3. Preserve the qualified v3 hashrate snapshot and the v4 timeout evidence. Do not retry macro providers automatically; any new route requires independent evidence and explicit review before a new protocol is registered.
 4. Archive and retain the completed Protocol v2 7/7 option/basis evidence. Do not rebuild or restart the completed collector, open basis historical ZIPs, or invent option-method substitutes.
 5. Open the 2020-2022 replication reserve exactly once only after a protocol's pipelines pass qualification on a clean commit; evaluate that protocol's locked candidates with the Nautilus/cost/gate protocol and no result-driven changes.
@@ -169,6 +171,23 @@ Immediate focus:
 - No edits to `freqtrade/` or `nautilus_trader/` unless explicitly requested.
 
 ## Latest Verification
+
+On 2026-07-17, after Protocol v5 provider qualification:
+
+- Exact image/collector commit `3d1687b` passed a network-disabled cloud
+  preflight, the four-snapshot 2026-07-16 collection, independent offline
+  verification, and an idempotent real rerun.
+- Local/cloud content hashes match for both curve and both BVOL datasets. Cloud
+  evidence has four snapshots, four normalized Parquets, zero vintage conflicts,
+  zero comparison markers, zero credential environment entries, and tree hash
+  `401d59902aef4f9c7e86d8fe8003dd092a49a04ff55a3e56e8bd844bfe361744`.
+- Local Spot execution qualification has 1,440 BTCUSDT and 1,440 ETHUSDT 1m
+  bars, zero gaps/duplicates/irregular steps, and aligned timestamps. No signal
+  or PnL was produced.
+- The v5 timer is disabled. Historical fast-track access is allowed only after
+  this retro is pushed; the future blind, SourcePolicy, testnet, and live path
+  remain untouched. Details are in
+  `docs/retros/2026-07-17-research-v5-provider-qualification.md`.
 
 On 2026-07-17, during Protocol v5 July-only schema qualification:
 
