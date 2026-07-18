@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-07-18 (v5 frozen; first scheduled collection verified; v6 availability discovery opened)
+- **Last updated**: 2026-07-18 (v5 frozen; first scheduled collection verified; v6 book-depth identity pre-registered)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
-- **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry and Protocol v2-v5 research identities are frozen. Protocol v5 curve carry and BVOL relief are both rejected; the 2026-08..12 blind remains sealed. Its isolated credential-free raw collector completed the 2026-07-17 data date on the scheduled 08:15 UTC retry after four expected-flat 04:15 UTC 404s. All four new snapshots and Parquets verified offline; storage is 8/8 with zero conflicts. The Phase 5 dashboard now accepts passive collector status only. Independent Protocol v6 has opened at metadata-only availability discovery: no candidate is selected or registered, and no archive body or PnL has been opened. Testnet/live-readiness work remains low priority and paused.
+- **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry and Protocol v2-v5 research identities are frozen. Protocol v5 curve carry and BVOL relief are both rejected; the 2026-08..12 blind remains sealed. Its isolated credential-free raw collector completed the 2026-07-17 data date on the scheduled 08:15 UTC retry after four expected-flat 04:15 UTC 404s. All four new snapshots and Parquets verified offline; storage is 8/8 with zero conflicts. The Phase 5 dashboard now accepts passive collector status only. Independent Protocol v6 accepted and pre-registered exactly one mechanism identity, `rule_binance_book_depth_imbalance_v1 / btc-eth-usdm-bidask1pct-daily-median-lag2-v1`; no archive/checksum body, factor value, signal, return or PnL has been opened. Its next gate is the exact 2026-07-17 BTC/ETH schema/semantics/mark-price qualification after the pre-data commit is pushed. Testnet/live-readiness work remains low priority and paused.
   Keep the current SourcePolicy unchanged until an explicit `promotion_review.py` decision. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
@@ -30,8 +30,8 @@ Detailed history archived so far:
 - `docs/progress/phase-2-research-protocol-v4.md` — separately identified FRED provider recovery for the two v3 macro routes blocked at Stooq.
 - `docs/progress/phase-2-research-protocol-v5.md` — Binance-native BTC/ETH curve-carry and BVOL-relief pre-registration, immutable collection, dual-sleeve review, and future-blind gates.
 - `docs/progress/phase-2-research-protocol-v6.md` — independent Binance-native
-  interface/archive availability discovery with no selected candidate or data
-  body access.
+  availability discovery, book-depth mechanism review and one fixed pre-data
+  identity; no archive body or PnL access yet.
 - `docs/progress/phase-3-testnet-canary-evidence.md` — Phase 3 testnet canary evidence ledger and paused operating step.
 - `docs/progress/phase-3-testnet-continuity-plan.md` — paused 14-day testnet continuity tracking plan and review command.
 - `docs/progress/phase-5-dashboard-history.md` — completed read-only dashboard, AgentAdvice input, passive Phase 6 gate, and dashboard hardening history.
@@ -132,10 +132,12 @@ pass, leave-best PnL is negative, and the ETH sleeve loses after costs. Both v5
 candidates therefore resolve to `reject_v5_candidate`; no candidate advances
 to the sealed future blind. The first scheduled raw-data date completed on its
 08:15 UTC retry and passed offline verification with zero conflicts; this is
-operations evidence only. Independent Protocol v6 is metadata-only: one USD-M
-book-depth route is eligible for later identity review, but no candidate is
-selected and no body is open. Routine 14-day testnet continuity remains paused,
-and the Phase 3 strict streak remains 0/14.
+operations evidence only. Independent Protocol v6 accepted one USD-M
+book-depth mechanism as genuinely distinct and locked its source/model,
+fields, parameters, evidence windows and gates before archive-body access.
+Provider semantics and quality remain unqualified; no body, factor, signal,
+return or PnL is open. Routine 14-day testnet continuity remains paused, and
+the Phase 3 strict streak remains 0/14.
 
 Immediate focus:
 
@@ -149,7 +151,7 @@ Immediate focus:
 
 1. Refresh the passive Protocol v5 collector artifact after scheduled batches and review run/date, four-stream status, retry, storage/conflicts, and deployment identity. Keep recording actual publication timing when an early attempt is 404; do not change the schedule without several days of evidence. The timer may collect raw curve/BVOL evidence only.
 2. Keep the 2026-08..12 final blind unopened. Both v5 candidates are rejected and must not have blind PnL opened under this protocol. Do not tune after historical results, substitute providers, create a PnL-selected ensemble, or treat the BVOL diagnostic as promotion evidence.
-3. Review the sole Protocol v6 availability survivor, USD-M book depth, for a genuinely independent mechanism identity. If accepted, freeze a new source/model identity, fields, parameters, data windows and gates in a separate pre-data commit before any body is opened. Do not treat this discovery document as candidate selection.
+3. After the Protocol v6 pre-data commit is pushed, implement only the immutable collector and synthetic audit tests for the exact 2026-07-17 BTC/ETH `bookDepth` plus audit-only 1m mark-price qualification. Then open those qualification bodies once. Both assets must prove the locked schema, percentage grid, timestamp coverage, side mapping and mark-price consistency before any historical development body, factor, signal or PnL. Any ambiguity is `blocked_provider_qualification`, not permission to reinterpret or clean the data.
 4. Preserve the qualified v3 hashrate snapshot and the v4 timeout evidence. Do not retry macro providers automatically; any new route requires independent evidence and explicit review before a new protocol is registered.
 5. Archive and retain the completed Protocol v2 7/7 option/basis evidence. Do not rebuild or restart the completed collector, open basis historical ZIPs, or invent option-method substitutes.
 6. Open the 2020-2022 replication reserve exactly once only after a protocol's pipelines pass qualification on a clean commit; evaluate that protocol's locked candidates with the Nautilus/cost/gate protocol and no result-driven changes.
@@ -173,24 +175,31 @@ Immediate focus:
 - No Protocol v5 research reopen: blind PnL, filling/interpolation, retuning,
   cross-asset result masking, testnet resume, and SourcePolicy changes are
   prohibited.
-- No Protocol v6 archive-body access until a candidate is explicitly selected
-  and a new identity, parameters, windows, and gates are committed and pushed.
+- No Protocol v6 archive-body access until the current identity, parameters,
+  windows and gates are committed and pushed. After that, only the exact
+  2026-07-17 provider-qualification bodies may open; historical development,
+  signals and PnL remain blocked until both assets qualify and the retro is
+  committed and pushed.
 - No n8n workflows until a concrete Phase 4 orchestration need appears.
 - No autonomous Agent trading. Agents may only research, review, summarize, and suggest.
 - No edits to `freqtrade/` or `nautilus_trader/` unless explicitly requested.
 
 ## Latest Verification
 
-On 2026-07-18, at the Phase 5 collector-monitor and Protocol v6 availability
-update:
+On 2026-07-18, at Protocol v6 book-depth identity pre-registration:
 
-- The live read-only collector-status command reported `healthy`, data date
-  2026-07-17, four successful streams, 8 snapshots / 8 Parquets / 0 conflicts,
-  the expected deployment commit/image, and the next scheduled timer trigger.
-- Collector/dashboard targeted tests reported 91 passed; the full suite
-  reported 921 passed / 12 skipped because local Postgres was unavailable.
-- Full ruff, frontend typecheck, production build, npm audit, strict v6 JSON
-  parsing, and `git diff --check` passed. npm audit reported 0 vulnerabilities.
+- The mechanism review accepts resting limit-order liquidity-supply asymmetry
+  for pre-registration only. The machine validator reports valid locked
+  protocol/provider/fingerprint hashes with archive bodies, signals and PnL
+  all false.
+- Six new v6 drift tests and all 26 v2/v3/v5/v6 protocol tests pass. The full
+  suite reports 927 passed / 12 skipped because local Postgres is unavailable;
+  full Ruff, strict JSON parsing and `git diff --check` pass.
+- No Binance archive/checksum body, factor value, return, SignalEvent,
+  Nautilus run, credential, SourcePolicy, testnet or live path was opened.
+- The live read-only v5 collector status remains `healthy` for data date
+  2026-07-17 with four successful streams and 8 snapshots / 8 Parquets /
+  0 conflicts.
 
 On 2026-07-18, at Protocol v5's first scheduled data date:
 

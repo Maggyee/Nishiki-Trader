@@ -1,0 +1,105 @@
+{
+  "schema_version": "research.data_sources.v6",
+  "frozen_at": "2026-07-18T15:58:31Z",
+  "status": "locked_before_archive_body_access",
+  "provider": "Binance",
+  "authentication": "none",
+  "allowed_hosts": ["data.binance.vision"],
+  "official_references": {
+    "public_archive": "https://github.com/binance/binance-public-data",
+    "usd_m_order_book": "https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-usd-s-m-futures/api/rest-api/market-data",
+    "unresolved_book_depth_issue": "https://github.com/binance/binance-public-data/issues/431"
+  },
+  "snapshot_envelope": {
+    "schema_version": "research.raw_snapshot.v2",
+    "raw_bytes_preserved": true,
+    "official_checksum_required": true,
+    "http_metadata_preserved": true,
+    "retrieved_at_required": true,
+    "content_hash_required": true,
+    "normalized_format": "Parquet",
+    "overwrite_forbidden": true,
+    "same_content_idempotent": true,
+    "different_content_new_vintage": true,
+    "different_content_blocks_result_comparison": true
+  },
+  "datasets": {
+    "book_depth_factor": {
+      "market": "USD-M Futures perpetual",
+      "assets": ["BTCUSDT", "ETHUSDT"],
+      "archive_request": "data/futures/um/daily/bookDepth/{asset}/{asset}-bookDepth-{date}.zip",
+      "checksum_suffix": ".CHECKSUM",
+      "locked_columns": ["timestamp", "percentage", "depth", "notional"],
+      "locked_percentage_grid": [-5, -4, -3, -2, -1, 1, 2, 3, 4, 5],
+      "side_mapping": {"negative_percentage": "bid", "positive_percentage": "ask"},
+      "factor_percentage_magnitude": 1,
+      "factor_value_field": "notional",
+      "depth_field_usage": "schema_and_price_sanity_only",
+      "snapshot_factor_formula": "(bid_notional_at_minus_1pct - ask_notional_at_plus_1pct) / (bid_notional_at_minus_1pct + ask_notional_at_plus_1pct)",
+      "daily_aggregation": "median_of_all_valid_complete_timestamp_groups",
+      "historical_publication_lag_days": 2,
+      "future_availability": "no earlier than the first UTC day boundary after actual retrieved_at",
+      "missing_policy": "no forward fill; desired state is flat",
+      "archive_to_rest_mapping_status": "must_be_proven_during_qualification",
+      "rpi_order_treatment": "unknown_for_archive_and_must_not_be_inferred"
+    },
+    "mark_price_qualification_audit": {
+      "market": "USD-M Futures perpetual",
+      "assets": ["BTCUSDT", "ETHUSDT"],
+      "archive_request": "data/futures/um/daily/markPriceKlines/{asset}/1m/{asset}-1m-{date}.zip",
+      "checksum_suffix": ".CHECKSUM",
+      "locked_columns": [
+        "open_time",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+        "close_time",
+        "quote_volume",
+        "count",
+        "taker_buy_volume",
+        "taker_buy_quote_volume",
+        "ignore"
+      ],
+      "usage": "qualification_audit_only_never_a_candidate_factor",
+      "matching_rule": "same UTC minute mark close for each bookDepth timestamp",
+      "weighted_price_formula": "notional / depth",
+      "side_and_band_rule": "weighted bid prices must remain on the bid side and within their percentage band; weighted ask prices must remain on the ask side and within their percentage band",
+      "tolerance_fraction": 0.01
+    },
+    "spot_execution": {
+      "assets": ["BTCUSDT", "ETHUSDT"],
+      "archive_request": "data/spot/daily/klines/{asset}/1m/{asset}-1m-{date}.zip",
+      "destination": "existing NautilusTrader ParquetDataCatalog",
+      "execution_engine": "NautilusTrader"
+    }
+  },
+  "timestamp_contract": {
+    "timezone": "UTC",
+    "book_depth_timestamp_format": "YYYY-MM-DD HH:MM:SS",
+    "normalized_unit": "nanoseconds",
+    "timestamp_groups_strictly_increasing": true,
+    "duplicate_percentage_within_group_forbidden": true,
+    "non_finite_values_forbidden": true,
+    "non_positive_depth_or_notional_forbidden": true
+  },
+  "qualification_boundaries": {
+    "qualification_data_date": "2026-07-17",
+    "opens_book_depth_and_mark_price_bodies_only_after_preregistration_commit_is_pushed": true,
+    "signals_forbidden": true,
+    "returns_forbidden": true,
+    "pnl_forbidden": true,
+    "failure_stops_before_historical_development": true
+  },
+  "boundaries": {
+    "archive_bodies_accessed": false,
+    "credentials_loaded": false,
+    "third_party_data_allowed": false,
+    "pnl_computed_during_collection": false,
+    "signals_generated_during_collection": false,
+    "source_policy_mutated": false,
+    "testnet_resumed": false,
+    "live_path_touched": false
+  }
+}

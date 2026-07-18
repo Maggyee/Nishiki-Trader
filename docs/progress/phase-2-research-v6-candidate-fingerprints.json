@@ -1,0 +1,35 @@
+{
+  "schema_version": "research.candidate_fingerprints.v6",
+  "frozen_at": "2026-07-18T15:58:31Z",
+  "status": "locked_before_archive_body_access",
+  "candidates": [
+    {
+      "candidate": "book_depth_imbalance",
+      "source": "rule_binance_book_depth_imbalance_v1",
+      "model_version": "btc-eth-usdm-bidask1pct-daily-median-lag2-v1",
+      "parameters": {
+        "percentage_magnitude": 1,
+        "daily_aggregation": "median",
+        "minimum_imbalance": 0.0,
+        "historical_publication_lag_days": 2,
+        "ttl_seconds": 86400,
+        "confidence": 0.75
+      },
+      "required_factors": ["bid_notional_at_minus_1pct", "ask_notional_at_plus_1pct"],
+      "factor_formula": "(bid_notional_at_minus_1pct - ask_notional_at_plus_1pct) / (bid_notional_at_minus_1pct + ask_notional_at_plus_1pct)",
+      "daily_factor": "median_of_all_valid_complete_timestamp_groups",
+      "missing_state": "flat",
+      "signal_emission": "state_changes_only",
+      "features_hash": "sha256:0865b6af6f8e3a5a221a518d4dc97af8539a7123a9628f30f7f9bc9dbde2a75e",
+      "candidate_sha256": "sha256:aefb68e78b71ebe34b68f88158687f54db10590f3260fbff963bc8d0879fb6ea"
+    }
+  ],
+  "boundaries": {
+    "archive_bodies_accessed": false,
+    "signals_written": false,
+    "pnl_computed": false,
+    "source_policy_mutated": false,
+    "testnet_resumed": false,
+    "live_path_touched": false
+  }
+}

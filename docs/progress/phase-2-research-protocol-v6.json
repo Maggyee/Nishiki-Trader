@@ -1,0 +1,180 @@
+{
+  "schema_version": "research.protocol.v6",
+  "frozen_at": "2026-07-18T15:58:31Z",
+  "status": "preregistered_before_archive_body_access",
+  "objective": "Evaluate one Binance USD-M limit-order-book liquidity-supply mechanism on independent BTCUSDT and ETHUSDT Spot sleeves without reopening any frozen prior identity.",
+  "identity_decision": {
+    "candidate": "book_depth_imbalance",
+    "decision": "accept_for_preregistration_only",
+    "economic_mechanism": "resting_limit_order_liquidity_supply_asymmetry",
+    "alpha_or_data_quality_claimed": false,
+    "archive_semantics_qualified": false
+  },
+  "relationship_to_prior_work": {
+    "registry_v1": "frozen_at_16_rejects_empty_selected_set",
+    "protocol_v2": "frozen_and_unchanged",
+    "protocol_v3": "frozen_and_unchanged",
+    "protocol_v4": "frozen_and_unchanged",
+    "protocol_v5": "frozen_with_both_candidates_rejected",
+    "forbidden_reuse": [
+      "price_or_return_direction",
+      "ohlcv_technical_indicators",
+      "trade_or_taker_flow",
+      "funding_positioning_or_open_interest",
+      "option_or_bvol_volatility",
+      "fixed_expiry_or_delivery_curve",
+      "pnl_selected_ensemble",
+      "opened_prior_candidate_results"
+    ],
+    "new_source_model_identity_required": true,
+    "failed_candidate_reparameterization_forbidden": true,
+    "pnl_selected_ensemble_forbidden": true
+  },
+  "partitions": {
+    "july_qualification": {
+      "data_date": "2026-07-17",
+      "allowed_use": "schema_archive_semantics_lineage_timestamp_coverage_and_mark_price_sanity_only",
+      "pnl_access_forbidden": true,
+      "signal_generation_forbidden": true
+    },
+    "historical_development": {
+      "data_start": "2023-01-01",
+      "data_end": "2025-12-31",
+      "folds": [
+        {"name": "book_depth_2023_jan_may", "start": "2023-01-01", "end": "2023-05-31"},
+        {"name": "book_depth_2023_aug_dec", "start": "2023-08-01", "end": "2023-12-31"},
+        {"name": "book_depth_2024_jan_may", "start": "2024-01-01", "end": "2024-05-31"},
+        {"name": "book_depth_2024_aug_dec", "start": "2024-08-01", "end": "2024-12-31"},
+        {"name": "book_depth_2025_jan_may", "start": "2025-01-01", "end": "2025-05-31"},
+        {"name": "book_depth_2025_aug_dec", "start": "2025-08-01", "end": "2025-12-31"}
+      ],
+      "open_status": "not_started",
+      "parameter_changes_after_open_forbidden": true
+    },
+    "final_future_blind": {
+      "start": "2026-08-01",
+      "end": "2026-12-31",
+      "access_status": "not_started",
+      "parameter_changes_after_open_forbidden": true
+    },
+    "second_future_confirmation": {
+      "start": "2027-01-01",
+      "end": "2027-05-31",
+      "required_after_2026_pass": true
+    }
+  },
+  "cost_scenarios": {
+    "gross": {"fee_bps_per_fill": 0.0, "slippage_bps_per_fill": 0.0},
+    "base": {"fee_bps_per_fill": 10.0, "slippage_bps_per_fill": 2.0},
+    "stress": {"fee_bps_per_fill": 10.0, "slippage_bps_per_fill": 5.0}
+  },
+  "execution": {
+    "venue": "BINANCE",
+    "assets": ["BTCUSDT", "ETHUSDT"],
+    "instrument_type": "Spot",
+    "account_type": "CASH",
+    "oms_type": "NETTING",
+    "starting_balance_usdt": 100000,
+    "engine": "NautilusTrader",
+    "per_asset_target_notional_usdt": 50.0,
+    "trade_size_formula": "floor((50 / fold_first_close) / size_increment) * size_increment",
+    "maximum_concurrent_assets": 2,
+    "maximum_initial_target_notional_usdt": 100.0,
+    "position_domain": ["long", "flat"],
+    "fold_initial_state": "flat",
+    "duplicate_runs_required": 2,
+    "benchmark": "equal_weight_buy_and_hold_same_asset_sizes_window_and_costs"
+  },
+  "gates": {
+    "provider_qualification": {
+      "official_checksum_required": true,
+      "exact_locked_columns_required": true,
+      "exact_percentage_grid_required": true,
+      "every_timestamp_group_complete": true,
+      "maximum_intraday_gap_seconds": 900,
+      "first_group_no_later_than_seconds_after_midnight": 900,
+      "last_group_no_earlier_than_seconds_after_midnight": 85500,
+      "negative_percentage_must_map_to_bid_side": true,
+      "positive_percentage_must_map_to_ask_side": true,
+      "mark_price_sanity_required": true,
+      "mark_price_tolerance_fraction": 0.01,
+      "known_public_misalignment_issue_must_not_reproduce": true,
+      "qualification_assets_required": ["BTCUSDT", "ETHUSDT"],
+      "both_assets_must_pass": true
+    },
+    "historical_development": {
+      "aggregate_gross_base_stress_gt": 0.0,
+      "positive_base_and_stress_folds_at_least": 5,
+      "folds_total": 6,
+      "positive_base_months_at_least": 18,
+      "calendar_months_total": 30,
+      "each_asset_aggregate_base_and_stress_gt": 0.0,
+      "each_asset_closed_positions_at_least": 15,
+      "closed_positions_at_least": 30,
+      "leave_best_position_base_net_pnl_gt": 0.0,
+      "minimum_valid_days_fraction_per_asset_fold": 0.95
+    },
+    "final_future_blind": {
+      "aggregate_base_and_stress_gt": 0.0,
+      "positive_base_months_at_least": 4,
+      "calendar_months_total": 5,
+      "each_asset_base_and_stress_gt": 0.0,
+      "closed_positions_at_least": 30,
+      "leave_best_position_base_net_pnl_gt": 0.0,
+      "candidate_max_drawdown_strictly_below_benchmark": true,
+      "candidate_pnl_to_drawdown_strictly_above_positive_benchmark": true
+    },
+    "second_future_confirmation": {
+      "aggregate_base_and_stress_gt": 0.0,
+      "positive_base_months_at_least": 4,
+      "calendar_months_total": 5,
+      "each_asset_base_and_stress_gt": 0.0
+    },
+    "hard_blockers": [
+      "archive_semantics_unproven",
+      "unexpected_archive_schema",
+      "incomplete_percentage_group",
+      "mark_price_consistency_failure",
+      "invalid_or_missing_data",
+      "vintage_conflict",
+      "non_point_in_time_input",
+      "concurrency_limit_exceeded",
+      "initial_notional_limit_exceeded",
+      "short_position",
+      "invalid_lineage",
+      "unexplained_fill",
+      "non_reproducible_replay"
+    ]
+  },
+  "candidates": [
+    {
+      "key": "book_depth_imbalance",
+      "source": "rule_binance_book_depth_imbalance_v1",
+      "model_version": "btc-eth-usdm-bidask1pct-daily-median-lag2-v1",
+      "features_hash": "sha256:0865b6af6f8e3a5a221a518d4dc97af8539a7123a9628f30f7f9bc9dbde2a75e",
+      "signal_rule": "For each asset, buy iff the prior eligible UTC day's median valid 1-percent quote-notional book imbalance is strictly positive; otherwise flat.",
+      "data_access_status": "not_accessed",
+      "promotion_ceiling": "research_only"
+    }
+  ],
+  "fixed_recommendations": [
+    "blocked_provider_qualification",
+    "reject_v6_candidate",
+    "development_pass_pending_future_blind",
+    "future_pass_pending_2027_confirmation",
+    "eligible_for_paper_shadow_review",
+    "insufficient_evidence",
+    "stop_before_testnet_resume"
+  ],
+  "boundaries_effect": {
+    "archive_bodies_accessed_during_preregistration": false,
+    "writes_signal_store_during_preregistration": false,
+    "loads_credentials": false,
+    "runs_nautilus_during_preregistration": false,
+    "computes_pnl_during_preregistration": false,
+    "mutates_source_policy": false,
+    "calls_promotion_review": false,
+    "resumes_testnet": false,
+    "touches_live_path": false
+  }
+}

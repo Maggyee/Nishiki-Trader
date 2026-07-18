@@ -2,6 +2,15 @@
   "schema_version": "research.protocol_v6.availability_inventory.v1",
   "observed_at": "2026-07-18T13:36:36Z",
   "status": "discovery_only",
+  "followup": {
+    "reviewed_at": "2026-07-18T15:58:31Z",
+    "route_id": "usdm_book_depth_liquidity",
+    "identity_decision": "accept_for_preregistration_only",
+    "registered_candidate": "book_depth_imbalance",
+    "machine_protocol": "docs/progress/phase-2-research-protocol-v6.json",
+    "archive_body_opened": false,
+    "pnl_computed": false
+  },
   "scope": {
     "execution_market": "Binance Spot",
     "assets": [
