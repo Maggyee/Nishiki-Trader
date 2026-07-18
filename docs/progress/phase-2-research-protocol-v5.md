@@ -4,7 +4,7 @@
 - **Machine contract**: `docs/progress/phase-2-research-protocol-v5.json`
 - **Provider contract**: `docs/progress/phase-2-research-v5-data-sources.json`
 - **Candidate fingerprints**: `docs/progress/phase-2-research-v5-candidate-fingerprints.json`
-- **Status**: pre-registered implementation and synthetic validation only.
+- **Status**: historical fast tracks complete; both candidates rejected.
 - **Trading effect**: none.
 
 July local/cloud provider qualification subsequently passed on clean collector
@@ -12,6 +12,12 @@ commit `3d1687b`, with four verified/idempotent snapshots, a complete aligned
 BTC/ETH Spot catalog, zero vintage conflicts, and no PnL. Qualification details
 are in `docs/retros/2026-07-17-research-v5-provider-qualification.md`; the
 machine contract and candidate fingerprints remain the pre-access originals.
+
+The locked historical review is recorded in
+`docs/progress/phase-2-research-v5-fast-track-results.json` and
+`docs/retros/2026-07-18-research-v5-fast-track-review.md`. Curve carry failed
+the Spot execution data gate before signals/PnL, while the reproducible BVOL
+diagnostic failed its cost, fold, month, concentration, and per-asset gates.
 
 ## Scope and separation from prior research
 
@@ -123,6 +129,26 @@ A hard execution-data blocker discovered before signals or PnL is represented
 by validated `research.v5.data_blocker.v1` evidence. The v5 review then rejects
 the candidate without fabricating empty fold metrics and records
 `pnl_evaluated=false` plus `stop_before_testnet_resume`.
+
+## Historical fast-track result
+
+Curve carry is rejected before PnL. Its 2021 Aug-Dec Spot execution fold is
+missing the official 2021-08-13, 2021-09-29, and 2021-12-24 daily bars for both
+assets, leaving 216,000 of 220,320 required minutes per asset. The immutable
+data-blocker review records `incomplete_spot_execution_catalog`, generated no
+curve signals, and did not start Nautilus.
+
+BVOL relief completed five folds, 20 Nautilus runs, and 10 clean reproducible
+pairs. Its aggregate gross result is positive, but base is -1.185170 USDT and
+stress is -6.326371 USDT. Only 3/5 folds pass base/stress, only 13/25 months are
+base-positive, leave-best base PnL is -16.799085 USDT, and the ETH sleeve is
+negative under both modeled costs. Its diagnostic conclusion is therefore
+`reject_v5_candidate`, not a pending blind or promotion state.
+
+The project recommendation remains `stop_before_testnet_resume`. The future
+blind stays sealed and no rejected candidate will be evaluated against it
+under this protocol. A separately deployed collector may preserve registered
+future raw evidence only; it cannot generate signals or PnL.
 
 ## Fixed workflow and boundaries
 

@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-07-17 (Protocol v5 historical fast-track collection opened; no historical PnL yet)
+- **Last updated**: 2026-07-18 (Protocol v5 fast tracks complete; both candidates rejected)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
-- **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry remains frozen at 16 rejects and an empty selected set. Research Protocol v2 remains locked and data-blocked, Protocol v3 has one valid July hashrate snapshot with both macro routes blocked, and Protocol v4's two FRED recovery routes timed out without snapshots. Protocol v5 local/cloud qualification passed and its retro commit `e2955d3` was pushed before historical access. The locked fast-track collection is now open: first complete curve data is 2021-06-18 and first complete BVOL data is 2023-06-22; pre-fold launch gaps remain flat, and an actual 2023-08-01 BVOL gap is rejected rather than filled. Range collection now records bad dates and continues to later valid days, but bulk collection and PnL have not started. The v5 timer is disabled, 2026-08..12 remains unopened, and no provider substitution, retuning, PnL-selected ensemble, policy change, or testnet resume is allowed.
+- **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry remains frozen at 16 rejects and an empty selected set. Research Protocol v2 remains locked and data-blocked, Protocol v3 has one valid July hashrate snapshot with both macro routes blocked, and Protocol v4's two FRED recovery routes timed out without snapshots. Protocol v5 fast tracks are complete: curve carry was rejected before PnL because its 2021 Aug-Dec Spot execution catalog is incomplete, and BVOL relief was rejected after a clean reproducible diagnostic because base/stress, fold, month, leave-best, and ETH-sleeve gates failed. The v5 timer remains disabled until this fast-track report is pushed; after that, only the credential-free raw-evidence collector may be deployed. The 2026-08..12 blind remains sealed and rejected candidates will not be evaluated against it. No provider substitution, retuning, PnL-selected ensemble, policy change, or testnet resume is allowed.
   Keep the current SourcePolicy unchanged until an explicit `promotion_review.py` decision. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
@@ -120,25 +120,19 @@ mechanisms. Hashrate's first real July schema/lineage snapshot is valid; DXY and
 VIX are blocked at the frozen provider route because Stooq serves a JavaScript
 verification page rather than CSV. Protocol v4 separately locked two new FRED
 identities, but both direct July-only routes timed out from cloud and local
-paths and wrote zero snapshots. Protocol v5 now freezes two Binance-native
-BTC/ETH identities, their point-in-time data contract, immutable archive
-collector, SignalEvent generators, dual-sleeve portfolio audit, and locked
-review gates. Pre-registration commit `f8437f5` was pushed before access. The
-first 2026-07-16 batch exposed official Futures/BVOL raw-name differences and
-failed before snapshot creation; correction `4891346` then produced four valid,
-idempotent local snapshots and a complete aligned Spot catalog. The candidate
-rules and fingerprints remain unchanged. Dedicated image `3d1687b` passed the
-cloud dry-run, four-snapshot collection, offline verification, and idempotent
-rerun with zero conflicts and zero credential environment. Historical fast
-tracks were opened only after qualification retro `e2955d3` was pushed. The
-first availability audit found launch/warm-up gaps and a real BVOL scoring-day
-gap; strict daily rejection remains in force, while the range CLI must continue
-to later valid dates. Routine 14-day testnet continuity remains paused, and the
-Phase 3 strict streak remains 0/14.
+paths and wrote zero snapshots. Protocol v5's qualified Binance-only fast
+tracks are now complete. Curve carry is rejected before signals/PnL because
+both assets lack three official Spot execution days in the 2021 Aug-Dec fold.
+BVOL completed 20 clean Nautilus runs and 10 reproducible pairs, but aggregate
+base/stress PnL is -1.185170/-6.326371 USDT, only 3/5 folds and 13/25 months
+pass, leave-best PnL is negative, and the ETH sleeve loses after costs. Both v5
+candidates therefore resolve to `reject_v5_candidate`; no candidate advances
+to the sealed future blind. Routine 14-day testnet continuity remains paused,
+and the Phase 3 strict streak remains 0/14.
 
 Immediate focus:
 
-1. Keep the original registry frozen. Keep Protocol v2 locked and data-blocked without retuning; its 7/7 cloud collection is complete and must not restart. Retain the qualified v3 hashrate snapshot. Keep both v3 Stooq and both v4 FRED macro routes blocked; do not implement v4 signals or automatically open another provider-recovery protocol. Keep Protocol v5 historical bodies closed until its pre-registration commit is pushed, then qualify only one July UTC day without returns or PnL.
+1. Keep the original registry and both rejected Protocol v5 identities frozen. Push the v5 fast-track report before deploying its separate future raw-data collector. Do not open the 2026-08..12 PnL, retune either rule, replace missing official data, or create a result-selected combination. Keep Protocol v2 locked and retain the qualified v3/v4 evidence without automatic provider retries.
 2. Treat `docs/progress/phase-3-testnet-canary-evidence.md`, `docs/progress/phase-3-testnet-continuity-plan.md`, the 2026-05-30 clean canary retro, the 2026-05-30 duplicate-entry abort retro, the 2026-05-30 post-fix clean retro, and the 2026-06-01 heartbeat-lost retro as the current operational evidence. The historical canaries remain valid for connection, lifecycle, lineage, and emergency-path evidence, but not as proof that `SourcePolicy.position_pct_multiplier` scaled the submitted quantity; that execution bug was fixed on 2026-07-16 and any future sizing claim needs post-fix evidence. Do not run more routine canaries unless the operator explicitly resumes live-readiness evidence collection. If canary evidence resumes, use `python -m apps.strategies_nautilus.runners.report_testnet_bundle data/testnet/<run_id>` before writing future manifest-backed canary retros, use `--markdown` with clean bundle directories before updating the clean evidence ledger, and use `--continuity --markdown --min-clean-hours-per-day 6 --required-consecutive-days 14` with every completed manifest-backed bundle in the candidate window before claiming continuity progress. Carry no-manifest aborts manually. Do not open a new `promotion_review` unless an actual policy/stage decision is being made.
 3. Use `docs/decisions/009-agent-advice-audit.md` and `docs/decisions/012-phase5-readonly-dashboard.md` as the active agent/frontend boundaries. Agent/MCP work may write/replay/review `AgentAdvice`; dashboard work may read passive reports, observability textfiles, and AgentAdvice through `dashboard.snapshot.v1`. `TradingAgents/` is available as an ignored read-only upstream reference for future agent role/configuration ideas only; `docs/progress/tradingagents-reference-map.md` is the current safe adaptation map, and `apps.agents.role_profiles` is the first machine-readable AgentAdvice-only role seed. Neither path may write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or encode structured execution directives.
 4. ADR-008 §6.2 Phase 3b, §6.3 Phase 3c-a/b/c, §6.4 Phase 3d, §6.5 Phase 3e, §6.6 Phase 3f stability soak/canary, and the §8 promotion-review patch are all implemented and unit-tested. The `phase_3_not_ready` blocker now only hard-blocks `live_canary` / `live_normal`.
@@ -146,8 +140,8 @@ Immediate focus:
 
 ## Next Steps
 
-1. Push the Protocol v5 range-continuation/failure-ledger change, then complete the frozen curve 2021-06..2022-12 and BVOL 2023-06..2025-12 collection exactly once. Preserve every missing-day failure as flat, audit scoring-fold coverage, and only then run the locked signals, duplicate Nautilus folds, costs, portfolio review, and gates.
-2. Keep the 2026-08..12 final blind unopened before 2027-01-01. Do not tune after historical results, substitute providers, create a PnL-selected ensemble, enable the v5 timer before fast-track reports, or treat a BVOL diagnostic pass as promotion evidence.
+1. Commit and push the Protocol v5 fast-track machine result and retro, then deploy the already-qualified collector commit as a separate credential-free, idempotent systemd timer. Verify a network-disabled dry-run, timer state, zero credential environment, and isolation from the v2 collector. The timer may collect raw curve/BVOL evidence only.
+2. Keep the 2026-08..12 final blind unopened. Both v5 candidates are rejected and must not have blind PnL opened under this protocol. Do not tune after historical results, substitute providers, create a PnL-selected ensemble, or treat the BVOL diagnostic as promotion evidence.
 3. Preserve the qualified v3 hashrate snapshot and the v4 timeout evidence. Do not retry macro providers automatically; any new route requires independent evidence and explicit review before a new protocol is registered.
 4. Archive and retain the completed Protocol v2 7/7 option/basis evidence. Do not rebuild or restart the completed collector, open basis historical ZIPs, or invent option-method substitutes.
 5. Open the 2020-2022 replication reserve exactly once only after a protocol's pipelines pass qualification on a clean commit; evaluate that protocol's locked candidates with the Nautilus/cost/gate protocol and no result-driven changes.
@@ -173,6 +167,22 @@ Immediate focus:
 - No edits to `freqtrade/` or `nautilus_trader/` unless explicitly requested.
 
 ## Latest Verification
+
+On 2026-07-18, at Protocol v5 historical fast-track completion:
+
+- Curve's 2021 Aug-Dec execution fold has 216,000/220,320 minutes per asset;
+  the same three missing official days produce a validated pre-PnL rejection.
+  No curve signals or Nautilus run were created.
+- All five BVOL Spot folds are complete and aligned. Twenty clean-commit
+  Nautilus runs form ten reproducible asset/fold pairs with strict sidecars,
+  lineage, Spot-only, concurrency, and notional evidence.
+- BVOL aggregate base/stress PnL is -1.185170/-6.326371 USDT, 13/25 months and
+  3/5 folds pass, leave-best base is -16.799085 USDT, and ETH is negative under
+  both modeled costs. The locked decision is `reject_v5_candidate`.
+- Both candidate reviews return `stop_before_testnet_resume`. The future blind,
+  credentials, SourcePolicy, promotion review, testnet, and live path remain
+  untouched. Machine detail is in
+  `docs/progress/phase-2-research-v5-fast-track-results.json`.
 
 On 2026-07-17, at Protocol v5 Spot execution lineage qualification:
 

@@ -1,0 +1,189 @@
+{
+  "schema_version": "research.v5.fast_track_results.v1",
+  "as_of": "2026-07-18",
+  "evaluation_commit": "d664df9fd996fb018a42892d92948a9b2ff1d000",
+  "data_provider": "Binance",
+  "historical_partitions_only": true,
+  "future_blind_opened": false,
+  "credentials_loaded": false,
+  "source_policy_mutated": false,
+  "testnet_resumed": false,
+  "live_path_touched": false,
+  "collection": {
+    "delivery_curve": {
+      "range": [
+        "2021-06-01",
+        "2022-12-31"
+      ],
+      "assets": {
+        "BTCUSDT": {
+          "requested_days": 579,
+          "valid_days": 37,
+          "failed_days": 542
+        },
+        "ETHUSDT": {
+          "requested_days": 579,
+          "valid_days": 37,
+          "failed_days": 542
+        }
+      }
+    },
+    "bvol": {
+      "range": [
+        "2023-06-01",
+        "2025-12-31"
+      ],
+      "assets": {
+        "BTCUSDT": {
+          "requested_days": 945,
+          "valid_days": 437,
+          "failed_days": 508
+        },
+        "ETHUSDT": {
+          "requested_days": 945,
+          "valid_days": 406,
+          "failed_days": 539
+        }
+      }
+    },
+    "spot_execution": {
+      "bvol_scoring_folds_complete": 5,
+      "bvol_scoring_folds_expected": 5,
+      "curve_scoring_folds_complete": 2,
+      "curve_scoring_folds_expected": 3,
+      "curve_missing_dates": [
+        "2021-08-13",
+        "2021-09-29",
+        "2021-12-24"
+      ],
+      "curve_missing_minutes_per_asset": 4320,
+      "cross_asset_timestamps_aligned": true,
+      "vintage_conflicts": 0
+    }
+  },
+  "candidates": [
+    {
+      "candidate": "curve_carry",
+      "source": "rule_binance_curve_carry_v1",
+      "model_version": "btc-eth-front-next-positive-steep-daily-v1",
+      "signals_generated": false,
+      "pnl_evaluated": false,
+      "blockers": [
+        "incomplete_spot_execution_catalog"
+      ],
+      "gates": {
+        "data_available": false,
+        "spot_execution_catalog_complete": false,
+        "pnl_evaluated": false,
+        "evidence_clean": false,
+        "reproducible": null
+      },
+      "evidence": {
+        "data_blocker_sha256": "sha256:d0b8aac6f2b886621fedff5dc549e9103d1ace9f5c8459f8c1f63e9116178b22",
+        "review_sha256": "sha256:638b4729cd6741fe0acb57b6627c03d1e42a276610a6fa84bba0f63d6da094b8"
+      },
+      "recommendation": "reject_v5_candidate"
+    },
+    {
+      "candidate": "bvol_relief",
+      "source": "rule_binance_bvol_relief_v1",
+      "model_version": "btc-eth-bvol5d-negative-daily-lag2-v1",
+      "signal_counts": {
+        "bvol_2023_aug_dec": {
+          "BTCUSDT": 42,
+          "ETHUSDT": 38
+        },
+        "bvol_2024_jan_may": {
+          "BTCUSDT": 44,
+          "ETHUSDT": 26
+        },
+        "bvol_2024_aug_dec": {
+          "BTCUSDT": 32,
+          "ETHUSDT": 22
+        },
+        "bvol_2025_jan_may": {
+          "BTCUSDT": 24,
+          "ETHUSDT": 32
+        },
+        "bvol_2025_aug_dec": {
+          "BTCUSDT": 24,
+          "ETHUSDT": 36
+        }
+      },
+      "nautilus_runs": 20,
+      "reproducibility_pairs": 10,
+      "all_pairs_reproducible": true,
+      "run_git_dirty": false,
+      "fold_results": {
+        "bvol_2023_aug_dec": {
+          "base_net_pnl": 18.584852192000003,
+          "stress_net_pnl": 17.333997740000004,
+          "base_positive_months": 4,
+          "closed_positions": 40,
+          "base_net_without_best_position": 12.431093619120002
+        },
+        "bvol_2024_jan_may": {
+          "base_net_pnl": -19.167649111247997,
+          "stress_net_pnl": -20.554965549059997,
+          "base_positive_months": 2,
+          "closed_positions": 35,
+          "base_net_without_best_position": -34.781564215248
+        },
+        "bvol_2024_aug_dec": {
+          "base_net_pnl": 4.7045790480319996,
+          "stress_net_pnl": 3.8927367250400007,
+          "base_positive_months": 3,
+          "closed_positions": 27,
+          "base_net_without_best_position": -3.9755175926119994
+        },
+        "bvol_2025_jan_may": {
+          "base_net_pnl": 6.319055068727999,
+          "stress_net_pnl": 5.551971620909999,
+          "base_positive_months": 3,
+          "closed_positions": 28,
+          "base_net_without_best_position": -1.593371005992
+        },
+        "bvol_2025_aug_dec": {
+          "base_net_pnl": -11.626007538111997,
+          "stress_net_pnl": -12.550111782639998,
+          "base_positive_months": 1,
+          "closed_positions": 30,
+          "base_net_without_best_position": -18.308124983232
+        }
+      },
+      "aggregate": {
+        "gross_net_pnl": 19.379633280000004,
+        "base_net_pnl": -1.185170340599992,
+        "stress_net_pnl": -6.326371245749991,
+        "base_positive_months": 13,
+        "calendar_months": 25,
+        "positive_base_and_stress_folds": 3,
+        "closed_positions": 160,
+        "base_net_without_best_position": -16.799085444599992,
+        "asset_cost_results": {
+          "BTCUSDT": {
+            "base": 8.125376408760003,
+            "stress": 5.3068596409500035
+          },
+          "ETHUSDT": {
+            "base": -9.310546749359993,
+            "stress": -11.633230886699994
+          }
+        }
+      },
+      "failed_gates": [
+        "aggregate_base_positive",
+        "aggregate_stress_positive",
+        "base_without_best_position_positive",
+        "base_positive_months_15_of_25",
+        "positive_base_and_stress_folds_4_of_5",
+        "each_asset_base_and_stress_positive"
+      ],
+      "evidence": {
+        "review_sha256": "sha256:536b7bbcfe1baaa7bd1023da64a6e86f52bae7f4769204d3a72bdfc85e2fc95e"
+      },
+      "recommendation": "reject_v5_candidate"
+    }
+  ],
+  "recommendation": "stop_before_testnet_resume"
+}
