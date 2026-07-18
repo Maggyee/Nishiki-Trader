@@ -4,7 +4,8 @@
 - **Machine contract**: `docs/progress/phase-2-research-protocol-v5.json`
 - **Provider contract**: `docs/progress/phase-2-research-v5-data-sources.json`
 - **Candidate fingerprints**: `docs/progress/phase-2-research-v5-candidate-fingerprints.json`
-- **Status**: historical fast tracks complete; both candidates rejected.
+- **Status**: formally frozen; historical fast tracks complete and both
+  candidates rejected.
 - **Trading effect**: none.
 
 July local/cloud provider qualification subsequently passed on clean collector
@@ -18,6 +19,21 @@ The locked historical review is recorded in
 `docs/retros/2026-07-18-research-v5-fast-track-review.md`. Curve carry failed
 the Spot execution data gate before signals/PnL, while the reproducible BVOL
 diagnostic failed its cost, fold, month, concentration, and per-asset gates.
+
+Protocol v5 research is closed. Its separate future collector is an
+append-preserving operations process, not a continuation of candidate
+research. The first 04:15 UTC scheduled attempt for data date 2026-07-17
+retained four explicit flat 404 failures; the 08:15 UTC retry then wrote four
+valid vintages. All four snapshots and Parquets passed offline verification,
+bringing storage to 8/8 with zero conflicts. The dated evidence is in
+`docs/retros/2026-07-18-research-v5-first-scheduled-collection.md`.
+
+The freeze forbids opening the 2026-08..12 blind PnL, filling or interpolating
+missing data, modifying parameters and rerunning, combining BTC and ETH to
+hide a losing sleeve, restoring testnet, or changing `SourcePolicy`. A future
+publication-time adjustment must be supported by several days of observed
+archive timing and remains an operational scheduling change, not strategy
+tuning.
 
 ## Scope and separation from prior research
 

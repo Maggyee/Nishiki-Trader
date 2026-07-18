@@ -1,7 +1,7 @@
 # Phase 5 Dashboard and Passive Phase 6 History
 
 - **Status**: Historical progress archive
-- **Last updated**: 2026-07-10
+- **Last updated**: 2026-07-18
 - **Scope**: Completed Phase 4/5 read-only dashboard work and passive Phase 6
   readiness/startup evidence hardening that was previously too detailed for
   `docs/project-status.md`.
@@ -47,6 +47,16 @@ Implemented operator visibility includes:
 - Snapshot freshness state with configurable warning/stale thresholds.
 - Snapshot source/input audit and degraded-input visibility.
 - English and Simplified Chinese UI chrome selected by URL query.
+- Passive Protocol v5 collector evidence: last service run and data date, all
+  four curve/BVOL stream outcomes, failure class and scheduled retry, immutable
+  snapshot/Parquet/conflict counts, and deployed Git/image identity.
+
+The collector addition uses `research.v5.collector_status.v1`. Its optional SSH
+mode runs only read commands (`systemctl`, `journalctl`, `git`, Docker image
+inspection, and `find`) through BatchMode; the frontend never connects to the
+host itself. The dashboard rejects artifacts that open collector mutation,
+credential, signal, PnL, SourcePolicy, testnet, Nautilus, or live-path
+boundaries.
 
 Representative verification from the Phase 5 opening and console hardening:
 
@@ -83,6 +93,12 @@ Representative verification from the Phase 5 opening and console hardening:
   `--snapshot-warning-after-seconds` / `--snapshot-stale-after-seconds`;
   targeted tests, ruff, frontend typecheck/build/audit, smoke JSON, and
   `git diff --check` passed.
+- 2026-07-18 Protocol v5 collector monitor: the passive SSH-backed status
+  reader reported a healthy real deployment with four successful streams,
+  8 snapshots / 8 Parquets / 0 conflicts, matching Git/image identity, and the
+  next timer trigger. Collector/dashboard tests reported 91 passed; the full
+  suite reported 921 passed / 12 skipped; ruff, typecheck, production build,
+  npm audit and strict JSON checks passed.
 
 ## Phase 4 AgentAdvice Inputs
 

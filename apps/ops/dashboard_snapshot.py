@@ -14,6 +14,12 @@ from typing import Any
 from urllib.parse import quote
 
 from apps.agents.store import DEFAULT_ADVICE_DB_PATH
+from apps.ops.research_v5_collector_status import (
+    EXPECTED_STREAMS as RESEARCH_V5_EXPECTED_STREAMS,
+)
+from apps.ops.research_v5_collector_status import (
+    SCHEMA_VERSION as RESEARCH_V5_COLLECTOR_STATUS_SCHEMA_VERSION,
+)
 from apps.strategies_nautilus.runners.report_paper_bundle import (
     load_paper_bundle_report,
 )
@@ -120,6 +126,34 @@ _SOURCE_REFERENCE_LINKS = (
         "detail": "Paused 14-day strict-continuity procedure and resume command.",
     },
     {
+        "group": "evidence",
+        "label": "Research Protocol v5",
+        "kind": "progress",
+        "path": "docs/progress/phase-2-research-protocol-v5.md",
+        "detail": "Frozen candidate decisions and raw-collector boundary.",
+    },
+    {
+        "group": "ops",
+        "label": "Research v5 collector deployment",
+        "kind": "runbook",
+        "path": "docs/retros/2026-07-18-research-v5-collector-deployment.md",
+        "detail": "Immutable cloud deployment identity, schedule, and boundary audit.",
+    },
+    {
+        "group": "ops",
+        "label": "Research v5 first scheduled collection",
+        "kind": "runbook",
+        "path": "docs/retros/2026-07-18-research-v5-first-scheduled-collection.md",
+        "detail": "04:15 flat 404 evidence, successful 08:15 retry, and offline verification.",
+    },
+    {
+        "group": "evidence",
+        "label": "Research Protocol v6 availability",
+        "kind": "progress",
+        "path": "docs/progress/phase-2-research-protocol-v6.md",
+        "detail": "Metadata-only Binance-native interface and archive availability screen.",
+    },
+    {
         "group": "ops",
         "label": "First testnet canary runbook",
         "kind": "runbook",
@@ -169,6 +203,7 @@ def build_dashboard_snapshot(
     testnet_bundle_dirs: Sequence[Path] = (),
     phase6_live_readiness_report_path: Path | None = None,
     phase6_live_startup_guard_report_path: Path | None = None,
+    research_v5_collector_status_path: Path | None = None,
     advice_limit: int = 20,
     grafana_base_url: str | None = DEFAULT_GRAFANA_BASE_URL,
     repo_browser_base_url: str | None = None,
@@ -210,6 +245,10 @@ def build_dashboard_snapshot(
         generated_at_ns=generated_ns,
         limit=observability_limit,
     )
+    research_v5_collector = _research_v5_collector_snapshot(
+        research_v5_collector_status_path,
+        generated_at_ns=generated_ns,
+    )
     ops_status = _ops_status_snapshot(
         project_status=project_status,
         boundaries=boundaries,
@@ -217,6 +256,7 @@ def build_dashboard_snapshot(
         paper_bundles=paper_bundles,
         testnet_bundles=testnet_bundles,
         observability=observability,
+        research_v5_collector=research_v5_collector,
     )
     phase6 = _phase6_snapshot(
         live_readiness_report_path=phase6_live_readiness_report_path,
@@ -230,6 +270,7 @@ def build_dashboard_snapshot(
         testnet_bundle_dirs=testnet_bundle_dirs,
         phase6_live_readiness_report_path=phase6_live_readiness_report_path,
         phase6_live_startup_guard_report_path=phase6_live_startup_guard_report_path,
+        research_v5_collector_status_path=research_v5_collector_status_path,
         observability_textfile_dir=observability_textfile_dir,
     )
     return {
@@ -250,6 +291,7 @@ def build_dashboard_snapshot(
         "phase6": phase6,
         "ops_status": ops_status,
         "observability": observability,
+        "research_v5_collector": research_v5_collector,
         "reference_links": _reference_links(
             grafana_base_url=grafana_base_url,
             repo_browser_base_url=repo_browser_base_url,
@@ -259,6 +301,7 @@ def build_dashboard_snapshot(
             boundaries=boundaries,
             agent_advice=agent_advice,
             ops_status=ops_status,
+            research_v5_collector=research_v5_collector,
         ),
     }
 
@@ -302,6 +345,39 @@ def render_markdown_snapshot(snapshot: dict[str, Any]) -> str:
                 f"{item.get('label')} status=`{item.get('status')}`, "
                 f"sha256=`{item.get('sha256') or item.get('expected_sha256') or 'none'}`"
             )
+
+    collector = snapshot.get("research_v5_collector") or {}
+    last_run = collector.get("last_run") or {}
+    timer = collector.get("timer") or {}
+    storage = collector.get("storage") or {}
+    deployment = collector.get("deployment") or {}
+    lines.extend(
+        [
+            "",
+            "## Research v5 Collector",
+            "",
+            f"- state: `{collector.get('state') or 'unknown'}`",
+            f"- data_date: `{last_run.get('data_date') or 'unknown'}`",
+            f"- next_trigger_at: `{timer.get('next_trigger_at') or 'unknown'}`",
+            f"- snapshot_count: {storage.get('snapshot_count', 0)}",
+            f"- normalized_parquet_count: {storage.get('normalized_parquet_count', 0)}",
+            f"- vintage_conflict_count: {storage.get('vintage_conflict_count', 0)}",
+            f"- git_commit: `{deployment.get('git_commit') or 'unknown'}`",
+            f"- image_id: `{deployment.get('image_id') or 'unknown'}`",
+            "",
+            "| kind | asset | status | failure type | error |",
+            "|---|---|---|---|---|",
+        ]
+    )
+    for row in last_run.get("streams") or []:
+        lines.append(
+            "| "
+            f"{_markdown_cell(str(row.get('kind') or 'unknown'))} | "
+            f"{_markdown_cell(str(row.get('asset') or 'unknown'))} | "
+            f"{_markdown_cell(str(row.get('status') or 'unknown'))} | "
+            f"{_markdown_cell(str(row.get('failure_type') or 'none'))} | "
+            f"{_markdown_cell(str(row.get('error') or 'none'))} |"
+        )
 
     lines.extend(["", "## Operator Next Steps", ""])
     for item in status.get("sections", {}).get("next_steps", []):
@@ -646,6 +722,7 @@ def _snapshot_inputs(
     testnet_bundle_dirs: Sequence[Path],
     phase6_live_readiness_report_path: Path | None,
     phase6_live_startup_guard_report_path: Path | None,
+    research_v5_collector_status_path: Path | None,
     observability_textfile_dir: Path | None,
 ) -> dict[str, Any]:
     items = [
@@ -702,6 +779,14 @@ def _snapshot_inputs(
             path=phase6_live_startup_guard_report_path,
             required=False,
             attached=phase6_live_startup_guard_report_path is not None,
+        ),
+        _input_item(
+            label="Research v5 collector status",
+            category="research_v5_collector_status",
+            kind="json",
+            path=research_v5_collector_status_path,
+            required=False,
+            attached=research_v5_collector_status_path is not None,
         ),
         _input_item(
             label="Observability textfile directory",
@@ -1584,6 +1669,239 @@ def _observability_counts(runs: Sequence[dict[str, Any]]) -> dict[str, int]:
         "open_positions": sum(int(run.get("open_positions") or 0) for run in runs),
         "alert_total": sum(int(run.get("alert_total") or 0) for run in runs),
         "parse_error_count": sum(len(run.get("parse_errors") or []) for run in runs),
+    }
+
+
+def _empty_research_v5_collector_snapshot(
+    *,
+    path: Path | None,
+    attached: bool,
+    exists: bool,
+    state: str,
+    blocker: str,
+    report_sha256: str | None = None,
+    load_error: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "path": str(path) if path is not None else None,
+        "attached": attached,
+        "exists": exists,
+        "schema_version": None,
+        "report_sha256": report_sha256,
+        "load_error": load_error,
+        "observed_at_ns": None,
+        "report_age_seconds": None,
+        "state": state,
+        "next_action": "attach_collector_status_artifact",
+        "source": {},
+        "service": {},
+        "timer": {},
+        "deployment": {},
+        "storage": {},
+        "last_run": {"streams": [], "failure_types": []},
+        "gates": {},
+        "blockers": [blocker],
+        "boundaries": {
+            "read_only": True,
+            "network_accessed": False,
+            "loads_credentials": False,
+            "writes_signal_event": False,
+            "computes_pnl": False,
+            "mutates_source_policy": False,
+            "starts_nautilus": False,
+            "resumes_testnet": False,
+            "touches_live_path": False,
+        },
+    }
+
+
+def _research_v5_collector_snapshot(
+    path: Path | None,
+    *,
+    generated_at_ns: int,
+) -> dict[str, Any]:
+    if path is None:
+        return _empty_research_v5_collector_snapshot(
+            path=None,
+            attached=False,
+            exists=False,
+            state="not_attached",
+            blocker="collector_status_not_attached",
+        )
+    if not path.exists():
+        return _empty_research_v5_collector_snapshot(
+            path=path,
+            attached=True,
+            exists=False,
+            state="missing",
+            blocker="collector_status_not_found",
+        )
+
+    raw = path.read_bytes()
+    report_sha256 = hashlib.sha256(raw).hexdigest()
+    try:
+        payload = json.loads(
+            raw.decode("utf-8"),
+            parse_constant=_reject_non_standard_json_constant,
+        )
+    except (UnicodeDecodeError, ValueError, json.JSONDecodeError) as exc:
+        return _empty_research_v5_collector_snapshot(
+            path=path,
+            attached=True,
+            exists=True,
+            state="invalid",
+            blocker=f"invalid_collector_status_json:{exc.__class__.__name__}",
+            report_sha256=report_sha256,
+            load_error=str(exc),
+        )
+    if not isinstance(payload, dict):
+        return _empty_research_v5_collector_snapshot(
+            path=path,
+            attached=True,
+            exists=True,
+            state="invalid",
+            blocker=f"invalid_collector_status_object:{type(payload).__name__}",
+            report_sha256=report_sha256,
+        )
+
+    payload_blockers = payload.get("blockers")
+    if not isinstance(payload_blockers, list):
+        payload_blockers = []
+        blockers = []
+        validation_blockers = ["collector_blockers_invalid"]
+    else:
+        blockers = [str(item) for item in payload_blockers]
+        validation_blockers = []
+    if payload.get("schema_version") != RESEARCH_V5_COLLECTOR_STATUS_SCHEMA_VERSION:
+        validation_blockers.append(
+            f"unexpected_schema_version:{payload.get('schema_version')}"
+        )
+    observed_at_ns = _phase6_report_generated_at_ns(payload.get("observed_at_ns"))
+    if observed_at_ns is None:
+        validation_blockers.append("observed_at_ns_invalid")
+    elif observed_at_ns > generated_at_ns:
+        validation_blockers.append("observed_at_ns_in_future")
+
+    boundaries = payload.get("boundaries")
+    if not isinstance(boundaries, dict) or boundaries.get("read_only") is not True:
+        validation_blockers.append("collector_boundary:read_only")
+    for key in (
+        "network_accessed",
+        "loads_credentials",
+        "writes_signal_event",
+        "computes_pnl",
+        "mutates_source_policy",
+        "starts_nautilus",
+        "resumes_testnet",
+        "touches_live_path",
+    ):
+        if not isinstance(boundaries, dict) or boundaries.get(key) is not False:
+            validation_blockers.append(f"collector_boundary:{key}")
+
+    last_run = payload.get("last_run")
+    if not isinstance(last_run, dict):
+        validation_blockers.append("last_run_invalid")
+        last_run = {"streams": [], "failure_types": []}
+    if last_run.get("signals_generated") is not False:
+        validation_blockers.append("signals_generated_must_remain_false")
+    if last_run.get("pnl_computed") is not False:
+        validation_blockers.append("pnl_computed_must_remain_false")
+    streams = last_run.get("streams")
+    stream_rows = streams if isinstance(streams, list) else []
+    if len(stream_rows) != len(RESEARCH_V5_EXPECTED_STREAMS):
+        validation_blockers.append("collector_stream_count_invalid")
+    stream_keys = {
+        (str(row.get("kind")), str(row.get("asset")))
+        for row in stream_rows
+        if isinstance(row, dict)
+    }
+    if stream_keys != set(RESEARCH_V5_EXPECTED_STREAMS):
+        validation_blockers.append("collector_stream_set_invalid")
+    for row in stream_rows:
+        if not isinstance(row, dict):
+            validation_blockers.append("collector_stream_row_invalid")
+            continue
+        if row.get("status") not in {"success", "failed", "missing"}:
+            validation_blockers.append("collector_stream_status_invalid")
+        if not isinstance(row.get("snapshot_written"), bool):
+            validation_blockers.append("collector_stream_write_flag_invalid")
+
+    deployment = payload.get("deployment")
+    if not isinstance(deployment, dict):
+        validation_blockers.append("collector_deployment_invalid")
+        deployment = {}
+    git_commit = deployment.get("git_commit")
+    image_revision = deployment.get("image_revision")
+    if not isinstance(git_commit, str) or not _PHASE6_GIT_COMMIT_RE.fullmatch(
+        git_commit
+    ):
+        validation_blockers.append("collector_git_commit_invalid")
+    if image_revision != git_commit:
+        validation_blockers.append("collector_image_revision_mismatch")
+    if deployment.get("checkout_clean") is not True:
+        validation_blockers.append("collector_checkout_not_clean")
+    image_id = deployment.get("image_id")
+    if not isinstance(image_id, str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", image_id):
+        validation_blockers.append("collector_image_id_invalid")
+
+    state = str(payload.get("state") or "unknown")
+    if state not in {"healthy", "attention", "breach", "unknown"}:
+        validation_blockers.append(f"collector_state_invalid:{state}")
+    storage = payload.get("storage")
+    if not isinstance(storage, dict):
+        validation_blockers.append("collector_storage_invalid")
+        storage = {}
+    for key in (
+        "snapshot_count",
+        "normalized_parquet_count",
+        "vintage_conflict_count",
+        "comparison_marker_count",
+    ):
+        value = storage.get(key)
+        if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+            validation_blockers.append(f"collector_storage_count_invalid:{key}")
+    if storage.get("vintage_conflict_count") not in {0, None}:
+        validation_blockers.append("collector_storage_has_conflicts")
+    if storage.get("comparison_marker_count") not in {0, None}:
+        validation_blockers.append("collector_storage_has_markers")
+    if state == "healthy":
+        if blockers:
+            validation_blockers.append("healthy_collector_has_blockers")
+        if last_run.get("complete") is not True:
+            validation_blockers.append("healthy_collector_batch_incomplete")
+        if any(
+            not isinstance(row, dict)
+            or row.get("status") != "success"
+            or row.get("snapshot_written") is not True
+            for row in stream_rows
+        ):
+            validation_blockers.append("healthy_collector_stream_not_success")
+        timer = payload.get("timer")
+        if not isinstance(timer, dict):
+            validation_blockers.append("healthy_collector_timer_invalid")
+        elif timer.get("active") != "active" or timer.get("enabled") != "enabled":
+            validation_blockers.append("healthy_collector_timer_not_ready")
+    blockers.extend(validation_blockers)
+    blockers = sorted(dict.fromkeys(blockers))
+    if validation_blockers:
+        state = "breach"
+    report_age_seconds = (
+        max(0.0, (generated_at_ns - observed_at_ns) / 1_000_000_000)
+        if observed_at_ns is not None
+        else None
+    )
+    return {
+        **payload,
+        "path": str(path),
+        "attached": True,
+        "exists": True,
+        "report_sha256": report_sha256,
+        "load_error": None,
+        "report_age_seconds": report_age_seconds,
+        "state": state,
+        "blockers": blockers,
+        "last_run": last_run,
+        "deployment": deployment,
     }
 
 
@@ -2874,6 +3192,7 @@ def _ops_status_snapshot(
     paper_bundles: list[dict[str, Any]],
     testnet_bundles: list[dict[str, Any]],
     observability: dict[str, Any],
+    research_v5_collector: dict[str, Any],
 ) -> dict[str, Any]:
     boundary_open_count = sum(1 for value in boundaries.values() if value)
     paper_blockers = sum(len(bundle.get("review_blockers") or []) for bundle in paper_bundles)
@@ -2890,18 +3209,29 @@ def _ops_status_snapshot(
     observability_issue_count = int(observability_counts.get("attention_count", 0)) + int(
         observability_counts.get("stale_count", 0)
     )
+    collector_state = str(research_v5_collector.get("state") or "not_attached")
+    collector_attached = research_v5_collector.get("attached") is True
+    collector_issue_count = int(
+        collector_attached and collector_state != "healthy"
+    )
     live_blocked = bool(project_status.get("live_trading_blocked", True))
     strict_continuity = project_status.get("strict_continuity")
 
     if boundary_open_count:
         state = "breach"
         headline = "A dashboard or agent boundary is open."
+    elif collector_state == "breach":
+        state = "breach"
+        headline = "Research v5 collector evidence breached its passive contract."
     elif agent_advice_error_count:
         state = "attention"
         headline = "AgentAdvice database could not be read."
     elif paper_blockers or testnet_blockers or promotion_blockers:
         state = "attention"
         headline = "Review blockers exist in attached evidence."
+    elif collector_issue_count:
+        state = "attention"
+        headline = "Research v5 collector needs review."
     elif observability_issue_count:
         state = "attention"
         headline = "Observability textfiles need review."
@@ -2927,6 +3257,7 @@ def _ops_status_snapshot(
             "paper_promotion_blockers": promotion_blockers,
             "testnet_review_blockers": testnet_blockers,
             "observability_issue_count": observability_issue_count,
+            "research_v5_collector_issue_count": collector_issue_count,
         },
         "summary": _ops_summary_lines(
             live_blocked=live_blocked,
@@ -2938,6 +3269,11 @@ def _ops_status_snapshot(
             testnet_blockers=testnet_blockers,
             promotion_blockers=promotion_blockers,
             observability_issue_count=observability_issue_count,
+            collector_state=collector_state,
+            collector_attached=collector_attached,
+            collector_next_action=str(
+                research_v5_collector.get("next_action") or "unknown"
+            ),
         ),
     }
 
@@ -2953,6 +3289,9 @@ def _ops_summary_lines(
     testnet_blockers: int,
     promotion_blockers: int,
     observability_issue_count: int,
+    collector_state: str,
+    collector_attached: bool,
+    collector_next_action: str,
 ) -> list[str]:
     lines = [
         "Live trading is blocked by ADR gates."
@@ -2981,6 +3320,11 @@ def _ops_summary_lines(
         lines.append(
             f"{observability_issue_count} observability run(s) need review."
         )
+    if collector_attached:
+        lines.append(
+            "Research v5 collector state is "
+            f"{collector_state}; next action is {collector_next_action}."
+        )
     return lines
 
 
@@ -2990,12 +3334,13 @@ def _operator_checklist(
     boundaries: dict[str, bool],
     agent_advice: dict[str, Any],
     ops_status: dict[str, Any],
+    research_v5_collector: dict[str, Any],
 ) -> list[dict[str, str]]:
     boundary_open_count = int(ops_status["counts"]["boundary_open_count"])
     recorded_advice = int(agent_advice.get("by_status", {}).get("recorded", 0))
     agent_advice_error = str(agent_advice.get("error") or "")
     strict_continuity = project_status.get("strict_continuity") or "unknown"
-    return [
+    items = [
         {
             "label": "Refresh dashboard snapshot",
             "status": "manual",
@@ -3030,6 +3375,31 @@ def _operator_checklist(
             "detail": "SourcePolicy changes must go through promotion_review, not the dashboard.",
         },
     ]
+    collector_state = str(research_v5_collector.get("state") or "not_attached")
+    collector_attached = research_v5_collector.get("attached") is True
+    collector_status = {
+        "healthy": "ok",
+        "attention": "warn",
+        "breach": "breach",
+        "unknown": "warn",
+        "missing": "warn",
+        "invalid": "breach",
+    }.get(collector_state, "manual")
+    items.append(
+        {
+            "label": "Review Research v5 collector",
+            "status": collector_status if collector_attached else "manual",
+            "detail": (
+                "Collector status artifact is not attached."
+                if not collector_attached
+                else (
+                    f"State={collector_state}; next_action="
+                    f"{research_v5_collector.get('next_action') or 'unknown'}."
+                )
+            ),
+        }
+    )
+    return items
 
 
 def _count_rows(conn: sqlite3.Connection, sql: str) -> dict[str, int]:
@@ -3161,6 +3531,14 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Optional saved phase6.live_startup_guard.v1 JSON artifact to summarize.",
     )
+    parser.add_argument(
+        "--research-v5-collector-status",
+        default=None,
+        help=(
+            "Optional research.v5.collector_status.v1 JSON artifact to expose "
+            "through the read-only dashboard snapshot."
+        ),
+    )
     parser.add_argument("--advice-limit", type=int, default=20)
     parser.add_argument(
         "--observability-textfile-dir",
@@ -3219,6 +3597,11 @@ def main(argv: list[str] | None = None) -> int:
         phase6_live_startup_guard_report_path=(
             Path(args.phase6_live_startup_guard_report)
             if args.phase6_live_startup_guard_report
+            else None
+        ),
+        research_v5_collector_status_path=(
+            Path(args.research_v5_collector_status)
+            if args.research_v5_collector_status
             else None
         ),
         advice_limit=args.advice_limit,

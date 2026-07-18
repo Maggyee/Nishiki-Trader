@@ -103,13 +103,16 @@ Phase 5 entry implementation:
 - `apps/frontend/package.json` locks a Next.js + Tailwind app.
 - `apps/frontend/app/dashboardData.ts` loads the local snapshot server-side,
   including `ops_status`, parsed project-status sections, `observability`,
-  `reference_links`, `operator_checklist`, and optional `phase6` summaries.
+  `reference_links`, `operator_checklist`, optional `phase6` summaries, and an
+  optional passive `research.v5.collector_status.v1` artifact.
 - `apps/frontend/app/page.tsx` renders the read-only operations dashboard:
   posture band, guardrail metrics, Phase 6 gate-artifact status, runtime
-  health, evidence matrix, bundle ledger, AgentAdvice queue, operator checklist,
-  snapshot source audit, watchlist, verification, reference links, boundary
-  ledger, Phase 6 promotion-review fingerprint evidence summaries, and an
-  English / Simplified Chinese URL language switch.
+  health, Protocol v5 collector run/date and four-stream status, passive
+  storage/conflict and deployment-identity evidence, evidence matrix, bundle
+  ledger, AgentAdvice queue, operator checklist, snapshot source audit,
+  watchlist, verification, reference links, boundary ledger, Phase 6
+  promotion-review fingerprint evidence summaries, and an English / Simplified
+  Chinese URL language switch.
 - `apps/frontend/app/globals.css` defines the compact dashboard surface.
 
 The first implementation deliberately has no API routes and no client-side

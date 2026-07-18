@@ -138,6 +138,70 @@ export type ObservabilitySnapshot = {
   runs?: ObservabilityRun[];
 };
 
+export type ResearchV5CollectorStream = {
+  kind?: string;
+  asset?: string;
+  status?: string;
+  snapshot_written?: boolean;
+  desired_state?: string | null;
+  failure_type?: string | null;
+  error?: string | null;
+};
+
+export type ResearchV5CollectorStatus = {
+  path?: string | null;
+  attached?: boolean;
+  exists?: boolean;
+  schema_version?: string | null;
+  report_sha256?: string | null;
+  load_error?: string | null;
+  observed_at_ns?: number | string | null;
+  report_age_seconds?: number | null;
+  state?: string;
+  next_action?: string;
+  source?: Record<string, string>;
+  service?: {
+    active?: string;
+    result?: string;
+    exit_status?: number;
+    started_at?: string | null;
+    finished_at?: string | null;
+  };
+  timer?: {
+    active?: string;
+    enabled?: string;
+    last_trigger_at?: string | null;
+    next_trigger_at?: string | null;
+  };
+  deployment?: {
+    git_commit?: string | null;
+    checkout_clean?: boolean;
+    image_id?: string | null;
+    image_revision?: string | null;
+  };
+  storage?: {
+    snapshot_count?: number;
+    normalized_parquet_count?: number;
+    vintage_conflict_count?: number;
+    comparison_marker_count?: number;
+  };
+  last_run?: {
+    report_found?: boolean;
+    data_date?: string | null;
+    complete?: boolean;
+    valid_snapshot_count?: number;
+    failed_snapshot_count?: number;
+    vintage_conflict_count?: number;
+    signals_generated?: boolean;
+    pnl_computed?: boolean;
+    streams?: ResearchV5CollectorStream[];
+    failure_types?: Array<{ type?: string; count?: number }>;
+  };
+  gates?: Record<string, boolean>;
+  blockers?: string[];
+  boundaries?: Record<string, boolean>;
+};
+
 export type Phase6GateReport = {
   label?: string;
   path?: string | null;
@@ -240,6 +304,7 @@ export type DashboardSnapshot = {
     summary?: string[];
   };
   observability?: ObservabilitySnapshot;
+  research_v5_collector?: ResearchV5CollectorStatus;
   reference_links?: ReferenceLink[];
   operator_checklist?: Array<{
     label?: string;
@@ -438,6 +503,7 @@ function fallbackSnapshot(snapshotPath: string, error: unknown): DashboardSnapsh
         paper_promotion_blockers: 0,
         testnet_review_blockers: 0,
         observability_issue_count: 0,
+        research_v5_collector_issue_count: 0,
       },
       summary: [
         "No snapshot file was loaded.",
@@ -461,6 +527,43 @@ function fallbackSnapshot(snapshotPath: string, error: unknown): DashboardSnapsh
       },
       latest: null,
       runs: [],
+    },
+    research_v5_collector: {
+      path: null,
+      attached: false,
+      exists: false,
+      schema_version: null,
+      report_sha256: null,
+      observed_at_ns: null,
+      report_age_seconds: null,
+      state: "not_attached",
+      next_action: "attach_collector_status_artifact",
+      source: {},
+      service: {},
+      timer: {},
+      deployment: {},
+      storage: {},
+      last_run: {
+        report_found: false,
+        complete: false,
+        streams: [],
+        failure_types: [],
+        signals_generated: false,
+        pnl_computed: false,
+      },
+      gates: {},
+      blockers: ["collector_status_not_attached"],
+      boundaries: {
+        read_only: true,
+        network_accessed: false,
+        loads_credentials: false,
+        writes_signal_event: false,
+        computes_pnl: false,
+        mutates_source_policy: false,
+        starts_nautilus: false,
+        resumes_testnet: false,
+        touches_live_path: false,
+      },
     },
     reference_links: [
       {

@@ -129,6 +129,231 @@ def _advice(
     )
 
 
+def _collector_status_payload() -> dict:
+    streams = [
+        {
+            "kind": kind,
+            "asset": asset,
+            "status": "failed",
+            "snapshot_written": False,
+            "desired_state": "flat",
+            "failure_type": "http_404_not_published",
+            "error": "archive request failed: HTTP Error 404: Not Found",
+        }
+        for kind in ("delivery_curve", "bvol")
+        for asset in ("BTCUSDT", "ETHUSDT")
+    ]
+    return {
+        "schema_version": "research.v5.collector_status.v1",
+        "observed_at_ns": REFERENCE_TS_NS - 60_000_000_000,
+        "state": "attention",
+        "next_action": "await_scheduled_retry",
+        "source": {
+            "service_unit": "nishiki-research-v5-collector.service",
+            "timer_unit": "nishiki-research-v5-collector.timer",
+            "data_root": "/var/lib/nishiki-trader/research-v5",
+            "checkout": "/opt/nishiki-trader-v5-d37d227",
+            "image": f"nishiki-research-v5:{'a' * 40}",
+        },
+        "service": {
+            "active": "failed",
+            "result": "exit-code",
+            "exit_status": 2,
+            "started_at": "Sat 2026-07-18 04:15:00 UTC",
+            "finished_at": "Sat 2026-07-18 04:15:03 UTC",
+        },
+        "timer": {
+            "active": "active",
+            "enabled": "enabled",
+            "last_trigger_at": "Sat 2026-07-18 04:15:00 UTC",
+            "next_trigger_at": "Sat 2026-07-18 08:15:00 UTC",
+        },
+        "deployment": {
+            "git_commit": "a" * 40,
+            "checkout_clean": True,
+            "image_id": "sha256:" + "b" * 64,
+            "image_revision": "a" * 40,
+        },
+        "storage": {
+            "snapshot_count": 4,
+            "normalized_parquet_count": 4,
+            "vintage_conflict_count": 0,
+            "comparison_marker_count": 0,
+        },
+        "last_run": {
+            "report_found": True,
+            "schema_version": "research.v5.daily_collection.v1",
+            "data_date": "2026-07-17",
+            "complete": False,
+            "valid_snapshot_count": 0,
+            "failed_snapshot_count": 4,
+            "vintage_conflict_count": 0,
+            "signals_generated": False,
+            "pnl_computed": False,
+            "streams": streams,
+            "failure_types": [
+                {"type": "http_404_not_published", "count": 4}
+            ],
+        },
+        "gates": {
+            "timer_ready": True,
+            "deployment_identity_match": True,
+            "checkout_clean": True,
+            "no_vintage_conflicts": True,
+            "daily_report_found": True,
+            "expected_stream_count": True,
+            "last_batch_complete": False,
+        },
+        "blockers": ["last_batch_incomplete"],
+        "boundaries": {
+            "read_only": True,
+            "network_accessed": False,
+            "loads_credentials": False,
+            "writes_signal_event": False,
+            "computes_pnl": False,
+            "mutates_source_policy": False,
+            "starts_nautilus": False,
+            "resumes_testnet": False,
+            "touches_live_path": False,
+        },
+    }
+
+
+def test_snapshot_exposes_read_only_research_v5_collector_status(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    collector_path = tmp_path / "collector.json"
+    collector_path.write_text(
+        json.dumps(_collector_status_payload()),
+        encoding="utf-8",
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        research_v5_collector_status_path=collector_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+    collector = snapshot["research_v5_collector"]
+
+    assert collector["attached"] is True
+    assert collector["exists"] is True
+    assert collector["state"] == "attention"
+    assert collector["report_age_seconds"] == 60.0
+    assert collector["last_run"]["data_date"] == "2026-07-17"
+    assert collector["last_run"]["failed_snapshot_count"] == 4
+    assert len(collector["last_run"]["streams"]) == 4
+    assert collector["storage"]["snapshot_count"] == 4
+    assert collector["deployment"]["git_commit"] == "a" * 40
+    assert snapshot["ops_status"]["state"] == "attention"
+    assert snapshot["ops_status"]["headline"] == (
+        "Research v5 collector needs review."
+    )
+    assert snapshot["ops_status"]["counts"][
+        "research_v5_collector_issue_count"
+    ] == 1
+    assert snapshot["operator_checklist"][-1] == {
+        "label": "Review Research v5 collector",
+        "status": "warn",
+        "detail": "State=attention; next_action=await_scheduled_retry.",
+    }
+    collector_input = next(
+        item
+        for item in snapshot["snapshot_inputs"]["items"]
+        if item["category"] == "research_v5_collector_status"
+    )
+    assert collector_input["path"] == str(collector_path)
+    assert collector_input["attached"] is True
+    assert collector_input["exists"] is True
+    markdown = dashboard_snapshot.render_markdown_snapshot(snapshot)
+    assert "## Research v5 Collector" in markdown
+    assert "http_404_not_published" in markdown
+    json.dumps(snapshot, allow_nan=False)
+
+
+def test_snapshot_rejects_collector_artifact_that_opens_pnl_boundary(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    collector_path = tmp_path / "collector.json"
+    payload = _collector_status_payload()
+    payload["last_run"]["pnl_computed"] = True
+    collector_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        research_v5_collector_status_path=collector_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    collector = snapshot["research_v5_collector"]
+    assert collector["state"] == "breach"
+    assert "pnl_computed_must_remain_false" in collector["blockers"]
+    assert snapshot["ops_status"]["state"] == "breach"
+    assert snapshot["operator_checklist"][-1]["status"] == "breach"
+
+
+def test_snapshot_rejects_healthy_collector_with_missing_stream(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    collector_path = tmp_path / "collector.json"
+    payload = _collector_status_payload()
+    payload["state"] = "healthy"
+    payload["next_action"] = "monitor_next_daily_batch"
+    payload["blockers"] = []
+    payload["last_run"]["complete"] = True
+    payload["last_run"]["valid_snapshot_count"] = 4
+    payload["last_run"]["failed_snapshot_count"] = 0
+    payload["last_run"]["streams"] = payload["last_run"]["streams"][:-1]
+    for stream in payload["last_run"]["streams"]:
+        stream.update(
+            status="success",
+            snapshot_written=True,
+            desired_state=None,
+            failure_type=None,
+            error=None,
+        )
+    collector_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        research_v5_collector_status_path=collector_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    collector = snapshot["research_v5_collector"]
+    assert collector["state"] == "breach"
+    assert "collector_stream_count_invalid" in collector["blockers"]
+    assert "collector_stream_set_invalid" in collector["blockers"]
+
+
+def test_snapshot_degrades_non_list_collector_streams(tmp_path: Path) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    collector_path = tmp_path / "collector.json"
+    payload = _collector_status_payload()
+    payload["last_run"]["streams"] = 3
+    collector_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        research_v5_collector_status_path=collector_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    collector = snapshot["research_v5_collector"]
+    assert collector["state"] == "breach"
+    assert "collector_stream_count_invalid" in collector["blockers"]
+
+
 def test_snapshot_reads_project_status_and_agent_advice(tmp_path: Path) -> None:
     status_path = tmp_path / "project-status.md"
     _write_status(status_path)

@@ -1,0 +1,282 @@
+{
+  "schema_version": "research.protocol_v6.availability_inventory.v1",
+  "observed_at": "2026-07-18T13:36:36Z",
+  "status": "discovery_only",
+  "scope": {
+    "execution_market": "Binance Spot",
+    "assets": [
+      "BTCUSDT",
+      "ETHUSDT"
+    ],
+    "factor_sources": "Binance-native public market mechanisms only",
+    "selected_candidate_ids": [],
+    "candidate_identity_registered": false,
+    "parameters_registered": false,
+    "data_windows_registered": false,
+    "review_gates_registered": false
+  },
+  "inspection_method": {
+    "official_sources_only": true,
+    "archive_listing_method": "S3 ListObjectsV2 key metadata",
+    "recent_availability_method": "HTTP HEAD",
+    "archive_body_opened": false,
+    "archive_bytes_downloaded": 0,
+    "checksum_body_opened": false,
+    "signals_generated": false,
+    "pnl_computed": false,
+    "continuity_claimed": false
+  },
+  "official_sources": [
+    {
+      "name": "Binance Public Data",
+      "url": "https://github.com/binance/binance-public-data",
+      "use": "Official archive cadence, checksum and immutable-update policy"
+    },
+    {
+      "name": "USD-M Futures Market Data REST API",
+      "url": "https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-usd-s-m-futures/api/rest-api/market-data",
+      "use": "Current public market-data interface semantics and REST history limits"
+    },
+    {
+      "name": "Binance Data Collection",
+      "url": "https://data.binance.vision/",
+      "use": "Official archive namespace and object metadata"
+    }
+  ],
+  "routes": [
+    {
+      "route_id": "usdm_book_depth_liquidity",
+      "mechanism": "Futures order-book liquidity withdrawal and bid/ask depth asymmetry",
+      "interfaces": [
+        "GET /fapi/v1/depth",
+        "data/futures/um/daily/bookDepth/<SYMBOL>/<SYMBOL>-bookDepth-<DATE>.zip"
+      ],
+      "assets": [
+        "BTCUSDT",
+        "ETHUSDT"
+      ],
+      "archive_coverage_observed": {
+        "BTCUSDT": {
+          "first_key": "2023-01-01",
+          "recent_key": "2026-07-17",
+          "recent_head_status": 200
+        },
+        "ETHUSDT": {
+          "first_key": "2023-01-01",
+          "recent_key": "2026-07-17",
+          "recent_head_status": 200
+        },
+        "partition": "daily",
+        "official_checksum_sibling_expected": true,
+        "continuity_verified": false
+      },
+      "mechanism_independence": "provisionally_independent",
+      "overlap_review": "No prior registered candidate used order-book depth; final identity must exclude price/volume proxies and use only pre-registered depth fields.",
+      "availability_decision": "eligible_for_preregistration_review",
+      "body_opened": false
+    },
+    {
+      "route_id": "usdm_metrics_positioning",
+      "mechanism": "Open-interest and trader-positioning state",
+      "interfaces": [
+        "GET /futures/data/openInterestHist",
+        "GET /futures/data/globalLongShortAccountRatio",
+        "GET /futures/data/takerlongshortRatio",
+        "data/futures/um/daily/metrics/<SYMBOL>/<SYMBOL>-metrics-<DATE>.zip"
+      ],
+      "assets": [
+        "BTCUSDT",
+        "ETHUSDT"
+      ],
+      "archive_coverage_observed": {
+        "BTCUSDT": {
+          "first_key": "2020-09-01",
+          "recent_key": "2026-07-17",
+          "recent_head_status": 200
+        },
+        "ETHUSDT": {
+          "first_key": "2021-12-01",
+          "recent_key": "2026-07-17",
+          "recent_head_status": 200
+        },
+        "partition": "daily",
+        "continuity_verified": false
+      },
+      "rest_history_limit": "Open-interest statistics expose only the latest 1 month; long/short and taker-volume REST histories expose only the latest 30 days.",
+      "mechanism_independence": "ambiguous",
+      "overlap_review": "Funding crowding and taker-flow families are already rejected; an open-interest identity may not reuse those signs, filters or price-momentum conditions.",
+      "availability_decision": "hold_for_identity_overlap_review",
+      "body_opened": false
+    },
+    {
+      "route_id": "coinm_forced_liquidation_flow",
+      "mechanism": "Forced deleveraging through exchange liquidation events",
+      "interfaces": [
+        "data/futures/cm/daily/liquidationSnapshot/<SYMBOL>/<SYMBOL>-liquidationSnapshot-<DATE>.zip"
+      ],
+      "assets": [
+        "BTCUSD_PERP",
+        "ETHUSD_PERP"
+      ],
+      "archive_coverage_observed": {
+        "BTCUSD_PERP": {
+          "first_key": "2023-06-25",
+          "last_key": "2024-10-14",
+          "head_2026_07_17": 404
+        },
+        "ETHUSD_PERP": {
+          "first_key": "2023-06-25",
+          "last_key": "2024-10-14",
+          "head_2026_07_17": 404
+        },
+        "usdm_BTCUSDT_prefix_key_count": 0,
+        "continuity_verified": false
+      },
+      "mechanism_independence": "provisionally_independent",
+      "availability_decision": "reject_archive_discontinued",
+      "body_opened": false
+    },
+    {
+      "route_id": "usdm_top_of_book_spread",
+      "mechanism": "Best-bid/ask spread and top-of-book liquidity",
+      "interfaces": [
+        "GET /fapi/v1/ticker/bookTicker",
+        "data/futures/um/daily/bookTicker/<SYMBOL>/<SYMBOL>-bookTicker-<DATE>.zip"
+      ],
+      "assets": [
+        "BTCUSDT",
+        "ETHUSDT"
+      ],
+      "archive_coverage_observed": {
+        "BTCUSDT": {
+          "first_key": "2023-05-16",
+          "last_key": "2024-03-30",
+          "head_2026_07_17": 404
+        },
+        "ETHUSDT": {
+          "first_key": "2023-05-16",
+          "last_key": "2024-03-30",
+          "head_2026_07_17": 404
+        },
+        "continuity_verified": false
+      },
+      "mechanism_independence": "provisionally_independent",
+      "availability_decision": "reject_archive_discontinued",
+      "body_opened": false
+    },
+    {
+      "route_id": "usdm_adl_insurance_stress",
+      "mechanism": "Exchange loss-absorption and auto-deleveraging stress",
+      "interfaces": [
+        "GET /fapi/v1/symbolAdlRisk",
+        "GET /fapi/v1/insuranceBalance"
+      ],
+      "assets": [
+        "BTCUSDT",
+        "ETHUSDT"
+      ],
+      "archive_coverage_observed": {
+        "symbolAdlRisk_standard_archive_prefix_key_count": 0,
+        "insuranceBalance_standard_archive_prefix_key_count": 0,
+        "current_rest_only": true,
+        "continuity_verified": false
+      },
+      "mechanism_independence": "provisionally_independent",
+      "availability_decision": "hold_forward_only_no_historical_archive",
+      "body_opened": false
+    },
+    {
+      "route_id": "options_eoh_surface",
+      "mechanism": "Option surface, skew and option positioning",
+      "interfaces": [
+        "data/option/daily/EOHSummary/<UNDERLYING>/<UNDERLYING>-EOHSummary-<DATE>.zip"
+      ],
+      "assets": [
+        "BTCUSDT",
+        "ETHUSDT"
+      ],
+      "archive_coverage_observed": {
+        "BTCUSDT": {
+          "first_key": "2023-05-18",
+          "last_key": "2023-10-23",
+          "head_2026_07_17": 404
+        },
+        "ETHUSDT": {
+          "first_key": "2023-05-18",
+          "last_key": "2023-10-23",
+          "head_2026_07_17": 404
+        },
+        "continuity_verified": false
+      },
+      "mechanism_independence": "overlaps_protocol_v2_option_risk_premium",
+      "availability_decision": "exclude_overlap_and_discontinued_archive",
+      "body_opened": false
+    },
+    {
+      "route_id": "funding_premium_basis",
+      "mechanism": "Perpetual funding, premium and futures basis",
+      "interfaces": [
+        "GET /fapi/v1/fundingRate",
+        "GET /fapi/v1/premiumIndexKlines",
+        "GET /futures/data/basis",
+        "data/futures/um/monthly/fundingRate/<SYMBOL>/"
+      ],
+      "archive_coverage_observed": {
+        "funding_monthly_first_key": "2020-01",
+        "historical_archive_available": true,
+        "continuity_verified": false
+      },
+      "mechanism_independence": "overlaps_rejected_funding_and_curve_families",
+      "availability_decision": "exclude_identity_overlap",
+      "body_opened": false
+    },
+    {
+      "route_id": "trade_and_kline_flow",
+      "mechanism": "Price, volume, aggregate trades and taker imbalance",
+      "interfaces": [
+        "data/spot/{daily,monthly}/{klines,trades,aggTrades}/",
+        "data/futures/um/{daily,monthly}/{klines,trades,aggTrades}/"
+      ],
+      "archive_coverage_observed": {
+        "official_daily_and_monthly_archives": true,
+        "continuity_verified": false
+      },
+      "mechanism_independence": "overlaps_rejected_price_volume_and_taker_flow_families",
+      "availability_decision": "exclude_identity_overlap",
+      "body_opened": false
+    },
+    {
+      "route_id": "protocol_v5_curve_bvol",
+      "mechanism": "Delivery curve and Binance volatility index",
+      "interfaces": [
+        "Protocol v5 registered collector routes"
+      ],
+      "archive_coverage_observed": {
+        "collector_operational": true,
+        "continuity_verified": false
+      },
+      "mechanism_independence": "frozen_protocol_v5_identity",
+      "availability_decision": "exclude_frozen_rejected_candidates",
+      "body_opened": false
+    }
+  ],
+  "screening_summary": {
+    "eligible_for_preregistration_review": [
+      "usdm_book_depth_liquidity"
+    ],
+    "selected_candidates": [],
+    "selection_made": false,
+    "next_step": "Review the sole availability survivor for mechanism identity; if selected, register a new source/model identity, fields, parameters, immutable data windows and gates before any archive body is opened."
+  },
+  "boundaries": {
+    "separate_from_protocol_v5": true,
+    "opens_historical_body": false,
+    "downloads_archive": false,
+    "computes_signal": false,
+    "computes_pnl": false,
+    "retunes_prior_candidate": false,
+    "changes_source_policy": false,
+    "resumes_testnet": false,
+    "touches_live_path": false
+  }
+}
