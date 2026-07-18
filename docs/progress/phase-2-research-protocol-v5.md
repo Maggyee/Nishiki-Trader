@@ -150,6 +150,13 @@ blind stays sealed and no rejected candidate will be evaluated against it
 under this protocol. A separately deployed collector may preserve registered
 future raw evidence only; it cannot generate signals or PnL.
 
+After the fast-track result commit was pushed, the separate cloud collector was
+deployed from clean commit `d37d227` and its timer enabled for 04:15 and 08:15
+UTC. The image contains only the two collector modules and provider contract.
+Its network-disabled preflight produced four plans with zero writes, zero
+signals, zero PnL, and zero credential environment. This deployment preserves
+raw evidence only and does not reopen either rejected candidate.
+
 ## Fixed workflow and boundaries
 
 1. Commit and push this protocol, contracts, implementation, fingerprints, and

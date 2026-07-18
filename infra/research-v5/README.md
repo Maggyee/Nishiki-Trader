@@ -2,8 +2,8 @@
 
 - **Purpose**: run the four credential-free BTC/ETH curve/BVOL snapshot jobs
   once per UTC day from one locked clean commit and commit-labelled image.
-- **Current phase**: templates only; do not enable before local July
-  schema/lineage qualification passes and its retro is committed.
+- **Current phase**: deployed from clean commit `d37d227` after both historical
+  fast-track reports were committed; the collector timer is raw-evidence only.
 - **Boundaries**: collection only. No signals, PnL, Nautilus runtime,
   SourcePolicy mutation, testnet, credentials, or live-order access.
 - **Next implementation entrypoint**:
@@ -26,7 +26,8 @@ commit that contains the pre-registration:
 ```bash
 sudo install -d -m 0700 -o 1002 -g 1002 /var/lib/nishiki-trader/research-v5
 sudo install -d -m 0755 /etc/nishiki-trader
-sudo install -m 0600 infra/research-v5/research-v5.env.example \
+sudo install -m 0600 -o nishiki -g nishiki \
+  infra/research-v5/research-v5.env.example \
   /etc/nishiki-trader/research-v5.env
 sudo install -m 0644 infra/research-v5/systemd/nishiki-research-v5-collector.service \
   /etc/systemd/system/
@@ -53,6 +54,7 @@ read-only `.collector-git-sha` must match both `TRADER_GIT_SHA` and the CLI
 argument before any request. It contains pandas/pyarrow for normalized Parquet
 but no Nautilus runtime, signal generator, exchange credential, or order path.
 
-The service/timer remain disabled until the fast-track reports authorize
-forward collection. Enabling the timer does not authorize signal generation or
-opening the 2026-08..12 blind PnL.
+The service executes as `nishiki`, so the mode-0600 Compose env file must also
+be owned by `nishiki`; it contains only the commit, data root, UID, and GID.
+Enabling the timer does not authorize signal generation or opening the
+2026-08..12 blind PnL.

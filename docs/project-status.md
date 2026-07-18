@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-07-18 (Protocol v5 fast tracks complete; both candidates rejected)
+- **Last updated**: 2026-07-18 (Protocol v5 candidates rejected; isolated future collector deployed)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
-- **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry remains frozen at 16 rejects and an empty selected set. Research Protocol v2 remains locked and data-blocked, Protocol v3 has one valid July hashrate snapshot with both macro routes blocked, and Protocol v4's two FRED recovery routes timed out without snapshots. Protocol v5 fast tracks are complete: curve carry was rejected before PnL because its 2021 Aug-Dec Spot execution catalog is incomplete, and BVOL relief was rejected after a clean reproducible diagnostic because base/stress, fold, month, leave-best, and ETH-sleeve gates failed. The v5 timer remains disabled until this fast-track report is pushed; after that, only the credential-free raw-evidence collector may be deployed. The 2026-08..12 blind remains sealed and rejected candidates will not be evaluated against it. No provider substitution, retuning, PnL-selected ensemble, policy change, or testnet resume is allowed.
+- **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry remains frozen at 16 rejects and an empty selected set. Research Protocol v2 remains locked and data-blocked, Protocol v3 has one valid July hashrate snapshot with both macro routes blocked, and Protocol v4's two FRED recovery routes timed out without snapshots. Protocol v5 fast tracks are complete: curve carry was rejected before PnL because its 2021 Aug-Dec Spot execution catalog is incomplete, and BVOL relief was rejected after a clean reproducible diagnostic because base/stress, fold, month, leave-best, and ETH-sleeve gates failed. After report commit `d37d227` was pushed, the isolated credential-free v5 raw collector was deployed and its 04:15/08:15 UTC timer enabled; v2 remains active and unchanged. The 2026-08..12 blind remains sealed and rejected candidates will not be evaluated against it. No provider substitution, retuning, PnL-selected ensemble, policy change, or testnet resume is allowed.
   Keep the current SourcePolicy unchanged until an explicit `promotion_review.py` decision. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
@@ -132,7 +132,7 @@ and the Phase 3 strict streak remains 0/14.
 
 Immediate focus:
 
-1. Keep the original registry and both rejected Protocol v5 identities frozen. Push the v5 fast-track report before deploying its separate future raw-data collector. Do not open the 2026-08..12 PnL, retune either rule, replace missing official data, or create a result-selected combination. Keep Protocol v2 locked and retain the qualified v3/v4 evidence without automatic provider retries.
+1. Keep the original registry and both rejected Protocol v5 identities frozen. Monitor the first scheduled v5 raw-data batch without opening PnL or changing the collector; retain successful streams and explicit flat failures. Do not open the 2026-08..12 PnL, retune either rule, replace missing official data, or create a result-selected combination. Keep Protocol v2 locked and retain the qualified v3/v4 evidence without automatic provider retries.
 2. Treat `docs/progress/phase-3-testnet-canary-evidence.md`, `docs/progress/phase-3-testnet-continuity-plan.md`, the 2026-05-30 clean canary retro, the 2026-05-30 duplicate-entry abort retro, the 2026-05-30 post-fix clean retro, and the 2026-06-01 heartbeat-lost retro as the current operational evidence. The historical canaries remain valid for connection, lifecycle, lineage, and emergency-path evidence, but not as proof that `SourcePolicy.position_pct_multiplier` scaled the submitted quantity; that execution bug was fixed on 2026-07-16 and any future sizing claim needs post-fix evidence. Do not run more routine canaries unless the operator explicitly resumes live-readiness evidence collection. If canary evidence resumes, use `python -m apps.strategies_nautilus.runners.report_testnet_bundle data/testnet/<run_id>` before writing future manifest-backed canary retros, use `--markdown` with clean bundle directories before updating the clean evidence ledger, and use `--continuity --markdown --min-clean-hours-per-day 6 --required-consecutive-days 14` with every completed manifest-backed bundle in the candidate window before claiming continuity progress. Carry no-manifest aborts manually. Do not open a new `promotion_review` unless an actual policy/stage decision is being made.
 3. Use `docs/decisions/009-agent-advice-audit.md` and `docs/decisions/012-phase5-readonly-dashboard.md` as the active agent/frontend boundaries. Agent/MCP work may write/replay/review `AgentAdvice`; dashboard work may read passive reports, observability textfiles, and AgentAdvice through `dashboard.snapshot.v1`. `TradingAgents/` is available as an ignored read-only upstream reference for future agent role/configuration ideas only; `docs/progress/tradingagents-reference-map.md` is the current safe adaptation map, and `apps.agents.role_profiles` is the first machine-readable AgentAdvice-only role seed. Neither path may write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or encode structured execution directives.
 4. ADR-008 §6.2 Phase 3b, §6.3 Phase 3c-a/b/c, §6.4 Phase 3d, §6.5 Phase 3e, §6.6 Phase 3f stability soak/canary, and the §8 promotion-review patch are all implemented and unit-tested. The `phase_3_not_ready` blocker now only hard-blocks `live_canary` / `live_normal`.
@@ -140,7 +140,7 @@ Immediate focus:
 
 ## Next Steps
 
-1. Commit and push the Protocol v5 fast-track machine result and retro, then deploy the already-qualified collector commit as a separate credential-free, idempotent systemd timer. Verify a network-disabled dry-run, timer state, zero credential environment, and isolation from the v2 collector. The timer may collect raw curve/BVOL evidence only.
+1. Monitor the first Protocol v5 timer batch at 2026-07-18 04:15 UTC and its 08:15 UTC retry if needed. Record collection completeness and conflicts without changing the frozen collector, enabling signals, or computing PnL. The timer may collect raw curve/BVOL evidence only.
 2. Keep the 2026-08..12 final blind unopened. Both v5 candidates are rejected and must not have blind PnL opened under this protocol. Do not tune after historical results, substitute providers, create a PnL-selected ensemble, or treat the BVOL diagnostic as promotion evidence.
 3. Preserve the qualified v3 hashrate snapshot and the v4 timeout evidence. Do not retry macro providers automatically; any new route requires independent evidence and explicit review before a new protocol is registered.
 4. Archive and retain the completed Protocol v2 7/7 option/basis evidence. Do not rebuild or restart the completed collector, open basis historical ZIPs, or invent option-method substitutes.
@@ -183,6 +183,19 @@ On 2026-07-18, at Protocol v5 historical fast-track completion:
   credentials, SourcePolicy, promotion review, testnet, and live path remain
   untouched. Machine detail is in
   `docs/progress/phase-2-research-v5-fast-track-results.json`.
+
+On 2026-07-18, at Protocol v5 future collector deployment:
+
+- Fast-track report commit `d37d227` was pushed before deployment. The same
+  clean SHA is checked out under an isolated cloud path and labels dedicated
+  ARM64 image `sha256:7ad7f9614692...`.
+- A network-disabled, read-only dry-run produced all four plans with no network,
+  data write, signal, or PnL. Host and image credential-entry counts are zero.
+- The separate v5 timer is active/enabled for 04:15 and 08:15 UTC; the v2 timer
+  remains active/enabled and unchanged. Existing v5 qualification evidence
+  remains at four snapshots/four Parquets with zero conflicts.
+- Details are in
+  `docs/retros/2026-07-18-research-v5-collector-deployment.md`.
 
 On 2026-07-17, at Protocol v5 Spot execution lineage qualification:
 
