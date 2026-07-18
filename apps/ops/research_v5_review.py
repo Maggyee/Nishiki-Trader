@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 from collections import defaultdict
@@ -12,11 +13,13 @@ from typing import Any
 
 from apps.ops.alpha_review import SCENARIOS
 from apps.strategies_freqtrade.research.binance_mechanism_signals import (
+    ASSETS,
     STRATEGY_IDENTITIES,
 )
 from apps.strategies_nautilus.runners.backtest_runner import validate_sidecar_bundle
 
 SCHEMA_VERSION = "research.v5.review.v1"
+DATA_BLOCKER_SCHEMA_VERSION = "research.v5.data_blocker.v1"
 PHASES = ("curve_fast_track", "bvol_fast_track_diagnostic", "final_future_blind")
 EXPECTED_FOLDS = {
     "curve_fast_track": {
@@ -434,6 +437,138 @@ def build_research_v5_review(
     return report
 
 
+def build_data_blocked_research_v5_review(
+    phase: str,
+    candidate_key: str,
+    evidence_path: Path,
+    *,
+    as_of: date | None = None,
+) -> dict[str, Any]:
+    """Build a v5 rejection without opening PnL when a hard data gate fails."""
+
+    if phase not in {"curve_fast_track", "bvol_fast_track_diagnostic"}:
+        raise ValueError("data blockers are accepted only for historical fast tracks")
+    expected_candidate = (
+        "curve_carry" if phase == "curve_fast_track" else "bvol_relief"
+    )
+    if candidate_key != expected_candidate:
+        raise ValueError(f"{phase} requires data blocker candidate {expected_candidate}")
+    evidence_bytes = evidence_path.read_bytes()
+    evidence = _strict_json(evidence_path)
+    if evidence.get("schema_version") != DATA_BLOCKER_SCHEMA_VERSION:
+        raise ValueError(f"{evidence_path} is not {DATA_BLOCKER_SCHEMA_VERSION}")
+    if evidence.get("phase") != phase or evidence.get("candidate") != candidate_key:
+        raise ValueError("data blocker evidence phase/candidate differs from the review")
+    if evidence.get("pnl_opened") is not False or evidence.get("signals_generated") is not False:
+        raise ValueError("data blocker evidence must precede signals and PnL")
+    reason = evidence.get("reason_code")
+    if not isinstance(reason, str) or not reason.strip():
+        raise ValueError("data blocker evidence requires a reason_code")
+    observations = evidence.get("observations")
+    if not isinstance(observations, list) or not observations:
+        raise ValueError("data blocker evidence requires observations")
+    observed_assets: set[str] = set()
+    observed_folds: set[str] = set()
+    for index, row in enumerate(observations):
+        if not isinstance(row, dict):
+            raise ValueError(f"data blocker observation {index} must be an object")
+        fold = row.get("fold")
+        asset = row.get("asset")
+        data_date = row.get("data_date")
+        if fold not in EXPECTED_FOLDS[phase]:
+            raise ValueError(f"data blocker observation {index} has an unlocked fold")
+        if asset not in ASSETS:
+            raise ValueError(f"data blocker observation {index} has an unlocked asset")
+        try:
+            observed_day = date.fromisoformat(str(data_date))
+        except ValueError as exc:
+            raise ValueError(
+                f"data blocker observation {index} has an invalid data_date"
+            ) from exc
+        start, end = (date.fromisoformat(value) for value in EXPECTED_FOLDS[phase][fold])
+        if not start <= observed_day <= end:
+            raise ValueError(f"data blocker observation {index} falls outside its fold")
+        if row.get("dataset") != "spot_execution":
+            raise ValueError(f"data blocker observation {index} must identify spot_execution")
+        if row.get("execution_window_usable") is not False:
+            raise ValueError(f"data blocker observation {index} is not fail-closed")
+        if not isinstance(row.get("error"), str) or not row["error"].strip():
+            raise ValueError(f"data blocker observation {index} requires an error")
+        observed_assets.add(str(asset))
+        observed_folds.add(str(fold))
+    if observed_assets != set(ASSETS):
+        raise ValueError("data blocker evidence must cover both locked assets")
+
+    source, model_version = STRATEGY_IDENTITIES[candidate_key]
+    gates = {
+        "data_available": False,
+        "spot_execution_catalog_complete": False,
+        "pnl_evaluated": False,
+        "evidence_clean": False,
+        "reproducible": None,
+    }
+    candidate = {
+        "candidate": candidate_key,
+        "source": source,
+        "model_version": model_version,
+        "folds": sorted(observed_folds),
+        "scenario_metrics": None,
+        "asset_cost_results": None,
+        "monthly_metrics": [],
+        "risk_metrics": None,
+        "benchmark": None,
+        "closed_positions": 0,
+        "best_position_base_net_pnl": None,
+        "base_net_without_best_position": None,
+        "blockers": [reason],
+        "gates": gates,
+        "passed": False,
+        "recommendation": "reject_v5_candidate",
+    }
+    today = as_of or datetime.now(UTC).date()
+    report = {
+        "schema_version": SCHEMA_VERSION,
+        "inputs": {
+            "phase": phase,
+            "as_of": today.isoformat(),
+            "fold_reports": [],
+            "data_blocker_evidence": {
+                "path": str(evidence_path),
+                "sha256": f"sha256:{hashlib.sha256(evidence_bytes).hexdigest()}",
+            },
+        },
+        "data_contract": {
+            "provider": "Binance",
+            "credential_free": True,
+            "immutable_vintages_required": True,
+            "sidecars_revalidated": False,
+            "sidecars_required": False,
+            "point_in_time_required": True,
+            "pnl_evaluated": False,
+        },
+        "cost_scenarios": _expected_costs(),
+        "folds": {candidate_key: sorted(observed_folds)},
+        "candidates": [candidate],
+        "monthly_metrics": {candidate_key: []},
+        "risk_metrics": {candidate_key: None},
+        "benchmark": {candidate_key: None},
+        "gates": {candidate_key: gates},
+        "recommendation": "stop_before_testnet_resume",
+        "boundaries": {
+            "passive_review_only": True,
+            "writes_signal_event": False,
+            "starts_nautilus": False,
+            "calls_promotion_review": False,
+            "mutates_source_policy": False,
+            "loads_credentials": False,
+            "resumes_testnet": False,
+            "touches_live_path": False,
+        },
+    }
+    _assert_finite(report)
+    return report
+
+
 def _parse_fold(value: str) -> tuple[str, str, Path]:
     identity, separator, path = value.partition("=")
     candidate, colon, fold = identity.partition(":")
@@ -442,10 +577,18 @@ def _parse_fold(value: str) -> tuple[str, str, Path]:
     return candidate, fold, Path(path)
 
 
+def _parse_data_blocker(value: str) -> tuple[str, Path]:
+    candidate, separator, path = value.partition("=")
+    if not separator or not candidate or not path:
+        raise argparse.ArgumentTypeError("data blocker must be candidate=evidence.json")
+    return candidate, Path(path)
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--phase", choices=PHASES, required=True)
     parser.add_argument("--fold", action="append", type=_parse_fold, default=[])
+    parser.add_argument("--data-blocker", type=_parse_data_blocker)
     return parser
 
 
@@ -453,7 +596,17 @@ def main(argv: list[str] | None = None) -> int:
     parser = _parser()
     args = parser.parse_args(argv)
     try:
-        report = build_research_v5_review(args.phase, args.fold)
+        if args.data_blocker is not None:
+            if args.fold:
+                raise ValueError("--data-blocker cannot be combined with --fold")
+            candidate, evidence_path = args.data_blocker
+            report = build_data_blocked_research_v5_review(
+                args.phase,
+                candidate,
+                evidence_path,
+            )
+        else:
+            report = build_research_v5_review(args.phase, args.fold)
     except Exception as exc:
         parser.exit(2, f"{parser.prog}: error: {exc}\n")
     print(json.dumps(report, indent=2, sort_keys=True, allow_nan=False))

@@ -156,6 +156,19 @@ uv run python -m apps.ops.research_v5_snapshot \
 Curve/BVOL collector 不会导入 Nautilus，因而云端只读日采集仍不需要交易引擎
 依赖；Nautilus 导入仅在显式选择 `spot_execution` 时延迟加载。
 
+若某个锁定评分折的 Spot 执行 catalog 在信号/PnL 前已确定不完整，使用结构化
+`research.v5.data_blocker.v1` 证据直接生成 fail-closed v5 review；不得用空回测
+或补值伪造 fold report：
+
+```bash
+uv run python -m apps.ops.research_v5_review \
+  --phase curve_fast_track \
+  --data-blocker curve_carry=data/research-v5/reports/curve-data-blocker.json
+```
+
+该模式固定输出候选 `reject_v5_candidate`、总建议
+`stop_before_testnet_resume` 和 `pnl_evaluated=false`，也不会启动 Nautilus。
+
 预注册提交后，使用无凭证的一次性 collector 保存 July 2026 provider
 qualification 快照。每份响应保留原始 payload、请求 URL、payload SHA-256、
 snapshot SHA-256 和 vintage id；同一文件名禁止覆盖：

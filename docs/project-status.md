@@ -194,7 +194,10 @@ On 2026-07-17, at Protocol v5 Spot execution lineage qualification:
   contract before downloading index/front bytes. Successful snapshots retain
   the locked envelope order and identical content identity; missing dates keep
   the same fail-closed ledger semantics.
-- The full suite is **909 passed, 12 Postgres-dependent skips**; full-repository
+- `research_v5_review` now accepts validated pre-PnL hard-data-blocker evidence,
+  so an incomplete execution catalog produces an explicit candidate rejection
+  without fabricated fold metrics or a Nautilus run.
+- The full suite is **910 passed, 12 Postgres-dependent skips**; full-repository
   Ruff and `git diff --check` pass. No historical Spot body, signal, return,
   PnL, backtest, credential, policy/testnet/live action, or future-blind data
   was accessed. Details are in

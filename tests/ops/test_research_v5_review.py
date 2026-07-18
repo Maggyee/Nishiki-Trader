@@ -1,8 +1,15 @@
 from __future__ import annotations
 
+import json
 from copy import deepcopy
+from datetime import date
 
-from apps.ops.research_v5_review import _evaluate_candidate
+import pytest
+
+from apps.ops.research_v5_review import (
+    _evaluate_candidate,
+    build_data_blocked_research_v5_review,
+)
 from apps.strategies_freqtrade.research.binance_mechanism_signals import (
     STRATEGY_IDENTITIES,
 )
@@ -164,3 +171,48 @@ def test_nonfinite_review_input_fails_closed() -> None:
 
     result = _evaluate_candidate("final_future_blind", "curve_carry", [("future", fold)])
     assert result["passed"] is False
+
+
+def test_hard_data_blocker_rejects_without_opening_pnl(tmp_path) -> None:
+    evidence = {
+        "schema_version": "research.v5.data_blocker.v1",
+        "phase": "curve_fast_track",
+        "candidate": "curve_carry",
+        "reason_code": "incomplete_spot_execution_catalog",
+        "pnl_opened": False,
+        "signals_generated": False,
+        "observations": [
+            {
+                "fold": "curve_2021_aug_dec",
+                "asset": asset,
+                "data_date": "2021-08-13",
+                "dataset": "spot_execution",
+                "execution_window_usable": False,
+                "error": "daily archive has fewer than 1440 rows",
+            }
+            for asset in ("BTCUSDT", "ETHUSDT")
+        ],
+    }
+    path = tmp_path / "blocker.json"
+    path.write_text(json.dumps(evidence))
+
+    report = build_data_blocked_research_v5_review(
+        "curve_fast_track",
+        "curve_carry",
+        path,
+        as_of=date(2026, 7, 18),
+    )
+
+    assert report["recommendation"] == "stop_before_testnet_resume"
+    assert report["candidates"][0]["recommendation"] == "reject_v5_candidate"
+    assert report["candidates"][0]["gates"]["pnl_evaluated"] is False
+    assert report["boundaries"]["starts_nautilus"] is False
+
+    evidence["pnl_opened"] = True
+    path.write_text(json.dumps(evidence))
+    with pytest.raises(ValueError, match="precede signals and PnL"):
+        build_data_blocked_research_v5_review(
+            "curve_fast_track",
+            "curve_carry",
+            path,
+        )

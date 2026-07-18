@@ -119,6 +119,11 @@ Every asset/fold backtest runs twice. Orders, fills, positions, lineage, monthly
 metrics, and gates must reproduce exactly. Commission is added back once before
 deducting the frozen gross/base/stress modeled costs.
 
+A hard execution-data blocker discovered before signals or PnL is represented
+by validated `research.v5.data_blocker.v1` evidence. The v5 review then rejects
+the candidate without fabricating empty fold metrics and records
+`pnl_evaluated=false` plus `stop_before_testnet_resume`.
+
 ## Fixed workflow and boundaries
 
 1. Commit and push this protocol, contracts, implementation, fingerprints, and
