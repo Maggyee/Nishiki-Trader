@@ -8,8 +8,9 @@
   `docs/progress/phase-2-research-v6-data-sources.json`.
 - **Candidate fingerprints**:
   `docs/progress/phase-2-research-v6-candidate-fingerprints.json`.
-- **Status**: one mechanism identity accepted and pre-registered; provider
-  qualification has not started.
+- **Status**: one mechanism identity accepted and pre-registered; the immutable
+  one-day qualification collector and synthetic audit suite are implemented,
+  while provider-body access has not started.
 - **Historical bodies/PnL**: unopened / not computed.
 - **Trading effect**: none.
 
@@ -147,11 +148,28 @@ lineage reproduction. Costs remain gross `0/0`, base `10/2`, and stress `10/5`
 fee/slippage bps per fill. BTC and ETH cannot mask one another: each sleeve
 must pass its own cost gate.
 
+## Qualification collector implementation
+
+`apps/ops/research_v6_book_depth.py` is a separate, credential-free v6-only
+entrypoint for the exact 2026-07-17 BTC/ETH qualification. It exposes only the
+fixed `--download`, offline `--dry-run`, and offline `--verify` actions. Each
+asset envelope retains the bookDepth and mark-price ZIP/checksum bytes, HTTP
+metadata, retrieval timestamps, content hashes, strict audit summary and one
+single-row audit Parquet. It does not calculate or store the registered factor,
+daily aggregation, state, signal, return, or PnL.
+
+Successful HTTP 200 response bytes are published atomically before later
+requests or validation. Reruns consume saved responses first; timeout/5xx may
+only fill missing responses. A saved 4xx blocker, checksum/schema/semantic
+failure, tamper, or different-content conflict cannot be retried into a new
+interpretation. The isolated `infra/research-v6/` image carries a commit label
+and internal SHA marker and has separate writable-download and network-none,
+read-only offline services. It deliberately has no systemd timer.
+
 ## Next entrypoint
 
-This pre-registration must be committed and pushed before the first archive
-body is opened. After that, implement only the immutable qualification
-collector and synthetic schema/audit tests, then open the exact 2026-07-17
-bookDepth and mark-price qualification bodies once. Historical development,
-signals and PnL remain closed until both assets pass and a qualification retro
-is committed and pushed.
+Push the exact clean collector/image commit, deploy that SHA to an isolated
+detached cloud checkout, and run the network-disabled dry-run against an empty
+data root. Then open the exact 2026-07-17 bookDepth and mark-price qualification
+bodies once. Historical development, factors, signals and PnL remain closed
+until both assets pass and a qualification retro is committed and pushed.

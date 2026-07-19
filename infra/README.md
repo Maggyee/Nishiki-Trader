@@ -36,6 +36,7 @@ heartbeat / alerts / manifest / sidecar 数据，被监控对象已齐；
 | `watchdog/` | Phase 3 testnet heartbeat watchdog（不读凭证，超时调用 emergency flatten） | 3 |
 | `postgres/` | `init.sql`（启 Timescale + pgvector + 占位 schema + trader_ro） | 3 entry |
 | `n8n/workflows/` | 工作流 JSON | 占位（未启用） |
+| `research-v6/` | 一次性、无凭据、无 timer 的 bookDepth provider 资格镜像 | Phase 2 research gate |
 
 ## 部署
 

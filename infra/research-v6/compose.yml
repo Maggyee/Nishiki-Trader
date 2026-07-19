@@ -1,0 +1,54 @@
+x-qualification-common: &qualification-common
+  image: "nishiki-research-v6:${TRADER_GIT_SHA:?TRADER_GIT_SHA is required}"
+  pull_policy: never
+  build:
+    context: ../..
+    dockerfile: infra/research-v6/Dockerfile
+    args:
+      TRADER_GIT_SHA: "${TRADER_GIT_SHA:?TRADER_GIT_SHA is required}"
+  user: "${COLLECTOR_UID:-1002}:${COLLECTOR_GID:-1002}"
+  environment:
+    TRADER_GIT_SHA: "${TRADER_GIT_SHA:?TRADER_GIT_SHA is required}"
+  read_only: true
+  tmpfs:
+    - /tmp:size=128m,mode=1777
+  cap_drop:
+    - ALL
+  security_opt:
+    - no-new-privileges:true
+  restart: "no"
+  cpus: 1.0
+  mem_limit: 1g
+  pids_limit: 128
+
+services:
+  download:
+    <<: *qualification-common
+    command:
+      - --asset
+      - all
+      - --date
+      - "2026-07-17"
+      - --download
+      - --data-root
+      - /data/research-v6
+      - --expected-git-commit
+      - "${TRADER_GIT_SHA:?TRADER_GIT_SHA is required}"
+    volumes:
+      - "${RESEARCH_V6_DATA_ROOT:-/var/lib/nishiki-trader/research-v6}:/data/research-v6"
+
+  offline:
+    <<: *qualification-common
+    network_mode: none
+    command:
+      - --asset
+      - all
+      - --date
+      - "2026-07-17"
+      - --dry-run
+      - --data-root
+      - /data/research-v6
+      - --expected-git-commit
+      - "${TRADER_GIT_SHA:?TRADER_GIT_SHA is required}"
+    volumes:
+      - "${RESEARCH_V6_DATA_ROOT:-/var/lib/nishiki-trader/research-v6}:/data/research-v6:ro"
