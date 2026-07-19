@@ -8,10 +8,11 @@
   `docs/progress/phase-2-research-v6-data-sources.json`.
 - **Candidate fingerprints**:
   `docs/progress/phase-2-research-v6-candidate-fingerprints.json`.
-- **Status**: one mechanism identity accepted and pre-registered; the immutable
-  one-day qualification collector and synthetic audit suite are implemented,
-  while provider-body access has not started.
-- **Historical bodies/PnL**: unopened / not computed.
+- **Status**: `blocked_provider_qualification`; both official 2026-07-17
+  bookDepth archives use a 12-row grid with additional ±0.20 bands, so zero
+  timestamp groups match the frozen ten-row grid.
+- **Historical bodies/PnL**: qualification bodies retained; 2023–2025 bodies
+  unopened / PnL not computed.
 - **Trading effect**: none.
 
 ## Separation from Protocol v5
@@ -166,10 +167,31 @@ interpretation. The isolated `infra/research-v6/` image carries a commit label
 and internal SHA marker and has separate writable-download and network-none,
 read-only offline services. It deliberately has no systemd timer.
 
+## Qualification outcome — blocked
+
+Exact pushed collector commit
+`93e97cfc34a628a12b20e73c3a3ee9ae35f0796b` passed its network-disabled
+empty-root preflight and made one all-asset qualification download on the
+isolated cloud path. All four ZIPs and all four official checksum bodies are
+retained with eight HTTP 200 metadata records, zero conflicts and zero HTTP
+blockers.
+
+Both assets contain 34,560 bookDepth rows across 2,880 groups. Every group has
+12 values: the locked `[-5…-1,+1…+5]` plus `-0.20` and `+0.20`. Zero groups
+match the required exact ten-row grid. Both mark-price archives contain 1,440
+UTC minutes, but the fail-fast qualification stopped before side/band audit
+because the grid gate had already failed. No snapshot or audit Parquet was
+written for an unqualified asset.
+
+The detailed immutable hashes, cloud/local offline reproduction and evidence
+package SHA-256 are recorded in
+`docs/retros/2026-07-19-research-v6-provider-qualification.md`.
+
 ## Next entrypoint
 
-Push the exact clean collector/image commit, deploy that SHA to an isolated
-detached cloud checkout, and run the network-disabled dry-run against an empty
-data root. Then open the exact 2026-07-17 bookDepth and mark-price qualification
-bodies once. Historical development, factors, signals and PnL remain closed
-until both assets pass and a qualification retro is committed and pushed.
+Stop Protocol v6 and preserve the retained raw evidence. Do not delete the
+±0.20 rows, reinterpret the official grid, change the registered band or
+tolerance, retry the qualification download, or implement/open historical
+development, factors, signals or PnL under this identity. Continue v5 passive
+operations monitoring independently without changing its collection times on
+one-day evidence.
