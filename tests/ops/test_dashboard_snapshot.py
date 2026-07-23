@@ -219,6 +219,38 @@ def _collector_status_payload() -> dict:
     }
 
 
+def _archived_collector_status_payload() -> dict:
+    payload = _collector_status_payload()
+    payload.update(
+        schema_version="research.v5.collector_status.v2",
+        lifecycle="archived",
+        state="archived",
+        next_action="retain_archived_evidence",
+        archive={
+            "archived_at": "2026-07-22T23:58:00Z",
+            "archived_at_ns": REFERENCE_TS_NS - 120_000_000_000,
+            "reason": "rejected_candidates_and_persistent_provider_instability",
+        },
+        blockers=[],
+    )
+    payload["service"]["active"] = "inactive"
+    payload["timer"].update(
+        active="inactive",
+        enabled="disabled",
+        next_trigger_at=None,
+    )
+    payload["storage"].update(
+        snapshot_count=13,
+        normalized_parquet_count=13,
+    )
+    payload["gates"].update(
+        timer_ready=False,
+        timer_archived=True,
+        service_stopped=True,
+    )
+    return payload
+
+
 def test_snapshot_exposes_read_only_research_v5_collector_status(
     tmp_path: Path,
 ) -> None:
@@ -271,6 +303,63 @@ def test_snapshot_exposes_read_only_research_v5_collector_status(
     assert "## Research v5 Collector" in markdown
     assert "http_404_not_published" in markdown
     json.dumps(snapshot, allow_nan=False)
+
+
+def test_snapshot_accepts_archived_v2_collector_without_operational_issue(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    collector_path = tmp_path / "collector.json"
+    collector_path.write_text(
+        json.dumps(_archived_collector_status_payload()),
+        encoding="utf-8",
+    )
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        research_v5_collector_status_path=collector_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    collector = snapshot["research_v5_collector"]
+    assert collector["state"] == "archived"
+    assert collector["lifecycle"] == "archived"
+    assert collector["blockers"] == []
+    assert collector["last_run"]["complete"] is False
+    assert collector["storage"]["snapshot_count"] == 13
+    assert snapshot["ops_status"]["state"] == "guarded"
+    assert snapshot["ops_status"]["counts"][
+        "research_v5_collector_issue_count"
+    ] == 0
+    assert snapshot["operator_checklist"][-1] == {
+        "label": "Review Research v5 collector",
+        "status": "ok",
+        "detail": "State=archived; next_action=retain_archived_evidence.",
+    }
+
+
+def test_snapshot_rejects_archived_collector_with_active_timer(
+    tmp_path: Path,
+) -> None:
+    status_path = tmp_path / "project-status.md"
+    _write_status(status_path)
+    collector_path = tmp_path / "collector.json"
+    payload = _archived_collector_status_payload()
+    payload["timer"].update(active="active", enabled="enabled")
+    collector_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    snapshot = dashboard_snapshot.build_dashboard_snapshot(
+        project_status_path=status_path,
+        agent_advice_db_path=tmp_path / "missing.db",
+        research_v5_collector_status_path=collector_path,
+        generated_at_ns=REFERENCE_TS_NS,
+    )
+
+    collector = snapshot["research_v5_collector"]
+    assert collector["state"] == "breach"
+    assert "archived_collector_timer_not_stopped" in collector["blockers"]
 
 
 def test_snapshot_rejects_collector_artifact_that_opens_pnl_boundary(

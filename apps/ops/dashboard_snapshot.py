@@ -15,7 +15,13 @@ from urllib.parse import quote
 
 from apps.agents.store import DEFAULT_ADVICE_DB_PATH
 from apps.ops.research_v5_collector_status import (
+    ARCHIVE_REASON_PROVIDER_INSTABILITY as RESEARCH_V5_ARCHIVE_REASON,
+)
+from apps.ops.research_v5_collector_status import (
     EXPECTED_STREAMS as RESEARCH_V5_EXPECTED_STREAMS,
+)
+from apps.ops.research_v5_collector_status import (
+    LEGACY_SCHEMA_VERSION as RESEARCH_V5_COLLECTOR_STATUS_LEGACY_SCHEMA_VERSION,
 )
 from apps.ops.research_v5_collector_status import (
     SCHEMA_VERSION as RESEARCH_V5_COLLECTOR_STATUS_SCHEMA_VERSION,
@@ -1772,9 +1778,13 @@ def _research_v5_collector_snapshot(
     else:
         blockers = [str(item) for item in payload_blockers]
         validation_blockers = []
-    if payload.get("schema_version") != RESEARCH_V5_COLLECTOR_STATUS_SCHEMA_VERSION:
+    schema_version = payload.get("schema_version")
+    if schema_version not in {
+        RESEARCH_V5_COLLECTOR_STATUS_LEGACY_SCHEMA_VERSION,
+        RESEARCH_V5_COLLECTOR_STATUS_SCHEMA_VERSION,
+    }:
         validation_blockers.append(
-            f"unexpected_schema_version:{payload.get('schema_version')}"
+            f"unexpected_schema_version:{schema_version}"
         )
     observed_at_ns = _phase6_report_generated_at_ns(payload.get("observed_at_ns"))
     if observed_at_ns is None:
@@ -1844,9 +1854,21 @@ def _research_v5_collector_snapshot(
     if not isinstance(image_id, str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", image_id):
         validation_blockers.append("collector_image_id_invalid")
 
+    lifecycle = str(payload.get("lifecycle") or "active")
+    if schema_version == RESEARCH_V5_COLLECTOR_STATUS_LEGACY_SCHEMA_VERSION:
+        if payload.get("lifecycle") not in {None, "active"}:
+            validation_blockers.append("legacy_collector_lifecycle_invalid")
+        lifecycle = "active"
+    elif payload.get("lifecycle") not in {"active", "archived"}:
+        validation_blockers.append(f"collector_lifecycle_invalid:{lifecycle}")
+
     state = str(payload.get("state") or "unknown")
-    if state not in {"healthy", "attention", "breach", "unknown"}:
+    if state not in {"healthy", "attention", "breach", "unknown", "archived"}:
         validation_blockers.append(f"collector_state_invalid:{state}")
+    if state == "archived" and lifecycle != "archived":
+        validation_blockers.append("archived_state_requires_archived_lifecycle")
+    if lifecycle == "active" and state == "archived":
+        validation_blockers.append("active_collector_cannot_be_archived")
     storage = payload.get("storage")
     if not isinstance(storage, dict):
         validation_blockers.append("collector_storage_invalid")
@@ -1881,6 +1903,43 @@ def _research_v5_collector_snapshot(
             validation_blockers.append("healthy_collector_timer_invalid")
         elif timer.get("active") != "active" or timer.get("enabled") != "enabled":
             validation_blockers.append("healthy_collector_timer_not_ready")
+    if state == "archived":
+        if blockers:
+            validation_blockers.append("archived_collector_has_blockers")
+        if payload.get("next_action") != "retain_archived_evidence":
+            validation_blockers.append("archived_collector_action_invalid")
+        archive = payload.get("archive")
+        if not isinstance(archive, dict):
+            validation_blockers.append("collector_archive_invalid")
+            archive = {}
+        archived_at_ns = _phase6_report_generated_at_ns(
+            archive.get("archived_at_ns")
+        )
+        if archived_at_ns is None:
+            validation_blockers.append("collector_archived_at_invalid")
+        elif observed_at_ns is not None and archived_at_ns > observed_at_ns:
+            validation_blockers.append("collector_archived_at_in_future")
+        if archive.get("reason") != RESEARCH_V5_ARCHIVE_REASON:
+            validation_blockers.append("collector_archive_reason_invalid")
+        timer = payload.get("timer")
+        if not isinstance(timer, dict):
+            validation_blockers.append("archived_collector_timer_invalid")
+        else:
+            if timer.get("active") != "inactive" or timer.get("enabled") != "disabled":
+                validation_blockers.append("archived_collector_timer_not_stopped")
+            if timer.get("next_trigger_at") not in {None, ""}:
+                validation_blockers.append("archived_collector_has_next_trigger")
+        service = payload.get("service")
+        if not isinstance(service, dict) or service.get("active") != "inactive":
+            validation_blockers.append("archived_collector_service_not_stopped")
+        gates = payload.get("gates")
+        if not isinstance(gates, dict):
+            validation_blockers.append("archived_collector_gates_invalid")
+        else:
+            if gates.get("timer_archived") is not True:
+                validation_blockers.append("archived_collector_timer_gate_failed")
+            if gates.get("service_stopped") is not True:
+                validation_blockers.append("archived_collector_service_gate_failed")
     blockers.extend(validation_blockers)
     blockers = sorted(dict.fromkeys(blockers))
     if validation_blockers:
@@ -3212,7 +3271,7 @@ def _ops_status_snapshot(
     collector_state = str(research_v5_collector.get("state") or "not_attached")
     collector_attached = research_v5_collector.get("attached") is True
     collector_issue_count = int(
-        collector_attached and collector_state != "healthy"
+        collector_attached and collector_state not in {"healthy", "archived"}
     )
     live_blocked = bool(project_status.get("live_trading_blocked", True))
     strict_continuity = project_status.get("strict_continuity")
@@ -3379,6 +3438,7 @@ def _operator_checklist(
     collector_attached = research_v5_collector.get("attached") is True
     collector_status = {
         "healthy": "ok",
+        "archived": "ok",
         "attention": "warn",
         "breach": "breach",
         "unknown": "warn",
@@ -3535,7 +3595,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--research-v5-collector-status",
         default=None,
         help=(
-            "Optional research.v5.collector_status.v1 JSON artifact to expose "
+            "Optional research.v5.collector_status.v1 or v2 JSON artifact to expose "
             "through the read-only dashboard snapshot."
         ),
     )

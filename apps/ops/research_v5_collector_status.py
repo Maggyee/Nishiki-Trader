@@ -14,8 +14,14 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-SCHEMA_VERSION = "research.v5.collector_status.v1"
+LEGACY_SCHEMA_VERSION = "research.v5.collector_status.v1"
+SCHEMA_VERSION = "research.v5.collector_status.v2"
 DAILY_SCHEMA_VERSION = "research.v5.daily_collection.v1"
+LIFECYCLE_ACTIVE = "active"
+LIFECYCLE_ARCHIVED = "archived"
+ARCHIVE_REASON_PROVIDER_INSTABILITY = (
+    "rejected_candidates_and_persistent_provider_instability"
+)
 DEFAULT_SERVICE_UNIT = "nishiki-research-v5-collector.service"
 DEFAULT_TIMER_UNIT = "nishiki-research-v5-collector.timer"
 EXPECTED_STREAMS = (
@@ -124,6 +130,26 @@ def _systemd_timestamp_ns(value: str | None) -> int | None:
     except ValueError:
         return None
     return int(parsed.timestamp() * 1_000_000_000)
+
+
+def _isoformat_ns(value: int | None) -> str | None:
+    if value is None:
+        return None
+    return datetime.fromtimestamp(value / 1_000_000_000, tz=UTC).isoformat().replace(
+        "+00:00", "Z"
+    )
+
+
+def _parse_iso8601_ns(value: str) -> int:
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(
+            "timestamp must be ISO-8601 with a timezone"
+        ) from exc
+    if parsed.tzinfo is None:
+        raise argparse.ArgumentTypeError("timestamp must include a timezone")
+    return int(parsed.astimezone(UTC).timestamp() * 1_000_000_000)
 
 
 def parse_latest_daily_report(journal_text: str) -> dict[str, Any] | None:
@@ -241,7 +267,22 @@ def build_collector_status(
     deployment: dict[str, Any],
     storage: dict[str, int],
     daily_report: dict[str, Any] | None,
+    lifecycle: str = LIFECYCLE_ACTIVE,
+    archived_at_ns: int | None = None,
+    archive_reason: str | None = None,
 ) -> dict[str, Any]:
+    if lifecycle not in {LIFECYCLE_ACTIVE, LIFECYCLE_ARCHIVED}:
+        raise ValueError(f"unsupported collector lifecycle: {lifecycle}")
+    if lifecycle == LIFECYCLE_ARCHIVED:
+        if archived_at_ns is None or archived_at_ns <= 0:
+            raise ValueError("archived lifecycle requires a positive archived_at_ns")
+        if archived_at_ns > observed_at_ns:
+            raise ValueError("archived_at_ns cannot be after observed_at_ns")
+        if archive_reason != ARCHIVE_REASON_PROVIDER_INSTABILITY:
+            raise ValueError("archived lifecycle requires the registered archive reason")
+    elif archived_at_ns is not None or archive_reason is not None:
+        raise ValueError("active lifecycle cannot include archive metadata")
+
     streams = _stream_rows(daily_report)
     failure_counts = Counter(
         str(row["failure_type"])
@@ -251,6 +292,10 @@ def build_collector_status(
     report_found = daily_report is not None
     expected_stream_count = _report_has_exact_streams(daily_report)
     timer_ready = timer.get("active") == "active" and timer.get("enabled") == "enabled"
+    timer_archived = (
+        timer.get("active") == "inactive" and timer.get("enabled") == "disabled"
+    )
+    service_stopped = service.get("active") == "inactive"
     identity_match = (
         bool(deployment.get("git_commit"))
         and deployment.get("git_commit") == deployment.get("image_revision")
@@ -262,8 +307,14 @@ def build_collector_status(
     )
     batch_complete = bool(daily_report and daily_report.get("complete") is True)
     blockers: list[str] = []
-    if not timer_ready:
-        blockers.append("timer_not_ready")
+    if lifecycle == LIFECYCLE_ACTIVE:
+        if not timer_ready:
+            blockers.append("timer_not_ready")
+    else:
+        if not timer_archived:
+            blockers.append("timer_not_archived")
+        if not service_stopped:
+            blockers.append("service_not_stopped")
     if not identity_match:
         blockers.append("deployment_identity_mismatch")
     if not checkout_clean:
@@ -272,7 +323,7 @@ def build_collector_status(
         blockers.append("immutable_vintage_conflict")
     if not report_found:
         blockers.append("daily_report_not_found")
-    elif not batch_complete:
+    elif lifecycle == LIFECYCLE_ACTIVE and not batch_complete:
         blockers.append("last_batch_incomplete")
     if not expected_stream_count:
         blockers.append("expected_stream_count_mismatch")
@@ -281,6 +332,8 @@ def build_collector_status(
         state = "breach"
     elif not report_found:
         state = "unknown"
+    elif lifecycle == LIFECYCLE_ARCHIVED:
+        state = "archived" if not blockers else "attention"
     elif not timer_ready or not batch_complete or not expected_stream_count:
         state = "attention"
     else:
@@ -288,6 +341,10 @@ def build_collector_status(
 
     if not no_conflicts:
         next_action = "stop_result_comparison"
+    elif lifecycle == LIFECYCLE_ARCHIVED and not blockers:
+        next_action = "retain_archived_evidence"
+    elif lifecycle == LIFECYCLE_ARCHIVED:
+        next_action = "complete_collector_archive"
     elif not timer_ready:
         next_action = "review_timer_state"
     elif not report_found:
@@ -304,8 +361,14 @@ def build_collector_status(
     return {
         "schema_version": SCHEMA_VERSION,
         "observed_at_ns": observed_at_ns,
+        "lifecycle": lifecycle,
         "state": state,
         "next_action": next_action,
+        "archive": {
+            "archived_at": _isoformat_ns(archived_at_ns),
+            "archived_at_ns": archived_at_ns,
+            "reason": archive_reason,
+        },
         "source": source,
         "service": service,
         "timer": timer,
@@ -337,6 +400,8 @@ def build_collector_status(
         },
         "gates": {
             "timer_ready": timer_ready,
+            "timer_archived": timer_archived,
+            "service_stopped": service_stopped,
             "deployment_identity_match": identity_match,
             "checkout_clean": checkout_clean,
             "no_vintage_conflicts": no_conflicts,
@@ -366,6 +431,9 @@ def collect_collector_status(
     data_root: Path,
     checkout: Path,
     image: str,
+    lifecycle: str = LIFECYCLE_ACTIVE,
+    archived_at_ns: int | None = None,
+    archive_reason: str | None = None,
     observed_at_ns: int | None = None,
     runner: CommandRunner = _run_command,
 ) -> dict[str, Any]:
@@ -465,6 +533,9 @@ def collect_collector_status(
         },
         storage=storage,
         daily_report=parse_latest_daily_report(journal),
+        lifecycle=lifecycle,
+        archived_at_ns=archived_at_ns,
+        archive_reason=archive_reason,
     )
 
 
@@ -476,6 +547,21 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--checkout", type=Path, required=True)
     parser.add_argument("--image", required=True)
     parser.add_argument(
+        "--lifecycle",
+        choices=(LIFECYCLE_ACTIVE, LIFECYCLE_ARCHIVED),
+        default=LIFECYCLE_ACTIVE,
+    )
+    parser.add_argument(
+        "--archived-at",
+        type=_parse_iso8601_ns,
+        help="Required ISO-8601 archive timestamp when --lifecycle=archived.",
+    )
+    parser.add_argument(
+        "--archive-reason",
+        choices=(ARCHIVE_REASON_PROVIDER_INSTABILITY,),
+        help="Required registered closeout reason when --lifecycle=archived.",
+    )
+    parser.add_argument(
         "--ssh-host",
         help="Optional SSH host/alias; all collector evidence remains read-only.",
     )
@@ -483,7 +569,15 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = build_parser().parse_args(argv)
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    if args.lifecycle == LIFECYCLE_ARCHIVED:
+        if args.archived_at is None or args.archive_reason is None:
+            parser.error(
+                "--lifecycle=archived requires --archived-at and --archive-reason"
+            )
+    elif args.archived_at is not None or args.archive_reason is not None:
+        parser.error("archive metadata is only valid with --lifecycle=archived")
     runner = _ssh_runner(args.ssh_host, _run_command) if args.ssh_host else _run_command
     report = collect_collector_status(
         service_unit=args.service_unit,
@@ -491,6 +585,9 @@ def main(argv: list[str] | None = None) -> int:
         data_root=args.data_root,
         checkout=args.checkout,
         image=args.image,
+        lifecycle=args.lifecycle,
+        archived_at_ns=args.archived_at,
+        archive_reason=args.archive_reason,
         runner=runner,
     )
     print(json.dumps(report, indent=2, sort_keys=True, allow_nan=False))
@@ -502,8 +599,12 @@ if __name__ == "__main__":
 
 
 __all__ = [
+    "ARCHIVE_REASON_PROVIDER_INSTABILITY",
     "DAILY_SCHEMA_VERSION",
     "EXPECTED_STREAMS",
+    "LEGACY_SCHEMA_VERSION",
+    "LIFECYCLE_ACTIVE",
+    "LIFECYCLE_ARCHIVED",
     "SCHEMA_VERSION",
     "build_collector_status",
     "collect_collector_status",

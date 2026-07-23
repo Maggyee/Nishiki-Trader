@@ -104,7 +104,9 @@ Phase 5 entry implementation:
 - `apps/frontend/app/dashboardData.ts` loads the local snapshot server-side,
   including `ops_status`, parsed project-status sections, `observability`,
   `reference_links`, `operator_checklist`, optional `phase6` summaries, and an
-  optional passive `research.v5.collector_status.v1` artifact.
+  optional passive `research.v5.collector_status.v1` or v2 artifact. Version 2
+  adds an explicit active/archived lifecycle; a valid archive is a healthy
+  terminal operations state, not a retryable collector fault.
 - `apps/frontend/app/page.tsx` renders the read-only operations dashboard:
   posture band, guardrail metrics, Phase 6 gate-artifact status, runtime
   health, Protocol v5 collector run/date and four-stream status, passive
@@ -131,3 +133,14 @@ The implementation must prove:
 **Decided.** Phase 5 starts with a read-only dashboard shell. The trading path
 remains `SignalEvent v1 -> NautilusTrader Strategy -> RiskEngine`; the frontend
 does not enter that path.
+
+## 6. Protocol v5 archive amendment (2026-07-23)
+
+The dashboard keeps backward-compatible v1 reads and accepts
+`research.v5.collector_status.v2`. An `archived` artifact must prove that the
+timer is inactive/disabled with no next trigger, the service is inactive, the
+deployment identity is clean and matching, and immutable storage has no
+conflicts or comparison markers. The last incomplete batch remains visible as
+history but is not an operational blocker. A valid archive displays its time,
+reason and `retain_archived_evidence` action without contributing to the
+collector issue count. Any false archive claim fails closed as a breach.

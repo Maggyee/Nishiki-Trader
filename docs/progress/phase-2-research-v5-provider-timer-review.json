@@ -1,0 +1,211 @@
+{
+  "schema_version": "research.v5.provider_timer_review.v1",
+  "observed_at": "2026-07-23T01:52:20Z",
+  "protocol_identity": "research-protocol-v5-binance-native-v1",
+  "provider": "Binance public daily archive",
+  "decision": "stop_scheduled_collection",
+  "decision_reason": "rejected_candidates_and_persistent_provider_instability",
+  "decision_scope": {
+    "backfill_allowed": false,
+    "validation_rule_change_allowed": false,
+    "signals_allowed": false,
+    "pnl_allowed": false,
+    "testnet_or_live_resume_allowed": false,
+    "future_research_requires_new_protocol_identity": true
+  },
+  "deployment": {
+    "checkout": "/opt/nishiki-trader-v5-d37d227",
+    "git_commit": "d37d227874d49e88e8e8857f1bf45ea426ee7a3d",
+    "checkout_clean": true,
+    "image": "nishiki-research-v5:d37d227874d49e88e8e8857f1bf45ea426ee7a3d",
+    "image_id": "sha256:7ad7f96146922078a141cc6e6c9fe92d1182e3f23767295570d40a375c6cdd8f",
+    "image_revision": "d37d227874d49e88e8e8857f1bf45ea426ee7a3d",
+    "identity_match": true
+  },
+  "scheduled_results": [
+    {
+      "data_date": "2026-07-17",
+      "first_attempt": {
+        "valid": 0,
+        "failed": 4,
+        "streams": {
+          "delivery_curve:BTCUSDT": "http_404_not_published",
+          "delivery_curve:ETHUSDT": "http_404_not_published",
+          "bvol:BTCUSDT": "http_404_not_published",
+          "bvol:ETHUSDT": "http_404_not_published"
+        }
+      },
+      "retry": {
+        "valid": 4,
+        "failed": 0,
+        "complete": true,
+        "streams": {
+          "delivery_curve:BTCUSDT": "success",
+          "delivery_curve:ETHUSDT": "success",
+          "bvol:BTCUSDT": "success",
+          "bvol:ETHUSDT": "success"
+        }
+      }
+    },
+    {
+      "data_date": "2026-07-18",
+      "first_attempt": {
+        "valid": 0,
+        "failed": 4,
+        "streams": {
+          "delivery_curve:BTCUSDT": "http_404_not_published",
+          "delivery_curve:ETHUSDT": "http_404_not_published",
+          "bvol:BTCUSDT": "http_404_not_published",
+          "bvol:ETHUSDT": "http_404_not_published"
+        }
+      },
+      "retry": {
+        "valid": 1,
+        "failed": 3,
+        "complete": false,
+        "streams": {
+          "delivery_curve:BTCUSDT": "http_404_not_published",
+          "delivery_curve:ETHUSDT": "http_404_not_published",
+          "bvol:BTCUSDT": "success",
+          "bvol:ETHUSDT": "validation_failed_every_utc_second"
+        }
+      }
+    },
+    {
+      "data_date": "2026-07-19",
+      "first_attempt": {
+        "valid": 0,
+        "failed": 4,
+        "streams": {
+          "delivery_curve:BTCUSDT": "http_404_not_published",
+          "delivery_curve:ETHUSDT": "http_404_not_published",
+          "bvol:BTCUSDT": "http_404_not_published",
+          "bvol:ETHUSDT": "http_404_not_published"
+        }
+      },
+      "retry": {
+        "valid": 2,
+        "failed": 2,
+        "complete": false,
+        "streams": {
+          "delivery_curve:BTCUSDT": "http_404_not_published",
+          "delivery_curve:ETHUSDT": "success",
+          "bvol:BTCUSDT": "success",
+          "bvol:ETHUSDT": "validation_failed_every_utc_second"
+        }
+      }
+    },
+    {
+      "data_date": "2026-07-20",
+      "first_attempt": {
+        "valid": 0,
+        "failed": 4,
+        "streams": {
+          "delivery_curve:BTCUSDT": "http_404_not_published",
+          "delivery_curve:ETHUSDT": "http_404_not_published",
+          "bvol:BTCUSDT": "http_404_not_published",
+          "bvol:ETHUSDT": "http_404_not_published"
+        }
+      },
+      "retry": {
+        "valid": 1,
+        "failed": 3,
+        "complete": false,
+        "streams": {
+          "delivery_curve:BTCUSDT": "http_404_not_published",
+          "delivery_curve:ETHUSDT": "http_404_not_published",
+          "bvol:BTCUSDT": "success",
+          "bvol:ETHUSDT": "validation_failed_every_utc_second"
+        }
+      }
+    },
+    {
+      "data_date": "2026-07-21",
+      "first_attempt": {
+        "valid": 0,
+        "failed": 4,
+        "streams": {
+          "delivery_curve:BTCUSDT": "http_404_not_published",
+          "delivery_curve:ETHUSDT": "http_404_not_published",
+          "bvol:BTCUSDT": "http_404_not_published",
+          "bvol:ETHUSDT": "http_404_not_published"
+        }
+      },
+      "retry": {
+        "valid": 1,
+        "failed": 3,
+        "complete": false,
+        "streams": {
+          "delivery_curve:BTCUSDT": "http_404_not_published",
+          "delivery_curve:ETHUSDT": "http_404_not_published",
+          "bvol:BTCUSDT": "success",
+          "bvol:ETHUSDT": "validation_failed_every_utc_second"
+        }
+      }
+    }
+  ],
+  "collection_summary": {
+    "scheduled_attempt_count": 10,
+    "last_complete_batch": {
+      "data_date": "2026-07-17",
+      "attempt": "retry",
+      "valid_stream_count": 4
+    },
+    "latest_any_valid_data_date": "2026-07-21",
+    "stream_storage": {
+      "delivery_curve:BTCUSDT": {
+        "snapshot_count": 2,
+        "last_valid_data_date": "2026-07-17"
+      },
+      "delivery_curve:ETHUSDT": {
+        "snapshot_count": 3,
+        "last_valid_data_date": "2026-07-19"
+      },
+      "bvol:BTCUSDT": {
+        "snapshot_count": 6,
+        "last_valid_data_date": "2026-07-21"
+      },
+      "bvol:ETHUSDT": {
+        "snapshot_count": 2,
+        "last_valid_data_date": "2026-07-17"
+      }
+    },
+    "persistent_findings": [
+      "Every 04:15 UTC first attempt returned HTTP 404 for all four streams.",
+      "BTC delivery curve remained HTTP 404 on every retry after the last complete batch.",
+      "ETH delivery curve was intermittent and last succeeded on 2026-07-19.",
+      "ETH BVOL failed the unchanged one-observation-per-UTC-second validation on every retry after the last complete batch."
+    ]
+  },
+  "retained_evidence": {
+    "v5_snapshot_count": 13,
+    "v5_normalized_parquet_count": 13,
+    "v5_vintage_conflict_count": 0,
+    "v5_comparison_marker_count": 0,
+    "v5_snapshot_parquet_manifest_sha256": "cdde4c062e0ad944538f32c936f0bebdddd6fda00180edeee461ca1c54491d7b",
+    "v2_complete_sha256": "44cdbaf8a17fed567b6cf747eb4d18b5bdc7c0e031c917c03de05cac5f4feb6d",
+    "v2_qualification_ledger_rows": 14,
+    "v2_qualification_ledger_sha256": "109bc9d2aee7fe7a4017080be67bc16c50be41ed97b38acb0e04985646e2f387",
+    "v2_latest_review_sha256": "d679940fc59ed66cd617ac5b4e456d42bd157978a73eb11dff6345a4043c91e8",
+    "signals_generated": false,
+    "pnl_computed": false
+  },
+  "execution": {
+    "status": "pending_timer_disable",
+    "archived_at": null,
+    "v2_timer": {
+      "active": "active",
+      "enabled": "enabled",
+      "last_trigger_at": "2026-07-22T09:15:05Z",
+      "next_trigger_at": "2026-07-23T03:15:00Z"
+    },
+    "v5_timer": {
+      "active": "active",
+      "enabled": "enabled",
+      "last_trigger_at": "2026-07-22T08:15:17Z",
+      "next_trigger_at": "2026-07-23T04:15:00Z"
+    },
+    "post_trigger_window_verified_at": null,
+    "post_trigger_window_new_invocations": null
+  }
+}

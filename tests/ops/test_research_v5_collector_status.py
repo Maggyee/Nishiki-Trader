@@ -5,6 +5,8 @@ import json
 import pytest
 
 from apps.ops.research_v5_collector_status import (
+    ARCHIVE_REASON_PROVIDER_INSTABILITY,
+    LIFECYCLE_ARCHIVED,
     _ssh_runner,
     build_collector_status,
     parse_latest_daily_report,
@@ -34,6 +36,27 @@ def _incomplete_report() -> dict:
             for asset in ("BTCUSDT", "ETHUSDT")
         ],
     }
+
+
+def _complete_report() -> dict:
+    report = _incomplete_report()
+    report.update(
+        complete=True,
+        valid_snapshot_count=4,
+        failed_snapshot_count=0,
+        snapshots=[
+            {
+                "kind": kind,
+                "asset": asset,
+                "valid": True,
+                "snapshot_written": True,
+            }
+            for kind in ("delivery_curve", "bvol")
+            for asset in ("BTCUSDT", "ETHUSDT")
+        ],
+        failures=[],
+    )
+    return report
 
 
 def test_parse_latest_daily_report_ignores_noise_and_uses_last_report() -> None:
@@ -103,6 +126,30 @@ def test_incomplete_archive_batch_is_attention_and_awaits_retry() -> None:
     assert report["last_run"]["pnl_computed"] is False
     assert report["boundaries"]["touches_live_path"] is False
     json.dumps(report, allow_nan=False)
+
+
+def test_complete_active_batch_remains_healthy() -> None:
+    report = build_collector_status(
+        observed_at_ns=2,
+        source={},
+        service={"active": "inactive"},
+        timer={"active": "active", "enabled": "enabled"},
+        deployment={
+            "git_commit": "a" * 40,
+            "checkout_clean": True,
+            "image_revision": "a" * 40,
+        },
+        storage={
+            "vintage_conflict_count": 0,
+            "comparison_marker_count": 0,
+        },
+        daily_report=_complete_report(),
+    )
+
+    assert report["lifecycle"] == "active"
+    assert report["state"] == "healthy"
+    assert report["next_action"] == "monitor_next_daily_batch"
+    assert report["blockers"] == []
 
 
 def test_identity_mismatch_is_a_breach() -> None:
@@ -183,6 +230,145 @@ def test_complete_batch_with_disabled_timer_needs_attention() -> None:
     assert report["state"] == "attention"
     assert report["next_action"] == "review_timer_state"
     assert "timer_not_ready" in report["blockers"]
+
+
+def test_archived_collector_accepts_disabled_timer_and_incomplete_last_batch() -> None:
+    report = build_collector_status(
+        observed_at_ns=2,
+        source={},
+        service={"active": "inactive"},
+        timer={
+            "active": "inactive",
+            "enabled": "disabled",
+            "next_trigger_at": None,
+        },
+        deployment={
+            "git_commit": "a" * 40,
+            "checkout_clean": True,
+            "image_revision": "a" * 40,
+        },
+        storage={
+            "vintage_conflict_count": 0,
+            "comparison_marker_count": 0,
+        },
+        daily_report=_incomplete_report(),
+        lifecycle=LIFECYCLE_ARCHIVED,
+        archived_at_ns=1,
+        archive_reason=ARCHIVE_REASON_PROVIDER_INSTABILITY,
+    )
+
+    assert report["schema_version"] == "research.v5.collector_status.v2"
+    assert report["lifecycle"] == "archived"
+    assert report["state"] == "archived"
+    assert report["next_action"] == "retain_archived_evidence"
+    assert report["blockers"] == []
+    assert report["last_run"]["complete"] is False
+    assert report["gates"]["timer_ready"] is False
+    assert report["gates"]["timer_archived"] is True
+    assert report["gates"]["service_stopped"] is True
+
+
+def test_archived_collector_fails_closed_when_timer_is_still_enabled() -> None:
+    report = build_collector_status(
+        observed_at_ns=2,
+        source={},
+        service={"active": "inactive"},
+        timer={"active": "active", "enabled": "enabled"},
+        deployment={
+            "git_commit": "a" * 40,
+            "checkout_clean": True,
+            "image_revision": "a" * 40,
+        },
+        storage={
+            "vintage_conflict_count": 0,
+            "comparison_marker_count": 0,
+        },
+        daily_report=_incomplete_report(),
+        lifecycle=LIFECYCLE_ARCHIVED,
+        archived_at_ns=1,
+        archive_reason=ARCHIVE_REASON_PROVIDER_INSTABILITY,
+    )
+
+    assert report["state"] == "attention"
+    assert report["next_action"] == "complete_collector_archive"
+    assert report["blockers"] == ["timer_not_archived"]
+
+
+def test_archived_collector_preserves_conflict_as_breach() -> None:
+    report = build_collector_status(
+        observed_at_ns=2,
+        source={},
+        service={"active": "inactive"},
+        timer={"active": "inactive", "enabled": "disabled"},
+        deployment={
+            "git_commit": "a" * 40,
+            "checkout_clean": True,
+            "image_revision": "a" * 40,
+        },
+        storage={
+            "vintage_conflict_count": 1,
+            "comparison_marker_count": 0,
+        },
+        daily_report=_incomplete_report(),
+        lifecycle=LIFECYCLE_ARCHIVED,
+        archived_at_ns=1,
+        archive_reason=ARCHIVE_REASON_PROVIDER_INSTABILITY,
+    )
+
+    assert report["state"] == "breach"
+    assert report["next_action"] == "stop_result_comparison"
+    assert report["blockers"] == ["immutable_vintage_conflict"]
+
+
+@pytest.mark.parametrize(
+    ("service", "deployment", "expected_blocker", "expected_state"),
+    [
+        (
+            {"active": "active"},
+            {
+                "git_commit": "a" * 40,
+                "checkout_clean": True,
+                "image_revision": "a" * 40,
+            },
+            "service_not_stopped",
+            "attention",
+        ),
+        (
+            {"active": "inactive"},
+            {
+                "git_commit": "a" * 40,
+                "checkout_clean": True,
+                "image_revision": "b" * 40,
+            },
+            "deployment_identity_mismatch",
+            "breach",
+        ),
+    ],
+)
+def test_archived_collector_fails_closed_on_service_or_identity(
+    service: dict,
+    deployment: dict,
+    expected_blocker: str,
+    expected_state: str,
+) -> None:
+    report = build_collector_status(
+        observed_at_ns=2,
+        source={},
+        service=service,
+        timer={"active": "inactive", "enabled": "disabled"},
+        deployment=deployment,
+        storage={
+            "vintage_conflict_count": 0,
+            "comparison_marker_count": 0,
+        },
+        daily_report=_incomplete_report(),
+        lifecycle=LIFECYCLE_ARCHIVED,
+        archived_at_ns=1,
+        archive_reason=ARCHIVE_REASON_PROVIDER_INSTABILITY,
+    )
+
+    assert report["state"] == expected_state
+    assert expected_blocker in report["blockers"]
 
 
 def test_ssh_runner_quotes_remote_read_only_command() -> None:

@@ -131,6 +131,8 @@ const COPY = {
       streams: "Four streams",
       storage: "Snapshot / Parquet",
       nextRetry: "Next retry",
+      archivedAt: "Archived at",
+      archiveReason: "Reason",
       valid: "valid",
       failed: "failed",
       conflicts: "conflicts",
@@ -159,6 +161,12 @@ const COPY = {
         review_timer_state: "review timer state",
         stop_result_comparison: "stop result comparison",
         monitor_next_daily_batch: "monitor next daily batch",
+        retain_archived_evidence: "retain archived evidence",
+        complete_collector_archive: "complete collector archive",
+      },
+      archiveReasons: {
+        rejected_candidates_and_persistent_provider_instability:
+          "rejected candidates and persistent provider instability",
       },
       failures: {
         http_404_not_published: "HTTP 404 · archive not published",
@@ -484,6 +492,8 @@ const COPY = {
       streams: "四路采集",
       storage: "快照 / Parquet",
       nextRetry: "下次重试",
+      archivedAt: "归档时间",
+      archiveReason: "原因",
       valid: "成功",
       failed: "失败",
       conflicts: "冲突",
@@ -512,6 +522,12 @@ const COPY = {
         review_timer_state: "复核 timer 状态",
         stop_result_comparison: "停止结果比较",
         monitor_next_daily_batch: "监控下一日批次",
+        retain_archived_evidence: "保留归档证据",
+        complete_collector_archive: "完成采集器归档",
+      },
+      archiveReasons: {
+        rejected_candidates_and_persistent_provider_instability:
+          "候选已拒绝且供应商持续不稳定",
       },
       failures: {
         http_404_not_published: "HTTP 404 · 归档尚未发布",
@@ -1237,11 +1253,13 @@ function ResearchV5CollectorPanel({
   const storage = collector.storage ?? {};
   const service = collector.service ?? {};
   const timer = collector.timer ?? {};
+  const archive = collector.archive ?? {};
   const deployment = collector.deployment ?? {};
   const streams = lastRun.streams ?? [];
   const validCount = lastRun.valid_snapshot_count ?? streams.filter((stream) => stream.status === "success").length;
   const failedCount = lastRun.failed_snapshot_count ?? streams.filter((stream) => stream.status !== "success").length;
   const state = normalizeCollectorState(collector.state);
+  const archived = state === "archived";
 
   return (
     <section className="panel">
@@ -1280,9 +1298,11 @@ function ResearchV5CollectorPanel({
           tone={(storage.vintage_conflict_count ?? 0) || (storage.comparison_marker_count ?? 0) ? "red" : "green"}
         />
         <RuntimeFact
-          label={copy.collector.nextRetry}
-          value={timer.next_trigger_at ?? copy.common.nA}
-          detail={`${copy.collector.nextAction}: ${localizeCollectorAction(collector.next_action, copy)}`}
+          label={archived ? copy.collector.archivedAt : copy.collector.nextRetry}
+          value={archived ? archive.archived_at ?? copy.common.nA : timer.next_trigger_at ?? copy.common.nA}
+          detail={archived
+            ? `${copy.collector.archiveReason}: ${localizeCollectorArchiveReason(archive.reason, copy)} · ${copy.collector.nextAction}: ${localizeCollectorAction(collector.next_action, copy)}`
+            : `${copy.collector.nextAction}: ${localizeCollectorAction(collector.next_action, copy)}`}
           tone={state === "breach" ? "red" : state === "attention" ? "amber" : "blue"}
         />
       </div>
@@ -1977,8 +1997,8 @@ function normalizeRuntimeState(value: string | undefined): "healthy" | "stale" |
   return "unknown";
 }
 
-function normalizeCollectorState(value: string | undefined): "healthy" | "attention" | "breach" | "not_attached" | "unknown" {
-  if (value === "healthy" || value === "attention" || value === "breach" || value === "not_attached") {
+function normalizeCollectorState(value: string | undefined): "healthy" | "archived" | "attention" | "breach" | "not_attached" | "unknown" {
+  if (value === "healthy" || value === "archived" || value === "attention" || value === "breach" || value === "not_attached") {
     return value;
   }
   return "unknown";
@@ -2039,6 +2059,14 @@ function localizeCollectorAction(value: string | undefined, copy: Copy): string 
     return copy.common.unknown;
   }
   const labels = copy.collector.actions as Record<string, string>;
+  return labels[value] ?? value;
+}
+
+function localizeCollectorArchiveReason(value: string | null | undefined, copy: Copy): string {
+  if (!value) {
+    return copy.common.unknown;
+  }
+  const labels = copy.collector.archiveReasons as Record<string, string>;
   return labels[value] ?? value;
 }
 

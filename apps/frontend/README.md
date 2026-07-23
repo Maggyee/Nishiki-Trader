@@ -72,8 +72,9 @@ snapshot 路径。默认路径是仓库根目录下的
 - Runtime health：从 `observability` 读取 Prometheus textfile 摘要，显示心跳、WS、open state、alert 与数据延迟
 - Protocol v5 Collector：显示最近运行时间与数据日期、BTC/ETH curve/BVOL
   四路成功/失败、失败类型与计划重试、snapshot/Parquet/conflict 数量，以及
-  部署 commit、镜像 SHA 和 revision；该面板只消费
-  `research.v5.collector_status.v1`
+  部署 commit、镜像 SHA 和 revision；该面板兼容
+  `research.v5.collector_status.v1` 和 v2。v2 的合法归档态显示归档时间与原因，
+  不显示下一次重试，也不计为运维故障
 - Signals & Rejections：从已附加的 passive paper/testnet bundle report 读取
   signal lineage 摘要，按 source/model 显示 accepted、skipped、rejection 原因与
   最新信号 freshness，并展示只读 evidence 链接（Grafana source/model

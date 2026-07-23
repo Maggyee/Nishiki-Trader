@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-07-20 (v5 durable provider/timing review triggered; timer unchanged)
+- **Last updated**: 2026-07-23 (v5 stop-collection decision recorded; controlled timer shutdown pending)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
-- **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry and Protocol v2-v5 research identities are frozen. Protocol v5 curve carry and BVOL relief are both rejected; the 2026-08..12 blind remains sealed. Its 2026-07-19 data-date retry completed only ETH curve and BTC BVOL; BTC curve remained 404 and ETH BVOL repeated the baseline every-second validation failure. That recurrence is a durable provider/timing review trigger. Storage is 11/11 with zero conflicts; identity and boundaries remain clean, and the timer is unchanged. Later passive oracle observations are skipped pending a separate provider/timer review that must not loosen validation. The Phase 5 dashboard accepts passive collector status only. Independent Protocol v6 remains `blocked_provider_qualification` on the official 12-row grid, with historical development closed. Testnet/live-readiness work remains low priority and paused.
+- **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry and Protocol v2-v5 research identities are frozen. Protocol v5 curve carry and BVOL relief are rejected and the 2026-08..12 blind remains sealed. The provider/timer review records `stop_scheduled_collection`: after the last complete 2026-07-17 batch, curve archives stayed intermittent/404 and ETH BVOL repeatedly failed the unchanged every-second rule. The retained tree is 13 snapshots / 13 Parquets with zero conflicts; identity and boundaries remain clean. Collector status v2 and Dashboard archive compatibility are ready; the controlled Oracle timer shutdown remains pending until this review/code commit is pushed. Protocol v2 remains `COMPLETE` and will have its completed timer disabled in the same operation. Independent Protocol v6 remains `blocked_provider_qualification` on the official 12-row grid, with historical development closed. Testnet/live-readiness work remains low priority and paused.
   Keep the current SourcePolicy unchanged until an explicit `promotion_review.py` decision. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
@@ -130,11 +130,13 @@ BVOL completed 20 clean Nautilus runs and 10 reproducible pairs, but aggregate
 base/stress PnL is -1.185170/-6.326371 USDT, only 3/5 folds and 13/25 months
 pass, leave-best PnL is negative, and the ETH sleeve loses after costs. Both v5
 candidates therefore resolve to `reject_v5_candidate`; no candidate advances
-to the sealed future blind. The next observed raw-data date remained incomplete
-on its 08:15 UTC retry: BTC curve returned 404 and ETH BVOL repeated the
-baseline every-second validation failure. This is a durable provider/timing
-review trigger; the timer remains unchanged and later oracle observations stop
-pending that review. Independent Protocol v6 accepted one USD-M
+to the sealed future blind. The provider/timer review now resolves the durable
+publication trigger as `stop_scheduled_collection`. Scheduled evidence through
+data date 2026-07-21 retains 13 snapshots and 13 Parquets with zero conflicts;
+the 2026-07-17 retry is the last complete batch, curves remained intermittent
+or 404, and ETH BVOL repeatedly failed the unchanged every-second rule. Status
+v2 and Dashboard archive compatibility are implemented; the controlled timer
+shutdown follows the first pushed commit. Independent Protocol v6 accepted one USD-M
 book-depth mechanism as genuinely distinct and locked its source/model,
 fields, parameters, evidence windows and gates before archive-body access. Its
 v6-only immutable one-day collector opened the exact qualification date once
@@ -146,15 +148,15 @@ testnet continuity remains paused, and the Phase 3 strict streak remains 0/14.
 
 Immediate focus:
 
-1. Keep the original registry and both rejected Protocol v5 identities frozen. The repeated ETH BVOL every-second failure is a durable provider/timing review trigger: skip later oracle observations and conduct a separate review before any timer decision. Do not loosen validation, retry/backfill, open the 2026-08..12 PnL, retune either rule, fill data, hide an ETH loss with BTC, resume testnet, or change `SourcePolicy`. Keep Protocol v2 locked and retain the qualified v3/v4 evidence without automatic provider retries.
+1. Complete the approved Protocol v5 closeout after the review/code commit is pushed: capture the final read-only v2/v5 evidence, disable both the v5 and completed v2 timers, clear only the v5 oneshot failed state, and verify the archive after a former trigger window. Do not loosen validation, retry/backfill, open the 2026-08..12 PnL, retune either rule, fill data, hide an ETH loss with BTC, resume testnet, or change `SourcePolicy`.
 2. Treat `docs/progress/phase-3-testnet-canary-evidence.md`, `docs/progress/phase-3-testnet-continuity-plan.md`, the 2026-05-30 clean canary retro, the 2026-05-30 duplicate-entry abort retro, the 2026-05-30 post-fix clean retro, and the 2026-06-01 heartbeat-lost retro as the current operational evidence. The historical canaries remain valid for connection, lifecycle, lineage, and emergency-path evidence, but not as proof that `SourcePolicy.position_pct_multiplier` scaled the submitted quantity; that execution bug was fixed on 2026-07-16 and any future sizing claim needs post-fix evidence. Do not run more routine canaries unless the operator explicitly resumes live-readiness evidence collection. If canary evidence resumes, use `python -m apps.strategies_nautilus.runners.report_testnet_bundle data/testnet/<run_id>` before writing future manifest-backed canary retros, use `--markdown` with clean bundle directories before updating the clean evidence ledger, and use `--continuity --markdown --min-clean-hours-per-day 6 --required-consecutive-days 14` with every completed manifest-backed bundle in the candidate window before claiming continuity progress. Carry no-manifest aborts manually. Do not open a new `promotion_review` unless an actual policy/stage decision is being made.
-3. Use `docs/decisions/009-agent-advice-audit.md` and `docs/decisions/012-phase5-readonly-dashboard.md` as the active agent/frontend boundaries. Agent/MCP work may write/replay/review `AgentAdvice`; dashboard work may read passive reports, observability textfiles, AgentAdvice, and `research.v5.collector_status.v1` through `dashboard.snapshot.v1`. `TradingAgents/` is available as an ignored read-only upstream reference for future agent role/configuration ideas only; `docs/progress/tradingagents-reference-map.md` is the current safe adaptation map, and `apps.agents.role_profiles` is the first machine-readable AgentAdvice-only role seed. Neither path may write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or encode structured execution directives.
+3. Use `docs/decisions/009-agent-advice-audit.md` and `docs/decisions/012-phase5-readonly-dashboard.md` as the active agent/frontend boundaries. Agent/MCP work may write/replay/review `AgentAdvice`; dashboard work may read passive reports, observability textfiles, AgentAdvice, and `research.v5.collector_status.v1|v2` through `dashboard.snapshot.v1`. A valid v2 archive is terminal, not an operational fault. `TradingAgents/` is available as an ignored read-only upstream reference for future agent role/configuration ideas only; `docs/progress/tradingagents-reference-map.md` is the current safe adaptation map, and `apps.agents.role_profiles` is the first machine-readable AgentAdvice-only role seed. Neither path may write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or encode structured execution directives.
 4. ADR-008 §6.2 Phase 3b, §6.3 Phase 3c-a/b/c, §6.4 Phase 3d, §6.5 Phase 3e, §6.6 Phase 3f stability soak/canary, and the §8 promotion-review patch are all implemented and unit-tested. The `phase_3_not_ready` blocker now only hard-blocks `live_canary` / `live_normal`.
 5. Keep LLM agents and FreqAI out of the order path; `SignalEvent v1 -> NautilusTrader Strategy -> RiskEngine` remains the only bridge.
 
 ## Next Steps
 
-1. Conduct a separate Protocol v5 provider/timer review using the retained passive evidence. Keep the timer unchanged during review, do not loosen the every-second validation rule, and skip later automation oracle checks because the durable trigger is already recorded.
+1. Push the Protocol v5 closeout review and collector-status v2 implementation, then execute the exact Oracle closeout: final read-only evidence capture, `disable --now` for the v5 and completed v2 timers, v5 failed-state reset, archived status generation, and no-new-invocation verification after a former trigger window.
 2. Keep the 2026-08..12 final blind unopened. Both v5 candidates are rejected and must not have blind PnL opened under this protocol. Do not tune after historical results, substitute providers, create a PnL-selected ensemble, or treat the BVOL diagnostic as promotion evidence.
 3. Preserve the blocked Protocol v6 qualification evidence and stop. Do not delete the ±0.20 rows, reinterpret the grid, change the registered band/tolerance, retry Binance, or implement/open historical development, factors, signals or PnL under this identity.
 4. Preserve the qualified v3 hashrate snapshot and the v4 timeout evidence. Do not retry macro providers automatically; any new route requires independent evidence and explicit review before a new protocol is registered.
@@ -180,9 +182,9 @@ Immediate focus:
 - No Protocol v5 research reopen: blind PnL, filling/interpolation, retuning,
   cross-asset result masking, testnet resume, and SourcePolicy changes are
   prohibited.
-- No later Protocol v5 publication-observation oracle checks while the durable
-  provider/timing review trigger is recorded. No timer change or validation
-  loosening before a separate review.
+- No Protocol v5 timer restoration after the approved closeout. Any future
+  related study requires a new protocol/provider identity; it may not loosen
+  this identity's validation, retry/backfill its gaps, or rewrite its evidence.
 - No Protocol v6 retry or historical development. The one allowed
   qualification download is retained and both assets failed the frozen exact
   grid on additional ±0.20 rows. Row deletion, grid reinterpretation, band or
@@ -193,6 +195,26 @@ Immediate focus:
 - No edits to `freqtrade/` or `nautilus_trader/` unless explicitly requested.
 
 ## Latest Verification
+
+On 2026-07-23, at the Protocol v5 provider/timer review decision:
+
+- Ten scheduled journal reports cover data dates 2026-07-17..21. The last
+  complete batch is the 2026-07-17 retry; the latest date with any valid stream
+  is 2026-07-21. First attempts were persistently 404, BTC curve never
+  recovered after the complete batch, and ETH BVOL repeated the unchanged
+  every-second validation failure on every later retry.
+- The retained v5 tree is 13 snapshots / 13 Parquets / 0 vintage conflicts / 0
+  comparison markers. Git/image identity matches clean commit `d37d227`.
+  Protocol v2 still has `COMPLETE` and a 14-row qualification ledger.
+- The decision is `stop_scheduled_collection`, with no backfill, validation
+  change, signals, PnL, testnet, or live activity. Controlled timer shutdown is
+  pending the first pushed implementation commit. Detailed evidence is in
+  `docs/progress/phase-2-research-v5-provider-timer-review.json` and
+  `docs/retros/2026-07-23-research-v5-stop-scheduled-collection.md`.
+- Collector/dashboard tests report 99 passed; the full suite reports 969
+  passed / 12 Postgres-dependent skips when its temp root is on Linux storage.
+  Repository-wide Ruff, strict JSON/diff checks, active-v2 Dashboard snapshot
+  smoke, frontend typecheck/build, and npm audit (0 vulnerabilities) pass.
 
 On 2026-07-20, at Protocol v5's 08:20 retry observation:
 

@@ -51,12 +51,16 @@ Implemented operator visibility includes:
   four curve/BVOL stream outcomes, failure class and scheduled retry, immutable
   snapshot/Parquet/conflict counts, and deployed Git/image identity.
 
-The collector addition uses `research.v5.collector_status.v1`. Its optional SSH
-mode runs only read commands (`systemctl`, `journalctl`, `git`, Docker image
-inspection, and `find`) through BatchMode; the frontend never connects to the
-host itself. The dashboard rejects artifacts that open collector mutation,
-credential, signal, PnL, SourcePolicy, testnet, Nautilus, or live-path
-boundaries.
+The collector addition accepts `research.v5.collector_status.v1` and v2. Its
+optional SSH mode runs only read commands (`systemctl`, `journalctl`, `git`,
+Docker image inspection, and `find`) through BatchMode; the frontend never
+connects to the host itself. Version 2 adds a fail-closed archived lifecycle:
+the timer must be inactive/disabled with no next trigger, the service inactive,
+deployment identity clean and matching, and storage conflict-free. A valid
+archive keeps the last incomplete batch as history, shows the archive time and
+reason without a retry, and is not counted as an operational issue. The
+dashboard rejects artifacts that open collector mutation, credential, signal,
+PnL, SourcePolicy, testnet, Nautilus, or live-path boundaries.
 
 Representative verification from the Phase 5 opening and console hardening:
 
@@ -99,6 +103,11 @@ Representative verification from the Phase 5 opening and console hardening:
   next timer trigger. Collector/dashboard tests reported 91 passed; the full
   suite reported 921 passed / 12 skipped; ruff, typecheck, production build,
   npm audit and strict JSON checks passed.
+- 2026-07-23 Protocol v5 archive compatibility: collector status v2 added an
+  explicit active/archived lifecycle while retaining v1 reads. Archived claims
+  fail closed unless timer, service, deployment identity and storage gates all
+  prove the terminal state; the dashboard renders a valid archive without a
+  retry or collector issue.
 
 ## Phase 4 AgentAdvice Inputs
 

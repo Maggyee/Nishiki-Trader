@@ -157,8 +157,14 @@ export type ResearchV5CollectorStatus = {
   load_error?: string | null;
   observed_at_ns?: number | string | null;
   report_age_seconds?: number | null;
+  lifecycle?: "active" | "archived" | string;
   state?: string;
   next_action?: string;
+  archive?: {
+    archived_at?: string | null;
+    archived_at_ns?: number | string | null;
+    reason?: string | null;
+  };
   source?: Record<string, string>;
   service?: {
     active?: string;
