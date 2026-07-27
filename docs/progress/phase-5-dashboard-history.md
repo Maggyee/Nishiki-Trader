@@ -108,6 +108,12 @@ Representative verification from the Phase 5 opening and console hardening:
   fail closed unless timer, service, deployment identity and storage gates all
   prove the terminal state; the dashboard renders a valid archive without a
   retry or collector issue.
+- 2026-07-27 Protocol v5 archive closeout: both v5 and completed v2 timers
+  remained inactive/disabled across both former trigger windows and four
+  additional days. The archived v2 collector artifact retained 13 snapshots /
+  13 Parquets / zero conflicts, rendered with no retry, and contributed zero
+  collector issues; journal invocation sets and all evidence checksums were
+  unchanged.
 
 ## Phase 4 AgentAdvice Inputs
 

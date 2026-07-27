@@ -4,8 +4,8 @@
 - **Machine contract**: `docs/progress/phase-2-research-protocol-v5.json`
 - **Provider contract**: `docs/progress/phase-2-research-v5-data-sources.json`
 - **Candidate fingerprints**: `docs/progress/phase-2-research-v5-candidate-fingerprints.json`
-- **Status**: formally frozen; historical fast tracks complete and both
-  candidates rejected.
+- **Status**: formally frozen and archived; historical fast tracks complete,
+  both candidates rejected, and scheduled collection permanently stopped.
 - **Trading effect**: none.
 
 July local/cloud provider qualification subsequently passed on clean collector
@@ -20,13 +20,21 @@ The locked historical review is recorded in
 the Spot execution data gate before signals/PnL, while the reproducible BVOL
 diagnostic failed its cost, fold, month, concentration, and per-asset gates.
 
-Protocol v5 research is closed. Its separate future collector is an
+Protocol v5 research is closed. Its separate future collector was an
 append-preserving operations process, not a continuation of candidate
 research. The first 04:15 UTC scheduled attempt for data date 2026-07-17
 retained four explicit flat 404 failures; the 08:15 UTC retry then wrote four
 valid vintages. All four snapshots and Parquets passed offline verification,
 bringing storage to 8/8 with zero conflicts. The dated evidence is in
 `docs/retros/2026-07-18-research-v5-first-scheduled-collection.md`.
+
+Scheduled collection ended at 2026-07-23 02:06:46 UTC after the provider/timer
+review selected `stop_scheduled_collection`. The final retained tree is 13
+snapshots / 13 Parquets with zero conflicts. Both v5 and completed v2 timers
+are inactive/disabled; a four-day post-window audit found zero new journal rows
+or invocations and unchanged data/ledger checksums. The terminal evidence is in
+`docs/progress/phase-2-research-v5-provider-timer-review.json` and
+`docs/retros/2026-07-23-research-v5-stop-scheduled-collection.md`.
 
 The freeze forbids opening the 2026-08..12 blind PnL, filling or interpolating
 missing data, modifying parameters and rerunning, combining BTC and ETH to
@@ -163,15 +171,16 @@ negative under both modeled costs. Its diagnostic conclusion is therefore
 
 The project recommendation remains `stop_before_testnet_resume`. The future
 blind stays sealed and no rejected candidate will be evaluated against it
-under this protocol. A separately deployed collector may preserve registered
-future raw evidence only; it cannot generate signals or PnL.
+under this protocol. The separately deployed collector is archived and must
+not be restored; retained raw evidence cannot generate signals or PnL.
 
 After the fast-track result commit was pushed, the separate cloud collector was
-deployed from clean commit `d37d227` and its timer enabled for 04:15 and 08:15
-UTC. The image contains only the two collector modules and provider contract.
-Its network-disabled preflight produced four plans with zero writes, zero
-signals, zero PnL, and zero credential environment. This deployment preserves
-raw evidence only and does not reopen either rejected candidate.
+deployed from clean commit `d37d227` and ran at 04:15 and 08:15 UTC until its
+controlled archive. The image contains only the two collector modules and
+provider contract. Its network-disabled preflight produced four plans with
+zero writes, zero signals, zero PnL, and zero credential environment. The
+frozen deployment now preserves raw evidence only and does not reopen either
+rejected candidate.
 
 ## Fixed workflow and boundaries
 

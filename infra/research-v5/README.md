@@ -2,13 +2,18 @@
 
 - **Purpose**: run the four credential-free BTC/ETH curve/BVOL snapshot jobs
   once per UTC day from one locked clean commit and commit-labelled image.
-- **Current phase**: deployed from clean commit `d37d227` after both historical
-  fast-track reports were committed; the collector timer is raw-evidence only.
+- **Current phase**: archived from clean commit `d37d227`; scheduled collection
+  stopped at 2026-07-23 02:06:46 UTC and post-window verification passed.
 - **Boundaries**: collection only. No signals, PnL, Nautilus runtime,
   SourcePolicy mutation, testnet, credentials, or live-order access.
-- **Next implementation entrypoint**:
-  `python -m apps.ops.research_v5_daily --dry-run ...` on the intended cloud
-  checkout, followed by a single explicitly dated qualification run.
+- **Next implementation entrypoint**: none under this identity. Retain the
+  immutable evidence; any future study requires a new protocol and deployment
+  identity.
+
+Both the v5 timer and completed v2 timer are `inactive/disabled`. Do not enable
+or manually start either collector under this protocol. The historical unit,
+frozen checkout, image and data tree remain installed only to preserve audit
+evidence.
 
 The timer is independent of the completed Protocol v2 collector. It does not
 modify, stop, or reuse the v2 unit, volume, image, or ledger. The data root is
@@ -56,5 +61,5 @@ but no Nautilus runtime, signal generator, exchange credential, or order path.
 
 The service executes as `nishiki`, so the mode-0600 Compose env file must also
 be owned by `nishiki`; it contains only the commit, data root, UID, and GID.
-Enabling the timer does not authorize signal generation or opening the
-2026-08..12 blind PnL.
+The archived timer must not be re-enabled. The archive does not authorize
+signal generation or opening the 2026-08..12 blind PnL.

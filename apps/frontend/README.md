@@ -14,6 +14,9 @@ uv run python -m apps.ops.research_v5_collector_status \
   --data-root /var/lib/nishiki-trader/research-v5 \
   --checkout /opt/nishiki-trader-v5-d37d227 \
   --image nishiki-research-v5:d37d227874d49e88e8e8857f1bf45ea426ee7a3d \
+  --lifecycle archived \
+  --archived-at 2026-07-23T02:06:46Z \
+  --archive-reason rejected_candidates_and_persistent_provider_instability \
   > data/frontend/research-v5-collector-status.json
 
 uv run python -m apps.ops.dashboard_snapshot \

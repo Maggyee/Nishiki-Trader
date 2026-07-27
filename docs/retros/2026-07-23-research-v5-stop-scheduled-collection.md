@@ -1,7 +1,7 @@
 # Research Protocol v5 scheduled collection closeout
 
 - **Date**: 2026-07-23
-- **Status**: Decision recorded; controlled Oracle shutdown pending
+- **Status**: Closed and post-trigger-window verified
 - **Decision**: `stop_scheduled_collection`
 - **Reason**: `rejected_candidates_and_persistent_provider_instability`
 - **Machine record**:
@@ -58,9 +58,48 @@ archive as archived, exposes the closeout reason/time and retained counts, does
 not display a retry, and does not count the terminal state as an operational
 fault. Invalid archive claims fail closed.
 
-The controlled Oracle execution and post-trigger-window verification will be
-added here after the first code/review commit is pushed. Until then the two
-timers are intentionally unchanged.
+## Controlled Oracle closeout
+
+After implementation commit `0fbf720` was pushed, the final read-only capture
+reconfirmed v2 `COMPLETE`, the 14-row ledger, all recorded checksums, v5
+13/13 storage, zero conflicts, the clean frozen checkout, and matching image
+identity. At 2026-07-23 02:06:46 UTC:
+
+- `disable --now` stopped and disabled the exact v5 and v2 timer units;
+- only the v5 oneshot's historical failed state was cleared;
+- both services became `inactive/dead`, both timers became
+  `inactive/disabled`, and neither timer retained a next elapse;
+- no collector container was running;
+- the cloud checkout, image and both data roots were not modified.
+
+The immediate `research.v5.collector_status.v2` artifact passed as
+`lifecycle=archived`, `state=archived`, `blockers=[]`,
+`next_action=retain_archived_evidence`. Dashboard snapshot validation rendered
+the same terminal state with collector issue count zero.
+
+## Post-trigger-window acceptance
+
+The final read-only audit at 2026-07-27 07:21:20 UTC crossed both former
+2026-07-23 trigger windows by more than four days. Both timers remained
+`inactive/disabled` with no next elapse and both services remained
+`inactive/dead` with no current invocation ID.
+
+The journal baseline is byte-position stable at 70 v2 rows / one recorded
+invocation and 656 v5 rows / ten recorded invocations. Row counts, invocation
+sets, last realtime timestamps and last cursors are identical to the
+pre-disable capture, so each unit has zero new invocations. Storage remains
+13 snapshots / 13 Parquets / 0 conflicts / 0 comparison blockers; its manifest
+checksum is unchanged. The v2 `COMPLETE`, qualification ledger and latest
+review checksums are also unchanged, and no collector container is running.
+
+The final archived artifact and Dashboard snapshot passed again with no
+blockers, no retry and no operational issue. The closeout is complete.
+
+Final repository verification reported 99 collector/dashboard tests passed,
+repository-wide Ruff clean, strict JSON and diff checks clean, frontend
+typecheck/build clean, and npm audit at zero vulnerabilities. A newly published
+PostCSS advisory on the closeout date required the minimal 8.5.23 patch update
+before that final audit passed.
 
 Pre-shutdown verification passed: 99 collector/dashboard tests, the full suite
 at 969 passed / 12 Postgres-dependent skips, repository-wide Ruff, strict JSON

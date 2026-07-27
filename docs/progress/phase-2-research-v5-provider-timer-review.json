@@ -1,6 +1,7 @@
 {
   "schema_version": "research.v5.provider_timer_review.v1",
-  "observed_at": "2026-07-23T01:52:20Z",
+  "decision_recorded_at": "2026-07-23T01:52:20Z",
+  "observed_at": "2026-07-27T07:21:20Z",
   "protocol_identity": "research-protocol-v5-binance-native-v1",
   "provider": "Binance public daily archive",
   "decision": "stop_scheduled_collection",
@@ -191,21 +192,61 @@
     "pnl_computed": false
   },
   "execution": {
-    "status": "pending_timer_disable",
-    "archived_at": null,
+    "status": "archived_and_post_window_verified",
+    "archived_at": "2026-07-23T02:06:46Z",
     "v2_timer": {
-      "active": "active",
-      "enabled": "enabled",
-      "last_trigger_at": "2026-07-22T09:15:05Z",
-      "next_trigger_at": "2026-07-23T03:15:00Z"
+      "active": "inactive",
+      "enabled": "disabled",
+      "last_trigger_at": null,
+      "next_trigger_at": null
     },
     "v5_timer": {
-      "active": "active",
-      "enabled": "enabled",
-      "last_trigger_at": "2026-07-22T08:15:17Z",
-      "next_trigger_at": "2026-07-23T04:15:00Z"
+      "active": "inactive",
+      "enabled": "disabled",
+      "last_trigger_at": null,
+      "next_trigger_at": null
     },
-    "post_trigger_window_verified_at": null,
-    "post_trigger_window_new_invocations": null
+    "services": {
+      "v2": {
+        "active": "inactive",
+        "sub_state": "dead",
+        "invocation_id": null
+      },
+      "v5": {
+        "active": "inactive",
+        "sub_state": "dead",
+        "invocation_id": null,
+        "failed_state_cleared": true
+      }
+    },
+    "journal_baseline": {
+      "captured_at": "2026-07-23T02:06:02Z",
+      "v2": {
+        "row_count": 70,
+        "invocation_count": 1,
+        "last_realtime_usec": 1784711705057242,
+        "last_cursor": "s=b8ce1a54d5ec47838fb0d5a77d5c1287;i=3482c;b=e77fee38b66a43b48baf3d9a05176688;m=11f7fab72e2;t=6572f9334d7da;x=ef393021db72c98f"
+      },
+      "v5": {
+        "row_count": 656,
+        "invocation_count": 10,
+        "last_realtime_usec": 1784708123138443,
+        "last_cursor": "s=b8ce1a54d5ec47838fb0d5a77d5c1287;i=34676;b=e77fee38b66a43b48baf3d9a05176688;m=11eaa2bb493;t=6572ebdb5198b;x=73d5f2f251dacfc9"
+      }
+    },
+    "former_trigger_windows_crossed": [
+      "2026-07-23T03:15:00Z",
+      "2026-07-23T04:15:00Z"
+    ],
+    "post_trigger_window_verified_at": "2026-07-27T07:21:20Z",
+    "post_trigger_window_new_invocations": {
+      "v2": 0,
+      "v5": 0
+    },
+    "journal_rows_changed": {
+      "v2": 0,
+      "v5": 0
+    },
+    "container_running": false
   }
 }
