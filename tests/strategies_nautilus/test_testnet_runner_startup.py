@@ -60,9 +60,10 @@ def _write_retro(
     allowed: str = "yes",
     current_stage: str = "paper_simulated",
     target_stage: str = "paper_simulated",
+    filename: str = "2026-05-17-freqai-linear-v1-hold-paper-simulated.md",
 ) -> Path:
     retros_dir.mkdir(parents=True, exist_ok=True)
-    path = retros_dir / "2026-05-17-freqai-linear-v1-hold-paper-simulated.md"
+    path = retros_dir / filename
     path.write_text(
         "\n".join(
             [
@@ -206,6 +207,31 @@ def test_validate_startup_accepts_promote_testnet_evidence(tmp_path):
     )
 
     assert result.stage_evidence_path.endswith(".md")
+
+
+def test_validate_startup_rejects_older_promotion_after_newer_demote(tmp_path):
+    retros_dir = tmp_path / "retros"
+    _write_retro(
+        retros_dir,
+        decision="PROMOTE",
+        current_stage="paper_simulated",
+        target_stage="testnet_canary",
+        filename="2026-05-19-promote-testnet-canary.md",
+    )
+    _write_retro(
+        retros_dir,
+        decision="DEMOTE",
+        current_stage="testnet_canary",
+        target_stage="paper_simulated",
+        filename="2026-07-29-demote-paper-simulated.md",
+    )
+
+    with pytest.raises(StartupValidationError, match="missing_paper_simulated_retro"):
+        validate_startup(
+            _config(tmp_path),
+            env=VALID_ENV,
+            git_state=GIT_CLEAN,
+        )
 
 
 def test_build_testnet_node_config_uses_binance_spot_testnet_without_embedded_keys(

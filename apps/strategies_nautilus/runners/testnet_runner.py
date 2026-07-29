@@ -2182,6 +2182,10 @@ def _find_stage_evidence(
                 current_stage=current_stage,
                 target_stage=target_stage,
             )
+        # The newest allowed decision for this source/model is authoritative.
+        # In particular, a later DEMOTE/DISABLE must prevent this scan from
+        # falling through to an older testnet promotion and reopening canary.
+        return None
     return None
 
 

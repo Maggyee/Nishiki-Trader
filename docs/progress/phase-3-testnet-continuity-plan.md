@@ -1,9 +1,12 @@
 # Phase 3 Testnet Continuity Plan
 
-- **Status**: Paused operating plan
-- **Last updated**: 2026-06-04 after operator decision to stop/pause routine canary testing
+- **Status**: Archived operating procedure
+- **Last updated**: 2026-07-29 after `freqai_linear_v1` was demoted to
+  `paper_simulated`
 - **Scope**: ADR-008 testnet continuity evidence for `freqai_linear_v1 / linear-mom-train20240105`
-- **Decision state**: Planning and evidence tracking only. Routine continuity collection is paused. This file does not authorize live trading or mutate `SourcePolicy`.
+- **Decision state**: Historical planning and evidence tracking only. This file
+  does not authorize a testnet restart, live trading, or a `SourcePolicy`
+  mutation.
 
 ## Current Position
 
@@ -66,10 +69,11 @@ position with no residual orders or positions.
 This is operational readiness evidence for the testnet path. It is not alpha
 evidence and not live authorization.
 
-On 2026-06-04, the operator decided to stop/pause the current slow routine
-canary-testing cadence and continue development. Treat this plan as the resume
-guide for live-readiness evidence, not as the active next step for ordinary
-development. The 14-day gate remains unmet.
+On 2026-07-29, the operator formally demoted the source from
+`testnet_canary` to `paper_simulated`. Treat this plan as historical procedure,
+not restart authorization. Before this identity could use the procedure again,
+it would need a separate evidence-backed promotion review. The 14-day gate
+remains unmet.
 
 ## Continuity Gate
 
@@ -123,17 +127,15 @@ ADR-001/ADR-008 still require a live-risk decision before live money. The
 daily PnL standard-deviation comparison against paper_simulated remains a
 manual review item until a paper-vs-testnet continuity comparator exists.
 
-## Paused / Resume Path
+## Archived / Future Re-entry Path
 
-1. Routine 6 h/day canary collection is paused. Continue development with
-   targeted verification for changed code rather than launching canaries only
-   to advance the streak.
-2. If the operator explicitly resumes live-readiness evidence collection, use
-   the hardened routine from `docs/runbook-first-testnet-canary.md`. The next
-   run must keep the runner and watchdog under a process supervisor independent
-   of Codex tool-session cleanup. The next possible strict streak advancement is
-   the next UTC day with a clean 6 h manifest-backed canary and no blocked run
-   on that same day.
+1. Routine 6 h/day canary collection is closed for the demoted identity. Do not
+   launch canaries only to advance the old streak.
+2. If new alpha evidence later supports testnet re-entry, first create a
+   separate allowed `paper_simulated -> testnet_canary` promotion review. Only
+   after that decision may the operator use the hardened routine from
+   `docs/runbook-first-testnet-canary.md`. The runner and watchdog must remain
+   under a process supervisor independent of Codex tool-session cleanup.
 3. After each completed resumed run, generate the single-bundle report, write
    the retro, then regenerate the aggregate and continuity reports from bundle
    artifacts.

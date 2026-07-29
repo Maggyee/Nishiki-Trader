@@ -1,7 +1,7 @@
-"""Generate an ADR-007 §2.6 promotion review record from a paper bundle.
+"""Generate an ADR-007 §2.6 promotion review record from a runtime bundle.
 
-This tool packages a paper bundle into the seven review sections required
-by ADR-007 §2.6 and validates whether the operator's intended
+This tool packages a paper or testnet bundle into the seven review sections
+required by ADR-007 §2.6 and validates whether the operator's intended
 ``SourcePolicy`` change is allowed under the ADR-007 §2.5 stage table.
 
 It is consumer-side only:
@@ -35,9 +35,16 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from apps.strategies_nautilus.runners.promotion_review_artifact import (
+    evaluate_testnet_canary_policy_review,
+)
 from apps.strategies_nautilus.runners.report_paper_bundle import (
     PaperBundleReport,
     load_paper_bundle_report,
+)
+from apps.strategies_nautilus.runners.report_testnet_bundle import (
+    TestnetBundleReport,
+    load_testnet_bundle_report,
 )
 
 STAGE_BACKTEST_BASELINE = "backtest_baseline"
@@ -107,6 +114,55 @@ class PolicyFields:
 
 
 @dataclass(frozen=True)
+class TestnetReviewBundleReport:
+    """Testnet evidence normalized to the paper-review field contract."""
+
+    bundle_dir: str
+    run_id: str
+    manifest_sha256: str
+    kind: str
+    git_commit: str
+    git_dirty: bool
+    runtime: dict[str, Any]
+    source: str | None
+    model_version: str | None
+    signal_rows: int
+    session_days_inclusive: int
+    matching_policy: dict[str, Any] | None
+    totals: dict[str, int]
+    decision_counts: dict[str, int]
+    reason_counts: dict[str, int]
+    accepted_signals: int
+    skipped_signals: int
+    dry_run_signals: int
+    expired_signals: int
+    unauthorized_signals: int
+    signal_lag_signals: int
+    kill_switch_signals: int
+    data_gap_signals: int
+    runtime_data_gaps: int
+    heartbeat_count: int
+    restart_sequence: int
+    previous_run_id: str | None
+    pnl_total_by_currency: dict[str, float | int | None]
+    max_drawdown_pct_by_currency: dict[str, float | int | None]
+    max_drawdown_abs_by_currency: dict[str, float | int | None]
+    missing_metrics: list[str]
+    review_blockers: list[str]
+    promotion_blockers: list[str]
+
+
+ReviewBundleReport = PaperBundleReport | TestnetReviewBundleReport
+
+
+@dataclass(frozen=True)
+class LoadedReviewBundle:
+    report: ReviewBundleReport
+    policy_evidence_path: str
+    policy_evidence_sha256: str
+
+
+@dataclass(frozen=True)
 class PromotionReview:
     """Full ADR-007 §2.6 review artifact for a single source/model bundle."""
 
@@ -126,9 +182,12 @@ class PromotionReview:
     # Section 3: bundle path / fingerprint
     bundle_dir: str
     run_id: str
+    bundle_kind: str
     manifest_sha256: str
     git_commit: str
     git_dirty: bool
+    policy_evidence_path: str
+    policy_evidence_sha256: str
     runtime_mode: str | None
     runtime_data_mode: str | None
     runtime_order_mode: str | None
@@ -197,8 +256,8 @@ def build_promotion_review(
 
     Raises:
         ValueError: when stage names or decision are invalid, or when the
-            bundle is missing / not kind=paper. The bundle loader handles
-            the second case.
+            bundle is missing / not kind=paper|testnet. The bundle loader
+            handles the second case.
     """
 
     _validate_stage(current_stage, "current_stage")
@@ -210,7 +269,8 @@ def build_promotion_review(
     if not rationale or not rationale.strip():
         raise ValueError("rationale is required and must be non-empty")
 
-    report = load_paper_bundle_report(bundle_dir)
+    loaded_bundle = _load_review_bundle(bundle_dir)
+    report = loaded_bundle.report
 
     policy_diff = _policy_diff(current_policy, target_policy)
     bundle_policy_mismatches = _bundle_policy_mismatches(report, current_policy)
@@ -254,9 +314,12 @@ def build_promotion_review(
         bundle_policy_mismatches=bundle_policy_mismatches,
         bundle_dir=report.bundle_dir,
         run_id=report.run_id,
+        bundle_kind=report.kind,
         manifest_sha256=report.manifest_sha256,
         git_commit=report.git_commit,
         git_dirty=report.git_dirty,
+        policy_evidence_path=loaded_bundle.policy_evidence_path,
+        policy_evidence_sha256=loaded_bundle.policy_evidence_sha256,
         runtime_mode=runtime_mode,
         runtime_data_mode=runtime_data_mode,
         runtime_order_mode=runtime_order_mode,
@@ -367,9 +430,12 @@ def render_markdown(review: PromotionReview) -> str:
         "",
         f"- bundle_dir: `{review.bundle_dir}`",
         f"- run_id: `{review.run_id}`",
+        f"- bundle_kind: `{review.bundle_kind}`",
         f"- manifest_sha256: `{review.manifest_sha256}`",
         f"- git_commit: `{review.git_commit}`",
         f"- git_dirty: {review.git_dirty}",
+        f"- policy_evidence_path: `{review.policy_evidence_path}`",
+        f"- policy_evidence_sha256: `{review.policy_evidence_sha256}`",
         "- runtime: "
         f"mode={review.runtime_mode}, "
         f"data_mode={review.runtime_data_mode}, "
@@ -454,7 +520,10 @@ def render_text(review: PromotionReview) -> str:
             f"decision: {review.decision} (allowed={review.decision_allowed})",
             f"operator: {review.operator}",
             f"bundle: {review.bundle_dir} run_id={review.run_id}",
+            f"bundle_kind: {review.bundle_kind}",
             f"manifest_sha256: {review.manifest_sha256}",
+            f"policy_evidence_path: {review.policy_evidence_path}",
+            f"policy_evidence_sha256: {review.policy_evidence_sha256}",
             f"git_dirty: {review.git_dirty}",
             f"signal_rows: {review.signal_rows} "
             f"session_days_inclusive: {review.session_days_inclusive}",
@@ -465,6 +534,182 @@ def render_text(review: PromotionReview) -> str:
             f"decision_reasons: {'; '.join(review.decision_reasons) or 'none'}",
         ]
     )
+
+
+def _load_review_bundle(bundle_dir: Path) -> LoadedReviewBundle:
+    manifest_path = bundle_dir / "run_manifest.json"
+    manifest_payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    kind = str(manifest_payload.get("kind") or "")
+    if kind == "paper":
+        report = load_paper_bundle_report(bundle_dir)
+        return LoadedReviewBundle(
+            report=report,
+            policy_evidence_path=str(manifest_path),
+            policy_evidence_sha256=report.manifest_sha256,
+        )
+    if kind == "testnet":
+        testnet_report = load_testnet_bundle_report(bundle_dir)
+        return _testnet_review_bundle(
+            bundle_dir=bundle_dir,
+            manifest_payload=manifest_payload,
+            report=testnet_report,
+        )
+    raise ValueError(
+        f"{bundle_dir} is kind={kind!r}, expected 'paper' or 'testnet'"
+    )
+
+
+def _testnet_review_bundle(
+    *,
+    bundle_dir: Path,
+    manifest_payload: dict[str, Any],
+    report: TestnetBundleReport,
+) -> LoadedReviewBundle:
+    raw_evidence_path = manifest_payload.get("stage_evidence_path")
+    evidence_path = _resolve_policy_evidence_path(
+        bundle_dir,
+        raw_evidence_path,
+    )
+    evidence = evaluate_testnet_canary_policy_review(
+        evidence_path,
+        source=report.source,
+        model_version=report.model_version,
+    )
+    evidence_problems = [
+        f"stage_policy_evidence:{problem}"
+        for problem in evidence.get("problems", [])
+    ]
+    matching_policy = evidence.get("policy")
+    if not isinstance(matching_policy, dict):
+        matching_policy = None
+
+    decision_counts = dict(report.decision_counts)
+    reason_counts = dict(report.reason_counts)
+    skipped = int(decision_counts.get("skip", 0))
+    kill_switch_count = _reason_prefix_count(
+        reason_counts,
+        ("kill_switch",),
+    ) + int(report.alert_msg_counts.get("kill_switch_fired", 0))
+    data_gap_count = _reason_prefix_count(
+        reason_counts,
+        ("data_gap",),
+    )
+    runtime_data_gaps = (
+        _int_or_zero(report.runtime.get("data_gap_count"))
+        + int(report.alert_msg_counts.get("data_gap_exceeded_tolerance", 0))
+    )
+
+    normalized = TestnetReviewBundleReport(
+        bundle_dir=report.bundle_dir,
+        run_id=report.run_id,
+        manifest_sha256=report.manifest_sha256,
+        kind=report.kind,
+        git_commit=report.git_commit or "unknown",
+        git_dirty=report.git_dirty,
+        runtime=dict(report.runtime),
+        source=report.source,
+        model_version=report.model_version,
+        signal_rows=report.lineage_rows,
+        session_days_inclusive=_session_days_inclusive(
+            report.started_at,
+            report.finished_at,
+        ),
+        matching_policy=matching_policy,
+        totals={
+            "events": report.lineage_rows,
+            "orders": report.order_count,
+            "fills": report.fill_count,
+            "positions": report.position_count,
+            "account_balances": report.account_balance_rows,
+        },
+        decision_counts=decision_counts,
+        reason_counts=reason_counts,
+        accepted_signals=max(report.lineage_rows - skipped, 0),
+        skipped_signals=skipped,
+        dry_run_signals=int(reason_counts.get("dry_run", 0)),
+        expired_signals=_reason_prefix_count(reason_counts, ("expired:",)),
+        unauthorized_signals=_reason_prefix_count(
+            reason_counts,
+            ("reject_unauthorized",),
+        ),
+        signal_lag_signals=_reason_prefix_count(
+            reason_counts,
+            ("signal_lag",),
+        ),
+        kill_switch_signals=kill_switch_count,
+        data_gap_signals=data_gap_count,
+        runtime_data_gaps=runtime_data_gaps,
+        heartbeat_count=report.heartbeat_count,
+        restart_sequence=_int_or_zero(report.runtime.get("restart_sequence")),
+        previous_run_id=_str_or_none(report.runtime.get("previous_run_id")),
+        pnl_total_by_currency={"USDT": report.realized_pnl_total},
+        max_drawdown_pct_by_currency={"USDT": None},
+        max_drawdown_abs_by_currency={"USDT": None},
+        missing_metrics=["max_drawdown_pct", "max_drawdown_abs"],
+        review_blockers=[*report.review_blockers, *evidence_problems],
+        promotion_blockers=[],
+    )
+    evidence_sha256 = evidence.get("sha256")
+    return LoadedReviewBundle(
+        report=normalized,
+        policy_evidence_path=str(evidence_path),
+        policy_evidence_sha256=(
+            evidence_sha256 if isinstance(evidence_sha256, str) else ""
+        ),
+    )
+
+
+def _resolve_policy_evidence_path(
+    bundle_dir: Path,
+    raw_path: Any,
+) -> Path:
+    if not isinstance(raw_path, str) or not raw_path.strip():
+        return bundle_dir / "missing-stage-evidence"
+
+    path = Path(raw_path)
+    if path.is_absolute() or path.is_file():
+        return path
+
+    for parent in bundle_dir.resolve().parents:
+        candidate = parent / path
+        if candidate.is_file():
+            return candidate
+    return path
+
+
+def _session_days_inclusive(
+    started_at: str | None,
+    finished_at: str | None,
+) -> int:
+    if not started_at or not finished_at:
+        return 0
+    try:
+        start = datetime.fromisoformat(started_at.replace("Z", "+00:00"))
+        finish = datetime.fromisoformat(finished_at.replace("Z", "+00:00"))
+    except ValueError:
+        return 0
+    return max((finish.date() - start.date()).days + 1, 0)
+
+
+def _reason_prefix_count(
+    reason_counts: dict[str, int],
+    prefixes: tuple[str, ...],
+) -> int:
+    return sum(
+        int(count)
+        for reason, count in reason_counts.items()
+        if reason.startswith(prefixes)
+    )
+
+
+def _int_or_zero(value: Any) -> int:
+    if isinstance(value, bool):
+        return 0
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str) and value.isdigit():
+        return int(value)
+    return 0
 
 
 def _validate_stage(stage: str, label: str) -> None:
@@ -488,15 +733,15 @@ def _policy_diff(
 
 
 def _bundle_policy_mismatches(
-    report: PaperBundleReport,
+    report: ReviewBundleReport,
     current: PolicyFields,
 ) -> list[str]:
     """Verify that the bundle's recorded policy matches the supplied current_policy.
 
-    The bundle is the only place where the runtime-applied policy is written.
-    If the operator's `current_policy` doesn't match it, the review is
-    fundamentally untrustworthy: either the operator typed the wrong number
-    or the runtime ran with a different policy than claimed.
+    Paper bundles record the policy directly in the manifest. Testnet bundles
+    link to the exact signed promotion artifact through ``stage_evidence_path``.
+    If the operator's ``current_policy`` does not match that evidence, the
+    review is fundamentally untrustworthy.
     """
 
     matching = report.matching_policy
@@ -535,7 +780,7 @@ def _bundle_policy_mismatches(
 
 def _promotion_gate_blockers(
     *,
-    report: PaperBundleReport,
+    report: ReviewBundleReport,
     current_stage: str,
     target_stage: str,
     current_policy: PolicyFields,
@@ -663,7 +908,7 @@ def _decision_specific_blockers(
     current_policy: PolicyFields,
     target_policy: PolicyFields,
     policy_diff: dict[str, dict[str, Any]],
-    report: PaperBundleReport,
+    report: ReviewBundleReport,
 ) -> list[str]:
     if decision == DECISION_PROMOTE:
         return _promote_blockers(
@@ -699,7 +944,7 @@ def _promote_blockers(
     current_policy: PolicyFields,
     target_policy: PolicyFields,
     policy_diff: dict[str, dict[str, Any]],
-    report: PaperBundleReport,
+    report: ReviewBundleReport,
 ) -> list[str]:
     blockers: list[str] = []
     cur_idx = STAGE_ORDER.index(current_stage)
@@ -845,7 +1090,7 @@ def _evidence_path_blockers(
     return []
 
 
-def _paper_shadow_evidence_blockers(report: PaperBundleReport) -> list[str]:
+def _paper_shadow_evidence_blockers(report: ReviewBundleReport) -> list[str]:
     """ADR-007 §2.5 paper_shadow → paper_simulated evidence threshold.
 
     The threshold is ``≥7 days OR ≥50 signals``. Either alone is enough to
@@ -981,7 +1226,10 @@ def _str_or_none(value: Any) -> str | None:
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Generate an ADR-007 §2.6 promotion review record.",
+        description=(
+            "Generate an ADR-007 §2.6 promotion review record from a paper "
+            "or testnet bundle."
+        ),
     )
     parser.add_argument("bundle_dir", type=Path)
     parser.add_argument("--current-stage", required=True, choices=STAGE_ORDER)

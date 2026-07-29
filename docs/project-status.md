@@ -1,10 +1,10 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-07-27 (v5/v2 timers archived; four-day post-window verification passed)
+- **Last updated**: 2026-07-29 (`freqai_linear_v1` formally demoted to `paper_simulated`)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
-- **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry and Protocol v2-v5 research identities are frozen. Protocol v5 curve carry and BVOL relief are rejected and the 2026-08..12 blind remains sealed. The provider/timer review is complete: v5 and completed v2 timers are `inactive/disabled`, v5 collector status is `archived`, and a four-day post-window audit found zero new invocations. The retained v5 tree is 13 snapshots / 13 Parquets with zero conflicts; v2 `COMPLETE`, ledger, deployment identity and all recorded checksums remain unchanged. Dashboard renders the archive as a valid terminal state with no retry or operations issue. Independent Protocol v6 remains `blocked_provider_qualification` on the official 12-row grid, with historical development closed. Testnet/live-readiness work remains low priority and paused.
-  Keep the current SourcePolicy unchanged until an explicit `promotion_review.py` decision. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
+- **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry and Protocol v2-v5 research identities are frozen. Protocol v5 curve carry and BVOL relief are rejected and the 2026-08..12 blind remains sealed. The provider/timer review is complete: v5 and completed v2 timers are `inactive/disabled`, v5 collector status is `archived`, and a four-day post-window audit found zero new invocations. The retained v5 tree is 13 snapshots / 13 Parquets with zero conflicts; v2 `COMPLETE`, ledger, deployment identity and all recorded checksums remain unchanged. Dashboard renders the archive as a valid terminal state with no retry or operations issue. Independent Protocol v6 remains `blocked_provider_qualification` on the official 12-row grid, with historical development closed.
+  The human-reviewed `freqai_linear_v1 / linear-mom-train20240105` decision is now `demote @ paper_simulated` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. Its old testnet continuity evidence is archived and cannot authorize a restart. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -32,8 +32,8 @@ Detailed history archived so far:
 - `docs/progress/phase-2-research-protocol-v6.md` — independent Binance-native
   availability discovery, book-depth mechanism review and one fixed pre-data
   identity; no archive body or PnL access yet.
-- `docs/progress/phase-3-testnet-canary-evidence.md` — Phase 3 testnet canary evidence ledger and paused operating step.
-- `docs/progress/phase-3-testnet-continuity-plan.md` — paused 14-day testnet continuity tracking plan and review command.
+- `docs/progress/phase-3-testnet-canary-evidence.md` — archived Phase 3 testnet canary evidence ledger.
+- `docs/progress/phase-3-testnet-continuity-plan.md` — archived 14-day testnet continuity procedure and review command.
 - `docs/progress/phase-5-dashboard-history.md` — completed read-only dashboard, AgentAdvice input, passive Phase 6 gate, and dashboard hardening history.
 
 ## Progress Sync Protocol
@@ -71,7 +71,7 @@ At task finish:
 - Paper bundle review reader is live: `apps/strategies_nautilus/runners/report_paper_bundle.py` summarizes `kind="paper"` manifest + sidecars into ADR-007 review evidence without mutating `SourcePolicy` or touching exchange paths.
 - Testnet bundle report reader is live: `apps/strategies_nautilus/runners/report_testnet_bundle.py` passively summarizes completed `kind="testnet"` bundles into retro evidence, including manifest identity, heartbeat gaps, alert message counts, live sidecar count agreement, fill lineage, final FLAT state, and review blockers without loading credentials or touching exchange paths. It also accepts multiple bundle directories and emits aggregate JSON or Markdown for the Phase 3 evidence ledger.
 - Incremental paper-session mechanics are live: catalog polling now records event-time poll cursors, heartbeat/runtime logs, restart metadata from `previous_run_id`, and market-data gap blockers while keeping orders simulated and exchange credentials out of the path.
-- ADR-007 §2.6 promotion-review tooling is live: `apps/strategies_nautilus/runners/promotion_review.py` packages a paper bundle, a declared `current_policy`/`target_policy`, and an operator decision (`promote|hold|demote|disable`) into the seven §2.6 sections plus a `decision_allowed` gate that enforces the §2.5 stage table, the `paper_shadow → paper_simulated` evidence threshold, bundle/policy match, `git_dirty`, review blockers, and the Phase-2 stage cap. Records land in `docs/retros/`.
+- ADR-007 §2.6 promotion-review tooling is live: `apps/strategies_nautilus/runners/promotion_review.py` packages a paper or testnet bundle, a declared `current_policy`/`target_policy`, and an operator decision (`promote|hold|demote|disable`) into the seven §2.6 sections plus a `decision_allowed` gate that enforces the §2.5 stage table, the `paper_shadow → paper_simulated` evidence threshold, bundle/policy match, `git_dirty`, review blockers, and the Phase-2 stage cap. Testnet reviews resolve and hash the manifest-linked signed stage-policy artifact and fail closed if it is absent or inconsistent. Records land in `docs/retros/`.
 - Catalog is now 31 days of BTCUSDT 1m (2024-01-01..2024-01-31, 44640 bars, 0 ts gaps). With `train_until=2024-01-05T23:59`, `freqai_linear_v1 / linear-mom-train20240105` now produces 308 deterministic out-of-sample shadow `SignalEvent v1` rows. `features_hash` and training metadata are unchanged from v3/v6, so the model fingerprint remains stable while the paper-shadow evidence base grows from 7 to 308.
 - Catalog now extends to 60 days (2024-01-01..2024-02-29, 86400 bars, 0 ts gaps). February is the first fully held-out month for `freqai_linear_v1 / linear-mom-train20240105` and adds 287 `SignalEvent v1` rows on top of January's 308 (total 595). `model_version` / `features_hash` (`sha256:885207ac…`) / `train_rows` (7181) / `train_until` (2024-01-05T23:59) are unchanged across v3/v6/v7/v8; only the OOS region grows. Hold-out distributional comparison Jan vs Feb shows near-identical signal density (9.94 vs 9.90 per day), long-share (0.7305 vs 0.7352), and score / confidence quantiles — the model survives the one-month regime shift on signal generation.
 - First `promote` retro in the project landed: `freqai_linear_v1 / linear-mom-train20240105` was deliberately moved from `paper_shadow` to `paper_simulated` via `promotion_review --decision promote`, authorizing `SourcePolicy(dry_run=False, position_pct_multiplier=0.2)`. The first paper_simulated bundle (v9, `data/paper/20260517-053502Z-37b99b3f`, manifest `fa344a55…`) produced 545 orders, 545 fills with every `signal_id` propagated, 273 positions, no kill-switch fires, no data gaps. Return-side metrics are now on record for the first time: PnL +5.0076 USDT (+0.005%), Win Rate 55.5%, expectancy +0.019 USDT/trade, max drawdown -0.001% / -$1.00 over 60 days. Source is now `hold @ paper_simulated`; further promotion to `testnet_canary` is hard-blocked by `phase_3_not_ready` and requires the Phase 3 risk/runbook ADR.
@@ -144,13 +144,14 @@ v6-only immutable one-day collector opened the exact qualification date once
 from a pushed clean commit. Both assets failed the exact grid gate because all
 2,880 groups contain 12 rows including ±0.20; v6 is now
 `blocked_provider_qualification` with raw evidence retained and historical
-development closed. No factor, signal, return or PnL was opened. Routine 14-day
-testnet continuity remains paused, and the Phase 3 strict streak remains 0/14.
+development closed. No factor, signal, return or PnL was opened. The
+`freqai_linear_v1` 14-day testnet campaign is archived after demotion, and its
+historical Phase 3 strict streak remains 0/14.
 
 Immediate focus:
 
-1. Retain the completed Protocol v5/v2 archive without restarting either timer. Do not loosen validation, retry/backfill, open the 2026-08..12 PnL, retune either rule, fill data, hide an ETH loss with BTC, resume testnet, or change `SourcePolicy`. Any future related study requires a new pre-registered protocol and deployment identity.
-2. Treat `docs/progress/phase-3-testnet-canary-evidence.md`, `docs/progress/phase-3-testnet-continuity-plan.md`, the 2026-05-30 clean canary retro, the 2026-05-30 duplicate-entry abort retro, the 2026-05-30 post-fix clean retro, and the 2026-06-01 heartbeat-lost retro as the current operational evidence. The historical canaries remain valid for connection, lifecycle, lineage, and emergency-path evidence, but not as proof that `SourcePolicy.position_pct_multiplier` scaled the submitted quantity; that execution bug was fixed on 2026-07-16 and any future sizing claim needs post-fix evidence. Do not run more routine canaries unless the operator explicitly resumes live-readiness evidence collection. If canary evidence resumes, use `python -m apps.strategies_nautilus.runners.report_testnet_bundle data/testnet/<run_id>` before writing future manifest-backed canary retros, use `--markdown` with clean bundle directories before updating the clean evidence ledger, and use `--continuity --markdown --min-clean-hours-per-day 6 --required-consecutive-days 14` with every completed manifest-backed bundle in the candidate window before claiming continuity progress. Carry no-manifest aborts manually. Do not open a new `promotion_review` unless an actual policy/stage decision is being made.
+1. Retain the completed Protocol v5/v2 archive without restarting either timer. Do not loosen validation, retry/backfill, open the 2026-08..12 PnL, retune either rule, fill data, hide an ETH loss with BTC, or resume testnet under those research identities. Any future related study requires a new pre-registered protocol and deployment identity.
+2. Treat `docs/retros/2026-07-29-freqai-linear-v1-demote-paper-simulated.md` as the current policy decision. The Phase 3 progress files and canary retros are archived operational evidence only. They remain valid for connection, lifecycle, lineage, and emergency-path evidence, but not as alpha or as proof that `SourcePolicy.position_pct_multiplier` scaled the submitted quantity; that execution bug was fixed on 2026-07-16 and any future sizing claim needs post-fix evidence. Do not run another canary for this identity without a new allowed `paper_simulated -> testnet_canary` promotion review. After such a future promotion, use the passive bundle and continuity reports with every completed manifest-backed bundle in the candidate window, and carry no-manifest aborts manually.
 3. Use `docs/decisions/009-agent-advice-audit.md` and `docs/decisions/012-phase5-readonly-dashboard.md` as the active agent/frontend boundaries. Agent/MCP work may write/replay/review `AgentAdvice`; dashboard work may read passive reports, observability textfiles, AgentAdvice, and `research.v5.collector_status.v1|v2` through `dashboard.snapshot.v1`. A valid v2 archive is terminal, not an operational fault. `TradingAgents/` is available as an ignored read-only upstream reference for future agent role/configuration ideas only; `docs/progress/tradingagents-reference-map.md` is the current safe adaptation map, and `apps.agents.role_profiles` is the first machine-readable AgentAdvice-only role seed. Neither path may write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or encode structured execution directives.
 4. ADR-008 §6.2 Phase 3b, §6.3 Phase 3c-a/b/c, §6.4 Phase 3d, §6.5 Phase 3e, §6.6 Phase 3f stability soak/canary, and the §8 promotion-review patch are all implemented and unit-tested. The `phase_3_not_ready` blocker now only hard-blocks `live_canary` / `live_normal`.
 5. Keep LLM agents and FreqAI out of the order path; `SignalEvent v1 -> NautilusTrader Strategy -> RiskEngine` remains the only bridge.
@@ -163,19 +164,19 @@ Immediate focus:
 4. Preserve the qualified v3 hashrate snapshot and the v4 timeout evidence. Do not retry macro providers automatically; any new route requires independent evidence and explicit review before a new protocol is registered.
 5. Archive and retain the completed Protocol v2 7/7 option/basis evidence. Do not rebuild or restart the completed collector, open basis historical ZIPs, or invent option-method substitutes.
 6. Open the 2020-2022 replication reserve exactly once only after a protocol's pipelines pass qualification on a clean commit; evaluate that protocol's locked candidates with the Nautilus/cost/gate protocol and no result-driven changes.
-7. Keep SourcePolicy unchanged and testnet/live blocked; only a candidate that later passes both historical replication and its separately frozen future blind may enter paper_shadow review.
-8. Keep the current SourcePolicy unchanged until a human reviews `demote_to_paper_simulated_recommended` and records an actual hold/demote decision with `promotion_review.py`.
+7. Keep the signed `freqai_linear_v1` policy at `paper_simulated` with multiplier `0.1`; testnet/live remain blocked. Do not tune or revive this frozen model identity. Only a new candidate that later passes both historical replication and its separately frozen future blind may enter `paper_shadow` review.
+8. Retain the 2026-07-29 demotion review and its linked testnet/policy fingerprints as the current audit chain; no follow-up runtime is required.
 9. Continue Phase 5 with only read-only dashboard improvements fed by `dashboard.snapshot.v1`; keep the frontend free of API routes and mutation controls until a separate ADR opens a specific workflow.
-10. If the operator explicitly resumes live-readiness evidence collection, use `docs/progress/phase-3-testnet-continuity-plan.md` and include every completed manifest-backed testnet bundle in the candidate window when running both `report_testnet_bundle --continuity` and `apps.ops.live_readiness`.
-11. Use `promotion_review.py` (not just `report_paper_bundle.py`) as the required ADR-007 §2.6 audit artifact for any actual `SourcePolicy` change. Do **not** run `promotion_review.py hold @ testnet_canary` as a routine ratification of each canary — the canary retros plus the evidence and continuity progress files are the operational record.
-12. Keep the `testnet_runner.py` startup guard + connection probe as the first line of defense for any subsequent testnet run: explicit `--allow-real-credentials`, clean git, source/model retro evidence, testnet multiplier cap, key-prefix-only audit, Ed25519-only credentials (HMAC fails Binance Spot WS `session.logon`), and Binance Spot TESTNET-only adapter config. The probe injects credentials into the in-memory `TradingNodeConfig` only and never writes the full key/secret to `logs/runtime.log` or `connection_probe.json`.
-13. Collect additional testnet canary or paper_simulated evidence only when it directly supports a concrete development or promotion question. The v11 paper bundle's expectancy (+0.00491 USDT/trade, 53.6% win rate, -0.003878% max drawdown over 152 days) is weaker than v9, includes a negative April, and only mildly positive May; the parquet-backed canary fill set is still only a few trades. Treat both as operational/monitoring evidence, not alpha.
+10. If a future allowed promotion reopens live-readiness evidence collection, use `docs/progress/phase-3-testnet-continuity-plan.md` and include every completed manifest-backed testnet bundle in the candidate window when running both `report_testnet_bundle --continuity` and `apps.ops.live_readiness`.
+11. Use `promotion_review.py` as the required ADR-007 §2.6 audit artifact for any actual `SourcePolicy` change. It now accepts paper evidence directly and testnet evidence through the manifest-linked signed policy record; linked policy absence or mismatch fails closed.
+12. Only after a future allowed testnet promotion, keep the `testnet_runner.py` startup guard + connection probe as the first line of defense: explicit `--allow-real-credentials`, clean git, source/model retro evidence, testnet multiplier cap, key-prefix-only audit, Ed25519-only credentials, and Binance Spot TESTNET-only adapter config. The probe injects credentials into the in-memory `TradingNodeConfig` only and never writes the full key/secret to `logs/runtime.log` or `connection_probe.json`.
+13. Do not collect additional testnet or paper evidence for the frozen `freqai_linear_v1` identity merely to improve its record. The v11 paper bundle's expectancy (+0.00491 USDT/trade, 53.6% win rate, -0.003878% max drawdown over 152 days) becomes negative under base/stress costs, contains incompatible historical shorts, and the parquet-backed canary fill set is only operational evidence.
 14. Decide SQLite -> Postgres / Redis Stream readiness only after backtest, paper, or testnet volume exposes an actual bottleneck.
 
 ## Blocked / Deferred
 
 - No live trading.
-- No Phase 6 entry: ADR-013 is Draft, strict continuity is 0/14, no live-canary promotion review exists, `docs/runbook-first-live-day.md` is Draft, and the live startup guard is not wired to any live runner.
+- No Phase 6 entry: the reference source is demoted to `paper_simulated`, ADR-013 is Draft, strict continuity is 0/14, no live-canary promotion review exists, `docs/runbook-first-live-day.md` is Draft, and the live startup guard is not wired to any live runner.
 - No real exchange API keys in the repository.
 - No Redis until cross-process signal transport is required.
 - No automatic SQLite -> Postgres mirror or PG-backed bridge default until an ADR-011 trigger fires; current Postgres/TimescaleDB/pgvector is service-only Phase 3 support.
@@ -196,6 +197,27 @@ Immediate focus:
 - No edits to `freqtrade/` or `nautilus_trader/` unless explicitly requested.
 
 ## Latest Verification
+
+On 2026-07-29, after the human-approved `freqai_linear_v1` demotion:
+
+- `promotion_review.py` accepted the exact
+  `testnet_canary -> paper_simulated` decision with unchanged
+  `SourcePolicy(dry_run=False, position_pct_multiplier=0.1,
+  min_confidence_override=None)`. Bundle/policy match is true and both review
+  and transition blocker sets are empty.
+- The review fingerprints clean testnet bundle
+  `20260530-141037Z-6e860b4f` at manifest SHA-256
+  `40c1a86106f3af1f9d02da6525db33d0958053135ef9739c1fd179cc45c347ad`
+  and its linked signed policy artifact at SHA-256
+  `bd86754b62bc1a7d2eedc9da30482360f4bb73709307a89b5622191fe15bccc3`.
+  The bundle retains 719 heartbeats, zero alerts/blockers, two orders/fills,
+  final FLAT state and -0.01055 USDT realized PnL as operational evidence.
+- The testnet startup evidence scan now treats the newest allowed decision as
+  authoritative. The repository scan returns no valid testnet stage evidence
+  after the demotion, so it cannot fall back to the older promotion artifact.
+- The full Python suite reports 973 passed / 12 Postgres-dependent skips;
+  repository-wide Ruff passes. No exchange credential was loaded, no runtime
+  was started, and no original paper/testnet evidence was modified.
 
 On 2026-07-27, at the Protocol v5/v2 post-trigger-window closeout:
 

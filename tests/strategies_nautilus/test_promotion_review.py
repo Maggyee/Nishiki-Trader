@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import pandas as pd
 import pytest
 
 from apps.strategies_nautilus.result_schema import SCHEMA_VERSION
+from apps.strategies_nautilus.runners import promotion_review as promotion_review_module
 from apps.strategies_nautilus.runners.backtest_runner import _write_parquet
 from apps.strategies_nautilus.runners.promotion_review import (
     DECISION_DEMOTE,
@@ -207,6 +209,78 @@ DISABLED_POLICY = PolicyFields(
     position_pct_multiplier=0.0,
     min_confidence_override=None,
 )
+TESTNET_POLICY = PolicyFields(
+    dry_run=False,
+    position_pct_multiplier=0.1,
+    min_confidence_override=None,
+)
+
+
+def _write_testnet_policy_evidence(
+    path: Path,
+    *,
+    dry_run: bool = False,
+) -> Path:
+    path.write_text(
+        "\n".join(
+            [
+                f"# Promotion review — {SOURCE} / {MODEL_VERSION}",
+                "",
+                "- **Operator**: nishiki",
+                "- **Decision**: PROMOTE",
+                "- **Decision allowed by gates**: yes",
+                "",
+                f"- source: `{SOURCE}`",
+                f"- model_version: `{MODEL_VERSION}`",
+                "- current_stage: `paper_simulated`",
+                "- target_stage: `testnet_canary`",
+                f"- target_policy: dry_run={dry_run}, "
+                "position_pct_multiplier=0.1, min_confidence_override=None",
+                "- review_blockers: none",
+                "- promotion_gate_blockers: none",
+                "- decision: **PROMOTE**",
+                "- decision_allowed: **yes**",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    return path
+
+
+def _testnet_report(bundle_dir: Path) -> SimpleNamespace:
+    return SimpleNamespace(
+        bundle_dir=str(bundle_dir),
+        run_id=RUN_ID,
+        manifest_sha256="1" * 64,
+        kind="testnet",
+        git_commit="0" * 40,
+        git_dirty=False,
+        runtime={
+            "mode": "testnet",
+            "data_mode": "exchange_ws",
+            "order_mode": "exchange_testnet",
+            "restart_sequence": 0,
+        },
+        source=SOURCE,
+        model_version=MODEL_VERSION,
+        started_at="2026-01-01T00:00:00.000Z",
+        finished_at="2026-01-01T06:00:00.000Z",
+        lineage_rows=2,
+        decision_counts={"target_long": 2},
+        reason_counts={"": 2},
+        alert_msg_counts={
+            "kill_switch_fired": 0,
+            "data_gap_exceeded_tolerance": 0,
+        },
+        order_count=2,
+        fill_count=2,
+        position_count=1,
+        account_balance_rows=2,
+        heartbeat_count=3,
+        realized_pnl_total=-0.5,
+        review_blockers=[],
+    )
 
 
 def test_hold_review_passes_with_clean_dry_run_bundle(tmp_path):
@@ -499,6 +573,137 @@ def test_demote_passes_when_target_stricter(tmp_path):
 
     assert review.decision_allowed is True
     assert review.promotion_gate_blockers == []
+
+
+def test_demote_accepts_testnet_bundle_with_signed_policy_evidence(
+    tmp_path,
+    monkeypatch,
+):
+    evidence_path = _write_testnet_policy_evidence(tmp_path / "promote.md")
+    bundle_dir = tmp_path / RUN_ID
+    bundle_dir.mkdir()
+    (bundle_dir / "run_manifest.json").write_text(
+        json.dumps(
+            {
+                "kind": "testnet",
+                "stage_evidence_path": str(evidence_path),
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        promotion_review_module,
+        "load_testnet_bundle_report",
+        lambda _: _testnet_report(bundle_dir),
+    )
+
+    review = build_promotion_review(
+        bundle_dir=bundle_dir,
+        current_stage=STAGE_TESTNET_CANARY,
+        target_stage=STAGE_PAPER_SIMULATED,
+        current_policy=TESTNET_POLICY,
+        target_policy=TESTNET_POLICY,
+        decision=DECISION_DEMOTE,
+        rationale="cost-sensitive evidence rejects the canary identity",
+        operator="nishiki",
+    )
+
+    assert review.decision_allowed is True
+    assert review.bundle_kind == "testnet"
+    assert review.bundle_policy_matches_current is True
+    assert review.policy_evidence_path == str(evidence_path)
+    assert len(review.policy_evidence_sha256) == 64
+    assert review.runtime_mode == "testnet"
+    assert review.totals == {
+        "events": 2,
+        "orders": 2,
+        "fills": 2,
+        "positions": 1,
+        "account_balances": 2,
+    }
+    assert review.pnl_total_by_currency == {"USDT": -0.5}
+    assert review.missing_metrics == ["max_drawdown_pct", "max_drawdown_abs"]
+
+
+def test_testnet_bundle_without_signed_policy_evidence_fails_closed(
+    tmp_path,
+    monkeypatch,
+):
+    bundle_dir = tmp_path / RUN_ID
+    bundle_dir.mkdir()
+    (bundle_dir / "run_manifest.json").write_text(
+        json.dumps({"kind": "testnet"}) + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        promotion_review_module,
+        "load_testnet_bundle_report",
+        lambda _: _testnet_report(bundle_dir),
+    )
+
+    review = build_promotion_review(
+        bundle_dir=bundle_dir,
+        current_stage=STAGE_TESTNET_CANARY,
+        target_stage=STAGE_PAPER_SIMULATED,
+        current_policy=TESTNET_POLICY,
+        target_policy=TESTNET_POLICY,
+        decision=DECISION_DEMOTE,
+        rationale="missing signed policy evidence must block the decision",
+        operator="nishiki",
+    )
+
+    assert review.decision_allowed is False
+    assert "stage_policy_evidence:not_found" in review.review_blockers
+    assert review.bundle_policy_matches_current is False
+    assert any(
+        reason.startswith("bundle_policy_mismatch:")
+        for reason in review.promotion_gate_blockers
+    )
+
+
+def test_testnet_bundle_with_invalid_stage_policy_fails_closed(
+    tmp_path,
+    monkeypatch,
+):
+    evidence_path = _write_testnet_policy_evidence(
+        tmp_path / "promote.md",
+        dry_run=True,
+    )
+    bundle_dir = tmp_path / RUN_ID
+    bundle_dir.mkdir()
+    (bundle_dir / "run_manifest.json").write_text(
+        json.dumps(
+            {
+                "kind": "testnet",
+                "stage_evidence_path": str(evidence_path),
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        promotion_review_module,
+        "load_testnet_bundle_report",
+        lambda _: _testnet_report(bundle_dir),
+    )
+
+    review = build_promotion_review(
+        bundle_dir=bundle_dir,
+        current_stage=STAGE_TESTNET_CANARY,
+        target_stage=STAGE_PAPER_SIMULATED,
+        current_policy=TESTNET_POLICY,
+        target_policy=TESTNET_POLICY,
+        decision=DECISION_DEMOTE,
+        rationale="invalid linked testnet policy must block the decision",
+        operator="nishiki",
+    )
+
+    assert review.decision_allowed is False
+    assert (
+        "stage_policy_evidence:target_policy.dry_run_for_testnet"
+        in review.review_blockers
+    )
 
 
 def test_disable_always_allowed_even_with_blockers(tmp_path):

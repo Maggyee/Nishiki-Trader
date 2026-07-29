@@ -1,32 +1,35 @@
 # Phase 3 Testnet Canary Evidence Summary
 
-- **Status**: Paused handoff summary
-- **Last updated**: 2026-06-04 after operator decision to stop/pause routine
-  canary testing and continue development
+- **Status**: Archived historical evidence
+- **Last updated**: 2026-07-29 after the signed demotion to
+  `paper_simulated`
 - **Scope**: Phase 3 ADR-008 testnet canary evidence for `freqai_linear_v1 / linear-mom-train20240105`
-- **Decision state**: Operational evidence only. This file does not mutate `SourcePolicy`.
+- **Decision state**: Historical operational evidence only. The current
+  `SourcePolicy` decision is
+  `docs/retros/2026-07-29-freqai-linear-v1-demote-paper-simulated.md`.
 
 ## Current Position
 
-`freqai_linear_v1 / linear-mom-train20240105` remains at
-`hold @ testnet_canary` under the signed testnet policy from
-`docs/retros/2026-05-19-freqai-linear-v1-promote-testnet-canary.md`:
+`freqai_linear_v1 / linear-mom-train20240105` is now
+`demote @ paper_simulated` under the signed 2026-07-29 review:
 
 - `dry_run=False`
 - `position_pct_multiplier=0.1`
 - `min_confidence_override=None`
 
-Do not run `promotion_review.py hold @ testnet_canary` as a routine
-ratification after each canary. The promotion-review tool is for actual
-policy/stage decisions. Canary retros and this summary are the operational
-record.
+The 2026-05-19 promote record remains the policy evidence linked by historical
+testnet manifests, but it is superseded as the current stage by the 2026-07-29
+demotion. Do not resume this identity on testnet from this ledger. A future
+testnet run would require a new, evidence-backed promotion decision before any
+credentials or runtime are opened.
 
 No live trading is authorized. The current evidence does not satisfy the
 ADR-001 live-money ladder requirement of 14 consecutive testnet days without
 manual intervention, and there is no live-risk ADR. On 2026-06-04, the
 operator decided to stop/pause routine canary evidence collection and continue
-development; the continuity plan is preserved as a paused resume guide in
-`docs/progress/phase-3-testnet-continuity-plan.md`.
+development. The continuity plan is retained as historical procedure in
+`docs/progress/phase-3-testnet-continuity-plan.md`; it is not authorization to
+resume the demoted identity.
 
 ## Evidence Bottom Line
 
