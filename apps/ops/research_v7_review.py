@@ -5,13 +5,58 @@ from __future__ import annotations
 import argparse
 import json
 from collections import defaultdict
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from apps.ops.alpha_review import build_alpha_review
+from apps.ops.alpha_review import _analyze_bundle, _runs_reproducible
 from apps.ops.research_protocol_v7 import STRATEGY_IDENTITIES
 
 SCHEMA_VERSION = "research.v7.review.v1"
+
+
+def build_v7_alpha(candidate_specs: list[tuple[str, Path]]) -> dict[str, Any]:
+    start = datetime(2020, 1, 1, tzinfo=UTC)
+    end_exclusive = datetime(2023, 1, 1, tzinfo=UTC)
+    start_ns = int(start.timestamp() * 1_000_000_000)
+    end_exclusive_ns = int(end_exclusive.timestamp() * 1_000_000_000)
+    months: list[str] = []
+    current = start
+    while current < end_exclusive:
+        months.append(current.strftime("%Y-%m"))
+        current = (current.replace(day=28) + timedelta(days=4)).replace(day=1)
+    grouped: dict[str, list[Path]] = defaultdict(list)
+    for label, path in candidate_specs:
+        grouped[label].append(path)
+    candidates: list[dict[str, Any]] = []
+    for label, paths in grouped.items():
+        runs = [
+            _analyze_bundle(
+                path,
+                start_ns=start_ns,
+                end_exclusive_ns=end_exclusive_ns,
+                months=months,
+            )
+            for path in paths
+        ]
+        primary = dict(runs[0])
+        reproducible = _runs_reproducible(runs)
+        blockers = list(primary["blockers"])
+        if len(runs) < 2:
+            blockers.append("reproducibility_run_missing")
+        elif not reproducible:
+            blockers.append("reproducibility_mismatch")
+        primary.update(
+            {
+                "label": label,
+                "bundle_runs": [run["bundle_dir"] for run in runs],
+                "run_count": len(runs),
+                "reproducible": reproducible,
+                "blockers": sorted(set(blockers)),
+            }
+        )
+        candidates.append(primary)
+    return {"schema_version": "alpha.review.v1", "candidates": candidates}
 
 
 def classify_review(alpha: dict[str, Any], catalog_audit: dict[str, Any]) -> dict[str, Any]:
@@ -131,14 +176,7 @@ def main(argv: list[str] | None = None) -> int:
             parser.error("--candidate must use label=run_dir")
         label, path = value.split("=", 1)
         specs.append((label, Path(path)))
-    alpha = build_alpha_review(
-        specs,
-        blind_start="2020-01-01",
-        blind_end="2022-12-31",
-        catalog_path=args.catalog_path,
-        bar_type=args.bar_type,
-        trade_size=0.001,
-    )
+    alpha = build_v7_alpha(specs)
     catalog_audit = json.loads(args.catalog_audit.read_text())
     print(
         json.dumps(
