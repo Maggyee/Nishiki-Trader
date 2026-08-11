@@ -6,6 +6,7 @@ import pytest
 from apps.strategies_freqtrade.research.cross_asset_volatility_signals import (
     STRATEGY_IDENTITIES,
     VolatilityReliefParams,
+    audit_session_point_in_time_frame,
     generate_volatility_relief_signals,
 )
 
@@ -52,3 +53,24 @@ def test_v7_fold_starts_flat_and_emits_first_eligible_buy() -> None:
 def test_v7_parameters_cannot_be_tuned() -> None:
     with pytest.raises(ValueError, match="five observations"):
         VolatilityReliefParams(change_observations=10)
+
+
+def test_v7_session_audit_allows_weekend_and_holiday_gaps() -> None:
+    frame = _frame([20, 19, 18]).iloc[[0, 1, 2]].copy()
+    frame.index = pd.DatetimeIndex(
+        [
+            pd.Timestamp("2020-01-03", tz="UTC"),
+            pd.Timestamp("2020-01-06", tz="UTC"),
+            pd.Timestamp("2020-01-07", tz="UTC"),
+        ]
+    )
+    frame["ts_event"] = [int(value.value) for value in frame.index]
+    frame["available_at"] = frame.index
+    assert len(audit_session_point_in_time_frame(frame)) == 3
+
+
+def test_v7_session_audit_rejects_publication_lookahead() -> None:
+    frame = _frame([20, 19, 18])
+    frame.loc[frame.index[0], "available_at"] = frame.index[0] + pd.Timedelta(seconds=1)
+    with pytest.raises(ValueError, match="lookahead"):
+        audit_session_point_in_time_frame(frame)

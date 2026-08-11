@@ -23,3 +23,11 @@ costs, gates, reserve, and future blind are unchanged.
 
 The corrected contract and tests must be committed and pushed before retrying
 any Cboe request.
+
+After the corrected provider qualification passed, immutable factor export
+retained official session rows without forward-filling weekends or holidays.
+The first signal dry-run failed closed because the shared v2/v3 audit requires
+one row per calendar day. Protocol v7 now uses a session-aware point-in-time
+audit that keeps all publication, ordering, vintage, hash, and finite-value
+checks while allowing official non-trading-day gaps. No signal or PnL was
+written before this correction.

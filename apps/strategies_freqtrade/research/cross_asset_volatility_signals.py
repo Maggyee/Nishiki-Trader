@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 import math
+import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
@@ -15,12 +16,10 @@ import pandas as pd
 from apps.bridge.signal_event import SignalEvent
 from apps.bridge.store import SignalStore
 from apps.strategies_freqtrade.research.freqai_linear_signals import _make_signal_id
-from apps.strategies_freqtrade.research.independent_mechanism_signals import (
-    audit_point_in_time_frame,
-    load_point_in_time_csv,
-)
+from apps.strategies_freqtrade.research.independent_mechanism_signals import load_point_in_time_csv
 
 PROTOCOL_VERSION = "research.protocol.v7"
+_SHA256_RE = re.compile(r"sha256:[0-9a-f]{64}")
 STRATEGY_IDENTITIES = {
     "equity_vol_relief": ("rule_equity_vol_relief_v3", "cboe-vix5obs-negative-1d-v1", "VIX"),
     "energy_vol_relief": ("rule_energy_vol_relief_v1", "cboe-ovx5obs-negative-1d-v1", "OVX"),
@@ -59,6 +58,39 @@ def _feature_hash(strategy: str, params: VolatilityReliefParams) -> str:
     return f"sha256:{digest}"
 
 
+def audit_session_point_in_time_frame(frame: pd.DataFrame) -> pd.DataFrame:
+    """Audit an official session series without filling weekends or holidays."""
+
+    required = {"available_at", "vintage_id", "snapshot_sha256", "vol_close"}
+    missing = sorted(required - set(frame.columns))
+    if missing:
+        raise ValueError(f"point-in-time frame is missing columns: {missing}")
+    if not isinstance(frame.index, pd.DatetimeIndex):
+        raise ValueError("point-in-time frame must use a DatetimeIndex")
+    if frame.index.tz is None or str(frame.index.tz) != "UTC":
+        raise ValueError("point-in-time timestamps must be UTC")
+    if frame.empty:
+        raise ValueError("point-in-time frame must not be empty")
+    if frame.index.has_duplicates or not frame.index.is_monotonic_increasing:
+        raise ValueError("point-in-time timestamps must be unique and strictly increasing")
+    available = pd.to_datetime(frame["available_at"], utc=True, errors="raise")
+    if available.isna().any() or (available.array.asi8 > frame.index.asi8).any():
+        raise ValueError("available_at after ts_event would introduce lookahead")
+    vintages = frame["vintage_id"].astype(str).str.strip()
+    if frame["vintage_id"].isna().any() or (vintages == "").any():
+        raise ValueError("every observation requires a non-empty vintage_id")
+    hashes = frame["snapshot_sha256"].astype(str)
+    if not hashes.map(lambda value: bool(_SHA256_RE.fullmatch(value))).all():
+        raise ValueError("every observation requires sha256:<64 lowercase hex>")
+    values = pd.to_numeric(frame["vol_close"], errors="raise").astype("float64")
+    if not values.map(math.isfinite).all():
+        raise ValueError("vol_close contains NaN or Infinity")
+    audited = frame.copy()
+    audited["available_at"] = available
+    audited["vol_close"] = values
+    return audited
+
+
 def generate_volatility_relief_signals(
     factors: pd.DataFrame,
     *,
@@ -72,7 +104,7 @@ def generate_volatility_relief_signals(
     if strategy not in STRATEGY_IDENTITIES:
         raise ValueError(f"unsupported Protocol v7 strategy {strategy!r}")
     cfg = params or VolatilityReliefParams()
-    frame = audit_point_in_time_frame(factors, required_numeric={"vol_close"})
+    frame = audit_session_point_in_time_frame(factors)
     if (frame["vol_close"] <= 0.0).any():
         raise ValueError("volatility index closes must be strictly positive")
     change = frame["vol_close"].pct_change(cfg.change_observations)
