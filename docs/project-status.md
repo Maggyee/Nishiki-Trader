@@ -1,13 +1,13 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-08-11 (Protocol v10 data-version gate blocked; v11 finalized-ledger reconstruction pre-registered)
+- **Last updated**: 2026-08-11 (Protocol v11 native-fundamental development complete; confirmation sealed)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
 - **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry and Protocol v2-v5 research identities are frozen. Protocol v5 curve carry and BVOL relief are rejected and the 2026-08..12 blind remains sealed. The provider/timer review is complete: v5 and completed v2 timers are `inactive/disabled`, v5 collector status is `archived`, and a four-day post-window audit found zero new invocations. The retained v5 tree is 13 snapshots / 13 Parquets with zero conflicts; v2 `COMPLETE`, ledger, deployment identity and all recorded checksums remain unchanged. Dashboard renders the archive as a valid terminal state with no retry or operations issue. Independent Protocol v6 remains `blocked_provider_qualification` on the official 12-row grid, with historical development closed.
   The human-reviewed `freqai_linear_v1 / linear-mom-train20240105` decision is now `demote @ paper_simulated` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. Its old testnet continuity evidence is archived and cannot authorize a restart. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
   Research Protocol v7 is complete. VIX and OVX relief fail frozen gates; GVZ was retained as a provisional survivor after its official downtime sensitivity. Protocol v8 then independently confirmed the unchanged GVZ identity on 2023-2025: all 36 official archive checksums qualify, one REST-empty hour is classified as exchange unavailable with no synthetic bar, duplicate Nautilus replays match, and every fixed performance/evidence gate passes. GVZ is now `hold @ paper_shadow` under `SourcePolicy(dry_run=True, position_pct_multiplier=0.2, min_confidence_override=None)`. Its first clean catalog-shadow bundle records 166/166 dry-run signals and zero orders/fills. Forward collection is active: Day 1 is qualified with fresh official GVZ, 167 contiguous closed BTCUSDT hourly bars, zero revisions/blockers, and 0 new forward signals; 38 pre-entry signals seed state but do not count. The weekday 02:30 UTC collector is installed in the `orca` crontab because this host has no user-systemd bus. `stop_before_testnet_resume` remains in force and the 2026-09..2027-01 future blind remains sealed.
   Protocol v9 then tested two pre-registered higher-order option-risk mechanisms. VIX9D-below-VIX and five-observation VVIX relief are both cost-positive and reproducible on 2020-2022, but both fail leave-best concentration; the curve rule also has only 12/36 positive months. Both are rejected, their 2023-2025 confirmation remains sealed, and neither affects the GVZ paper-shadow process.
-  Protocol v10 opened the three pre-registered Coin Metrics responses once. Coverage passed, but none of 4,628 rows supplied status-time metadata, so v10 closed without factor values, signals, or PnL. Protocol v11 preserves the same three rules and immutable bodies, and pre-registers a finalized-public-ledger reconstruction interpretation with a fixed D+2 decision lag. Its development PnL remains unopened; any historical passer would still require forward immutable snapshots before paper_shadow.
+  Protocol v10 opened the three pre-registered Coin Metrics responses once. Coverage passed, but none of 4,628 rows supplied status-time metadata, so v10 closed without factor values, signals, or PnL. Protocol v11 preserved the same rules and immutable bodies under a D+2 finalized-ledger reconstruction and completed duplicate 2020-2022 development replays. Hashrate recovery is cost-positive but fails breadth and leave-best concentration; BTC fee demand is negative after costs; stablecoin expansion is strongly positive but has only seven positions and is classified insufficient evidence. Zero candidates may open confirmation, and any future related study requires a new identity or genuinely forward immutable data.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -42,7 +42,7 @@ Detailed history archived so far:
   development batch; both candidates rejected and confirmation never opened.
 - `docs/progress/phase-2-research-protocol-v10.md` — pre-registered
   crypto-native fundamental batch; v10 status-time route closed and v11
-  finalized-ledger reconstruction is pre-registered before PnL access.
+  completed development with zero confirmation-eligible candidates.
 - `docs/progress/phase-3-testnet-canary-evidence.md` — archived Phase 3 testnet canary evidence ledger.
 - `docs/progress/phase-3-testnet-continuity-plan.md` — archived 14-day testnet continuity procedure and review command.
 - `docs/progress/phase-5-dashboard-history.md` — completed read-only dashboard, AgentAdvice input, passive Phase 6 gate, and dashboard hardening history.
@@ -185,7 +185,7 @@ Immediate focus:
 5. Keep LLM agents and FreqAI out of the order path; `SignalEvent v1 -> NautilusTrader Strategy -> RiskEngine` remains the only bridge.
 6. Keep the confirmed GVZ identity at `paper_shadow` dry-run and collect genuinely forward official GVZ/BTC evidence. Do not change its parameters, disable dry-run, open the 2026-09..2027-01 blind early, or resume testnet.
 7. Preserve both Protocol v9 rejects. Do not alter their thresholds/signs, combine them after seeing PnL, or open their sealed 2023-2025 confirmation results.
-8. Implement the exact Protocol v11 D+2 factor and signal path, then open the 2020-2022 development reserve once with duplicate replays. Do not refresh the v10 snapshots or open confirmation unless a candidate passes every frozen development gate.
+8. Preserve Protocol v11 results and keep 2023-2025 confirmation sealed. Hashrate and fee-demand identities are rejected; stablecoin expansion is an undersampled lead only and may be revisited solely through a new pre-registered forward immutable collection, without changing its 30-observation rule from these results.
 
 ## Next Steps
 

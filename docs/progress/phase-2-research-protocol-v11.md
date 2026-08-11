@@ -2,7 +2,8 @@
 
 - **Frozen**: 2026-08-11, after v10 schema qualification but before factor
   values, signals, or PnL were opened.
-- **Status**: pre-registered; signal implementation committed; development unopened.
+- **Status**: development complete; hashrate and fee demand rejected;
+  stablecoin expansion is insufficient evidence; confirmation sealed.
 - **Trading effect**: none.
 
 V10 proved that all three Community API routes have complete 2019-11 through
@@ -22,3 +23,14 @@ immutable daily snapshots.
 The development, confirmation, cost, activity, breadth, concentration, and
 duplicate-replay gates remain the same as v10. Confirmation and the shared
 future blind remain sealed until the preceding stage passes.
+
+## Development result
+
+All three candidates reproduced exactly and passed execution evidence checks.
+Hashrate recovery is cost-positive but fails monthly breadth and leave-best
+concentration. BTC fee demand is negative after costs and also fails breadth
+and concentration. Stablecoin expansion is strongly cost-positive but has only
+seven closed positions and is dominated by its best position, so it is marked
+insufficient evidence rather than rejected as a negative return result. No
+candidate may open confirmation. See
+`docs/retros/2026-08-11-research-v11-native-fundamentals-development.md`.

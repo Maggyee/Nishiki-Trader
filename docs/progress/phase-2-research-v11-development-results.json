@@ -1,0 +1,153 @@
+{
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_future_blind": false,
+    "resumes_testnet": false,
+    "touches_live_path": false
+  },
+  "candidates": [
+    {
+      "base_net_pnl": 2.805893232000005,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:24ef7045829a333ecc0d7fe54bbcfd81da759b3a86529c40009dd9207c6a47d1",
+          "manifest_sha256": "sha256:bf964ccdbd3f02b65df94ab44661c8fccb7e8fb680379a53b1dbda0f2bf49764",
+          "path": "data/research-v11/backtests/20260811-103016Z-5bc579c8"
+        },
+        {
+          "fills_sha256": "sha256:24ef7045829a333ecc0d7fe54bbcfd81da759b3a86529c40009dd9207c6a47d1",
+          "manifest_sha256": "sha256:9030aeeec105c2977e5e3fb5946bd5c913544ce996a0d7bad3125fb6af4f4bc8",
+          "path": "data/research-v11/backtests/20260811-103019Z-07ef93d6"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "reject_candidate",
+      "closed_positions": 57,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [
+        "positive_months_14_below_18",
+        "leave_best_base_net_pnl_not_positive"
+      ],
+      "gross_net_pnl": 6.5523600000000055,
+      "key": "miner_hashrate_recovery",
+      "leave_best_base_net_pnl": -23.17059062,
+      "model_version": "chainfinalized-hashrate7-30-positive-lag2d-v1",
+      "performance_pass": false,
+      "positive_months": 14,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 114,
+      "signal_store_sha256": "sha256:9a0de0d8c2dc6b6457ac9c62144cae184798d431c446285b36180c2a81e008b6",
+      "source": "rule_miner_hashrate_recovery_v3",
+      "stress_net_pnl": 1.8692765400000053,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 8.73912858,
+        "2021": 25.684199118,
+        "2022": -31.617434465999995
+      }
+    },
+    {
+      "base_net_pnl": 23.014887088,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:9987d97be04015bbf4f3290a6e380b7dfb7cdb425b7a6aa6ca53c33dc31e8352",
+          "manifest_sha256": "sha256:3f0ab0c194353ac56f9e3bbb337d685f16f575765738b8cdee1260dd70c41302",
+          "path": "data/research-v11/backtests/20260811-103023Z-24161be2"
+        },
+        {
+          "fills_sha256": "sha256:9987d97be04015bbf4f3290a6e380b7dfb7cdb425b7a6aa6ca53c33dc31e8352",
+          "manifest_sha256": "sha256:f29631ab78f8ce3afac80bfa4809bee317a7738da8450f89b804876b49c1062b",
+          "path": "data/research-v11/backtests/20260811-103027Z-a8d137b7"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "insufficient_evidence",
+      "closed_positions": 7,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [
+        "positive_months_2_below_18",
+        "closed_positions_7_below_30",
+        "leave_best_base_net_pnl_not_positive"
+      ],
+      "gross_net_pnl": 23.303859999999997,
+      "key": "stablecoin_liquidity_expansion",
+      "leave_best_base_net_pnl": -6.712348123999998,
+      "model_version": "chainfinalized-usdt-usdc-splycur30d-positive-lag2d-v1",
+      "performance_pass": false,
+      "positive_months": 2,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 13,
+      "signal_store_sha256": "sha256:ff23a571168cc7219bb0ef1c0612a65158cf9f9f2199ee221334ca9cf6d842c1",
+      "source": "rule_stablecoin_liquidity_v2",
+      "stress_net_pnl": 22.942643859999997,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 1.099093394,
+        "2021": 0.0,
+        "2022": 21.915793694
+      }
+    },
+    {
+      "base_net_pnl": -2.384972355999999,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:f9e647a4bfdababaa789966a11114d8cf3e1907848c424e0d72e80d7a24bc709",
+          "manifest_sha256": "sha256:4d8d282f30616695f65d0fb56b333a5d00475abec45d0ddd56031f88cf7b8b75",
+          "path": "data/research-v11/backtests/20260811-103031Z-a01b19fd"
+        },
+        {
+          "fills_sha256": "sha256:f9e647a4bfdababaa789966a11114d8cf3e1907848c424e0d72e80d7a24bc709",
+          "manifest_sha256": "sha256:274726cc7d62e5787b2021970f4081b638ac6d7f5c7992cb17ca31e7036e3e02",
+          "path": "data/research-v11/backtests/20260811-103034Z-397230e6"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "reject_candidate",
+      "closed_positions": 33,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [
+        "base_net_pnl_not_positive",
+        "stress_net_pnl_not_positive",
+        "positive_months_14_below_18",
+        "leave_best_base_net_pnl_not_positive"
+      ],
+      "gross_net_pnl": 0.08429000000000064,
+      "key": "btc_fee_demand",
+      "leave_best_base_net_pnl": -14.656350792,
+      "model_version": "chainfinalized-feetotntv7-30-positive-lag2d-v1",
+      "performance_pass": false,
+      "positive_months": 14,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 65,
+      "signal_store_sha256": "sha256:aac83ec16fdfd0c1e5e7f7445fc597ae45b1b2a31bd8490cb18ee7e5c1fded5d",
+      "source": "rule_btc_fee_demand_v2",
+      "stress_net_pnl": -3.002287944999999,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 7.397092514,
+        "2021": 9.489204933999996,
+        "2022": -19.271269804
+      }
+    }
+  ],
+  "confirmation_holdout_status": "sealed_not_opened_no_development_passer",
+  "confirmation_open_eligible_candidates": [],
+  "development_passer_count": 0,
+  "future_blind_status": "sealed_unopened",
+  "protocol_sha256": "sha256:85f45672a6f36f0003225566d4ea1d8e540b90adc4ea76ffb502a90c08a9573d",
+  "recommendation": "stop_protocol_v11_no_confirmation_open",
+  "schema_version": "research.v11.development_results.v1"
+}
