@@ -1,0 +1,58 @@
+{
+  "schema_version": "research.v8.paper_shadow_status_summary.v1",
+  "updated_at": "2026-08-11T08:50:00.613711Z",
+  "contract_sha256": "sha256:915db3d118e2d9762a0b052d6af62c37a9b558bc134bd8be9075e89790609dbd",
+  "stage": "paper_shadow",
+  "policy": {
+    "dry_run": true,
+    "position_pct_multiplier": 0.2,
+    "min_confidence_override": null
+  },
+  "forward_gate": {
+    "qualified_day_count": 1,
+    "required_days": 7,
+    "new_forward_signal_count": 0,
+    "required_signals": 50,
+    "operator": "or",
+    "threshold_met": false,
+    "review_eligible": false
+  },
+  "latest_attempt": {
+    "attempt_id": "20260811T085000Z-57a967cc19ed",
+    "git_commit": "1b44e6e1097ef8477cf55a1fa78a8874e3bcf4ad",
+    "git_dirty": false,
+    "origin_main_contains_commit": true,
+    "qualified_day": true,
+    "blockers": [],
+    "journal_sha256": "sha256:c6e235e81c1c1e7b99a2fc87076251eeeb4ef9b76fa439513c296dc44e012ecf",
+    "gvz": {
+      "last_date": "2026-08-10",
+      "age_calendar_days": 1,
+      "snapshot_sha256": "sha256:104cb48a421db2ea1d80bb055e60d21b444c389d7f4816a8dfdd57a967cc19ed",
+      "historical_revisions": 0
+    },
+    "btc": {
+      "closed_hourly_bars": 167,
+      "cumulative_contiguous": true,
+      "raw_sha256": "sha256:9b3826349a977afe18eab34c62adeb7087dcdab694ab6740f249d58198426dd7",
+      "historical_revisions": 0
+    },
+    "signals": {
+      "baseline_before_forward_start": 38,
+      "new_forward": 0
+    }
+  },
+  "scheduler": {
+    "mechanism": "user_crontab",
+    "calendar": "30 2 * * 1-5",
+    "timezone": "UTC",
+    "installed": true,
+    "system_cron_active": true,
+    "systemd_user_bus_available": false
+  },
+  "anomaly_blockers": [],
+  "next_action": "continue_paper_shadow_collection",
+  "future_blind_status": "sealed_unopened",
+  "testnet_status": "blocked",
+  "live_status": "blocked"
+}
