@@ -240,6 +240,7 @@ def _analyze_bundle(
     start_ns: int,
     end_exclusive_ns: int,
     months: list[str],
+    bar_interval_ns: int = 60_000_000_000,
 ) -> dict[str, Any]:
     manifest_path = bundle_dir / "run_manifest.json"
     manifest_bytes = manifest_path.read_bytes()
@@ -259,13 +260,15 @@ def _analyze_bundle(
         blockers.append("git_dirty")
     start = int(pd.Timestamp(manifest.backtest_start).value)
     end = int(pd.Timestamp(manifest.backtest_end).value)
-    if start > start_ns or end < end_exclusive_ns - 60_000_000_000:
+    if bar_interval_ns <= 0:
+        raise ValueError("bar_interval_ns must be positive")
+    if start > start_ns or end < end_exclusive_ns - bar_interval_ns:
         blockers.append("blind_window_not_fully_covered")
-    expected_rows = (end_exclusive_ns - start_ns) // 60_000_000_000
+    expected_rows = (end_exclusive_ns - start_ns) // bar_interval_ns
     catalog_rows = int(manifest.data_catalog.instruments[0].rows)
     if (
         start == start_ns
-        and end >= end_exclusive_ns - 60_000_000_000
+        and end >= end_exclusive_ns - bar_interval_ns
         and catalog_rows != expected_rows
     ):
         blockers.append(f"catalog_rows={catalog_rows}!=expected={expected_rows}")
@@ -335,9 +338,9 @@ def _analyze_bundle(
     system_exit_fills = int(blank_fill_mask.sum())
     if system_exit_fills:
         blank_fill_times = fills_window.loc[blank_fill_mask, "_ts"]
-        if (blank_fill_times < end_exclusive_ns - 60_000_000_000).any():
+        if (blank_fill_times < end_exclusive_ns - bar_interval_ns).any():
             invalid_fill_lineage += int(
-                (blank_fill_times < end_exclusive_ns - 60_000_000_000).sum()
+                (blank_fill_times < end_exclusive_ns - bar_interval_ns).sum()
             )
     if invalid_fill_lineage:
         blockers.append(f"invalid_fill_lineage={invalid_fill_lineage}")

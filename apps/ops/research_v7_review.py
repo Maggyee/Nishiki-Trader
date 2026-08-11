@@ -36,6 +36,7 @@ def build_v7_alpha(candidate_specs: list[tuple[str, Path]]) -> dict[str, Any]:
                 start_ns=start_ns,
                 end_exclusive_ns=end_exclusive_ns,
                 months=months,
+                bar_interval_ns=3_600_000_000_000,
             )
             for path in paths
         ]
