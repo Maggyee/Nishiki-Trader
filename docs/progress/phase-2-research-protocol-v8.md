@@ -3,7 +3,7 @@
 - **Frozen**: 2026-08-11, before opening BTCUSDT 2023-2025 execution archives or strategy-specific PnL.
 - **Machine contract**: `docs/progress/phase-2-research-protocol-v8.json`
 - **Provider contract**: `docs/progress/phase-2-research-v8-data-sources.json`
-- **Status**: pre-registered; confirmation data and PnL unopened.
+- **Status**: confirmation passed; candidate entered `paper_shadow` dry-run.
 - **Trading effect**: none.
 
 ## Why this stage exists
@@ -39,3 +39,17 @@ during verified no-kline windows all fail closed before promotion.
 If all fixed performance, breadth, concentration, lineage, data, and duplicate
 replay gates pass, GVZ becomes eligible for a human `paper_shadow` review. v8
 cannot authorize testnet or live trading.
+
+## Result
+
+The one allowed 2023-2025 opening passed every fixed gate: base/stress PnL
++25.180955/+21.737949 USDT, 2/3 positive years, 19/36 positive months, 83
+positions, +12.855628 USDT after removing the best position, and matching
+duplicate replays. Thirty-six official execution archives qualified; one
+official/REST-empty hour was treated as exchange unavailable with no synthetic
+bar and no order or fill in that window.
+
+The candidate is now `hold @ paper_shadow` under
+`SourcePolicy(dry_run=True, position_pct_multiplier=0.2,
+min_confidence_override=None)`. See
+`docs/retros/2026-08-11-research-v8-gvz-confirmation.md`.

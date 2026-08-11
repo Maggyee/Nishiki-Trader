@@ -1,11 +1,11 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-08-11 (Protocol v8 GVZ confirmation pre-registered)
+- **Last updated**: 2026-08-11 (GVZ passed Protocol v8 confirmation; entered `paper_shadow`)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
 - **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry and Protocol v2-v5 research identities are frozen. Protocol v5 curve carry and BVOL relief are rejected and the 2026-08..12 blind remains sealed. The provider/timer review is complete: v5 and completed v2 timers are `inactive/disabled`, v5 collector status is `archived`, and a four-day post-window audit found zero new invocations. The retained v5 tree is 13 snapshots / 13 Parquets with zero conflicts; v2 `COMPLETE`, ledger, deployment identity and all recorded checksums remain unchanged. Dashboard renders the archive as a valid terminal state with no retry or operations issue. Independent Protocol v6 remains `blocked_provider_qualification` on the official 12-row grid, with historical development closed.
   The human-reviewed `freqai_linear_v1 / linear-mom-train20240105` decision is now `demote @ paper_simulated` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. Its old testnet continuity evidence is archived and cannot authorize a restart. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
-  Research Protocol v7 is complete. VIX and OVX relief fail frozen performance gates. GVZ passes every numeric gate, and the post-hoc provider audit proves its 30 absent hours are exchange-side no-kline windows whose explicit markers leave results unchanged. The immutable v7 formal record remains closed, but the research program now retains GVZ as a provisional survivor rather than discarding it. Protocol v8 is pre-registered before 2023-2025 strategy-specific execution/PnL access: one unchanged GVZ identity, fixed costs/gates, official-checksum archives, market-session-aware continuity, no synthetic bars, and duplicate Nautilus replays. `stop_before_testnet_resume` remains in force and the 2026-09..2027-01 future blind remains sealed.
+  Research Protocol v7 is complete. VIX and OVX relief fail frozen gates; GVZ was retained as a provisional survivor after its official downtime sensitivity. Protocol v8 then independently confirmed the unchanged GVZ identity on 2023-2025: all 36 official archive checksums qualify, one REST-empty hour is classified as exchange unavailable with no synthetic bar, duplicate Nautilus replays match, and every fixed performance/evidence gate passes. GVZ is now `hold @ paper_shadow` under `SourcePolicy(dry_run=True, position_pct_multiplier=0.2, min_confidence_override=None)`. Its first clean catalog-shadow bundle records 166/166 dry-run signals and zero orders/fills. `stop_before_testnet_resume` remains in force and the 2026-09..2027-01 future blind remains sealed.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -159,8 +159,10 @@ numeric gates but is rejected by the frozen execution-catalog continuity gate:
 downtime sensitivity verified that the official ZIP/checksum and REST sources
 also contain no bars in those windows; 30 isolated zero-volume markers leave
 all strategy results unchanged and receive no orders or fills. The diagnostic
-does not reopen v7: the future blind remains sealed and no candidate advances
-to `paper_shadow` or testnet.
+does not reopen v7. Protocol v8 separately froze the unchanged GVZ survivor
+before opening 2023-2025 PnL, passed every confirmation gate, and entered it at
+`paper_shadow` dry-run. The future blind remains sealed and testnet stays
+blocked.
 
 Immediate focus:
 
@@ -169,7 +171,7 @@ Immediate focus:
 3. Use `docs/decisions/009-agent-advice-audit.md` and `docs/decisions/012-phase5-readonly-dashboard.md` as the active agent/frontend boundaries. Agent/MCP work may write/replay/review `AgentAdvice`; dashboard work may read passive reports, observability textfiles, AgentAdvice, and `research.v5.collector_status.v1|v2` through `dashboard.snapshot.v1`. A valid v2 archive is terminal, not an operational fault. `TradingAgents/` is available as an ignored read-only upstream reference for future agent role/configuration ideas only; `docs/progress/tradingagents-reference-map.md` is the current safe adaptation map, and `apps.agents.role_profiles` is the first machine-readable AgentAdvice-only role seed. Neither path may write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or encode structured execution directives.
 4. ADR-008 §6.2 Phase 3b, §6.3 Phase 3c-a/b/c, §6.4 Phase 3d, §6.5 Phase 3e, §6.6 Phase 3f stability soak/canary, and the §8 promotion-review patch are all implemented and unit-tested. The `phase_3_not_ready` blocker now only hard-blocks `live_canary` / `live_normal`.
 5. Keep LLM agents and FreqAI out of the order path; `SignalEvent v1 -> NautilusTrader Strategy -> RiskEngine` remains the only bridge.
-6. Commit and push the Protocol v8 pre-access baseline, then open the 2023-2025 BTCUSDT execution archives exactly once. Keep GVZ parameters unchanged, use official bars without synthetic rows, accept only checksum/REST-verified no-kline windows, run duplicate replays, and keep the 2026-09..2027-01 future blind sealed.
+6. Keep the confirmed GVZ identity at `paper_shadow` dry-run and collect genuinely forward official GVZ/BTC evidence. Do not change its parameters, disable dry-run, open the 2026-09..2027-01 blind early, or resume testnet.
 
 ## Next Steps
 
@@ -178,8 +180,8 @@ Immediate focus:
 3. Preserve the blocked Protocol v6 qualification evidence and stop. Do not delete the ±0.20 rows, reinterpret the grid, change the registered band/tolerance, retry Binance, or implement/open historical development, factors, signals or PnL under this identity.
 4. Preserve the qualified v3 hashrate snapshot and the v4 timeout evidence. Do not retry macro providers automatically; any new route requires independent evidence and explicit review before a new protocol is registered.
 5. Archive and retain the completed Protocol v2 7/7 option/basis evidence. Do not rebuild or restart the completed collector, open basis historical ZIPs, or invent option-method substitutes.
-6. Execute Protocol v8 only after its pre-access identity is clean and pushed. A full gate pass makes the unchanged GVZ identity eligible for human `paper_shadow` review; it does not authorize testnet or open the separately sealed future blind.
-7. Keep the signed `freqai_linear_v1` policy at `paper_simulated` with multiplier `0.1`; testnet/live remain blocked. Do not tune or revive this frozen model identity. Only a new candidate that later passes both historical replication and its separately frozen future blind may enter `paper_shadow` review.
+6. Accumulate at least seven forward paper-shadow days or 50 new forward signals with clean schema, freshness, lineage, and verified-session behavior. Require a separate human review before any `paper_shadow -> paper_simulated` change.
+7. Keep the signed `freqai_linear_v1` policy at `paper_simulated` with multiplier `0.1`; testnet/live remain blocked. Do not tune or revive this frozen model identity. New research candidates may enter `paper_shadow` only through a prospectively frozen confirmation protocol; GVZ is the current instance and its separate final future blind remains required before any testnet consideration.
 8. Retain the 2026-07-29 demotion review and its linked testnet/policy fingerprints as the current audit chain; no follow-up runtime is required.
 9. Continue Phase 5 with only read-only dashboard improvements fed by `dashboard.snapshot.v1`; keep the frontend free of API routes and mutation controls until a separate ADR opens a specific workflow.
 10. If a future allowed promotion reopens live-readiness evidence collection, use `docs/progress/phase-3-testnet-continuity-plan.md` and include every completed manifest-backed testnet bundle in the candidate window when running both `report_testnet_bundle --continuity` and `apps.ops.live_readiness`.
@@ -212,11 +214,31 @@ Immediate focus:
   sensitivity is diagnostic only. Further filling/interpolation, changing the
   execution interval, retuning after PnL, advancing GVZ, or opening the
   2026-09..2027-01 future blind is prohibited under this identity.
+- No GVZ `paper_simulated` entry yet. Protocol v8 confirmation authorizes only
+  `paper_shadow` with `dry_run=True`; forward shadow evidence and a separate
+  promotion review are still required.
 - No n8n workflows until a concrete Phase 4 orchestration need appears.
 - No autonomous Agent trading. Agents may only research, review, summarize, and suggest.
 - No edits to `freqtrade/` or `nautilus_trader/` unless explicitly requested.
 
 ## Latest Verification
+
+On 2026-08-11, after Protocol v8 confirmation and paper-shadow entry:
+
+- The pre-access contract was pushed at `138cf35`; confirmation code was clean
+  and pushed at `20ec74d` before opening 2023-2025 execution/PnL.
+- All 36 official Binance monthly archives match checksums. The catalog has
+  26,303 official bars plus one exact REST-verified exchange-unavailable hour,
+  zero synthetic bars, zero duplicates, and a passing session-aware audit.
+- Two clean Nautilus replays return `MATCH`. Base/stress PnL is
+  +25.180955/+21.737949 USDT, 2/3 years and 19/36 months are positive, 83
+  positions close, and leave-best base PnL remains +12.855628 USDT.
+- The first clean paper-shadow bundle records 166 accepted dry-run signals,
+  zero orders/fills/positions, zero expired/unauthorized/kill-switch signals,
+  and no signal in the verified unavailable hour.
+- Current stage is `hold @ paper_shadow`; testnet/live remain blocked and the
+  2026-09..2027-01 future blind remains sealed.
+- The full Python suite reports 1003 passed / 12 Postgres-dependent skips.
 
 On 2026-08-11, after the operator-requested Protocol v7 downtime sensitivity:
 
