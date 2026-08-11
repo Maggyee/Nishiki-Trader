@@ -39,7 +39,7 @@ def _contract() -> dict[str, Any]:
         raise ValueError("v7 provider contract must be an object")
     if payload.get("schema_version") != "research.data_sources.v7":
         raise ValueError("v7 provider contract schema drifted")
-    if payload.get("status") != "provider_contract_locked_before_csv_body_access":
+    if payload.get("status") != "schema_correction_locked_after_fail_closed_probe":
         raise ValueError("v7 provider contract status drifted")
     if payload.get("authentication") != "none":
         raise ValueError("v7 provider must remain credential-free")
@@ -116,6 +116,8 @@ def parse_and_audit_csv(kind: str, raw: bytes) -> tuple[list[dict[str, Any]], di
     rows: list[dict[str, Any]] = []
     previous: date | None = None
     reserve_count = 0
+    value_column = str(spec["value_column"])
+    validation_window = spec.get("ohlc_validation_window")
     for index, row in enumerate(reader):
         if None in row or any(value is None for value in row.values()):
             raise ValueError(f"{kind} row {index} does not match the locked header")
@@ -123,17 +125,20 @@ def parse_and_audit_csv(kind: str, raw: bytes) -> tuple[list[dict[str, Any]], di
         if previous is not None and session <= previous:
             raise ValueError(f"{kind} DATE values must be unique and increasing")
         previous = session
-        open_px = _positive(row["OPEN"], f"rows[{index}].OPEN")
-        high = _positive(row["HIGH"], f"rows[{index}].HIGH")
-        low = _positive(row["LOW"], f"rows[{index}].LOW")
-        close = _positive(row["CLOSE"], f"rows[{index}].CLOSE")
-        if low > min(open_px, close) or high < max(open_px, close) or high < low:
-            raise ValueError(f"{kind} row {index} has invalid OHLC bounds")
+        close = _positive(row[value_column], f"rows[{index}].{value_column}")
+        if validation_window is not None:
+            open_px = _positive(row["OPEN"], f"rows[{index}].OPEN")
+            high = _positive(row["HIGH"], f"rows[{index}].HIGH")
+            low = _positive(row["LOW"], f"rows[{index}].LOW")
+            validation_start = date.fromisoformat(validation_window["start"])
+            validation_end = date.fromisoformat(validation_window["end"])
+            if validation_start <= session <= validation_end and (
+                low > min(open_px, close) or high < max(open_px, close) or high < low
+            ):
+                raise ValueError(f"{kind} row {index} has invalid in-scope OHLC bounds")
         if RESERVE_START <= session <= RESERVE_END:
             reserve_count += 1
-        rows.append(
-            {"date": session.isoformat(), "open": open_px, "high": high, "low": low, "close": close}
-        )
+        rows.append({"date": session.isoformat(), "close": close})
     if not rows:
         raise ValueError(f"{kind} history is empty")
     reserve_rows = [

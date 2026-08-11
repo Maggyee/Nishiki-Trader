@@ -15,15 +15,18 @@ from apps.ops.research_v7_snapshot import (
 )
 
 
-def _history() -> bytes:
-    rows = ["DATE,OPEN,HIGH,LOW,CLOSE"]
+def _history(*, kind: str = "vix") -> bytes:
+    rows = ["DATE,OPEN,HIGH,LOW,CLOSE"] if kind == "vix" else [f"DATE,{kind.upper()}"]
     current = date(2019, 11, 1)
     value = 20.0
     while current <= date(2022, 12, 31):
         if current.weekday() < 5:
-            rows.append(
-                f"{current.strftime('%m/%d/%Y')},{value:.2f},{value + 1:.2f},{value - 1:.2f},{value + 0.25:.2f}"
-            )
+            if kind == "vix":
+                rows.append(
+                    f"{current.strftime('%m/%d/%Y')},{value:.2f},{value + 1:.2f},{value - 1:.2f},{value + 0.25:.2f}"
+                )
+            else:
+                rows.append(f"{current.strftime('%m/%d/%Y')},{value + 0.25:.2f}")
             value += 0.01
         current += timedelta(days=1)
     return ("\n".join(rows) + "\n").encode()
@@ -41,7 +44,7 @@ def test_v7_snapshot_round_trip_and_factor_lag(tmp_path: Path) -> None:
     snapshot_path, result = collect_snapshot(
         "ovx",
         output_dir=tmp_path / "raw",
-        fetch=lambda _: _history(),
+        fetch=lambda _: _history(kind="ovx"),
         now=datetime(2026, 8, 11, 12, tzinfo=UTC),
     )
     assert result["valid"] is True
@@ -63,7 +66,7 @@ def test_v7_snapshot_rejects_tampering(tmp_path: Path) -> None:
     path, _ = collect_snapshot(
         "gvz",
         output_dir=tmp_path,
-        fetch=lambda _: _history(),
+        fetch=lambda _: _history(kind="gvz"),
         now=datetime(2026, 8, 11, 12, tzinfo=UTC),
     )
     payload = json.loads(path.read_text())

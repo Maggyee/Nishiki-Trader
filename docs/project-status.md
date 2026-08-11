@@ -5,7 +5,7 @@
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
 - **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry and Protocol v2-v5 research identities are frozen. Protocol v5 curve carry and BVOL relief are rejected and the 2026-08..12 blind remains sealed. The provider/timer review is complete: v5 and completed v2 timers are `inactive/disabled`, v5 collector status is `archived`, and a four-day post-window audit found zero new invocations. The retained v5 tree is 13 snapshots / 13 Parquets with zero conflicts; v2 `COMPLETE`, ledger, deployment identity and all recorded checksums remain unchanged. Dashboard renders the archive as a valid terminal state with no retry or operations issue. Independent Protocol v6 remains `blocked_provider_qualification` on the official 12-row grid, with historical development closed.
   The human-reviewed `freqai_linear_v1 / linear-mom-train20240105` decision is now `demote @ paper_simulated` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. Its old testnet continuity evidence is archived and cannot authorize a restart. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
-  Research Protocol v7 is pre-registered on a clean local tree before any Cboe CSV body access. It locks three official cross-asset volatility-relief identities (VIX/OVX/GVZ), a one-opening 2020-2022 replication reserve, fixed costs/gates, and a 2026-09..2027-01 future blind. No result exists yet.
+  Research Protocol v7 was pre-registered and pushed before Cboe body access. Its first probe failed closed without writes or PnL: OVX/GVZ are official close-only files and one old VIX row outside the factor window violates OHLC bounds. A schema-only provider-contract correction is now locked; identities, rules, costs, reserve, and future blind are unchanged. No result exists yet.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -148,9 +148,9 @@ from a pushed clean commit. Both assets failed the exact grid gate because all
 development closed. No factor, signal, return or PnL was opened. The
 `freqai_linear_v1` 14-day testnet campaign is archived after demotion, and its
 historical Phase 3 strict streak remains 0/14.
-Protocol v7 is the only newly opened research route: its independent official
-Cboe data mechanisms, provider URLs, parameters, costs, reserve, and future
-blind are frozen before response access. The current state is pre-access only.
+Protocol v7 is the only newly opened research route. The fail-closed provider
+probe wrote no snapshot and opened no PnL; its schema-only correction is locked
+before retry. The current state is provider qualification, not strategy review.
 
 Immediate focus:
 
