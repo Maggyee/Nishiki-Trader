@@ -70,6 +70,10 @@ loop.
 - `binance_mechanism_signals.py` — the two Research Protocol v5 Binance-native
   curve-carry and BVOL-relief generators. The CLI can write both sleeves or
   isolate one `--asset` in its own SignalStore for independent Nautilus runs.
+- `cross_asset_volatility_signals.py` — the three Research Protocol v7 Cboe
+  VIX/OVX/GVZ relief generators. All use the same frozen five-observation
+  negative-change rule, emit only Spot long/flat state changes, and reject
+  runtime parameter changes.
 - `wall_clock_signal_replay.py` — testnet-canary helper that copies already
   reviewed historical `SignalEvent` rows, re-stamps `ts_event` into future
   wall-clock times, and writes them back to `SignalStore`. It preserves the
@@ -168,4 +172,16 @@ uv run python -m apps.strategies_freqtrade.research.binance_mechanism_signals \
   --start-date 2023-08-01 \
   --end-date 2023-12-31 \
   --signal-db data/research-v5/signals/bvol-BTCUSDT-2023-08_12.db
+```
+
+Research Protocol v7 uses an official Cboe snapshot transformed into a daily
+point-in-time CSV. Validate the frozen contract before any download, then run
+one identity at a time:
+
+```bash
+uv run python -m apps.ops.research_protocol_v7
+uv run python -m apps.strategies_freqtrade.research.cross_asset_volatility_signals \
+  --strategy equity_vol_relief \
+  --input-csv data/research-v7/factors/vix.csv \
+  --signal-store-path data/research-v7/signals/vix.db
 ```

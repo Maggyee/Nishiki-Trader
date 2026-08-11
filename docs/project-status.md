@@ -5,6 +5,7 @@
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
 - **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry and Protocol v2-v5 research identities are frozen. Protocol v5 curve carry and BVOL relief are rejected and the 2026-08..12 blind remains sealed. The provider/timer review is complete: v5 and completed v2 timers are `inactive/disabled`, v5 collector status is `archived`, and a four-day post-window audit found zero new invocations. The retained v5 tree is 13 snapshots / 13 Parquets with zero conflicts; v2 `COMPLETE`, ledger, deployment identity and all recorded checksums remain unchanged. Dashboard renders the archive as a valid terminal state with no retry or operations issue. Independent Protocol v6 remains `blocked_provider_qualification` on the official 12-row grid, with historical development closed.
   The human-reviewed `freqai_linear_v1 / linear-mom-train20240105` decision is now `demote @ paper_simulated` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. Its old testnet continuity evidence is archived and cannot authorize a restart. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
+  Research Protocol v7 is pre-registered on a clean local tree before any Cboe CSV body access. It locks three official cross-asset volatility-relief identities (VIX/OVX/GVZ), a one-opening 2020-2022 replication reserve, fixed costs/gates, and a 2026-09..2027-01 future blind. No result exists yet.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -147,6 +148,9 @@ from a pushed clean commit. Both assets failed the exact grid gate because all
 development closed. No factor, signal, return or PnL was opened. The
 `freqai_linear_v1` 14-day testnet campaign is archived after demotion, and its
 historical Phase 3 strict streak remains 0/14.
+Protocol v7 is the only newly opened research route: its independent official
+Cboe data mechanisms, provider URLs, parameters, costs, reserve, and future
+blind are frozen before response access. The current state is pre-access only.
 
 Immediate focus:
 
@@ -155,6 +159,7 @@ Immediate focus:
 3. Use `docs/decisions/009-agent-advice-audit.md` and `docs/decisions/012-phase5-readonly-dashboard.md` as the active agent/frontend boundaries. Agent/MCP work may write/replay/review `AgentAdvice`; dashboard work may read passive reports, observability textfiles, AgentAdvice, and `research.v5.collector_status.v1|v2` through `dashboard.snapshot.v1`. A valid v2 archive is terminal, not an operational fault. `TradingAgents/` is available as an ignored read-only upstream reference for future agent role/configuration ideas only; `docs/progress/tradingagents-reference-map.md` is the current safe adaptation map, and `apps.agents.role_profiles` is the first machine-readable AgentAdvice-only role seed. Neither path may write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or encode structured execution directives.
 4. ADR-008 §6.2 Phase 3b, §6.3 Phase 3c-a/b/c, §6.4 Phase 3d, §6.5 Phase 3e, §6.6 Phase 3f stability soak/canary, and the §8 promotion-review patch are all implemented and unit-tested. The `phase_3_not_ready` blocker now only hard-blocks `live_canary` / `live_normal`.
 5. Keep LLM agents and FreqAI out of the order path; `SignalEvent v1 -> NautilusTrader Strategy -> RiskEngine` remains the only bridge.
+6. Commit and push the Protocol v7 pre-access baseline, then open its Cboe provider qualification and 2020-2022 reserve exactly once. Do not inspect 2023+ PnL, tune the five-observation rule, change signs, or combine candidates by observed return.
 
 ## Next Steps
 
@@ -172,6 +177,7 @@ Immediate focus:
 12. Only after a future allowed testnet promotion, keep the `testnet_runner.py` startup guard + connection probe as the first line of defense: explicit `--allow-real-credentials`, clean git, source/model retro evidence, testnet multiplier cap, key-prefix-only audit, Ed25519-only credentials, and Binance Spot TESTNET-only adapter config. The probe injects credentials into the in-memory `TradingNodeConfig` only and never writes the full key/secret to `logs/runtime.log` or `connection_probe.json`.
 13. Do not collect additional testnet or paper evidence for the frozen `freqai_linear_v1` identity merely to improve its record. The v11 paper bundle's expectancy (+0.00491 USDT/trade, 53.6% win rate, -0.003878% max drawdown over 152 days) becomes negative under base/stress costs, contains incompatible historical shorts, and the parquet-backed canary fill set is only operational evidence.
 14. Decide SQLite -> Postgres / Redis Stream readiness only after backtest, paper, or testnet volume exposes an actual bottleneck.
+15. For Protocol v7, preserve the pre-access commit identity, collect each official Cboe CSV once into an immutable snapshot, and run duplicate Nautilus replays only on the locked 2020-2022 reserve. The 2026-09..2027-01 future blind must remain unopened.
 
 ## Blocked / Deferred
 

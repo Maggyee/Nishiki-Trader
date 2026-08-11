@@ -347,6 +347,7 @@ continuity evidence、可选 promotion review artifact、以及显式声明的�
 | `research_protocol_v2.py` | 校验独立机制预注册、证据分区和不可调参数 | 2 |
 | `research_protocol_v3.py` | 校验宏/原生机制预注册、证据分区和不可调参数 | 2 |
 | `research_protocol_v5.py` | 校验 Binance 原生双资产候选、分区、闸门和指纹 | 2 |
+| `research_protocol_v7.py` | 校验 Cboe VIX/OVX/GVZ 候选、分区、闸门和不可调参数 | 2 |
 | `research_v2_snapshot.py` | 保存无凭证 provider qualification 不可变快照 | 2 |
 | `research_v2_factors.py` | 把已验证 basis 快照转换为无收益 point-in-time 因子 | 2 |
 | `research_v2_snapshot_review.py` | 审计期权/basis 多日配对、缺口、重复和篡改 | 2 |
@@ -354,6 +355,7 @@ continuity evidence、可选 promotion review artifact、以及显式声明的�
 | `research_v5_snapshot.py` | 下载/校验不可变 curve/BVOL 归档、checksum、审计和 Parquet | 2 |
 | `research_v5_daily.py` | 从锁定干净 commit 执行四路只读日采集 | 2 |
 | `research_v5_review.py` | 汇总 v5 folds、成本、风险、benchmark 与固定结论 | 2 |
+| `research_v7_snapshot.py` | 保存并离线复验 Cboe 历史 CSV、生成 point-in-time 因子 | 2 |
 | `signal_replay.py` | 重放 SQLite 中的历史 signals 跑回测 | 1 |
 | `migrate_sqlite_to_pg.py` | Phase 2 数据迁移 | 2 |
 | `dashboard_snapshot.py` | Phase 4 只读 AgentAdvice / report snapshot | 4 |
