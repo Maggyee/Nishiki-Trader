@@ -2,7 +2,7 @@
 
 - **Frozen**: 2026-08-11, before reading the VIX9D or VVIX CSV body.
 - **Machine contract**: `docs/progress/phase-2-research-protocol-v9.json`
-- **Status**: pre-registered; provider qualification pending.
+- **Status**: development complete; both candidates rejected; confirmation sealed.
 - **Trading effect**: none.
 
 ## Why this batch is allowed
@@ -53,3 +53,12 @@ refreshing it.
 No credentials, SourcePolicy change, testnet restart, future-blind access, or
 live path is authorized. The pre-access contract and collector must be clean,
 committed, and pushed before either new CSV body is downloaded.
+
+## Development result
+
+Provider qualification passed with 756 VIX9D and 756 VVIX observations in the
+development reserve. Both candidates are cost-positive and reproducible, but
+both fail the frozen leave-best concentration gate. The curve rule also has
+only 12/36 positive months. Zero candidates pass, so 2023-2025 confirmation
+remains sealed and Protocol v9 stops. See
+`docs/retros/2026-08-11-research-v9-option-risk-development.md`.

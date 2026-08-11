@@ -5,7 +5,11 @@ import json
 
 import pytest
 
-from apps.ops.research_v9_review import _effective_bundle_blockers, _verified_gap_timestamps
+from apps.ops.research_v9_review import (
+    _confirmation_holdout_status,
+    _effective_bundle_blockers,
+    _verified_gap_timestamps,
+)
 
 
 def _audit() -> tuple[dict, dict, bytes]:
@@ -52,3 +56,8 @@ def test_effective_blockers_remove_only_exact_verified_row_mismatch() -> None:
         "invalid_fill_lineage=1"
     ]
     assert _effective_bundle_blockers(raw, verified_gap_count=29) == raw
+
+
+def test_confirmation_stays_sealed_without_development_passer() -> None:
+    assert _confirmation_holdout_status(0) == "sealed_not_opened_no_development_passer"
+    assert _confirmation_holdout_status(1) == "sealed_pending_committed_development_review"

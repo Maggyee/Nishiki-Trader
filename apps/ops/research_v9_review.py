@@ -77,6 +77,16 @@ def _effective_bundle_blockers(raw: list[str], *, verified_gap_count: int) -> li
     return [blocker for blocker in raw if blocker != explained]
 
 
+def _confirmation_holdout_status(passer_count: int) -> str:
+    if passer_count < 0:
+        raise ValueError("passer_count must be non-negative")
+    return (
+        "sealed_pending_committed_development_review"
+        if passer_count
+        else "sealed_not_opened_no_development_passer"
+    )
+
+
 def build_review(
     candidate_specs: list[tuple[str, Path]],
     *,
@@ -205,7 +215,7 @@ def build_review(
         "recommendation": "commit_development_results_before_confirmation_open"
         if passers
         else "stop_protocol_v9_no_confirmation_open",
-        "confirmation_holdout_status": "sealed_pending_committed_development_review",
+        "confirmation_holdout_status": _confirmation_holdout_status(len(passers)),
         "future_blind_status": "sealed_unopened",
         "boundaries": {
             "mutates_source_policy": False,
