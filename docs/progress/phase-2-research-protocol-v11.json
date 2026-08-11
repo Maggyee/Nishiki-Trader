@@ -1,0 +1,46 @@
+{
+  "schema_version": "research.protocol.v11",
+  "frozen_at": "2026-08-11T10:30:00Z",
+  "status": "preregistered_after_schema_before_factor_value_and_pnl_access",
+  "objective": "Test the unchanged three v10 mechanisms using finalized-ledger reconstruction semantics rather than unavailable provider vintage metadata.",
+  "relationship_to_v10": {
+    "v10_status": "closed_without_factor_value_or_pnl_access",
+    "rules_and_parameters_unchanged": true,
+    "raw_snapshots_reused_without_refresh": true,
+    "new_data_semantics": "daily ledger-derived observations are consumed at D+2 00:00 UTC; no provider status-time claim is made"
+  },
+  "boundaries": {
+    "development_reserve": {"start": "2020-01-01", "end": "2022-12-31", "strategy_specific_pnl_access_status": "unconsumed", "max_openings": 1},
+    "confirmation_holdout": {"start": "2023-01-01", "end": "2025-12-31", "strategy_specific_pnl_access_status": "sealed_until_development_pass", "max_openings": 1},
+    "final_future_blind": {"start": "2026-09-01", "end": "2027-01-31", "access_status": "not_started", "shared_v8_blind_remains_sealed": true}
+  },
+  "cost_scenarios": {
+    "gross": {"fee_bps_per_fill": 0.0, "slippage_bps_per_fill": 0.0},
+    "base": {"fee_bps_per_fill": 10.0, "slippage_bps_per_fill": 2.0},
+    "stress": {"fee_bps_per_fill": 10.0, "slippage_bps_per_fill": 5.0}
+  },
+  "shared_execution": {"venue": "BINANCE", "instrument": "BTCUSDT", "bar_interval": "1h", "account_type": "CASH", "oms_type": "NETTING", "starting_balance_usdt": 100000, "trade_size_btc": 0.001, "position_domain": ["long", "flat"], "fold_initial_state": "flat", "engine": "NautilusTrader"},
+  "point_in_time_contract": {
+    "observation_semantics": "canonical finalized public-ledger state or activity for UTC day D",
+    "decision_timestamp": "D+2 at 00:00:00 UTC",
+    "minimum_lag_hours": 24,
+    "forward_fill_forbidden": true,
+    "provider_vintage_claimed": false,
+    "methodology_risk": "current Coin Metrics transport may embody later implementation corrections; results are replication evidence only and cannot enter paper_shadow without forward immutable snapshots"
+  },
+  "gates": {
+    "development": {"base_net_pnl_gt": 0.0, "stress_net_pnl_gt": 0.0, "positive_calendar_years_at_least": 2, "calendar_years_total": 3, "positive_month_fraction_at_least": 0.5, "closed_positions_at_least": 30, "leave_best_position_base_net_pnl_gt": 0.0, "duplicate_replays_required": 2},
+    "multiple_testing": {"candidate_count_locked": 3, "parameter_grid_search_forbidden": true, "alternate_sign_forbidden": true, "pnl_selected_ensemble_forbidden": true, "failed_candidate_reparameterization_forbidden": true}
+  },
+  "candidates": [
+    {"key": "miner_hashrate_recovery", "source": "rule_miner_hashrate_recovery_v3", "model_version": "chainfinalized-hashrate7-30-positive-lag2d-v1", "metric": "HashRate", "parameters": {"short_days": 7, "long_days": 30, "ttl_seconds": 86400, "confidence": 0.75}},
+    {"key": "stablecoin_liquidity_expansion", "source": "rule_stablecoin_liquidity_v2", "model_version": "chainfinalized-usdt-usdc-splycur30d-positive-lag2d-v1", "metric": "SplyCur", "parameters": {"change_days": 30, "maximum_change": 0.0, "assets": ["usdt", "usdc"], "ttl_seconds": 86400, "confidence": 0.75}},
+    {"key": "btc_fee_demand", "source": "rule_btc_fee_demand_v2", "model_version": "chainfinalized-feetotntv7-30-positive-lag2d-v1", "metric": "FeeTotNtv", "parameters": {"short_days": 7, "long_days": 30, "ttl_seconds": 86400, "confidence": 0.75}}
+  ],
+  "snapshots": {
+    "hashrate": "sha256:7cc0ce6692dd24ac4bdb7213b4f10930de39491ff759dbe0f23ff5879d2c72ab",
+    "stablecoin_supply": "sha256:caf97d08177affc162d8bcf48d30b2071e16865836c032c8428108ad90a83815",
+    "btc_fees": "sha256:328a58c3fb7fde94bd4631a40ca98e454b0271f90af70926fc0d1c0d21b8ecdc"
+  },
+  "boundaries_effect": {"loads_credentials": false, "mutates_source_policy": false, "resumes_testnet": false, "touches_live_path": false, "opens_confirmation_holdout": false, "opens_future_blind": false}
+}

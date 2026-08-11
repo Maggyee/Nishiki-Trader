@@ -2,7 +2,8 @@
 
 - **Frozen**: 2026-08-11, before opening any Coin Metrics time-series body.
 - **Machine contract**: `docs/progress/phase-2-research-protocol-v10.json`
-- **Status**: pre-registered; provider qualification pending.
+- **Status**: provider qualification complete; all three routes blocked by the
+  frozen status-time gate; no factor value, signal, or PnL opened.
 - **Trading effect**: none.
 
 ## Locked batch
@@ -43,3 +44,10 @@ concentration, lineage, continuity, and duplicate-replay gates before its
 
 This protocol does not load credentials, change SourcePolicy, resume testnet,
 touch the live path, or alter the confirmed GVZ paper-shadow identity.
+
+## Qualification result
+
+All three exact requests returned complete coverage, but none of the 4,628
+rows contained provider status-time metadata. V10 therefore closes without a
+historical test. This is a data-version failure, not a strategy rejection.
+Machine evidence is in `phase-2-research-v10-data-sources.json`.

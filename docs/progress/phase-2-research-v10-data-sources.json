@@ -1,0 +1,32 @@
+{
+  "schema_version": "research.data_sources.v10",
+  "status": "qualification_complete_all_routes_blocked_missing_status_time",
+  "protocol_commit": "4b68e64",
+  "values_reported": false,
+  "signals_generated": false,
+  "pnl_opened": false,
+  "snapshots": {
+    "hashrate": {
+      "path": "data/research-v10/raw/hashrate-20260811T102410Z-7cc0ce6692dd.json",
+      "snapshot_sha256": "sha256:7cc0ce6692dd24ac4bdb7213b4f10930de39491ff759dbe0f23ff5879d2c72ab",
+      "row_count": 1157,
+      "status_time_row_count": 0,
+      "classification": "blocked_missing_status_time"
+    },
+    "stablecoin_supply": {
+      "path": "data/research-v10/raw/stablecoin_supply-20260811T102411Z-caf97d08177a.json",
+      "snapshot_sha256": "sha256:caf97d08177affc162d8bcf48d30b2071e16865836c032c8428108ad90a83815",
+      "row_count": 2314,
+      "status_time_row_count": 0,
+      "classification": "blocked_missing_status_time"
+    },
+    "btc_fees": {
+      "path": "data/research-v10/raw/btc_fees-20260811T102412Z-328a58c3fb7f.json",
+      "snapshot_sha256": "sha256:328a58c3fb7fde94bd4631a40ca98e454b0271f90af70926fc0d1c0d21b8ecdc",
+      "row_count": 1157,
+      "status_time_row_count": 0,
+      "classification": "blocked_missing_status_time"
+    }
+  },
+  "decision": "close_v10_without_factor_value_or_pnl_access"
+}
