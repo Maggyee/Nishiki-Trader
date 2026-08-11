@@ -2,7 +2,7 @@
 
 - **Frozen**: 2026-08-11, after v10 schema qualification but before factor
   values, signals, or PnL were opened.
-- **Status**: pre-registered; development unopened.
+- **Status**: pre-registered; signal implementation committed; development unopened.
 - **Trading effect**: none.
 
 V10 proved that all three Community API routes have complete 2019-11 through
