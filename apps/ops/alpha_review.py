@@ -30,6 +30,8 @@ ELIGIBLE_SOURCES = frozenset(
         "rule_binance_curve_carry_v1",
         "rule_breakout_v1",
         "rule_dual_momentum_v1",
+        "rule_energy_vol_relief_v1",
+        "rule_equity_vol_relief_v3",
         "rule_flow_exhaustion_v1",
         "rule_funding_crowding_rotation_v1",
         "rule_mean_reversion_v1",
@@ -40,6 +42,7 @@ ELIGIBLE_SOURCES = frozenset(
         "rule_trend_regime_v1",
         "rule_vol_squeeze_v1",
         "rule_volume_breakout_v1",
+        "rule_gold_vol_relief_v1",
         "rule_xs_momentum_rotation_v1",
     }
 )
@@ -135,12 +138,7 @@ def build_alpha_review(
             recommendation = "demote_to_paper_simulated_recommended"
         elif passed:
             recommendation = "eligible_for_paper_shadow_review"
-        elif (
-            is_research_candidate
-            and base_net > 0.0
-            and stress_net > 0.0
-            and positions < 30
-        ):
+        elif is_research_candidate and base_net > 0.0 and stress_net > 0.0 and positions < 30:
             recommendation = "insufficient_evidence"
         else:
             recommendation = "stop_before_testnet_resume"
@@ -279,9 +277,7 @@ def _analyze_bundle(
     fill_mask = (fill_ts >= start_ns) & (fill_ts < end_exclusive_ns)
     fills_window = fills.loc[fill_mask].copy()
     fills_window["_ts"] = fill_ts.loc[fill_mask].astype("int64")
-    fills_window["_notional"] = (
-        fill_qty.loc[fill_mask].abs() * fill_price.loc[fill_mask].abs()
-    )
+    fills_window["_notional"] = fill_qty.loc[fill_mask].abs() * fill_price.loc[fill_mask].abs()
     fills_window["_commission"] = fill_commission.loc[fill_mask]
     if (fills_window["_notional"] <= 0.0).any():
         blockers.append("non_positive_fill_notional")
@@ -312,9 +308,7 @@ def _analyze_bundle(
             str(position["opening_order_id"]),
             str(position["closing_order_id"]),
         }
-        position_fills = fills_for_positions.loc[
-            fills_for_positions["_order_id"].isin(order_ids)
-        ]
+        position_fills = fills_for_positions.loc[fills_for_positions["_order_id"].isin(order_ids)]
         if position_fills.empty:
             blockers.append(f"position_without_fills:{position['_position_id']}")
             continue
@@ -324,9 +318,7 @@ def _analyze_bundle(
             - float(position_fills["_notional"].sum()) * 12.0 / 10_000.0
         )
     best_position_base_net = max(position_base_net) if position_base_net else 0.0
-    base_net_without_best_position = (
-        float(sum(position_base_net)) - best_position_base_net
-    )
+    base_net_without_best_position = float(sum(position_base_net)) - best_position_base_net
     short_positions = int(
         positions_window.get("side", pd.Series(dtype="string"))
         .astype(str)
@@ -338,9 +330,7 @@ def _analyze_bundle(
     lineage_ids = set(lineage.get("signal_id", pd.Series(dtype="string")).astype(str))
     fill_ids = fills_window.get("signal_id", pd.Series(dtype="string")).astype(str)
     nonblank_fill_ids = fill_ids.loc[fill_ids.str.len() > 0]
-    invalid_fill_lineage = int(
-        sum(signal_id not in lineage_ids for signal_id in nonblank_fill_ids)
-    )
+    invalid_fill_lineage = int(sum(signal_id not in lineage_ids for signal_id in nonblank_fill_ids))
     blank_fill_mask = fill_ids.str.len() == 0
     system_exit_fills = int(blank_fill_mask.sum())
     if system_exit_fills:
@@ -496,8 +486,7 @@ def _buy_and_hold_benchmark(
         month_start = pd.Timestamp(f"{month}-01", tz="UTC")
         month_end = month_start + pd.offsets.MonthBegin(1)
         month_frame = frame.loc[
-            (frame["ts"] >= int(month_start.value))
-            & (frame["ts"] < int(month_end.value))
+            (frame["ts"] >= int(month_start.value)) & (frame["ts"] < int(month_end.value))
         ]
         month_close = float(month_frame["close"].iloc[-1])
         pnl = trade_size * (month_close - previous)
@@ -573,7 +562,12 @@ def _blind_window(start: str, end: str) -> tuple[int, int, list[str]]:
     end_exclusive = end_date + pd.Timedelta(days=1)
     if start_ts.day != 1 or end_date != (end_date + pd.offsets.MonthEnd(0)).normalize():
         raise ValueError("blind window must cover complete calendar months")
-    months = [str(period) for period in pd.period_range(start_ts.tz_localize(None), end_date.tz_localize(None), freq="M")]
+    months = [
+        str(period)
+        for period in pd.period_range(
+            start_ts.tz_localize(None), end_date.tz_localize(None), freq="M"
+        )
+    ]
     if len(months) != 5:
         raise ValueError(f"blind window must contain exactly 5 months, got {len(months)}")
     return int(start_ts.value), int(end_exclusive.value), months
@@ -647,9 +641,7 @@ def render_markdown(report: dict[str, Any]) -> str:
         base_without_best = candidate.get("base_net_without_best_position", 0.0)
         stress = candidate["scenario_metrics"]["stress"]["net_pnl"]
         positive = sum(
-            1
-            for month in candidate["monthly_metrics"]
-            if month["scenarios"]["base"]["net_pnl"] > 0
+            1 for month in candidate["monthly_metrics"] if month["scenarios"]["base"]["net_pnl"] > 0
         )
         lines.append(
             f"| `{candidate['label']}` | `{candidate['source']} / {candidate['model_version']}` "
