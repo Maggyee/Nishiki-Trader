@@ -1,0 +1,80 @@
+{
+  "schema_version": "research.data_sources.v9",
+  "locked_at": "2026-08-11T09:14:46Z",
+  "status": "locked_after_qualification_before_strategy_value_and_pnl_access",
+  "provider": "Cboe Global Markets official historical index data",
+  "authentication": "none",
+  "documentation_url": "https://www.cboe.com/tradable_products/vix/vix_historical_data",
+  "protocol_sha256": "sha256:4227abeac63c03dedd5e72981d0498105c6c9ed23011acbdf2ede61e1a46c3f0",
+  "snapshots": {
+    "vix9d": {
+      "path": "data/research-v9/raw/vix9d-20260811T091443Z-81e1df251f4a.json",
+      "snapshot_sha256": "sha256:81e1df251f4a4ff7e4e1ccf1e7413a3f1edf11fec5891b94712f7df8dc808e72",
+      "payload_sha256": "sha256:f8b5fb18fb58eca3a376759b61fb7923ab555abd77775ed96ab75dd51289181a",
+      "vintage_id": "cboe-vix9d:2026-08-11T09:14:43.574416+00:00:81e1df251f4a",
+      "columns": ["DATE", "OPEN", "HIGH", "LOW", "CLOSE"],
+      "value_column": "CLOSE",
+      "first_date": "2011-01-04",
+      "last_date": "2026-08-10",
+      "development_row_count": 756
+    },
+    "vvix": {
+      "path": "data/research-v9/raw/vvix-20260811T091445Z-155f8576a077.json",
+      "snapshot_sha256": "sha256:155f8576a077bb7092ae1f2609a794754f77b1b5022bb330962688724a3629fb",
+      "payload_sha256": "sha256:bdfdb6c57993ed7b8c6daebd07a3a4473ad93b02d7a442a7c79b65f5df97eb33",
+      "vintage_id": "cboe-vvix:2026-08-11T09:14:45.546258+00:00:155f8576a077",
+      "columns": ["DATE", "VVIX"],
+      "value_column": "VVIX",
+      "first_date": "2006-03-06",
+      "last_date": "2026-08-10",
+      "development_row_count": 756
+    },
+    "vix": {
+      "path": "data/research-v7/raw/vix-20260811T075050Z-b2cffe2c74b4.json",
+      "snapshot_sha256": "sha256:b2cffe2c74b4b03cab1cf47759a4be741af17cd87853f1817ba03c6aea30d368",
+      "payload_sha256": "sha256:daa276a6ff0dda369e03d206160c92defd8003328da70d6d59ccc748e7b880a4",
+      "vintage_id": "cboe-vix:2026-08-11T07:50:50.862380+00:00:b2cffe2c74b4",
+      "columns": ["DATE", "OPEN", "HIGH", "LOW", "CLOSE"],
+      "value_column": "CLOSE",
+      "refresh_forbidden": true
+    }
+  },
+  "point_in_time": {
+    "availability": "next UTC midnight after official DATE",
+    "curve_alignment": "same DATE inner join; no value or calendar forward fill",
+    "missing_session_state": "carry existing desired state until next valid observation",
+    "lineage": "every SignalEvent includes relevant snapshot hashes and vintage ids"
+  },
+  "execution": {
+    "development": {
+      "catalog_path": "data/research-v7/catalog",
+      "bar_type": "BTCUSDT.BINANCE-1-HOUR-LAST-EXTERNAL",
+      "official_bar_rows": 26274,
+      "expected_clock_rows": 26304,
+      "verified_exchange_no_kline_rows": 30,
+      "verified_exchange_no_kline_windows": 14,
+      "official_archive_checksums": "36_of_36_match",
+      "downtime_results_path": "docs/progress/phase-2-research-v7-downtime-sensitivity-results.json",
+      "downtime_results_sha256": "sha256:3f6318e1275a43bf2eb4fe24aa2093cc7a27193909821202c209945fe4f32f3f",
+      "gap_detail_path": "data/research-v7-downtime-sensitivity/build-report.json",
+      "gap_detail_sha256": "sha256:fa069d41a68d264484ea737b4d000f2485054f3a582aa25caacc6a4c1739033e",
+      "synthetic_bars_forbidden": true,
+      "orders_or_fills_in_verified_windows_forbidden": true
+    },
+    "confirmation": {
+      "catalog_path": "data/research-v8/catalog",
+      "bar_type": "BTCUSDT.BINANCE-1-HOUR-LAST-EXTERNAL",
+      "access_status": "sealed_until_development_pass"
+    }
+  },
+  "boundaries": {
+    "refresh_snapshots": false,
+    "forward_fill": false,
+    "synthetic_bars": false,
+    "credentials_loaded": false,
+    "source_policy_mutated": false,
+    "testnet_resumed": false,
+    "live_path_touched": false,
+    "future_blind_opened": false
+  }
+}
