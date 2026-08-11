@@ -1,0 +1,43 @@
+{
+  "schema_version": "research.data_sources.v8",
+  "frozen_at": "2026-08-11T08:22:50Z",
+  "status": "locked_before_2023_2025_execution_archive_access",
+  "signal_source": {
+    "provider": "Cboe Global Markets",
+    "index": "GVZ",
+    "snapshot_path": "data/research-v7/raw/gvz-20260811T075054Z-d18a093c7f2b.json",
+    "snapshot_sha256": "sha256:d18a093c7f2b00bb4ed08d2c7e7970dde06a185b47df4e1344a2d6b5830491c1",
+    "vintage_id": "cboe-gvz:2026-08-11T07:50:54.528744+00:00:d18a093c7f2b",
+    "reuse_reason": "exact frozen v7 snapshot; no provider refresh or revised values allowed",
+    "factor_window": {"warmup_start": "2022-11-01", "end": "2025-12-31"},
+    "available_at": "next UTC midnight after official DATE",
+    "forward_fill": false
+  },
+  "execution_source": {
+    "provider": "Binance Public Data",
+    "host": "data.binance.vision",
+    "archive_template": "https://data.binance.vision/data/spot/monthly/klines/BTCUSDT/1h/BTCUSDT-1h-{YYYY-MM}.zip",
+    "checksum_suffix": ".CHECKSUM",
+    "months": {"start": "2023-01", "end": "2025-12", "count": 36},
+    "rest_gap_verification": {
+      "host": "api.binance.com",
+      "endpoint": "/api/v3/klines",
+      "symbol": "BTCUSDT",
+      "interval": "1h",
+      "exact_missing_window_only": true
+    }
+  },
+  "forbidden": [
+    "alternate_execution_provider_after_pnl",
+    "synthetic_ohlcv",
+    "interpolation",
+    "provider_refresh_for_gvz",
+    "2026_09_to_2027_01_access"
+  ],
+  "boundaries": {
+    "credentials_loaded": false,
+    "source_policy_mutated": false,
+    "testnet_resumed": false,
+    "live_path_touched": false
+  }
+}
