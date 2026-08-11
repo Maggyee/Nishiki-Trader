@@ -35,6 +35,23 @@ def _event_timestamps(bundle: Path) -> set[int]:
     return timestamps
 
 
+def _effective_bundle_blockers(
+    raw_blockers: list[str],
+    execution_audit: dict[str, Any],
+) -> list[str]:
+    """Remove only the row blocker explained by the frozen session-aware audit."""
+    blockers = list(raw_blockers)
+    if execution_audit.get("passed") is not True:
+        return blockers
+    official = int(execution_audit["official_bar_rows"])
+    expected = int(execution_audit["expected_clock_rows"])
+    verified = int(execution_audit["verified_no_kline_rows"])
+    if official + verified != expected:
+        raise ValueError("Protocol v8 execution audit row accounting drifted")
+    explained = f"catalog_rows={official}!=expected={expected}"
+    return [blocker for blocker in blockers if blocker != explained]
+
+
 def build_review(bundle_paths: list[Path], execution_audit: dict[str, Any]) -> dict[str, Any]:
     """Build and classify the one fixed v8 confirmation candidate."""
     contract = load_and_validate()
@@ -86,6 +103,11 @@ def build_review(bundle_paths: list[Path], execution_audit: dict[str, Any]) -> d
             timestamp for path in bundle_paths for timestamp in _event_timestamps(path)
         )
     )
+    raw_bundle_blockers = list(primary.get("blockers", []))
+    effective_bundle_blockers = _effective_bundle_blockers(
+        raw_bundle_blockers,
+        execution_audit,
+    )
     positive_years = sum(value > 0.0 for value in yearly.values())
     gates = {
         "base_net_positive": base_net > 0.0,
@@ -119,7 +141,7 @@ def build_review(bundle_paths: list[Path], execution_audit: dict[str, Any]) -> d
         and reproducible
         and gates["execution_audit_passed"]
         and not marker_hits
-        and not primary.get("blockers")
+        and not effective_bundle_blockers
     )
     if performance_pass and evidence_pass:
         classification = "paper_shadow_review_eligible"
@@ -137,6 +159,8 @@ def build_review(bundle_paths: list[Path], execution_audit: dict[str, Any]) -> d
         "yearly_base_net_pnl": yearly,
         "monthly_metrics": monthly,
         "gates": gates,
+        "raw_bundle_blockers": raw_bundle_blockers,
+        "effective_bundle_blockers": effective_bundle_blockers,
         "performance_pass": performance_pass,
         "evidence_pass": evidence_pass,
         "classification": classification,
