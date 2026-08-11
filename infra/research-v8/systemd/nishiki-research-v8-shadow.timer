@@ -1,0 +1,12 @@
+[Unit]
+Description=Collect Nishiki Protocol v8 paper-shadow evidence on weekdays
+
+[Timer]
+OnCalendar=Mon..Fri *-*-* 02:30:00 UTC
+Persistent=true
+RandomizedDelaySec=5min
+AccuracySec=1min
+Unit=nishiki-research-v8-shadow.service
+
+[Install]
+WantedBy=timers.target

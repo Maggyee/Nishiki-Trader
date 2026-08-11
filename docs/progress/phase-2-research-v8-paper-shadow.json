@@ -1,0 +1,52 @@
+{
+  "schema_version": "research.v8.paper_shadow_contract.v1",
+  "status": "prospectively_locked",
+  "locked_at": "2026-08-11T08:45:47Z",
+  "forward_started_at": "2026-08-11T08:32:29Z",
+  "candidate": {
+    "source": "rule_gold_vol_relief_v1",
+    "model_version": "cboe-gvz5obs-negative-1d-v1",
+    "strategy": "gold_vol_relief",
+    "symbol": "BTCUSDT",
+    "venue": "BINANCE"
+  },
+  "policy": {
+    "stage": "paper_shadow",
+    "dry_run": true,
+    "position_pct_multiplier": 0.2,
+    "min_confidence_override": null
+  },
+  "collection": {
+    "schedule": "weekdays after the US close",
+    "gvz_url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/GVZ_History.csv",
+    "btc_url": "https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=168",
+    "gvz_max_age_calendar_days": 4,
+    "btc_interval_seconds": 3600,
+    "btc_closed_bar_lookback": 167,
+    "historical_revision_policy": "fail_closed_and_require_human_review",
+    "missing_policy": "no_synthetic_rows_and_no_forward_fill"
+  },
+  "evidence_gate": {
+    "qualified_distinct_utc_collection_days": 7,
+    "new_forward_signal_events": 50,
+    "operator": "or",
+    "qualified_day_requires": [
+      "official_gvz_snapshot_verified",
+      "gvz_freshness_within_limit",
+      "official_btc_closed_hourly_bars_contiguous",
+      "no_historical_revision",
+      "clean_git_commit"
+    ],
+    "baseline_rule": "events before forward_started_at seed state but never count as forward signals",
+    "same_day_rule": "multiple successful attempts count as one qualified UTC day",
+    "promotion_rule": "threshold creates review eligibility only; paper_simulated requires a separate human decision"
+  },
+  "boundaries": {
+    "credentials_loaded": false,
+    "orders_allowed": false,
+    "fills_allowed": false,
+    "testnet_allowed": false,
+    "live_allowed": false,
+    "future_blind_opened": false
+  }
+}
