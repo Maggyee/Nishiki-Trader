@@ -1,11 +1,11 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-07-29 (`freqai_linear_v1` formally demoted to `paper_simulated`)
+- **Last updated**: 2026-08-11 (Protocol v7 replication complete; all candidates rejected)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
 - **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry and Protocol v2-v5 research identities are frozen. Protocol v5 curve carry and BVOL relief are rejected and the 2026-08..12 blind remains sealed. The provider/timer review is complete: v5 and completed v2 timers are `inactive/disabled`, v5 collector status is `archived`, and a four-day post-window audit found zero new invocations. The retained v5 tree is 13 snapshots / 13 Parquets with zero conflicts; v2 `COMPLETE`, ledger, deployment identity and all recorded checksums remain unchanged. Dashboard renders the archive as a valid terminal state with no retry or operations issue. Independent Protocol v6 remains `blocked_provider_qualification` on the official 12-row grid, with historical development closed.
   The human-reviewed `freqai_linear_v1 / linear-mom-train20240105` decision is now `demote @ paper_simulated` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. Its old testnet continuity evidence is archived and cannot authorize a restart. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
-  Research Protocol v7 was pre-registered and pushed before Cboe body access. All three official snapshots and session-aware point-in-time factors qualify; 171/175/162 long-flat state-change signals are isolated by candidate. The official BTCUSDT 1h reserve catalog contains 26,274 bars but fails strict continuity by 30 missing hours, so the v7 review hard-blocks promotion even if diagnostic PnL is positive. No PnL result exists yet.
+  Research Protocol v7 is complete. All three official Cboe snapshots, point-in-time factors, isolated signals, and duplicate Nautilus replays qualify for reproducibility. VIX and OVX relief fail frozen performance gates. GVZ relief passes every numeric gate but is still rejected because the official BTCUSDT 1h reserve catalog has 26,274 / 26,304 bars and the 30 missing hours trigger the pre-registered execution-data hard blocker. Selected candidates remain zero, `stop_before_testnet_resume` remains in force, and the 2026-09..2027-01 future blind remains sealed.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -33,6 +33,9 @@ Detailed history archived so far:
 - `docs/progress/phase-2-research-protocol-v6.md` — independent Binance-native
   availability discovery, book-depth mechanism review and one fixed pre-data
   identity; no archive body or PnL access yet.
+- `docs/progress/phase-2-research-protocol-v7.md` — completed Cboe cross-asset
+  volatility replication batch; all three candidates rejected and the future
+  blind remains sealed.
 - `docs/progress/phase-3-testnet-canary-evidence.md` — archived Phase 3 testnet canary evidence ledger.
 - `docs/progress/phase-3-testnet-continuity-plan.md` — archived 14-day testnet continuity procedure and review command.
 - `docs/progress/phase-5-dashboard-history.md` — completed read-only dashboard, AgentAdvice input, passive Phase 6 gate, and dashboard hardening history.
@@ -148,9 +151,12 @@ from a pushed clean commit. Both assets failed the exact grid gate because all
 development closed. No factor, signal, return or PnL was opened. The
 `freqai_linear_v1` 14-day testnet campaign is archived after demotion, and its
 historical Phase 3 strict streak remains 0/14.
-Protocol v7 is the only newly opened research route. Its official Cboe
-snapshots and point-in-time factors qualify; no signal or PnL has been written.
-The current state is pre-signal pipeline correction, not strategy review.
+Protocol v7 is complete. The VIX/OVX/GVZ routes produced 171/175/162 isolated
+signals and reproducible duplicate replays. VIX fails concentration, OVX fails
+cost-adjusted return, monthly breadth, and concentration, and GVZ passes all
+numeric gates but is rejected by the frozen execution-catalog continuity gate:
+30 of 26,304 expected BTCUSDT hours are missing. No data was filled, the future
+blind remains sealed, and no candidate advances to `paper_shadow` or testnet.
 
 Immediate focus:
 
@@ -159,7 +165,7 @@ Immediate focus:
 3. Use `docs/decisions/009-agent-advice-audit.md` and `docs/decisions/012-phase5-readonly-dashboard.md` as the active agent/frontend boundaries. Agent/MCP work may write/replay/review `AgentAdvice`; dashboard work may read passive reports, observability textfiles, AgentAdvice, and `research.v5.collector_status.v1|v2` through `dashboard.snapshot.v1`. A valid v2 archive is terminal, not an operational fault. `TradingAgents/` is available as an ignored read-only upstream reference for future agent role/configuration ideas only; `docs/progress/tradingagents-reference-map.md` is the current safe adaptation map, and `apps.agents.role_profiles` is the first machine-readable AgentAdvice-only role seed. Neither path may write `SignalEvent`, mutate `SourcePolicy`, call exchange APIs, or encode structured execution directives.
 4. ADR-008 §6.2 Phase 3b, §6.3 Phase 3c-a/b/c, §6.4 Phase 3d, §6.5 Phase 3e, §6.6 Phase 3f stability soak/canary, and the §8 promotion-review patch are all implemented and unit-tested. The `phase_3_not_ready` blocker now only hard-blocks `live_canary` / `live_normal`.
 5. Keep LLM agents and FreqAI out of the order path; `SignalEvent v1 -> NautilusTrader Strategy -> RiskEngine` remains the only bridge.
-6. Commit and push the Protocol v7 pre-access baseline, then open its Cboe provider qualification and 2020-2022 reserve exactly once. Do not inspect 2023+ PnL, tune the five-observation rule, change signs, or combine candidates by observed return.
+6. Retain the completed Protocol v7 evidence immutably. Do not fill its 30 missing execution hours, change interval, tune the five-observation rule, rerun under a replacement identity, or open the 2026-09..2027-01 future blind to rescue an observed result.
 
 ## Next Steps
 
@@ -168,7 +174,7 @@ Immediate focus:
 3. Preserve the blocked Protocol v6 qualification evidence and stop. Do not delete the ±0.20 rows, reinterpret the grid, change the registered band/tolerance, retry Binance, or implement/open historical development, factors, signals or PnL under this identity.
 4. Preserve the qualified v3 hashrate snapshot and the v4 timeout evidence. Do not retry macro providers automatically; any new route requires independent evidence and explicit review before a new protocol is registered.
 5. Archive and retain the completed Protocol v2 7/7 option/basis evidence. Do not rebuild or restart the completed collector, open basis historical ZIPs, or invent option-method substitutes.
-6. Open the 2020-2022 replication reserve exactly once only after a protocol's pipelines pass qualification on a clean commit; evaluate that protocol's locked candidates with the Nautilus/cost/gate protocol and no result-driven changes.
+6. Preserve the completed Protocol v7 result with zero selected candidates. Its positive GVZ diagnostic cannot advance because the pre-registered catalog continuity gate failed; keep the future blind sealed and do not resume testnet.
 7. Keep the signed `freqai_linear_v1` policy at `paper_simulated` with multiplier `0.1`; testnet/live remain blocked. Do not tune or revive this frozen model identity. Only a new candidate that later passes both historical replication and its separately frozen future blind may enter `paper_shadow` review.
 8. Retain the 2026-07-29 demotion review and its linked testnet/policy fingerprints as the current audit chain; no follow-up runtime is required.
 9. Continue Phase 5 with only read-only dashboard improvements fed by `dashboard.snapshot.v1`; keep the frontend free of API routes and mutation controls until a separate ADR opens a specific workflow.
@@ -177,7 +183,7 @@ Immediate focus:
 12. Only after a future allowed testnet promotion, keep the `testnet_runner.py` startup guard + connection probe as the first line of defense: explicit `--allow-real-credentials`, clean git, source/model retro evidence, testnet multiplier cap, key-prefix-only audit, Ed25519-only credentials, and Binance Spot TESTNET-only adapter config. The probe injects credentials into the in-memory `TradingNodeConfig` only and never writes the full key/secret to `logs/runtime.log` or `connection_probe.json`.
 13. Do not collect additional testnet or paper evidence for the frozen `freqai_linear_v1` identity merely to improve its record. The v11 paper bundle's expectancy (+0.00491 USDT/trade, 53.6% win rate, -0.003878% max drawdown over 152 days) becomes negative under base/stress costs, contains incompatible historical shorts, and the parquet-backed canary fill set is only operational evidence.
 14. Decide SQLite -> Postgres / Redis Stream readiness only after backtest, paper, or testnet volume exposes an actual bottleneck.
-15. For Protocol v7, preserve the pre-access commit identity, collect each official Cboe CSV once into an immutable snapshot, and run duplicate Nautilus replays only on the locked 2020-2022 reserve. The 2026-09..2027-01 future blind must remain unopened.
+15. Any future alpha batch must use genuinely independent evidence and a new protocol frozen before data access; it may not reuse Protocol v7 to tune around its observed results.
 
 ## Blocked / Deferred
 
@@ -198,11 +204,31 @@ Immediate focus:
   grid on additional ±0.20 rows. Row deletion, grid reinterpretation, band or
   tolerance changes, another provider request, factor/signal implementation
   and PnL access are prohibited under this identity.
+- No Protocol v7 reopen. Filling or interpolating the 30 missing BTCUSDT hours,
+  changing the execution interval, retuning after PnL, advancing GVZ, or opening
+  the 2026-09..2027-01 future blind is prohibited under this identity.
 - No n8n workflows until a concrete Phase 4 orchestration need appears.
 - No autonomous Agent trading. Agents may only research, review, summarize, and suggest.
 - No edits to `freqtrade/` or `nautilus_trader/` unless explicitly requested.
 
 ## Latest Verification
+
+On 2026-08-11, after the Protocol v7 replication review:
+
+- Official Cboe VIX/OVX/GVZ reserve snapshots qualified with 761/757/757 rows
+  and produced 171/175/162 isolated long/flat signals.
+- The BTCUSDT 1h reserve catalog has 26,274 / 26,304 expected bars, zero
+  duplicates, and 30 missing intervals across 14 irregular steps. No fill or
+  interpolation was applied.
+- Six clean-commit Nautilus backtests completed; both runs for every candidate
+  compare as `MATCH`. VIX base/stress PnL is +9.538828/+8.041265 USDT but fails
+  leave-best concentration; OVX is -2.443604/-3.986020 and fails multiple
+  gates; GVZ is +18.871408/+17.434647 and passes numeric gates but is rejected
+  by the catalog hard blocker.
+- Selected candidates are zero, recommendation is `stop_before_testnet_resume`,
+  and no exchange credential, paper/testnet runtime, or trading policy was
+  touched.
+- The full Python suite reports 992 passed / 12 Postgres-dependent skips.
 
 On 2026-07-29, after the human-approved `freqai_linear_v1` demotion:
 

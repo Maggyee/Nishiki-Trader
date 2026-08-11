@@ -3,7 +3,7 @@
 - **Frozen**: 2026-08-11, before reading any Cboe historical CSV body.
 - **Machine contract**: `docs/progress/phase-2-research-protocol-v7.json`
 - **Provider contract**: `docs/progress/phase-2-research-v7-data-sources.json`
-- **Status**: pre-registered; no response body, factor, signal, return, or PnL opened.
+- **Status**: replication complete; all three candidates rejected; future blind sealed.
 - **Trading effect**: none.
 
 ## Why this protocol is allowed
@@ -54,3 +54,12 @@ vintage and snapshot fingerprint in every event.
 This protocol cannot load credentials, modify `SourcePolicy`, restart testnet,
 or touch live trading. The pre-access baseline must be committed and pushed
 before any CSV body is downloaded.
+
+## Replication result
+
+The one allowed 2020-2022 opening is complete. VIX is cost-positive but fails
+leave-best concentration; OVX is cost-negative; GVZ passes the numeric gates
+but is rejected by the pre-registered execution-catalog blocker because the
+official BTCUSDT 1h archive has 30 missing intervals. All duplicate replays
+match. No candidate advances and the 2026-09..2027-01 blind remains sealed.
+See `docs/retros/2026-08-11-research-v7-replication-review.md`.

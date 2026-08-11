@@ -1,0 +1,87 @@
+{
+  "schema_version": "research.v7.replication_results.v1",
+  "reviewed_at": "2026-08-11T08:00:00Z",
+  "protocol_sha256": "sha256:61e6ed2926efc6cee5c1d2b2404faa1cdb5c8aee787534e36504fae763fb7dbe",
+  "pre_access_commit": "799fd99",
+  "backtest_commit": "d91ac5241f6207a94e466eeda47d69424e093892",
+  "review_artifact_sha256": "sha256:4d3d4542fc2d67c3c26586643b38ac61819db059617ef67bbb31a5c29f45f2d3",
+  "catalog_audit_sha256": "sha256:7968001ffb16209852a2380274b4a9d42cfe97fbd0dcc317ea75fe993b3c7527",
+  "catalog": {
+    "bar_type": "BTCUSDT.BINANCE-1-HOUR-LAST-EXTERNAL",
+    "start": "2020-01-01",
+    "end": "2022-12-31",
+    "rows": 26274,
+    "expected_rows": 26304,
+    "missing_intervals": 30,
+    "irregular_steps": 14,
+    "passed": false
+  },
+  "candidates": [
+    {
+      "key": "equity_vol_relief",
+      "source": "rule_equity_vol_relief_v3",
+      "model_version": "cboe-vix5obs-negative-1d-v1",
+      "signals": 171,
+      "closed_positions": 86,
+      "gross_net_pnl": 15.52908,
+      "base_net_pnl": 9.538828,
+      "stress_net_pnl": 8.041265,
+      "positive_years": 2,
+      "positive_months": 21,
+      "leave_best_base_net_pnl": -1.37344,
+      "reproducible": true,
+      "classification": "reject",
+      "blockers": [
+        "catalog_rows=26274!=expected=26304",
+        "execution_catalog_incomplete",
+        "leave_best_position_base_net_pnl_not_positive"
+      ]
+    },
+    {
+      "key": "energy_vol_relief",
+      "source": "rule_energy_vol_relief_v1",
+      "model_version": "cboe-ovx5obs-negative-1d-v1",
+      "signals": 175,
+      "closed_positions": 88,
+      "gross_net_pnl": 3.72606,
+      "base_net_pnl": -2.443604,
+      "stress_net_pnl": -3.98602,
+      "positive_years": 2,
+      "positive_months": 15,
+      "leave_best_base_net_pnl": -13.355872,
+      "reproducible": true,
+      "classification": "reject",
+      "blockers": [
+        "base_net_pnl_not_positive",
+        "stress_net_pnl_not_positive",
+        "positive_months_below_18",
+        "leave_best_position_base_net_pnl_not_positive",
+        "catalog_rows=26274!=expected=26304",
+        "execution_catalog_incomplete"
+      ]
+    },
+    {
+      "key": "gold_vol_relief",
+      "source": "rule_gold_vol_relief_v1",
+      "model_version": "cboe-gvz5obs-negative-1d-v1",
+      "signals": 162,
+      "closed_positions": 81,
+      "gross_net_pnl": 24.61845,
+      "base_net_pnl": 18.871408,
+      "stress_net_pnl": 17.434647,
+      "positive_years": 2,
+      "positive_months": 24,
+      "leave_best_base_net_pnl": 6.266502,
+      "reproducible": true,
+      "classification": "reject",
+      "blockers": [
+        "catalog_rows=26274!=expected=26304",
+        "execution_catalog_incomplete"
+      ]
+    }
+  ],
+  "selected_candidate_count": 0,
+  "recommendation": "stop_before_testnet_resume",
+  "future_blind_status": "sealed_unopened",
+  "trading_effect": "none"
+}
