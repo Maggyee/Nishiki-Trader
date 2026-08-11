@@ -63,3 +63,11 @@ but is rejected by the pre-registered execution-catalog blocker because the
 official BTCUSDT 1h archive has 30 missing intervals. All duplicate replays
 match. No candidate advances and the 2026-09..2027-01 blind remains sealed.
 See `docs/retros/2026-08-11-research-v7-replication-review.md`.
+
+An operator-requested post-hoc sensitivity later verified that all 36 official
+Binance monthly archives match their checksums and all 14 gap windows are also
+empty in the official REST response. A separate catalog with 30 zero-volume,
+previous-close downtime markers produced identical strategy results and no
+orders or fills on marker timestamps. This supports an exchange-downtime, not
+local-data-loss, diagnosis, but does not reopen or promote Protocol v7. See
+`docs/retros/2026-08-11-research-v7-downtime-sensitivity.md`.

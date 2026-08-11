@@ -357,6 +357,7 @@ continuity evidence、可选 promotion review artifact、以及显式声明的�
 | `research_v5_review.py` | 汇总 v5 folds、成本、风险、benchmark 与固定结论 | 2 |
 | `research_v7_snapshot.py` | 保存并离线复验 Cboe 历史 CSV、生成 point-in-time 因子 | 2 |
 | `research_v7_review.py` | 汇总 v7 重复回放、年度/月度成本门槛和执行数据阻塞项 | 2 |
+| `research_v7_downtime_sensitivity.py` | 生成隔离的零量停机占位 catalog，仅用于 v7 事后敏感性分析 | 2 |
 | `signal_replay.py` | 重放 SQLite 中的历史 signals 跑回测 | 1 |
 | `migrate_sqlite_to_pg.py` | Phase 2 数据迁移 | 2 |
 | `dashboard_snapshot.py` | Phase 4 只读 AgentAdvice / report snapshot | 4 |
