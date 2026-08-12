@@ -1,7 +1,7 @@
 # Phase 2 Research Protocol v15
 
 - **Frozen**: 2026-08-12 before opening the FRED CSV body.
-- **Status**: pre-registered; development values unopened.
+- **Status**: blocked at FRED provider qualification; development values unopened.
 - **Trading effect**: none.
 
 V15 locks three U.S. rate mechanisms: falling 10-year real yields, steepening
@@ -25,3 +25,15 @@ downtime, and duplicate-replay gates apply. The 2023-2025 confirmation remains
 sealed until a development candidate passes every gate. V12-v14, GVZ paper
 shadow, SourcePolicy, testnet, live trading, and the shared future blind are
 unchanged.
+
+## Provider outcome
+
+The one allowed GET was opened from clean pushed commit `91a79e1`. FRED did
+not return response headers or body within the locked 30-second client timeout.
+No CSV row or factor value was received. This reproduces the direct-CSV
+availability weakness previously seen in Protocol v4, so v15 stops at
+`blocked_provider_qualification` rather than retrying until one response works.
+
+Development, confirmation, signals, and PnL remain unopened. A direct U.S.
+Treasury annual CSV route may be evaluated only under a separately frozen
+provider identity.

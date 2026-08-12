@@ -1,0 +1,22 @@
+{
+  "schema_version": "research.v15.provider_qualification.v1",
+  "protocol_sha256": "sha256:e03027ad687a5598b5f95b14408e37789186ce3e3b14ca8d7ed1d485c0511538",
+  "clean_commit_before_access": "91a79e1",
+  "request_openings": 1,
+  "client_timeout_seconds": 30,
+  "outcome": "read_timeout_before_response_headers_or_body",
+  "response_body_received": false,
+  "classification": "blocked_provider_qualification",
+  "development_status": "not_opened",
+  "confirmation_status": "sealed_unopened",
+  "future_blind_status": "sealed_unopened",
+  "boundaries": {
+    "factor_values_opened": false,
+    "signals_generated": false,
+    "pnl_opened": false,
+    "loads_credentials": false,
+    "touches_v12_forward_collection": false,
+    "reopens_v13_or_v14": false,
+    "touches_live_path": false
+  }
+}
