@@ -1,7 +1,7 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-08-12 (Protocol v15 blocked on FRED timeout before factor values)
+- **Last updated**: 2026-08-12 (Protocol v16 Treasury-direct rate recovery pre-registered; bodies unopened)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
 - **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry and Protocol v2-v5 research identities are frozen. Protocol v5 curve carry and BVOL relief are rejected and the 2026-08..12 blind remains sealed. The provider/timer review is complete: v5 and completed v2 timers are `inactive/disabled`, v5 collector status is `archived`, and a four-day post-window audit found zero new invocations. The retained v5 tree is 13 snapshots / 13 Parquets with zero conflicts; v2 `COMPLETE`, ledger, deployment identity and all recorded checksums remain unchanged. Dashboard renders the archive as a valid terminal state with no retry or operations issue. Independent Protocol v6 remains `blocked_provider_qualification` on the official 12-row grid, with historical development closed.
   The human-reviewed `freqai_linear_v1 / linear-mom-train20240105` decision is now `demote @ paper_simulated` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. Its old testnet continuity evidence is archived and cannot authorize a restart. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
@@ -12,6 +12,7 @@
   Protocol v13 completed three separate BTC network-mechanism development tests on a complete 1,157-day Coin Metrics grid with D+2 reconstruction semantics. Active-address expansion is cost-positive but fails monthly breadth and leave-best concentration; transfer-count expansion is negative; MVRV below one is cost-positive but has only seven positions and is classified insufficient evidence. All duplicate pairs reproduce and have no effective blockers or verified no-kline event hits. Zero candidates may open 2023-2025 confirmation. V13 does not change or schedule v12 and does not touch any trading path.
   Protocol v14 was pre-registered before opening a new Coin Metrics request, but the Community API returned HTTP 403 before metric rows because `CapRealUSD` is not publicly entitled. Community-scoped catalog metadata also excludes `CapRealUSD`, `NVTAdj`, and `SOPR`; catalog-all had described product coverage rather than free-plan availability. V14 is closed at `blocked_provider_qualification` with zero factor values, signals, or PnL opened. It cannot reopen or retune v13 and does not touch v12 or any trading path.
   Protocol v15 was pre-registered before opening one credential-free FRED CSV body, but its only GET timed out after 30 seconds before response headers or rows. It is closed at `blocked_provider_qualification`; no rate value, factor, signal, or PnL was received. An official U.S. Treasury annual-CSV recovery requires a separate frozen provider identity. Development and confirmation remain unopened; v12-v14 and all trading paths are unchanged.
+  Protocol v16 now preserves v15's three economic rules under new Treasury-direct provider/model fingerprints. Eight 2019-2022 nominal/real annual CSV routes passed body-free HEAD qualification. V16 inner-joins numeric dates without filling, delays observations by D+2, and leaves development/confirmation PnL unopened until the pre-registration commit is pushed. V15 is not retried and no trading path changes.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -55,6 +56,8 @@ Detailed history archived so far:
   blocked by Community entitlement before values; development remains unopened.
 - `docs/progress/phase-2-research-protocol-v15.md` — U.S. rate mechanisms
   blocked by FRED read timeout before values; development remains unopened.
+- `docs/progress/phase-2-research-protocol-v16.md` — pre-registered official
+  Treasury-direct recovery; all annual data bodies remain unopened.
 - `docs/progress/phase-3-testnet-canary-evidence.md` — archived Phase 3 testnet canary evidence ledger.
 - `docs/progress/phase-3-testnet-continuity-plan.md` — archived 14-day testnet continuity procedure and review command.
 - `docs/progress/phase-5-dashboard-history.md` — completed read-only dashboard, AgentAdvice input, passive Phase 6 gate, and dashboard hardening history.
@@ -202,6 +205,7 @@ Immediate focus:
 10. Preserve Protocol v13 results. Active-address and transfer-count expansion are rejected; MVRV below one is an undersampled lead only. Do not retune thresholds/signs, construct a PnL-selected ensemble, or open 2023-2025 confirmation.
 11. Preserve v14's provider failure. Do not retry the exact request, delete the denied metric, load a paid credential, or substitute series under the same identity; its development and confirmation remain unopened.
 12. Preserve v15's timeout result without retrying FRED. Any official Treasury-direct recovery must use a new frozen data contract before annual CSV values are opened.
+13. Commit and push v16 before opening its eight annual Treasury CSV bodies, then require complete joint coverage and duplicate 2020-2022 replays before considering confirmation.
 
 ## Next Steps
 
