@@ -1,0 +1,150 @@
+{
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_confirmation": false,
+    "opens_future_blind": false,
+    "resumes_testnet": false,
+    "touches_live_path": false
+  },
+  "candidates": [
+    {
+      "base_net_pnl": 23.0538542,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:e707033652b7bd177426f46fbaeb5189f4ef9cff072bbf748320bdba83f44499",
+          "manifest_sha256": "sha256:fceab56daa1b8738bd87bc9ff1f8fab483e9e3866798ed677368ca7627799823",
+          "path": "data/research-v16/backtests/20260812-091504Z-78e8e254"
+        },
+        {
+          "fills_sha256": "sha256:e707033652b7bd177426f46fbaeb5189f4ef9cff072bbf748320bdba83f44499",
+          "manifest_sha256": "sha256:357589ad116d8a8ca5f39a6f64e23f96ba473b2808d9db0eb9589b29094f732f",
+          "path": "data/research-v16/backtests/20260812-091508Z-9f26dc6d"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "insufficient_evidence",
+      "closed_positions": 25,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [
+        "positive_months_14_below_18",
+        "closed_positions_25_below_30"
+      ],
+      "gross_net_pnl": 24.83654,
+      "key": "real_yield_relief",
+      "leave_best_base_net_pnl": 3.2237578239999998,
+      "model_version": "treasury-real10-5-20-negative-lag2d-v1",
+      "performance_pass": false,
+      "positive_months": 14,
+      "positive_years": 3,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 50,
+      "signal_store_sha256": "sha256:930febde9fc1b3a7df9c7de724b31e753890fde864b85e3835533f0c92886aa9",
+      "source": "rule_us_real_yield_relief_v2",
+      "stress_net_pnl": 22.60818275,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 4.551274896,
+        "2021": 15.200545475999997,
+        "2022": 3.3020338280000003
+      }
+    },
+    {
+      "base_net_pnl": 45.90294542000001,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:91d7efad190d182f2cd8b21fed46fa084da139b0ba95bbe41e229c4375585b2e",
+          "manifest_sha256": "sha256:af0d1d89003321e8e3778f51df961189e135fe5e0110532db56b030a5e81b59b",
+          "path": "data/research-v16/backtests/20260812-091511Z-0435b6d5"
+        },
+        {
+          "fills_sha256": "sha256:91d7efad190d182f2cd8b21fed46fa084da139b0ba95bbe41e229c4375585b2e",
+          "manifest_sha256": "sha256:bc0c10b422fff019e9bc8972d9a564542d8de357baaf423af2a006b44b883276",
+          "path": "data/research-v16/backtests/20260812-091515Z-d28b5620"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "insufficient_evidence",
+      "closed_positions": 24,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [
+        "positive_months_7_below_18",
+        "closed_positions_24_below_30"
+      ],
+      "gross_net_pnl": 47.36009000000001,
+      "key": "yield_curve_steepening",
+      "leave_best_base_net_pnl": 5.0296396199999975,
+      "model_version": "treasury-10y2y-5-20-positive-lag2d-v1",
+      "performance_pass": false,
+      "positive_months": 7,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 47,
+      "signal_store_sha256": "sha256:bad810dea07b4f5be84df7187f1c3c1021ec54437452169d665bd3f70d0d3549",
+      "source": "rule_us_yield_curve_steepening_v2",
+      "stress_net_pnl": 45.53865927500001,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 7.096892832000001,
+        "2021": 51.313172108,
+        "2022": -12.50711952
+      }
+    },
+    {
+      "base_net_pnl": 55.211115828,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:066459cfbe3f22a17176e47924b4e31036106a045c69ad24d0981570aea519b6",
+          "manifest_sha256": "sha256:036d20d4929fc53e76e78792a9481c86b3388065ce69afe060ff0a368eeb0590",
+          "path": "data/research-v16/backtests/20260812-091518Z-3fdc362f"
+        },
+        {
+          "fills_sha256": "sha256:066459cfbe3f22a17176e47924b4e31036106a045c69ad24d0981570aea519b6",
+          "manifest_sha256": "sha256:e31e49c348bc7fa807a4ab3475029f9ab0c5a00043f21c976b398c9db75a4d8f",
+          "path": "data/research-v16/backtests/20260812-091522Z-695473ba"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "development_pass_confirmation_open_eligible",
+      "closed_positions": 76,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [],
+      "gross_net_pnl": 60.770129999999995,
+      "key": "treasury_volatility_relief",
+      "leave_best_base_net_pnl": 35.236937704,
+      "model_version": "treasury-nominal10-absdiff5-20-negative-lag2d-v1",
+      "performance_pass": true,
+      "positive_months": 20,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 151,
+      "signal_store_sha256": "sha256:ce0e4e8045bce312c4ba4bfc3961a7f758660d74b3051e3ce710b81e44d12bc1",
+      "source": "rule_us_treasury_volatility_relief_v2",
+      "stress_net_pnl": 53.821362285,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 7.2362471400000015,
+        "2021": 52.58290418,
+        "2022": -4.608035492000001
+      }
+    }
+  ],
+  "confirmation_holdout_status": "sealed_pending_committed_development_review",
+  "confirmation_open_eligible_candidates": [
+    "treasury_volatility_relief"
+  ],
+  "development_passer_count": 1,
+  "future_blind_status": "sealed_unopened",
+  "protocol_sha256": "sha256:c641cb7118d2498284305945c7a86f57cb3d95177b53aed9897ad68c3fa732cb",
+  "recommendation": "commit_development_results_before_confirmation_open",
+  "schema_version": "research.v16.development_results.v1"
+}

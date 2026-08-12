@@ -1,0 +1,28 @@
+{
+  "schema_version": "research.v16.data_sources.v1",
+  "protocol_sha256": "sha256:c641cb7118d2498284305945c7a86f57cb3d95177b53aed9897ad68c3fa732cb",
+  "provider": "U.S. Department of the Treasury Daily Treasury Rates",
+  "retrieved_at": "2026-08-12T09:14:37.813940Z",
+  "local_snapshot_path": "data/research-v16/raw/treasury-us-rates-20260812T091437Z-5b281c2cd540.json",
+  "snapshot_sha256": "sha256:5b281c2cd540c1226325969fedb3ecca17d5f936d9992922f226934e202549ac",
+  "vintage_id": "treasury-us-rates:2026-08-12T09:14:37.813940+00:00:5b281c2cd540",
+  "audit": {
+    "annual_numeric_row_counts": {"2019_nominal": 250, "2019_real": 250, "2020_nominal": 251, "2020_real": 251, "2021_nominal": 251, "2021_real": 251, "2022_nominal": 249, "2022_real": 249},
+    "joint_row_count": 791,
+    "first_joint_date": "2019-11-01",
+    "last_joint_date": "2022-12-30",
+    "maximum_joint_calendar_gap_days": 4,
+    "forward_fill_used": false
+  },
+  "request_payload_sha256": {
+    "2019_nominal": "sha256:83fc47c17325e222c45fd3a1eb26c69ae01f62d33b793030b4b8b350ca0a290b",
+    "2019_real": "sha256:593741b038e0970fe5be65a04e0047e17f00809da64e84948d1d306ab032e207",
+    "2020_nominal": "sha256:edcf1c8be9622f3cd92eb7de1847aefc3977e2118e2ff9af67f46614a5c306a7",
+    "2020_real": "sha256:30c98a2d75a4474e08a338bc3874745241d63be8f4a0d07a7f04a454a332921c",
+    "2021_nominal": "sha256:1be57e49c63a99f6002431a1030c8fbe539b71066c3eaf14f9f58ddc34492cea",
+    "2021_real": "sha256:9c614f8b16db601f1dc01ddd77db42d4e4a54b7243db4b4fc228270a08f747d3",
+    "2022_nominal": "sha256:c33cb2758e5e34c2c23b7ab759d18681091860f3f9e5960112859f64f31cd814",
+    "2022_real": "sha256:70b21a92a05801c479f1ddaee21137b7f842d43d883d32d57f9bbae272111a48"
+  },
+  "boundaries": {"confirmation_opened": false, "future_blind_opened": false, "v12_forward_collection_touched": false, "trading_touched": false}
+}

@@ -37,31 +37,35 @@ def _classification(
     return "reject_candidate"
 
 
-def build_review(
+def build_standard_review(
     candidate_specs: list[tuple[str, Path]],
     *,
+    identities: dict[str, tuple[str, str]],
+    load_protocol: Any,
+    protocol_version: str,
+    schema_version: str,
     downtime_results: dict[str, Any],
     gap_detail: dict[str, Any],
     gap_detail_bytes: bytes,
 ) -> dict[str, Any]:
-    protocol = load_and_validate()
+    protocol = load_protocol()
     verified_hours = _verified_gap_timestamps(
         downtime_results, gap_detail, gap_detail_bytes=gap_detail_bytes
     )
     grouped: dict[str, list[Path]] = defaultdict(list)
     for candidate, path in candidate_specs:
-        if candidate not in IDENTITIES:
-            raise ValueError(f"unsupported Protocol v13 candidate {candidate!r}")
+        if candidate not in identities:
+            raise ValueError(f"unsupported Protocol {protocol_version} candidate {candidate!r}")
         grouped[candidate].append(path)
-    if set(grouped) != set(IDENTITIES):
-        raise ValueError("Protocol v13 review requires all three candidates")
+    if set(grouped) != set(identities):
+        raise ValueError(f"Protocol {protocol_version} review requires all three candidates")
     if any(len(paths) != 2 for paths in grouped.values()):
-        raise ValueError("Protocol v13 requires exactly two runs per candidate")
+        raise ValueError(f"Protocol {protocol_version} requires exactly two runs per candidate")
 
     start = datetime(2020, 1, 1, tzinfo=UTC)
     end = datetime(2023, 1, 1, tzinfo=UTC)
     candidates: list[dict[str, Any]] = []
-    for candidate in IDENTITIES:
+    for candidate in identities:
         paths = grouped[candidate]
         runs = [
             _analyze_bundle(
@@ -75,10 +79,10 @@ def build_review(
         ]
         primary = runs[0]
         identity = (primary["source"], primary["model_version"])
-        if identity != IDENTITIES[candidate]:
-            raise ValueError(f"Protocol v13 {candidate} bundle identity drifted")
+        if identity != identities[candidate]:
+            raise ValueError(f"Protocol {protocol_version} {candidate} bundle identity drifted")
         if len(primary["monthly_metrics"]) != 36:
-            raise ValueError(f"Protocol v13 {candidate} must contain 36 months")
+            raise ValueError(f"Protocol {protocol_version} {candidate} must contain 36 months")
         yearly = {"2020": 0.0, "2021": 0.0, "2022": 0.0}
         positive_months = 0
         for row in primary["monthly_metrics"]:
@@ -178,14 +182,14 @@ def build_review(
         if row["classification"] == "development_pass_confirmation_open_eligible"
     ]
     return {
-        "schema_version": SCHEMA_VERSION,
+        "schema_version": schema_version,
         "protocol_sha256": protocol["protocol_sha256"],
         "candidates": candidates,
         "development_passer_count": len(passers),
         "confirmation_open_eligible_candidates": passers,
         "recommendation": "commit_development_results_before_confirmation_open"
         if passers
-        else "stop_protocol_v13_no_confirmation_open",
+        else f"stop_protocol_{protocol_version}_no_confirmation_open",
         "confirmation_holdout_status": "sealed_pending_committed_development_review"
         if passers
         else "sealed_not_opened_no_development_passer",
@@ -199,6 +203,25 @@ def build_review(
             "opens_future_blind": False,
         },
     }
+
+
+def build_review(
+    candidate_specs: list[tuple[str, Path]],
+    *,
+    downtime_results: dict[str, Any],
+    gap_detail: dict[str, Any],
+    gap_detail_bytes: bytes,
+) -> dict[str, Any]:
+    return build_standard_review(
+        candidate_specs,
+        identities=IDENTITIES,
+        load_protocol=load_and_validate,
+        protocol_version="v13",
+        schema_version=SCHEMA_VERSION,
+        downtime_results=downtime_results,
+        gap_detail=gap_detail,
+        gap_detail_bytes=gap_detail_bytes,
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
