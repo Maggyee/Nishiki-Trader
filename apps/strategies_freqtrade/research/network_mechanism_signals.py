@@ -8,12 +8,13 @@ import hashlib
 import json
 import math
 from pathlib import Path
+
 import pandas as pd
 
 from apps.bridge.signal_event import SignalEvent
 from apps.bridge.store import SignalStore
 from apps.ops.research_protocol_v13 import IDENTITIES, PARAMETERS, load_and_validate
-from apps.ops.research_v13_snapshot import parse_and_audit
+from apps.ops.research_v13_snapshot import verify_snapshot
 from apps.strategies_freqtrade.research.freqai_linear_signals import _make_signal_id
 
 PROTOCOL_VERSION = "research.protocol.v13"
@@ -26,9 +27,11 @@ METRIC_COLUMNS = {
 
 def build_factor_frame(snapshot_path: Path) -> pd.DataFrame:
     load_and_validate()
+    verify_snapshot(snapshot_path)
     envelope = json.loads(snapshot_path.read_text())
     raw = base64.b64decode(envelope["payload_raw_base64"], validate=True)
-    rows, _ = parse_and_audit(raw)
+    payload = json.loads(raw)
+    rows = payload["data"]
     records = []
     for row in rows:
         observed = pd.Timestamp(row["time"])

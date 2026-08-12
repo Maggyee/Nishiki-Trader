@@ -121,7 +121,44 @@ def collect_snapshot(
     if path.exists():
         raise FileExistsError(f"refusing to overwrite {path}")
     path.write_text(json.dumps(envelope, indent=2, sort_keys=True) + "\n")
-    return path, {
+    return path, verify_snapshot(path)
+
+
+def verify_snapshot(path: Path) -> dict[str, Any]:
+    envelope = _strict_json(path.read_bytes())
+    if not isinstance(envelope, dict) or envelope.get("schema_version") != SCHEMA_VERSION:
+        raise ValueError("invalid Protocol v13 snapshot schema")
+    if envelope.get("url") != request_url():
+        raise ValueError("Protocol v13 snapshot request identity drifted")
+    if envelope.get("protocol_sha256") != load_and_validate()["protocol_sha256"]:
+        raise ValueError("Protocol v13 protocol fingerprint mismatch")
+    expected_boundaries = {
+        "values_reported": False,
+        "signals_generated": False,
+        "pnl_opened": False,
+        "trading_touched": False,
+    }
+    if envelope.get("boundaries") != expected_boundaries:
+        raise ValueError("Protocol v13 snapshot boundaries are unsafe")
+    raw = base64.b64decode(str(envelope.get("payload_raw_base64")), validate=True)
+    if envelope.get("payload_sha256") != "sha256:" + hashlib.sha256(raw).hexdigest():
+        raise ValueError("Protocol v13 raw payload fingerprint mismatch")
+    _, audit = parse_and_audit(raw)
+    if envelope.get("audit") != audit:
+        raise ValueError("Protocol v13 snapshot audit mismatch")
+    core = {
+        key: value
+        for key, value in envelope.items()
+        if key not in {"snapshot_sha256", "vintage_id"}
+    }
+    digest = hashlib.sha256(
+        json.dumps(core, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
+    ).hexdigest()
+    if envelope.get("snapshot_sha256") != "sha256:" + digest:
+        raise ValueError("Protocol v13 snapshot fingerprint mismatch")
+    if not str(envelope.get("vintage_id", "")).endswith(digest[:12]):
+        raise ValueError("Protocol v13 snapshot vintage mismatch")
+    return {
         "path": str(path),
         "snapshot_sha256": envelope["snapshot_sha256"],
         "vintage_id": envelope["vintage_id"],
@@ -134,7 +171,11 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output-dir", type=Path, default=Path("data/research-v13/raw"))
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--verify", type=Path)
     args = parser.parse_args(argv)
+    if args.verify:
+        print(json.dumps(verify_snapshot(args.verify), indent=2, sort_keys=True))
+        return 0
     if args.dry_run:
         print(
             json.dumps(
