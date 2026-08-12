@@ -1,0 +1,26 @@
+{
+  "schema_version": "research.v13.data_sources.v1",
+  "protocol_sha256": "sha256:05a3f6965363d2e57176778172d1dcb6f2b7a164dd8c967cbb96461a2da74074",
+  "provider": "Coin Metrics Community API v4",
+  "retrieved_at": "2026-08-12T08:45:06.142023Z",
+  "request_url": "https://community-api.coinmetrics.io/v4/timeseries/asset-metrics?assets=btc&metrics=AdrActCnt%2CTxTfrCnt%2CCapMVRVCur&start_time=2019-11-01&end_time=2022-12-31&frequency=1d&page_size=10000",
+  "local_snapshot_path": "data/research-v13/raw/btc-network-20260812T084506Z-2af15212f18f.json",
+  "payload_sha256": "sha256:a2c20900830c1fc7b6c6aac53f56002956edb0e1932b601f9ab338a1d105052c",
+  "snapshot_sha256": "sha256:2af15212f18f210c10c5a6f0814cc1fe7eb724b32b03457c50ddddff5a4aa016",
+  "vintage_id": "coinmetrics-btc-network:2026-08-12T08:45:06.142023+00:00:2af15212f18f",
+  "audit": {
+    "first_date": "2019-11-01",
+    "last_date": "2022-12-31",
+    "row_count": 1157,
+    "metrics": ["AdrActCnt", "TxTfrCnt", "CapMVRVCur"],
+    "complete_daily_grid": true,
+    "forward_fill_used": false
+  },
+  "interpretation": "finalized-ledger reconstruction delayed to D+2; no historical provider-vintage claim",
+  "boundaries": {
+    "confirmation_opened": false,
+    "future_blind_opened": false,
+    "v12_forward_collection_touched": false,
+    "trading_touched": false
+  }
+}

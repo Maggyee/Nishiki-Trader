@@ -30,6 +30,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
+import nautilus_trader
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -43,7 +44,6 @@ from nautilus_trader.model.instruments import Instrument
 from nautilus_trader.model.objects import Currency, Money
 from nautilus_trader.persistence.catalog.parquet import ParquetDataCatalog
 
-import nautilus_trader
 from apps.bridge.signal_event import SignalEvent
 from apps.bridge.store import SignalStore
 from apps.bridge.validators import Authorization, SourcePolicy

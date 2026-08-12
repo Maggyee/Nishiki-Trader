@@ -1,7 +1,7 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-08-12 (Protocol v13 BTC network-mechanism batch pre-registered; data body unopened)
+- **Last updated**: 2026-08-12 (Protocol v13 BTC network-mechanism development complete; zero confirmation passers)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
 - **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry and Protocol v2-v5 research identities are frozen. Protocol v5 curve carry and BVOL relief are rejected and the 2026-08..12 blind remains sealed. The provider/timer review is complete: v5 and completed v2 timers are `inactive/disabled`, v5 collector status is `archived`, and a four-day post-window audit found zero new invocations. The retained v5 tree is 13 snapshots / 13 Parquets with zero conflicts; v2 `COMPLETE`, ledger, deployment identity and all recorded checksums remain unchanged. Dashboard renders the archive as a valid terminal state with no retry or operations issue. Independent Protocol v6 remains `blocked_provider_qualification` on the official 12-row grid, with historical development closed.
   The human-reviewed `freqai_linear_v1 / linear-mom-train20240105` decision is now `demote @ paper_simulated` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. Its old testnet continuity evidence is archived and cannot authorize a restart. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
@@ -9,7 +9,7 @@
   Protocol v9 then tested two pre-registered higher-order option-risk mechanisms. VIX9D-below-VIX and five-observation VVIX relief are both cost-positive and reproducible on 2020-2022, but both fail leave-best concentration; the curve rule also has only 12/36 positive months. Both are rejected, their 2023-2025 confirmation remains sealed, and neither affects the GVZ paper-shadow process.
   Protocol v10 opened the three pre-registered Coin Metrics responses once. Coverage passed, but none of 4,628 rows supplied status-time metadata, so v10 closed without factor values, signals, or PnL. Protocol v11 preserved the same rules and immutable bodies under a D+2 finalized-ledger reconstruction and completed duplicate 2020-2022 development replays. Hashrate recovery is cost-positive but fails breadth and leave-best concentration; BTC fee demand is negative after costs; stablecoin expansion is strongly positive but has only seven positions and is classified insufficient evidence. Zero candidates may open confirmation, and any future related study requires a new identity or genuinely forward immutable data.
   Protocol v12 now isolates the unchanged USDT+USDC 30-observation expansion rule as a `forward_data_candidate`. Day 0 pipeline qualification passed from clean pushed commit `70c53a2`: the 142-row stablecoin grid through 2026-08-10 and 167 closed BTC hours are complete with zero revisions/blockers. Because the latest factor predates the forward boundary, genuine evidence remains 0/180 days and 0/2 state changes. V12 creates no paper-shadow or promotion eligibility, and its recurring host schedule is not installed pending explicit operator approval.
-  Protocol v13 pre-registers three separate BTC network mechanisms before opening their Coin Metrics body: active-address 7/30 expansion, positive-value transfer-count 7/30 expansion, and MVRV distress below one. All use D+2 reconstruction semantics and the existing frozen development gates. V13 does not change or schedule v12 and does not touch any trading path.
+  Protocol v13 completed three separate BTC network-mechanism development tests on a complete 1,157-day Coin Metrics grid with D+2 reconstruction semantics. Active-address expansion is cost-positive but fails monthly breadth and leave-best concentration; transfer-count expansion is negative; MVRV below one is cost-positive but has only seven positions and is classified insufficient evidence. All duplicate pairs reproduce and have no effective blockers or verified no-kline event hits. Zero candidates may open 2023-2025 confirmation. V13 does not change or schedule v12 and does not touch any trading path.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -47,6 +47,8 @@ Detailed history archived so far:
   completed development with zero confirmation-eligible candidates.
 - `docs/progress/phase-2-research-protocol-v12.md` — stablecoin expansion
   forward-data contract; exact rule preserved and Day 0 pipeline qualified.
+- `docs/progress/phase-2-research-protocol-v13.md` — completed BTC network
+  mechanisms batch; zero candidates qualify to open confirmation.
 - `docs/progress/phase-3-testnet-canary-evidence.md` — archived Phase 3 testnet canary evidence ledger.
 - `docs/progress/phase-3-testnet-continuity-plan.md` — archived 14-day testnet continuity procedure and review command.
 - `docs/progress/phase-5-dashboard-history.md` — completed read-only dashboard, AgentAdvice input, passive Phase 6 gate, and dashboard hardening history.
@@ -191,7 +193,7 @@ Immediate focus:
 7. Preserve both Protocol v9 rejects. Do not alter their thresholds/signs, combine them after seeing PnL, or open their sealed 2023-2025 confirmation results.
 8. Preserve Protocol v11 results and keep 2023-2025 confirmation sealed. Hashrate and fee-demand identities are rejected; stablecoin expansion is an undersampled lead only and may be revisited solely through a new pre-registered forward immutable collection, without changing its 30-observation rule from these results.
 9. Continue Protocol v12 manually or install its daily 12:30 UTC recurring schedule only after explicit operator approval. The first countable observation is 2026-08-12 at the 2026-08-14 decision; never count bootstrap rows or treat the 180-day continuation threshold as promotion evidence.
-10. Commit and push Protocol v13 before its one allowed Coin Metrics body opening, then qualify coverage and run duplicate 2020-2022 development replays. Keep 2023-2025 confirmation sealed unless a candidate passes every gate.
+10. Preserve Protocol v13 results. Active-address and transfer-count expansion are rejected; MVRV below one is an undersampled lead only. Do not retune thresholds/signs, construct a PnL-selected ensemble, or open 2023-2025 confirmation.
 
 ## Next Steps
 
@@ -211,6 +213,7 @@ Immediate focus:
 14. Do not collect additional testnet or paper evidence for the frozen `freqai_linear_v1` identity merely to improve its record. The v11 paper bundle's expectancy (+0.00491 USDT/trade, 53.6% win rate, -0.003878% max drawdown over 152 days) becomes negative under base/stress costs, contains incompatible historical shorts, and the parquet-backed canary fill set is only operational evidence.
 14. Decide SQLite -> Postgres / Redis Stream readiness only after backtest, paper, or testnet volume exposes an actual bottleneck.
 15. Any future alpha batch must use genuinely independent evidence and a new protocol frozen before data access; it may not reuse Protocol v7 to tune around its observed results.
+16. Keep Protocol v13 confirmation sealed. Any MVRV follow-up must preserve the below-one identity and use prospectively collected immutable evidence rather than a threshold search on opened history.
 
 ## Blocked / Deferred
 
@@ -245,6 +248,22 @@ Immediate focus:
 - No edits to `freqtrade/` or `nautilus_trader/` unless explicitly requested.
 
 ## Latest Verification
+
+On 2026-08-12, after Protocol v13 BTC network-mechanism development:
+
+- The pre-access contract was pushed at `e61cc0b`, and snapshot-integrity
+  hardening was pushed at `70f0402` before the time-series body was opened.
+- The immutable response contains 1,157 complete daily rows for all three
+  metrics; snapshot hash is `2af15212…a016` and no row was filled.
+- Active-address expansion base/stress PnL is +6.915612/+5.979135 USDT but it
+  fails monthly breadth and leave-best concentration. Transfer expansion is
+  -15.162113/-16.235711. MVRV below one is +1.918861/+1.848863 but has only
+  seven positions and is insufficient evidence.
+- All duplicate pairs reproduce, with zero shorts, effective blockers, or
+  verified no-kline event hits. Zero candidates qualify for confirmation;
+  v12, SourcePolicy, testnet, and live paths remain unchanged.
+- Full verification: **1,076 passed, 12 Postgres-dependent skips**; Ruff and
+  `git diff --check` clean.
 
 On 2026-08-11, after Protocol v9 option-risk development:
 

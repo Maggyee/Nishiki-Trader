@@ -1,0 +1,155 @@
+{
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_confirmation": false,
+    "opens_future_blind": false,
+    "resumes_testnet": false,
+    "touches_live_path": false
+  },
+  "candidates": [
+    {
+      "base_net_pnl": 6.91561236,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:e6233eefb90fd7d6ca128a070b95a90745b80704355d9f931ab0c06d42c473ae",
+          "manifest_sha256": "sha256:c52950a9bfc357cab29c4fddda6f3cb23a422493e4cbeee943fd28f04c7f108d",
+          "path": "data/research-v13/backtests/20260812-084549Z-fefed8e9"
+        },
+        {
+          "fills_sha256": "sha256:e6233eefb90fd7d6ca128a070b95a90745b80704355d9f931ab0c06d42c473ae",
+          "manifest_sha256": "sha256:25ffff83cf4b3278cb2295036a23d7e2e289917b3bbdc97d9d79aec306478cbc",
+          "path": "data/research-v13/backtests/20260812-084553Z-2fbd761f"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "reject_candidate",
+      "closed_positions": 50,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [
+        "positive_months_15_below_18",
+        "leave_best_base_net_pnl_not_positive"
+      ],
+      "gross_net_pnl": 10.66152,
+      "key": "active_address_expansion",
+      "leave_best_base_net_pnl": -5.677339852000001,
+      "model_version": "chainfinalized-adractcnt7-30-positive-lag2d-v1",
+      "performance_pass": false,
+      "positive_months": 15,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 100,
+      "signal_store_sha256": "sha256:a694db570a74934c4d5d432bb8c11e764e4337ee0b2932185f2823791d20fe10",
+      "source": "rule_btc_active_address_expansion_v1",
+      "stress_net_pnl": 5.97913545,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 8.216511894,
+        "2021": 21.085527881999994,
+        "2022": -22.386427416000004
+      }
+    },
+    {
+      "base_net_pnl": -15.162113079999997,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:653897c9a4c3edfa7de6c781e4fcf046e8f9ca9c91bedca44168d6dd913e3417",
+          "manifest_sha256": "sha256:1312465f34608549fa625824ecf5b8fb1b634ec49c8931ef1aa559d43d2d9981",
+          "path": "data/research-v13/backtests/20260812-084557Z-c8fbd030"
+        },
+        {
+          "fills_sha256": "sha256:653897c9a4c3edfa7de6c781e4fcf046e8f9ca9c91bedca44168d6dd913e3417",
+          "manifest_sha256": "sha256:7f3148ce4a312de4baeee5220cbef317ccbe5ee0f52ed40ccefbad175aeb94c1",
+          "path": "data/research-v13/backtests/20260812-084600Z-c626116b"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "reject_candidate",
+      "closed_positions": 60,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [
+        "base_net_pnl_not_positive",
+        "stress_net_pnl_not_positive",
+        "positive_years_1_below_2",
+        "positive_months_12_below_18",
+        "leave_best_base_net_pnl_not_positive"
+      ],
+      "gross_net_pnl": -10.867719999999998,
+      "key": "transfer_count_expansion",
+      "leave_best_base_net_pnl": -28.502803704,
+      "model_version": "chainfinalized-txtfrcnt7-30-positive-lag2d-v1",
+      "performance_pass": false,
+      "positive_months": 12,
+      "positive_years": 1,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 120,
+      "signal_store_sha256": "sha256:d2932212b99ba29f1214625bb585362b87ebf203cabb57ed1960ba6cc901947c",
+      "source": "rule_btc_transfer_expansion_v1",
+      "stress_net_pnl": -16.23571135,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 5.6797957320000005,
+        "2021": -1.0395122320000034,
+        "2022": -19.802396579999996
+      }
+    },
+    {
+      "base_net_pnl": 1.9188607320000002,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:341fcc5efce2ffa35ae2265a7672a8c552bd3fb245980e869ea178fa9137a444",
+          "manifest_sha256": "sha256:f87915be92321151c4747f8b8d32ac8764c61dc11e539c00b96af4a1e366790b",
+          "path": "data/research-v13/backtests/20260812-084604Z-2c8ff329"
+        },
+        {
+          "fills_sha256": "sha256:341fcc5efce2ffa35ae2265a7672a8c552bd3fb245980e869ea178fa9137a444",
+          "manifest_sha256": "sha256:a69268e72f87f9f4fa7e594034f4f2b6380aff3000526341bdf6a81a3add6065",
+          "path": "data/research-v13/backtests/20260812-084607Z-bb404868"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "insufficient_evidence",
+      "closed_positions": 7,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [
+        "positive_months_4_below_18",
+        "closed_positions_7_below_30",
+        "leave_best_base_net_pnl_not_positive"
+      ],
+      "gross_net_pnl": 2.19885,
+      "key": "mvrv_distress",
+      "leave_best_base_net_pnl": -0.6995027920000001,
+      "model_version": "chainfinalized-mvrv-below1-lag2d-v1",
+      "performance_pass": false,
+      "positive_months": 4,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 13,
+      "signal_store_sha256": "sha256:6aa330198f6bca428233a959dadfe693530ae4a1ffc720ae4c9f2c7bc4665156",
+      "source": "rule_btc_mvrv_distress_v1",
+      "stress_net_pnl": 1.8488634150000003,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 0.608453612,
+        "2021": 0.0,
+        "2022": 1.310407119999999
+      }
+    }
+  ],
+  "confirmation_holdout_status": "sealed_not_opened_no_development_passer",
+  "confirmation_open_eligible_candidates": [],
+  "development_passer_count": 0,
+  "future_blind_status": "sealed_unopened",
+  "protocol_sha256": "sha256:05a3f6965363d2e57176778172d1dcb6f2b7a164dd8c967cbb96461a2da74074",
+  "recommendation": "stop_protocol_v13_no_confirmation_open",
+  "schema_version": "research.v13.development_results.v1"
+}
