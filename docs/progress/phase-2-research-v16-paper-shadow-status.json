@@ -1,6 +1,6 @@
 {
   "schema_version": "research.v16.paper_shadow_status_summary.v1",
-  "updated_at": "2026-08-12T09:37:17Z",
+  "updated_at": "2026-08-12T10:43:09.049022Z",
   "contract_sha256": "sha256:fa82c5c24431766788fd8fdf1608da9609fce59b27e5a5e20bee9ba359e8d2de",
   "review_sha256": "sha256:7bd05a6e20e4eb006c23607f48a2948a240772629d6a19c44ed355cbd483d566",
   "stage": "paper_shadow",
@@ -10,7 +10,7 @@
     "min_confidence_override": null
   },
   "forward_gate": {
-    "qualified_day_count": 0,
+    "qualified_day_count": 1,
     "required_days": 7,
     "new_forward_signal_count": 0,
     "required_signals": 50,
@@ -29,12 +29,43 @@
     "decision": "hold",
     "decision_allowed": true
   },
+  "latest_attempt": {
+    "attempt_id": "20260812T104309Z-a3a1f27bf08b",
+    "git_commit": "8bb03fd34e004829b8bb6f49a220d323dfc3c94f",
+    "git_dirty": false,
+    "origin_main_contains_commit": true,
+    "qualified_day": true,
+    "blockers": [],
+    "journal_sha256": "sha256:3774faa0d8c50d2fec7fabfacaaa91d641b7a825525e739510eb401240d4f940",
+    "treasury": {
+      "target_eligible_observation_date": "2026-08-10",
+      "row_count": 401,
+      "first_date": "2025-01-02",
+      "last_date": "2026-08-10",
+      "maximum_calendar_gap_days": 4,
+      "forward_fill_used": false,
+      "historical_revisions": 0,
+      "snapshot_sha256": "sha256:d664075202a8539007197a1be78478909cc0465b6f5414b2b45ea3a1f27bf08b",
+      "snapshot_file_sha256": "sha256:83754ea2aae6b8bd0c95754e7586b87c125aba02f4a004fe485e4e0b85add1b9"
+    },
+    "btc": {
+      "closed_hourly_bars": 167,
+      "cumulative_contiguous": true,
+      "historical_revisions": 0,
+      "raw_sha256": "sha256:de2e4d83d07213170501227fe8c5181f8cceabe229d8e54e7a6367b73fef7925"
+    },
+    "signals": {
+      "baseline_at_or_before_forward_start": 92,
+      "new_forward": 0,
+      "signal_store_sha256": "sha256:abec640c2a8b75a00c4f27d14ff1b6d0f3b7e0296554bcde3b25ce58f5cd49f7"
+    }
+  },
   "scheduler": {
     "installed": false,
     "collector_implemented": true
   },
   "anomaly_blockers": [],
-  "next_action": "commit_push_then_run_one_manual_qualification_attempt",
+  "next_action": "await_operator_decision_on_recurring_collection",
   "future_blind_status": "sealed_unopened",
   "paper_simulated_status": "not_authorized",
   "testnet_status": "blocked",

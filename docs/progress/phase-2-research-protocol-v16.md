@@ -68,8 +68,10 @@ UTC exchange-unavailable hour already verified by official archive and empty
 REST response; no row was filled and no strategy event occurs there.
 
 These historical bundles validate stage-entry plumbing only. Genuine forward
-evidence remains 0/7 qualified days and 0/50 new signals. A credential-free
-prospective Treasury/BTC collector is now implemented and frozen before its
-first request, but no schedule is installed. `paper_simulated` remains
-unauthorized; the next step is one manual qualification run from a clean
-commit already present on `origin/main`.
+evidence is now 1/7 qualified days and 0/50 new signals. The credential-free
+prospective Treasury/BTC collector was frozen and pushed before its first
+request. Day 1 qualified on 401 unfilled D+2 Treasury observations through
+2026-08-10 plus 167 contiguous closed BTC hours, with no revisions or
+blockers. The 92 generated baseline signals seed state and do not count as
+forward events. No schedule is installed and `paper_simulated` remains
+unauthorized; recurring collection now requires a separate operator decision.
