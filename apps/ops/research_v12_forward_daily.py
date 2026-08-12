@@ -292,7 +292,51 @@ def _write_snapshot(
     if path.exists():
         raise FileExistsError(f"refusing to overwrite {path}")
     path.write_text(json.dumps(envelope, indent=2, sort_keys=True) + "\n")
+    verify_snapshot(path)
     return path, envelope
+
+
+def verify_snapshot(path: Path, contract_path: Path = CONTRACT_PATH) -> dict[str, Any]:
+    envelope = _strict_json(path.read_bytes())
+    if not isinstance(envelope, dict) or envelope.get("schema_version") != (
+        "research.raw_snapshot.v12"
+    ):
+        raise ValueError("invalid Protocol v12 snapshot schema")
+    validation = load_and_validate(contract_path)
+    if envelope.get("protocol_sha256") != validation["protocol_sha256"]:
+        raise ValueError("Protocol v12 snapshot protocol fingerprint mismatch")
+    raw = base64.b64decode(str(envelope.get("payload_raw_base64")), validate=True)
+    if envelope.get("payload_sha256") != f"sha256:{hashlib.sha256(raw).hexdigest()}":
+        raise ValueError("Protocol v12 snapshot raw fingerprint mismatch")
+    audit = envelope.get("audit", {})
+    try:
+        start_day = date.fromisoformat(str(audit["first_date"]))
+        target_day = date.fromisoformat(str(audit["last_date"]))
+    except (KeyError, ValueError) as exc:
+        raise ValueError("Protocol v12 snapshot audit dates are invalid") from exc
+    _, rebuilt_audit = parse_stablecoin_rows(raw, start_day=start_day, target_day=target_day)
+    if audit != rebuilt_audit:
+        raise ValueError("Protocol v12 snapshot audit mismatch")
+    core = {
+        key: value
+        for key, value in envelope.items()
+        if key not in {"snapshot_sha256", "vintage_id"}
+    }
+    digest = hashlib.sha256(
+        json.dumps(core, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
+    ).hexdigest()
+    if envelope.get("snapshot_sha256") != f"sha256:{digest}":
+        raise ValueError("Protocol v12 snapshot fingerprint mismatch")
+    if not str(envelope.get("vintage_id", "")).endswith(digest[:12]):
+        raise ValueError("Protocol v12 snapshot vintage mismatch")
+    return {
+        "schema_version": "research.raw_snapshot.v12",
+        "path": str(path),
+        "snapshot_sha256": envelope["snapshot_sha256"],
+        "vintage_id": envelope["vintage_id"],
+        "audit": audit,
+        "valid": True,
+    }
 
 
 def collect_daily(
@@ -476,7 +520,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--repo-root", type=Path, default=Path.cwd())
     parser.add_argument("--data-root", type=Path, default=Path("data/research-v12-forward"))
     parser.add_argument("--contract", type=Path, default=CONTRACT_PATH)
+    parser.add_argument("--verify", type=Path)
     args = parser.parse_args(argv)
+    if args.verify:
+        print(json.dumps(verify_snapshot(args.verify, args.contract), indent=2, sort_keys=True))
+        return 0
     result = collect_daily(
         repo_root=args.repo_root.resolve(),
         data_root=args.data_root,

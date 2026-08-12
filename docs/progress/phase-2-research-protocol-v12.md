@@ -2,7 +2,8 @@
 
 - **Frozen**: 2026-08-12, before opening any 2026 Coin Metrics stablecoin
   response body under this identity.
-- **Status**: pre-registered; forward collection not started.
+- **Status**: Day 0 pipeline qualification passed; genuine forward evidence
+  remains 0/180 observations and 0/2 state changes.
 - **Stage**: `forward_data_candidate`; not `paper_shadow`.
 - **Trading effect**: none.
 
@@ -35,3 +36,13 @@ observation days and two genuinely forward state-change events. That review
 may decide only whether the long collection should continue. It does not open
 v11 confirmation, paper trading, SourcePolicy, testnet, live trading, or the
 shared future blind.
+
+## Day 0 qualification
+
+The first manual attempt ran from clean pushed commit `70c53a2`. It retained a
+complete 142-row USDT/USDC daily grid through 2026-08-10 and 167 contiguous
+closed BTCUSDT hourly bars, with zero detected revisions and zero blockers.
+Because the target factor date predates the 2026-08-12 forward boundary, it is
+bootstrap evidence only and contributes zero forward observations or state
+changes. Detailed status is in
+`docs/progress/phase-2-research-v12-forward-status.json`.

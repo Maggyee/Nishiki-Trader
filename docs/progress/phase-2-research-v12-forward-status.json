@@ -1,0 +1,52 @@
+{
+  "schema_version": "research.v12.forward_status_summary.v1",
+  "updated_at": "2026-08-12T01:39:21.064501Z",
+  "stage": "forward_data_candidate",
+  "contract_sha256": "sha256:4bebcde90bec76f2c9a1e9e1202787b554d1a95b839322f3bf905ca8ac1e2f50",
+  "latest_attempt": {
+    "attempt_id": "20260812T013921Z-6e21027d0871",
+    "classification": "qualified_pipeline_bootstrap_day_0",
+    "git_commit": "70c53a2067ac4839451ed399d89ad00ef2919b43",
+    "git_dirty": false,
+    "origin_main_contains_commit": true,
+    "target_observation_date": "2026-08-10",
+    "stablecoin": {
+      "first_date": "2026-06-01",
+      "last_date": "2026-08-10",
+      "row_count": 142,
+      "complete_daily_grid": true,
+      "historical_revision_count": 0,
+      "snapshot_sha256": "sha256:381cb2725e63f25081245d94156f7d5c62aafc1ba391a8b057e36e21027d0871"
+    },
+    "btc": {
+      "closed_hourly_bar_count": 167,
+      "cumulative_contiguous": true,
+      "historical_revision_count": 0,
+      "raw_sha256": "sha256:f0cb537905ae93de3e7aa25bace42ad42c345eaa1d44695f852824f078216847"
+    },
+    "new_forward_observations": 0,
+    "new_forward_state_changes": 0,
+    "blockers": []
+  },
+  "forward_gate": {
+    "qualified_forward_observation_count": 0,
+    "required_forward_observations": 180,
+    "new_forward_state_change_count": 0,
+    "required_state_changes": 2,
+    "operator": "and",
+    "threshold_met": false,
+    "continuation_review_eligible": false,
+    "promotion_eligible": false
+  },
+  "scheduler": {
+    "cadence": "daily at 12:30 UTC",
+    "installed": false,
+    "reason": "explicit operator approval required for a recurring host job"
+  },
+  "historical_confirmation_status": "sealed_unopened",
+  "paper_shadow_status": "not_authorized",
+  "future_blind_status": "sealed_unopened",
+  "testnet_status": "blocked",
+  "live_status": "blocked",
+  "next_action": "await_operator_schedule_authorization_or_run_manual_daily_collection"
+}

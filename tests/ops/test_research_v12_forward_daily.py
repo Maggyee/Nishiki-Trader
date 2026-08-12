@@ -11,6 +11,7 @@ from apps.ops.research_v12_forward_daily import (
     generate_forward_events,
     parse_stablecoin_rows,
     summarize_attempts,
+    verify_snapshot,
 )
 
 
@@ -123,3 +124,11 @@ def test_daily_collection_preserves_day_one_without_touching_trading(tmp_path: P
     assert result["record"]["boundaries"]["orders_submitted"] is False
     assert result["status"]["qualified_forward_observation_count"] == 1
     assert result["status"]["promotion_eligible"] is False
+
+    snapshot = Path(result["record"]["stablecoin"]["snapshot_path"])
+    assert verify_snapshot(snapshot)["valid"] is True
+    payload = json.loads(snapshot.read_text())
+    payload["audit"]["row_count"] += 1
+    snapshot.write_text(json.dumps(payload))
+    with pytest.raises(ValueError, match="audit mismatch"):
+        verify_snapshot(snapshot)
