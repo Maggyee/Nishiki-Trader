@@ -1,0 +1,12 @@
+{
+  "schema_version": "research.v16.confirmation_data_sources.v1",
+  "contract_sha256": "sha256:55ffc5f8781baa2919e7d226149b1f58fd000f49ceb7b4c7782c42f1ccd16ff2",
+  "provider": "U.S. Department of the Treasury Daily Treasury Rates",
+  "retrieved_at": "2026-08-12T09:22:51.342930Z",
+  "local_snapshot_path": "data/research-v16/confirmation/raw/treasury-us-rates-confirmation-20260812T092251Z-1b59aaec9e20.json",
+  "snapshot_sha256": "sha256:1b59aaec9e200f0f6573b9bb7ec0997873dd4bbc8bf1597e02e6177ce55dce86",
+  "vintage_id": "treasury-us-rates-confirmation:2026-08-12T09:22:51.342930+00:00:1b59aaec9e20",
+  "audit": {"annual_numeric_row_counts": {"2023": 250, "2024": 250, "2025": 249}, "row_count": 749, "first_date": "2023-01-03", "last_date": "2025-12-31", "maximum_calendar_gap_days": 4, "forward_fill_used": false},
+  "payload_sha256": {"2023": "sha256:edb7f3904e11dcaa502cdcc03ad9b1b16c893802d166ce9bc5fa1118251249d4", "2024": "sha256:6775840b76cd7fd41121f61d6f6c60184eca6b2ba49954ec7372c463cbeef34d", "2025": "sha256:cf2fa3da7f160384b63d2ead698532b1d76cd9f789ce4911e2304db85b14e6d5"},
+  "boundaries": {"future_blind_opened": false, "source_policy_mutated": false, "testnet_resumed": false, "live_path_touched": false}
+}

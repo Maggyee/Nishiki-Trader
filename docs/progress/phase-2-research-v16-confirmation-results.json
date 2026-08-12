@@ -1,0 +1,52 @@
+{
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_future_blind": false,
+    "resumes_testnet": false,
+    "touches_live_path": false
+  },
+  "candidate": {
+    "base_net_pnl": 37.66872503599999,
+    "bundle_runs": [
+      {
+        "fills_sha256": "sha256:75a543c3dd73c8082bea42cd8278215950e41ac5f1b54e24d53058d719e27588",
+        "manifest_sha256": "sha256:f162d4ad4d176ff72964a9b9632725a247e3988d36c0af84a8e25d9a7e39739d",
+        "path": "data/research-v16/confirmation/backtests/20260812-092313Z-f79e3429"
+      },
+      {
+        "fills_sha256": "sha256:75a543c3dd73c8082bea42cd8278215950e41ac5f1b54e24d53058d719e27588",
+        "manifest_sha256": "sha256:99015f7e1ecc61aa940075a03e9b8a24572fe76f1882f54189206e488a9b31aa",
+        "path": "data/research-v16/confirmation/backtests/20260812-092317Z-f5f908ae"
+      }
+    ],
+    "calendar_months": 36,
+    "classification": "paper_shadow_review_eligible",
+    "closed_positions": 80,
+    "duplicate_replays": 2,
+    "effective_blockers": [],
+    "evidence_pass": true,
+    "gross_net_pnl": 50.69902999999999,
+    "key": "treasury_volatility_relief",
+    "leave_best_base_net_pnl": 19.510103040000004,
+    "model_version": "treasury-nominal10-absdiff5-20-negative-lag2d-v1",
+    "performance_pass": true,
+    "positive_months": 19,
+    "positive_years": 3,
+    "reproducible": true,
+    "short_positions": 0,
+    "signal_count": 159,
+    "source": "rule_us_treasury_volatility_relief_v2",
+    "stress_net_pnl": 34.41114879499999,
+    "verified_no_kline_event_hits": [],
+    "yearly_base_net_pnl": {
+      "2023": 2.3647242240000006,
+      "2024": 29.746350898,
+      "2025": 5.557649914000002
+    }
+  },
+  "contract_sha256": "sha256:55ffc5f8781baa2919e7d226149b1f58fd000f49ceb7b4c7782c42f1ccd16ff2",
+  "future_blind_status": "sealed_unopened",
+  "recommendation": "enter_paper_shadow_review",
+  "schema_version": "research.v16.confirmation_results.v1"
+}

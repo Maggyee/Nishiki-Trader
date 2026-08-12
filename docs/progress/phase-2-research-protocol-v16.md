@@ -39,3 +39,20 @@ All duplicate pairs reproduce exactly, remain Spot long/flat, have no
 effective blockers, and place no event in a verified Binance no-kline hour.
 Only Treasury-yield volatility relief passes every development gate. Its
 result must be committed before any 2023-2025 confirmation body is opened.
+
+## Confirmation outcome
+
+The development review was committed at `2e4edbf`, then the single-candidate
+confirmation contract was pushed at `37187ca` before 2023-2025 bodies opened.
+The three nominal Treasury files contain 749 numeric observations, no fill,
+and no gap above four calendar days.
+
+The unchanged Treasury-yield volatility rule emits 159 confirmation signals
+and closes 80 positions. Gross/base/stress PnL is
+`+50.699030/+37.668725/+34.411149` USDT; all three years and 19/36 months are
+positive, and leave-best base PnL remains `+19.510103`. Duplicate fills match,
+with zero shorts, effective blockers, or verified no-kline event hits.
+
+The identity is `paper_shadow_review_eligible`. This is permission to perform
+the separate ADR-007 paper-shadow policy review, not an automatic SourcePolicy
+mutation or trading start. The 2026-09..2027-01 future blind remains sealed.
