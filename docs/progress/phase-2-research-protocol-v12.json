@@ -1,0 +1,74 @@
+{
+  "schema_version": "research.protocol.v12",
+  "status": "prospectively_locked_before_2026_coinmetrics_body_access",
+  "frozen_at": "2026-08-12T01:35:00Z",
+  "objective": "Collect genuinely forward immutable USDT plus USDC supply evidence for the unchanged 30-observation expansion rule that was undersampled in Protocol v11.",
+  "relationship_to_v11": {
+    "v11_classification": "insufficient_evidence",
+    "rule_and_sign_unchanged": true,
+    "historical_confirmation_remains_sealed": true,
+    "v11_pnl_not_used_for_parameter_selection": true
+  },
+  "candidate": {
+    "key": "stablecoin_liquidity_expansion_forward",
+    "source": "rule_stablecoin_liquidity_v3",
+    "model_version": "forward-usdt-usdc-splycur30d-positive-d2-v1",
+    "symbol": "BTCUSDT",
+    "venue": "BINANCE",
+    "parameters": {
+      "change_observations": 30,
+      "maximum_change": 0.0,
+      "assets": ["usdt", "usdc"],
+      "decision_lag_days": 2,
+      "ttl_seconds": 86400,
+      "confidence": 0.75
+    },
+    "signal_rule": "buy iff aggregate USDT plus USDC SplyCur is strictly greater than thirty daily observations earlier; flat otherwise; emit only on state change"
+  },
+  "collection": {
+    "schedule": "daily at 12:30 UTC",
+    "coinmetrics_url": "https://community-api.coinmetrics.io/v4/timeseries/asset-metrics",
+    "coinmetrics_params": {
+      "assets": "usdt,usdc",
+      "metrics": "SplyCur",
+      "start_time": "2026-06-01",
+      "frequency": "1d",
+      "page_size": "10000"
+    },
+    "end_time_rule": "collection UTC date minus two calendar days",
+    "btc_url": "https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=168",
+    "forward_observation_start": "2026-08-12",
+    "forward_decision_start": "2026-08-14T00:00:00Z",
+    "bootstrap_before_forward_start": "state seed only; never counts as forward evidence",
+    "historical_revision_policy": "fail closed and require human review",
+    "missing_policy": "no forward fill and no synthetic stablecoin or BTC row"
+  },
+  "evidence_gate": {
+    "qualified_distinct_forward_observation_days": 180,
+    "new_forward_state_change_events": 2,
+    "operator": "and",
+    "review_scope": "data quality and whether to continue collection only",
+    "promotion_created": false,
+    "qualified_observation_requires": [
+      "raw Coin Metrics response preserved and hashed",
+      "both USDT and USDC present on the target UTC day",
+      "complete daily asset grid from the fixed bootstrap start",
+      "target observation consumed only at D+2",
+      "no historical stablecoin revision",
+      "official BTC closed hourly overlap contiguous",
+      "no historical BTC revision",
+      "clean commit contained by origin/main"
+    ]
+  },
+  "boundaries": {
+    "credentials_loaded": false,
+    "orders_allowed": false,
+    "fills_allowed": false,
+    "source_policy_mutated": false,
+    "paper_shadow_authorized": false,
+    "testnet_allowed": false,
+    "live_allowed": false,
+    "historical_confirmation_opened": false,
+    "future_blind_opened": false
+  }
+}
