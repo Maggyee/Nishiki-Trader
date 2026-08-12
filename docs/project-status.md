@@ -1,7 +1,7 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-08-12 (Protocol v13 BTC network-mechanism development complete; zero confirmation passers)
+- **Last updated**: 2026-08-12 (Protocol v14 BTC valuation mechanisms pre-registered; metric body unopened)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
 - **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry and Protocol v2-v5 research identities are frozen. Protocol v5 curve carry and BVOL relief are rejected and the 2026-08..12 blind remains sealed. The provider/timer review is complete: v5 and completed v2 timers are `inactive/disabled`, v5 collector status is `archived`, and a four-day post-window audit found zero new invocations. The retained v5 tree is 13 snapshots / 13 Parquets with zero conflicts; v2 `COMPLETE`, ledger, deployment identity and all recorded checksums remain unchanged. Dashboard renders the archive as a valid terminal state with no retry or operations issue. Independent Protocol v6 remains `blocked_provider_qualification` on the official 12-row grid, with historical development closed.
   The human-reviewed `freqai_linear_v1 / linear-mom-train20240105` decision is now `demote @ paper_simulated` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. Its old testnet continuity evidence is archived and cannot authorize a restart. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
@@ -10,6 +10,7 @@
   Protocol v10 opened the three pre-registered Coin Metrics responses once. Coverage passed, but none of 4,628 rows supplied status-time metadata, so v10 closed without factor values, signals, or PnL. Protocol v11 preserved the same rules and immutable bodies under a D+2 finalized-ledger reconstruction and completed duplicate 2020-2022 development replays. Hashrate recovery is cost-positive but fails breadth and leave-best concentration; BTC fee demand is negative after costs; stablecoin expansion is strongly positive but has only seven positions and is classified insufficient evidence. Zero candidates may open confirmation, and any future related study requires a new identity or genuinely forward immutable data.
   Protocol v12 now isolates the unchanged USDT+USDC 30-observation expansion rule as a `forward_data_candidate`. Day 0 pipeline qualification passed from clean pushed commit `70c53a2`: the 142-row stablecoin grid through 2026-08-10 and 167 closed BTC hours are complete with zero revisions/blockers. Because the latest factor predates the forward boundary, genuine evidence remains 0/180 days and 0/2 state changes. V12 creates no paper-shadow or promotion eligibility, and its recurring host schedule is not installed pending explicit operator approval.
   Protocol v13 completed three separate BTC network-mechanism development tests on a complete 1,157-day Coin Metrics grid with D+2 reconstruction semantics. Active-address expansion is cost-positive but fails monthly breadth and leave-best concentration; transfer-count expansion is negative; MVRV below one is cost-positive but has only seven positions and is classified insufficient evidence. All duplicate pairs reproduce and have no effective blockers or verified no-kline event hits. Zero candidates may open 2023-2025 confirmation. V13 does not change or schedule v12 and does not touch any trading path.
+  Protocol v14 is pre-registered before opening a new Coin Metrics body. It locks realized-cap 7/30 expansion, adjusted-NVT 7/30 compression, and seven-observation SOPR below one, with the same D+2 reconstruction semantics and frozen development gates. The Community catalog qualifies all three metrics across the full development window without opening their values. V14 cannot reopen or retune v13 and does not touch v12 or any trading path.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -49,6 +50,8 @@ Detailed history archived so far:
   forward-data contract; exact rule preserved and Day 0 pipeline qualified.
 - `docs/progress/phase-2-research-protocol-v13.md` — completed BTC network
   mechanisms batch; zero candidates qualify to open confirmation.
+- `docs/progress/phase-2-research-protocol-v14.md` — pre-registered BTC
+  valuation mechanisms batch; data body remains unopened.
 - `docs/progress/phase-3-testnet-canary-evidence.md` — archived Phase 3 testnet canary evidence ledger.
 - `docs/progress/phase-3-testnet-continuity-plan.md` — archived 14-day testnet continuity procedure and review command.
 - `docs/progress/phase-5-dashboard-history.md` — completed read-only dashboard, AgentAdvice input, passive Phase 6 gate, and dashboard hardening history.
@@ -194,6 +197,7 @@ Immediate focus:
 8. Preserve Protocol v11 results and keep 2023-2025 confirmation sealed. Hashrate and fee-demand identities are rejected; stablecoin expansion is an undersampled lead only and may be revisited solely through a new pre-registered forward immutable collection, without changing its 30-observation rule from these results.
 9. Continue Protocol v12 manually or install its daily 12:30 UTC recurring schedule only after explicit operator approval. The first countable observation is 2026-08-12 at the 2026-08-14 decision; never count bootstrap rows or treat the 180-day continuation threshold as promotion evidence.
 10. Preserve Protocol v13 results. Active-address and transfer-count expansion are rejected; MVRV below one is an undersampled lead only. Do not retune thresholds/signs, construct a PnL-selected ensemble, or open 2023-2025 confirmation.
+11. Commit and push Protocol v14 before its one allowed Coin Metrics body opening, then qualify the complete daily grid and run duplicate 2020-2022 development replays. Keep confirmation sealed unless a candidate passes every gate.
 
 ## Next Steps
 

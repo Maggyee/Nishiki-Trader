@@ -1,0 +1,37 @@
+{
+  "schema_version": "research.protocol.v14",
+  "status": "preregistered_before_coinmetrics_valuation_body_access",
+  "frozen_at": "2026-08-12T08:55:13Z",
+  "objective": "Test three BTC realized-cost, utility-valuation, and realized-profit mechanisms without retuning any opened Protocol v13 identity.",
+  "boundaries": {
+    "development_reserve": {"start": "2020-01-01", "end": "2022-12-31", "pnl_status": "unconsumed", "max_openings": 1},
+    "confirmation_holdout": {"start": "2023-01-01", "end": "2025-12-31", "pnl_status": "sealed_until_development_pass"},
+    "future_blind": {"start": "2026-09-01", "end": "2027-01-31", "status": "sealed", "shared_v8_blind_unchanged": true}
+  },
+  "data_contract": {
+    "provider": "Coin Metrics Community API v4",
+    "url": "https://community-api.coinmetrics.io/v4/timeseries/asset-metrics",
+    "params": {"assets": "btc", "metrics": "CapRealUSD,NVTAdj,SOPR", "start_time": "2019-11-01", "end_time": "2022-12-31", "frequency": "1d", "page_size": "10000"},
+    "catalog_qualified_before_body_access": true,
+    "decision_lag_days": 2,
+    "interpretation": "finalized-ledger reconstruction only; no historical provider-vintage claim",
+    "forward_fill_forbidden": true,
+    "promotion_ceiling": "research_only"
+  },
+  "cost_scenarios": {
+    "gross": {"fee_bps_per_fill": 0.0, "slippage_bps_per_fill": 0.0},
+    "base": {"fee_bps_per_fill": 10.0, "slippage_bps_per_fill": 2.0},
+    "stress": {"fee_bps_per_fill": 10.0, "slippage_bps_per_fill": 5.0}
+  },
+  "shared_execution": {"venue": "BINANCE", "instrument": "BTCUSDT", "bar_interval": "1h", "account_type": "CASH", "oms_type": "NETTING", "starting_balance_usdt": 100000, "trade_size_btc": 0.001, "position_domain": ["long", "flat"], "fold_initial_state": "flat", "engine": "NautilusTrader"},
+  "gates": {
+    "development": {"base_net_pnl_gt": 0.0, "stress_net_pnl_gt": 0.0, "positive_calendar_years_at_least": 2, "positive_calendar_months_at_least": 18, "closed_positions_at_least": 30, "leave_best_position_base_net_pnl_gt": 0.0, "duplicate_replays_required": 2},
+    "multiple_testing": {"candidate_count_locked": 3, "parameter_grid_search_forbidden": true, "alternate_sign_forbidden": true, "pnl_selected_ensemble_forbidden": true, "failed_candidate_reparameterization_forbidden": true}
+  },
+  "candidates": [
+    {"key": "realized_cap_expansion", "source": "rule_btc_realized_cap_expansion_v1", "model_version": "chainfinalized-caprealusd7-30-positive-lag2d-v1", "metric": "CapRealUSD", "parameters": {"short_days": 7, "long_days": 30, "ttl_seconds": 86400, "confidence": 0.75}, "rule": "buy iff the seven-observation realized-cap mean is strictly above the thirty-observation mean; flat otherwise"},
+    {"key": "nvt_compression", "source": "rule_btc_nvt_compression_v1", "model_version": "chainfinalized-nvtadj7-30-negative-lag2d-v1", "metric": "NVTAdj", "parameters": {"short_days": 7, "long_days": 30, "ttl_seconds": 86400, "confidence": 0.75}, "rule": "buy iff the seven-observation adjusted-NVT mean is strictly below the thirty-observation mean; flat otherwise"},
+    {"key": "sopr_capitulation", "source": "rule_btc_sopr_capitulation_v1", "model_version": "chainfinalized-sopr7-below1-lag2d-v1", "metric": "SOPR", "parameters": {"smoothing_days": 7, "maximum_sopr": 1.0, "comparison": "strictly_below", "ttl_seconds": 86400, "confidence": 0.75}, "rule": "buy iff the seven-observation SOPR mean is strictly below one; flat otherwise"}
+  ],
+  "boundaries_effect": {"loads_credentials": false, "mutates_source_policy": false, "touches_v12_forward_collection": false, "reopens_v13": false, "resumes_testnet": false, "touches_live_path": false, "opens_confirmation": false, "opens_future_blind": false}
+}
