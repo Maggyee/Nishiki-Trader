@@ -1,8 +1,8 @@
 # Phase 2 Research Protocol v16
 
 - **Frozen**: 2026-08-12 before opening any Treasury CSV body.
-- **Status**: development complete; one candidate is confirmation-open eligible.
-- **Trading effect**: none.
+- **Status**: confirmation complete; one candidate is held at `paper_shadow` dry-run.
+- **Trading effect**: identity-specific dry-run lineage only; no orders.
 
 V16 preserves v15's three economic rules but moves them to direct official
 U.S. Treasury annual CSVs and assigns new provider/model fingerprints. The
@@ -56,3 +56,19 @@ with zero shorts, effective blockers, or verified no-kline event hits.
 The identity is `paper_shadow_review_eligible`. This is permission to perform
 the separate ADR-007 paper-shadow policy review, not an automatic SourcePolicy
 mutation or trading start. The 2026-09..2027-01 future blind remains sealed.
+
+## ADR-007 paper-shadow policy review
+
+The separate review is complete. The identity is now `hold @ paper_shadow`
+under `SourcePolicy(dry_run=True, position_pct_multiplier=0.2,
+min_confidence_override=None)`. The formal contiguous catalog bundle records
+147/147 dry-run lineage rows, zero orders/fills/positions, and zero review
+blockers. A companion full-window bundle retains the single 2023-03-24 13:00
+UTC exchange-unavailable hour already verified by official archive and empty
+REST response; no row was filled and no strategy event occurs there.
+
+These historical bundles validate stage-entry plumbing only. Genuine forward
+evidence remains 0/7 qualified days and 0/50 new signals. No collector or
+schedule was installed, `paper_simulated` remains unauthorized, and the next
+step is a separate implementation/review of a prospective collector before
+any host scheduling decision.

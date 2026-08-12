@@ -1,7 +1,7 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-08-12 (Protocol v16 Treasury-yield volatility relief passed confirmation; paper-shadow review eligible)
+- **Last updated**: 2026-08-12 (Protocol v16 Treasury-yield volatility relief held at identity-specific paper shadow)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
 - **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry and Protocol v2-v5 research identities are frozen. Protocol v5 curve carry and BVOL relief are rejected and the 2026-08..12 blind remains sealed. The provider/timer review is complete: v5 and completed v2 timers are `inactive/disabled`, v5 collector status is `archived`, and a four-day post-window audit found zero new invocations. The retained v5 tree is 13 snapshots / 13 Parquets with zero conflicts; v2 `COMPLETE`, ledger, deployment identity and all recorded checksums remain unchanged. Dashboard renders the archive as a valid terminal state with no retry or operations issue. Independent Protocol v6 remains `blocked_provider_qualification` on the official 12-row grid, with historical development closed.
   The human-reviewed `freqai_linear_v1 / linear-mom-train20240105` decision is now `demote @ paper_simulated` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. Its old testnet continuity evidence is archived and cannot authorize a restart. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
@@ -12,7 +12,7 @@
   Protocol v13 completed three separate BTC network-mechanism development tests on a complete 1,157-day Coin Metrics grid with D+2 reconstruction semantics. Active-address expansion is cost-positive but fails monthly breadth and leave-best concentration; transfer-count expansion is negative; MVRV below one is cost-positive but has only seven positions and is classified insufficient evidence. All duplicate pairs reproduce and have no effective blockers or verified no-kline event hits. Zero candidates may open 2023-2025 confirmation. V13 does not change or schedule v12 and does not touch any trading path.
   Protocol v14 was pre-registered before opening a new Coin Metrics request, but the Community API returned HTTP 403 before metric rows because `CapRealUSD` is not publicly entitled. Community-scoped catalog metadata also excludes `CapRealUSD`, `NVTAdj`, and `SOPR`; catalog-all had described product coverage rather than free-plan availability. V14 is closed at `blocked_provider_qualification` with zero factor values, signals, or PnL opened. It cannot reopen or retune v13 and does not touch v12 or any trading path.
   Protocol v15 was pre-registered before opening one credential-free FRED CSV body, but its only GET timed out after 30 seconds before response headers or rows. It is closed at `blocked_provider_qualification`; no rate value, factor, signal, or PnL was received. An official U.S. Treasury annual-CSV recovery requires a separate frozen provider identity. Development and confirmation remain unopened; v12-v14 and all trading paths are unchanged.
-  Protocol v16 completed development using 791 unfilled joint observations. Real-yield relief and curve steepening are profitable but insufficient evidence. Treasury-yield volatility relief then passed the independently frozen 2023-2025 confirmation on 749 unfilled observations: base/stress +37.668725/+34.411149 USDT, 3/3 positive years, 19/36 positive months, 80 positions, and +19.510103 leave-best base PnL. Duplicate fills match with no blockers or no-kline event hits. The identity is `paper_shadow_review_eligible`; SourcePolicy remains unchanged, no collector or trading process was started, and the final future blind stays sealed.
+  Protocol v16 completed development using 791 unfilled joint observations. Real-yield relief and curve steepening are profitable but insufficient evidence. Treasury-yield volatility relief then passed the independently frozen 2023-2025 confirmation on 749 unfilled observations: base/stress +37.668725/+34.411149 USDT, 3/3 positive years, 19/36 positive months, 80 positions, and +19.510103 leave-best base PnL. Duplicate fills match with no blockers or no-kline event hits. Its separate ADR-007 review now records `hold @ paper_shadow` under the identity-specific `SourcePolicy(dry_run=True, position_pct_multiplier=0.2, min_confidence_override=None)`: the clean contiguous evidence bundle has 147/147 dry-run lineage rows, zero orders/fills and zero review blockers, while the companion full-window bundle preserves the separately verified exchange-unavailable hour. Historical replay does not count toward the forward exit gate, which remains 0/7 qualified days and 0/50 new signals. No collector or schedule was installed, `paper_simulated` is not authorized, and the final future blind stays sealed.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -57,8 +57,9 @@ Detailed history archived so far:
 - `docs/progress/phase-2-research-protocol-v15.md` — U.S. rate mechanisms
   blocked by FRED read timeout before values; development remains unopened.
 - `docs/progress/phase-2-research-protocol-v16.md` — Treasury-yield volatility
-  relief passed development and independent confirmation; paper-shadow review
-  is the next permitted step.
+  relief passed development and independent confirmation, then entered an
+  identity-specific ADR-007 `paper_shadow` hold; prospective collection is the
+  next permitted implementation step.
 - `docs/progress/phase-3-testnet-canary-evidence.md` — archived Phase 3 testnet canary evidence ledger.
 - `docs/progress/phase-3-testnet-continuity-plan.md` — archived 14-day testnet continuity procedure and review command.
 - `docs/progress/phase-5-dashboard-history.md` — completed read-only dashboard, AgentAdvice input, passive Phase 6 gate, and dashboard hardening history.
@@ -206,7 +207,7 @@ Immediate focus:
 10. Preserve Protocol v13 results. Active-address and transfer-count expansion are rejected; MVRV below one is an undersampled lead only. Do not retune thresholds/signs, construct a PnL-selected ensemble, or open 2023-2025 confirmation.
 11. Preserve v14's provider failure. Do not retry the exact request, delete the denied metric, load a paid credential, or substitute series under the same identity; its development and confirmation remain unopened.
 12. Preserve v15's timeout result without retrying FRED. Any official Treasury-direct recovery must use a new frozen data contract before annual CSV values are opened.
-13. Preserve the confirmed v16 Treasury-yield volatility identity unchanged. The next permitted action is a separate ADR-007 `paper_shadow` policy review; do not mutate SourcePolicy, install a recurring collector, start paper/testnet, or open the future blind as part of this research result.
+13. Preserve the confirmed v16 Treasury-yield volatility identity unchanged at its reviewed `paper_shadow` policy. Its historical entry bundle is dry-run plumbing evidence only. The next permitted implementation is a prospectively immutable collector, which requires separate review before any recurring schedule is installed; do not disable dry-run, count historical rows toward the forward gate, start testnet, or open the future blind.
 
 ## Next Steps
 
@@ -217,7 +218,7 @@ Immediate focus:
 5. Archive and retain the completed Protocol v2 7/7 option/basis evidence. Do not rebuild or restart the completed collector, open basis historical ZIPs, or invent option-method substitutes.
 6. Continue the installed weekday 02:30 UTC Protocol v8 collector from its qualified Day 1 baseline. Accumulate 6 more distinct forward paper-shadow days or 50 new forward signals with clean schema, freshness, lineage, and verified-session behavior. Require a separate human review before any `paper_shadow -> paper_simulated` change.
 7. Keep Protocol v9 closed with both candidates rejected. Do not open 2023-2025 confirmation, retune either rule, or create a PnL-selected ensemble.
-8. Keep the signed `freqai_linear_v1` policy at `paper_simulated` with multiplier `0.1`; testnet/live remain blocked. Do not tune or revive this frozen model identity. New research candidates may enter `paper_shadow` only through a prospectively frozen confirmation protocol; GVZ is the current instance and its separate final future blind remains required before any testnet consideration.
+8. Keep the signed `freqai_linear_v1` policy at `paper_simulated` with multiplier `0.1`; testnet/live remain blocked. Do not tune or revive this frozen model identity. New research candidates may enter `paper_shadow` only through a prospectively frozen confirmation protocol; GVZ and v16 Treasury-volatility relief are the current instances, and their separate forward/future-blind gates remain required before any later-stage consideration.
 9. Retain the 2026-07-29 demotion review and its linked testnet/policy fingerprints as the current audit chain; no follow-up runtime is required.
 10. Continue Phase 5 with only read-only dashboard improvements fed by `dashboard.snapshot.v1`; keep the frontend free of API routes and mutation controls until a separate ADR opens a specific workflow.
 11. If a future allowed promotion reopens live-readiness evidence collection, use `docs/progress/phase-3-testnet-continuity-plan.md` and include every completed manifest-backed testnet bundle in the candidate window when running both `report_testnet_bundle --continuity` and `apps.ops.live_readiness`.
@@ -227,6 +228,7 @@ Immediate focus:
 14. Decide SQLite -> Postgres / Redis Stream readiness only after backtest, paper, or testnet volume exposes an actual bottleneck.
 15. Any future alpha batch must use genuinely independent evidence and a new protocol frozen before data access; it may not reuse Protocol v7 to tune around its observed results.
 16. Keep Protocol v13 confirmation sealed. Any MVRV follow-up must preserve the below-one identity and use prospectively collected immutable evidence rather than a threshold search on opened history.
+17. For v16 Treasury-volatility relief, keep the reviewed policy at `dry_run=True`, multiplier `0.2`. Design and review the prospective Treasury/BTC collector before installing any schedule; only observations after `2026-08-12T09:37:17Z` may count toward 7 qualified days or 50 new signals, and crossing that OR-gate creates review eligibility rather than automatic `paper_simulated` authorization.
 
 ## Blocked / Deferred
 
