@@ -1,0 +1,28 @@
+{
+  "schema_version": "research.v14.provider_qualification.v1",
+  "protocol_sha256": "sha256:9aba07d425b7019f271906be6e3219c830d0000d9787fc3bd8e8233976381a79",
+  "clean_commit_before_access": "0ec5333",
+  "request_openings": 1,
+  "http_status": 403,
+  "error_payload_sha256": "sha256:79bcb4a2c52a377337662b4e657df79b767d5cb9987e4e9ac8cb9855fb560489",
+  "error_type": "forbidden",
+  "error_message": "Requested metric 'CapRealUSD' with frequency '1d' for asset 'btc' is not available with supplied credentials.",
+  "community_catalog_metric_entitlements": {
+    "CapRealUSD": false,
+    "NVTAdj": false,
+    "SOPR": false
+  },
+  "classification": "blocked_provider_qualification",
+  "development_status": "not_opened",
+  "confirmation_status": "sealed_unopened",
+  "future_blind_status": "sealed_unopened",
+  "boundaries": {
+    "metric_values_opened": false,
+    "signals_generated": false,
+    "pnl_opened": false,
+    "loads_credentials": false,
+    "touches_v12_forward_collection": false,
+    "reopens_v13": false,
+    "touches_live_path": false
+  }
+}
