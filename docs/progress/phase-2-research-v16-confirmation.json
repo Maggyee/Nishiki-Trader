@@ -1,0 +1,35 @@
+{
+  "schema_version": "research.protocol.v16.confirmation.v1",
+  "status": "preregistered_before_treasury_confirmation_body_access",
+  "frozen_at": "2026-08-12T09:20:00Z",
+  "development_evidence": {
+    "committed_review": "2e4edbf",
+    "development_results": "docs/progress/phase-2-research-v16-development-results.json",
+    "protocol_sha256": "sha256:c641cb7118d2498284305945c7a86f57cb3d95177b53aed9897ad68c3fa732cb",
+    "development_classification": "development_pass_confirmation_open_eligible"
+  },
+  "candidate": {
+    "key": "treasury_volatility_relief",
+    "source": "rule_us_treasury_volatility_relief_v2",
+    "model_version": "treasury-nominal10-absdiff5-20-negative-lag2d-v1",
+    "metric": "nominal_10y",
+    "parameters": {"change": "absolute_first_difference", "short_observations": 5, "long_observations": 20, "ttl_seconds": 86400, "confidence": 0.75},
+    "rule": "buy iff the five-observation mean absolute change in the 10-year nominal yield is strictly below its twenty-observation mean; flat otherwise",
+    "parameter_changes_forbidden": true
+  },
+  "confirmation": {"start": "2023-01-01", "end": "2025-12-31", "pnl_status": "unconsumed", "max_request_openings": 3},
+  "data_contract": {
+    "provider": "U.S. Department of the Treasury Daily Treasury Rates",
+    "url_template": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/{year}/all",
+    "years": [2023, 2024, 2025],
+    "params": {"type": "daily_treasury_yield_curve", "field_tdr_date_value": "{year}", "page": "", "_format": "csv"},
+    "required_fields_normalized": ["date", "10 yr"],
+    "development_warmup": {"year": 2022, "route": "nominal", "payload_sha256": "sha256:c33cb2758e5e34c2c23b7ab759d18681091860f3f9e5960112859f64f31cd814"},
+    "decision_lag_calendar_days": 2,
+    "missing_value_policy": "drop missing nominal observation; never fill"
+  },
+  "gates": {"base_net_pnl_gt": 0.0, "stress_net_pnl_gt": 0.0, "positive_calendar_years_at_least": 2, "positive_calendar_months_at_least": 18, "closed_positions_at_least": 30, "leave_best_position_base_net_pnl_gt": 0.0, "duplicate_replays_required": 2, "spot_long_flat_only": true, "evidence_blockers_required": 0},
+  "outcomes": {"all_gates_pass": "paper_shadow_review_eligible", "performance_gate_fails": "reject_candidate", "evidence_gate_fails": "insufficient_confirmation_evidence"},
+  "future_blind": {"start": "2026-09-01", "end": "2027-01-31", "status": "sealed_unopened"},
+  "boundaries_effect": {"loads_credentials": false, "mutates_source_policy": false, "touches_v12_forward_collection": false, "reopens_other_candidates": false, "resumes_testnet": false, "touches_live_path": false, "opens_future_blind": false}
+}
