@@ -1,0 +1,39 @@
+{
+  "schema_version": "research.protocol.v15",
+  "status": "preregistered_before_fred_rate_body_access",
+  "frozen_at": "2026-08-12T09:01:33Z",
+  "objective": "Test three credential-free U.S. rate mechanisms without reopening rejected crypto-native, price, volatility-index, or flow identities.",
+  "boundaries": {
+    "development_reserve": {"start": "2020-01-01", "end": "2022-12-31", "pnl_status": "unconsumed", "max_openings": 1},
+    "confirmation_holdout": {"start": "2023-01-01", "end": "2025-12-31", "pnl_status": "sealed_until_development_pass"},
+    "future_blind": {"start": "2026-09-01", "end": "2027-01-31", "status": "sealed", "shared_v8_blind_unchanged": true}
+  },
+  "data_contract": {
+    "provider": "Federal Reserve Bank of St. Louis FRED",
+    "url": "https://fred.stlouisfed.org/graph/fredgraph.csv",
+    "params": {"id": "DFII10,T10Y2Y,DGS10", "cosd": "2019-11-01", "coed": "2022-12-31"},
+    "authentication": "none",
+    "head_qualified_before_body_access": true,
+    "locked_fields": ["observation_date", "DFII10", "T10Y2Y", "DGS10"],
+    "decision_lag_calendar_days": 4,
+    "interpretation": "latest finalized reconstruction delayed conservatively; no historical FRED-vintage claim",
+    "missing_value_policy": "drop incomplete observation date; never fill",
+    "promotion_ceiling": "research_only"
+  },
+  "cost_scenarios": {
+    "gross": {"fee_bps_per_fill": 0.0, "slippage_bps_per_fill": 0.0},
+    "base": {"fee_bps_per_fill": 10.0, "slippage_bps_per_fill": 2.0},
+    "stress": {"fee_bps_per_fill": 10.0, "slippage_bps_per_fill": 5.0}
+  },
+  "shared_execution": {"venue": "BINANCE", "instrument": "BTCUSDT", "bar_interval": "1h", "account_type": "CASH", "oms_type": "NETTING", "starting_balance_usdt": 100000, "trade_size_btc": 0.001, "position_domain": ["long", "flat"], "fold_initial_state": "flat", "engine": "NautilusTrader"},
+  "gates": {
+    "development": {"base_net_pnl_gt": 0.0, "stress_net_pnl_gt": 0.0, "positive_calendar_years_at_least": 2, "positive_calendar_months_at_least": 18, "closed_positions_at_least": 30, "leave_best_position_base_net_pnl_gt": 0.0, "duplicate_replays_required": 2},
+    "multiple_testing": {"candidate_count_locked": 3, "parameter_grid_search_forbidden": true, "alternate_sign_forbidden": true, "pnl_selected_ensemble_forbidden": true, "failed_candidate_reparameterization_forbidden": true}
+  },
+  "candidates": [
+    {"key": "real_yield_relief", "source": "rule_us_real_yield_relief_v1", "model_version": "fred-dfii10-5-20-negative-lag4d-v1", "metric": "DFII10", "parameters": {"short_observations": 5, "long_observations": 20, "ttl_seconds": 86400, "confidence": 0.75}, "rule": "buy iff the five-observation 10-year real-yield mean is strictly below its twenty-observation mean; flat otherwise"},
+    {"key": "yield_curve_steepening", "source": "rule_us_yield_curve_steepening_v1", "model_version": "fred-t10y2y-5-20-positive-lag4d-v1", "metric": "T10Y2Y", "parameters": {"short_observations": 5, "long_observations": 20, "ttl_seconds": 86400, "confidence": 0.75}, "rule": "buy iff the five-observation 10y-minus-2y mean is strictly above its twenty-observation mean; flat otherwise"},
+    {"key": "treasury_volatility_relief", "source": "rule_us_treasury_volatility_relief_v1", "model_version": "fred-dgs10-absdiff5-20-negative-lag4d-v1", "metric": "DGS10", "parameters": {"change": "absolute_first_difference", "short_observations": 5, "long_observations": 20, "ttl_seconds": 86400, "confidence": 0.75}, "rule": "buy iff the five-observation mean absolute change in the 10-year nominal yield is strictly below its twenty-observation mean; flat otherwise"}
+  ],
+  "boundaries_effect": {"loads_credentials": false, "mutates_source_policy": false, "touches_v12_forward_collection": false, "reopens_v13": false, "reopens_v14": false, "resumes_testnet": false, "touches_live_path": false, "opens_confirmation": false, "opens_future_blind": false}
+}
