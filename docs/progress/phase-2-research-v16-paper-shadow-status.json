@@ -1,6 +1,6 @@
 {
   "schema_version": "research.v16.paper_shadow_status_summary.v1",
-  "updated_at": "2026-08-12T10:43:09.049022Z",
+  "updated_at": "2026-08-12T11:49:24Z",
   "contract_sha256": "sha256:fa82c5c24431766788fd8fdf1608da9609fce59b27e5a5e20bee9ba359e8d2de",
   "review_sha256": "sha256:7bd05a6e20e4eb006c23607f48a2948a240772629d6a19c44ed355cbd483d566",
   "stage": "paper_shadow",
@@ -61,11 +61,19 @@
     }
   },
   "scheduler": {
-    "installed": false,
-    "collector_implemented": true
+    "installed": true,
+    "collector_implemented": true,
+    "mechanism": "user_crontab",
+    "calendar": "30 12 * * 1-5",
+    "timezone": "UTC",
+    "installed_at": "2026-08-12T11:49:24Z",
+    "cron_service_active": true,
+    "systemd_user_bus_available": false,
+    "entry_count": 1,
+    "crontab_sha256": "sha256:d22697d8fa6d981eb1173ad17f58211d4bafcbc817c37ff4f3a3dbb793f115ad"
   },
   "anomaly_blockers": [],
-  "next_action": "await_operator_decision_on_recurring_collection",
+  "next_action": "continue_weekday_collection_until_7_days_or_50_signals_then_human_review",
   "future_blind_status": "sealed_unopened",
   "paper_simulated_status": "not_authorized",
   "testnet_status": "blocked",

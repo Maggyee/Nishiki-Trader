@@ -6,9 +6,11 @@ writes only to the gitignored `data/research-v16-forward/` tree. It never
 loads credentials, places orders, changes `SourcePolicy`, starts a Nautilus
 runtime, touches testnet/live, or opens the sealed future blind.
 
-Current phase: collector implementation and manual first-attempt
-qualification. No timer, cron entry, service, or recurring process is
-installed by this directory. Scheduling remains a separate operator decision.
+Current phase: recurring paper-shadow collection after a qualified manual Day
+1. The operator approved a user-crontab deployment on 2026-08-12 because this
+host has no usable user-systemd bus. No service or timer file is installed by
+this directory; the repository remains declarative and the host crontab is the
+operational deployment.
 
 The implementation entrypoint is:
 
@@ -25,6 +27,7 @@ public BTCUSDT hourly bars, detects revisions against accepted local state,
 and writes dry-run `SignalEvent v1` lineage state. Multiple attempts on one UTC
 date count as at most one qualified day.
 
-Only an explicit future operator instruction may add a scheduler. Reaching
-7 qualified days or 50 new forward signals creates human review eligibility;
-it never automatically authorizes `paper_simulated`.
+The installed host entry is `30 12 * * 1-5` and appends output to
+`data/research-v16-forward/cron.log`. Reaching 7 qualified days or 50 new
+forward signals creates human review eligibility; it never automatically
+authorizes `paper_simulated`.

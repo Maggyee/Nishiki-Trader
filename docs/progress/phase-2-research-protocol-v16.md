@@ -73,5 +73,7 @@ prospective Treasury/BTC collector was frozen and pushed before its first
 request. Day 1 qualified on 401 unfilled D+2 Treasury observations through
 2026-08-10 plus 167 contiguous closed BTC hours, with no revisions or
 blockers. The 92 generated baseline signals seed state and do not count as
-forward events. No schedule is installed and `paper_simulated` remains
-unauthorized; recurring collection now requires a separate operator decision.
+forward events. The operator then installed the credential-free collector at
+12:30 UTC on weekdays through the user crontab. `paper_simulated` remains
+unauthorized; collection continues until 7 qualified days or 50 new signals,
+followed by a separate human review.
