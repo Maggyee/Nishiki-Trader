@@ -1,7 +1,8 @@
 {
   "schema_version": "research.v16.paper_shadow_contract.v1",
-  "status": "policy_reviewed_forward_collection_not_started",
+  "status": "prospectively_locked",
   "locked_at": "2026-08-12T09:37:17Z",
+  "collection_locked_at": "2026-08-12T10:38:20Z",
   "forward_started_at": "2026-08-12T09:37:17Z",
   "candidate": {
     "source": "rule_us_treasury_volatility_relief_v2",
@@ -27,11 +28,24 @@
   "collection": {
     "treasury_provider": "U.S. Department of the Treasury Daily Treasury Rates",
     "treasury_metric": "10-year nominal yield",
+    "treasury_url_template": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/{year}/all",
+    "treasury_route_params": {
+      "type": "daily_treasury_yield_curve",
+      "field_tdr_date_value": "{year}",
+      "page": "",
+      "_format": "csv"
+    },
+    "treasury_years_per_attempt": "previous_and_current_observed_year",
     "decision_lag_calendar_days": 2,
+    "treasury_max_eligible_age_calendar_days": 4,
+    "treasury_max_observation_gap_calendar_days": 5,
     "btc_source": "public Binance closed BTCUSDT 1h bars",
+    "btc_url": "https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=168",
+    "btc_closed_bar_lookback": 167,
+    "schedule": "weekdays at 12:30 UTC",
     "historical_revision_policy": "fail_closed_and_require_human_review",
     "missing_policy": "no_synthetic_rows_and_no_forward_fill",
-    "collector_implemented": false,
+    "collector_implemented": true,
     "scheduler_installed": false,
     "scheduler_install_requires_explicit_operator_approval": true
   },

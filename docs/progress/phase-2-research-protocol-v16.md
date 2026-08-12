@@ -68,7 +68,8 @@ UTC exchange-unavailable hour already verified by official archive and empty
 REST response; no row was filled and no strategy event occurs there.
 
 These historical bundles validate stage-entry plumbing only. Genuine forward
-evidence remains 0/7 qualified days and 0/50 new signals. No collector or
-schedule was installed, `paper_simulated` remains unauthorized, and the next
-step is a separate implementation/review of a prospective collector before
-any host scheduling decision.
+evidence remains 0/7 qualified days and 0/50 new signals. A credential-free
+prospective Treasury/BTC collector is now implemented and frozen before its
+first request, but no schedule is installed. `paper_simulated` remains
+unauthorized; the next step is one manual qualification run from a clean
+commit already present on `origin/main`.
