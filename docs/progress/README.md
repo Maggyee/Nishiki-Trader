@@ -44,6 +44,9 @@ Current Phase 3 progress files:
 - `phase-2-research-protocol-v21.md` freezes one U.S. net-liquidity expansion
   mechanism; its first FRED request timed out before headers/body, closing v21
   at provider qualification with no factor value, signal, or PnL opened.
+- `phase-2-research-protocol-v22.md` freezes SKEW relief, COR1M relief, and
+  DSPX expansion as three option-surface mechanisms before historical Cboe
+  CSV bodies, factor values, signals, or PnL are opened.
 
 - `phase-3-testnet-canary-evidence.md` records the testnet session ledger and
   bundle evidence summary.
