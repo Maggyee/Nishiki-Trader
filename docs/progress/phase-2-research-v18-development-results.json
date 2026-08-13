@@ -1,0 +1,153 @@
+{
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_confirmation": false,
+    "opens_future_blind": false,
+    "resumes_testnet": false,
+    "touches_live_path": false
+  },
+  "candidates": [
+    {
+      "base_net_pnl": -3.8493533239999946,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:7530c653c6ae098ac3bae330fe1605fe0ebd634d672550a2ec4faa3876ac7303",
+          "manifest_sha256": "sha256:0c5ad75aaa810b35d0baac9012599453a64000765e9919b27547dcf9d0757604",
+          "path": "data/research-v18/backtests/20260813-024718Z-87ee39b8"
+        },
+        {
+          "fills_sha256": "sha256:7530c653c6ae098ac3bae330fe1605fe0ebd634d672550a2ec4faa3876ac7303",
+          "manifest_sha256": "sha256:05d428c9250647f74b6988fc43761ea110fb4ba7bd5103beb82a4110cf50d467",
+          "path": "data/research-v18/backtests/20260813-024722Z-93e1da53"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "reject_candidate",
+      "closed_positions": 83,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [
+        "base_net_pnl_not_positive",
+        "stress_net_pnl_not_positive",
+        "leave_best_base_net_pnl_not_positive"
+      ],
+      "gross_net_pnl": 2.1647500000000055,
+      "key": "em_vol_relief",
+      "leave_best_base_net_pnl": -17.448356192000002,
+      "model_version": "cboe-vxeem-ohlc5obs-negative-1d-v1",
+      "performance_pass": false,
+      "positive_months": 18,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 166,
+      "signal_store_sha256": "sha256:efc0e5e9fc136d28f2f05a0eb38b9a8dab875b9dca3139936f931dfbf66322d4",
+      "source": "rule_em_vol_relief_v2",
+      "stress_net_pnl": -5.352879154999995,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 5.750500978,
+        "2021": 0.308344968000005,
+        "2022": -9.908199270000003
+      }
+    },
+    {
+      "base_net_pnl": -2.3779152079999957,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:0f489e0f85f58f5c403f7c1b5f80cd5c119f64c30877013f695f1534376a528d",
+          "manifest_sha256": "sha256:3f670308235dec24ebda9052c6d85d5cb07bf9fd6d13ed939816fc841082c16f",
+          "path": "data/research-v18/backtests/20260813-024728Z-c07fc316"
+        },
+        {
+          "fills_sha256": "sha256:0f489e0f85f58f5c403f7c1b5f80cd5c119f64c30877013f695f1534376a528d",
+          "manifest_sha256": "sha256:b60737c9d5712edbd35b5cf3f3a67faa2c08f4d7b402d1a30c34b555b893c9f2",
+          "path": "data/research-v18/backtests/20260813-024736Z-1bd3fb63"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "reject_candidate",
+      "closed_positions": 95,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [
+        "base_net_pnl_not_positive",
+        "stress_net_pnl_not_positive",
+        "positive_years_1_below_2",
+        "leave_best_base_net_pnl_not_positive"
+      ],
+      "gross_net_pnl": 4.543120000000004,
+      "key": "eafe_vol_relief",
+      "leave_best_base_net_pnl": -10.622921855999998,
+      "model_version": "cboe-vxefa-ohlc5obs-negative-1d-v1",
+      "performance_pass": false,
+      "positive_months": 18,
+      "positive_years": 1,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 190,
+      "signal_store_sha256": "sha256:72c37d5bf6175b99eac6c7fdce3c760e1f355c6cacb41c3b9ecbe272c4fe3d6d",
+      "source": "rule_eafe_vol_relief_v2",
+      "stress_net_pnl": -4.1081740099999955,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 9.933674747999998,
+        "2021": -0.7052182879999997,
+        "2022": -11.606371667999998
+      }
+    },
+    {
+      "base_net_pnl": 14.12856161200001,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:45639e8d18dcd037626bca41ea84e74341ed749f4cb736743089bdcba4acc691",
+          "manifest_sha256": "sha256:3c75bc5e28004344af58b2c09b6abc1b946c33a803274d4a2930aa18b33a938a",
+          "path": "data/research-v18/backtests/20260813-024740Z-c260838c"
+        },
+        {
+          "fills_sha256": "sha256:45639e8d18dcd037626bca41ea84e74341ed749f4cb736743089bdcba4acc691",
+          "manifest_sha256": "sha256:19b913727410dc065c311795d57da43374fdbaf61c8f22c4ea0bb8f4c49d7318",
+          "path": "data/research-v18/backtests/20260813-024743Z-439fab96"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "development_pass_confirmation_open_eligible",
+      "closed_positions": 81,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [],
+      "gross_net_pnl": 20.11483000000001,
+      "key": "nasdaq_vol_relief",
+      "leave_best_base_net_pnl": 3.151905300000003,
+      "model_version": "cboe-vxn-ohlc5obs-negative-1d-v1",
+      "performance_pass": true,
+      "positive_months": 21,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 162,
+      "signal_store_sha256": "sha256:f5d011265c3f7931632ea52e4d9e8f249084ac68107687f24ee7ebddb8aaef65",
+      "source": "rule_nasdaq_vol_relief_v2",
+      "stress_net_pnl": 12.63199451500001,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 8.163725721999999,
+        "2021": 17.666051426000003,
+        "2022": -11.701215536
+      }
+    }
+  ],
+  "confirmation_holdout_status": "sealed_pending_committed_development_review",
+  "confirmation_open_eligible_candidates": [
+    "nasdaq_vol_relief"
+  ],
+  "development_passer_count": 1,
+  "future_blind_status": "sealed_unopened",
+  "protocol_sha256": "sha256:62878d75fba9f2073243fa16504700c1f18b0e51d9a79a42cbcff4ee91a2ce39",
+  "recommendation": "commit_development_results_before_confirmation_open",
+  "schema_version": "research.v18.development_results.v1"
+}

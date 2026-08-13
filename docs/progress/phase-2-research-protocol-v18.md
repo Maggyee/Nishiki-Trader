@@ -3,7 +3,7 @@
 - **Frozen**: 2026-08-13 before opening any v18 Cboe CSV body.
 - **Machine contract**: `docs/progress/phase-2-research-protocol-v18.json`
 - **Provider contract**: `docs/progress/phase-2-research-v18-data-sources.json`
-- **Status**: provider qualified; development values and PnL unopened.
+- **Status**: development complete; Nasdaq vol relief is confirmation-eligible; confirmation sealed.
 - **Trading effect**: none.
 
 ## Why this recovery is separate
@@ -48,3 +48,15 @@ All three OHLC histories qualified from clean pushed commit `77afac1`. Reserve
 coverage is 755/755/758 unfilled observations for VXEEM/VXEFA/VXN through
 2022-12-30. No signal or PnL was opened. See
 `docs/retros/2026-08-13-research-v18-provider-qualification.md`.
+
+## Development outcome
+
+Clean-commit duplicate replays from `a4ff746` are complete. VXEEM and VXEFA
+are cost-negative and rejected. Nasdaq-100 five-observation relief passes
+every frozen gate: base/stress +14.128562/+12.631995 USDT, 2/3 years, 21/36
+months, 81 positions, and +3.151905 leave-best base PnL. Duplicate fills
+match with zero shorts, blockers, or verified no-kline event hits.
+
+Only that unchanged VXN identity may open 2023-2025, and only after this
+review is committed. Confirmation, the future blind, and every trading path
+remain closed.
