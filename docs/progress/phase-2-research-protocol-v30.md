@@ -56,5 +56,11 @@ and no evidence blockers. Apple vol relief is cost-positive but fails
 leave-best. Amazon vol relief is cost-positive but has only 14/36 positive
 months. Unchanged Google/Alphabet vol relief passes every frozen development
 gate and is the only confirmation-open eligible identity. Do not retune,
-sign-flip, or ensemble the rejected names. Confirmation values stay sealed
-until a separate confirmation contract is frozen.
+sign-flip, or ensemble the rejected names.
+
+## Confirmation contract
+
+Frozen against development review `eab525c` and the already-captured VXGOG
+snapshot. Confirmation coverage is qualified at 752 unfilled 2023-2025 rows.
+Returns and PnL remain unopened. Machine identity lives in
+`docs/progress/phase-2-research-v30-confirmation.json`.

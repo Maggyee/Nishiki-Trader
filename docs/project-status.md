@@ -296,7 +296,7 @@ Immediate focus:
 26. Keep Protocol v27 closed. Any later independent DeFi cashflow study needs a new identity frozen before data access; it may not continue these three fingerprints or open the future blind.
 27. Keep Protocol v28 closed. Any later options or open-interest study needs a new identity and coverage contract frozen before data access; it may not retry these three GETs.
 28. Keep Protocol v29 closed. Any later independent attention study needs a new identity frozen before data access; it may not continue these three fingerprints, substitute Wikipedia articles after seeing Recession's year-breadth miss, or open the future blind.
-29. After the Protocol v30 confirmation freeze is on `origin/main`, export 2023-2025 VXGOG factors from the already-captured snapshot (no new GET) and run two clean-git cash replays on the v8 catalog. Review with `research_v30_confirmation_review`. Do not retune Apple or Amazon.
+29. From a clean Protocol v30 confirmation-data HEAD, run two cash replays of unchanged Google/Alphabet vol relief on the v8 catalog. Review with `research_v30_confirmation_review`. Do not GET again or retune Apple/Amazon.
 
 ## Blocked / Deferred
 
@@ -353,8 +353,8 @@ Immediate focus:
   identities failed development; confirmation, Wikimedia retry, article
   substitution, sign flip, ensemble, and the future blind remain sealed.
 - No Protocol v30 Apple/Amazon reopen. Those identities failed development.
-  No new GET, sign flip, ensemble, or future-blind opening. Confirmation
-  values stay sealed until the confirmation freeze is on `origin/main`.
+  No new GET, sign flip, ensemble, or future-blind opening. Confirmation PnL
+  may be opened only from a clean git tree after confirmation-data qualification.
 
 ## Latest Verification
 
