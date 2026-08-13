@@ -1,8 +1,8 @@
 # Phase 2 Research Protocol v26
 
-- **Status**: provider qualification complete; Solana rejected; development PnL unopened.
+- **Status**: closed; Solana provider-rejected; all-DEX and Ethereum development-rejected.
 - **Mechanisms**: DefiLlama aggregated DEX daily-volume expansion.
-- **Development**: 2020-01-01 through 2022-12-31; signals and PnL unopened.
+- **Development**: 2020-01-01 through 2022-12-31; complete with zero passers.
 - **Confirmation**: sealed.
 - **Future blind**: sealed.
 - **Trading effect**: none.
@@ -36,8 +36,16 @@ qualify on 1,096 unfilled development observations, 61 warmup rows, a one-day
 maximum gap, and 1,321 ignored later rows. Solana failed closed at 453
 development observations; no snapshot or factor was written.
 
+## Development outcome
+
+Two clean replays per qualified candidate from `8abaffb` reproduce with
+identical fills and no evidence blockers. All-DEX volume expansion is
+gross-positive but base/stress and leave-best are negative. Ethereum DEX
+volume expansion fails the same three cost/concentration gates. Zero
+candidates may open 2023-2025 confirmation. Do not retune, sign-flip, or
+ensemble.
+
 ## Gates and progression
 
-Unchanged development gates. A development passer may only enter a separately
-frozen 2023-2025 confirmation contract. Existing paper-shadow collectors,
-SourcePolicy, testnet, live trading, and the future blind stay untouched.
+Unchanged development gates. Existing paper-shadow collectors, SourcePolicy,
+testnet, live trading, and the future blind stay untouched.

@@ -1,0 +1,119 @@
+{
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_confirmation": false,
+    "opens_future_blind": false,
+    "resumes_testnet": false,
+    "touches_live_path": false
+  },
+  "candidates": [
+    {
+      "base_net_pnl": -6.320471388000001,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:3335a65eaa9066bc7ee3330e3a672f4a70b971c4f9de5498946deacef47710dc",
+          "manifest_sha256": "sha256:9b57a7027132348339528c6086384ef377d6ef8a69185b5c802630f8e3a16835",
+          "path": "data/research-v26/backtests/20260813-081440Z-33fd000e"
+        },
+        {
+          "fills_sha256": "sha256:3335a65eaa9066bc7ee3330e3a672f4a70b971c4f9de5498946deacef47710dc",
+          "manifest_sha256": "sha256:85af4ac9bb0d341ec616081745fb4107d54048417f1f89557448ef17ede9e1bd",
+          "path": "data/research-v26/backtests/20260813-081444Z-bf068a9a"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "reject_candidate",
+      "closed_positions": 195,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [
+        "base_net_pnl_not_positive",
+        "stress_net_pnl_not_positive",
+        "leave_best_base_net_pnl_not_positive"
+      ],
+      "gross_net_pnl": 7.814729999999999,
+      "key": "all_dex_volume_expansion",
+      "leave_best_base_net_pnl": -14.245160420000001,
+      "model_version": "defillama-all-dexs-vol-diff5-positive-lag2d-v1",
+      "performance_pass": false,
+      "positive_months": 20,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 389,
+      "signal_store_sha256": "sha256:69f5f0e5057c6996144292baa8906c0934b95ecf86ccc16fce227b38d1a7721c",
+      "source": "rule_defillama_all_dex_volume_expansion_v1",
+      "stress_net_pnl": -9.854271735000001,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 6.650762758000001,
+        "2021": 18.199912513999998,
+        "2022": -31.171146660000005
+      }
+    },
+    {
+      "base_net_pnl": -2.029904060000004,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:ec38385d0633faf33c8563da8f2ea07ed61860a0219ed888678ab2423fc820bb",
+          "manifest_sha256": "sha256:ba60da59d876086565a18b6c06a91332977b251df93758887e5b2b26d8477311",
+          "path": "data/research-v26/backtests/20260813-081448Z-41e9c4c3"
+        },
+        {
+          "fills_sha256": "sha256:ec38385d0633faf33c8563da8f2ea07ed61860a0219ed888678ab2423fc820bb",
+          "manifest_sha256": "sha256:10977b58d7801248a802dfc81fb33f96c924eab1551884cfc3bea447641b624b",
+          "path": "data/research-v26/backtests/20260813-081453Z-ffd84fea"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "reject_candidate",
+      "closed_positions": 199,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [
+        "base_net_pnl_not_positive",
+        "stress_net_pnl_not_positive",
+        "leave_best_base_net_pnl_not_positive"
+      ],
+      "gross_net_pnl": 12.396669999999995,
+      "key": "ethereum_dex_volume_expansion",
+      "leave_best_base_net_pnl": -9.954593092,
+      "model_version": "defillama-ethereum-dex-vol-diff5-positive-lag2d-v1",
+      "performance_pass": false,
+      "positive_months": 20,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 397,
+      "signal_store_sha256": "sha256:4657b032b740f3ea90a43f7da69bee5406c20b376a5902ee2ed80ae40e386d39",
+      "source": "rule_defillama_ethereum_dex_volume_expansion_v1",
+      "stress_net_pnl": -5.636547575000003,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 8.014425446,
+        "2021": 26.536734181999996,
+        "2022": -36.581063688
+      }
+    }
+  ],
+  "confirmation_holdout_status": "sealed_not_opened_no_development_passer",
+  "confirmation_open_eligible_candidates": [],
+  "development_passer_count": 0,
+  "future_blind_status": "sealed_unopened",
+  "protocol_sha256": "sha256:726a2e6847902b2a2180e07e05fdef028cfbb1f90a579f1422711133ac2d72aa",
+  "provider_qualification": {
+    "historical_vintage_claim": false,
+    "qualified_candidates": [
+      "all_dex_volume_expansion",
+      "ethereum_dex_volume_expansion"
+    ],
+    "rejected_candidates": {
+      "solana_dex_volume_expansion": "development_reserve_only_453_observations"
+    }
+  },
+  "recommendation": "stop_protocol_v26_no_confirmation_open",
+  "schema_version": "research.v26.development_results.v1"
+}

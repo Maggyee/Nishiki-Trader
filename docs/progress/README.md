@@ -63,7 +63,7 @@ Current Phase 3 progress files:
   and negative leave-best base PnL, closing v25.
 - `phase-2-research-protocol-v26.md` freezes three DefiLlama DEX-volume
   expansion identities. Solana failed provider qualification; all-DEX and
-  Ethereum factors are written and development PnL remains unopened.
+  Ethereum failed 2020-2022 development, closing v26.
 
 - `phase-3-testnet-canary-evidence.md` records the testnet session ledger and
   bundle evidence summary.
