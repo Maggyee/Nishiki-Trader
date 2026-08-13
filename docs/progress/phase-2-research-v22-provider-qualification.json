@@ -1,0 +1,59 @@
+{
+  "schema_version": "research.v22.provider_qualification.v1",
+  "classification": "partially_provider_qualified",
+  "protocol_sha256": "sha256:ae3edd20007a35470f94a57609e53f994bfb4cdf677318d99b6e3c249989685f",
+  "provider_contract_sha256": "sha256:f3d2af2ded7f9abe38bd2d8b8afe179b8874dcb719900b90c8d09eabe098d199",
+  "qualified_candidates": ["tail_skew_relief", "implied_correlation_relief"],
+  "rejected_candidates": {
+    "implied_dispersion_expansion": "provider_value_contract_failure_non_positive_DSPX"
+  },
+  "qualified_series": {
+    "skew": {
+      "snapshot_path": "data/research-v22/raw/skew-20260813T042015Z-5bbc36196cbb.json",
+      "snapshot_sha256": "sha256:5bbc36196cbbb95c4b014caadfc4dce612cc49af65d66019edbfd2b74a2db524",
+      "factor_path": "data/research-v22/factors/skew.csv",
+      "factor_sha256": "sha256:1e77ee3149e22458cc570f66f4c4bb6ae457d1196e9f11c6d4720801ea12e8e9",
+      "factor_row_count": 797,
+      "development_row_count": 756,
+      "warmup_row_count": 41,
+      "development_first_date": "2020-01-02",
+      "development_last_date": "2022-12-30",
+      "maximum_calendar_gap_days": 4,
+      "schema": "scalar",
+      "value_column": "SKEW"
+    },
+    "cor1m": {
+      "snapshot_path": "data/research-v22/raw/cor1m-20260813T042019Z-2eeec6793d1d.json",
+      "snapshot_sha256": "sha256:2eeec6793d1d43f7a3b962074cc9fc20bd5ced04302b8527a94cd6f7f01e55e0",
+      "factor_path": "data/research-v22/factors/cor1m.csv",
+      "factor_sha256": "sha256:2c37e73c2e9659d238283623047f4507e0ace1da197c747832b9938c06fec71c",
+      "factor_row_count": 797,
+      "development_row_count": 756,
+      "warmup_row_count": 41,
+      "development_first_date": "2020-01-02",
+      "development_last_date": "2022-12-30",
+      "maximum_calendar_gap_days": 4,
+      "schema": "ohlc",
+      "value_column": "CLOSE"
+    }
+  },
+  "rejected_series": {
+    "dspx": {
+      "request_opened_once": true,
+      "snapshot_written": false,
+      "factor_written": false,
+      "failure": "DSPX history contains at least one non-positive value, violating the frozen value contract",
+      "retry_allowed": false
+    }
+  },
+  "historical_vintage_claim": false,
+  "boundaries": {
+    "factor_values_reported": false,
+    "signals_generated": false,
+    "pnl_opened": false,
+    "confirmation_opened": false,
+    "source_policy_mutated": false,
+    "trading_touched": false,
+    "future_blind_opened": false
+  }
+}

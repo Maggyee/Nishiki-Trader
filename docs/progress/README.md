@@ -45,8 +45,8 @@ Current Phase 3 progress files:
   mechanism; its first FRED request timed out before headers/body, closing v21
   at provider qualification with no factor value, signal, or PnL opened.
 - `phase-2-research-protocol-v22.md` freezes SKEW relief, COR1M relief, and
-  DSPX expansion as three option-surface mechanisms before historical Cboe
-  CSV bodies, factor values, signals, or PnL are opened.
+  DSPX expansion as three option-surface mechanisms; SKEW/COR1M are
+  provider-qualified and DSPX is provider-rejected before strategy PnL.
 
 - `phase-3-testnet-canary-evidence.md` records the testnet session ledger and
   bundle evidence summary.

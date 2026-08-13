@@ -1,6 +1,6 @@
 # Phase 2 Research Protocol v22
 
-- **Status**: pre-registered before historical Cboe CSV bodies.
+- **Status**: provider qualification complete; SKEW/COR1M qualified, DSPX rejected, development PnL sealed.
 - **Mechanisms**: tail skew, implied correlation, and implied dispersion.
 - **Development**: 2020-01-01 through 2022-12-31.
 - **Confirmation**: 2023-01-01 through 2025-12-31, sealed.
@@ -45,3 +45,15 @@ and two identical clean replays. A development survivor may only enter a new
 committed confirmation contract. A confirmed survivor may only become
 eligible for a separate ADR-007 `paper_shadow` review; no policy, testnet,
 live path, or future blind changes here.
+
+## Provider outcome
+
+The pre-data contract was pushed at `ee4bbe3`. SKEW and COR1M each qualify on
+756 development observations, 41 warmup observations, and a maximum four-day
+gap with no fill or interpolation. DSPX violates the frozen positive-value
+contract and is rejected without snapshot, factor, retry, signal, or PnL.
+
+The qualified snapshot and factor hashes are in
+`docs/progress/phase-2-research-v22-provider-qualification.json`. SKEW and
+COR1M development PnL stays sealed until this qualification is committed and
+pushed.
