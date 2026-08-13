@@ -1,7 +1,7 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-08-13 (Protocol v22 COR1M confirmation passed; ADR-007 review eligible)
+- **Last updated**: 2026-08-13 (Protocol v23 Wikipedia attention freeze; pageview bodies sealed)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
 - **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry and Protocol v2-v5 research identities are frozen. Protocol v5 curve carry and BVOL relief are rejected and the 2026-08..12 blind remains sealed. The provider/timer review is complete: v5 and completed v2 timers are `inactive/disabled`, v5 collector status is `archived`, and a four-day post-window audit found zero new invocations. The retained v5 tree is 13 snapshots / 13 Parquets with zero conflicts; v2 `COMPLETE`, ledger, deployment identity and all recorded checksums remain unchanged. Dashboard renders the archive as a valid terminal state with no retry or operations issue. Independent Protocol v6 remains `blocked_provider_qualification` on the official 12-row grid, with historical development closed.
   The human-reviewed `freqai_linear_v1 / linear-mom-train20240105` decision is now `demote @ paper_simulated` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. Its old testnet continuity evidence is archived and cannot authorize a restart. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
@@ -18,6 +18,7 @@
   Protocol v20 is complete with zero survivors. Total/credit stress relief are development-rejected. Unchanged safe-asset-stress relief then failed independently frozen 2023-2025 confirmation solely on monthly breadth: gross/base/stress +47.630810/+35.946934/+33.025964 USDT, 3/3 positive years, 17/36 positive months versus 18 required, 74 positions, and +18.107091 leave-best base PnL. Duplicate fills from `b99962c` match with no shorts, blockers, or no-kline hits. It cannot enter ADR-007 or `paper_shadow`. The no-vintage limitation, v8/v16/v18 paper shadow, SourcePolicy, testnet, and the future blind remain untouched.
   Protocol v21 is closed at `blocked_provider_qualification`. Its one U.S. net-liquidity identity was frozen and pushed at `d9ec0e3` before historical access, but the first WALCL request timed out after 30 seconds before response headers/body. The sequential collector did not attempt WDTGAL or RRPONTSYD and wrote no snapshot, factor, signal, or PnL. The no-retry provider policy applies; development and confirmation remain unopened, and the strategy has no alpha verdict.
   Protocol v22 is complete with one confirmed survivor. DSPX is provider-rejected and SKEW relief is development-rejected. Unchanged COR1M implied-correlation relief passes independent 2023-2025 confirmation: gross/base/stress +41.704460/+29.737095/+26.745253 USDT, 2/3 positive years, exactly 18/36 positive months, 78 positions, and +14.242905 leave-best base PnL. Duplicate clean-git fills match with zero shorts, blockers, or no-kline hits. It is now eligible for a separate identity-specific ADR-007 `paper_shadow` policy review; no SourcePolicy or runtime change has occurred. The current-history/no-vintage limitation and future blind remain intact.
+  Protocol v23 is pre-registered and frozen before Wikimedia pageview JSON bodies. It tests three independent English Wikipedia *user* attention-expansion rules (`Bitcoin`, `Ethereum`, `Cryptocurrency`): buy BTCUSDT Spot iff the latest completed daily view count minus the count five official observations earlier is strictly positive; otherwise flat. Decisions wait two calendar days, make no historical-vintage claim, and use the already-audited 2020-2022 downtime catalog. Each article may be fetched once after this freeze is pushed; 2023+ timestamps are forbidden in the locked URLs. No pageview value, signal, or PnL is opened yet.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -226,6 +227,7 @@ Immediate focus:
 16. Preserve all three v20 rejects. Do not lower the 18-month breadth gate, retune/sign-flip/ensemble safe-asset stress relief, refetch OFR, or claim historical vintages. It is not eligible for ADR-007 or `paper_shadow`.
 17. Preserve v21's provider failure. Do not retry WALCL, attempt the remaining requests, substitute a provider, or infer strategy performance. Any later liquidity study requires a new frozen provider identity.
 18. Preserve v22's DSPX/SKEW rejects and confirmed COR1M identity unchanged. Do not retune, sign-flip, ensemble, treat historical confirmation as forward evidence, or change SourcePolicy without a separate ADR-007 review.
+19. Keep Protocol v23 sealed until this freeze is committed and pushed. Do not open pageview JSON, retune v19-v22 fingerprints, sign-flip attention expansion, ensemble after PnL, or include 2023+ in the first GETs.
 
 ## Next Steps
 
@@ -252,6 +254,7 @@ Immediate focus:
 20. Keep Protocol v20 closed. Any later independent batch needs a new identity frozen before data access; it may not continue these three fingerprints or open the future blind.
 21. Keep Protocol v21 closed with development and confirmation unopened. Continue alpha exploration only through a genuinely independent, pre-registered protocol and provider route.
 22. Retain the committed COR1M confirmation evidence. The next authorized stage is a separate identity-specific ADR-007 `paper_shadow` policy review; confirmation does not itself authorize paper runtime, testnet, or live trading.
+23. After Protocol v23 is pushed, open each locked Wikimedia pageview URL once from that HEAD, qualify or reject independently, then write factors/signals and two clean-git cash replays only for passers. Do not GET before the freeze is on `origin/main`.
 
 ## Blocked / Deferred
 
@@ -287,8 +290,22 @@ Immediate focus:
 - No Protocol v19 or v20 reopen. VXD and OFR safe-asset stress both failed
   the frozen 18-month confirmation gate; lowering that gate or retuning is
   forbidden.
+- No Protocol v23 pageview body, factor, signal, or PnL until the freeze is
+  on `origin/main`. Confirmation dates and the future blind remain sealed.
 
 ## Latest Verification
+
+On 2026-08-13, after Protocol v23 pre-registration:
+
+- Official Wikimedia pageview API documentation was inspected; no
+  `/metrics/pageviews` JSON body, view count, signal, or PnL was opened.
+- The contract locks Bitcoin, Ethereum, and Cryptocurrency user pageviews,
+  five-observation strictly-positive expansion, a two-calendar-day lag, one
+  GET per article through 2022-12-31, the v7 downtime catalog, and no
+  historical-vintage claim.
+- Targeted freeze tests cover protocol identity, dry-run request plans, JSON
+  audit/factor round-trip, confirmation-timestamp rejection, and buy/flat
+  signal emission.
 
 On 2026-08-13, after Protocol v20 pre-registration:
 

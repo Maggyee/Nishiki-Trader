@@ -49,6 +49,9 @@ Current Phase 3 progress files:
   provider-qualified, DSPX is provider-rejected, SKEW fails development, and
   COR1M relief passes independent confirmation and is eligible for a separate
   ADR-007 `paper_shadow` policy review.
+- `phase-2-research-protocol-v23.md` freezes three English Wikipedia user
+  pageview attention-expansion identities before any pageview JSON body is
+  opened; confirmation dates are excluded from the locked request range.
 
 - `phase-3-testnet-canary-evidence.md` records the testnet session ledger and
   bundle evidence summary.
