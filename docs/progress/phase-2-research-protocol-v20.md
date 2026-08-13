@@ -94,3 +94,16 @@ costs/gates, two clean replays, and the audited BTC execution catalog. Passing
 can create only separate ADR-007 `paper_shadow` review eligibility. It makes
 no network request, policy mutation, trade authorization, or future-blind
 opening.
+
+## Confirmation data outcome
+
+Offline extraction from the immutable snapshot qualifies 783 D+5 decision
+dates, 261 in each of 2023, 2024, and 2025. Coverage is exactly 2023-01-01
+through 2025-12-31 with a maximum three-calendar-day gap and 40 warmup rows.
+No observation becoming available in 2026 is included.
+
+The factor hash is recorded in
+`docs/progress/phase-2-research-v20-confirmation-data-sources.json`. There was
+no network request, fill, return, PnL, historical-vintage claim, policy change,
+or future-blind access. Confirmation signals/PnL stay sealed until this
+qualification is committed and pushed.

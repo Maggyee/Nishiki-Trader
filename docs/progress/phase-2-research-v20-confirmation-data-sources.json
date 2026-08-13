@@ -1,0 +1,38 @@
+{
+  "audit": {
+    "annual_decision_counts": {
+      "2023": 261,
+      "2024": 261,
+      "2025": 261
+    },
+    "confirmation_decision_count": 783,
+    "first_decision_date": "2023-01-01",
+    "forward_fill_used": false,
+    "last_decision_date": "2025-12-31",
+    "maximum_calendar_gap_days": 3,
+    "partition_basis": "decision_available_at",
+    "warmup_rows": 40
+  },
+  "boundaries": {
+    "future_blind_opened": false,
+    "historical_vintage_claim": false,
+    "network_accessed": false,
+    "pnl_opened": false,
+    "returns_computed": false,
+    "source_policy_mutated": false,
+    "trading_touched": false
+  },
+  "classification": "provider_qualified",
+  "contract_sha256": "sha256:987317c45ac6c751979da5e9e2f030ba24aa500ca9d76036f6b4f1fa9ab0374d",
+  "factor": {
+    "path": "data/research-v20/confirmation/factors/safe_asset.csv",
+    "row_count": 823,
+    "sha256": "sha256:0c258762f65fa62dc579c12d8294f2b1b244e1dc4ccb935859490aedba826a2e"
+  },
+  "schema_version": "research.v20.confirmation_data.v1",
+  "source_snapshot": {
+    "path": "data/research-v20/raw/fsi-20260813T035301Z-202240619bc4.json",
+    "snapshot_sha256": "sha256:202240619bc436ebe8bdd6eab5217aa9062a00854d8c6c6b2fae1d4503349a0b",
+    "vintage_id": "ofr-fsi:2026-08-13T03:53:01.920622+00:00:202240619bc4"
+  }
+}
