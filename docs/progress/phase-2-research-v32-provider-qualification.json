@@ -1,0 +1,60 @@
+{
+  "schema_version": "research.v32.provider_qualification.v1",
+  "classification": "provider_partially_qualified",
+  "protocol_sha256": "sha256:b26031e36e44c3c4b1fa7a0c0b2ce46a351c19badc90db776971c871fe6b3726",
+  "provider_contract_sha256": "sha256:3842af035f6f1eff3e5429c584ce2c097a847908f0a05b12d7af6973cbc309fd",
+  "pre_data_commit": "89a9a9c",
+  "qualified_candidates": [
+    "pound_fx_vol_relief"
+  ],
+  "rejected_candidates": {
+    "euro_fx_vol_relief": {
+      "reason": "development_reserve_ends_before_2022-12-29",
+      "request_openings": 1,
+      "retry_allowed": false
+    },
+    "yen_fx_vol_relief": {
+      "reason": "development_reserve_ends_before_2022-12-29",
+      "request_openings": 1,
+      "retry_allowed": false
+    }
+  },
+  "qualified_series": {
+    "bpvix": {
+      "snapshot_path": "data/research-v32/raw/bpvix-20260813T151214Z-71cb60900755.json",
+      "snapshot_sha256": "sha256:71cb609007555d1ff4b9ff126a4a73fb6af400451cc5484239277985b100d30a",
+      "factor_path": "data/research-v32/factors/bpvix.csv",
+      "factor_sha256": "sha256:3977404593851839c179303caa1d1dc73d871fcbc055f5fbb8dfc3ab89dab883",
+      "factor_row_count": 795,
+      "development_row_count": 754,
+      "warmup_row_count": 41,
+      "development_first_date": "2020-01-02",
+      "development_last_date": "2022-12-30",
+      "maximum_calendar_gap_days": 4,
+      "schema": "scalar",
+      "index": "BPVIX"
+    }
+  },
+  "rejected_series": {
+    "euvix": {
+      "qualified": false,
+      "snapshot_written": false,
+      "failure": "development_reserve_ends_too_early"
+    },
+    "jyvix": {
+      "qualified": false,
+      "snapshot_written": false,
+      "failure": "development_reserve_ends_too_early"
+    }
+  },
+  "historical_vintage_claim": false,
+  "boundaries": {
+    "signals_generated": false,
+    "pnl_opened": false,
+    "confirmation_opened": false,
+    "confirmation_values_used": false,
+    "source_policy_mutated": false,
+    "trading_touched": false,
+    "future_blind_opened": false
+  }
+}

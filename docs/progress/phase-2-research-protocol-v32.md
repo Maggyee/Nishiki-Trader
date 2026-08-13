@@ -1,6 +1,7 @@
 # Phase 2 Research Protocol v32
 
-- **Status**: pre-registered; no historical CSV body, factor, signal, or PnL opened.
+- **Status**: pre-registered; BPVIX provider-qualified; EUVIX and JYVIX
+  coverage-rejected; no signal or PnL opened.
 - **Mechanisms**: Cboe/CME FX Euro, Yen, and Pound 30-day implied-vol relief
   (EUVIX, JYVIX, BPVIX).
 - **Development**: 2020-01-01 through 2022-12-31; unopened.
@@ -40,3 +41,12 @@ future blind stay untouched.
 Unchanged development gates. A development passer may only enter a separately
 frozen 2023-2025 confirmation contract. A confirmed passer may only become
 eligible for a separate ADR-007 `paper_shadow` review.
+
+## Provider qualification
+
+From freeze `89a9a9c`, BPVIX qualified with 754 unfilled 2020-2022 observations,
+41 warmup rows, scalar schema, and a four-day maximum gap. Development factors
+stop at 2022-12-30. EUVIX and JYVIX failed closed after one GET each because
+the development reserve ends before 2022-12-29, with no snapshot written.
+Machine hashes live in `docs/progress/phase-2-research-v32-provider-qualification.json`.
+Signals and PnL remain unopened. Do not retry the rejected kinds.
