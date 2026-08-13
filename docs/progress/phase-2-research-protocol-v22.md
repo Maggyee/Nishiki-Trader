@@ -68,3 +68,16 @@ already-audited 2020-2022 downtime-sensitivity catalog for development while
 retaining `data/research-v8/catalog` for confirmation. No candidate identity,
 factor, signal, partition, cost, gate, or trading boundary changes. Valid
 development replay remains sealed until this amendment is committed.
+
+## Development outcome
+
+Two clean replays per qualified candidate from `1861726` reproduce with
+identical fills and no evidence blockers. SKEW relief is rejected at
+gross/base/stress -21.720930/-27.462310/-28.897655 USDT and negative
+leave-best base PnL.
+
+COR1M relief passes all frozen gates: gross/base/stress PnL is
++19.959630/+14.196850/+12.756155 USDT, 2/3 years and 23/36 months are positive,
+86 positions close, and leave-best base PnL is +0.856160 USDT. Only this
+unchanged identity may enter a separately committed confirmation. Its thin
+concentration margin and negative 2022 result make confirmation essential.

@@ -46,7 +46,8 @@ Current Phase 3 progress files:
   at provider qualification with no factor value, signal, or PnL opened.
 - `phase-2-research-protocol-v22.md` freezes SKEW relief, COR1M relief, and
   DSPX expansion as three option-surface mechanisms; SKEW/COR1M are
-  provider-qualified and DSPX is provider-rejected before strategy PnL.
+  provider-qualified, DSPX is provider-rejected, SKEW fails development, and
+  COR1M relief alone is eligible for a separately frozen confirmation.
 
 - `phase-3-testnet-canary-evidence.md` records the testnet session ledger and
   bundle evidence summary.

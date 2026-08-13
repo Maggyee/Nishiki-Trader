@@ -1,0 +1,123 @@
+{
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_confirmation": false,
+    "opens_future_blind": false,
+    "resumes_testnet": false,
+    "touches_live_path": false
+  },
+  "candidates": [
+    {
+      "base_net_pnl": -27.462309828,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:f0da7352e569ab10a34c0d93115fcf7c252340dbb93978790cf67e3e008341f1",
+          "manifest_sha256": "sha256:54f466f3817cb0121d4888ba884b2175bdfe281c740fe04a908ea9540e6003ab",
+          "path": "data/research-v22/backtests/20260813-042358Z-b6411c7d"
+        },
+        {
+          "fills_sha256": "sha256:f0da7352e569ab10a34c0d93115fcf7c252340dbb93978790cf67e3e008341f1",
+          "manifest_sha256": "sha256:2b4f391e0f97a2981da1fa547c2df4dfbf3b72564073c4b4e9e90de1ec260f97",
+          "path": "data/research-v22/backtests/20260813-042358Z-d208e0ad"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "reject_candidate",
+      "closed_positions": 85,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [
+        "base_net_pnl_not_positive",
+        "stress_net_pnl_not_positive",
+        "leave_best_base_net_pnl_not_positive"
+      ],
+      "gross_net_pnl": -21.72093,
+      "key": "tail_skew_relief",
+      "leave_best_base_net_pnl": -41.955474496,
+      "model_version": "cboe-skew-diff5-negative-lag1d-v1",
+      "performance_pass": false,
+      "positive_months": 18,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 169,
+      "signal_store_sha256": "sha256:7ab8c495bb9e500d7ef9f1ac4b71c876077fc5746b3b1e297cefd1098f8e9fff",
+      "source": "rule_cboe_tail_skew_relief_v1",
+      "stress_net_pnl": -28.897654785,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 4.678568933999999,
+        "2021": 4.38950109,
+        "2022": -36.530379852
+      }
+    },
+    {
+      "base_net_pnl": 14.19685013999999,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:315b0b4dcb7394ac226cf1ff0f9e55c23fa7de0103e48ac090b61da06a662b50",
+          "manifest_sha256": "sha256:acbbdf2a42522dd5ae3612a723e6e058172b483df018fc47936b3da3e852ea0e",
+          "path": "data/research-v22/backtests/20260813-042358Z-bfdf6436"
+        },
+        {
+          "fills_sha256": "sha256:315b0b4dcb7394ac226cf1ff0f9e55c23fa7de0103e48ac090b61da06a662b50",
+          "manifest_sha256": "sha256:b24f55467fff848d91b0049edfd562549cdbf76fd4e6b5fe99474317fa840057",
+          "path": "data/research-v22/backtests/20260813-042358Z-e272055f"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "development_pass_confirmation_open_eligible",
+      "closed_positions": 86,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [],
+      "gross_net_pnl": 19.95962999999999,
+      "key": "implied_correlation_relief",
+      "leave_best_base_net_pnl": 0.856159516,
+      "model_version": "cboe-cor1m-diff5-negative-lag1d-v1",
+      "performance_pass": true,
+      "positive_months": 23,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 171,
+      "signal_store_sha256": "sha256:a0aa721a85f9cb57366a519bcbcabf07ec153c5147df38bb619c000d813b054e",
+      "source": "rule_cboe_implied_correlation_relief_v1",
+      "stress_net_pnl": 12.75615517499999,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 5.564866474,
+        "2021": 14.481305790000008,
+        "2022": -5.849322124000002
+      }
+    }
+  ],
+  "confirmation_holdout_status": "sealed_pending_committed_development_review",
+  "confirmation_open_eligible_candidates": [
+    "implied_correlation_relief"
+  ],
+  "development_passer_count": 1,
+  "execution_amendment": {
+    "confirmation_catalog_path": "data/research-v8/catalog",
+    "development_catalog_path": "data/research-v7-downtime-sensitivity/catalog",
+    "execution_amendment_sha256": "sha256:9b9256571905f0dcd21d4a7331e2f5d6a15e0f849f349c6706e8dd5c3a2d36af",
+    "valid": true
+  },
+  "future_blind_status": "sealed_unopened",
+  "protocol_sha256": "sha256:ae3edd20007a35470f94a57609e53f994bfb4cdf677318d99b6e3c249989685f",
+  "provider_qualification": {
+    "historical_vintage_claim": false,
+    "qualified_candidates": [
+      "tail_skew_relief",
+      "implied_correlation_relief"
+    ],
+    "rejected_candidates": {
+      "implied_dispersion_expansion": "provider_value_contract_failure_non_positive_DSPX"
+    }
+  },
+  "recommendation": "commit_development_results_before_confirmation_open",
+  "schema_version": "research.v22.development_results.v1"
+}
