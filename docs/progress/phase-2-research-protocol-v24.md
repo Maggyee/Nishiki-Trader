@@ -1,6 +1,6 @@
 # Phase 2 Research Protocol v24
 
-- **Status**: pre-registered; alternative.me Fear and Greed JSON body sealed.
+- **Status**: provider-qualified; 2020-2022 signals and PnL still sealed.
 - **Mechanisms**: official Crypto Fear and Greed `value_classification` holds.
 - **Development**: 2020-01-01 through 2022-12-31.
 - **Confirmation**: 2023-01-01 through 2025-12-31, sealed.
@@ -47,3 +47,11 @@ positive months, 30 closed positions, positive leave-best base PnL, and two
 identical clean cash replays. A development passer may only enter a new
 confirmation contract. A confirmed passer may only become eligible for a
 separate ADR-007 `paper_shadow` review.
+
+## Provider qualification
+
+The shared series qualified from freeze `1b5ff65`. Development has 1,096
+unfilled observations from 2020-01-01 through 2022-12-31, 61 warmup rows, a
+one-day maximum gap, and 1,319 later rows counted but unused. Machine hashes
+live in `docs/progress/phase-2-research-v24-provider-qualification.json`.
+Signals and PnL remain unopened.

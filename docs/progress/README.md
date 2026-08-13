@@ -54,7 +54,8 @@ Current Phase 3 progress files:
   pageview attention-expansion identities. All three articles qualified, then
   failed 2020-2022 development gates; confirmation remains sealed.
 - `phase-2-research-protocol-v24.md` freezes three official Crypto Fear and
-  Greed classification holds before the alternative.me JSON body is opened.
+  Greed classification holds. The shared series qualified from freeze
+  `1b5ff65` with 1,096 unfilled 2020-2022 days; confirmation remains sealed.
 
 - `phase-3-testnet-canary-evidence.md` records the testnet session ledger and
   bundle evidence summary.

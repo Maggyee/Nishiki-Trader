@@ -1,0 +1,32 @@
+{
+  "schema_version": "research.v24.provider_qualification.v1",
+  "classification": "provider_qualified",
+  "protocol_sha256": "sha256:c9097690bed8837ed2ecc1eefcdb0167043ef6fb4d6506e3738b725ec426961c",
+  "provider_contract_sha256": "sha256:a338b3f0460cfb050b729d38e4e635f024b6b69c7053f30a36b538783e5e82d1",
+  "pre_data_commit": "1b5ff65d2fd0aea7c53f94fff9b8667786758607",
+  "qualified_candidates": ["extreme_fear_hold", "fear_hold", "non_greed_hold"],
+  "rejected_candidates": {},
+  "snapshot": {
+    "path": "data/research-v24/raw/fng-20260813T053729Z-8488ecdf085e.json",
+    "snapshot_sha256": "sha256:8488ecdf085ea7814f9cb60ad9d85ea5de13d2f9d6e336f8ecddd2702d5cc7bf",
+    "factor_path": "data/research-v24/factors/fng.csv",
+    "factor_sha256": "sha256:b7c66c31031ad67df59d9a10b599dc29dca973d6c032edd2718d520cbbb691f2",
+    "factor_row_count": 1157,
+    "development_row_count": 1096,
+    "warmup_row_count": 61,
+    "development_first_date": "2020-01-01",
+    "development_last_date": "2022-12-31",
+    "maximum_calendar_gap_days": 1,
+    "trailing_rows_ignored": 1319
+  },
+  "historical_vintage_claim": false,
+  "boundaries": {
+    "signals_generated": false,
+    "pnl_opened": false,
+    "confirmation_opened": false,
+    "confirmation_values_used": false,
+    "source_policy_mutated": false,
+    "trading_touched": false,
+    "future_blind_opened": false
+  }
+}

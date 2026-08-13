@@ -10,6 +10,7 @@ from apps.ops.research_protocol_v24 import (
     load_and_validate,
     validate_protocol,
 )
+from apps.ops.research_v24_review import load_provider_qualification
 
 
 def test_protocol_v24_is_frozen_and_valid() -> None:
@@ -35,3 +36,16 @@ def test_protocol_v24_rejects_opened_history() -> None:
 
     with pytest.raises(ValueError, match="historical data boundary drifted"):
         validate_protocol(payload)
+
+
+def test_protocol_v24_provider_qualification_is_frozen() -> None:
+    result = load_provider_qualification()
+
+    assert result["classification"] == "provider_qualified"
+    assert result["qualified_candidates"] == [
+        "extreme_fear_hold",
+        "fear_hold",
+        "non_greed_hold",
+    ]
+    assert result["snapshot"]["development_row_count"] == 1096
+    assert result["historical_vintage_claim"] is False
