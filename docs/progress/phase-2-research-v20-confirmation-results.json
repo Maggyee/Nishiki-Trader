@@ -1,0 +1,60 @@
+{
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_future_blind": false,
+    "resumes_testnet": false,
+    "touches_live_path": false
+  },
+  "candidate": {
+    "base_net_pnl": 35.946933595999994,
+    "bundle_runs": [
+      {
+        "fills_sha256": "sha256:9f0b89d6677b2d66d445cb1b0157ae82c5afa23e3603a881a36f7bf183f3ea3c",
+        "manifest_sha256": "sha256:71bc8941096e8817bd4aa78860efa10af5c8b14296d0a7472f4703af79b21e9d",
+        "path": "data/research-v20/confirmation/backtests/20260813-040521Z-4def2da3"
+      },
+      {
+        "fills_sha256": "sha256:9f0b89d6677b2d66d445cb1b0157ae82c5afa23e3603a881a36f7bf183f3ea3c",
+        "manifest_sha256": "sha256:02d923d2f94f23ff25afa06f10b866d7f847a53622489f825e052d16fa41fcd7",
+        "path": "data/research-v20/confirmation/backtests/20260813-040524Z-1537b651"
+      }
+    ],
+    "calendar_months": 36,
+    "classification": "reject_candidate",
+    "closed_positions": 74,
+    "duplicate_replays": 2,
+    "effective_blockers": [],
+    "evidence_pass": true,
+    "gross_net_pnl": 47.63081,
+    "key": "safe_asset_stress_relief",
+    "leave_best_base_net_pnl": 18.107091451999995,
+    "model_version": "ofr-fsi-safe-assets-diff5-negative-lag5d-v1",
+    "performance_pass": false,
+    "positive_months": 17,
+    "positive_years": 3,
+    "reproducible": true,
+    "short_positions": 0,
+    "signal_count": 147,
+    "signal_store_sha256": "296db440ab0b683f141c58df5249c4b148ae1a553f7f2cc6c5acf8c4f023b236",
+    "source": "rule_ofr_safe_asset_stress_relief_v1",
+    "stress_net_pnl": 33.025964495,
+    "verified_no_kline_event_hits": [],
+    "yearly_base_net_pnl": {
+      "2023": 6.9378883039999995,
+      "2024": 25.850034686,
+      "2025": 3.1590106060000007
+    }
+  },
+  "contract_sha256": "sha256:987317c45ac6c751979da5e9e2f030ba24aa500ca9d76036f6b4f1fa9ab0374d",
+  "data_qualification": {
+    "classification": "provider_qualified",
+    "confirmation_decision_count": 783,
+    "factor_sha256": "sha256:0c258762f65fa62dc579c12d8294f2b1b244e1dc4ccb935859490aedba826a2e",
+    "snapshot_sha256": "sha256:202240619bc436ebe8bdd6eab5217aa9062a00854d8c6c6b2fae1d4503349a0b"
+  },
+  "future_blind_status": "sealed_unopened",
+  "historical_vintage_claim": false,
+  "recommendation": "stop_protocol_v20_confirmation_failed",
+  "schema_version": "research.v20.confirmation_results.v1"
+}

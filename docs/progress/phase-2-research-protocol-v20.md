@@ -3,7 +3,7 @@
 - **Frozen**: 2026-08-13 before opening the OFR FSI JSON or CSV body.
 - **Machine contract**: `docs/progress/phase-2-research-protocol-v20.json`
 - **Provider contract**: `docs/progress/phase-2-research-v20-data-sources.json`
-- **Status**: provider qualified; development PnL sealed pending committed qualification.
+- **Status**: complete; all three candidates rejected; confirmation closed.
 - **Trading effect**: none.
 
 ## Independent mechanism
@@ -107,3 +107,15 @@ The factor hash is recorded in
 no network request, fill, return, PnL, historical-vintage claim, policy change,
 or future-blind access. Confirmation signals/PnL stay sealed until this
 qualification is committed and pushed.
+
+## Confirmation outcome
+
+Two clean replays from `b99962c` have identical fills and no evidence
+blockers. Safe-asset stress relief is strongly positive after costs:
+gross/base/stress PnL is +47.630810/+35.946934/+33.025964 USDT; all three
+years are positive, 74 positions close, and leave-best base PnL is
++18.107091 USDT.
+
+However, only 17/36 calendar months are positive against the frozen 18-month
+minimum. The candidate is rejected. It may not enter ADR-007 or
+`paper_shadow`, be retuned, or open the future blind.
