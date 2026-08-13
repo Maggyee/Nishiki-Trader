@@ -1,6 +1,6 @@
 # Phase 2 Research Protocol v21
 
-- **Status**: pre-registered; historical CSV bodies, factor values, signals, and PnL unopened.
+- **Status**: closed at `blocked_provider_qualification`; historical CSV bodies, factor values, signals, and PnL unopened.
 - **Mechanism**: U.S. dollar net-liquidity expansion.
 - **Development**: 2020-01-01 through 2022-12-31.
 - **Confirmation**: 2023-01-01 through 2025-12-31, sealed.
@@ -46,3 +46,12 @@ two clean Nautilus cash-account replays. A development pass can open only a
 separately committed 2023-2025 confirmation contract. A confirmation pass can
 create only ADR-007 `paper_shadow` review eligibility; it cannot mutate policy,
 resume testnet, touch live trading, or open the future blind.
+
+## Provider outcome
+
+The frozen contract was pushed at `d9ec0e3`. The first and only attempted
+historical request (`WALCL`) timed out after 30 seconds before response headers
+or body. The sequential collector did not attempt `WDTGAL` or `RRPONTSYD` and
+wrote no snapshot or factor file. The no-retry failure policy closes v21 at
+`blocked_provider_qualification`; development and confirmation remain
+unopened.

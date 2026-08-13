@@ -1,0 +1,29 @@
+{
+  "schema_version": "research.v21.provider_qualification.v1",
+  "classification": "blocked_provider_qualification",
+  "attempted_at": "2026-08-13T04:14:00Z",
+  "protocol_commit": "d9ec0e3",
+  "attempt": {
+    "series_id": "WALCL",
+    "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=WALCL&cosd=2019-10-01&coed=2022-12-31",
+    "request_ordinal": 1,
+    "failure": "TimeoutError: The read operation timed out",
+    "timeout_seconds": 30,
+    "response_headers_received": false,
+    "response_body_opened": false
+  },
+  "unattempted_series": ["WDTGAL", "RRPONTSYD"],
+  "failure_policy_applied": "stop_without_retry_substitution_or_strategy_evaluation",
+  "historical_vintage_claim": false,
+  "boundaries": {
+    "historical_factor_values_opened": false,
+    "snapshot_written": false,
+    "factor_written": false,
+    "signals_generated": false,
+    "pnl_opened": false,
+    "confirmation_opened": false,
+    "source_policy_mutated": false,
+    "trading_touched": false,
+    "future_blind_opened": false
+  }
+}

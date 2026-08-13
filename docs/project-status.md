@@ -1,7 +1,7 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-08-13 (Protocol v21 net-liquidity mechanism pre-registered before historical data)
+- **Last updated**: 2026-08-13 (Protocol v21 provider-blocked before historical data)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
 - **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry and Protocol v2-v5 research identities are frozen. Protocol v5 curve carry and BVOL relief are rejected and the 2026-08..12 blind remains sealed. The provider/timer review is complete: v5 and completed v2 timers are `inactive/disabled`, v5 collector status is `archived`, and a four-day post-window audit found zero new invocations. The retained v5 tree is 13 snapshots / 13 Parquets with zero conflicts; v2 `COMPLETE`, ledger, deployment identity and all recorded checksums remain unchanged. Dashboard renders the archive as a valid terminal state with no retry or operations issue. Independent Protocol v6 remains `blocked_provider_qualification` on the official 12-row grid, with historical development closed.
   The human-reviewed `freqai_linear_v1 / linear-mom-train20240105` decision is now `demote @ paper_simulated` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. Its old testnet continuity evidence is archived and cannot authorize a restart. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
@@ -16,7 +16,7 @@
   Protocol v17 is closed at `blocked_provider_qualification`. Its one allowed VXEEM GET, opened from `c0a9629`, returned `DATE,OPEN,HIGH,LOW,CLOSE` rather than the frozen `DATE,VXEEM`. No close value, signal, or PnL was audited; VXEFA and VXN were not fetched. Protocol v18 recovered the same three five-observation rules under new OHLC identities. Development rejected VXEEM/VXEFA and advanced only VXN. The unchanged VXN rule passed independent 2023-2025 confirmation on 752 unfilled observations: base/stress +60.207790/+57.571400 USDT, 3/3 positive years, 20/36 positive months, 72 positions, and +35.304076 leave-best base PnL. Its separate ADR-007 review now records `hold @ paper_shadow` under `SourcePolicy(dry_run=True, position_pct_multiplier=0.2, min_confidence_override=None)`. The clean entry bundle accepts 129/129 signals and emits zero orders/fills or blockers. The fail-closed VXN/BTC collector was frozen and pushed at `e90799e` before access. Day 1 qualified on 4256 official VXN rows through 2026-08-12 (age one calendar day) and 167 contiguous closed BTC hours, with zero revisions or blockers. The 41 baseline signals only seed state. Forward progress is 1/7 qualified days and 0/50 new signals. The operator-approved weekday 03:30 UTC collector is installed once in the user crontab; `paper_simulated` is not authorized, and the final future blind stays sealed.
   Protocol v19 is complete with zero survivors. RVX is development-rejected and VXFXI provider-rejected. VXD passed development, then failed the independently frozen 2023-2025 confirmation solely on monthly breadth: gross/base/stress +71.365380/+57.492785/+54.024636 USDT, 3/3 positive years, 17/36 positive months versus 18 required, 94 positions, and +34.350455 leave-best base PnL. Duplicate fills match with no shorts, blockers, or verified no-kline event hits. VXD is rejected and cannot enter ADR-007 or `paper_shadow`; the future blind stays sealed.
   Protocol v20 is complete with zero survivors. Total/credit stress relief are development-rejected. Unchanged safe-asset-stress relief then failed independently frozen 2023-2025 confirmation solely on monthly breadth: gross/base/stress +47.630810/+35.946934/+33.025964 USDT, 3/3 positive years, 17/36 positive months versus 18 required, 74 positions, and +18.107091 leave-best base PnL. Duplicate fills from `b99962c` match with no shorts, blockers, or no-kline hits. It cannot enter ADR-007 or `paper_shadow`. The no-vintage limitation, v8/v16/v18 paper shadow, SourcePolicy, testnet, and the future blind remain untouched.
-  Protocol v21 is pre-registered with one independent U.S. net-liquidity identity: `WALCL - WDTGAL - 1000 * RRPONTSYD`, long BTC only when its four-common-week change is positive, with a conservative D+7 decision lag. Official metadata pages verified definitions and exposed only five August 2026 headline values per page, outside both historical partitions. No 2019-2025 CSV body, factor value, signal, or PnL is open. The three-request provider contract, exact formula, single lookback/sign, development gates, and sealed 2023-2025 confirmation are frozen on disk pending commit and push.
+  Protocol v21 is closed at `blocked_provider_qualification`. Its one U.S. net-liquidity identity was frozen and pushed at `d9ec0e3` before historical access, but the first WALCL request timed out after 30 seconds before response headers/body. The sequential collector did not attempt WDTGAL or RRPONTSYD and wrote no snapshot, factor, signal, or PnL. The no-retry provider policy applies; development and confirmation remain unopened, and the strategy has no alpha verdict.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -223,7 +223,7 @@ Immediate focus:
 14. Preserve v17's schema mismatch, the v18 VXEEM/VXEFA rejects, and confirmed VXN at its reviewed `paper_shadow` policy. Continue the installed weekday 03:30 UTC collector. Do not retune, disable dry-run, count baseline rows toward the forward gate, enter `paper_simulated`, or open the future blind.
 15. Preserve all three v19 rejects. Do not lower VXD's 18-month breadth gate, retune/sign-flip/ensemble it, retry VXFXI, reopen RVX, enter ADR-007, or open the future blind.
 16. Preserve all three v20 rejects. Do not lower the 18-month breadth gate, retune/sign-flip/ensemble safe-asset stress relief, refetch OFR, or claim historical vintages. It is not eligible for ADR-007 or `paper_shadow`.
-17. Preserve the v21 pre-data boundary. Do not open any FRED historical CSV body until the protocol, provider contract, implementation, tests, and current status are committed and pushed. Afterward permit exactly one GET for each frozen development series, without retry, filling, interpolation, alternate formula, or parameter change.
+17. Preserve v21's provider failure. Do not retry WALCL, attempt the remaining requests, substitute a provider, or infer strategy performance. Any later liquidity study requires a new frozen provider identity.
 
 ## Next Steps
 
@@ -248,7 +248,7 @@ Immediate focus:
 18. For v18 VXN relief, keep `dry_run=True` and multiplier `0.2`. Day 1 is qualified at 1/7 days and 0/50 signals. Continue the installed weekday 03:30 UTC collector until the OR-gate is reached; crossing it creates review eligibility rather than automatic `paper_simulated` authorization.
 19. Preserve the committed v19 confirmation rejection without retry or retuning.
 20. Keep Protocol v20 closed. Any later independent batch needs a new identity frozen before data access; it may not continue these three fingerprints or open the future blind.
-21. Commit and push Protocol v21, then run the three-request provider qualification. Only a qualified exact-date common grid may produce development signals and exactly two clean Nautilus replays; 2023-2025 confirmation remains sealed unless every development gate passes.
+21. Keep Protocol v21 closed with development and confirmation unopened. Continue alpha exploration only through a genuinely independent, pre-registered protocol and provider route.
 
 ## Blocked / Deferred
 
@@ -339,6 +339,14 @@ On 2026-08-13, after Protocol v21 pre-registration:
   before any 2019-2025 historical CSV body or PnL access.
 - Nine targeted contract, synthetic snapshot, and signal tests pass. The dry
   run lists exactly three credential-free requests and makes no network call.
+
+On 2026-08-13, after Protocol v21 provider qualification:
+
+- The first WALCL request from clean pushed commit `d9ec0e3` timed out after
+  30 seconds before response headers/body; WDTGAL and RRPONTSYD were not
+  attempted.
+- Classification is `blocked_provider_qualification`. No snapshot, historical
+  value, factor, signal, PnL, policy, trading path, or future blind was opened.
 
 On 2026-08-13, after Protocol v20 confirmation:
 
