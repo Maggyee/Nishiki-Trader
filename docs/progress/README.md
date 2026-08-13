@@ -58,8 +58,8 @@ Current Phase 3 progress files:
   failed 2020-2022 development gates; confirmation remains sealed.
 - `phase-2-research-protocol-v25.md` freezes three DefiLlama TVL-expansion
   identities. Bitcoin-chain TVL is provider-rejected. Ethereum TVL expansion
-  fails development. All-chain TVL expansion is confirmation-open eligible;
-  2023-2025 values remain sealed.
+  fails development. All-chain TVL expansion passed development; its 2023-2025
+  confirmation contract is frozen and values remain sealed until pushed.
 
 - `phase-3-testnet-canary-evidence.md` records the testnet session ledger and
   bundle evidence summary.
