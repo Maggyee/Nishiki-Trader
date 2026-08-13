@@ -1,0 +1,26 @@
+{
+  "schema_version": "research.v17.provider_qualification.v1",
+  "protocol_sha256": "sha256:928943f4c045279200e73c02b8a32752f4e1b5d3cf83c175676951d03886e777",
+  "clean_commit_before_access": "c0a9629",
+  "request_openings": 1,
+  "opened_kind": "vxeem",
+  "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/VXEEM_History.csv",
+  "outcome": "schema_mismatch_before_value_audit",
+  "locked_columns": ["DATE", "VXEEM"],
+  "observed_header": ["DATE", "OPEN", "HIGH", "LOW", "CLOSE"],
+  "value_rows_audited": false,
+  "remaining_kinds_fetched": false,
+  "classification": "blocked_provider_qualification",
+  "development_status": "not_opened",
+  "confirmation_status": "sealed_unopened",
+  "future_blind_status": "sealed_unopened",
+  "boundaries": {
+    "factor_values_opened": false,
+    "signals_generated": false,
+    "pnl_opened": false,
+    "loads_credentials": false,
+    "touches_v8_or_v16_shadow": false,
+    "reopens_v7_or_v9": false,
+    "touches_live_path": false
+  }
+}

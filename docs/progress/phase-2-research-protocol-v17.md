@@ -3,7 +3,7 @@
 - **Frozen**: 2026-08-13 before reading any VXEEM, VXEFA, or VXN CSV body.
 - **Machine contract**: `docs/progress/phase-2-research-protocol-v17.json`
 - **Provider contract**: `docs/progress/phase-2-research-v17-data-sources.json`
-- **Status**: pre-registered; implementation and synthetic validation only.
+- **Status**: blocked at provider qualification; CSV schema mismatch; development values unopened.
 - **Trading effect**: none.
 
 ## Why this batch is allowed
@@ -64,3 +64,10 @@ after this contract is committed and pushed. Schema mismatch fails closed.
 
 No credentials, SourcePolicy change, v8/v16 paper-shadow mutation, testnet
 restart, confirmation PnL, future-blind access, or live path is authorized.
+
+## Provider outcome
+
+The one allowed VXEEM GET was opened from clean pushed commit `c0a9629`. The
+response header was `DATE,OPEN,HIGH,LOW,CLOSE` rather than the frozen
+`DATE,VXEEM`. Value-row audit did not run. VXEFA and VXN remain unfetched.
+v17 is `blocked_provider_qualification`. An OHLC recovery needs a new identity.
