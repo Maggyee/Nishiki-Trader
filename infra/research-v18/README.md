@@ -6,10 +6,11 @@ writes only to the gitignored `data/research-v18-forward/` tree. It never
 loads credentials, places orders, changes `SourcePolicy`, starts a Nautilus
 runtime, touches testnet/live, or opens the sealed future blind.
 
-Current phase: prospective collection after the identity-specific ADR-007
-`hold @ paper_shadow` review. Recurring host scheduling requires the already
-recorded operator approval plus a clean pushed collector commit and a
-qualified Day 1. This directory does not mutate the host crontab by itself.
+Current phase: recurring paper-shadow collection after a qualified manual Day
+1. The operator approved a user-crontab deployment on 2026-08-13 because this
+host has no usable user-systemd bus. No service or timer file is enabled by
+this directory; the repository remains declarative and the host crontab is the
+operational deployment.
 
 The implementation entrypoint is:
 
@@ -26,5 +27,7 @@ hourly bars, detects revisions against accepted local state, and writes
 dry-run `SignalEvent v1` lineage. Multiple attempts on one UTC date count as
 at most one qualified day.
 
-Reaching 7 qualified days or 50 new forward signals creates human review
-eligibility; it never automatically authorizes `paper_simulated`.
+The installed host entry is `30 3 * * 1-5` and appends output to
+`data/research-v18-forward/cron.log`. Reaching 7 qualified days or 50 new
+forward signals creates human review eligibility; it never automatically
+authorizes `paper_simulated`.

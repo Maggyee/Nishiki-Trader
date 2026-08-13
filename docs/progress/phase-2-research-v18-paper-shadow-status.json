@@ -1,6 +1,6 @@
 {
   "schema_version": "research.v18.paper_shadow_status_summary.v1",
-  "updated_at": "2026-08-13T03:15:00Z",
+  "updated_at": "2026-08-13T03:18:16Z",
   "contract_sha256": "sha256:78e2f65d76604e35ab4bf4053585b5611894bb74efbd59872e95d4f4e3a7a6f8",
   "review_sha256": "sha256:afc29c0b19daae4036d1e508f84824c9739fddded391e01bf93778ee37b5a974",
   "stage": "paper_shadow",
@@ -10,7 +10,7 @@
     "min_confidence_override": null
   },
   "forward_gate": {
-    "qualified_day_count": 0,
+    "qualified_day_count": 1,
     "required_days": 7,
     "new_forward_signal_count": 0,
     "required_signals": 50,
@@ -30,11 +30,14 @@
     "decision_allowed": true
   },
   "scheduler": {
-    "installed": false,
-    "collector_implemented": true
+    "installed": true,
+    "collector_implemented": true,
+    "crontab_calendar": "30 3 * * 1-5",
+    "crontab_fingerprint_sha256": "sha256:3f4d6a1c32dd56cd2277eee8a23ecf94823c41a0eaead502a9607335fe19eb21"
   },
+  "day1_attempt_id": "20260813T031755Z-2d86f76f3b64",
   "anomaly_blockers": [],
-  "next_action": "run_day1_from_clean_pushed_commit_then_install_approved_crontab",
+  "next_action": "continue_paper_shadow_collection",
   "future_blind_status": "sealed_unopened",
   "paper_simulated_status": "not_authorized",
   "testnet_status": "blocked",
