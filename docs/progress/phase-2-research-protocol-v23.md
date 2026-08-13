@@ -1,6 +1,6 @@
 # Phase 2 Research Protocol v23
 
-- **Status**: provider-qualified; 2020-2022 signals and PnL still sealed.
+- **Status**: development complete; all three candidates rejected; confirmation sealed.
 - **Mechanisms**: English Wikipedia user pageview attention expansion.
 - **Development**: 2020-01-01 through 2022-12-31.
 - **Confirmation**: 2023-01-01 through 2025-12-31, sealed.
@@ -54,3 +54,12 @@ unfilled rows, 1,096 development observations from 2020-01-01 through
 2022-12-31, 61 warmup rows, and a one-day maximum gap. Machine hashes live in
 `docs/progress/phase-2-research-v23-provider-qualification.json`. Signals and
 PnL remain unopened.
+
+## Development review
+
+All three identities fail frozen 2020-2022 gates. Duplicate fills match, with
+zero shorts, blockers, or verified no-kline hits. Bitcoin and Cryptocurrency
+attention are negative after costs and fail year/month breadth. Ethereum
+attention is gross-positive but negative after base/stress costs and
+concentration. Zero candidates may open confirmation. Machine results live in
+`docs/progress/phase-2-research-v23-development-results.json`.

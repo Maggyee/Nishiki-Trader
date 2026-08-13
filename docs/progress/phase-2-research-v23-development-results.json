@@ -1,0 +1,166 @@
+{
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_confirmation": false,
+    "opens_future_blind": false,
+    "resumes_testnet": false,
+    "touches_live_path": false
+  },
+  "candidates": [
+    {
+      "base_net_pnl": -38.528122708000005,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:80ea7854072236ce87ccf18f69fe69c00be7314f6db3a523a35f08ea1f5163ac",
+          "manifest_sha256": "sha256:4d81fca3f4b3d30f601e71178dbe6f1f9f72a1784a6dc02686da99c8c592c98c",
+          "path": "data/research-v23/backtests/20260813-050609Z-4040bb71"
+        },
+        {
+          "fills_sha256": "sha256:80ea7854072236ce87ccf18f69fe69c00be7314f6db3a523a35f08ea1f5163ac",
+          "manifest_sha256": "sha256:4e06fa315a96651b7f0457576239dfba14c22f727cbbd75190e7b1e59ef19c75",
+          "path": "data/research-v23/backtests/20260813-050614Z-dd4057be"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "reject_candidate",
+      "closed_positions": 158,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [
+        "base_net_pnl_not_positive",
+        "stress_net_pnl_not_positive",
+        "positive_years_1_below_2",
+        "positive_months_17_below_18",
+        "leave_best_base_net_pnl_not_positive"
+      ],
+      "gross_net_pnl": -28.048930000000006,
+      "key": "bitcoin_attention_expansion",
+      "leave_best_base_net_pnl": -46.177612276,
+      "model_version": "wikimedia-enwiki-bitcoin-pageviews-diff5-positive-lag2d-v1",
+      "performance_pass": false,
+      "positive_months": 17,
+      "positive_years": 1,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 315,
+      "signal_store_sha256": "sha256:746874ebd82a01a2dc4dce1d53ecae94011be57e40af109839639d11f93a1469",
+      "source": "rule_wikipedia_bitcoin_attention_expansion_v1",
+      "stress_net_pnl": -41.147920885000005,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 6.973837266,
+        "2021": -19.039054714000006,
+        "2022": -26.462905260000003
+      }
+    },
+    {
+      "base_net_pnl": -0.7549340400000042,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:bc6adbd987c7c01a3b19621f11c980f75cbb5533e7a97485642b29350ab7fdba",
+          "manifest_sha256": "sha256:1e139220ea6584c6fc0ac211510ed773cb5a08e02da7cce684260ad4d6a925d7",
+          "path": "data/research-v23/backtests/20260813-050618Z-36acd2cc"
+        },
+        {
+          "fills_sha256": "sha256:bc6adbd987c7c01a3b19621f11c980f75cbb5533e7a97485642b29350ab7fdba",
+          "manifest_sha256": "sha256:5545c4435a38d4ceb15b4fe00737880ffcc1b8b70d9aa9957b34caea248be791",
+          "path": "data/research-v23/backtests/20260813-050622Z-f8ca4a87"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "reject_candidate",
+      "closed_positions": 152,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [
+        "base_net_pnl_not_positive",
+        "stress_net_pnl_not_positive",
+        "leave_best_base_net_pnl_not_positive"
+      ],
+      "gross_net_pnl": 8.830439999999996,
+      "key": "ethereum_attention_expansion",
+      "leave_best_base_net_pnl": -15.168837576000001,
+      "model_version": "wikimedia-enwiki-ethereum-pageviews-diff5-positive-lag2d-v1",
+      "performance_pass": false,
+      "positive_months": 20,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 303,
+      "signal_store_sha256": "sha256:95b710f503e8bdf9695960b1fa18985c2b43fc372722e190d90c25fb08579e79",
+      "source": "rule_wikipedia_ethereum_attention_expansion_v1",
+      "stress_net_pnl": -3.151277550000004,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 7.264100941999999,
+        "2021": 15.934902550000002,
+        "2022": -23.953937531999998
+      }
+    },
+    {
+      "base_net_pnl": -25.213814027999998,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:24ee29168ccfe461f670ffe07aff72464bba7ec8f27bf2c160f0efc9fbe64d63",
+          "manifest_sha256": "sha256:3fc1cd62d8f05e36ca7d83be72b01896c570857bd0862a8b4dcd649c78099503",
+          "path": "data/research-v23/backtests/20260813-050627Z-bdcf8c90"
+        },
+        {
+          "fills_sha256": "sha256:24ee29168ccfe461f670ffe07aff72464bba7ec8f27bf2c160f0efc9fbe64d63",
+          "manifest_sha256": "sha256:96ca72784e182e52f2fe30171f5dd9ffbd0254e7cdee6aaf9e6e5109a6e3d4bf",
+          "path": "data/research-v23/backtests/20260813-050631Z-fde7f07c"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "reject_candidate",
+      "closed_positions": 151,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [
+        "base_net_pnl_not_positive",
+        "stress_net_pnl_not_positive",
+        "positive_years_1_below_2",
+        "leave_best_base_net_pnl_not_positive"
+      ],
+      "gross_net_pnl": -15.253589999999999,
+      "key": "cryptocurrency_attention_expansion",
+      "leave_best_base_net_pnl": -34.307270679999995,
+      "model_version": "wikimedia-enwiki-cryptocurrency-pageviews-diff5-positive-lag2d-v1",
+      "performance_pass": false,
+      "positive_months": 19,
+      "positive_years": 1,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 301,
+      "signal_store_sha256": "sha256:8c800e34c378da1e85638830fc109648de208ba098be89555c0babdcab2da098",
+      "source": "rule_wikipedia_cryptocurrency_attention_expansion_v1",
+      "stress_net_pnl": -27.703870035,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 2.798143424,
+        "2021": -11.335723805999997,
+        "2022": -16.676233645999996
+      }
+    }
+  ],
+  "confirmation_holdout_status": "sealed_not_opened_no_development_passer",
+  "confirmation_open_eligible_candidates": [],
+  "development_passer_count": 0,
+  "future_blind_status": "sealed_unopened",
+  "protocol_sha256": "sha256:564259571881347b7d508cd9dbafbe562d2771f96caacb41c3123303e213f994",
+  "provider_qualification": {
+    "historical_vintage_claim": false,
+    "qualified_candidates": [
+      "bitcoin_attention_expansion",
+      "ethereum_attention_expansion",
+      "cryptocurrency_attention_expansion"
+    ],
+    "rejected_candidates": {}
+  },
+  "recommendation": "stop_protocol_v23_no_confirmation_open",
+  "schema_version": "research.v23.development_results.v1"
+}

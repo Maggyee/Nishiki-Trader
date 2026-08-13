@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import json
+from pathlib import Path
 
 import pytest
 
@@ -57,3 +58,12 @@ def test_protocol_v23_provider_qualification_is_frozen() -> None:
     ]
     assert result["rejected_candidates"] == {}
     assert result["historical_vintage_claim"] is False
+
+
+def test_protocol_v23_development_is_closed_without_confirmation() -> None:
+    payload = json.loads(Path("docs/progress/phase-2-research-v23-development-results.json").read_text())
+
+    assert payload["recommendation"] == "stop_protocol_v23_no_confirmation_open"
+    assert payload["development_passer_count"] == 0
+    assert payload["confirmation_open_eligible_candidates"] == []
+    assert payload["confirmation_holdout_status"] == "sealed_not_opened_no_development_passer"

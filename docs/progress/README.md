@@ -51,9 +51,8 @@ Current Phase 3 progress files:
   ADR-007 `paper_shadow` dry-run. Forward progress is 0/7 days and 0/50 new
   signals; no prospective collector or scheduler is installed.
 - `phase-2-research-protocol-v23.md` freezes three English Wikipedia user
-  pageview attention-expansion identities. All three articles qualified from
-  freeze `7a1a123` with 1,096 unfilled 2020-2022 days; confirmation remains
-  sealed.
+  pageview attention-expansion identities. All three articles qualified, then
+  failed 2020-2022 development gates; confirmation remains sealed.
 
 - `phase-3-testnet-canary-evidence.md` records the testnet session ledger and
   bundle evidence summary.
