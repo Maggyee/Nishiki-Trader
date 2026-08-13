@@ -1,7 +1,7 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-08-13 (Protocol v26 DefiLlama DEX volume freeze; JSON bodies sealed)
+- **Last updated**: 2026-08-13 (Protocol v26 DEX volume provider qualification; Solana rejected)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
 - **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry and Protocol v2-v5 research identities are frozen. Protocol v5 curve carry and BVOL relief are rejected and the 2026-08..12 blind remains sealed. The provider/timer review is complete: v5 and completed v2 timers are `inactive/disabled`, v5 collector status is `archived`, and a four-day post-window audit found zero new invocations. The retained v5 tree is 13 snapshots / 13 Parquets with zero conflicts; v2 `COMPLETE`, ledger, deployment identity and all recorded checksums remain unchanged. Dashboard renders the archive as a valid terminal state with no retry or operations issue. Independent Protocol v6 remains `blocked_provider_qualification` on the official 12-row grid, with historical development closed.
   The human-reviewed `freqai_linear_v1 / linear-mom-train20240105` decision is now `demote @ paper_simulated` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. Its old testnet continuity evidence is archived and cannot authorize a restart. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
@@ -21,7 +21,7 @@
   Protocol v23 is complete with zero survivors. From freeze `7a1a123`, Bitcoin/Ethereum/Cryptocurrency user pageviews each qualified on 1,096 unfilled development days. Duplicate clean-git cash replays from `0b8c517` then reject all three attention-expansion rules: Bitcoin base/stress -38.528123/-41.147921 USDT with 1/3 years and 17/36 months; Ethereum gross +8.830440 but base/stress -0.754934/-3.151278 USDT; Cryptocurrency base/stress -25.213814/-27.703870 USDT. Fills match with zero shorts, blockers, or no-kline hits. Confirmation stays sealed. Do not retune or ensemble. Paper-shadow policies, SourcePolicy, testnet, live trading, and the future blind are unchanged.
   Protocol v24 is complete with zero survivors. From freeze `1b5ff65`, the Fear and Greed series qualified on 1,096 unfilled development days. Duplicate clean-git cash replays from `7127677` then reject all three classification holds: Extreme Fear base/stress -9.876116/-10.883138 USDT (1/3 years, 8/36 months); Fear -28.166744/-28.646468 USDT; Non-greed -29.504746/-29.895812 USDT with only 24 positions. Fills match with zero shorts, blockers, or no-kline hits. Confirmation stays sealed. Do not retune, invent numeric cutoffs, or ensemble. Paper-shadow policies, SourcePolicy, testnet, live trading, and the future blind are unchanged.
   Protocol v25 is closed with zero survivors. Bitcoin-chain TVL is provider-rejected. Ethereum TVL expansion is development-rejected. Unchanged all-chain TVL expansion passed 2020-2022, then failed independently frozen 2023-2025 confirmation: gross/base/stress +27.949010/+9.738210/+5.185511 USDT, 2/3 years, 14/36 positive months versus 18 required, 115 positions, and -12.753346 leave-best base PnL. Duplicate fills from `0bb16d3` match with no shorts, blockers, or no-kline hits. It cannot enter ADR-007 or `paper_shadow`. Do not retune or ensemble. Paper-shadow policies, SourcePolicy, testnet, live trading, and the future blind are unchanged.
-  Protocol v26 is pre-registered and frozen before DefiLlama DEX volume JSON bodies. It tests three five-observation DEX-volume expansion rules (all DEX, Ethereum, Solana) with a two-calendar-day lag, a `[unix, volume]` chart schema, and no historical-vintage claim. Each kind may be fetched once after this freeze is pushed. No volume value, signal, or PnL is opened yet.
+  Protocol v26 opened each locked DefiLlama DEX-volume URL once from freeze `d7716b6`. All-DEX and Ethereum each qualify on 1,096 unfilled 2020-2022 observations, 61 warmup rows, a one-day maximum gap, and 1,321 ignored later rows. Solana failed closed at 453 development observations; no snapshot or factor was written and retry is forbidden. Signals and development PnL remain unopened. Do not retune v25 TVL.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -87,7 +87,7 @@ Detailed history archived so far:
 - `docs/progress/phase-2-research-protocol-v25.md` — DefiLlama TVL expansion;
   protocol closed after all-chain confirmation failure.
 - `docs/progress/phase-2-research-protocol-v26.md` — DefiLlama DEX volume
-  expansion; historical bodies sealed until the freeze is pushed.
+  expansion; Solana provider-rejected; all-DEX and Ethereum factors written.
 - `docs/progress/phase-3-testnet-canary-evidence.md` — archived Phase 3 testnet canary evidence ledger.
 - `docs/progress/phase-3-testnet-continuity-plan.md` — archived 14-day testnet continuity procedure and review command.
 - `docs/progress/phase-5-dashboard-history.md` — completed read-only dashboard, AgentAdvice input, passive Phase 6 gate, and dashboard hardening history.
@@ -244,6 +244,7 @@ Immediate focus:
 19. Preserve all three v23 rejects. Do not retune/sign-flip/ensemble Wikipedia attention expansion, reopen 2023-2025 pageviews, lower cost gates, or claim historical vintages.
 20. Preserve all three v24 rejects. Do not invent numeric Fear and Greed cutoffs, retune/sign-flip/ensemble the classification holds, reuse the ignored later rows, or open confirmation.
 21. Preserve all three Protocol v25 rejects. Do not retry Bitcoin-chain TVL, retune/sign-flip/ensemble Ethereum or all-chain TVL expansion, reopen 2023-2025 TVL PnL, or claim historical vintages.
+22. Preserve v26 Solana's provider failure. Do not retry the Solana DEX-volume GET, substitute a chain, or claim historical vintages. All-DEX and Ethereum may enter development only under the frozen five-observation identities.
 
 ## Next Steps
 
@@ -276,7 +277,7 @@ Immediate focus:
     separate `paper_simulated` policy review.
 23. Keep Protocol v23 closed. Any later independent attention or pageview study needs a new identity frozen before data access; it may not continue these three fingerprints or open the future blind.
 24. Keep Protocol v24 closed. Any later independent sentiment study needs a new identity frozen before data access; it may not continue these three fingerprints or open the future blind.
-25. After Protocol v26 is pushed, open each locked DefiLlama DEX volume URL once from that HEAD, qualify or reject independently, then write factors/signals and two clean-git cash replays only for passers. Do not GET before the freeze is on `origin/main`. Do not retune v25 TVL.
+25. For the two Protocol v26 provider-qualified identities, generate 2020-2022 signals and exactly two clean-git Nautilus cash replays each from freeze `d7716b6` factors. Do not replay Solana, retune lookbacks, open confirmation values, or GET DefiLlama again.
 
 ## Blocked / Deferred
 
@@ -320,10 +321,20 @@ Immediate focus:
   the future blind remain sealed.
 - No Protocol v25 reopen. Bitcoin is provider-rejected, Ethereum is
   development-rejected, and all-chain TVL failed confirmation.
-- No Protocol v26 DEX volume body, factor, signal, or PnL until the freeze is
-  on `origin/main`. Confirmation PnL and the future blind remain sealed.
+- No Protocol v26 Solana retry, extra DefiLlama GET, confirmation PnL, or
+  future-blind opening. Development signals/PnL remain unopened until the
+  two qualified identities are replayed from this qualification commit.
 
 ## Latest Verification
+
+On 2026-08-13, after Protocol v26 provider qualification:
+
+- All-DEX and Ethereum DEX volume each have 1,096 unfilled development
+  observations, 61 warmup rows, a one-day maximum gap, and 1,321 ignored
+  later rows. Factors were written from the one GET per kind.
+- Solana DEX volume failed closed after its one GET: 453 development
+  observations. No snapshot, factor, signal, or PnL was written.
+- Signals and development PnL for the two qualified identities remain unopened.
 
 On 2026-08-13, after Protocol v26 pre-registration:
 

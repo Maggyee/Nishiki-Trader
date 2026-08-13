@@ -1,8 +1,8 @@
 # Phase 2 Research Protocol v26
 
-- **Status**: pre-registered; DefiLlama DEX volume JSON bodies sealed.
+- **Status**: provider qualification complete; Solana rejected; development PnL unopened.
 - **Mechanisms**: DefiLlama aggregated DEX daily-volume expansion.
-- **Development**: 2020-01-01 through 2022-12-31.
+- **Development**: 2020-01-01 through 2022-12-31; signals and PnL unopened.
 - **Confirmation**: sealed.
 - **Future blind**: sealed.
 - **Trading effect**: none.
@@ -22,12 +22,19 @@ ensemble, or post-result reparameterization.
 
 Volume history is a current reconstruction, not a vintage tape. Decisions wait
 two calendar days after the UTC observation date. One current-history GET per
-kind is allowed; rows after 2022-12-31 are counted, not used for development
+kind was allowed; rows after 2022-12-31 are counted, not used for development
 factors, signals, or PnL.
 
 The frozen chart schema is an object whose `totalDataChart` is a list of
 `[unix_seconds, volume]` pairs at UTC midnight. A schema mismatch rejects that
 kind without retry.
+
+## Provider qualification
+
+From freeze `d7716b6`, each URL was opened once. All-DEX and Ethereum each
+qualify on 1,096 unfilled development observations, 61 warmup rows, a one-day
+maximum gap, and 1,321 ignored later rows. Solana failed closed at 453
+development observations; no snapshot or factor was written.
 
 ## Gates and progression
 

@@ -1,0 +1,61 @@
+{
+  "schema_version": "research.v26.provider_qualification.v1",
+  "classification": "partially_provider_qualified",
+  "protocol_sha256": "sha256:726a2e6847902b2a2180e07e05fdef028cfbb1f90a579f1422711133ac2d72aa",
+  "provider_contract_sha256": "sha256:cc83e988da632c3d535a2cb6cf9e16fc80325c92b4021aa85d742f875a4fc060",
+  "pre_data_commit": "d7716b6",
+  "qualified_candidates": [
+    "all_dex_volume_expansion",
+    "ethereum_dex_volume_expansion"
+  ],
+  "rejected_candidates": {
+    "solana_dex_volume_expansion": "development_reserve_only_453_observations"
+  },
+  "qualified_series": {
+    "all_dexs": {
+      "snapshot_path": "data/research-v26/raw/all_dexs-20260813T081100Z-2260ff1e2392.json",
+      "snapshot_sha256": "sha256:2260ff1e2392512cb6cf27b3094bf451e27055182834e64c762b701c1720ecdb",
+      "factor_path": "data/research-v26/factors/all_dexs.csv",
+      "factor_sha256": "sha256:093806c1869b76739c207f09fda2afe486dbbc1b28b592288746a09dd6f0984e",
+      "factor_row_count": 1157,
+      "development_row_count": 1096,
+      "warmup_row_count": 61,
+      "development_first_date": "2020-01-01",
+      "development_last_date": "2022-12-31",
+      "maximum_calendar_gap_days": 1,
+      "trailing_rows_ignored": 1321
+    },
+    "ethereum": {
+      "snapshot_path": "data/research-v26/raw/ethereum-20260813T081101Z-8451296b7fcc.json",
+      "snapshot_sha256": "sha256:8451296b7fcc6beef4713c1b41af53c48b967376582e7dfbf9f23beab1deb2cd",
+      "factor_path": "data/research-v26/factors/ethereum.csv",
+      "factor_sha256": "sha256:a3c77ed30664c4a3a3af2fc5d07fd318c754f0e47782a9fee341c5c3647b58ac",
+      "factor_row_count": 1157,
+      "development_row_count": 1096,
+      "warmup_row_count": 61,
+      "development_first_date": "2020-01-01",
+      "development_last_date": "2022-12-31",
+      "maximum_calendar_gap_days": 1,
+      "trailing_rows_ignored": 1321
+    }
+  },
+  "rejected_series": {
+    "solana": {
+      "request_opened_once": true,
+      "snapshot_written": false,
+      "factor_written": false,
+      "failure": "solana development reserve has only 453 observations",
+      "retry_allowed": false
+    }
+  },
+  "historical_vintage_claim": false,
+  "boundaries": {
+    "signals_generated": false,
+    "pnl_opened": false,
+    "confirmation_opened": false,
+    "confirmation_values_used": false,
+    "source_policy_mutated": false,
+    "trading_touched": false,
+    "future_blind_opened": false
+  }
+}
