@@ -1,0 +1,164 @@
+{
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_confirmation": false,
+    "opens_future_blind": false,
+    "resumes_testnet": false,
+    "touches_live_path": false
+  },
+  "candidates": [
+    {
+      "base_net_pnl": -5.2266232320000015,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:72b626726ae434006a43af0ca11e32ac83ed957b09ef60d9ecadc7b17b42ccef",
+          "manifest_sha256": "sha256:52fd6d7c322b476adbe93fe5288c913aa11782c659b5642fb0808c640065556b",
+          "path": "data/research-v29/backtests/20260813-095158Z-b4aca9cd"
+        },
+        {
+          "fills_sha256": "sha256:72b626726ae434006a43af0ca11e32ac83ed957b09ef60d9ecadc7b17b42ccef",
+          "manifest_sha256": "sha256:ff469c8df77999e7a20b1899ad005c940c6a79a112dbfb6e7777826f04e06f3c",
+          "path": "data/research-v29/backtests/20260813-095202Z-ce814c79"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "reject_candidate",
+      "closed_positions": 162,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [
+        "base_net_pnl_not_positive",
+        "stress_net_pnl_not_positive",
+        "positive_years_1_below_2",
+        "leave_best_base_net_pnl_not_positive"
+      ],
+      "gross_net_pnl": 6.255360000000001,
+      "key": "fed_attention_relief",
+      "leave_best_base_net_pnl": -16.838197708,
+      "model_version": "wikimedia-enwiki-federal-reserve-pageviews-diff5-negative-lag2d-v1",
+      "performance_pass": false,
+      "positive_months": 18,
+      "positive_years": 1,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 324,
+      "signal_store_sha256": "sha256:574c01c31266d8b1192cf863a17815f73f09bece1b6321c78aab57dd63a0a517",
+      "source": "rule_wikipedia_fed_attention_relief_v1",
+      "stress_net_pnl": -8.097119040000003,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 9.902591487999999,
+        "2021": -3.143523376000001,
+        "2022": -11.985691344000001
+      }
+    },
+    {
+      "base_net_pnl": -17.588427331999988,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:5ff0874249b4b7373322614364312172c7cbb85ef0317c37632897662091904e",
+          "manifest_sha256": "sha256:4734da0653c6f78c132bbf36bc2f272df45a3e19c6f9a9d1d59d9951a824cdc6",
+          "path": "data/research-v29/backtests/20260813-095206Z-59350246"
+        },
+        {
+          "fills_sha256": "sha256:5ff0874249b4b7373322614364312172c7cbb85ef0317c37632897662091904e",
+          "manifest_sha256": "sha256:b7101ff36c796c26a7c368cb9e83ec5e1a1e9bd681a00f91a4b160984f75c444",
+          "path": "data/research-v29/backtests/20260813-095210Z-4fd56a89"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "reject_candidate",
+      "closed_positions": 172,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [
+        "base_net_pnl_not_positive",
+        "stress_net_pnl_not_positive",
+        "positive_years_1_below_2",
+        "positive_months_16_below_18",
+        "leave_best_base_net_pnl_not_positive"
+      ],
+      "gross_net_pnl": -6.0541699999999885,
+      "key": "inflation_attention_relief",
+      "leave_best_base_net_pnl": -25.278375684000004,
+      "model_version": "wikimedia-enwiki-inflation-pageviews-diff5-negative-lag2d-v1",
+      "performance_pass": false,
+      "positive_months": 16,
+      "positive_years": 1,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 344,
+      "signal_store_sha256": "sha256:cb23438e690713b49cde0a8c4125a9bc0c3e08a4f9effc12f08ffe6d521f3ce1",
+      "source": "rule_wikipedia_inflation_attention_relief_v1",
+      "stress_net_pnl": -20.47199166499999,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 8.42676204,
+        "2021": -18.736227416000006,
+        "2022": -7.278961956000002
+      }
+    },
+    {
+      "base_net_pnl": 11.952139016,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:4d018d1292966b1d621e2d8fd3c4692ab5b69aa5c3e3b295fbe027cebb035d01",
+          "manifest_sha256": "sha256:888194cd8c5c50a4782bfd763f966ab7c52c5b0d053402ee4cec7a0110ddfad2",
+          "path": "data/research-v29/backtests/20260813-095215Z-bb754e71"
+        },
+        {
+          "fills_sha256": "sha256:4d018d1292966b1d621e2d8fd3c4692ab5b69aa5c3e3b295fbe027cebb035d01",
+          "manifest_sha256": "sha256:dc4446e0963d58d3b07faa715eb2f96a96c5b34be2817d350b892c1f582ece6f",
+          "path": "data/research-v29/backtests/20260813-095219Z-b0772199"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "reject_candidate",
+      "closed_positions": 167,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [
+        "positive_years_1_below_2"
+      ],
+      "gross_net_pnl": 23.47316,
+      "key": "recession_attention_relief",
+      "leave_best_base_net_pnl": 4.615017436,
+      "model_version": "wikimedia-enwiki-recession-pageviews-diff5-negative-lag2d-v1",
+      "performance_pass": false,
+      "positive_months": 23,
+      "positive_years": 1,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 334,
+      "signal_store_sha256": "sha256:aeaec425d6c99a5afa7ca18877fb3b772602a983903478dd861a28d9e3daef82",
+      "source": "rule_wikipedia_recession_attention_relief_v1",
+      "stress_net_pnl": 9.07188377,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 19.161352523999998,
+        "2021": -3.255231403999999,
+        "2022": -3.9539821039999965
+      }
+    }
+  ],
+  "confirmation_holdout_status": "sealed_not_opened_no_development_passer",
+  "confirmation_open_eligible_candidates": [],
+  "development_passer_count": 0,
+  "future_blind_status": "sealed_unopened",
+  "protocol_sha256": "sha256:16e646878fdd49b5f4068a14066d3da0aa58cf6bef42000d83324ac78f47b099",
+  "provider_qualification": {
+    "historical_vintage_claim": false,
+    "qualified_candidates": [
+      "fed_attention_relief",
+      "inflation_attention_relief",
+      "recession_attention_relief"
+    ],
+    "rejected_candidates": {}
+  },
+  "recommendation": "stop_protocol_v29_no_confirmation_open",
+  "schema_version": "research.v29.development_results.v1"
+}

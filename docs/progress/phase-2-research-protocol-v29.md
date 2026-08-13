@@ -1,9 +1,10 @@
 # Phase 2 Research Protocol v29
 
-- **Status**: provider-qualified; signals and PnL unopened.
+- **Status**: closed; all three Wikipedia macro-attention-relief identities
+  development-rejected.
 - **Mechanisms**: English Wikipedia Federal_Reserve, Inflation, and Recession
   user-pageview relief.
-- **Development**: 2020-01-01 through 2022-12-31.
+- **Development**: 2020-01-01 through 2022-12-31; complete with zero passers.
 - **Confirmation**: sealed.
 - **Future blind**: sealed.
 - **Trading effect**: none.
@@ -36,5 +37,14 @@ SourcePolicy, testnet, live trading, and the future blind stay untouched.
 All three articles qualified from freeze `4e15d2d`. Each series has 1,157
 unfilled rows, 1,096 development observations from 2020-01-01 through
 2022-12-31, 61 warmup rows, and a one-day maximum gap. Machine hashes live in
-`docs/progress/phase-2-research-v29-provider-qualification.json`. Signals and
-PnL remain unopened. Confirmation timestamps were not requested.
+`docs/progress/phase-2-research-v29-provider-qualification.json`. Confirmation
+timestamps were not requested.
+
+## Development outcome
+
+Two clean replays per candidate from `a19c207` reproduce with identical fills
+and no evidence blockers. Fed and Inflation attention relief fail after costs.
+Recession attention relief is cost-positive with 23/36 months and positive
+leave-best, but has only one positive calendar year. Zero candidates may open
+2023-2025 confirmation. Do not retune, sign-flip, substitute articles, or
+ensemble.
