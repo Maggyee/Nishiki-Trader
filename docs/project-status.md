@@ -1,7 +1,7 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-08-13 (Protocol v22 COR1M relief passes development; confirmation sealed)
+- **Last updated**: 2026-08-13 (Protocol v22 COR1M confirmation contract frozen; holdout sealed)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
 - **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry and Protocol v2-v5 research identities are frozen. Protocol v5 curve carry and BVOL relief are rejected and the 2026-08..12 blind remains sealed. The provider/timer review is complete: v5 and completed v2 timers are `inactive/disabled`, v5 collector status is `archived`, and a four-day post-window audit found zero new invocations. The retained v5 tree is 13 snapshots / 13 Parquets with zero conflicts; v2 `COMPLETE`, ledger, deployment identity and all recorded checksums remain unchanged. Dashboard renders the archive as a valid terminal state with no retry or operations issue. Independent Protocol v6 remains `blocked_provider_qualification` on the official 12-row grid, with historical development closed.
   The human-reviewed `freqai_linear_v1 / linear-mom-train20240105` decision is now `demote @ paper_simulated` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. Its old testnet continuity evidence is archived and cannot authorize a restart. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
@@ -17,7 +17,7 @@
   Protocol v19 is complete with zero survivors. RVX is development-rejected and VXFXI provider-rejected. VXD passed development, then failed the independently frozen 2023-2025 confirmation solely on monthly breadth: gross/base/stress +71.365380/+57.492785/+54.024636 USDT, 3/3 positive years, 17/36 positive months versus 18 required, 94 positions, and +34.350455 leave-best base PnL. Duplicate fills match with no shorts, blockers, or verified no-kline event hits. VXD is rejected and cannot enter ADR-007 or `paper_shadow`; the future blind stays sealed.
   Protocol v20 is complete with zero survivors. Total/credit stress relief are development-rejected. Unchanged safe-asset-stress relief then failed independently frozen 2023-2025 confirmation solely on monthly breadth: gross/base/stress +47.630810/+35.946934/+33.025964 USDT, 3/3 positive years, 17/36 positive months versus 18 required, 74 positions, and +18.107091 leave-best base PnL. Duplicate fills from `b99962c` match with no shorts, blockers, or no-kline hits. It cannot enter ADR-007 or `paper_shadow`. The no-vintage limitation, v8/v16/v18 paper shadow, SourcePolicy, testnet, and the future blind remain untouched.
   Protocol v21 is closed at `blocked_provider_qualification`. Its one U.S. net-liquidity identity was frozen and pushed at `d9ec0e3` before historical access, but the first WALCL request timed out after 30 seconds before response headers/body. The sequential collector did not attempt WDTGAL or RRPONTSYD and wrote no snapshot, factor, signal, or PnL. The no-retry provider policy applies; development and confirmation remain unopened, and the strategy has no alpha verdict.
-  Protocol v22 development is complete. DSPX is provider-rejected and SKEW relief is development-rejected at base/stress -27.462310/-28.897655 USDT. COR1M implied-correlation relief passes every frozen development gate: gross/base/stress +19.959630/+14.196850/+12.756155 USDT, 2/3 positive years, 23/36 positive months, 86 positions, and +0.856160 leave-best base PnL. Duplicate fills match with no shorts, blockers, or no-kline hits. Its 2022 base result is -5.849322 and concentration margin is thin; 2023-2025 values/PnL remain sealed pending a separately frozen confirmation contract. No ADR-007 or `paper_shadow` eligibility exists yet.
+  Protocol v22 development is complete. DSPX/SKEW are rejected. COR1M implied-correlation relief passes every development gate at base/stress +14.196850/+12.756155 USDT, 2/3 years, 23/36 months, 86 positions, and +0.856160 leave-best base PnL. Its separate 2023-2025 confirmation contract now fingerprints committed review `e6ea3a4`, immutable COR1M snapshot, unchanged rule, D+1 partition, current-history/no-vintage limitation, execution audit, costs, and gates before holdout values. Confirmation values/PnL remain unopened until the contract is committed and pushed. No ADR-007 or `paper_shadow` eligibility exists yet.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -225,7 +225,7 @@ Immediate focus:
 15. Preserve all three v19 rejects. Do not lower VXD's 18-month breadth gate, retune/sign-flip/ensemble it, retry VXFXI, reopen RVX, enter ADR-007, or open the future blind.
 16. Preserve all three v20 rejects. Do not lower the 18-month breadth gate, retune/sign-flip/ensemble safe-asset stress relief, refetch OFR, or claim historical vintages. It is not eligible for ADR-007 or `paper_shadow`.
 17. Preserve v21's provider failure. Do not retry WALCL, attempt the remaining requests, substitute a provider, or infer strategy performance. Any later liquidity study requires a new frozen provider identity.
-18. Preserve v22's DSPX/SKEW rejects and unchanged COR1M development survivor. Do not loosen value checks, retune, sign-flip, ensemble, or open holdout values before a COR1M-only confirmation contract is committed and pushed.
+18. Preserve v22's DSPX/SKEW rejects and unchanged COR1M confirmation identity. Do not loosen checks, retune, sign-flip, ensemble, or open holdout values before the confirmation contract is committed and pushed.
 
 ## Next Steps
 
@@ -251,7 +251,7 @@ Immediate focus:
 19. Preserve the committed v19 confirmation rejection without retry or retuning.
 20. Keep Protocol v20 closed. Any later independent batch needs a new identity frozen before data access; it may not continue these three fingerprints or open the future blind.
 21. Keep Protocol v21 closed with development and confirmation unopened. Continue alpha exploration only through a genuinely independent, pre-registered protocol and provider route.
-22. Commit and push the v22 development review, then freeze a COR1M-only 2023-2025 confirmation contract with the same rule, D+1 lag, costs, gates, and two clean replays before opening holdout values.
+22. Commit and push the v22 COR1M confirmation contract, then qualify 2023-2025 values offline from the immutable snapshot and commit the factor hash before generating confirmation signals/PnL.
 
 ## Blocked / Deferred
 
@@ -366,6 +366,14 @@ On 2026-08-13, after Protocol v22 development:
 - SKEW relief is rejected. COR1M relief passes at base/stress
   +14.196850/+12.756155 USDT, 2/3 years, 23/36 months, 86 positions, and
   +0.856160 leave-best base PnL; confirmation remains sealed.
+
+On 2026-08-13, after Protocol v22 confirmation pre-registration:
+
+- The COR1M-only contract fingerprints committed development evidence, exact
+  snapshot/rule/D+1 partition, current-history limitation, execution audit,
+  costs, gates, and two replays before holdout values.
+- Targeted dry runs open no network request, holdout value, PnL, policy,
+  trading path, existing collector, or future blind.
 
 On 2026-08-13, after Protocol v21 pre-registration:
 

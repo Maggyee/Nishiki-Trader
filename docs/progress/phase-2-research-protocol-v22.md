@@ -81,3 +81,15 @@ COR1M relief passes all frozen gates: gross/base/stress PnL is
 86 positions close, and leave-best base PnL is +0.856160 USDT. Only this
 unchanged identity may enter a separately committed confirmation. Its thin
 concentration margin and negative 2022 result make confirmation essential.
+
+## Confirmation boundary
+
+`docs/progress/phase-2-research-v22-confirmation.json` fingerprints committed
+development review `e6ea3a4`, the immutable COR1M snapshot, the unchanged
+five-observation negative-change rule, D+1 partition, confirmation execution
+audit, costs, gates, and two replay requirement before holdout values.
+
+The contract keeps the current-history/no-historical-vintage limitation and
+opens no network request. A pass creates only separate ADR-007
+`paper_shadow` review eligibility; it does not change policy, testnet, live
+trading, existing collectors, or the future blind.
