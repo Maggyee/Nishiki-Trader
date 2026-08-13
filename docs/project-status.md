@@ -1,7 +1,7 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-08-13 (Protocol v28 options/OI freeze; JSON bodies sealed)
+- **Last updated**: 2026-08-13 (Protocol v28 options/OI provider-rejected; protocol closed)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
 - **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry and Protocol v2-v5 research identities are frozen. Protocol v5 curve carry and BVOL relief are rejected and the 2026-08..12 blind remains sealed. The provider/timer review is complete: v5 and completed v2 timers are `inactive/disabled`, v5 collector status is `archived`, and a four-day post-window audit found zero new invocations. The retained v5 tree is 13 snapshots / 13 Parquets with zero conflicts; v2 `COMPLETE`, ledger, deployment identity and all recorded checksums remain unchanged. Dashboard renders the archive as a valid terminal state with no retry or operations issue. Independent Protocol v6 remains `blocked_provider_qualification` on the official 12-row grid, with historical development closed.
   The human-reviewed `freqai_linear_v1 / linear-mom-train20240105` decision is now `demote @ paper_simulated` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. Its old testnet continuity evidence is archived and cannot authorize a restart. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
@@ -23,7 +23,7 @@
   Protocol v25 is closed with zero survivors. Bitcoin-chain TVL is provider-rejected. Ethereum TVL expansion is development-rejected. Unchanged all-chain TVL expansion passed 2020-2022, then failed independently frozen 2023-2025 confirmation: gross/base/stress +27.949010/+9.738210/+5.185511 USDT, 2/3 years, 14/36 positive months versus 18 required, 115 positions, and -12.753346 leave-best base PnL. Duplicate fills from `0bb16d3` match with no shorts, blockers, or no-kline hits. It cannot enter ADR-007 or `paper_shadow`. Do not retune or ensemble. Paper-shadow policies, SourcePolicy, testnet, live trading, and the future blind are unchanged.
   Protocol v26 is closed with zero survivors. Solana DEX volume is provider-rejected. Unchanged all-DEX and Ethereum five-observation volume expansion both fail 2020-2022 development on duplicate clean-git cash replays from `8abaffb`: all-DEX base/stress -6.320471/-9.854272 USDT and Ethereum -2.029904/-5.636548 USDT, each with negative leave-best despite 20/36 positive months. Fills match with no shorts, blockers, or no-kline hits. Confirmation stays sealed. Do not retune or ensemble. Paper-shadow policies, SourcePolicy, testnet, live trading, and the future blind are unchanged.
   Protocol v27 is closed with zero survivors. Unchanged all-chain dailyFees, dailyRevenue, and dailyHoldersRevenue five-observation expansion all fail 2020-2022 development on duplicate clean-git cash replays from `66a725e`. Fees is cost-positive but leave-best is -1.639513 USDT. Revenue and holder-revenue fail base/stress; holder-revenue also has only 14/36 positive months. Fills match with no shorts, blockers, or no-kline hits. Confirmation stays sealed. Do not retune or ensemble. Paper-shadow policies, SourcePolicy, testnet, live trading, and the future blind are unchanged.
-  Protocol v28 is pre-registered and frozen before DefiLlama options-volume and open-interest JSON bodies. It tests three five-observation expansion rules (options notional, options premium, perpetual DEX OI) with a two-calendar-day lag, a `[unix, amount]` chart schema, and no historical-vintage claim. Each kind may be fetched once after this freeze is pushed. No value, signal, or PnL is opened yet.
+  Protocol v28 is closed at `blocked_provider_qualification`. From freeze `d425a3c`, each locked DefiLlama options/OI URL was opened once. Options notional and premium have only 414 development observations; perpetual DEX open interest has 675 versus 700 required. No snapshot, factor, signal, or PnL was written. Retry is forbidden. Do not retune v25-v27.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -93,7 +93,7 @@ Detailed history archived so far:
 - `docs/progress/phase-2-research-protocol-v27.md` — DefiLlama protocol-fee
   expansion; protocol closed after development cost/concentration failure.
 - `docs/progress/phase-2-research-protocol-v28.md` — DefiLlama options notional,
-  options premium, and perpetual OI expansion; bodies sealed until freeze push.
+  options premium, and perpetual OI expansion; all three failed coverage.
 - `docs/progress/phase-3-testnet-canary-evidence.md` — archived Phase 3 testnet canary evidence ledger.
 - `docs/progress/phase-3-testnet-continuity-plan.md` — archived 14-day testnet continuity procedure and review command.
 - `docs/progress/phase-5-dashboard-history.md` — completed read-only dashboard, AgentAdvice input, passive Phase 6 gate, and dashboard hardening history.
@@ -252,6 +252,7 @@ Immediate focus:
 21. Preserve all three Protocol v25 rejects. Do not retry Bitcoin-chain TVL, retune/sign-flip/ensemble Ethereum or all-chain TVL expansion, reopen 2023-2025 TVL PnL, or claim historical vintages.
 22. Preserve all three Protocol v26 rejects. Do not retry Solana DEX volume, retune/sign-flip/ensemble all-DEX or Ethereum volume expansion, reopen 2023-2025 DEX-volume PnL, or claim historical vintages.
 23. Preserve all three Protocol v27 rejects. Do not retune/sign-flip/ensemble fees, revenue, or holder-revenue expansion, reopen 2023-2025 fee PnL, or claim historical vintages.
+24. Preserve all three Protocol v28 provider rejects. Do not retry options notional, options premium, or perpetual OI, loosen the 700-observation gate, or open signals/PnL under this identity.
 
 ## Next Steps
 
@@ -286,7 +287,7 @@ Immediate focus:
 24. Keep Protocol v24 closed. Any later independent sentiment study needs a new identity frozen before data access; it may not continue these three fingerprints or open the future blind.
 25. Keep Protocol v26 closed. Any later independent activity or fee study needs a new identity frozen before data access; it may not continue these three fingerprints or open the future blind.
 26. Keep Protocol v27 closed. Any later independent DeFi cashflow study needs a new identity frozen before data access; it may not continue these three fingerprints or open the future blind.
-27. After Protocol v28 is pushed, open each locked DefiLlama options/OI URL once from that HEAD, qualify or reject independently, then write factors/signals and two clean-git cash replays only for passers. Do not GET before the freeze is on `origin/main`. Do not retune v25-v27.
+27. Keep Protocol v28 closed. Any later options or open-interest study needs a new identity and coverage contract frozen before data access; it may not retry these three GETs.
 
 ## Blocked / Deferred
 
@@ -336,10 +337,17 @@ Immediate focus:
 - No Protocol v27 reopen. All three fee/revenue identities failed
   development; confirmation, sign flip, ensemble, and the future blind remain
   sealed.
-- No Protocol v28 options/OI body, factor, signal, or PnL until the freeze is
-  on `origin/main`. Confirmation PnL and the future blind remain sealed.
+- No Protocol v28 reopen. All three options/OI identities failed coverage
+  after one GET each; signals, PnL, confirmation, retry, and the future blind
+  remain sealed.
 
 ## Latest Verification
+
+On 2026-08-13, after Protocol v28 provider qualification:
+
+- Options notional and premium each have 414 development observations versus
+  700 required. Open interest has 675. No snapshot or factor was written.
+- Protocol v28 is closed at provider qualification. Confirmation remains sealed.
 
 On 2026-08-13, after Protocol v28 pre-registration:
 

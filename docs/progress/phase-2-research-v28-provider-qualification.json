@@ -1,0 +1,47 @@
+{
+  "schema_version": "research.v28.provider_qualification.v1",
+  "classification": "blocked_provider_qualification",
+  "protocol_sha256": "sha256:a873532093f260a2e9d025e97adf2df6b5e74f1d3143238d066410f414360b43",
+  "provider_contract_sha256": "sha256:1e1eeb9ae436b20b1fdf88252f75c47e9f3ac4c8d8fc9db165c55d9d0b0e07d2",
+  "pre_data_commit": "d425a3c",
+  "qualified_candidates": [],
+  "rejected_candidates": {
+    "options_notional_expansion": "development_reserve_only_414_observations",
+    "options_premium_expansion": "development_reserve_only_414_observations",
+    "open_interest_expansion": "development_reserve_only_675_observations"
+  },
+  "qualified_series": {},
+  "rejected_series": {
+    "options_notional": {
+      "request_opened_once": true,
+      "snapshot_written": false,
+      "factor_written": false,
+      "failure": "options_notional development reserve has only 414 observations",
+      "retry_allowed": false
+    },
+    "options_premium": {
+      "request_opened_once": true,
+      "snapshot_written": false,
+      "factor_written": false,
+      "failure": "options_premium development reserve has only 414 observations",
+      "retry_allowed": false
+    },
+    "open_interest": {
+      "request_opened_once": true,
+      "snapshot_written": false,
+      "factor_written": false,
+      "failure": "open_interest development reserve has only 675 observations",
+      "retry_allowed": false
+    }
+  },
+  "historical_vintage_claim": false,
+  "boundaries": {
+    "signals_generated": false,
+    "pnl_opened": false,
+    "confirmation_opened": false,
+    "confirmation_values_used": false,
+    "source_policy_mutated": false,
+    "trading_touched": false,
+    "future_blind_opened": false
+  }
+}

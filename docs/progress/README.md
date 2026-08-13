@@ -67,7 +67,8 @@ Current Phase 3 progress files:
 - `phase-2-research-protocol-v27.md` freezes three DefiLlama all-chain
   protocol-fee identities. All three failed 2020-2022 development, closing v27.
 - `phase-2-research-protocol-v28.md` freezes three DefiLlama options-volume and
-  perpetual-OI identities before any historical JSON body is opened.
+  perpetual-OI identities. All three failed the development coverage gate,
+  closing v28.
 
 - `phase-3-testnet-canary-evidence.md` records the testnet session ledger and
   bundle evidence summary.
