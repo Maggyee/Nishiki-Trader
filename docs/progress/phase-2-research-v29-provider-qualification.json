@@ -1,0 +1,65 @@
+{
+  "schema_version": "research.v29.provider_qualification.v1",
+  "classification": "provider_qualified",
+  "protocol_sha256": "sha256:16e646878fdd49b5f4068a14066d3da0aa58cf6bef42000d83324ac78f47b099",
+  "provider_contract_sha256": "sha256:a7a336b235924445200d9a49f118e578bdbbf407aad452e04434ec3ddeb5658d",
+  "pre_data_commit": "4e15d2d",
+  "qualified_candidates": [
+    "fed_attention_relief",
+    "inflation_attention_relief",
+    "recession_attention_relief"
+  ],
+  "rejected_candidates": {},
+  "qualified_series": {
+    "federal_reserve": {
+      "snapshot_path": "data/research-v29/raw/federal_reserve-20260813T094806Z-f4987a77786d.json",
+      "snapshot_sha256": "sha256:f4987a77786d27351a1181572eaec73ee87bd4c1969d82a165c6398c917b44ea",
+      "factor_path": "data/research-v29/factors/federal_reserve.csv",
+      "factor_sha256": "sha256:38caa75146d6b507f74ce05ba6966f82061139a622a48163d438191f7fe61f49",
+      "factor_row_count": 1157,
+      "development_row_count": 1096,
+      "warmup_row_count": 61,
+      "development_first_date": "2020-01-01",
+      "development_last_date": "2022-12-31",
+      "maximum_calendar_gap_days": 1,
+      "article": "Federal_Reserve"
+    },
+    "inflation": {
+      "snapshot_path": "data/research-v29/raw/inflation-20260813T094814Z-9dba59f58462.json",
+      "snapshot_sha256": "sha256:9dba59f584628ba382e39553cc78788d2f724946f71547310e2931bced518228",
+      "factor_path": "data/research-v29/factors/inflation.csv",
+      "factor_sha256": "sha256:ee131c12d7cf02494b3ee4b773ac5e28a9683b5f09fa69b36374a527e8cddb30",
+      "factor_row_count": 1157,
+      "development_row_count": 1096,
+      "warmup_row_count": 61,
+      "development_first_date": "2020-01-01",
+      "development_last_date": "2022-12-31",
+      "maximum_calendar_gap_days": 1,
+      "article": "Inflation"
+    },
+    "recession": {
+      "snapshot_path": "data/research-v29/raw/recession-20260813T094815Z-742ab928d822.json",
+      "snapshot_sha256": "sha256:742ab928d8225c8615a9b262d57ff734d12e4808e2a2a9c7c3fb5725788d6095",
+      "factor_path": "data/research-v29/factors/recession.csv",
+      "factor_sha256": "sha256:acead17834ca62dd5742c0976509ca452cf279aeb074197ba99e2e04707eeeec",
+      "factor_row_count": 1157,
+      "development_row_count": 1096,
+      "warmup_row_count": 61,
+      "development_first_date": "2020-01-01",
+      "development_last_date": "2022-12-31",
+      "maximum_calendar_gap_days": 1,
+      "article": "Recession"
+    }
+  },
+  "rejected_series": {},
+  "historical_vintage_claim": false,
+  "boundaries": {
+    "signals_generated": false,
+    "pnl_opened": false,
+    "confirmation_opened": false,
+    "confirmation_values_used": false,
+    "source_policy_mutated": false,
+    "trading_touched": false,
+    "future_blind_opened": false
+  }
+}

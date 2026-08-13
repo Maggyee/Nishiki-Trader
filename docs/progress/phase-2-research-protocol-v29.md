@@ -1,6 +1,6 @@
 # Phase 2 Research Protocol v29
 
-- **Status**: pre-registered; Wikimedia macro pageview JSON bodies sealed.
+- **Status**: provider-qualified; signals and PnL unopened.
 - **Mechanisms**: English Wikipedia Federal_Reserve, Inflation, and Recession
   user-pageview relief.
 - **Development**: 2020-01-01 through 2022-12-31.
@@ -30,3 +30,11 @@ the UTC observation date. One GET per article is allowed.
 Unchanged development gates. A development passer may only enter a separately
 frozen 2023-2025 confirmation contract. Existing paper-shadow collectors,
 SourcePolicy, testnet, live trading, and the future blind stay untouched.
+
+## Provider qualification
+
+All three articles qualified from freeze `4e15d2d`. Each series has 1,157
+unfilled rows, 1,096 development observations from 2020-01-01 through
+2022-12-31, 61 warmup rows, and a one-day maximum gap. Machine hashes live in
+`docs/progress/phase-2-research-v29-provider-qualification.json`. Signals and
+PnL remain unopened. Confirmation timestamps were not requested.

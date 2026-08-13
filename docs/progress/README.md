@@ -70,7 +70,8 @@ Current Phase 3 progress files:
   perpetual-OI identities. All three failed the development coverage gate,
   closing v28.
 - `phase-2-research-protocol-v29.md` freezes three Wikipedia macro-attention
-  relief identities before any historical pageview JSON body is opened.
+  relief identities. All three articles are provider-qualified; signals and
+  PnL remain unopened.
 
 - `phase-3-testnet-canary-evidence.md` records the testnet session ledger and
   bundle evidence summary.
