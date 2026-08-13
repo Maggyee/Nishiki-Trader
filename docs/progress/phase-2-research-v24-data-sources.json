@@ -1,0 +1,46 @@
+{
+  "schema_version": "research.data_sources.v24",
+  "status": "locked_before_alternative_fng_body_access",
+  "provider": "alternative.me Crypto Fear and Greed Index",
+  "authentication": "none",
+  "documentation_url": "https://alternative.me/crypto/fear-and-greed-index/",
+  "user_agent": "Nishiki-Trader/research-v24",
+  "request": {
+    "kind": "fng",
+    "url": "https://api.alternative.me/fng/?limit=0&format=json",
+    "method": "GET",
+    "maximum_body_openings": 1,
+    "retry_allowed": false
+  },
+  "locked_response": {
+    "name": "Fear and Greed Index",
+    "root_key": "data",
+    "required_item_fields": ["value", "value_classification", "timestamp"],
+    "timestamp_encoding": "unix_seconds_string",
+    "observation_timezone": "America/New_York",
+    "value_encoding": "integer_string_0_to_100",
+    "allowed_classifications": [
+      "Extreme Fear",
+      "Fear",
+      "Neutral",
+      "Greed",
+      "Extreme Greed"
+    ]
+  },
+  "coverage_gates": {
+    "warmup_start": "2019-11-01",
+    "development_start": "2020-01-01",
+    "development_end": "2022-12-31",
+    "minimum_development_observations": 700,
+    "minimum_warmup_observations": 5,
+    "first_development_observation_no_later_than": "2020-01-03",
+    "last_development_observation_no_earlier_than": "2022-12-29",
+    "maximum_calendar_gap_days": 5,
+    "forward_fill_allowed": false,
+    "interpolation_allowed": false,
+    "confirmation_values_unused": true
+  },
+  "body_range_note": "The official endpoint has no start/end filter. One current-history GET is required to obtain 2019-11-01 through 2022-12-31. Rows after 2022-12-31 may exist in the raw body and are counted but not written to the development factor or used for signals or PnL.",
+  "failure_policy": "A schema or coverage failure rejects the shared series and all three candidates without retry or substitution.",
+  "historical_vintage_claim": false
+}

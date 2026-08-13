@@ -53,6 +53,8 @@ Current Phase 3 progress files:
 - `phase-2-research-protocol-v23.md` freezes three English Wikipedia user
   pageview attention-expansion identities. All three articles qualified, then
   failed 2020-2022 development gates; confirmation remains sealed.
+- `phase-2-research-protocol-v24.md` freezes three official Crypto Fear and
+  Greed classification holds before the alternative.me JSON body is opened.
 
 - `phase-3-testnet-canary-evidence.md` records the testnet session ledger and
   bundle evidence summary.
