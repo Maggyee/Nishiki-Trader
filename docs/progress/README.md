@@ -76,6 +76,9 @@ Current Phase 3 progress files:
   relief identities. Apple and Amazon fail development; unchanged
   Google/Alphabet VXGOG relief passed development then failed confirmation
   leave-best, closing v30.
+- `phase-2-research-protocol-v31.md` freezes three Cboe implied-vol relief
+  identities on silver ETF (VXSLV), energy-sector ETF (VXXLE), and
+  long-duration Treasury ETF (VXTLT) before any historical CSV body is opened.
 
 - `phase-3-testnet-canary-evidence.md` records the testnet session ledger and
   bundle evidence summary.

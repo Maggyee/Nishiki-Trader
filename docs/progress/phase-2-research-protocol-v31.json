@@ -1,0 +1,97 @@
+{
+  "schema_version": "research.protocol.v31",
+  "status": "preregistered_before_cboe_commodity_sector_duration_vol_body_access",
+  "created_at": "2026-08-13",
+  "objective": "Test three Cboe implied-volatility relief mechanisms outside already-opened families: silver ETF vol (VXSLV), energy-sector ETF vol (VXXLE), and long-duration Treasury ETF vol (VXTLT). Do not reopen gold/oil commodity vol (GVZ/OVX), equity-index vol (VIX/VXN/VXD/RVX/VXEEM/VXEFA/VXFXI), mega-cap single-name vol (VXAPL/VXAZN/VXGOG), realized Treasury yield vol, option-surface (SKEW/COR1M/DSPX), VIX tenor retries, Wikipedia attention, DefiLlama expansion, OFR, Fear and Greed, or Coin Metrics series.",
+  "data_access_disclosure": {
+    "official_product_pages_opened": true,
+    "historical_csv_bodies_opened": false,
+    "development_factor_values_opened": false,
+    "confirmation_factor_values_opened": false,
+    "strategy_specific_pnl_opened": false
+  },
+  "research_windows": {
+    "warmup": {"start": "2019-11-01", "end": "2019-12-31"},
+    "development": {"start": "2020-01-01", "end": "2022-12-31", "strategy_specific_pnl_access_status": "unconsumed", "max_openings": 1},
+    "confirmation": {"start": "2023-01-01", "end": "2025-12-31", "strategy_specific_pnl_access_status": "sealed_until_development_pass", "max_openings": 1},
+    "future_blind": {"start": "2026-09-01", "end": "2027-01-31", "status": "sealed_unopened"}
+  },
+  "data_contract": {
+    "provider_contract": "docs/progress/phase-2-research-v31-data-sources.json",
+    "provider": "Cboe Global Indices",
+    "conservative_decision_lag_calendar_days": 1,
+    "historical_vintage_claim": false,
+    "missing_data_policy": "no interpolation, no forward fill, and hold the current state until the next official observation"
+  },
+  "candidates": [
+    {
+      "key": "silver_vol_relief",
+      "source": "rule_cboe_silver_vol_relief_v1",
+      "model_version": "cboe-vxslv-diff5-negative-lag1d-v1",
+      "index": "VXSLV",
+      "parameters": {"change_observations": 5, "direction": "negative", "threshold": 0.0, "publication_lag_calendar_days": 1, "ttl_seconds": 86400, "confidence": 0.75},
+      "rule": "buy iff VXSLV minus its value five official observations earlier is strictly negative; flat otherwise; begin flat and emit only on state change"
+    },
+    {
+      "key": "energy_sector_vol_relief",
+      "source": "rule_cboe_energy_sector_vol_relief_v1",
+      "model_version": "cboe-vxxle-diff5-negative-lag1d-v1",
+      "index": "VXXLE",
+      "parameters": {"change_observations": 5, "direction": "negative", "threshold": 0.0, "publication_lag_calendar_days": 1, "ttl_seconds": 86400, "confidence": 0.75},
+      "rule": "buy iff VXXLE minus its value five official observations earlier is strictly negative; flat otherwise; begin flat and emit only on state change"
+    },
+    {
+      "key": "long_treasury_etf_vol_relief",
+      "source": "rule_cboe_long_treasury_etf_vol_relief_v1",
+      "model_version": "cboe-vxtlt-diff5-negative-lag1d-v1",
+      "index": "VXTLT",
+      "parameters": {"change_observations": 5, "direction": "negative", "threshold": 0.0, "publication_lag_calendar_days": 1, "ttl_seconds": 86400, "confidence": 0.75},
+      "rule": "buy iff VXTLT minus its value five official observations earlier is strictly negative; flat otherwise; begin flat and emit only on state change"
+    }
+  ],
+  "execution": {
+    "instrument_id": "BTCUSDT.BINANCE",
+    "bar_type": "BTCUSDT.BINANCE-1-HOUR-LAST-EXTERNAL",
+    "development_catalog_path": "data/research-v7-downtime-sensitivity/catalog",
+    "confirmation_catalog_path": "data/research-v8/catalog",
+    "trade_size_btc": 0.001,
+    "starting_balance_usdt": 100000,
+    "account_type": "cash",
+    "min_confidence": 0.55,
+    "long_flat_only": true,
+    "costs_usdt_per_closed_position": {"gross": 0.0, "base": 0.08, "stress": 0.10}
+  },
+  "gates": {
+    "development": {
+      "base_net_pnl_gt": 0.0,
+      "stress_net_pnl_gt": 0.0,
+      "positive_calendar_years_at_least": 2,
+      "positive_calendar_months_at_least": 18,
+      "closed_positions_at_least": 30,
+      "leave_best_position_base_net_pnl_gt": 0.0,
+      "duplicate_replays_required": 2
+    },
+    "multiple_testing": {
+      "candidate_count_locked": 3,
+      "parameter_grid_search_forbidden": true,
+      "alternate_sign_forbidden": true,
+      "pnl_selected_ensemble_forbidden": true,
+      "failed_candidate_reparameterization_forbidden": true
+    }
+  },
+  "progression": {
+    "development_pass_opens_only": "separately frozen 2023-2025 confirmation contract",
+    "confirmation_pass_opens_only": "separate ADR-007 paper_shadow policy review",
+    "automatic_policy_change": false,
+    "automatic_trading_authorization": false
+  },
+  "boundaries_effect": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "touches_existing_paper_shadow": false,
+    "retries_prior_research_identities": false,
+    "resumes_testnet": false,
+    "touches_live_path": false,
+    "opens_future_blind": false
+  }
+}
