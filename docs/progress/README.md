@@ -41,6 +41,9 @@ Current Phase 3 progress files:
   mechanisms with a D+5 availability lag; total/credit stress relief are
   rejected and safe-asset stress relief failed independent confirmation at
   17/36 positive months, closing v20.
+- `phase-2-research-protocol-v21.md` freezes one U.S. net-liquidity expansion
+  mechanism and three credential-free FRED development requests before any
+  2019-2025 historical CSV body, factor value, signal, or PnL is opened.
 
 - `phase-3-testnet-canary-evidence.md` records the testnet session ledger and
   bundle evidence summary.

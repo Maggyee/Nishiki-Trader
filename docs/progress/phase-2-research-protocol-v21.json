@@ -1,0 +1,86 @@
+{
+  "schema_version": "research.protocol.v21",
+  "status": "preregistered_before_fred_historical_body_access",
+  "created_at": "2026-08-13",
+  "objective": "Test one independent U.S. dollar net-liquidity expansion mechanism for BTCUSDT Spot without reopening or retuning rejected price, volatility, flow, funding, on-chain, rate, or financial-stress identities.",
+  "data_access_disclosure": {
+    "official_metadata_pages_opened": true,
+    "metadata_exposure": "Official series pages exposed five August 2026 headline observations per page; those dates are outside development and confirmation, are not used by the rule, and are not part of any CSV body.",
+    "historical_csv_bodies_opened": false,
+    "development_factor_values_opened": false,
+    "confirmation_factor_values_opened": false,
+    "strategy_specific_pnl_opened": false
+  },
+  "research_windows": {
+    "warmup": {"start": "2019-10-01", "end": "2019-12-31"},
+    "development": {"start": "2020-01-01", "end": "2022-12-31", "strategy_specific_pnl_access_status": "unconsumed", "max_openings": 1},
+    "confirmation": {"start": "2023-01-01", "end": "2025-12-31", "strategy_specific_pnl_access_status": "sealed_until_development_pass", "max_openings": 1},
+    "future_blind": {"start": "2026-09-01", "end": "2027-01-31", "status": "sealed_unopened"}
+  },
+  "data_contract": {
+    "provider_contract": "docs/progress/phase-2-research-v21-data-sources.json",
+    "provider": "Federal Reserve Economic Data (FRED), Federal Reserve Bank of St. Louis",
+    "series": ["WALCL", "WDTGAL", "RRPONTSYD"],
+    "formula_millions_usd": "WALCL - WDTGAL - (1000 * RRPONTSYD)",
+    "common_timestamp_join": "exact_observation_date_intersection",
+    "conservative_decision_lag_calendar_days": 7,
+    "historical_vintage_claim": false,
+    "missing_data_policy": "no interpolation, no forward fill, and no synthetic weekly observation"
+  },
+  "candidate": {
+    "key": "net_usd_liquidity_expansion",
+    "source": "rule_us_net_liquidity_expansion_v1",
+    "model_version": "fred-walcl-wdtgal-rrpontsyd-diff4w-positive-lag7d-v1",
+    "mechanism": "Expansion in Federal Reserve assets net of the Treasury General Account and overnight reverse repos increases marginal dollar liquidity available to risk assets.",
+    "parameters": {
+      "change_observations": 4,
+      "minimum_change_millions_usd": 0.0,
+      "publication_lag_calendar_days": 7,
+      "ttl_seconds": 86400,
+      "confidence": 0.75
+    },
+    "rule": "buy iff current net liquidity minus net liquidity four exact common weekly observations earlier is strictly positive; flat otherwise; begin flat and emit only on state change"
+  },
+  "execution": {
+    "instrument_id": "BTCUSDT.BINANCE",
+    "bar_type": "BTCUSDT.BINANCE-1-HOUR-LAST-EXTERNAL",
+    "catalog_path": "data/research-v8/catalog",
+    "trade_size_btc": 0.001,
+    "starting_balance_usdt": 100000,
+    "account_type": "cash",
+    "min_confidence": 0.55,
+    "long_flat_only": true,
+    "costs_usdt_per_closed_position": {"gross": 0.0, "base": 0.08, "stress": 0.10}
+  },
+  "gates": {
+    "development": {
+      "base_net_pnl_gt": 0.0,
+      "stress_net_pnl_gt": 0.0,
+      "positive_calendar_years_at_least": 2,
+      "positive_calendar_months_at_least": 18,
+      "closed_positions_at_least": 30,
+      "leave_best_position_base_net_pnl_gt": 0.0,
+      "duplicate_replays_required": 2
+    },
+    "multiple_testing": {
+      "candidate_count_locked": 1,
+      "parameter_grid_search_forbidden": true,
+      "alternate_sign_forbidden": true,
+      "pnl_selected_ensemble_forbidden": true,
+      "failed_candidate_reparameterization_forbidden": true
+    }
+  },
+  "progression": {
+    "development_pass_opens_only": "separately frozen 2023-2025 confirmation contract",
+    "confirmation_pass_opens_only": "separate ADR-007 paper_shadow policy review",
+    "automatic_policy_change": false,
+    "automatic_trading_authorization": false
+  },
+  "boundaries_effect": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "resumes_testnet": false,
+    "touches_live_path": false,
+    "opens_future_blind": false
+  }
+}
