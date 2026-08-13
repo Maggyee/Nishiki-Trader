@@ -1,0 +1,84 @@
+{
+  "accepted_signals": 141,
+  "bundle_dir": "data/research-v22/paper/20260813-045912Z-903c37c0",
+  "bundle_kind": "paper",
+  "bundle_policy_matches_current": true,
+  "bundle_policy_mismatches": [],
+  "bundle_promotion_blockers": [
+    "manual_review_required_before_disabling_dry_run"
+  ],
+  "current_policy": {
+    "dry_run": true,
+    "min_confidence_override": null,
+    "position_pct_multiplier": 0.2
+  },
+  "current_stage": "paper_shadow",
+  "data_gap_signals": 0,
+  "decision": "hold",
+  "decision_allowed": true,
+  "decision_counts": {
+    "target_flat": 70,
+    "target_long": 71
+  },
+  "decision_reasons": [
+    "hold_gates_passed"
+  ],
+  "dry_run_signals": 141,
+  "expired_signals": 0,
+  "generated_at": "2026-08-13T04:59:26Z",
+  "git_commit": "757c191c265d12e160e9b2bd47e9f0ca1666771e",
+  "git_dirty": false,
+  "heartbeat_count": 24322,
+  "kill_switch_fired": false,
+  "kill_switch_signals": 0,
+  "manifest_sha256": "a25ce1307533597ced01b1a9d70e7f2ab6133d7740adbda637014bf767c032d2",
+  "max_drawdown_abs_by_currency": {
+    "USDT": 0.0
+  },
+  "max_drawdown_pct_by_currency": {
+    "USDT": 0.0
+  },
+  "missing_metrics": [],
+  "model_version": "cboe-cor1m-diff5-negative-lag1d-v1",
+  "operator": "nishiki",
+  "paper_simulated_retro_path": null,
+  "pnl_total_by_currency": {
+    "USDT": 0.0
+  },
+  "policy_diff": {},
+  "policy_evidence_path": "data/research-v22/paper/20260813-045912Z-903c37c0/run_manifest.json",
+  "policy_evidence_sha256": "a25ce1307533597ced01b1a9d70e7f2ab6133d7740adbda637014bf767c032d2",
+  "previous_run_id": null,
+  "promotion_gate_blockers": [],
+  "rationale": "The exact COR1M-relief identity passed its independently frozen 2023-2025 confirmation, but 2025 base PnL was slightly negative and monthly breadth passed exactly at 18/36, so it enters only the strict identity-specific dry-run stage. The longest contiguous catalog suffix after the separately audited Binance exchange-unavailable hour verifies 141 of 141 SignalEvent v1 rows with zero orders, fills, schema, authorization, freshness, lag, kill-switch, or data-gap blockers. Historical replay is stage-entry plumbing evidence only; genuinely forward observations remain zero and a separate ADR-007 review is mandatory before paper_simulated.",
+  "reason_counts": {
+    "dry_run": 141
+  },
+  "restart_sequence": 0,
+  "review_blockers": [],
+  "run_id": "20260813-045912Z-903c37c0",
+  "runtime_data_gaps": 0,
+  "runtime_data_mode": "catalog_polling",
+  "runtime_mode": "paper",
+  "runtime_order_mode": "simulated",
+  "session_days_inclusive": 1014,
+  "signal_lag_signals": 0,
+  "signal_rows": 141,
+  "skipped_signals": 0,
+  "source": "rule_cboe_implied_correlation_relief_v1",
+  "target_policy": {
+    "dry_run": true,
+    "min_confidence_override": null,
+    "position_pct_multiplier": 0.2
+  },
+  "target_stage": "paper_shadow",
+  "testnet_runbook_signoff_path": null,
+  "totals": {
+    "events": 141,
+    "fills": 0,
+    "iterations": 24322,
+    "orders": 0,
+    "positions": 0
+  },
+  "unauthorized_signals": 0
+}

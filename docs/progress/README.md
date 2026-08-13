@@ -47,8 +47,9 @@ Current Phase 3 progress files:
 - `phase-2-research-protocol-v22.md` freezes SKEW relief, COR1M relief, and
   DSPX expansion as three option-surface mechanisms; SKEW/COR1M are
   provider-qualified, DSPX is provider-rejected, SKEW fails development, and
-  COR1M relief passes independent confirmation and is eligible for a separate
-  ADR-007 `paper_shadow` policy review.
+  COR1M relief passes independent confirmation and is held at identity-specific
+  ADR-007 `paper_shadow` dry-run. Forward progress is 0/7 days and 0/50 new
+  signals; no prospective collector or scheduler is installed.
 - `phase-2-research-protocol-v23.md` freezes three English Wikipedia user
   pageview attention-expansion identities before any pageview JSON body is
   opened; confirmation dates are excluded from the locked request range.

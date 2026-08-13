@@ -117,3 +117,19 @@ positive, 78 positions close, and leave-best base PnL is +14.242905 USDT.
 The classification is `paper_shadow_review_eligible`. It can proceed only to
 a separate identity-specific ADR-007 policy review. No SourcePolicy, existing
 collector, testnet, live path, or future blind changes here.
+
+## ADR-007 paper-shadow decision
+
+The separate identity-specific review records `hold @ paper_shadow` under
+`SourcePolicy(dry_run=True, position_pct_multiplier=0.2,
+min_confidence_override=None)`. A clean catalog-shadow bundle accepts all 141
+signals on the longest contiguous suffix and classifies every one as dry run,
+with zero orders, fills, rejections, lag events, data gaps, kill-switches, or
+review blockers.
+
+The historical replay proves only stage-entry plumbing and counts as neither
+forward days nor forward signals. Forward progress is 0/7 qualified days and
+0/50 new signals; no collector or scheduler is installed. The slightly
+negative 2025 base PnL and exactly-at-threshold 18/36 positive-month breadth
+are retained as caution flags. `paper_simulated`, testnet/live trading, and
+the future blind remain closed.

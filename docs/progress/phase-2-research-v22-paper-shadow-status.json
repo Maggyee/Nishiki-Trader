@@ -1,0 +1,42 @@
+{
+  "schema_version": "research.v22.paper_shadow_status_summary.v1",
+  "updated_at": "2026-08-13T04:59:26Z",
+  "contract_sha256": "sha256:461dcdb655bc85467737cff7152ee5fdcd4f63429fa2fcf039510446cd6c3ef3",
+  "review_sha256": "sha256:6f56749836eb21451a0aa006d8f90f86301e29062e6d14a3dc36fb5336d1d4e3",
+  "stage": "paper_shadow",
+  "policy": {
+    "dry_run": true,
+    "position_pct_multiplier": 0.2,
+    "min_confidence_override": null
+  },
+  "forward_gate": {
+    "qualified_day_count": 0,
+    "required_days": 7,
+    "new_forward_signal_count": 0,
+    "required_signals": 50,
+    "operator": "or",
+    "threshold_met": false,
+    "review_eligible": false
+  },
+  "entry_evidence": {
+    "historical_replay_only": true,
+    "signal_rows": 141,
+    "accepted_signals": 141,
+    "dry_run_signals": 141,
+    "orders": 0,
+    "fills": 0,
+    "review_blockers": [],
+    "decision": "hold",
+    "decision_allowed": true
+  },
+  "scheduler": {
+    "installed": false,
+    "collector_implemented": false
+  },
+  "anomaly_blockers": [],
+  "next_action": "implement_and_review_prospective_collector_before_any_schedule_install",
+  "future_blind_status": "sealed_unopened",
+  "paper_simulated_status": "not_authorized",
+  "testnet_status": "blocked",
+  "live_status": "blocked"
+}

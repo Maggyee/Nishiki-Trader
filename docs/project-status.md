@@ -17,7 +17,7 @@
   Protocol v19 is complete with zero survivors. RVX is development-rejected and VXFXI provider-rejected. VXD passed development, then failed the independently frozen 2023-2025 confirmation solely on monthly breadth: gross/base/stress +71.365380/+57.492785/+54.024636 USDT, 3/3 positive years, 17/36 positive months versus 18 required, 94 positions, and +34.350455 leave-best base PnL. Duplicate fills match with no shorts, blockers, or verified no-kline event hits. VXD is rejected and cannot enter ADR-007 or `paper_shadow`; the future blind stays sealed.
   Protocol v20 is complete with zero survivors. Total/credit stress relief are development-rejected. Unchanged safe-asset-stress relief then failed independently frozen 2023-2025 confirmation solely on monthly breadth: gross/base/stress +47.630810/+35.946934/+33.025964 USDT, 3/3 positive years, 17/36 positive months versus 18 required, 74 positions, and +18.107091 leave-best base PnL. Duplicate fills from `b99962c` match with no shorts, blockers, or no-kline hits. It cannot enter ADR-007 or `paper_shadow`. The no-vintage limitation, v8/v16/v18 paper shadow, SourcePolicy, testnet, and the future blind remain untouched.
   Protocol v21 is closed at `blocked_provider_qualification`. Its one U.S. net-liquidity identity was frozen and pushed at `d9ec0e3` before historical access, but the first WALCL request timed out after 30 seconds before response headers/body. The sequential collector did not attempt WDTGAL or RRPONTSYD and wrote no snapshot, factor, signal, or PnL. The no-retry provider policy applies; development and confirmation remain unopened, and the strategy has no alpha verdict.
-  Protocol v22 is complete with one confirmed survivor. DSPX is provider-rejected and SKEW relief is development-rejected. Unchanged COR1M implied-correlation relief passes independent 2023-2025 confirmation: gross/base/stress +41.704460/+29.737095/+26.745253 USDT, 2/3 positive years, exactly 18/36 positive months, 78 positions, and +14.242905 leave-best base PnL. Duplicate clean-git fills match with zero shorts, blockers, or no-kline hits. It is now eligible for a separate identity-specific ADR-007 `paper_shadow` policy review; no SourcePolicy or runtime change has occurred. The current-history/no-vintage limitation and future blind remain intact.
+  Protocol v22 is complete with one confirmed survivor. DSPX is provider-rejected and SKEW relief is development-rejected. Unchanged COR1M implied-correlation relief passes independent 2023-2025 confirmation: gross/base/stress +41.704460/+29.737095/+26.745253 USDT, 2/3 positive years, exactly 18/36 positive months, 78 positions, and +14.242905 leave-best base PnL. Duplicate clean-git fills match with zero shorts, blockers, or no-kline hits. Its separate ADR-007 review records `hold @ paper_shadow` under `SourcePolicy(dry_run=True, position_pct_multiplier=0.2, min_confidence_override=None)`. The clean entry bundle accepts and dry-runs 141/141 historical signals with no orders, fills, rejections, gaps, or kill-switches. Forward progress is 0/7 qualified days and 0/50 new signals; no collector or scheduler is installed. The current-history/no-vintage limitation and future blind remain intact.
   Protocol v23 is pre-registered and frozen before Wikimedia pageview JSON bodies. It tests three independent English Wikipedia *user* attention-expansion rules (`Bitcoin`, `Ethereum`, `Cryptocurrency`): buy BTCUSDT Spot iff the latest completed daily view count minus the count five official observations earlier is strictly positive; otherwise flat. Decisions wait two calendar days, make no historical-vintage claim, and use the already-audited 2020-2022 downtime catalog. Each article may be fetched once after this freeze is pushed; 2023+ timestamps are forbidden in the locked URLs. No pageview value, signal, or PnL is opened yet.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
@@ -74,6 +74,9 @@ Detailed history archived so far:
   relief; all three rejected, VXD after confirmation monthly-breadth failure.
 - `docs/progress/phase-2-research-protocol-v20.md` — OFR financial-stress relief;
   all three rejected, safe-asset after confirmation monthly-breadth failure.
+- `docs/progress/phase-2-research-protocol-v22.md` — COR1M relief passed
+  independent confirmation and is held at identity-specific ADR-007
+  `paper_shadow`; its prospective collector is not yet implemented.
 - `docs/progress/phase-3-testnet-canary-evidence.md` — archived Phase 3 testnet canary evidence ledger.
 - `docs/progress/phase-3-testnet-continuity-plan.md` — archived 14-day testnet continuity procedure and review command.
 - `docs/progress/phase-5-dashboard-history.md` — completed read-only dashboard, AgentAdvice input, passive Phase 6 gate, and dashboard hardening history.
@@ -226,7 +229,7 @@ Immediate focus:
 15. Preserve all three v19 rejects. Do not lower VXD's 18-month breadth gate, retune/sign-flip/ensemble it, retry VXFXI, reopen RVX, enter ADR-007, or open the future blind.
 16. Preserve all three v20 rejects. Do not lower the 18-month breadth gate, retune/sign-flip/ensemble safe-asset stress relief, refetch OFR, or claim historical vintages. It is not eligible for ADR-007 or `paper_shadow`.
 17. Preserve v21's provider failure. Do not retry WALCL, attempt the remaining requests, substitute a provider, or infer strategy performance. Any later liquidity study requires a new frozen provider identity.
-18. Preserve v22's DSPX/SKEW rejects and confirmed COR1M identity unchanged. Do not retune, sign-flip, ensemble, treat historical confirmation as forward evidence, or change SourcePolicy without a separate ADR-007 review.
+18. Preserve v22's DSPX/SKEW rejects and confirmed COR1M identity at its reviewed `paper_shadow` policy. Do not retune, sign-flip, ensemble, count historical entry rows toward the forward gate, disable dry-run, install a schedule before collector review, or open the future blind.
 19. Keep Protocol v23 sealed until this freeze is committed and pushed. Do not open pageview JSON, retune v19-v22 fingerprints, sign-flip attention expansion, ensemble after PnL, or include 2023+ in the first GETs.
 
 ## Next Steps
@@ -238,7 +241,7 @@ Immediate focus:
 5. Archive and retain the completed Protocol v2 7/7 option/basis evidence. Do not rebuild or restart the completed collector, open basis historical ZIPs, or invent option-method substitutes.
 6. Continue the installed weekday 02:30 UTC Protocol v8 collector from its qualified Day 1 baseline. Accumulate 6 more distinct forward paper-shadow days or 50 new forward signals with clean schema, freshness, lineage, and verified-session behavior. Require a separate human review before any `paper_shadow -> paper_simulated` change.
 7. Keep Protocol v9 closed with both candidates rejected. Do not open 2023-2025 confirmation, retune either rule, or create a PnL-selected ensemble.
-8. Keep the signed `freqai_linear_v1` policy at `paper_simulated` with multiplier `0.1`; testnet/live remain blocked. Do not tune or revive this frozen model identity. New research candidates may enter `paper_shadow` only through a prospectively frozen confirmation protocol; GVZ, v16 Treasury-volatility relief, and v18 VXN relief are the current instances, and their separate forward/future-blind gates remain required before any later-stage consideration.
+8. Keep the signed `freqai_linear_v1` policy at `paper_simulated` with multiplier `0.1`; testnet/live remain blocked. Do not tune or revive this frozen model identity. New research candidates may enter `paper_shadow` only through a prospectively frozen confirmation protocol; GVZ, v16 Treasury-volatility relief, v18 VXN relief, and v22 COR1M relief are the current instances, and their separate forward/future-blind gates remain required before any later-stage consideration.
 9. Retain the 2026-07-29 demotion review and its linked testnet/policy fingerprints as the current audit chain; no follow-up runtime is required.
 10. Continue Phase 5 with only read-only dashboard improvements fed by `dashboard.snapshot.v1`; keep the frontend free of API routes and mutation controls until a separate ADR opens a specific workflow.
 11. If a future allowed promotion reopens live-readiness evidence collection, use `docs/progress/phase-3-testnet-continuity-plan.md` and include every completed manifest-backed testnet bundle in the candidate window when running both `report_testnet_bundle --continuity` and `apps.ops.live_readiness`.
@@ -253,7 +256,11 @@ Immediate focus:
 19. Preserve the committed v19 confirmation rejection without retry or retuning.
 20. Keep Protocol v20 closed. Any later independent batch needs a new identity frozen before data access; it may not continue these three fingerprints or open the future blind.
 21. Keep Protocol v21 closed with development and confirmation unopened. Continue alpha exploration only through a genuinely independent, pre-registered protocol and provider route.
-22. Retain the committed COR1M confirmation evidence. The next authorized stage is a separate identity-specific ADR-007 `paper_shadow` policy review; confirmation does not itself authorize paper runtime, testnet, or live trading.
+22. Keep v22 COR1M relief at the reviewed `paper_shadow` policy. The next
+    implementation step is a fail-closed prospective COR1M/BTC collector and
+    its own review; schedule installation still requires explicit operator
+    approval. Reach 7 qualified days or 50 genuinely new signals before a
+    separate `paper_simulated` policy review.
 23. After Protocol v23 is pushed, open each locked Wikimedia pageview URL once from that HEAD, qualify or reject independently, then write factors/signals and two clean-git cash replays only for passers. Do not GET before the freeze is on `origin/main`.
 
 ## Blocked / Deferred
@@ -406,6 +413,23 @@ On 2026-08-13, after Protocol v22 COR1M confirmation:
   months, 78 positions, and +14.242905 leave-best base PnL.
 - Classification is `paper_shadow_review_eligible`. A separate ADR-007 review
   is required; no policy, runtime, testnet, live path, or future blind changed.
+
+On 2026-08-13, after the identity-specific Protocol v22 ADR-007 review:
+
+- `rule_cboe_implied_correlation_relief_v1 /
+  cboe-cor1m-diff5-negative-lag1d-v1` is held at `paper_shadow` under
+  `SourcePolicy(dry_run=True, position_pct_multiplier=0.2,
+  min_confidence_override=None)`; the policy review is allowed with no review
+  blockers.
+- Clean bundle `data/research-v22/paper/20260813-045912Z-903c37c0` accepts
+  141/141 historical SignalEvent v1 rows on the longest contiguous catalog
+  suffix; all 141 are dry-run, with 0 skips, orders, fills, positions,
+  unauthorized/expired/lag/data-gap signals, runtime gaps, or kill-switches.
+- The 1,014-day historical replay is entry-plumbing evidence only. Forward
+  progress is 0/7 qualified days and 0/50 new signals, so `paper_simulated`
+  remains unauthorized. No collector/scheduler, credential, testnet/live path,
+  or future blind was opened. The next action is to implement and review a
+  fail-closed prospective collector before any schedule installation.
 
 On 2026-08-13, after Protocol v21 pre-registration:
 
