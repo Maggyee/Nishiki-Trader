@@ -73,7 +73,8 @@ Current Phase 3 progress files:
   relief identities. All three articles qualified, then failed 2020-2022
   development; confirmation remains sealed.
 - `phase-2-research-protocol-v30.md` freezes three Cboe single-name implied-vol
-  relief identities before any historical CSV body is opened.
+  relief identities. All three indices are provider-qualified; signals and
+  PnL remain unopened.
 
 - `phase-3-testnet-canary-evidence.md` records the testnet session ledger and
   bundle evidence summary.

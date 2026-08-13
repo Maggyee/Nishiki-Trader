@@ -1,0 +1,68 @@
+{
+  "schema_version": "research.v30.provider_qualification.v1",
+  "classification": "provider_qualified",
+  "protocol_sha256": "sha256:b8b7a4d201bdd11720544f91c476b8eaffe183eee7de2b7fe923db153d7759a8",
+  "provider_contract_sha256": "sha256:971738527a29c15edf95805e6bb90928891ebed31a4c02ef497f6623984b32b8",
+  "pre_data_commit": "7e16b3f",
+  "qualified_candidates": [
+    "apple_vol_relief",
+    "amazon_vol_relief",
+    "google_vol_relief"
+  ],
+  "rejected_candidates": {},
+  "qualified_series": {
+    "vxapl": {
+      "snapshot_path": "data/research-v30/raw/vxapl-20260813T110124Z-7847a7ff51a4.json",
+      "snapshot_sha256": "sha256:7847a7ff51a4492571c339e48a75232ab029ec7f80595ca91482f68cf071cb1b",
+      "factor_path": "data/research-v30/factors/vxapl.csv",
+      "factor_sha256": "sha256:c36dceb8c37e38d4d0d6815af13cd01320f36992554ef5fd705c3cf0d6a0f43a",
+      "factor_row_count": 796,
+      "development_row_count": 755,
+      "warmup_row_count": 41,
+      "development_first_date": "2020-01-02",
+      "development_last_date": "2022-12-30",
+      "maximum_calendar_gap_days": 4,
+      "schema": "ohlc",
+      "index": "VXAPL"
+    },
+    "vxazn": {
+      "snapshot_path": "data/research-v30/raw/vxazn-20260813T110125Z-e5a520d1ef59.json",
+      "snapshot_sha256": "sha256:e5a520d1ef5927bcb7d7b3e2536681023595b5d1d000df24ee315abf74b9c47c",
+      "factor_path": "data/research-v30/factors/vxazn.csv",
+      "factor_sha256": "sha256:aeb724e03468cb213fd55f59d6866abef0434cf6510eedfae53e5d5a5f58bce5",
+      "factor_row_count": 796,
+      "development_row_count": 755,
+      "warmup_row_count": 41,
+      "development_first_date": "2020-01-02",
+      "development_last_date": "2022-12-30",
+      "maximum_calendar_gap_days": 4,
+      "schema": "ohlc",
+      "index": "VXAZN"
+    },
+    "vxgog": {
+      "snapshot_path": "data/research-v30/raw/vxgog-20260813T110126Z-8cbfcce64bae.json",
+      "snapshot_sha256": "sha256:8cbfcce64baed178563f7ad5f86554c702b6bd83a38e24ddcc4e70bff3966b5f",
+      "factor_path": "data/research-v30/factors/vxgog.csv",
+      "factor_sha256": "sha256:a7ffaaf312285f5bc80d230993cafbb16dedaf702939991c2381fe189b06cca7",
+      "factor_row_count": 796,
+      "development_row_count": 755,
+      "warmup_row_count": 41,
+      "development_first_date": "2020-01-02",
+      "development_last_date": "2022-12-30",
+      "maximum_calendar_gap_days": 4,
+      "schema": "ohlc",
+      "index": "VXGOG"
+    }
+  },
+  "rejected_series": {},
+  "historical_vintage_claim": false,
+  "boundaries": {
+    "signals_generated": false,
+    "pnl_opened": false,
+    "confirmation_opened": false,
+    "confirmation_values_used": false,
+    "source_policy_mutated": false,
+    "trading_touched": false,
+    "future_blind_opened": false
+  }
+}
