@@ -1,10 +1,11 @@
 # Phase 2 Research Protocol v30
 
-- **Status**: provider-qualified; signals and PnL unopened.
+- **Status**: development complete; google_vol_relief confirmation-open eligible;
+  Apple and Amazon rejected.
 - **Mechanisms**: Cboe Apple, Amazon, and Google/Alphabet 30-day implied-vol
   relief (VXAPL, VXAZN, VXGOG).
-- **Development**: 2020-01-01 through 2022-12-31.
-- **Confirmation**: sealed.
+- **Development**: 2020-01-01 through 2022-12-31; one passer.
+- **Confirmation**: sealed until a separately frozen 2023-2025 contract.
 - **Future blind**: sealed.
 - **Trading effect**: none.
 
@@ -47,3 +48,13 @@ unfilled 2020-2022 observations, 41 warmup rows, OHLC CLOSE schema, and a
 four-day maximum gap. Development factors stop at 2022-12-30. Machine hashes
 live in `docs/progress/phase-2-research-v30-provider-qualification.json`.
 Signals and PnL remain unopened.
+
+## Development outcome
+
+Two clean replays per candidate from `b2c85b2` reproduce with identical fills
+and no evidence blockers. Apple vol relief is cost-positive but fails
+leave-best. Amazon vol relief is cost-positive but has only 14/36 positive
+months. Unchanged Google/Alphabet vol relief passes every frozen development
+gate and is the only confirmation-open eligible identity. Do not retune,
+sign-flip, or ensemble the rejected names. Confirmation values stay sealed
+until a separate confirmation contract is frozen.

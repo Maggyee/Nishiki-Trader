@@ -1,0 +1,157 @@
+{
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_confirmation": false,
+    "opens_future_blind": false,
+    "resumes_testnet": false,
+    "touches_live_path": false
+  },
+  "candidates": [
+    {
+      "base_net_pnl": 16.647100083999987,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:c8d6d3b972a6db2cb4306c940101a1d08b63c2d75faab5950a3f99791d576b85",
+          "manifest_sha256": "sha256:5b67da9a395d4a91faa09d76adc16fd0b1b4cb87fa376a736a8de19cc0e66d9d",
+          "path": "data/research-v30/backtests/20260813-110702Z-5db82853"
+        },
+        {
+          "fills_sha256": "sha256:c8d6d3b972a6db2cb4306c940101a1d08b63c2d75faab5950a3f99791d576b85",
+          "manifest_sha256": "sha256:6e429a29c0399e63131d2987a3a7e6b914b80afb1580c1f896ddb15f9f1bbe1c",
+          "path": "data/research-v30/backtests/20260813-110706Z-a5d6099b"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "reject_candidate",
+      "closed_positions": 83,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [
+        "leave_best_base_net_pnl_not_positive"
+      ],
+      "gross_net_pnl": 22.628049999999988,
+      "key": "apple_vol_relief",
+      "leave_best_base_net_pnl": -0.9988306359999974,
+      "model_version": "cboe-vxapl-diff5-negative-lag1d-v1",
+      "performance_pass": false,
+      "positive_months": 18,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 166,
+      "signal_store_sha256": "sha256:a64d0b63809b890d4dc3932890678dee924d42da778f8b81433e3dc6ca5338e3",
+      "source": "rule_cboe_apple_vol_relief_v1",
+      "stress_net_pnl": 15.151862604999987,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 11.544997175999999,
+        "2021": 20.885400066000003,
+        "2022": -15.783297158
+      }
+    },
+    {
+      "base_net_pnl": 22.557443788,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:097262c042c03f81f8783212b7c8032db3813f7aa8b318ef3e5e6d4ac1567b12",
+          "manifest_sha256": "sha256:1c4c36214bf0baf335c2a08cfc6f6a71fc44c163c7e989343c057b8432d0a7e6",
+          "path": "data/research-v30/backtests/20260813-110710Z-59714e46"
+        },
+        {
+          "fills_sha256": "sha256:097262c042c03f81f8783212b7c8032db3813f7aa8b318ef3e5e6d4ac1567b12",
+          "manifest_sha256": "sha256:d3f26ba6d5adc773a399164a6aeb54c10c1a63758bea60f2b2df247212fd3e9f",
+          "path": "data/research-v30/backtests/20260813-110714Z-ba4a9745"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "reject_candidate",
+      "closed_positions": 77,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [
+        "positive_months_14_below_18"
+      ],
+      "gross_net_pnl": 28.190890000000003,
+      "key": "amazon_vol_relief",
+      "leave_best_base_net_pnl": 6.531216583999999,
+      "model_version": "cboe-vxazn-diff5-negative-lag1d-v1",
+      "performance_pass": false,
+      "positive_months": 14,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 154,
+      "signal_store_sha256": "sha256:6e2eab4ffe6cb46b85cb85b603e4a385dc9adb9482f8bb8e7a69b9e77c9618a9",
+      "source": "rule_cboe_amazon_vol_relief_v1",
+      "stress_net_pnl": 21.149082235,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 10.364332544,
+        "2021": 25.612541435999997,
+        "2022": -13.419430192
+      }
+    },
+    {
+      "base_net_pnl": 15.307939128,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:7393260af8b8f6d1509da89a96771b11721e8f4c909e3cb4202db3cf8efa59fc",
+          "manifest_sha256": "sha256:ef92c9e287660c3ecc34225c8ef1f60dfe0912e5d4484c0d9300b97476c895af",
+          "path": "data/research-v30/backtests/20260813-110717Z-d80c34b8"
+        },
+        {
+          "fills_sha256": "sha256:7393260af8b8f6d1509da89a96771b11721e8f4c909e3cb4202db3cf8efa59fc",
+          "manifest_sha256": "sha256:6f9ea8a8124647c731d6ff843628eca61736366a2d341118ef89854600a920ad",
+          "path": "data/research-v30/backtests/20260813-110721Z-a6e22432"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "development_pass_confirmation_open_eligible",
+      "closed_positions": 87,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [],
+      "gross_net_pnl": 21.52986,
+      "key": "google_vol_relief",
+      "leave_best_base_net_pnl": 4.0837225880000005,
+      "model_version": "cboe-vxgog-diff5-negative-lag1d-v1",
+      "performance_pass": true,
+      "positive_months": 24,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 174,
+      "signal_store_sha256": "sha256:118e67be4d36d3485adff0033df22a4b8893f72289ab4f4fef5ce73feda0c8c2",
+      "source": "rule_cboe_google_vol_relief_v1",
+      "stress_net_pnl": 13.75245891,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 15.788253728,
+        "2021": 7.854550188000001,
+        "2022": -8.334864787999997
+      }
+    }
+  ],
+  "confirmation_holdout_status": "sealed_pending_committed_development_review",
+  "confirmation_open_eligible_candidates": [
+    "google_vol_relief"
+  ],
+  "development_passer_count": 1,
+  "future_blind_status": "sealed_unopened",
+  "protocol_sha256": "sha256:b8b7a4d201bdd11720544f91c476b8eaffe183eee7de2b7fe923db153d7759a8",
+  "provider_qualification": {
+    "historical_vintage_claim": false,
+    "qualified_candidates": [
+      "apple_vol_relief",
+      "amazon_vol_relief",
+      "google_vol_relief"
+    ],
+    "rejected_candidates": {}
+  },
+  "recommendation": "commit_development_results_before_confirmation_open",
+  "schema_version": "research.v30.development_results.v1"
+}

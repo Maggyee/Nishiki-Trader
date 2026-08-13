@@ -73,8 +73,8 @@ Current Phase 3 progress files:
   relief identities. All three articles qualified, then failed 2020-2022
   development; confirmation remains sealed.
 - `phase-2-research-protocol-v30.md` freezes three Cboe single-name implied-vol
-  relief identities. All three indices are provider-qualified; signals and
-  PnL remain unopened.
+  relief identities. Apple and Amazon fail development; unchanged
+  Google/Alphabet VXGOG relief is confirmation-open eligible.
 
 - `phase-3-testnet-canary-evidence.md` records the testnet session ledger and
   bundle evidence summary.

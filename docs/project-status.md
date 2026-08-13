@@ -1,7 +1,7 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-08-13 (Protocol v30 Cboe single-name vol provider-qualified; PnL unopened)
+- **Last updated**: 2026-08-13 (Protocol v30 Google vol relief development-pass; confirmation sealed)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
 - **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry and Protocol v2-v5 research identities are frozen. Protocol v5 curve carry and BVOL relief are rejected and the 2026-08..12 blind remains sealed. The provider/timer review is complete: v5 and completed v2 timers are `inactive/disabled`, v5 collector status is `archived`, and a four-day post-window audit found zero new invocations. The retained v5 tree is 13 snapshots / 13 Parquets with zero conflicts; v2 `COMPLETE`, ledger, deployment identity and all recorded checksums remain unchanged. Dashboard renders the archive as a valid terminal state with no retry or operations issue. Independent Protocol v6 remains `blocked_provider_qualification` on the official 12-row grid, with historical development closed.
   The human-reviewed `freqai_linear_v1 / linear-mom-train20240105` decision is now `demote @ paper_simulated` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. Its old testnet continuity evidence is archived and cannot authorize a restart. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
@@ -25,7 +25,7 @@
   Protocol v27 is closed with zero survivors. Unchanged all-chain dailyFees, dailyRevenue, and dailyHoldersRevenue five-observation expansion all fail 2020-2022 development on duplicate clean-git cash replays from `66a725e`. Fees is cost-positive but leave-best is -1.639513 USDT. Revenue and holder-revenue fail base/stress; holder-revenue also has only 14/36 positive months. Fills match with no shorts, blockers, or no-kline hits. Confirmation stays sealed. Do not retune or ensemble. Paper-shadow policies, SourcePolicy, testnet, live trading, and the future blind are unchanged.
   Protocol v28 is closed at `blocked_provider_qualification`. From freeze `d425a3c`, each locked DefiLlama options/OI URL was opened once. Options notional and premium have only 414 development observations; perpetual DEX open interest has 675 versus 700 required. No snapshot, factor, signal, or PnL was written. Retry is forbidden. Do not retune v25-v27.
   Protocol v29 is closed with zero survivors. From freeze `4e15d2d`, Federal_Reserve/Inflation/Recession user pageviews each qualified on 1,096 unfilled development days. Duplicate clean-git cash replays from `a19c207` then reject all three attention-relief rules: Fed base/stress -5.226623/-8.097119 USDT; Inflation -17.588427/-20.471992 USDT; Recession +11.952139/+9.071884 USDT with 23/36 months and positive leave-best but only 1/3 positive years. Fills match with zero shorts, blockers, or no-kline hits. Confirmation stays sealed. Do not retune, substitute articles, or ensemble. Paper-shadow policies, SourcePolicy, testnet, live trading, and the future blind are unchanged.
-  Protocol v30 Cboe single-name vol relief is provider-qualified from freeze `7e16b3f`. VXAPL, VXAZN, and VXGOG each have 755 unfilled 2020-2022 observations, 41 warmup rows, and a four-day maximum gap. Development factors stop at 2022-12-30. Signals and PnL remain unopened; two clean-git cash replays per identity are the next step.
+  Protocol v30 Cboe single-name vol relief completed 2020-2022 development from `b2c85b2`. Apple fails leave-best. Amazon fails monthly breadth. Unchanged Google/Alphabet VXGOG relief passes: base/stress +15.307939/+13.752459 USDT, 2/3 years, 24/36 months, 87 positions, and +4.083723 leave-best base PnL. Duplicate fills match with zero shorts, blockers, or no-kline hits. Only this identity may enter a separately frozen 2023-2025 confirmation contract. Do not retune Apple/Amazon. Paper-shadow policies, SourcePolicy, testnet, live trading, and the future blind are unchanged.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -99,7 +99,7 @@ Detailed history archived so far:
 - `docs/progress/phase-2-research-protocol-v29.md` — Wikipedia macro-attention
   relief; protocol closed after development year-breadth / cost failure.
 - `docs/progress/phase-2-research-protocol-v30.md` — Cboe single-name vol
-  relief; all three indices provider-qualified, PnL unopened.
+  relief; Google/Alphabet development-pass, confirmation still sealed.
 - `docs/progress/phase-3-testnet-canary-evidence.md` — archived Phase 3 testnet canary evidence ledger.
 - `docs/progress/phase-3-testnet-continuity-plan.md` — archived 14-day testnet continuity procedure and review command.
 - `docs/progress/phase-5-dashboard-history.md` — completed read-only dashboard, AgentAdvice input, passive Phase 6 gate, and dashboard hardening history.
@@ -295,7 +295,7 @@ Immediate focus:
 26. Keep Protocol v27 closed. Any later independent DeFi cashflow study needs a new identity frozen before data access; it may not continue these three fingerprints or open the future blind.
 27. Keep Protocol v28 closed. Any later options or open-interest study needs a new identity and coverage contract frozen before data access; it may not retry these three GETs.
 28. Keep Protocol v29 closed. Any later independent attention study needs a new identity frozen before data access; it may not continue these three fingerprints, substitute Wikipedia articles after seeing Recession's year-breadth miss, or open the future blind.
-29. From the Protocol v30 qualification HEAD, generate development signals and two clean-git cash replays per identity on the v7 downtime catalog. Review with `research_v30_review`. Do not GET again, retune, sign-flip, or ensemble. Confirmation stays sealed until a passer has its own frozen 2023-2025 contract.
+29. Freeze a Protocol v30 Google/Alphabet confirmation contract before exporting 2023-2025 values from the already-captured VXGOG snapshot. Do not GET again. Do not retune Apple or Amazon. After that freeze is pushed, export confirmation factors from the same snapshot and run two clean-git cash replays on the v8 catalog.
 
 ## Blocked / Deferred
 
@@ -351,18 +351,16 @@ Immediate focus:
 - No Protocol v29 reopen. All three Wikipedia macro-attention-relief
   identities failed development; confirmation, Wikimedia retry, article
   substitution, sign flip, ensemble, and the future blind remain sealed.
-- No Protocol v30 confirmation, retry, sign flip, ensemble, or future-blind
-  opening. Development PnL may be opened only from the qualification HEAD.
+- No Protocol v30 Apple/Amazon reopen. Those identities failed development.
+  Google confirmation values stay sealed until a separate confirmation
+  contract is frozen. No new GET, sign flip, ensemble, or future-blind opening.
 
 ## Latest Verification
 
-On 2026-08-13, after Protocol v30 provider qualification:
+On 2026-08-13, after Protocol v30 development review:
 
-- Each locked Cboe history URL was opened once from freeze `7e16b3f`. All
-  three indices qualified: 755 development observations, 41 warmup rows,
-  maximum gap four days, OHLC CLOSE.
-- Factors exist locally through 2022-12-30; signals and PnL remain unopened.
-  Retry is forbidden.
+- Duplicate cash replays from `b2c85b2` reject Apple and Amazon and pass
+  unchanged Google/Alphabet vol relief. Confirmation remains sealed.
 
 On 2026-08-13, after Protocol v29 development review:
 
