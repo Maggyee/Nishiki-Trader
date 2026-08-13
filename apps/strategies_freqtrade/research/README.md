@@ -185,3 +185,12 @@ uv run python -m apps.strategies_freqtrade.research.cross_asset_volatility_signa
   --input-csv data/research-v7/factors/vix.csv \
   --signal-store-path data/research-v7/signals/vix.db
 ```
+
+Research Protocol v17 uses the same Cboe snapshot → daily point-in-time CSV
+path for VXEEM, VXEFA, and VXN. Validate the frozen contract before any
+download:
+
+```bash
+uv run python -m apps.ops.research_protocol_v17
+uv run python -m apps.ops.research_v17_snapshot --kind vxeem --dry-run
+```

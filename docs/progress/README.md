@@ -26,6 +26,8 @@ Current Phase 3 progress files:
 - `phase-2-research-v3-data-sources.json` locks credential-free Blockchain.com
   hashrate and Stooq DXY/VIX qualification endpoints before response-body
   access.
+- `phase-2-research-protocol-v17.md` and its JSON/provider contracts lock
+  VXEEM, VXEFA, and VXN five-observation relief before any CSV body is opened.
 
 - `phase-3-testnet-canary-evidence.md` records the testnet session ledger and
   bundle evidence summary.

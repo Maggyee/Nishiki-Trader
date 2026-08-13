@@ -1,0 +1,58 @@
+{
+  "schema_version": "research.data_sources.v17",
+  "frozen_at": "2026-08-13T02:30:00Z",
+  "status": "locked_before_cboe_csv_body_access",
+  "provider": "Cboe Global Markets official historical index data",
+  "authentication": "none",
+  "documentation_url": "https://www.cboe.com/tradable_products/vix/vix_historical_data",
+  "requests": [
+    {
+      "kind": "vxeem",
+      "index": "VXEEM",
+      "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/VXEEM_History.csv",
+      "expected_columns": ["DATE", "VXEEM"],
+      "value_column": "VXEEM",
+      "ohlc_validation_window": null,
+      "head_status": 200,
+      "head_content_type": "text/csv",
+      "head_last_modified": "2026-08-12T22:31:29Z"
+    },
+    {
+      "kind": "vxefa",
+      "index": "VXEFA",
+      "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/VXEFA_History.csv",
+      "expected_columns": ["DATE", "VXEFA"],
+      "value_column": "VXEFA",
+      "ohlc_validation_window": null,
+      "head_status": 200,
+      "head_content_type": "text/csv",
+      "head_last_modified": "2026-08-13T01:51:34Z"
+    },
+    {
+      "kind": "vxn",
+      "index": "VXN",
+      "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/VXN_History.csv",
+      "expected_columns": ["DATE", "OPEN", "HIGH", "LOW", "CLOSE"],
+      "value_column": "CLOSE",
+      "ohlc_validation_window": {"start": "2019-11-01", "end": "2022-12-31"},
+      "head_status": 200,
+      "head_content_type": "text/csv",
+      "head_last_modified": "2026-08-12T22:01:34Z"
+    }
+  ],
+  "point_in_time_contract": {
+    "observation": "official completed daily index close",
+    "available_at": "next UTC midnight after DATE",
+    "decision_ts_event": "available_at",
+    "missing_sessions": "no forward fill; carry existing position until the next official observation",
+    "raw_lineage": "retain exact CSV bytes, payload SHA-256, retrieval timestamp, immutable snapshot SHA-256 and vintage id",
+    "historical_window": {"start": "2020-01-01", "end": "2022-12-31"}
+  },
+  "boundaries": {
+    "credentials_loaded": false,
+    "source_policy_mutated": false,
+    "testnet_resumed": false,
+    "live_path_touched": false,
+    "csv_bodies_opened": false
+  }
+}

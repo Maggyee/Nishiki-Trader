@@ -1,7 +1,7 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-08-12 (Protocol v16 Treasury-yield volatility relief held at identity-specific paper shadow)
+- **Last updated**: 2026-08-13 (Protocol v17 Cboe geographic/style volatility pre-registered; CSV bodies unopened)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
 - **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry and Protocol v2-v5 research identities are frozen. Protocol v5 curve carry and BVOL relief are rejected and the 2026-08..12 blind remains sealed. The provider/timer review is complete: v5 and completed v2 timers are `inactive/disabled`, v5 collector status is `archived`, and a four-day post-window audit found zero new invocations. The retained v5 tree is 13 snapshots / 13 Parquets with zero conflicts; v2 `COMPLETE`, ledger, deployment identity and all recorded checksums remain unchanged. Dashboard renders the archive as a valid terminal state with no retry or operations issue. Independent Protocol v6 remains `blocked_provider_qualification` on the official 12-row grid, with historical development closed.
   The human-reviewed `freqai_linear_v1 / linear-mom-train20240105` decision is now `demote @ paper_simulated` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. Its old testnet continuity evidence is archived and cannot authorize a restart. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
@@ -13,6 +13,7 @@
   Protocol v14 was pre-registered before opening a new Coin Metrics request, but the Community API returned HTTP 403 before metric rows because `CapRealUSD` is not publicly entitled. Community-scoped catalog metadata also excludes `CapRealUSD`, `NVTAdj`, and `SOPR`; catalog-all had described product coverage rather than free-plan availability. V14 is closed at `blocked_provider_qualification` with zero factor values, signals, or PnL opened. It cannot reopen or retune v13 and does not touch v12 or any trading path.
   Protocol v15 was pre-registered before opening one credential-free FRED CSV body, but its only GET timed out after 30 seconds before response headers or rows. It is closed at `blocked_provider_qualification`; no rate value, factor, signal, or PnL was received. An official U.S. Treasury annual-CSV recovery requires a separate frozen provider identity. Development and confirmation remain unopened; v12-v14 and all trading paths are unchanged.
   Protocol v16 completed development using 791 unfilled joint observations. Real-yield relief and curve steepening are profitable but insufficient evidence. Treasury-yield volatility relief then passed the independently frozen 2023-2025 confirmation on 749 unfilled observations: base/stress +37.668725/+34.411149 USDT, 3/3 positive years, 19/36 positive months, 80 positions, and +19.510103 leave-best base PnL. Duplicate fills match with no blockers or no-kline event hits. Its separate ADR-007 review records `hold @ paper_shadow` under the identity-specific `SourcePolicy(dry_run=True, position_pct_multiplier=0.2, min_confidence_override=None)`. The prospective collector was frozen and pushed before access; Day 1 qualified on 401 unfilled D+2 Treasury observations through 2026-08-10 and 167 contiguous closed BTC hours, with zero revisions or blockers. The 92 baseline signals only seed state. Forward progress is 1/7 qualified days and 0/50 new signals. The operator-approved weekday 12:30 UTC collector is installed once in the user crontab; `paper_simulated` is not authorized, and the final future blind stays sealed.
+  Protocol v17 is pre-registered for three new Cboe underliers: VXEEM, VXEFA, and VXN five-observation relief. Body-free HEAD qualification passed. CSV bodies, factors, signals, and PnL remain unopened until this contract is committed and pushed. It does not reopen v7/v9, mutate v8/v16 paper shadow, or touch any trading path.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -60,6 +61,8 @@ Detailed history archived so far:
   relief passed development and independent confirmation, then entered an
   identity-specific ADR-007 `paper_shadow` hold; prospective collection is the
   next permitted implementation step.
+- `docs/progress/phase-2-research-protocol-v17.md` — pre-registered Cboe
+  VXEEM/VXEFA/VXN geographic and style volatility relief; CSV bodies unopened.
 - `docs/progress/phase-3-testnet-canary-evidence.md` — archived Phase 3 testnet canary evidence ledger.
 - `docs/progress/phase-3-testnet-continuity-plan.md` — archived 14-day testnet continuity procedure and review command.
 - `docs/progress/phase-5-dashboard-history.md` — completed read-only dashboard, AgentAdvice input, passive Phase 6 gate, and dashboard hardening history.
@@ -208,6 +211,7 @@ Immediate focus:
 11. Preserve v14's provider failure. Do not retry the exact request, delete the denied metric, load a paid credential, or substitute series under the same identity; its development and confirmation remain unopened.
 12. Preserve v15's timeout result without retrying FRED. Any official Treasury-direct recovery must use a new frozen data contract before annual CSV values are opened.
 13. Preserve the confirmed v16 Treasury-yield volatility identity unchanged at its reviewed `paper_shadow` policy. Its historical entry bundle and 92 collector baseline signals are state-seeding evidence only. Continue the installed weekday 12:30 UTC collector and inspect any fail-closed attempt before relying on later days. Do not disable dry-run, count baseline rows toward the forward gate, start testnet, or open the future blind.
+14. Commit and push Protocol v17 before opening any VXEEM, VXEFA, or VXN CSV body. Do not retune the five-observation rule, substitute VIX/OVX/GVZ, or open confirmation or the future blind.
 
 ## Next Steps
 
@@ -229,6 +233,7 @@ Immediate focus:
 15. Any future alpha batch must use genuinely independent evidence and a new protocol frozen before data access; it may not reuse Protocol v7 to tune around its observed results.
 16. Keep Protocol v13 confirmation sealed. Any MVRV follow-up must preserve the below-one identity and use prospectively collected immutable evidence rather than a threshold search on opened history.
 17. For v16 Treasury-volatility relief, keep the reviewed policy at `dry_run=True`, multiplier `0.2`. Day 1 is qualified at 1/7 days and 0/50 signals. Continue the installed weekday 12:30 UTC collector until the OR-gate is reached; crossing it creates review eligibility rather than automatic `paper_simulated` authorization.
+18. After the v17 pre-registration commit is on `origin/main`, fetch each Cboe body once. Schema mismatch fails closed. Development PnL may open only after qualification and a committed collector/signal path.
 
 ## Blocked / Deferred
 
@@ -263,6 +268,14 @@ Immediate focus:
 - No edits to `freqtrade/` or `nautilus_trader/` unless explicitly requested.
 
 ## Latest Verification
+
+On 2026-08-13, after Protocol v17 pre-registration:
+
+- VXEEM, VXEFA, and VXN five-observation relief are locked with new source/model
+  fingerprints. Body-free HEAD requests returned HTTP 200 `text/csv`.
+- No CSV body, factor value, signal, or PnL was opened. v7/v9 remain closed;
+  v8 and v16 paper-shadow collectors and policies are unchanged.
+- Synthetic contract, snapshot, and signal tests cover the frozen identities.
 
 On 2026-08-12, after Protocol v16 first paper-shadow collection:
 
