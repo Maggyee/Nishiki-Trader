@@ -1,0 +1,64 @@
+{
+  "schema_version": "research.v31.provider_qualification.v1",
+  "classification": "provider_partially_qualified",
+  "protocol_sha256": "sha256:c6620b9943e97b6b2b6f115ed6290f11db94f301399400827bd5d52651638bbc",
+  "provider_contract_sha256": "sha256:f7af02de171710e8021a067b6c378b2821e24b670eefbf9dbbb64b922592d2e3",
+  "pre_data_commit": "8f22da9",
+  "qualified_candidates": [
+    "long_treasury_etf_vol_relief"
+  ],
+  "rejected_candidates": {
+    "silver_vol_relief": {
+      "reason": "development_rows_533_below_locked_minimum_700",
+      "request_openings": 1,
+      "retry_allowed": false
+    },
+    "energy_sector_vol_relief": {
+      "reason": "development_rows_533_below_locked_minimum_700",
+      "request_openings": 1,
+      "retry_allowed": false
+    }
+  },
+  "qualified_series": {
+    "vxtlt": {
+      "snapshot_path": "data/research-v31/raw/vxtlt-20260813T143438Z-5944a52b8163.json",
+      "snapshot_sha256": "sha256:5944a52b8163a3cefc2aad00027926ab135c1bdbf69fed2270be42e819ce917e",
+      "factor_path": "data/research-v31/factors/vxtlt.csv",
+      "factor_sha256": "sha256:dd5be05c4ed1b4caa20e7225782cc99198c8b9a82e418e2f5c5a14c68c2e52f1",
+      "factor_row_count": 796,
+      "development_row_count": 755,
+      "warmup_row_count": 41,
+      "development_first_date": "2020-01-02",
+      "development_last_date": "2022-12-30",
+      "maximum_calendar_gap_days": 4,
+      "schema": "scalar",
+      "index": "VXTLT"
+    }
+  },
+  "rejected_series": {
+    "vxslv": {
+      "qualified": false,
+      "snapshot_written": false,
+      "failure": "reserve_coverage",
+      "development_row_count": 533,
+      "minimum_development_observations": 700
+    },
+    "vxxle": {
+      "qualified": false,
+      "snapshot_written": false,
+      "failure": "reserve_coverage",
+      "development_row_count": 533,
+      "minimum_development_observations": 700
+    }
+  },
+  "historical_vintage_claim": false,
+  "boundaries": {
+    "signals_generated": false,
+    "pnl_opened": false,
+    "confirmation_opened": false,
+    "confirmation_values_used": false,
+    "source_policy_mutated": false,
+    "trading_touched": false,
+    "future_blind_opened": false
+  }
+}

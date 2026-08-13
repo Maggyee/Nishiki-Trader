@@ -1,6 +1,7 @@
 # Phase 2 Research Protocol v31
 
-- **Status**: pre-registered; no historical CSV body, factor, signal, or PnL opened.
+- **Status**: pre-registered; VXTLT provider-qualified; VXSLV and VXXLE
+  coverage-rejected; no signal or PnL opened.
 - **Mechanisms**: Cboe silver ETF, energy-sector ETF, and long-duration Treasury
   ETF 30-day implied-vol relief (VXSLV, VXXLE, VXTLT).
 - **Development**: 2020-01-01 through 2022-12-31; unopened.
@@ -44,3 +45,12 @@ future blind stay untouched.
 Unchanged development gates. A development passer may only enter a separately
 frozen 2023-2025 confirmation contract. A confirmed passer may only become
 eligible for a separate ADR-007 `paper_shadow` review.
+
+## Provider qualification
+
+From freeze `8f22da9`, VXTLT qualified with 755 unfilled 2020-2022 observations,
+41 warmup rows, scalar CLOSE schema, and a four-day maximum gap. Development
+factors stop at 2022-12-30. VXSLV and VXXLE failed closed after one GET each:
+533 development observations versus 700 required, with no snapshot written.
+Machine hashes live in `docs/progress/phase-2-research-v31-provider-qualification.json`.
+Signals and PnL remain unopened. Do not retry the rejected kinds.
