@@ -284,9 +284,8 @@ On 2026-08-13, after Protocol v17 provider qualification and v18 pre-registratio
 - v17 was pushed at `c0a9629` before its one VXEEM GET. The header was
   `DATE,OPEN,HIGH,LOW,CLOSE` rather than `DATE,VXEEM`. Value-row audit did not
   run; VXEFA and VXN were not fetched.
-- v17 is `blocked_provider_qualification`. v18 locks the same economic rules
-  to OHLC CLOSE under new identities. Its CSV bodies remain unopened until the
-  recovery contract is pushed.
+- v17 is `blocked_provider_qualification`. The later v18 OHLC recovery is a
+  separate identity and does not rewrite v17.
 - v8/v16 paper shadow, SourcePolicy, testnet, and live paths are unchanged.
 
 On 2026-08-12, after Protocol v16 first paper-shadow collection:
