@@ -38,8 +38,8 @@ Current Phase 3 progress files:
   RVX and VXFXI were rejected; Dow-volatility relief passed development but
   failed independent confirmation at 17/36 positive months, closing v19.
 - `phase-2-research-protocol-v20.md` locks three OFR financial-stress relief
-  mechanisms with a D+5 availability lag; all three provider series qualify
-  on 762 common unfilled development observations with PnL still sealed.
+  mechanisms with a D+5 availability lag; total/credit stress relief are
+  rejected and safe-asset-stress relief passes development for confirmation.
 
 - `phase-3-testnet-canary-evidence.md` records the testnet session ledger and
   bundle evidence summary.

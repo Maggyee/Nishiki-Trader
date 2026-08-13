@@ -1,0 +1,160 @@
+{
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_confirmation": false,
+    "opens_future_blind": false,
+    "resumes_testnet": false,
+    "touches_live_path": false
+  },
+  "candidates": [
+    {
+      "base_net_pnl": -10.913103756,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:699ce813405a4d89146f745ea36ecd204b4a6febc23f6f3f3829f45e063ec6cb",
+          "manifest_sha256": "sha256:ae6d178b4704033cd14d4cddad4e0caeaba5cdfa9d43be4103f1aae1ef78cf54",
+          "path": "data/research-v20/backtests/20260813-035540Z-96d79215"
+        },
+        {
+          "fills_sha256": "sha256:699ce813405a4d89146f745ea36ecd204b4a6febc23f6f3f3829f45e063ec6cb",
+          "manifest_sha256": "sha256:777a30c14e7bda5002c31ad4b457ac0a4897d6fc63e0936cd18d72e72a993aec",
+          "path": "data/research-v20/backtests/20260813-035544Z-034c4926"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "reject_candidate",
+      "closed_positions": 67,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [
+        "base_net_pnl_not_positive",
+        "stress_net_pnl_not_positive",
+        "positive_months_17_below_18",
+        "leave_best_base_net_pnl_not_positive"
+      ],
+      "gross_net_pnl": -6.09135,
+      "key": "systemic_stress_relief",
+      "leave_best_base_net_pnl": -21.915806508,
+      "model_version": "ofr-fsi-total-diff5-negative-lag5d-v1",
+      "performance_pass": false,
+      "positive_months": 17,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 134,
+      "signal_store_sha256": "sha256:34defc8b9379617e163479ce71c983891745e1b04248286b5babb0a269f074cc",
+      "source": "rule_ofr_systemic_stress_relief_v1",
+      "stress_net_pnl": -12.118542195,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 10.059261484,
+        "2021": 3.232601561999996,
+        "2022": -24.204966802000005
+      }
+    },
+    {
+      "base_net_pnl": -33.28010002,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:69bbf8695890085a708c77e33f96a58dbd1e8fb7a58248ac1a0c88484ae7d322",
+          "manifest_sha256": "sha256:bca2472e210d5b2d57aa3c56cdc891e91df4ec20df8bde676479d5d74a9454c0",
+          "path": "data/research-v20/backtests/20260813-035548Z-8f5846b7"
+        },
+        {
+          "fills_sha256": "sha256:69bbf8695890085a708c77e33f96a58dbd1e8fb7a58248ac1a0c88484ae7d322",
+          "manifest_sha256": "sha256:e38bfbf92b1ffb70659c0d4a83ab38bc9395690112d697176185f77023638215",
+          "path": "data/research-v20/backtests/20260813-035552Z-e4521944"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "reject_candidate",
+      "closed_positions": 60,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [
+        "base_net_pnl_not_positive",
+        "stress_net_pnl_not_positive",
+        "positive_years_1_below_2",
+        "positive_months_13_below_18",
+        "leave_best_base_net_pnl_not_positive"
+      ],
+      "gross_net_pnl": -28.86223,
+      "key": "credit_stress_relief",
+      "leave_best_base_net_pnl": -39.96862600400001,
+      "model_version": "ofr-fsi-credit-diff5-negative-lag5d-v1",
+      "performance_pass": false,
+      "positive_months": 13,
+      "positive_years": 1,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 119,
+      "signal_store_sha256": "sha256:4952a92ef4fb6d6dc2efccd0bb332cbcab0500d3f9bb6cb29e82570c09f0fee6",
+      "source": "rule_ofr_credit_stress_relief_v1",
+      "stress_net_pnl": -34.384567525,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 12.508265332,
+        "2021": -19.230918470000002,
+        "2022": -26.557446882000008
+      }
+    },
+    {
+      "base_net_pnl": 11.916318428,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:e19509d4433a9c70804c45144f319357071fca99d5ed2fb7a56f95a716371aef",
+          "manifest_sha256": "sha256:27083f16a5baf408ceedaa7051f92ca7b2de62f3c3717c13ca089391db70900d",
+          "path": "data/research-v20/backtests/20260813-035556Z-21027ef5"
+        },
+        {
+          "fills_sha256": "sha256:e19509d4433a9c70804c45144f319357071fca99d5ed2fb7a56f95a716371aef",
+          "manifest_sha256": "sha256:ffe4c9cea622b0b31d745d34a98af84b9e607848e6e798355abc3acc25ce881f",
+          "path": "data/research-v20/backtests/20260813-035600Z-f8f5c707"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "development_pass_confirmation_open_eligible",
+      "closed_positions": 76,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [],
+      "gross_net_pnl": 17.108510000000003,
+      "key": "safe_asset_stress_relief",
+      "leave_best_base_net_pnl": 0.4828732639999984,
+      "model_version": "ofr-fsi-safe-assets-diff5-negative-lag5d-v1",
+      "performance_pass": true,
+      "positive_months": 20,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 152,
+      "signal_store_sha256": "sha256:7d7851d898ca1d8ec2817ac6084cf9eb3f2d4734814d1f0a7b35a8018e474964",
+      "source": "rule_ofr_safe_asset_stress_relief_v1",
+      "stress_net_pnl": 10.618270535,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 6.69114918,
+        "2021": 26.149263742,
+        "2022": -20.924094494000002
+      }
+    }
+  ],
+  "confirmation_holdout_status": "sealed_pending_committed_development_review",
+  "confirmation_open_eligible_candidates": [
+    "safe_asset_stress_relief"
+  ],
+  "development_passer_count": 1,
+  "future_blind_status": "sealed_unopened",
+  "protocol_sha256": "sha256:4103958eb9a088b9b8eb0157cc72cc3de3564b5f80a601e1596978a9b589dda8",
+  "provider_qualification": {
+    "classification": "provider_qualified",
+    "development_row_count": 762,
+    "snapshot_sha256": "sha256:202240619bc436ebe8bdd6eab5217aa9062a00854d8c6c6b2fae1d4503349a0b"
+  },
+  "recommendation": "commit_development_results_before_confirmation_open",
+  "schema_version": "research.v20.development_results.v1"
+}

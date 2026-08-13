@@ -1,7 +1,7 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-08-13 (Protocol v20 OFR provider qualified; development PnL sealed)
+- **Last updated**: 2026-08-13 (Protocol v20 safe-asset stress relief passed development)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
 - **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry and Protocol v2-v5 research identities are frozen. Protocol v5 curve carry and BVOL relief are rejected and the 2026-08..12 blind remains sealed. The provider/timer review is complete: v5 and completed v2 timers are `inactive/disabled`, v5 collector status is `archived`, and a four-day post-window audit found zero new invocations. The retained v5 tree is 13 snapshots / 13 Parquets with zero conflicts; v2 `COMPLETE`, ledger, deployment identity and all recorded checksums remain unchanged. Dashboard renders the archive as a valid terminal state with no retry or operations issue. Independent Protocol v6 remains `blocked_provider_qualification` on the official 12-row grid, with historical development closed.
   The human-reviewed `freqai_linear_v1 / linear-mom-train20240105` decision is now `demote @ paper_simulated` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. Its old testnet continuity evidence is archived and cannot authorize a restart. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
@@ -15,7 +15,7 @@
   Protocol v16 completed development using 791 unfilled joint observations. Real-yield relief and curve steepening are profitable but insufficient evidence. Treasury-yield volatility relief then passed the independently frozen 2023-2025 confirmation on 749 unfilled observations: base/stress +37.668725/+34.411149 USDT, 3/3 positive years, 19/36 positive months, 80 positions, and +19.510103 leave-best base PnL. Duplicate fills match with no blockers or no-kline event hits. Its separate ADR-007 review records `hold @ paper_shadow` under the identity-specific `SourcePolicy(dry_run=True, position_pct_multiplier=0.2, min_confidence_override=None)`. The prospective collector was frozen and pushed before access; Day 1 qualified on 401 unfilled D+2 Treasury observations through 2026-08-10 and 167 contiguous closed BTC hours, with zero revisions or blockers. The 92 baseline signals only seed state. Forward progress is 1/7 qualified days and 0/50 new signals. The operator-approved weekday 12:30 UTC collector is installed once in the user crontab; `paper_simulated` is not authorized, and the final future blind stays sealed.
   Protocol v17 is closed at `blocked_provider_qualification`. Its one allowed VXEEM GET, opened from `c0a9629`, returned `DATE,OPEN,HIGH,LOW,CLOSE` rather than the frozen `DATE,VXEEM`. No close value, signal, or PnL was audited; VXEFA and VXN were not fetched. Protocol v18 recovered the same three five-observation rules under new OHLC identities. Development rejected VXEEM/VXEFA and advanced only VXN. The unchanged VXN rule passed independent 2023-2025 confirmation on 752 unfilled observations: base/stress +60.207790/+57.571400 USDT, 3/3 positive years, 20/36 positive months, 72 positions, and +35.304076 leave-best base PnL. Its separate ADR-007 review now records `hold @ paper_shadow` under `SourcePolicy(dry_run=True, position_pct_multiplier=0.2, min_confidence_override=None)`. The clean entry bundle accepts 129/129 signals and emits zero orders/fills or blockers. The fail-closed VXN/BTC collector was frozen and pushed at `e90799e` before access. Day 1 qualified on 4256 official VXN rows through 2026-08-12 (age one calendar day) and 167 contiguous closed BTC hours, with zero revisions or blockers. The 41 baseline signals only seed state. Forward progress is 1/7 qualified days and 0/50 new signals. The operator-approved weekday 03:30 UTC collector is installed once in the user crontab; `paper_simulated` is not authorized, and the final future blind stays sealed.
   Protocol v19 is complete with zero survivors. RVX is development-rejected and VXFXI provider-rejected. VXD passed development, then failed the independently frozen 2023-2025 confirmation solely on monthly breadth: gross/base/stress +71.365380/+57.492785/+54.024636 USDT, 3/3 positive years, 17/36 positive months versus 18 required, 94 positions, and +34.350455 leave-best base PnL. Duplicate fills match with no shorts, blockers, or verified no-kline event hits. VXD is rejected and cannot enter ADR-007 or `paper_shadow`; the future blind stays sealed.
-  Protocol v20's single official OFR JSON GET qualified all three required series. OFRFSI, Credit, and Flight_to_Safety each contain 6,733 rows with identical timestamps; the 2020-2022 reserve has 762 unfilled common observations, a four-day maximum gap, and 41 warmup rows. The immutable snapshot is `sha256:20224061…3349a0b`. Factor values, signals, and PnL remain sealed until the qualification result is committed. D+5 current-history-without-vintage-claim semantics, confirmation, paper shadow, SourcePolicy, testnet/live, and the future blind remain unchanged.
+  Protocol v20 completed six clean development replays from 762 common unfilled OFR observations under D+5 current-history semantics. Total financial-stress and credit-stress relief are negative after costs and rejected. Safe-asset-stress relief passes every frozen gate: gross/base/stress +17.108510/+11.916318/+10.618271 USDT, 2/3 positive years, 20/36 positive months, 76 positions, and +0.482873 leave-best base PnL. Duplicate fills match with no shorts, blockers, or verified no-kline hits. Only the unchanged safe-asset identity may enter a separately frozen 2023-2025 confirmation; confirmation, policy, paper shadow, testnet/live, and the future blind remain closed.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -219,7 +219,7 @@ Immediate focus:
 13. Preserve the confirmed v16 Treasury-yield volatility identity unchanged at its reviewed `paper_shadow` policy. Its historical entry bundle and 92 collector baseline signals are state-seeding evidence only. Continue the installed weekday 12:30 UTC collector and inspect any fail-closed attempt before relying on later days. Do not disable dry-run, count baseline rows toward the forward gate, start testnet, or open the future blind.
 14. Preserve v17's schema mismatch, the v18 VXEEM/VXEFA rejects, and confirmed VXN at its reviewed `paper_shadow` policy. Continue the installed weekday 03:30 UTC collector. Do not retune, disable dry-run, count baseline rows toward the forward gate, enter `paper_simulated`, or open the future blind.
 15. Preserve all three v19 rejects. Do not lower VXD's 18-month breadth gate, retune/sign-flip/ensemble it, retry VXFXI, reopen RVX, enter ADR-007, or open the future blind.
-16. Preserve the single v20 OFR snapshot and its no-vintage limitation. Do not refetch, revise, fill, retune, or open development factors/PnL until provider qualification is on `origin/main`.
+16. Preserve the v20 development result and no-vintage limitation. Reject total/credit stress relief; do not refetch, fill, retune, sign-flip, or ensemble. Only unchanged safe-asset stress relief may enter a separately frozen confirmation after this review is on `origin/main`.
 
 ## Next Steps
 
@@ -243,7 +243,7 @@ Immediate focus:
 17. For v16 Treasury-volatility relief, keep the reviewed policy at `dry_run=True`, multiplier `0.2`. Day 1 is qualified at 1/7 days and 0/50 signals. Continue the installed weekday 12:30 UTC collector until the OR-gate is reached; crossing it creates review eligibility rather than automatic `paper_simulated` authorization.
 18. For v18 VXN relief, keep `dry_run=True` and multiplier `0.2`. Day 1 is qualified at 1/7 days and 0/50 signals. Continue the installed weekday 03:30 UTC collector until the OR-gate is reached; crossing it creates review eligibility rather than automatic `paper_simulated` authorization.
 19. Preserve the committed v19 confirmation rejection without retry or retuning.
-20. Commit and push the v20 provider qualification, then export the D+5 development factor, generate all three unchanged identities, and run exactly two clean Nautilus replays per candidate before applying frozen gates.
+20. Commit and push the v20 development review, then freeze a safe-asset-only 2023-2025 confirmation contract before exporting any holdout factor value or PnL.
 
 ## Blocked / Deferred
 
@@ -297,6 +297,16 @@ On 2026-08-13, after Protocol v20 provider qualification:
   762 unfilled rows, a four-day maximum gap, and 41 warmup rows.
 - No factor value, signal, return, PnL, confirmation, policy, trading path, or
   future blind was opened during qualification.
+
+On 2026-08-13, after Protocol v20 development:
+
+- Six bundles from clean commit `b875e6c` reproduce pairwise with identical
+  fills, zero shorts, blockers, or verified no-kline event hits.
+- Total/credit stress relief base PnL is -10.913104/-33.280100 USDT; both are
+  rejected.
+- Safe-asset-stress relief passes at base/stress +11.916318/+10.618271 USDT,
+  2/3 years, 20/36 months, 76 positions, and +0.482873 leave-best base PnL.
+  Confirmation remains sealed pending a separate contract.
 
 On 2026-08-13, after Protocol v19 development:
 

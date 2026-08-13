@@ -68,3 +68,15 @@ No factor value, signal, or PnL was reported. Development may open only after
 `docs/progress/phase-2-research-v20-provider-qualification.json` is committed
 and pushed. The no-vintage claim, D+5 lag, confirmation seal, and future blind
 remain unchanged.
+
+## Development outcome
+
+Six clean replays from `b875e6c` reproduce pairwise. Total financial-stress
+and credit-stress relief are negative after costs and rejected. Safe-asset-
+stress relief passes every frozen gate: gross/base/stress PnL is
++17.108510/+11.916318/+10.618271 USDT, 2/3 years and 20/36 months are positive,
+76 positions close, and leave-best base PnL is +0.482873 USDT.
+
+Only the unchanged safe-asset identity may enter a separately frozen
+2023-2025 confirmation. Its thin leave-best margin and -20.924094 USDT 2022
+base result make confirmation essential. No policy or trading stage changes.
