@@ -1,0 +1,207 @@
+"""SignalEvent generators for Protocol v18 Cboe geographic/style volatility."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import math
+import re
+from dataclasses import asdict, dataclass
+from pathlib import Path
+
+import pandas as pd
+
+from apps.bridge.signal_event import SignalEvent
+from apps.bridge.store import SignalStore
+from apps.ops.research_protocol_v18 import IDENTITIES, PARAMETERS
+from apps.strategies_freqtrade.research.freqai_linear_signals import _make_signal_id
+from apps.strategies_freqtrade.research.independent_mechanism_signals import load_point_in_time_csv
+
+PROTOCOL_VERSION = "research.protocol.v18"
+_SHA256_RE = re.compile(r"sha256:[0-9a-f]{64}")
+STRATEGY_IDENTITIES = {
+    "em_vol_relief": (*IDENTITIES["em_vol_relief"], "VXEEM"),
+    "eafe_vol_relief": (*IDENTITIES["eafe_vol_relief"], "VXEFA"),
+    "nasdaq_vol_relief": (*IDENTITIES["nasdaq_vol_relief"], "VXN"),
+}
+
+
+@dataclass(frozen=True)
+class VolatilityReliefParams:
+    change_observations: int = 5
+    maximum_change: float = 0.0
+    ttl_seconds: int = 86_400
+    confidence: float = 0.75
+
+    def __post_init__(self) -> None:
+        if asdict(self) != PARAMETERS:
+            raise ValueError("Protocol v18 volatility-relief parameters cannot be tuned")
+
+
+def _feature_hash(strategy: str, params: VolatilityReliefParams) -> str:
+    payload = {
+        "protocol": PROTOCOL_VERSION,
+        "strategy": strategy,
+        "params": asdict(params),
+        "fields": ["vol_close"],
+    }
+    digest = hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    return f"sha256:{digest}"
+
+
+def audit_session_point_in_time_frame(frame: pd.DataFrame) -> pd.DataFrame:
+    required = {"available_at", "vintage_id", "snapshot_sha256", "vol_close"}
+    missing = sorted(required - set(frame.columns))
+    if missing:
+        raise ValueError(f"point-in-time frame is missing columns: {missing}")
+    if not isinstance(frame.index, pd.DatetimeIndex):
+        raise ValueError("point-in-time frame must use a DatetimeIndex")
+    if frame.index.tz is None or str(frame.index.tz) != "UTC":
+        raise ValueError("point-in-time timestamps must be UTC")
+    if frame.empty:
+        raise ValueError("point-in-time frame must not be empty")
+    if frame.index.has_duplicates or not frame.index.is_monotonic_increasing:
+        raise ValueError("point-in-time timestamps must be unique and strictly increasing")
+    available = pd.to_datetime(frame["available_at"], utc=True, errors="raise")
+    if available.isna().any() or (available.array.asi8 > frame.index.asi8).any():
+        raise ValueError("available_at after ts_event would introduce lookahead")
+    vintages = frame["vintage_id"].astype(str).str.strip()
+    if frame["vintage_id"].isna().any() or (vintages == "").any():
+        raise ValueError("every observation requires a non-empty vintage_id")
+    hashes = frame["snapshot_sha256"].astype(str)
+    if not hashes.map(lambda value: bool(_SHA256_RE.fullmatch(value))).all():
+        raise ValueError("every observation requires sha256:<64 lowercase hex>")
+    values = pd.to_numeric(frame["vol_close"], errors="raise").astype("float64")
+    if not values.map(math.isfinite).all():
+        raise ValueError("vol_close contains NaN or Infinity")
+    audited = frame.copy()
+    audited["available_at"] = available
+    audited["vol_close"] = values
+    return audited
+
+
+def generate_geographic_vol_signals(
+    factors: pd.DataFrame,
+    *,
+    strategy: str,
+    symbol: str = "BTCUSDT",
+    venue: str = "BINANCE",
+    start_date: str | None = None,
+    end_date: str | None = None,
+    params: VolatilityReliefParams | None = None,
+) -> list[SignalEvent]:
+    if strategy not in STRATEGY_IDENTITIES:
+        raise ValueError(f"unsupported Protocol v18 strategy {strategy!r}")
+    cfg = params or VolatilityReliefParams()
+    frame = audit_session_point_in_time_frame(factors)
+    if (frame["vol_close"] <= 0.0).any():
+        raise ValueError("volatility index closes must be strictly positive")
+    change = frame["vol_close"].pct_change(cfg.change_observations)
+    states = pd.Series(pd.NA, index=frame.index, dtype="boolean")
+    ready = change.notna()
+    states.loc[ready] = change.loc[ready] < cfg.maximum_change
+    source, model_version, index_name = STRATEGY_IDENTITIES[strategy]
+    feature_hash = _feature_hash(strategy, cfg)
+    start = pd.Timestamp(start_date, tz="UTC") if start_date else None
+    end = pd.Timestamp(end_date, tz="UTC") + pd.Timedelta(days=1) if end_date else None
+    current_long = False
+    events: list[SignalEvent] = []
+    for timestamp, desired in states.items():
+        if pd.isna(desired):
+            continue
+        if start is not None and timestamp < start:
+            continue
+        if end is not None and timestamp >= end:
+            break
+        desired_long = bool(desired)
+        if desired_long == current_long:
+            continue
+        row = frame.loc[timestamp]
+        change_value = float(change.loc[timestamp])
+        side = "buy" if desired_long else "flat"
+        ts_event = int(timestamp.value)
+        score = math.tanh(max(0.0, -change_value)) if desired_long else 0.0
+        events.append(
+            SignalEvent.model_validate(
+                {
+                    "schema_version": "signal.v1",
+                    "signal_id": _make_signal_id(
+                        source=source,
+                        model_version=model_version,
+                        symbol=symbol,
+                        venue=venue,
+                        ts_event_ns=ts_event,
+                        side=side,
+                    ),
+                    "symbol": symbol,
+                    "venue": venue,
+                    "ts_event": ts_event,
+                    "horizon": "1d",
+                    "side": side,
+                    "score": score,
+                    "confidence": cfg.confidence,
+                    "source": source,
+                    "model_version": model_version,
+                    "ttl_seconds": cfg.ttl_seconds,
+                    "features_hash": feature_hash,
+                    "metadata": {
+                        "protocol_version": PROTOCOL_VERSION,
+                        "strategy": strategy,
+                        "index": index_name,
+                        "available_at": pd.Timestamp(row["available_at"]).isoformat(),
+                        "vintage_id": str(row["vintage_id"]),
+                        "snapshot_sha256": str(row["snapshot_sha256"]),
+                        "point_in_time": True,
+                        "trigger": (
+                            f"{index_name.lower()}_5obs_negative"
+                            if desired_long
+                            else f"{index_name.lower()}_not_relieving"
+                        ),
+                        "inputs": {
+                            "vol_close": round(float(row["vol_close"]), 12),
+                            "change_5obs": round(change_value, 12),
+                        },
+                        **asdict(cfg),
+                    },
+                }
+            )
+        )
+        current_long = desired_long
+    return events
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--strategy", choices=sorted(STRATEGY_IDENTITIES), required=True)
+    parser.add_argument("--input-csv", type=Path, required=True)
+    parser.add_argument("--start-date", default="2020-01-01")
+    parser.add_argument("--end-date", default="2022-12-31")
+    parser.add_argument("--symbol", default="BTCUSDT")
+    parser.add_argument("--venue", default="BINANCE")
+    parser.add_argument("--signal-store-path", type=Path)
+    parser.add_argument("--dry-run", action="store_true")
+    args = parser.parse_args(argv)
+    if not args.dry_run and args.signal_store_path is None:
+        raise SystemExit("--signal-store-path is required unless --dry-run is set")
+    events = generate_geographic_vol_signals(
+        load_point_in_time_csv(args.input_csv),
+        strategy=args.strategy,
+        symbol=args.symbol,
+        venue=args.venue,
+        start_date=args.start_date,
+        end_date=args.end_date,
+    )
+    source, model_version, _ = STRATEGY_IDENTITIES[args.strategy]
+    print(f"generated {len(events)} signals for {source} / {model_version}")
+    if args.dry_run:
+        for event in events[:10]:
+            print(f"  {event.signal_id} side={event.side}")
+        return 0
+    written, duplicates = SignalStore(args.signal_store_path).write_many(events)
+    print(f"wrote {written}, skipped {duplicates} duplicates into {args.signal_store_path}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

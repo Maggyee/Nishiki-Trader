@@ -194,3 +194,11 @@ download:
 uv run python -m apps.ops.research_protocol_v17
 uv run python -m apps.ops.research_v17_snapshot --kind vxeem --dry-run
 ```
+
+Research Protocol v18 recovers the same underliers with locked OHLC CLOSE
+columns. Validate it before any further download:
+
+```bash
+uv run python -m apps.ops.research_protocol_v18
+uv run python -m apps.ops.research_v18_snapshot --kind vxeem --dry-run
+```

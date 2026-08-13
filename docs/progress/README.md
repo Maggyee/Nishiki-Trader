@@ -27,7 +27,10 @@ Current Phase 3 progress files:
   hashrate and Stooq DXY/VIX qualification endpoints before response-body
   access.
 - `phase-2-research-protocol-v17.md` and its JSON/provider contracts lock
-  VXEEM, VXEFA, and VXN five-observation relief before any CSV body is opened.
+  VXEEM, VXEFA, and VXN five-observation relief; provider qualification then
+  failed closed on the VXEEM OHLC header.
+- `phase-2-research-protocol-v18.md` recovers those rules under new OHLC
+  identities before any further Cboe body access.
 
 - `phase-3-testnet-canary-evidence.md` records the testnet session ledger and
   bundle evidence summary.
