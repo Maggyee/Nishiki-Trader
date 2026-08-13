@@ -3,7 +3,7 @@
 - **Frozen**: 2026-08-13 before opening the OFR FSI JSON or CSV body.
 - **Machine contract**: `docs/progress/phase-2-research-protocol-v20.json`
 - **Provider contract**: `docs/progress/phase-2-research-v20-data-sources.json`
-- **Status**: pre-registered; OFR data body sealed.
+- **Status**: provider qualified; development PnL sealed pending committed qualification.
 - **Trading effect**: none.
 
 ## Independent mechanism
@@ -55,3 +55,16 @@ return, signal, or PnL was opened. The contract must be committed and pushed
 before the single allowed GET. Qualification reports only schema, series
 names, counts, dates, gaps, and hashes. Confirmation and the shared future
 blind stay sealed.
+
+## Provider outcome
+
+The single official JSON body was opened from pushed freeze `5d3a899`. All
+three required series contain 6,733 rows and share identical timestamps. The
+development reserve qualifies with 762 unfilled observations from 2020-01-02
+through 2022-12-30, a four-day maximum gap, and 41 warmup rows. The immutable
+snapshot is `sha256:20224061…3349a0b`.
+
+No factor value, signal, or PnL was reported. Development may open only after
+`docs/progress/phase-2-research-v20-provider-qualification.json` is committed
+and pushed. The no-vintage claim, D+5 lag, confirmation seal, and future blind
+remain unchanged.

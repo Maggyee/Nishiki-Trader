@@ -14,6 +14,41 @@ from apps.ops.research_v13_review import (
 from apps.ops.research_v13_review import build_standard_review
 
 SCHEMA_VERSION = "research.v20.development_results.v1"
+PROVIDER_QUALIFICATION = Path(
+    "docs/progress/phase-2-research-v20-provider-qualification.json"
+)
+
+
+def load_provider_qualification(
+    path: Path = PROVIDER_QUALIFICATION,
+) -> dict[str, Any]:
+    payload = json.loads(path.read_text())
+    if payload.get("schema_version") != "research.v20.provider_qualification.v1":
+        raise ValueError("Protocol v20 provider qualification schema drifted")
+    if payload.get("protocol_sha256") != load_and_validate()["protocol_sha256"]:
+        raise ValueError("Protocol v20 provider qualification fingerprint drifted")
+    if payload.get("classification") != "provider_qualified":
+        raise ValueError("Protocol v20 provider qualification status drifted")
+    snapshot = payload.get("snapshot", {})
+    if snapshot.get("snapshot_sha256") != (
+        "sha256:202240619bc436ebe8bdd6eab5217aa9062a00854d8c6c6b2fae1d4503349a0b"
+    ):
+        raise ValueError("Protocol v20 provider snapshot drifted")
+    audit = payload.get("audit", {})
+    if (
+        audit.get("development_row_count") != 762
+        or audit.get("common_timestamps") is not True
+        or audit.get("forward_fill_used") is not False
+    ):
+        raise ValueError("Protocol v20 provider coverage evidence drifted")
+    boundaries = payload.get("boundaries", {})
+    if (
+        boundaries.get("factor_values_opened") is not False
+        or boundaries.get("signals_generated") is not False
+        or boundaries.get("pnl_opened") is not False
+    ):
+        raise ValueError("Protocol v20 provider qualification crossed boundaries")
+    return payload
 
 
 def build_review(
@@ -23,7 +58,8 @@ def build_review(
     gap_detail: dict[str, Any],
     gap_detail_bytes: bytes,
 ) -> dict[str, Any]:
-    return build_standard_review(
+    qualification = load_provider_qualification()
+    result = build_standard_review(
         candidate_specs,
         identities=IDENTITIES,
         load_protocol=load_and_validate,
@@ -33,6 +69,14 @@ def build_review(
         gap_detail=gap_detail,
         gap_detail_bytes=gap_detail_bytes,
     )
+    result["provider_qualification"] = {
+        "classification": qualification["classification"],
+        "snapshot_sha256": qualification["snapshot"]["snapshot_sha256"],
+        "development_row_count": qualification["audit"][
+            "development_row_count"
+        ],
+    }
+    return result
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -1,0 +1,39 @@
+{
+  "schema_version": "research.v20.provider_qualification.v1",
+  "protocol_sha256": "sha256:4103958eb9a088b9b8eb0157cc72cc3de3564b5f80a601e1596978a9b589dda8",
+  "clean_commit_before_access": "5d3a899",
+  "request_openings": 1,
+  "classification": "provider_qualified",
+  "development_status": "eligible_after_this_result_is_committed",
+  "confirmation_status": "sealed_unopened",
+  "future_blind_status": "sealed_unopened",
+  "snapshot": {
+    "path": "data/research-v20/raw/fsi-20260813T035301Z-202240619bc4.json",
+    "snapshot_sha256": "sha256:202240619bc436ebe8bdd6eab5217aa9062a00854d8c6c6b2fae1d4503349a0b",
+    "vintage_id": "ofr-fsi:2026-08-13T03:53:01.920622+00:00:202240619bc4",
+    "payload_sha256": "sha256:ba043ef857e9befa52b896d2984114bfa83fcb14b29ec90431fe6d72aad63b1e",
+    "provider_contract_sha256": "sha256:fc9e47547116a9985b3180a202691f20da88aa5bafba32534dd9d182c09f9c99"
+  },
+  "audit": {
+    "series_keys": ["OFRFSI", "Credit", "Flight_to_Safety"],
+    "series_names": {"OFRFSI": "FSI", "Credit": "Credit", "Flight_to_Safety": "Safe assets"},
+    "series_row_counts": {"OFRFSI": 6733, "Credit": 6733, "Flight_to_Safety": 6733},
+    "common_timestamps": true,
+    "development_row_count": 762,
+    "development_first_date": "2020-01-02",
+    "development_last_date": "2022-12-30",
+    "maximum_calendar_gap_days": 4,
+    "warmup_row_count": 41,
+    "forward_fill_used": false
+  },
+  "boundaries": {
+    "factor_values_opened": false,
+    "signals_generated": false,
+    "pnl_opened": false,
+    "confirmation_opened": false,
+    "future_blind_opened": false,
+    "credentials_loaded": false,
+    "source_policy_mutated": false,
+    "trading_touched": false
+  }
+}
