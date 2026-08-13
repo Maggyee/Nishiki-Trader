@@ -1,0 +1,97 @@
+{
+  "schema_version": "research.protocol.v25",
+  "status": "preregistered_before_defillama_tvl_body_access",
+  "created_at": "2026-08-13",
+  "objective": "Test three DefiLlama TVL-expansion mechanisms for BTCUSDT Spot without reopening Cboe volatility/option-surface identities, OFR stress, Wikipedia pageviews, Fear and Greed, Coin Metrics supply/network series, or FRED liquidity.",
+  "data_access_disclosure": {
+    "official_api_documentation_opened": true,
+    "historical_json_bodies_opened": false,
+    "development_factor_values_opened": false,
+    "confirmation_factor_values_opened": false,
+    "strategy_specific_pnl_opened": false
+  },
+  "research_windows": {
+    "warmup": {"start": "2019-11-01", "end": "2019-12-31"},
+    "development": {"start": "2020-01-01", "end": "2022-12-31", "strategy_specific_pnl_access_status": "unconsumed", "max_openings": 1},
+    "confirmation": {"start": "2023-01-01", "end": "2025-12-31", "strategy_specific_pnl_access_status": "sealed_until_development_pass", "max_openings": 1},
+    "future_blind": {"start": "2026-09-01", "end": "2027-01-31", "status": "sealed_unopened"}
+  },
+  "data_contract": {
+    "provider_contract": "docs/progress/phase-2-research-v25-data-sources.json",
+    "provider": "DefiLlama Free API",
+    "conservative_decision_lag_calendar_days": 2,
+    "historical_vintage_claim": false,
+    "missing_data_policy": "no interpolation, no forward fill, and hold the current state until the next official observation"
+  },
+  "candidates": [
+    {
+      "key": "all_chains_tvl_expansion",
+      "source": "rule_defillama_all_chains_tvl_expansion_v1",
+      "model_version": "defillama-all-chains-tvl-diff5-positive-lag2d-v1",
+      "kind": "all_chains",
+      "parameters": {"change_observations": 5, "direction": "positive", "threshold": 0.0, "publication_lag_calendar_days": 2, "ttl_seconds": 86400, "confidence": 0.75},
+      "rule": "buy iff all-chain DefiLlama TVL minus the value five official daily observations earlier is strictly positive; flat otherwise; begin flat and emit only on state change"
+    },
+    {
+      "key": "ethereum_tvl_expansion",
+      "source": "rule_defillama_ethereum_tvl_expansion_v1",
+      "model_version": "defillama-ethereum-tvl-diff5-positive-lag2d-v1",
+      "kind": "ethereum",
+      "parameters": {"change_observations": 5, "direction": "positive", "threshold": 0.0, "publication_lag_calendar_days": 2, "ttl_seconds": 86400, "confidence": 0.75},
+      "rule": "buy iff Ethereum-chain DefiLlama TVL minus the value five official daily observations earlier is strictly positive; flat otherwise; begin flat and emit only on state change"
+    },
+    {
+      "key": "bitcoin_tvl_expansion",
+      "source": "rule_defillama_bitcoin_tvl_expansion_v1",
+      "model_version": "defillama-bitcoin-tvl-diff5-positive-lag2d-v1",
+      "kind": "bitcoin",
+      "parameters": {"change_observations": 5, "direction": "positive", "threshold": 0.0, "publication_lag_calendar_days": 2, "ttl_seconds": 86400, "confidence": 0.75},
+      "rule": "buy iff Bitcoin-chain DefiLlama TVL minus the value five official daily observations earlier is strictly positive; flat otherwise; begin flat and emit only on state change"
+    }
+  ],
+  "execution": {
+    "instrument_id": "BTCUSDT.BINANCE",
+    "bar_type": "BTCUSDT.BINANCE-1-HOUR-LAST-EXTERNAL",
+    "development_catalog_path": "data/research-v7-downtime-sensitivity/catalog",
+    "confirmation_catalog_path": "data/research-v8/catalog",
+    "trade_size_btc": 0.001,
+    "starting_balance_usdt": 100000,
+    "account_type": "cash",
+    "min_confidence": 0.55,
+    "long_flat_only": true,
+    "costs_usdt_per_closed_position": {"gross": 0.0, "base": 0.08, "stress": 0.10}
+  },
+  "gates": {
+    "development": {
+      "base_net_pnl_gt": 0.0,
+      "stress_net_pnl_gt": 0.0,
+      "positive_calendar_years_at_least": 2,
+      "positive_calendar_months_at_least": 18,
+      "closed_positions_at_least": 30,
+      "leave_best_position_base_net_pnl_gt": 0.0,
+      "duplicate_replays_required": 2
+    },
+    "multiple_testing": {
+      "candidate_count_locked": 3,
+      "parameter_grid_search_forbidden": true,
+      "alternate_sign_forbidden": true,
+      "pnl_selected_ensemble_forbidden": true,
+      "failed_candidate_reparameterization_forbidden": true
+    }
+  },
+  "progression": {
+    "development_pass_opens_only": "separately frozen 2023-2025 confirmation contract",
+    "confirmation_pass_opens_only": "separate ADR-007 paper_shadow policy review",
+    "automatic_policy_change": false,
+    "automatic_trading_authorization": false
+  },
+  "boundaries_effect": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "touches_existing_paper_shadow": false,
+    "retries_prior_research_identities": false,
+    "resumes_testnet": false,
+    "touches_live_path": false,
+    "opens_future_blind": false
+  }
+}

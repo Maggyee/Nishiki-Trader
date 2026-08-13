@@ -56,6 +56,8 @@ Current Phase 3 progress files:
 - `phase-2-research-protocol-v24.md` freezes three official Crypto Fear and
   Greed classification holds. The shared series qualified, then all three
   failed 2020-2022 development gates; confirmation remains sealed.
+- `phase-2-research-protocol-v25.md` freezes three DefiLlama TVL-expansion
+  identities before any historical TVL JSON body is opened.
 
 - `phase-3-testnet-canary-evidence.md` records the testnet session ledger and
   bundle evidence summary.
