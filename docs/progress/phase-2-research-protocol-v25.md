@@ -1,6 +1,6 @@
 # Phase 2 Research Protocol v25
 
-- **Status**: all-chain and Ethereum TVL qualified; Bitcoin TVL provider-rejected; development PnL unopened.
+- **Status**: development complete; all-chain TVL expansion is confirmation-open eligible; Ethereum rejected; Bitcoin provider-rejected.
 - **Mechanisms**: DefiLlama historical chain TVL expansion.
 - **Development**: 2020-01-01 through 2022-12-31.
 - **Confirmation**: sealed.
@@ -32,3 +32,16 @@ are counted, not used for development factors, signals, or PnL.
 Unchanged development gates. A development passer may only enter a separately
 frozen 2023-2025 confirmation contract. Existing paper-shadow collectors,
 SourcePolicy, testnet, live trading, and the future blind stay untouched.
+
+## Development outcome
+
+Two clean replays per qualified candidate from `e4b22c0` reproduce with
+identical fills and no evidence blockers. Ethereum TVL expansion is rejected
+at 15/36 positive months and negative leave-best base PnL. Bitcoin-chain TVL
+was never replayed.
+
+All-chain TVL expansion passes every frozen gate: gross/base/stress
++30.655530/+24.445097/+22.892488 USDT, 2/3 years and 19/36 months are
+positive, 94 positions, and +9.220236 leave-best base PnL. Confirmation values
+remain sealed until a separate contract is frozen. That contract must reuse
+the already-captured all-chain snapshot without a new GET.
