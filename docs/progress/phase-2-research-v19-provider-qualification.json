@@ -2,6 +2,18 @@
   "schema_version": "research.v19.provider_qualification.v1",
   "protocol_sha256": "sha256:23ae530d39f09ae0b3cfaccad4f0dea69cc23027cc8d0a28ff4588d228e80482",
   "clean_commit_before_access": "a2ea80a",
+  "classification": "provider_partially_qualified",
+  "development_status": "not_opened",
+  "confirmation_status": "sealed_unopened",
+  "future_blind_status": "sealed_unopened",
+  "development_eligible_candidates": ["russell_vol_relief", "dow_vol_relief"],
+  "provider_rejected_candidates": {
+    "china_vol_relief": {
+      "reason": "development_rows_533_below_locked_minimum_700",
+      "request_openings": 1,
+      "retry_allowed": false
+    }
+  },
   "head_results": {
     "rvx": {"http_status": 200, "content_type": "text/csv"},
     "vxd": {"http_status": 200, "content_type": "text/csv"},
@@ -9,10 +21,10 @@
   },
   "snapshots": {
     "rvx": {
-      "path": "data/research-v19/raw/rvx-20260813T033715Z-5f6fa0ca0c21.json",
-      "snapshot_sha256": "sha256:5f6fa0ca0c218be496c47c5ad9dad4c1be3e4f8effde13ed396ba6fbba1b6ebb",
-      "vintage_id": "cboe-rvx:2026-08-13T03:37:15.197217+00:00:5f6fa0ca0c21",
-      "payload_sha256": "sha256:d1228b4d898d1",
+      "path": "data/research-v19/raw/rvx-20260813T033654Z-c2179bee4b7a.json",
+      "snapshot_sha256": "sha256:c2179bee4b7ad958a2017200ee69639a2801436291b8a331b9854ec5e6cf08dc",
+      "vintage_id": "cboe-rvx:2026-08-13T03:36:54.952551+00:00:c2179bee4b7a",
+      "payload_sha256": "sha256:d1228b4d898d1974f885d5c52e87f42eb66099d92499d4645b98ba83ee4072ea",
       "reserve_row_count": 755,
       "reserve_first_date": "2020-01-02",
       "reserve_last_date": "2022-12-30",
@@ -21,10 +33,10 @@
       "qualified": true
     },
     "vxd": {
-      "path": "data/research-v19/raw/vxd-20260813T033715Z-fd0520d0ee5e.json",
-      "snapshot_sha256": "sha256:fd0520d0ee5e42e9e0a0e60f10304dc670cdb55c27bfacdfd0bfebca9b244660",
-      "vintage_id": "cboe-vxd:2026-08-13T03:37:15.805283+00:00:fd0520d0ee5e",
-      "payload_sha256": "sha256:9980915798418",
+      "path": "data/research-v19/raw/vxd-20260813T033656Z-6161821e1a8e.json",
+      "snapshot_sha256": "sha256:6161821e1a8ec597108eb97534709f625b2303a4bcc6fb7bdecf2e347340bc04",
+      "vintage_id": "cboe-vxd:2026-08-13T03:36:56.035696+00:00:6161821e1a8e",
+      "payload_sha256": "sha256:9980915798418783ae430a14f3ee857ee3f8a790daa397f5ae093268bec614a4",
       "reserve_row_count": 758,
       "reserve_first_date": "2020-01-02",
       "reserve_last_date": "2022-12-30",
@@ -37,28 +49,24 @@
       "snapshot_written": false,
       "failure": "reserve_coverage",
       "reserve_row_count": 533,
-      "minimum_reserve_rows": 700,
-      "columns_observed_before_coverage_fail": ["DATE", "OPEN", "HIGH", "LOW", "CLOSE"]
+      "minimum_reserve_rows": 700
     }
   },
   "duplicate_payload_identical_vintages": {
-    "rvx": "data/research-v19/raw/rvx-20260813T033654Z-c2179bee4b7a.json",
-    "vxd": "data/research-v19/raw/vxd-20260813T033656Z-6161821e1a8e.json",
+    "rvx": "data/research-v19/raw/rvx-20260813T033715Z-5f6fa0ca0c21.json",
+    "vxd": "data/research-v19/raw/vxd-20260813T033715Z-fd0520d0ee5e.json",
     "note": "same payload SHA-256 as the recorded snapshots; not additional series"
   },
-  "classification": "blocked_provider_qualification",
-  "development_status": "not_opened",
-  "confirmation_status": "sealed_unopened",
-  "future_blind_status": "sealed_unopened",
   "forward_fill_used": false,
   "signals_generated": false,
   "pnl_opened": false,
   "boundaries": {
+    "signals_generated": false,
+    "pnl_opened": false,
     "retries_v17_or_v18_identities": false,
     "reopens_v7_or_v9": false,
     "touches_v8_or_v16_or_v18_shadow": false,
     "loads_credentials": false,
-    "touches_live_path": false,
-    "drops_failed_candidate_to_continue": false
+    "touches_live_path": false
   }
 }
