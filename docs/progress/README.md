@@ -61,6 +61,8 @@ Current Phase 3 progress files:
   fails development. All-chain TVL expansion passed development; its 2023-2025
   confirmation contract is frozen; confirmation then failed at 14/36 months
   and negative leave-best base PnL, closing v25.
+- `phase-2-research-protocol-v26.md` freezes three DefiLlama DEX-volume
+  expansion identities before any historical DEX JSON body is opened.
 
 - `phase-3-testnet-canary-evidence.md` records the testnet session ledger and
   bundle evidence summary.
