@@ -1,4 +1,4 @@
-"""Apply the frozen Protocol v19 gates to duplicate development bundles."""
+"""Apply the frozen Protocol v19 gates to provider-qualified bundles."""
 
 from __future__ import annotations
 
@@ -14,6 +14,50 @@ from apps.ops.research_v13_review import (
 from apps.ops.research_v13_review import build_standard_review
 
 SCHEMA_VERSION = "research.v19.development_results.v1"
+PROVIDER_QUALIFICATION = Path(
+    "docs/progress/phase-2-research-v19-provider-qualification.json"
+)
+PROVIDER_REJECTED = {
+    "china_vol_relief": {
+        "classification": "reject_candidate",
+        "failure_reasons": ["provider_development_rows_533_below_700"],
+        "development_row_count": 533,
+    }
+}
+
+
+def load_provider_qualification(
+    path: Path = PROVIDER_QUALIFICATION,
+) -> dict[str, Any]:
+    payload = json.loads(path.read_text())
+    if payload.get("schema_version") != "research.v19.provider_qualification.v1":
+        raise ValueError("Protocol v19 provider qualification schema drifted")
+    if payload.get("protocol_sha256") != load_and_validate()["protocol_sha256"]:
+        raise ValueError("Protocol v19 provider qualification fingerprint drifted")
+    if payload.get("classification") != "provider_partially_qualified":
+        raise ValueError("Protocol v19 provider qualification status drifted")
+    if payload.get("development_eligible_candidates") != [
+        "russell_vol_relief",
+        "dow_vol_relief",
+    ]:
+        raise ValueError("Protocol v19 development-eligible candidates drifted")
+    rejected = payload.get("provider_rejected_candidates")
+    if rejected != {
+        "china_vol_relief": {
+            "reason": "development_rows_533_below_locked_minimum_700",
+            "request_openings": 1,
+            "retry_allowed": False,
+        }
+    }:
+        raise ValueError("Protocol v19 provider rejection evidence drifted")
+    if payload.get("confirmation_status") != "sealed_unopened" or payload.get(
+        "future_blind_status"
+    ) != "sealed_unopened":
+        raise ValueError("Protocol v19 sealed partitions drifted")
+    boundaries = payload.get("boundaries", {})
+    if boundaries.get("signals_generated") is not False or boundaries.get("pnl_opened") is not False:
+        raise ValueError("Protocol v19 provider qualification crossed strategy boundaries")
+    return payload
 
 
 def build_review(
@@ -23,9 +67,14 @@ def build_review(
     gap_detail: dict[str, Any],
     gap_detail_bytes: bytes,
 ) -> dict[str, Any]:
-    return build_standard_review(
+    qualification = load_provider_qualification()
+    eligible = {
+        key: IDENTITIES[key]
+        for key in qualification["development_eligible_candidates"]
+    }
+    result = build_standard_review(
         candidate_specs,
-        identities=IDENTITIES,
+        identities=eligible,
         load_protocol=load_and_validate,
         protocol_version="v19",
         schema_version=SCHEMA_VERSION,
@@ -33,6 +82,32 @@ def build_review(
         gap_detail=gap_detail,
         gap_detail_bytes=gap_detail_bytes,
     )
+    for key, provider_result in PROVIDER_REJECTED.items():
+        source, model_version = IDENTITIES[key]
+        result["candidates"].append(
+            {
+                "key": key,
+                "source": source,
+                "model_version": model_version,
+                "classification": provider_result["classification"],
+                "failure_reasons": provider_result["failure_reasons"],
+                "development_row_count": provider_result["development_row_count"],
+                "performance_pass": False,
+                "evidence_pass": False,
+                "signal_count": 0,
+                "duplicate_replays": 0,
+            }
+        )
+    result["provider_qualification"] = {
+        "classification": qualification["classification"],
+        "development_eligible_candidates": qualification[
+            "development_eligible_candidates"
+        ],
+        "provider_rejected_candidates": qualification[
+            "provider_rejected_candidates"
+        ],
+    }
+    return result
 
 
 def main(argv: list[str] | None = None) -> int:

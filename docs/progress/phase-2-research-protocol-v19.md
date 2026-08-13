@@ -3,7 +3,7 @@
 - **Frozen**: 2026-08-13 before opening any v19 Cboe CSV body.
 - **Machine contract**: `docs/progress/phase-2-research-protocol-v19.json`
 - **Provider contract**: `docs/progress/phase-2-research-v19-data-sources.json`
-- **Status**: pre-registered; CSV bodies sealed.
+- **Status**: RVX/VXD provider-qualified; VXFXI coverage-rejected; development PnL sealed.
 - **Trading effect**: none.
 
 ## Why this batch is allowed
@@ -54,3 +54,15 @@ paper shadow, SourcePolicy, testnet, and live trading stay untouched.
 The pre-access contract must be committed and pushed before any v19 CSV body
 is downloaded. HEAD may qualify URLs without reading values. Each body may be
 fetched once after that push.
+
+## Provider outcome
+
+From pushed commit `a2ea80a`, all three endpoints passed body-free HEAD and
+were opened once. RVX and VXD qualified with 755 and 758 unfilled development
+observations. VXFXI supplied only 533 observations against the frozen minimum
+of 700, so it is provider-rejected without retry or backtest. See
+`docs/retros/2026-08-13-research-v19-provider-qualification.md`.
+
+After this outcome is committed, only RVX and VXD may enter duplicate
+2020-2022 development replays. VXFXI remains the third locked candidate and is
+reported as a data rejection. Confirmation and the future blind stay sealed.
