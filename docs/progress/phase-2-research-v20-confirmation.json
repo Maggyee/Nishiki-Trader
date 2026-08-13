@@ -1,0 +1,88 @@
+{
+  "schema_version": "research.protocol.v20.confirmation.v1",
+  "status": "preregistered_before_safe_asset_confirmation_value_access",
+  "frozen_at": "2026-08-13T03:59:47Z",
+  "development_evidence": {
+    "committed_review": "0ab1e08",
+    "development_results": "docs/progress/phase-2-research-v20-development-results.json",
+    "development_results_sha256": "sha256:4f42a18b92f299d4d930130e7286b757f1c529c06671b74544b057d0f78b1711",
+    "protocol_sha256": "sha256:4103958eb9a088b9b8eb0157cc72cc3de3564b5f80a601e1596978a9b589dda8",
+    "development_classification": "development_pass_confirmation_open_eligible"
+  },
+  "data_access_disclosure": {
+    "source_snapshot_already_captured_and_qualified": true,
+    "confirmation_value_rows_reported": false,
+    "confirmation_returns_computed": false,
+    "confirmation_pnl_computed": false,
+    "new_network_request_required": false
+  },
+  "candidate": {
+    "key": "safe_asset_stress_relief",
+    "source": "rule_ofr_safe_asset_stress_relief_v1",
+    "model_version": "ofr-fsi-safe-assets-diff5-negative-lag5d-v1",
+    "series_key": "Flight_to_Safety",
+    "parameters": {"change_observations": 5, "maximum_change": 0.0, "publication_lag_calendar_days": 5, "ttl_seconds": 86400, "confidence": 0.75},
+    "rule": "buy iff the latest complete Flight_to_Safety value minus the value five common official observations earlier is strictly negative; flat otherwise",
+    "parameter_changes_forbidden": true
+  },
+  "confirmation": {
+    "start": "2023-01-01",
+    "end": "2025-12-31",
+    "partition_basis": "decision_available_at",
+    "pnl_status": "unconsumed",
+    "fold_initial_state": "flat"
+  },
+  "data_contract": {
+    "provider": "Office of Financial Research Financial Stress Index",
+    "source_snapshot": {
+      "path": "data/research-v20/raw/fsi-20260813T035301Z-202240619bc4.json",
+      "snapshot_sha256": "sha256:202240619bc436ebe8bdd6eab5217aa9062a00854d8c6c6b2fae1d4503349a0b"
+    },
+    "series_key": "Flight_to_Safety",
+    "value_column": "safe_asset_stress",
+    "warmup_observation_start": "2022-11-01",
+    "decision_lag_calendar_days": 5,
+    "minimum_confirmation_decisions": 700,
+    "first_decision_on_or_before": "2023-01-05",
+    "last_decision_on_or_after": "2025-12-29",
+    "maximum_calendar_gap_days": 5,
+    "missing_value_policy": "require complete official observation; never fill",
+    "historical_vintage_claim": false,
+    "execution_catalog": "data/research-v8/catalog",
+    "execution_audit": "data/research-v8/execution-audit.json",
+    "execution_audit_sha256": "sha256:02f3179b79a9720210419241af82ab9563ff2a67cb23f18641934edb3e7caca1"
+  },
+  "cost_scenarios": {
+    "gross": {"fee_bps_per_fill": 0, "slippage_bps_per_fill": 0},
+    "base": {"fee_bps_per_fill": 10, "slippage_bps_per_fill": 2},
+    "stress": {"fee_bps_per_fill": 10, "slippage_bps_per_fill": 5}
+  },
+  "gates": {
+    "base_net_pnl_gt": 0,
+    "stress_net_pnl_gt": 0,
+    "positive_calendar_years_at_least": 2,
+    "positive_calendar_months_at_least": 18,
+    "closed_positions_at_least": 30,
+    "leave_best_position_base_net_pnl_gt": 0,
+    "duplicate_replays_required": 2,
+    "spot_long_flat_only": true,
+    "evidence_blockers_required": 0
+  },
+  "outcomes": {
+    "all_gates_pass": "paper_shadow_review_eligible",
+    "performance_gate_fails": "reject_candidate",
+    "evidence_gate_fails": "insufficient_confirmation_evidence"
+  },
+  "future_blind": {"start": "2026-09-01", "end": "2027-01-31", "status": "sealed_unopened"},
+  "boundaries_effect": {
+    "loads_credentials": false,
+    "makes_network_request": false,
+    "mutates_source_policy": false,
+    "reopens_systemic_or_credit_stress": false,
+    "retries_rejected_identity": false,
+    "touches_existing_paper_shadow": false,
+    "resumes_testnet": false,
+    "touches_live_path": false,
+    "opens_future_blind": false
+  }
+}

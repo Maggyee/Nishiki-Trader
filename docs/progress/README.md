@@ -39,7 +39,8 @@ Current Phase 3 progress files:
   failed independent confirmation at 17/36 positive months, closing v19.
 - `phase-2-research-protocol-v20.md` locks three OFR financial-stress relief
   mechanisms with a D+5 availability lag; total/credit stress relief are
-  rejected and safe-asset-stress relief passes development for confirmation.
+  rejected and the safe-asset-only confirmation contract is frozen before
+  holdout value export.
 
 - `phase-3-testnet-canary-evidence.md` records the testnet session ledger and
   bundle evidence summary.

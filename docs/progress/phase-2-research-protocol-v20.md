@@ -80,3 +80,17 @@ stress relief passes every frozen gate: gross/base/stress PnL is
 Only the unchanged safe-asset identity may enter a separately frozen
 2023-2025 confirmation. Its thin leave-best margin and -20.924094 USDT 2022
 base result make confirmation essential. No policy or trading stage changes.
+
+## Confirmation boundary
+
+`docs/progress/phase-2-research-v20-confirmation.json` fingerprints the
+committed development review, immutable OFR snapshot, unchanged safe-asset
+identity, D+5 decision lag, and 2023-2025 partition before holdout values.
+The partition is defined by `available_at`, so observations that become usable
+in 2026 cannot leak into confirmation.
+
+The contract retains the explicit no-historical-vintage claim, unchanged
+costs/gates, two clean replays, and the audited BTC execution catalog. Passing
+can create only separate ADR-007 `paper_shadow` review eligibility. It makes
+no network request, policy mutation, trade authorization, or future-blind
+opening.
