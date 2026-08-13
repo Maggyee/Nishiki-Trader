@@ -30,8 +30,8 @@ Current Phase 3 progress files:
   VXEEM, VXEFA, and VXN five-observation relief; provider qualification then
   failed closed on the VXEEM OHLC header.
 - `phase-2-research-protocol-v18.md` recovers those rules under new OHLC
-  identities. Nasdaq vol relief passed 2020-2022 development; confirmation
-  remains sealed.
+  identities. Nasdaq vol relief passed 2020-2022 development; its exact
+  VXN-only confirmation contract is frozen before holdout value access.
 
 - `phase-3-testnet-canary-evidence.md` records the testnet session ledger and
   bundle evidence summary.

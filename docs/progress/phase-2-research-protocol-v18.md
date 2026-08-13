@@ -3,7 +3,8 @@
 - **Frozen**: 2026-08-13 before opening any v18 Cboe CSV body.
 - **Machine contract**: `docs/progress/phase-2-research-protocol-v18.json`
 - **Provider contract**: `docs/progress/phase-2-research-v18-data-sources.json`
-- **Status**: development complete; Nasdaq vol relief is confirmation-eligible; confirmation sealed.
+- **Confirmation contract**: `docs/progress/phase-2-research-v18-confirmation.json`
+- **Status**: VXN-only confirmation contract frozen; holdout values still sealed.
 - **Trading effect**: none.
 
 ## Why this recovery is separate
@@ -57,6 +58,18 @@ every frozen gate: base/stress +14.128562/+12.631995 USDT, 2/3 years, 21/36
 months, 81 positions, and +3.151905 leave-best base PnL. Duplicate fills
 match with zero shorts, blockers, or verified no-kline event hits.
 
-Only that unchanged VXN identity may open 2023-2025, and only after this
-review is committed. Confirmation, the future blind, and every trading path
-remain closed.
+Only that unchanged VXN identity may open 2023-2025. The development review
+was committed at `98a0ef2` before the VXN-only confirmation contract was
+frozen.
+
+## Confirmation boundary
+
+The confirmation contract locks the existing qualified VXN snapshot, OHLC
+`CLOSE`, one-calendar-day availability lag, five-observation rule, flat fold
+initial state, unchanged costs, 36-month breadth gates, duplicate replays, and
+the already-audited v8 BTC execution catalog. It makes no new network request.
+
+The contract and its factor/review code must be committed and pushed before
+2023-2025 value rows are exported. Passing confirmation creates only
+ADR-007 `paper_shadow` review eligibility. It cannot mutate SourcePolicy,
+authorize paper simulation/testnet/live trading, or open the future blind.
