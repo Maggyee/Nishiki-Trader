@@ -1,0 +1,60 @@
+{
+  "schema_version": "research.data_sources.v29",
+  "status": "locked_before_wikimedia_macro_pageview_body_access",
+  "provider": "Wikimedia Pageviews REST API",
+  "authentication": "none",
+  "documentation_url": "https://doc.wikimedia.org/generated-data-platform/aqs/analytics-api/reference/page-views.html",
+  "user_agent": "Nishiki-Trader/research-v29",
+  "requests": [
+    {
+      "kind": "federal_reserve",
+      "article": "Federal_Reserve",
+      "url": "https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia/all-access/user/Federal_Reserve/daily/2019110100/2022123100",
+      "project": "en.wikipedia",
+      "access": "all-access",
+      "agent": "user",
+      "granularity": "daily"
+    },
+    {
+      "kind": "inflation",
+      "article": "Inflation",
+      "url": "https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia/all-access/user/Inflation/daily/2019110100/2022123100",
+      "project": "en.wikipedia",
+      "access": "all-access",
+      "agent": "user",
+      "granularity": "daily"
+    },
+    {
+      "kind": "recession",
+      "article": "Recession",
+      "url": "https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia/all-access/user/Recession/daily/2019110100/2022123100",
+      "project": "en.wikipedia",
+      "access": "all-access",
+      "agent": "user",
+      "granularity": "daily"
+    }
+  ],
+  "request_policy": {"method": "GET", "maximum_body_openings_per_kind": 1, "retry_allowed": false},
+  "locked_response": {
+    "root_key": "items",
+    "required_item_fields": ["project", "article", "granularity", "timestamp", "access", "agent", "views"],
+    "timestamp_format": "YYYYMMDDHH",
+    "timestamp_hour": "00",
+    "value_field": "views"
+  },
+  "coverage_gates": {
+    "warmup_start": "2019-11-01",
+    "development_start": "2020-01-01",
+    "development_end": "2022-12-31",
+    "minimum_development_observations": 700,
+    "minimum_warmup_observations": 5,
+    "first_development_observation_no_later_than": "2020-01-03",
+    "last_development_observation_no_earlier_than": "2022-12-29",
+    "maximum_calendar_gap_days": 5,
+    "forward_fill_allowed": false,
+    "interpolation_allowed": false,
+    "confirmation_timestamps_forbidden": true
+  },
+  "failure_policy": "Qualify or reject each kind independently. A failed kind is not retried or substituted and cannot generate signals or PnL; other pre-registered kinds may still be requested once.",
+  "historical_vintage_claim": false
+}

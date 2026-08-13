@@ -1,7 +1,7 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-08-13 (Protocol v28 options/OI provider-rejected; protocol closed)
+- **Last updated**: 2026-08-13 (Protocol v29 Wikipedia macro-attention freeze; bodies sealed)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
 - **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry and Protocol v2-v5 research identities are frozen. Protocol v5 curve carry and BVOL relief are rejected and the 2026-08..12 blind remains sealed. The provider/timer review is complete: v5 and completed v2 timers are `inactive/disabled`, v5 collector status is `archived`, and a four-day post-window audit found zero new invocations. The retained v5 tree is 13 snapshots / 13 Parquets with zero conflicts; v2 `COMPLETE`, ledger, deployment identity and all recorded checksums remain unchanged. Dashboard renders the archive as a valid terminal state with no retry or operations issue. Independent Protocol v6 remains `blocked_provider_qualification` on the official 12-row grid, with historical development closed.
   The human-reviewed `freqai_linear_v1 / linear-mom-train20240105` decision is now `demote @ paper_simulated` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. Its old testnet continuity evidence is archived and cannot authorize a restart. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
@@ -24,6 +24,7 @@
   Protocol v26 is closed with zero survivors. Solana DEX volume is provider-rejected. Unchanged all-DEX and Ethereum five-observation volume expansion both fail 2020-2022 development on duplicate clean-git cash replays from `8abaffb`: all-DEX base/stress -6.320471/-9.854272 USDT and Ethereum -2.029904/-5.636548 USDT, each with negative leave-best despite 20/36 positive months. Fills match with no shorts, blockers, or no-kline hits. Confirmation stays sealed. Do not retune or ensemble. Paper-shadow policies, SourcePolicy, testnet, live trading, and the future blind are unchanged.
   Protocol v27 is closed with zero survivors. Unchanged all-chain dailyFees, dailyRevenue, and dailyHoldersRevenue five-observation expansion all fail 2020-2022 development on duplicate clean-git cash replays from `66a725e`. Fees is cost-positive but leave-best is -1.639513 USDT. Revenue and holder-revenue fail base/stress; holder-revenue also has only 14/36 positive months. Fills match with no shorts, blockers, or no-kline hits. Confirmation stays sealed. Do not retune or ensemble. Paper-shadow policies, SourcePolicy, testnet, live trading, and the future blind are unchanged.
   Protocol v28 is closed at `blocked_provider_qualification`. From freeze `d425a3c`, each locked DefiLlama options/OI URL was opened once. Options notional and premium have only 414 development observations; perpetual DEX open interest has 675 versus 700 required. No snapshot, factor, signal, or PnL was written. Retry is forbidden. Do not retune v25-v27.
+  Protocol v29 is pre-registered and frozen before Wikimedia macro pageview JSON bodies. It tests three five-observation attention-relief rules (Federal_Reserve, Inflation, Recession) with a two-calendar-day lag and a request range that ends 2022-12-31. Each article may be fetched once after this freeze is pushed. No pageview value, signal, or PnL is opened yet.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -94,6 +95,8 @@ Detailed history archived so far:
   expansion; protocol closed after development cost/concentration failure.
 - `docs/progress/phase-2-research-protocol-v28.md` — DefiLlama options notional,
   options premium, and perpetual OI expansion; all three failed coverage.
+- `docs/progress/phase-2-research-protocol-v29.md` — Wikipedia macro-attention
+  relief; historical bodies sealed until the freeze is pushed.
 - `docs/progress/phase-3-testnet-canary-evidence.md` — archived Phase 3 testnet canary evidence ledger.
 - `docs/progress/phase-3-testnet-continuity-plan.md` — archived 14-day testnet continuity procedure and review command.
 - `docs/progress/phase-5-dashboard-history.md` — completed read-only dashboard, AgentAdvice input, passive Phase 6 gate, and dashboard hardening history.
@@ -288,6 +291,7 @@ Immediate focus:
 25. Keep Protocol v26 closed. Any later independent activity or fee study needs a new identity frozen before data access; it may not continue these three fingerprints or open the future blind.
 26. Keep Protocol v27 closed. Any later independent DeFi cashflow study needs a new identity frozen before data access; it may not continue these three fingerprints or open the future blind.
 27. Keep Protocol v28 closed. Any later options or open-interest study needs a new identity and coverage contract frozen before data access; it may not retry these three GETs.
+28. After Protocol v29 is pushed, open each locked Wikimedia URL once from that HEAD, qualify or reject independently, then write factors/signals and two clean-git cash replays only for passers. Do not GET before the freeze is on `origin/main`. Do not retune v23 crypto-article expansion.
 
 ## Blocked / Deferred
 
@@ -340,8 +344,19 @@ Immediate focus:
 - No Protocol v28 reopen. All three options/OI identities failed coverage
   after one GET each; signals, PnL, confirmation, retry, and the future blind
   remain sealed.
+- No Protocol v29 pageview body, factor, signal, or PnL until the freeze is on
+  `origin/main`. Confirmation PnL and the future blind remain sealed.
 
 ## Latest Verification
+
+On 2026-08-13, after Protocol v29 pre-registration:
+
+- Official Wikimedia pageviews documentation was inspected; no historical
+  Federal_Reserve, Inflation, or Recession JSON body, value, signal, or PnL
+  was opened.
+- The contract locks three five-observation negative-change identities, a
+  two-calendar-day lag, one GET per article through 2022-12-31, the v7
+  downtime catalog, and no historical-vintage claim.
 
 On 2026-08-13, after Protocol v28 provider qualification:
 

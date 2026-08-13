@@ -69,6 +69,8 @@ Current Phase 3 progress files:
 - `phase-2-research-protocol-v28.md` freezes three DefiLlama options-volume and
   perpetual-OI identities. All three failed the development coverage gate,
   closing v28.
+- `phase-2-research-protocol-v29.md` freezes three Wikipedia macro-attention
+  relief identities before any historical pageview JSON body is opened.
 
 - `phase-3-testnet-canary-evidence.md` records the testnet session ledger and
   bundle evidence summary.
