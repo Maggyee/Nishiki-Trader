@@ -22,6 +22,7 @@ def test_v18_confirmation_contract_is_valid() -> None:
         (("candidate", "parameters", "change_observations"), 3),
         (("development_evidence", "committed_review"), "uncommitted"),
         (("data_contract", "decision_lag_calendar_days"), 0),
+        (("cost_scenarios", "base", "fee_bps_per_fill"), 9),
         (("data_access_disclosure", "confirmation_pnl_computed"), True),
         (("boundaries_effect", "opens_future_blind"), True),
     ],

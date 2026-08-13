@@ -14,6 +14,7 @@ DEFAULT_CONTRACT = Path("docs/progress/phase-2-research-v18-confirmation.json")
 SCHEMA_VERSION = "research.protocol.v18.confirmation.v1"
 CANDIDATE = "nasdaq_vol_relief"
 DEVELOPMENT_REVIEW = "98a0ef2"
+DEVELOPMENT_RESULTS_PATH = Path("docs/progress/phase-2-research-v18-development-results.json")
 DEVELOPMENT_RESULTS_SHA256 = (
     "sha256:174ff270aff742a13303d7060de85a93cf3c8a7489a0fb09b723c585d7d8ddd4"
 )
@@ -66,6 +67,7 @@ def validate_contract(payload: dict[str, Any]) -> dict[str, Any]:
     development = payload.get("development_evidence", {})
     if (
         development.get("committed_review") != DEVELOPMENT_REVIEW
+        or development.get("development_results") != str(DEVELOPMENT_RESULTS_PATH)
         or development.get("development_results_sha256") != DEVELOPMENT_RESULTS_SHA256
         or development.get("protocol_sha256") != PROTOCOL_SHA256
         or development.get("development_classification")
@@ -150,7 +152,13 @@ def load_and_validate(path: Path = DEFAULT_CONTRACT) -> dict[str, Any]:
     payload = json.loads(path.read_text())
     if not isinstance(payload, dict):
         raise ValueError("Protocol v18 confirmation root must be an object")
-    return validate_contract(payload)
+    result = validate_contract(payload)
+    actual_development_hash = (
+        "sha256:" + hashlib.sha256(DEVELOPMENT_RESULTS_PATH.read_bytes()).hexdigest()
+    )
+    if actual_development_hash != DEVELOPMENT_RESULTS_SHA256:
+        raise ValueError("Protocol v18 committed development evidence drifted")
+    return result
 
 
 def main(argv: list[str] | None = None) -> int:
