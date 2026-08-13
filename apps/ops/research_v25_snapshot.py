@@ -97,7 +97,7 @@ def _tvl(value: Any, *, kind: str, index: int) -> float:
     return result
 
 
-def parse_and_audit_json(kind: str, raw: bytes) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+def parse_all_json_rows(kind: str, raw: bytes) -> list[dict[str, Any]]:
     try:
         payload = json.loads(raw, parse_constant=_reject_constant)
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
@@ -121,6 +121,11 @@ def parse_and_audit_json(kind: str, raw: bytes) -> tuple[list[dict[str, Any]], d
         if previous is not None and row["date"] <= previous:
             raise ValueError(f"{kind} dates must be unique and increasing")
         previous = row["date"]
+    return parsed
+
+
+def parse_and_audit_json(kind: str, raw: bytes) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    parsed = parse_all_json_rows(kind, raw)
     trailing = [row for row in parsed if date.fromisoformat(row["date"]) > DEVELOPMENT_END]
     rows = [row for row in parsed if date.fromisoformat(row["date"]) <= DEVELOPMENT_END]
     if not rows:

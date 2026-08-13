@@ -1,7 +1,7 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-08-13 (Protocol v25 all-chain TVL expansion passed development)
+- **Last updated**: 2026-08-13 (Protocol v25 all-chain TVL confirmation freeze; values sealed)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
 - **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry and Protocol v2-v5 research identities are frozen. Protocol v5 curve carry and BVOL relief are rejected and the 2026-08..12 blind remains sealed. The provider/timer review is complete: v5 and completed v2 timers are `inactive/disabled`, v5 collector status is `archived`, and a four-day post-window audit found zero new invocations. The retained v5 tree is 13 snapshots / 13 Parquets with zero conflicts; v2 `COMPLETE`, ledger, deployment identity and all recorded checksums remain unchanged. Dashboard renders the archive as a valid terminal state with no retry or operations issue. Independent Protocol v6 remains `blocked_provider_qualification` on the official 12-row grid, with historical development closed.
   The human-reviewed `freqai_linear_v1 / linear-mom-train20240105` decision is now `demote @ paper_simulated` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. Its old testnet continuity evidence is archived and cannot authorize a restart. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
@@ -20,7 +20,7 @@
   Protocol v22 is complete with one confirmed survivor. DSPX is provider-rejected and SKEW relief is development-rejected. Unchanged COR1M implied-correlation relief passes independent 2023-2025 confirmation: gross/base/stress +41.704460/+29.737095/+26.745253 USDT, 2/3 positive years, exactly 18/36 positive months, 78 positions, and +14.242905 leave-best base PnL. Duplicate clean-git fills match with zero shorts, blockers, or no-kline hits. Its separate ADR-007 review records `hold @ paper_shadow` under `SourcePolicy(dry_run=True, position_pct_multiplier=0.2, min_confidence_override=None)`. The clean entry bundle accepts and dry-runs 141/141 historical signals with no orders, fills, rejections, gaps, or kill-switches. Forward progress is 0/7 qualified days and 0/50 new signals; no collector or scheduler is installed. The current-history/no-vintage limitation and future blind remain intact.
   Protocol v23 is complete with zero survivors. From freeze `7a1a123`, Bitcoin/Ethereum/Cryptocurrency user pageviews each qualified on 1,096 unfilled development days. Duplicate clean-git cash replays from `0b8c517` then reject all three attention-expansion rules: Bitcoin base/stress -38.528123/-41.147921 USDT with 1/3 years and 17/36 months; Ethereum gross +8.830440 but base/stress -0.754934/-3.151278 USDT; Cryptocurrency base/stress -25.213814/-27.703870 USDT. Fills match with zero shorts, blockers, or no-kline hits. Confirmation stays sealed. Do not retune or ensemble. Paper-shadow policies, SourcePolicy, testnet, live trading, and the future blind are unchanged.
   Protocol v24 is complete with zero survivors. From freeze `1b5ff65`, the Fear and Greed series qualified on 1,096 unfilled development days. Duplicate clean-git cash replays from `7127677` then reject all three classification holds: Extreme Fear base/stress -9.876116/-10.883138 USDT (1/3 years, 8/36 months); Fear -28.166744/-28.646468 USDT; Non-greed -29.504746/-29.895812 USDT with only 24 positions. Fills match with zero shorts, blockers, or no-kline hits. Confirmation stays sealed. Do not retune, invent numeric cutoffs, or ensemble. Paper-shadow policies, SourcePolicy, testnet, live trading, and the future blind are unchanged.
-  Protocol v25 completed 2020-2022 development from qualification `e4b22c0`. Bitcoin-chain TVL is provider-rejected (652 observations). Ethereum TVL expansion is development-rejected: 15/36 positive months and negative leave-best base PnL. Unchanged all-chain TVL expansion passes: gross/base/stress +30.655530/+24.445097/+22.892488 USDT, 2/3 years, 19/36 months, 94 positions, +9.220236 leave-best base. Duplicate fills match with zero shorts, blockers, or no-kline hits. Confirmation stays sealed until a separate contract reuses the captured all-chain snapshot with no new GET. Do not retune or ensemble. Paper-shadow policies, SourcePolicy, testnet, live trading, and the future blind are unchanged.
+  Protocol v25 completed 2020-2022 development from qualification `e4b22c0`. Bitcoin-chain TVL is provider-rejected (652 observations). Ethereum TVL expansion is development-rejected: 15/36 positive months and negative leave-best base PnL. Unchanged all-chain TVL expansion passes: gross/base/stress +30.655530/+24.445097/+22.892488 USDT, 2/3 years, 19/36 months, 94 positions, +9.220236 leave-best base. Duplicate fills match with zero shorts, blockers, or no-kline hits. A separate 2023-2025 confirmation contract is frozen against review `342a0e3` and reuses the captured all-chain snapshot with no new GET. Confirmation values and PnL remain sealed until that freeze is pushed. Do not retune or ensemble. Paper-shadow policies, SourcePolicy, testnet, live trading, and the future blind are unchanged.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -85,7 +85,8 @@ Detailed history archived so far:
   classification holds; all three identities rejected on 2020-2022 development.
 - `docs/progress/phase-2-research-protocol-v25.md` — DefiLlama TVL expansion;
   Ethereum rejected, Bitcoin provider-rejected, all-chain TVL confirmation-open
-  eligible with confirmation still sealed.
+  eligible with a frozen 2023-2025 confirmation contract; confirmation values
+  remain sealed until that freeze is pushed.
 - `docs/progress/phase-3-testnet-canary-evidence.md` — archived Phase 3 testnet canary evidence ledger.
 - `docs/progress/phase-3-testnet-continuity-plan.md` — archived 14-day testnet continuity procedure and review command.
 - `docs/progress/phase-5-dashboard-history.md` — completed read-only dashboard, AgentAdvice input, passive Phase 6 gate, and dashboard hardening history.
@@ -274,7 +275,7 @@ Immediate focus:
     separate `paper_simulated` policy review.
 23. Keep Protocol v23 closed. Any later independent attention or pageview study needs a new identity frozen before data access; it may not continue these three fingerprints or open the future blind.
 24. Keep Protocol v24 closed. Any later independent sentiment study needs a new identity frozen before data access; it may not continue these three fingerprints or open the future blind.
-25. After the Protocol v25 development review is pushed, freeze a separate all-chain TVL 2023-2025 confirmation contract that reuses the captured snapshot with no new GET. Do not open confirmation values, retune Ethereum/Bitcoin identities, or touch existing paper shadow.
+25. After the Protocol v25 confirmation freeze is pushed, export the all-chain 2023-2025 factor from the captured snapshot with no new GET, then run two clean-git cash replays on the v8 catalog. Do not retune Ethereum/Bitcoin identities or touch existing paper shadow.
 
 ## Blocked / Deferred
 
@@ -316,10 +317,17 @@ Immediate focus:
 - No Protocol v24 reopen. All three Fear and Greed classification holds failed
   development; confirmation, numeric cutoff search, sign flip, ensemble, and
   the future blind remain sealed.
-- No Protocol v25 Ethereum/Bitcoin reopen. All-chain confirmation PnL remains
-  sealed until a separate contract is frozen. The future blind stays sealed.
+- No Protocol v25 Ethereum/Bitcoin reopen. All-chain confirmation values remain
+  sealed until the confirmation freeze is on `origin/main`. The future blind
+  stays sealed.
 
 ## Latest Verification
+
+On 2026-08-13, after Protocol v25 confirmation freeze:
+
+- The unchanged all-chain TVL identity is locked against development review
+  `342a0e3`. No confirmation value, return, or PnL has been opened.
+- No new DefiLlama GET is required or allowed.
 
 On 2026-08-13, after Protocol v25 development:
 

@@ -3,7 +3,7 @@
 - **Status**: development complete; all-chain TVL expansion is confirmation-open eligible; Ethereum rejected; Bitcoin provider-rejected.
 - **Mechanisms**: DefiLlama historical chain TVL expansion.
 - **Development**: 2020-01-01 through 2022-12-31.
-- **Confirmation**: sealed.
+- **Confirmation**: 2023-01-01 through 2025-12-31, sealed until this confirmation freeze is pushed.
 - **Future blind**: sealed.
 - **Trading effect**: none.
 
@@ -45,3 +45,12 @@ All-chain TVL expansion passes every frozen gate: gross/base/stress
 positive, 94 positions, and +9.220236 leave-best base PnL. Confirmation values
 remain sealed until a separate contract is frozen. That contract must reuse
 the already-captured all-chain snapshot without a new GET.
+
+## Confirmation freeze
+
+The unchanged all-chain identity is locked in
+`docs/progress/phase-2-research-v25-confirmation.json` against development
+review `342a0e3`. Confirmation values, returns, and PnL stay unopened until
+this freeze is on `origin/main`. No new DefiLlama GET is allowed; post-2025
+rows in the captured snapshot are counted and ignored. Ethereum and Bitcoin
+identities stay closed.
