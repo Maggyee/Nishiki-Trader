@@ -47,9 +47,12 @@ def build_review(
     qualified = set(qualification["qualified_candidates"])
     if any(key not in qualified for key, _ in candidate_specs):
         raise ValueError("Protocol v22 review includes a provider-rejected candidate")
+    qualified_identities = {
+        key: identity for key, identity in IDENTITIES.items() if key in qualified
+    }
     result = build_standard_review(
         candidate_specs,
-        identities=IDENTITIES,
+        identities=qualified_identities,
         load_protocol=load_and_validate,
         protocol_version="v22",
         schema_version=SCHEMA_VERSION,
