@@ -1,0 +1,59 @@
+{
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_future_blind": false,
+    "resumes_testnet": false,
+    "touches_live_path": false
+  },
+  "candidate": {
+    "base_net_pnl": 57.492785112000014,
+    "bundle_runs": [
+      {
+        "fills_sha256": "sha256:e458a03c7ecc6de48fd29f24e75836330bb909f1fed1ee6448541474a6aca18c",
+        "manifest_sha256": "sha256:ed72cc0027d67f49281cb56bdd80c8504d5c5808def4dcdd404e3be9007b4a83",
+        "path": "data/research-v19/confirmation/backtests/20260813-035144Z-eda54254"
+      },
+      {
+        "fills_sha256": "sha256:e458a03c7ecc6de48fd29f24e75836330bb909f1fed1ee6448541474a6aca18c",
+        "manifest_sha256": "sha256:1cda81accd492ffe98a6e53164738895fc509ca23c432f33b30793db085438cc",
+        "path": "data/research-v19/confirmation/backtests/20260813-035149Z-38623a55"
+      }
+    ],
+    "calendar_months": 36,
+    "classification": "reject_candidate",
+    "closed_positions": 94,
+    "duplicate_replays": 2,
+    "effective_blockers": [],
+    "evidence_pass": true,
+    "gross_net_pnl": 71.36538000000002,
+    "key": "dow_vol_relief",
+    "leave_best_base_net_pnl": 34.350455456000006,
+    "model_version": "cboe-vxd-ohlc5obs-negative-1d-v1",
+    "performance_pass": false,
+    "positive_months": 17,
+    "positive_years": 3,
+    "reproducible": true,
+    "short_positions": 0,
+    "signal_count": 187,
+    "signal_store_sha256": "385dd690ca74c833d9459ca96d45ccea90d464bda09cd60b898bd53590b14757",
+    "source": "rule_dow_vol_relief_v1",
+    "stress_net_pnl": 54.02463639000002,
+    "verified_no_kline_event_hits": [],
+    "yearly_base_net_pnl": {
+      "2023": 2.0877441920000006,
+      "2024": 21.300472008000007,
+      "2025": 34.104568912
+    }
+  },
+  "contract_sha256": "sha256:dc800a9524031c4170a17a31c17512a6465ac7acd8018fd4637d5e0d5a85b315",
+  "data_qualification": {
+    "classification": "provider_qualified",
+    "confirmation_row_count": 752,
+    "factor_sha256": "sha256:a8a12efafb7454c7125f7b59d2ca110695fe15179be7caf6b1de801922b414e6",
+    "snapshot_sha256": "sha256:6161821e1a8ec597108eb97534709f625b2303a4bcc6fb7bdecf2e347340bc04"
+  },
+  "future_blind_status": "sealed_unopened",
+  "recommendation": "stop_protocol_v19_confirmation_failed",
+  "schema_version": "research.v19.confirmation_results.v1"
+}

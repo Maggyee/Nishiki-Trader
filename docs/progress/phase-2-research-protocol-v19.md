@@ -3,7 +3,7 @@
 - **Frozen**: 2026-08-13 before opening any v19 Cboe CSV body.
 - **Machine contract**: `docs/progress/phase-2-research-protocol-v19.json`
 - **Provider contract**: `docs/progress/phase-2-research-v19-data-sources.json`
-- **Status**: development complete; VXD passed, RVX rejected, VXFXI provider-rejected; confirmation sealed.
+- **Status**: complete; VXD failed confirmation breadth, all three candidates rejected.
 - **Trading effect**: none.
 
 ## Why this batch is allowed
@@ -104,3 +104,14 @@ The immutable factor fingerprint is recorded in
 `docs/progress/phase-2-research-v19-confirmation-data-sources.json`. Signal
 generation and confirmation PnL remain sealed until that qualification is
 committed and pushed.
+
+## Confirmation outcome
+
+Two clean replays from `6f342e9` have identical fills and no evidence
+blockers. VXD is strongly positive after costs: gross/base/stress PnL is
++71.365380/+57.492785/+54.024636 USDT; all three years are positive, 94
+positions close, and leave-best base PnL is +34.350455 USDT.
+
+However, only 17/36 calendar months are positive against the frozen 18-month
+minimum. The candidate is rejected. It may not enter ADR-007 or
+`paper_shadow`, be retuned, or open the future blind.

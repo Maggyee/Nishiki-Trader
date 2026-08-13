@@ -35,9 +35,8 @@ Current Phase 3 progress files:
   the fail-closed VXN/BTC collector has a qualified Day 1 and an installed
   weekday 03:30 UTC crontab.
 - `phase-2-research-protocol-v19.md` records the locked RVX/VXD/VXFXI batch:
-  RVX was rejected, VXFXI failed provider coverage, and Dow-volatility relief
-  passed development; its VXD-only confirmation contract is frozen before
-  holdout value export.
+  RVX and VXFXI were rejected; Dow-volatility relief passed development but
+  failed independent confirmation at 17/36 positive months, closing v19.
 - `phase-2-research-protocol-v20.md` locks three OFR financial-stress relief
   mechanisms with a D+5 availability lag before opening the official data body.
 
