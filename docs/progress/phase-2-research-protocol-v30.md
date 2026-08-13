@@ -1,11 +1,11 @@
 # Phase 2 Research Protocol v30
 
-- **Status**: development complete; google_vol_relief confirmation-open eligible;
-  Apple and Amazon rejected.
+- **Status**: closed; Apple and Amazon development-rejected; Google/Alphabet
+  vol relief failed confirmation.
 - **Mechanisms**: Cboe Apple, Amazon, and Google/Alphabet 30-day implied-vol
   relief (VXAPL, VXAZN, VXGOG).
-- **Development**: 2020-01-01 through 2022-12-31; one passer.
-- **Confirmation**: sealed until a separately frozen 2023-2025 contract.
+- **Development**: 2020-01-01 through 2022-12-31; Google/Alphabet passed.
+- **Confirmation**: 2023-01-01 through 2025-12-31, complete; identity rejected.
 - **Future blind**: sealed.
 - **Trading effect**: none.
 
@@ -61,6 +61,6 @@ sign-flip, or ensemble the rejected names.
 ## Confirmation contract
 
 Frozen against development review `eab525c` and the already-captured VXGOG
-snapshot. Confirmation coverage is qualified at 752 unfilled 2023-2025 rows.
-Returns and PnL remain unopened. Machine identity lives in
-`docs/progress/phase-2-research-v30-confirmation.json`.
+snapshot. Confirmation coverage is 752 unfilled 2023-2025 rows. Duplicate
+clean-git cash replays from `69fa1a9` then reject the identity on leave-best
+concentration. It cannot enter ADR-007 or `paper_shadow`.

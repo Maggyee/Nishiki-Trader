@@ -1,6 +1,6 @@
 # Phase 2 Research Protocol v30 Confirmation
 
-- **Status**: pre-registered; VXGOG 2023-2025 values sealed.
+- **Status**: confirmation failed; protocol closed.
 - **Candidate**: unchanged Google/Alphabet vol relief.
 - **Confirmation**: 2023-01-01 through 2025-12-31.
 - **Future blind**: sealed.

@@ -5,6 +5,8 @@ import json
 
 import pytest
 
+from pathlib import Path
+
 from apps.ops.research_v30_confirmation import DEFAULT_CONTRACT, validate_contract
 from apps.ops.research_v30_confirmation_factor import _audit_confirmation_rows
 from apps.ops.research_v30_confirmation_review import _classification
@@ -75,3 +77,16 @@ def test_v30_confirmation_classification() -> None:
     assert _classification(True, True) == "paper_shadow_review_eligible"
     assert _classification(False, True) == "reject_candidate"
     assert _classification(True, False) == "insufficient_confirmation_evidence"
+
+
+def test_v30_confirmation_results_reject_google_vol_relief() -> None:
+    payload = json.loads(
+        Path("docs/progress/phase-2-research-v30-confirmation-results.json").read_text()
+    )
+
+    assert payload["recommendation"] == "stop_protocol_v30_confirmation_failed"
+    assert payload["candidate"]["classification"] == "reject_candidate"
+    assert payload["candidate"]["key"] == "google_vol_relief"
+    assert payload["candidate"]["reproducible"] is True
+    assert payload["candidate"]["leave_best_base_net_pnl"] < 0
+    assert payload["boundaries"]["opens_future_blind"] is False

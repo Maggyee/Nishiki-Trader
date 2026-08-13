@@ -74,8 +74,8 @@ Current Phase 3 progress files:
   development; confirmation remains sealed.
 - `phase-2-research-protocol-v30.md` freezes three Cboe single-name implied-vol
   relief identities. Apple and Amazon fail development; unchanged
-  Google/Alphabet VXGOG relief passed development. Its confirmation contract
-  is frozen; 2023-2025 values remain sealed.
+  Google/Alphabet VXGOG relief passed development then failed confirmation
+  leave-best, closing v30.
 
 - `phase-3-testnet-canary-evidence.md` records the testnet session ledger and
   bundle evidence summary.
