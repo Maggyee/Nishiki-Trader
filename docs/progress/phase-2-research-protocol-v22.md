@@ -93,3 +93,15 @@ The contract keeps the current-history/no-historical-vintage limitation and
 opens no network request. A pass creates only separate ADR-007
 `paper_shadow` review eligibility; it does not change policy, testnet, live
 trading, existing collectors, or the future blind.
+
+## Confirmation data outcome
+
+Offline extraction from the immutable snapshot qualifies 752 official COR1M
+observations in 2023-2025 (250/252/250 by year), 42 warmup rows, and a maximum
+four-calendar-day gap. No value was filled or interpolated and no network
+request was made.
+
+The factor hash is recorded in
+`docs/progress/phase-2-research-v22-confirmation-data-sources.json`. This step
+opens no return, PnL, policy, trading path, or future blind. Confirmation
+signals/PnL remain sealed until the qualification is committed and pushed.

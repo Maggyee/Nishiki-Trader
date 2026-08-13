@@ -1,0 +1,38 @@
+{
+  "audit": {
+    "annual_row_counts": {
+      "2023": 250,
+      "2024": 252,
+      "2025": 250
+    },
+    "confirmation_row_count": 752,
+    "first_date": "2023-01-03",
+    "forward_fill_used": false,
+    "interpolation_used": false,
+    "last_date": "2025-12-31",
+    "maximum_calendar_gap_days": 4,
+    "warmup_rows": 42
+  },
+  "boundaries": {
+    "future_blind_opened": false,
+    "network_accessed": false,
+    "pnl_opened": false,
+    "returns_computed": false,
+    "source_policy_mutated": false,
+    "trading_touched": false
+  },
+  "classification": "provider_qualified",
+  "contract_sha256": "sha256:c7abce3999dea3395ad2b0b0cb874cfce74a7d3d4594ceaf2011c27deedde6b3",
+  "factor": {
+    "path": "data/research-v22/confirmation/factors/cor1m.csv",
+    "row_count": 794,
+    "sha256": "sha256:17fc14e0ddd4616aa7e6ae60b22fb0fa4fdda78ef67d786de27d119e847f4708"
+  },
+  "historical_vintage_claim": false,
+  "schema_version": "research.v22.confirmation_data.v1",
+  "source_snapshot": {
+    "path": "data/research-v22/raw/cor1m-20260813T042019Z-2eeec6793d1d.json",
+    "snapshot_sha256": "sha256:2eeec6793d1d43f7a3b962074cc9fc20bd5ced04302b8527a94cd6f7f01e55e0",
+    "vintage_id": "cboe-cor1m:2026-08-13T04:20:19.300009+00:00:2eeec6793d1d"
+  }
+}
