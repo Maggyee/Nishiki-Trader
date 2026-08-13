@@ -1,0 +1,65 @@
+{
+  "schema_version": "research.v27.provider_qualification.v1",
+  "classification": "provider_qualified",
+  "protocol_sha256": "sha256:036ec88805625590bb17a839adadbc7fe7d26247a800581eed2ee2d553a80aed",
+  "provider_contract_sha256": "sha256:2cc9077d832e49d00d239873e8b4d017b4c99e0f3e702dc01a2d35d9a6217261",
+  "pre_data_commit": "fd565b4",
+  "qualified_candidates": [
+    "all_fees_expansion",
+    "all_revenue_expansion",
+    "all_holders_revenue_expansion"
+  ],
+  "rejected_candidates": {},
+  "qualified_series": {
+    "daily_fees": {
+      "snapshot_path": "data/research-v27/raw/daily_fees-20260813T085355Z-45b23eef23ac.json",
+      "snapshot_sha256": "sha256:45b23eef23ac3ff7e9a7a135df88b6046ad95fdd585a01c40d13ca38fc78876d",
+      "factor_path": "data/research-v27/factors/daily_fees.csv",
+      "factor_sha256": "sha256:c830042f27bd38476b3a0fdf88e8bbcf97c5fc5a40a783caf923c71881201030",
+      "factor_row_count": 1157,
+      "development_row_count": 1096,
+      "warmup_row_count": 61,
+      "development_first_date": "2020-01-01",
+      "development_last_date": "2022-12-31",
+      "maximum_calendar_gap_days": 1,
+      "trailing_rows_ignored": 1321
+    },
+    "daily_revenue": {
+      "snapshot_path": "data/research-v27/raw/daily_revenue-20260813T085358Z-4bcf44c2bdc7.json",
+      "snapshot_sha256": "sha256:4bcf44c2bdc743c23f2d12987441bb998bcff5878ec73e3f22e57ec658aefaea",
+      "factor_path": "data/research-v27/factors/daily_revenue.csv",
+      "factor_sha256": "sha256:29266f92693767bf7facbc2c4708e6ed7819f1d09b1be9620e4f98b926e552df",
+      "factor_row_count": 1157,
+      "development_row_count": 1096,
+      "warmup_row_count": 61,
+      "development_first_date": "2020-01-01",
+      "development_last_date": "2022-12-31",
+      "maximum_calendar_gap_days": 1,
+      "trailing_rows_ignored": 1321
+    },
+    "daily_holders_revenue": {
+      "snapshot_path": "data/research-v27/raw/daily_holders_revenue-20260813T085401Z-b201655eec27.json",
+      "snapshot_sha256": "sha256:b201655eec279db30f97be11ee398f79497c3afb1d8a0e1e389241597d6d7207",
+      "factor_path": "data/research-v27/factors/daily_holders_revenue.csv",
+      "factor_sha256": "sha256:330e66e8a874e4e88ca2d823bb9cc522d1c05121285e78f9e44a3d8d9a23f524",
+      "factor_row_count": 1157,
+      "development_row_count": 1096,
+      "warmup_row_count": 61,
+      "development_first_date": "2020-01-01",
+      "development_last_date": "2022-12-31",
+      "maximum_calendar_gap_days": 1,
+      "trailing_rows_ignored": 1321
+    }
+  },
+  "rejected_series": {},
+  "historical_vintage_claim": false,
+  "boundaries": {
+    "signals_generated": false,
+    "pnl_opened": false,
+    "confirmation_opened": false,
+    "confirmation_values_used": false,
+    "source_policy_mutated": false,
+    "trading_touched": false,
+    "future_blind_opened": false
+  }
+}

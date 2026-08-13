@@ -1,8 +1,8 @@
 # Phase 2 Research Protocol v27
 
-- **Status**: pre-registered; DefiLlama protocol-fee JSON bodies sealed.
+- **Status**: provider qualification complete; development PnL unopened.
 - **Mechanisms**: DefiLlama all-chain daily fees, revenue, and holder revenue expansion.
-- **Development**: 2020-01-01 through 2022-12-31.
+- **Development**: 2020-01-01 through 2022-12-31; signals and PnL unopened.
 - **Confirmation**: sealed.
 - **Future blind**: sealed.
 - **Trading effect**: none.
@@ -22,12 +22,18 @@ ensemble, chain substitution, or post-result reparameterization.
 
 Fee history is a current reconstruction, not a vintage tape. Decisions wait
 two calendar days after the UTC observation date. One current-history GET per
-dataType is allowed; rows after 2022-12-31 are counted, not used for
+dataType was allowed; rows after 2022-12-31 are counted, not used for
 development factors, signals, or PnL.
 
 The frozen chart schema is an object whose `totalDataChart` is a list of
 `[unix_seconds, amount]` pairs at UTC midnight. A schema mismatch rejects that
 kind without retry.
+
+## Provider qualification
+
+From freeze `fd565b4`, each URL was opened once. All three series qualify on
+1,096 unfilled development observations, 61 warmup rows, a one-day maximum
+gap, and 1,321 ignored later rows.
 
 ## Gates and progression
 
