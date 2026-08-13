@@ -47,7 +47,8 @@ Current Phase 3 progress files:
 - `phase-2-research-protocol-v22.md` freezes SKEW relief, COR1M relief, and
   DSPX expansion as three option-surface mechanisms; SKEW/COR1M are
   provider-qualified, DSPX is provider-rejected, SKEW fails development, and
-  COR1M relief alone is eligible for a separately frozen confirmation.
+  COR1M relief passes independent confirmation and is eligible for a separate
+  ADR-007 `paper_shadow` policy review.
 
 - `phase-3-testnet-canary-evidence.md` records the testnet session ledger and
   bundle evidence summary.

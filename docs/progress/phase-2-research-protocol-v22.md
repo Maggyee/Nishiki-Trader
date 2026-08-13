@@ -105,3 +105,15 @@ The factor hash is recorded in
 `docs/progress/phase-2-research-v22-confirmation-data-sources.json`. This step
 opens no return, PnL, policy, trading path, or future blind. Confirmation
 signals/PnL remain sealed until the qualification is committed and pushed.
+
+## Confirmation outcome
+
+Two clean 2023-2025 replays from `0dac1cc` reproduce with identical fills and
+no shorts, effective blockers, or verified no-kline event hits. COR1M relief
+passes every frozen gate: gross/base/stress PnL is
++41.704460/+29.737095/+26.745253 USDT, 2/3 years and exactly 18/36 months are
+positive, 78 positions close, and leave-best base PnL is +14.242905 USDT.
+
+The classification is `paper_shadow_review_eligible`. It can proceed only to
+a separate identity-specific ADR-007 policy review. No SourcePolicy, existing
+collector, testnet, live path, or future blind changes here.
