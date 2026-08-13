@@ -1,0 +1,169 @@
+{
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_confirmation": false,
+    "opens_future_blind": false,
+    "resumes_testnet": false,
+    "touches_live_path": false
+  },
+  "candidates": [
+    {
+      "base_net_pnl": -9.876116020000001,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:513933873b2d307ad029afc9adafdd3edaf9bac6b707ef56c6960da968596fe0",
+          "manifest_sha256": "sha256:f691c7a2f6d600d178b56738949ffd6df62413af6445de0f65e6cb5fbdb86ae5",
+          "path": "data/research-v24/backtests/20260813-053957Z-c1fdca63"
+        },
+        {
+          "fills_sha256": "sha256:513933873b2d307ad029afc9adafdd3edaf9bac6b707ef56c6960da968596fe0",
+          "manifest_sha256": "sha256:6406701379a1bf5c3b074dde76e24f6378eb86e56b9f37e2fdae5db5206fb1f5",
+          "path": "data/research-v24/backtests/20260813-054001Z-701c5929"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "reject_candidate",
+      "closed_positions": 47,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [
+        "base_net_pnl_not_positive",
+        "stress_net_pnl_not_positive",
+        "positive_years_1_below_2",
+        "positive_months_8_below_18",
+        "leave_best_base_net_pnl_not_positive"
+      ],
+      "gross_net_pnl": -5.8480300000000005,
+      "key": "extreme_fear_hold",
+      "leave_best_base_net_pnl": -15.990349304000004,
+      "model_version": "alternative-fng-extreme-fear-lag2d-v1",
+      "performance_pass": false,
+      "positive_months": 8,
+      "positive_years": 1,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 94,
+      "signal_store_sha256": "sha256:2b215eb9195fc6b539c6bce4cdc263fb4968682cf31e6d41cb151c8710667486",
+      "source": "rule_alternative_extreme_fear_hold_v1",
+      "stress_net_pnl": -10.883137525000002,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": -0.21460457200000002,
+        "2021": 16.069787515999998,
+        "2022": -25.731298963999997
+      }
+    },
+    {
+      "base_net_pnl": -28.16674426,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:a4539b9e13d187755c841b1e7e35e77651fab8d2f0f2951fd15c047c17389db7",
+          "manifest_sha256": "sha256:4a9d24ea30fd3438f7c0a3f7f1d0015f18aa158155fefb9cd9e7f312e21e54b4",
+          "path": "data/research-v24/backtests/20260813-054004Z-549c6db6"
+        },
+        {
+          "fills_sha256": "sha256:a4539b9e13d187755c841b1e7e35e77651fab8d2f0f2951fd15c047c17389db7",
+          "manifest_sha256": "sha256:68945140065a739f8409aa198389c305637193f3fa93ff58caef23a4ea8e6242",
+          "path": "data/research-v24/backtests/20260813-054009Z-49b62ca6"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "reject_candidate",
+      "closed_positions": 30,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [
+        "base_net_pnl_not_positive",
+        "stress_net_pnl_not_positive",
+        "positive_years_1_below_2",
+        "positive_months_10_below_18",
+        "leave_best_base_net_pnl_not_positive"
+      ],
+      "gross_net_pnl": -26.24785,
+      "key": "fear_hold",
+      "leave_best_base_net_pnl": -34.315567040000005,
+      "model_version": "alternative-fng-fear-or-extreme-fear-lag2d-v1",
+      "performance_pass": false,
+      "positive_months": 10,
+      "positive_years": 1,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 59,
+      "signal_store_sha256": "sha256:18287352f0cb96391934de6519f08030b2adcbcc957f5cb7ba5daf7072fc8ce5",
+      "source": "rule_alternative_fear_hold_v1",
+      "stress_net_pnl": -28.646467825000002,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 4.2148189920000005,
+        "2021": -3.2066008459999997,
+        "2022": -29.174962406
+      }
+    },
+    {
+      "base_net_pnl": -29.504745735999993,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:d8aaf9ebe039d2b0e43d9e065198904bd9479f324d939f16eb0b6c0ba2b802ac",
+          "manifest_sha256": "sha256:49fa794687d27b3e8958e4a389eced709e97b19ac06e27eee771a4a10bca1202",
+          "path": "data/research-v24/backtests/20260813-054012Z-e24300a1"
+        },
+        {
+          "fills_sha256": "sha256:d8aaf9ebe039d2b0e43d9e065198904bd9479f324d939f16eb0b6c0ba2b802ac",
+          "manifest_sha256": "sha256:a4d902f3e205b35e8a6dd0a45ec136d96a08248982b381d4e73ebb169f9d7ea9",
+          "path": "data/research-v24/backtests/20260813-054017Z-e4b3f187"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "reject_candidate",
+      "closed_positions": 24,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [
+        "base_net_pnl_not_positive",
+        "stress_net_pnl_not_positive",
+        "positive_months_10_below_18",
+        "closed_positions_24_below_30",
+        "leave_best_base_net_pnl_not_positive"
+      ],
+      "gross_net_pnl": -27.940479999999994,
+      "key": "non_greed_hold",
+      "leave_best_base_net_pnl": -34.650504272,
+      "model_version": "alternative-fng-not-greed-or-extreme-greed-lag2d-v1",
+      "performance_pass": false,
+      "positive_months": 10,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 47,
+      "signal_store_sha256": "sha256:b953a3c64cede044e578d9e72f96ea94790b830e18cfcd8af6a9ad5a3b3e8cbd",
+      "source": "rule_alternative_non_greed_hold_v1",
+      "stress_net_pnl": -29.895812169999992,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 3.932142516,
+        "2021": 8.846570254,
+        "2022": -42.283458506
+      }
+    }
+  ],
+  "confirmation_holdout_status": "sealed_not_opened_no_development_passer",
+  "confirmation_open_eligible_candidates": [],
+  "development_passer_count": 0,
+  "future_blind_status": "sealed_unopened",
+  "protocol_sha256": "sha256:c9097690bed8837ed2ecc1eefcdb0167043ef6fb4d6506e3738b725ec426961c",
+  "provider_qualification": {
+    "historical_vintage_claim": false,
+    "qualified_candidates": [
+      "extreme_fear_hold",
+      "fear_hold",
+      "non_greed_hold"
+    ],
+    "rejected_candidates": {}
+  },
+  "recommendation": "stop_protocol_v24_no_confirmation_open",
+  "schema_version": "research.v24.development_results.v1"
+}

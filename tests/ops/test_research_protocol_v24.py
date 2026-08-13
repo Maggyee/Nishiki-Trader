@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import json
+from pathlib import Path
 
 import pytest
 
@@ -49,3 +50,13 @@ def test_protocol_v24_provider_qualification_is_frozen() -> None:
     ]
     assert result["snapshot"]["development_row_count"] == 1096
     assert result["historical_vintage_claim"] is False
+
+
+def test_protocol_v24_development_is_closed_without_confirmation() -> None:
+    payload = json.loads(
+        Path("docs/progress/phase-2-research-v24-development-results.json").read_text()
+    )
+
+    assert payload["recommendation"] == "stop_protocol_v24_no_confirmation_open"
+    assert payload["development_passer_count"] == 0
+    assert payload["confirmation_open_eligible_candidates"] == []

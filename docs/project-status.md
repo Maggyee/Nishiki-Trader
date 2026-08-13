@@ -1,7 +1,7 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-08-13 (Protocol v24 Fear and Greed qualified; signals/PnL sealed)
+- **Last updated**: 2026-08-13 (Protocol v24 Fear and Greed rejected; confirmation sealed)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
 - **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry and Protocol v2-v5 research identities are frozen. Protocol v5 curve carry and BVOL relief are rejected and the 2026-08..12 blind remains sealed. The provider/timer review is complete: v5 and completed v2 timers are `inactive/disabled`, v5 collector status is `archived`, and a four-day post-window audit found zero new invocations. The retained v5 tree is 13 snapshots / 13 Parquets with zero conflicts; v2 `COMPLETE`, ledger, deployment identity and all recorded checksums remain unchanged. Dashboard renders the archive as a valid terminal state with no retry or operations issue. Independent Protocol v6 remains `blocked_provider_qualification` on the official 12-row grid, with historical development closed.
   The human-reviewed `freqai_linear_v1 / linear-mom-train20240105` decision is now `demote @ paper_simulated` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. Its old testnet continuity evidence is archived and cannot authorize a restart. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
@@ -19,7 +19,7 @@
   Protocol v21 is closed at `blocked_provider_qualification`. Its one U.S. net-liquidity identity was frozen and pushed at `d9ec0e3` before historical access, but the first WALCL request timed out after 30 seconds before response headers/body. The sequential collector did not attempt WDTGAL or RRPONTSYD and wrote no snapshot, factor, signal, or PnL. The no-retry provider policy applies; development and confirmation remain unopened, and the strategy has no alpha verdict.
   Protocol v22 is complete with one confirmed survivor. DSPX is provider-rejected and SKEW relief is development-rejected. Unchanged COR1M implied-correlation relief passes independent 2023-2025 confirmation: gross/base/stress +41.704460/+29.737095/+26.745253 USDT, 2/3 positive years, exactly 18/36 positive months, 78 positions, and +14.242905 leave-best base PnL. Duplicate clean-git fills match with zero shorts, blockers, or no-kline hits. Its separate ADR-007 review records `hold @ paper_shadow` under `SourcePolicy(dry_run=True, position_pct_multiplier=0.2, min_confidence_override=None)`. The clean entry bundle accepts and dry-runs 141/141 historical signals with no orders, fills, rejections, gaps, or kill-switches. Forward progress is 0/7 qualified days and 0/50 new signals; no collector or scheduler is installed. The current-history/no-vintage limitation and future blind remain intact.
   Protocol v23 is complete with zero survivors. From freeze `7a1a123`, Bitcoin/Ethereum/Cryptocurrency user pageviews each qualified on 1,096 unfilled development days. Duplicate clean-git cash replays from `0b8c517` then reject all three attention-expansion rules: Bitcoin base/stress -38.528123/-41.147921 USDT with 1/3 years and 17/36 months; Ethereum gross +8.830440 but base/stress -0.754934/-3.151278 USDT; Cryptocurrency base/stress -25.213814/-27.703870 USDT. Fills match with zero shorts, blockers, or no-kline hits. Confirmation stays sealed. Do not retune or ensemble. Paper-shadow policies, SourcePolicy, testnet, live trading, and the future blind are unchanged.
-  Protocol v24 is provider-qualified. From freeze `1b5ff65`, the one locked `/fng/?limit=0` GET produced 1,096 unfilled development days from 2020-01-01 through 2022-12-31, 61 warmup days, a one-day maximum gap, and 1,319 later rows counted but unused. Snapshot `8488ecdf…` and factor `b7c66c31…` are recorded. Signals and PnL remain unopened. The study still makes no historical-vintage claim. Existing paper-shadow policies, SourcePolicy, testnet, live trading, and the future blind are unchanged.
+  Protocol v24 is complete with zero survivors. From freeze `1b5ff65`, the Fear and Greed series qualified on 1,096 unfilled development days. Duplicate clean-git cash replays from `7127677` then reject all three classification holds: Extreme Fear base/stress -9.876116/-10.883138 USDT (1/3 years, 8/36 months); Fear -28.166744/-28.646468 USDT; Non-greed -29.504746/-29.895812 USDT with only 24 positions. Fills match with zero shorts, blockers, or no-kline hits. Confirmation stays sealed. Do not retune, invent numeric cutoffs, or ensemble. Paper-shadow policies, SourcePolicy, testnet, live trading, and the future blind are unchanged.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -81,7 +81,7 @@ Detailed history archived so far:
 - `docs/progress/phase-2-research-protocol-v23.md` — Wikipedia pageview
   attention expansion; all three identities rejected on 2020-2022 development.
 - `docs/progress/phase-2-research-protocol-v24.md` — Crypto Fear and Greed
-  classification holds; historical body sealed until freeze is pushed.
+  classification holds; all three identities rejected on 2020-2022 development.
 - `docs/progress/phase-3-testnet-canary-evidence.md` — archived Phase 3 testnet canary evidence ledger.
 - `docs/progress/phase-3-testnet-continuity-plan.md` — archived 14-day testnet continuity procedure and review command.
 - `docs/progress/phase-5-dashboard-history.md` — completed read-only dashboard, AgentAdvice input, passive Phase 6 gate, and dashboard hardening history.
@@ -236,7 +236,7 @@ Immediate focus:
 17. Preserve v21's provider failure. Do not retry WALCL, attempt the remaining requests, substitute a provider, or infer strategy performance. Any later liquidity study requires a new frozen provider identity.
 18. Preserve v22's DSPX/SKEW rejects and confirmed COR1M identity at its reviewed `paper_shadow` policy. Do not retune, sign-flip, ensemble, count historical entry rows toward the forward gate, disable dry-run, install a schedule before collector review, or open the future blind.
 19. Preserve all three v23 rejects. Do not retune/sign-flip/ensemble Wikipedia attention expansion, reopen 2023-2025 pageviews, lower cost gates, or claim historical vintages.
-20. Preserve Protocol v24's qualified Fear and Greed snapshot. Do not retry alternative.me, invent numeric cutoffs, retune/sign-flip/ensemble the three classification holds, or use the 1,319 ignored later rows for development PnL.
+20. Preserve all three v24 rejects. Do not invent numeric Fear and Greed cutoffs, retune/sign-flip/ensemble the classification holds, reuse the ignored later rows, or open confirmation.
 
 ## Next Steps
 
@@ -268,7 +268,7 @@ Immediate focus:
     approval. Reach 7 qualified days or 50 genuinely new signals before a
     separate `paper_simulated` policy review.
 23. Keep Protocol v23 closed. Any later independent attention or pageview study needs a new identity frozen before data access; it may not continue these three fingerprints or open the future blind.
-24. From the committed v24 qualification, generate 2020-2022 signals for all three qualified identities and run two clean-git Nautilus cash replays each against the v7 downtime catalog. Do not open 2023-2025 Fear and Greed PnL.
+24. Keep Protocol v24 closed. Any later independent sentiment study needs a new identity frozen before data access; it may not continue these three fingerprints or open the future blind.
 
 ## Blocked / Deferred
 
@@ -307,12 +307,20 @@ Immediate focus:
 - No Protocol v23 reopen. All three Wikipedia attention-expansion identities
   failed development; confirmation, Wikimedia retry, sign flip, ensemble, and
   the future blind remain sealed.
-- No Protocol v24 confirmation opening, alternative.me retry, numeric cutoff
-  search, sign flip, or ensemble. Development signals/PnL may open only for
-  the three qualified classification holds; confirmation PnL and the future
-  blind remain sealed.
+- No Protocol v24 reopen. All three Fear and Greed classification holds failed
+  development; confirmation, numeric cutoff search, sign flip, ensemble, and
+  the future blind remain sealed.
 
 ## Latest Verification
+
+On 2026-08-13, after Protocol v24 development:
+
+- Six bundles from clean commit `7127677` reproduce pairwise with identical
+  fills, zero shorts, blockers, or verified no-kline event hits.
+- Extreme Fear hold base/stress is -9.876116/-10.883138 USDT (1/3 years,
+  8/36 months). Fear hold is -28.166744/-28.646468 USDT. Non-greed hold is
+  -29.504746/-29.895812 USDT with 24 positions.
+- All three are rejected. Confirmation remains sealed.
 
 On 2026-08-13, after Protocol v24 provider qualification:
 

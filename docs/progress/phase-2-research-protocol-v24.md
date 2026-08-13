@@ -1,6 +1,6 @@
 # Phase 2 Research Protocol v24
 
-- **Status**: provider-qualified; 2020-2022 signals and PnL still sealed.
+- **Status**: development complete; all three candidates rejected; confirmation sealed.
 - **Mechanisms**: official Crypto Fear and Greed `value_classification` holds.
 - **Development**: 2020-01-01 through 2022-12-31.
 - **Confirmation**: 2023-01-01 through 2025-12-31, sealed.
@@ -55,3 +55,11 @@ unfilled observations from 2020-01-01 through 2022-12-31, 61 warmup rows, a
 one-day maximum gap, and 1,319 later rows counted but unused. Machine hashes
 live in `docs/progress/phase-2-research-v24-provider-qualification.json`.
 Signals and PnL remain unopened.
+
+## Development review
+
+All three identities fail frozen 2020-2022 gates. Duplicate fills match, with
+zero shorts, blockers, or verified no-kline hits. Extreme Fear and Fear holds
+are negative after costs and fail year/month breadth. Non-greed is also
+undersampled at 24 positions. Zero candidates may open confirmation. Machine
+results live in `docs/progress/phase-2-research-v24-development-results.json`.
