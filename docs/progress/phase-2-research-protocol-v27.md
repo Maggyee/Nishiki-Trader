@@ -1,8 +1,8 @@
 # Phase 2 Research Protocol v27
 
-- **Status**: provider qualification complete; development PnL unopened.
+- **Status**: closed; all three all-chain fee/revenue identities development-rejected.
 - **Mechanisms**: DefiLlama all-chain daily fees, revenue, and holder revenue expansion.
-- **Development**: 2020-01-01 through 2022-12-31; signals and PnL unopened.
+- **Development**: 2020-01-01 through 2022-12-31; complete with zero passers.
 - **Confirmation**: sealed.
 - **Future blind**: sealed.
 - **Trading effect**: none.
@@ -35,8 +35,15 @@ From freeze `fd565b4`, each URL was opened once. All three series qualify on
 1,096 unfilled development observations, 61 warmup rows, a one-day maximum
 gap, and 1,321 ignored later rows.
 
+## Development outcome
+
+Two clean replays per candidate from `66a725e` reproduce with identical fills
+and no evidence blockers. All-chain fees expansion is cost-positive but fails
+leave-best concentration. Revenue fails base/stress and leave-best.
+Holder-revenue also fails monthly breadth. Zero candidates may open 2023-2025
+confirmation. Do not retune, sign-flip, or ensemble.
+
 ## Gates and progression
 
-Unchanged development gates. A development passer may only enter a separately
-frozen 2023-2025 confirmation contract. Existing paper-shadow collectors,
-SourcePolicy, testnet, live trading, and the future blind stay untouched.
+Unchanged development gates. Existing paper-shadow collectors, SourcePolicy,
+testnet, live trading, and the future blind stay untouched.

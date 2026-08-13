@@ -1,0 +1,162 @@
+{
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_confirmation": false,
+    "opens_future_blind": false,
+    "resumes_testnet": false,
+    "touches_live_path": false
+  },
+  "candidates": [
+    {
+      "base_net_pnl": 9.206059328000002,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:eb779b923c5fd70e2f54d8d367724cef8dad57cdd94b299c7cac2fce2119e81d",
+          "manifest_sha256": "sha256:41a365048a72cc0e4910a4663b3da7f2d2a942f6210635565b807247f2b3c676",
+          "path": "data/research-v27/backtests/20260813-090533Z-67826dab"
+        },
+        {
+          "fills_sha256": "sha256:eb779b923c5fd70e2f54d8d367724cef8dad57cdd94b299c7cac2fce2119e81d",
+          "manifest_sha256": "sha256:de245f10472751f644778b0a8edb584155c4db7fbc447230604bd4708b84c0d0",
+          "path": "data/research-v27/backtests/20260813-090537Z-2d301298"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "reject_candidate",
+      "closed_positions": 171,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [
+        "leave_best_base_net_pnl_not_positive"
+      ],
+      "gross_net_pnl": 21.073880000000003,
+      "key": "all_fees_expansion",
+      "leave_best_base_net_pnl": -1.6395128919999973,
+      "model_version": "defillama-all-fees-diff5-positive-lag2d-v1",
+      "performance_pass": false,
+      "positive_months": 19,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 341,
+      "signal_store_sha256": "sha256:df75a1af7cb073f42710b5c8c0360f5fa7353e735c1e017fd57470c0bf0cf6cb",
+      "source": "rule_defillama_all_fees_expansion_v1",
+      "stress_net_pnl": 6.239104160000001,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 7.746806886,
+        "2021": 24.706378493999992,
+        "2022": -23.247126052
+      }
+    },
+    {
+      "base_net_pnl": -1.8929597120000063,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:41025d30a0232e04ea15d0a1ebc4cb8dfb6ad0724c6881834962f7e76167af8e",
+          "manifest_sha256": "sha256:23dd8f34130d2e6cbcba042e7fe4cd1205b5e9d5a2e1aedfb6a14e46f886955f",
+          "path": "data/research-v27/backtests/20260813-090541Z-f533e27a"
+        },
+        {
+          "fills_sha256": "sha256:41025d30a0232e04ea15d0a1ebc4cb8dfb6ad0724c6881834962f7e76167af8e",
+          "manifest_sha256": "sha256:e12df7b8529656c34ab7da1fe2bf495a69399b3feea7e25bc4121ba9186d601f",
+          "path": "data/research-v27/backtests/20260813-090545Z-a3a06cc4"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "reject_candidate",
+      "closed_positions": 163,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [
+        "base_net_pnl_not_positive",
+        "stress_net_pnl_not_positive",
+        "leave_best_base_net_pnl_not_positive"
+      ],
+      "gross_net_pnl": 9.004959999999993,
+      "key": "all_revenue_expansion",
+      "leave_best_base_net_pnl": -14.005060272,
+      "model_version": "defillama-all-revenue-diff5-positive-lag2d-v1",
+      "performance_pass": false,
+      "positive_months": 18,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 326,
+      "signal_store_sha256": "sha256:3ca7c368a28aa40794330e4b651e9ecc7e2a743b29cae96db48e9ac92b92a74a",
+      "source": "rule_defillama_all_revenue_expansion_v1",
+      "stress_net_pnl": -4.617439640000006,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 9.754067728000003,
+        "2021": 14.249437987999995,
+        "2022": -25.896465428
+      }
+    },
+    {
+      "base_net_pnl": -1.939505695999996,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:f28f1271cec908936a98d44abca6b78704d0dd442b4bff071d54a04129f69f09",
+          "manifest_sha256": "sha256:e1f8ec7f16a74a45fa6368a7f773c85f37c593496eebfbf88b36e249b0b8b9b5",
+          "path": "data/research-v27/backtests/20260813-090549Z-3d66ac2e"
+        },
+        {
+          "fills_sha256": "sha256:f28f1271cec908936a98d44abca6b78704d0dd442b4bff071d54a04129f69f09",
+          "manifest_sha256": "sha256:f97f23c5968b73b27b09e5500ce7a8a3121cd349d96318db8af3db9c10d53b40",
+          "path": "data/research-v27/backtests/20260813-090553Z-e798ba43"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "reject_candidate",
+      "closed_positions": 160,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [
+        "base_net_pnl_not_positive",
+        "stress_net_pnl_not_positive",
+        "positive_months_14_below_18",
+        "leave_best_base_net_pnl_not_positive"
+      ],
+      "gross_net_pnl": 11.725780000000002,
+      "key": "all_holders_revenue_expansion",
+      "leave_best_base_net_pnl": -9.864194728000003,
+      "model_version": "defillama-all-holders-revenue-diff5-positive-lag2d-v1",
+      "performance_pass": false,
+      "positive_months": 14,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 320,
+      "signal_store_sha256": "sha256:58bae4676c49bf390de66d01e35e41517f98a55c478ccceca88676e4b308dc01",
+      "source": "rule_defillama_all_holders_revenue_expansion_v1",
+      "stress_net_pnl": -5.355827119999995,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 8.65333196,
+        "2021": 20.1531656,
+        "2022": -30.746003256000005
+      }
+    }
+  ],
+  "confirmation_holdout_status": "sealed_not_opened_no_development_passer",
+  "confirmation_open_eligible_candidates": [],
+  "development_passer_count": 0,
+  "future_blind_status": "sealed_unopened",
+  "protocol_sha256": "sha256:036ec88805625590bb17a839adadbc7fe7d26247a800581eed2ee2d553a80aed",
+  "provider_qualification": {
+    "historical_vintage_claim": false,
+    "qualified_candidates": [
+      "all_fees_expansion",
+      "all_revenue_expansion",
+      "all_holders_revenue_expansion"
+    ],
+    "rejected_candidates": {}
+  },
+  "recommendation": "stop_protocol_v27_no_confirmation_open",
+  "schema_version": "research.v27.development_results.v1"
+}
