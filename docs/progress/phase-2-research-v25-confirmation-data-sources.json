@@ -1,0 +1,39 @@
+{
+  "audit": {
+    "annual_row_counts": {
+      "2023": 365,
+      "2024": 366,
+      "2025": 365
+    },
+    "confirmation_row_count": 1096,
+    "first_date": "2023-01-01",
+    "forward_fill_used": false,
+    "interpolation_used": false,
+    "last_date": "2025-12-31",
+    "maximum_calendar_gap_days": 1,
+    "trailing_rows_ignored": 225,
+    "warmup_rows": 61
+  },
+  "boundaries": {
+    "future_blind_opened": false,
+    "network_accessed": false,
+    "pnl_opened": false,
+    "returns_computed": false,
+    "source_policy_mutated": false,
+    "trading_touched": false
+  },
+  "classification": "provider_qualified",
+  "contract_sha256": "sha256:042870d02e6990ba5333d2832ace446c4c8da7b56f56311036b5997acc541b22",
+  "factor": {
+    "path": "data/research-v25/confirmation/factors/all_chains.csv",
+    "row_count": 1157,
+    "sha256": "sha256:32aa36e6e3fce0ea5742611b68554307fa7389909f3c81ef8e4a98b7829d34e7"
+  },
+  "historical_vintage_claim": false,
+  "schema_version": "research.v25.confirmation_data.v1",
+  "source_snapshot": {
+    "path": "data/research-v25/raw/all_chains-20260813T062933Z-3554a6973137.json",
+    "snapshot_sha256": "sha256:3554a69731376e489d074cc110555bd11c85ce8ed664401470034135751530fe",
+    "vintage_id": "defillama-all_chains:2026-08-13T06:29:33.772256+00:00:3554a6973137"
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_future_blind": false,
+    "resumes_testnet": false,
+    "touches_live_path": false
+  },
+  "candidate": {
+    "base_net_pnl": 9.738210476000003,
+    "bundle_runs": [
+      {
+        "fills_sha256": "sha256:64b28e2b91c19bb6b551859de41e41ca860df0a5eba11ad55602e91d2dadf614",
+        "manifest_sha256": "sha256:d1a82e76c5e32b5e9f74f5c4fe70cdcd750bf2ac496b90f24432193c5077ee97",
+        "path": "data/research-v25/confirmation/backtests/20260813-070627Z-97347168"
+      },
+      {
+        "fills_sha256": "sha256:64b28e2b91c19bb6b551859de41e41ca860df0a5eba11ad55602e91d2dadf614",
+        "manifest_sha256": "sha256:776a4b7ac5b734c1e4eb53c50721904da15961d795d69685a902a63da183f77e",
+        "path": "data/research-v25/confirmation/backtests/20260813-070631Z-3a955c08"
+      }
+    ],
+    "calendar_months": 36,
+    "classification": "reject_candidate",
+    "closed_positions": 115,
+    "duplicate_replays": 2,
+    "effective_blockers": [],
+    "evidence_pass": true,
+    "gross_net_pnl": 27.94901,
+    "key": "all_chains_tvl_expansion",
+    "leave_best_base_net_pnl": -12.753345984000005,
+    "model_version": "defillama-all-chains-tvl-diff5-positive-lag2d-v1",
+    "performance_pass": false,
+    "positive_months": 14,
+    "positive_years": 2,
+    "reproducible": true,
+    "short_positions": 0,
+    "signal_count": 229,
+    "signal_store_sha256": "08278a5a3752926d44c4cdea85311db94ccd1522a63c69ef5da73d9b26d91006",
+    "source": "rule_defillama_all_chains_tvl_expansion_v1",
+    "stress_net_pnl": 5.185510595000003,
+    "verified_no_kline_event_hits": [],
+    "yearly_base_net_pnl": {
+      "2023": 12.177330630000002,
+      "2024": 26.995276454000003,
+      "2025": -29.434396608000004
+    }
+  },
+  "contract_sha256": "sha256:042870d02e6990ba5333d2832ace446c4c8da7b56f56311036b5997acc541b22",
+  "data_qualification": {
+    "classification": "provider_qualified",
+    "confirmation_row_count": 1096,
+    "factor_sha256": "sha256:32aa36e6e3fce0ea5742611b68554307fa7389909f3c81ef8e4a98b7829d34e7",
+    "historical_vintage_claim": false,
+    "snapshot_sha256": "sha256:3554a69731376e489d074cc110555bd11c85ce8ed664401470034135751530fe"
+  },
+  "future_blind_status": "sealed_unopened",
+  "recommendation": "stop_protocol_v25_confirmation_failed",
+  "schema_version": "research.v25.confirmation_results.v1"
+}

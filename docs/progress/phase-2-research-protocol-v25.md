@@ -1,9 +1,9 @@
 # Phase 2 Research Protocol v25
 
-- **Status**: development complete; all-chain TVL expansion is confirmation-open eligible; Ethereum rejected; Bitcoin provider-rejected.
+- **Status**: closed; Bitcoin provider-rejected, Ethereum development-rejected, all-chain TVL failed confirmation.
 - **Mechanisms**: DefiLlama historical chain TVL expansion.
 - **Development**: 2020-01-01 through 2022-12-31.
-- **Confirmation**: 2023-01-01 through 2025-12-31, sealed until this confirmation freeze is pushed.
+- **Confirmation**: 2023-01-01 through 2025-12-31, complete; identity rejected.
 - **Future blind**: sealed.
 - **Trading effect**: none.
 
@@ -54,3 +54,11 @@ review `342a0e3`. Confirmation values, returns, and PnL stay unopened until
 this freeze is on `origin/main`. No new DefiLlama GET is allowed; post-2025
 rows in the captured snapshot are counted and ignored. Ethereum and Bitcoin
 identities stay closed.
+
+## Confirmation outcome
+
+Two clean replays from `0bb16d3` reproduce with identical fills and no
+evidence blockers. All-chain TVL expansion is rejected on 2023-2025:
+gross/base/stress +27.949010/+9.738210/+5.185511 USDT, 2/3 years, 14/36
+months versus 18 required, 115 positions, and -12.753346 leave-best base PnL.
+It cannot enter ADR-007 or `paper_shadow`. Do not retune this identity.
