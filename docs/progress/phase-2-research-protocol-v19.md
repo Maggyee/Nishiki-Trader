@@ -91,3 +91,16 @@ After this contract is committed and pushed, confirmation data may be
 qualified from the existing immutable snapshot. Passing confirmation creates
 only separate ADR-007 `paper_shadow` review eligibility; it does not mutate a
 policy, authorize orders, or open the future blind.
+
+## Confirmation data outcome
+
+The locked snapshot supplies 752 unfilled confirmation observations: 250 in
+2023, 252 in 2024, and 250 in 2025. Coverage runs from 2023-01-03 through
+2025-12-31 with a maximum four-calendar-day gap. Forty-two late-2022 rows are
+used only as indicator warmup. Export used no network request, forward fill,
+return calculation, or future-blind access.
+
+The immutable factor fingerprint is recorded in
+`docs/progress/phase-2-research-v19-confirmation-data-sources.json`. Signal
+generation and confirmation PnL remain sealed until that qualification is
+committed and pushed.
