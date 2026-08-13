@@ -64,6 +64,8 @@ Current Phase 3 progress files:
 - `phase-2-research-protocol-v26.md` freezes three DefiLlama DEX-volume
   expansion identities. Solana failed provider qualification; all-DEX and
   Ethereum failed 2020-2022 development, closing v26.
+- `phase-2-research-protocol-v27.md` freezes three DefiLlama all-chain
+  protocol-fee identities before any historical fee JSON body is opened.
 
 - `phase-3-testnet-canary-evidence.md` records the testnet session ledger and
   bundle evidence summary.

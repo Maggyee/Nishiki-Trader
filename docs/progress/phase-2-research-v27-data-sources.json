@@ -1,0 +1,50 @@
+{
+  "schema_version": "research.data_sources.v27",
+  "status": "locked_before_defillama_fee_body_access",
+  "provider": "DefiLlama Free API",
+  "authentication": "none",
+  "documentation_url": "https://api-docs.defillama.com/",
+  "user_agent": "Nishiki-Trader/research-v27",
+  "requests": [
+    {
+      "kind": "daily_fees",
+      "data_type": "dailyFees",
+      "url": "https://api.llama.fi/overview/fees?excludeTotalDataChart=false&excludeTotalDataChartBreakdown=true&dataType=dailyFees"
+    },
+    {
+      "kind": "daily_revenue",
+      "data_type": "dailyRevenue",
+      "url": "https://api.llama.fi/overview/fees?excludeTotalDataChart=false&excludeTotalDataChartBreakdown=true&dataType=dailyRevenue"
+    },
+    {
+      "kind": "daily_holders_revenue",
+      "data_type": "dailyHoldersRevenue",
+      "url": "https://api.llama.fi/overview/fees?excludeTotalDataChart=false&excludeTotalDataChartBreakdown=true&dataType=dailyHoldersRevenue"
+    }
+  ],
+  "request_policy": {"method": "GET", "maximum_body_openings_per_kind": 1, "retry_allowed": false},
+  "locked_response": {
+    "root": "object",
+    "required_root_fields": ["totalDataChart"],
+    "chart_item": "[unix_seconds, amount]",
+    "date_encoding": "unix_seconds",
+    "timestamp_hour_utc": "00",
+    "value_field": "amount"
+  },
+  "coverage_gates": {
+    "warmup_start": "2019-11-01",
+    "development_start": "2020-01-01",
+    "development_end": "2022-12-31",
+    "minimum_development_observations": 700,
+    "minimum_warmup_observations": 5,
+    "first_development_observation_no_later_than": "2020-01-03",
+    "last_development_observation_no_earlier_than": "2022-12-29",
+    "maximum_calendar_gap_days": 5,
+    "forward_fill_allowed": false,
+    "interpolation_allowed": false,
+    "confirmation_values_unused": true
+  },
+  "body_range_note": "The official overview/fees endpoint has no start/end filter. One current-history GET per dataType is required. excludeTotalDataChart is false so the aggregated chart is present; excludeTotalDataChartBreakdown is true to omit protocol breakdown. Rows after 2022-12-31 may exist in the raw body and are counted but not written to the development factor or used for signals or PnL.",
+  "failure_policy": "Qualify or reject each kind independently. A failed kind is not retried or substituted and cannot generate signals or PnL; other pre-registered kinds may still be requested once.",
+  "historical_vintage_claim": false
+}
