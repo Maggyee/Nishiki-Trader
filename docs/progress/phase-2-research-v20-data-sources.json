@@ -1,0 +1,57 @@
+{
+  "schema_version": "research.data_sources.v20",
+  "frozen_at": "2026-08-13T03:39:33Z",
+  "status": "locked_before_ofr_fsi_body_access",
+  "provider": "Office of Financial Research Financial Stress Index",
+  "authentication": "none",
+  "official_page": "https://www.financialresearch.gov/financial-stress-index/",
+  "official_indicator_page": "https://www.financialresearch.gov/financial-stress-index/files/indicators/",
+  "frontend_schema_evidence": "https://www.financialresearch.gov/assets/js/fsi/fsi-indicator.js",
+  "request": {
+    "method": "GET",
+    "url": "https://www.financialresearch.gov/financial-stress-index/data/fsi.json",
+    "maximum_body_openings": 1,
+    "expected_content_type": "application/json",
+    "required_series": ["OFRFSI", "Credit", "Flight_to_Safety"],
+    "series_fields": ["name", "data"],
+    "point_shape": ["epoch_ms", "finite_numeric_value"]
+  },
+  "head_metadata_observed_before_freeze": {
+    "http_status": 200,
+    "content_type": "application/json",
+    "content_length": 3299819,
+    "accept_ranges": "bytes",
+    "last_modified": "Wed, 12 Aug 2026 14:00:18 GMT",
+    "etag": "74bba481f810df63d616daa10f3246f8"
+  },
+  "coverage_gates": {
+    "warmup_start": "2019-11-01",
+    "development_start": "2020-01-01",
+    "development_end": "2022-12-31",
+    "minimum_development_observations": 700,
+    "first_development_observation_no_later_than": "2020-01-03",
+    "last_development_observation_no_earlier_than": "2022-12-29",
+    "maximum_calendar_gap_days": 5,
+    "common_timestamps_required": true,
+    "forward_fill_allowed": false
+  },
+  "point_in_time_contract": {
+    "observation": "official daily OFR FSI or component value",
+    "available_at": "observation UTC date plus five calendar days at 00:00 UTC",
+    "decision_ts_event": "available_at",
+    "historical_vintage_claim": false,
+    "revision_handling": "retain exact response bytes and hashes; forward collection fails closed on any historical revision",
+    "missing_sessions": "require common timestamps across all three series; no fill"
+  },
+  "boundaries": {
+    "credentials_loaded": false,
+    "source_policy_mutated": false,
+    "testnet_resumed": false,
+    "live_path_touched": false,
+    "json_body_opened": false,
+    "csv_body_opened": false,
+    "touches_existing_paper_shadow": false,
+    "opens_confirmation": false,
+    "opens_future_blind": false
+  }
+}

@@ -37,6 +37,8 @@ Current Phase 3 progress files:
 - `phase-2-research-protocol-v19.md` records the locked RVX/VXD/VXFXI batch:
   RVX and VXD qualified for development while VXFXI failed the frozen coverage
   gate without retry.
+- `phase-2-research-protocol-v20.md` locks three OFR financial-stress relief
+  mechanisms with a D+5 availability lag before opening the official data body.
 
 - `phase-3-testnet-canary-evidence.md` records the testnet session ledger and
   bundle evidence summary.
