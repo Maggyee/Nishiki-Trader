@@ -3,7 +3,7 @@
 - **Frozen**: 2026-08-13 before opening any v18 Cboe CSV body.
 - **Machine contract**: `docs/progress/phase-2-research-protocol-v18.json`
 - **Provider contract**: `docs/progress/phase-2-research-v18-data-sources.json`
-- **Status**: pre-registered; implementation and synthetic validation only.
+- **Status**: provider qualified; development values and PnL unopened.
 - **Trading effect**: none.
 
 ## Why this recovery is separate
@@ -41,3 +41,10 @@ v16 paper shadow, SourcePolicy, testnet, and live trading stay untouched.
 
 The pre-access contract must be committed and pushed before any v18 CSV body
 is downloaded.
+
+## Provider outcome
+
+All three OHLC histories qualified from clean pushed commit `77afac1`. Reserve
+coverage is 755/755/758 unfilled observations for VXEEM/VXEFA/VXN through
+2022-12-30. No signal or PnL was opened. See
+`docs/retros/2026-08-13-research-v18-provider-qualification.md`.

@@ -1,0 +1,45 @@
+{
+  "schema_version": "research.v18.provider_qualification.v1",
+  "protocol_sha256": "sha256:62878d75fba9f2073243fa16504700c1f18b0e51d9a79a42cbcff4ee91a2ce39",
+  "clean_commit_before_access": "77afac1",
+  "classification": "provider_qualified",
+  "development_status": "not_opened",
+  "confirmation_status": "sealed_unopened",
+  "future_blind_status": "sealed_unopened",
+  "snapshots": {
+    "vxeem": {
+      "path": "data/research-v18/raw/vxeem-20260813T023343Z-c48245b48350.json",
+      "snapshot_sha256": "sha256:c48245b483508506fcb3814aefe2414d2a8c4a40ea36e40edc3c03371e6bd08a",
+      "vintage_id": "cboe-vxeem:2026-08-13T02:33:43.907199+00:00:c48245b48350",
+      "reserve_row_count": 755,
+      "reserve_first_date": "2020-01-02",
+      "reserve_last_date": "2022-12-30"
+    },
+    "vxefa": {
+      "path": "data/research-v18/raw/vxefa-20260813T023344Z-b180b9e0c7d4.json",
+      "snapshot_sha256": "sha256:b180b9e0c7d424b4950aad9f374d2c976adcd47fa69764fca16c97811463ec12",
+      "vintage_id": "cboe-vxefa:2026-08-13T02:33:44.439191+00:00:b180b9e0c7d4",
+      "reserve_row_count": 755,
+      "reserve_first_date": "2020-01-02",
+      "reserve_last_date": "2022-12-30"
+    },
+    "vxn": {
+      "path": "data/research-v18/raw/vxn-20260813T023345Z-7a92d57150d8.json",
+      "snapshot_sha256": "sha256:7a92d57150d8be506a15ad14c9af21fd40c85834d78cd7541666b0d9de0d84d1",
+      "vintage_id": "cboe-vxn:2026-08-13T02:33:45.659939+00:00:7a92d57150d8",
+      "reserve_row_count": 758,
+      "reserve_first_date": "2020-01-02",
+      "reserve_last_date": "2022-12-30"
+    }
+  },
+  "forward_fill_used": false,
+  "signals_generated": false,
+  "pnl_opened": false,
+  "boundaries": {
+    "retries_v17_identity": false,
+    "reopens_v7_or_v9": false,
+    "touches_v8_or_v16_shadow": false,
+    "loads_credentials": false,
+    "touches_live_path": false
+  }
+}
