@@ -57,7 +57,8 @@ Current Phase 3 progress files:
   Greed classification holds. The shared series qualified, then all three
   failed 2020-2022 development gates; confirmation remains sealed.
 - `phase-2-research-protocol-v25.md` freezes three DefiLlama TVL-expansion
-  identities before any historical TVL JSON body is opened.
+  identities. All-chain and Ethereum TVL qualified; Bitcoin-chain TVL failed
+  the 700-observation development-reserve gate after one GET.
 
 - `phase-3-testnet-canary-evidence.md` records the testnet session ledger and
   bundle evidence summary.

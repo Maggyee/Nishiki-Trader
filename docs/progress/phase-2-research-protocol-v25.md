@@ -1,6 +1,6 @@
 # Phase 2 Research Protocol v25
 
-- **Status**: pre-registered; DefiLlama TVL JSON bodies sealed.
+- **Status**: all-chain and Ethereum TVL qualified; Bitcoin TVL provider-rejected; development PnL unopened.
 - **Mechanisms**: DefiLlama historical chain TVL expansion.
 - **Development**: 2020-01-01 through 2022-12-31.
 - **Confirmation**: sealed.

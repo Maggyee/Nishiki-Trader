@@ -1,0 +1,61 @@
+{
+  "schema_version": "research.v25.provider_qualification.v1",
+  "classification": "partially_provider_qualified",
+  "protocol_sha256": "sha256:9f4d5bd27fcb9520970d343a605e73bd0d0fb5084b3701b6bb0d6b4fb60d0409",
+  "provider_contract_sha256": "sha256:823343c77aa315fbf59b008df7287098840f326683448cf1aabd857d4915c1cc",
+  "pre_data_commit": "c69f579",
+  "qualified_candidates": [
+    "all_chains_tvl_expansion",
+    "ethereum_tvl_expansion"
+  ],
+  "rejected_candidates": {
+    "bitcoin_tvl_expansion": "development_reserve_only_652_observations"
+  },
+  "qualified_series": {
+    "all_chains": {
+      "snapshot_path": "data/research-v25/raw/all_chains-20260813T062933Z-3554a6973137.json",
+      "snapshot_sha256": "sha256:3554a69731376e489d074cc110555bd11c85ce8ed664401470034135751530fe",
+      "factor_path": "data/research-v25/factors/all_chains.csv",
+      "factor_sha256": "sha256:33c4433621c9205f278df1537ccf602906db87e10d23ff5305a3aee64be16067",
+      "factor_row_count": 1157,
+      "development_row_count": 1096,
+      "warmup_row_count": 61,
+      "development_first_date": "2020-01-01",
+      "development_last_date": "2022-12-31",
+      "maximum_calendar_gap_days": 1,
+      "trailing_rows_ignored": 1321
+    },
+    "ethereum": {
+      "snapshot_path": "data/research-v25/raw/ethereum-20260813T062949Z-9747eb889816.json",
+      "snapshot_sha256": "sha256:9747eb88981614bbd95ff4e79b0e05eed3c463ea1a8986bb37e1547c1f2dbc7f",
+      "factor_path": "data/research-v25/factors/ethereum.csv",
+      "factor_sha256": "sha256:e40ac7c4a50bf60c3e88098356508bddeb02bcb2315a934a21bc58ef5256193b",
+      "factor_row_count": 1157,
+      "development_row_count": 1096,
+      "warmup_row_count": 61,
+      "development_first_date": "2020-01-01",
+      "development_last_date": "2022-12-31",
+      "maximum_calendar_gap_days": 1,
+      "trailing_rows_ignored": 1321
+    }
+  },
+  "rejected_series": {
+    "bitcoin": {
+      "request_opened_once": true,
+      "snapshot_written": false,
+      "factor_written": false,
+      "failure": "bitcoin development reserve has only 652 observations",
+      "retry_allowed": false
+    }
+  },
+  "historical_vintage_claim": false,
+  "boundaries": {
+    "signals_generated": false,
+    "pnl_opened": false,
+    "confirmation_opened": false,
+    "confirmation_values_used": false,
+    "source_policy_mutated": false,
+    "trading_touched": false,
+    "future_blind_opened": false
+  }
+}
