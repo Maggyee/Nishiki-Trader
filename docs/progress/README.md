@@ -80,6 +80,8 @@ Current Phase 3 progress files:
   identities on silver ETF (VXSLV), energy-sector ETF (VXXLE), and
   long-duration Treasury ETF (VXTLT). VXSLV and VXXLE failed coverage;
   VXTLT failed 2020-2022 development, closing v31.
+- `phase-2-research-protocol-v32.md` freezes three Cboe/CME FX implied-vol
+  relief identities (EUVIX, JYVIX, BPVIX) before any historical CSV body is opened.
 
 - `phase-3-testnet-canary-evidence.md` records the testnet session ledger and
   bundle evidence summary.

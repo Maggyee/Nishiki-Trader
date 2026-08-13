@@ -1,7 +1,7 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-08-13 (Protocol v31 long-Treasury ETF vol relief failed development)
+- **Last updated**: 2026-08-13 (Protocol v32 Cboe FX vol pre-registered)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
 - **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry and Protocol v2-v5 research identities are frozen. Protocol v5 curve carry and BVOL relief are rejected and the 2026-08..12 blind remains sealed. The provider/timer review is complete: v5 and completed v2 timers are `inactive/disabled`, v5 collector status is `archived`, and a four-day post-window audit found zero new invocations. The retained v5 tree is 13 snapshots / 13 Parquets with zero conflicts; v2 `COMPLETE`, ledger, deployment identity and all recorded checksums remain unchanged. Dashboard renders the archive as a valid terminal state with no retry or operations issue. Independent Protocol v6 remains `blocked_provider_qualification` on the official 12-row grid, with historical development closed.
   The human-reviewed `freqai_linear_v1 / linear-mom-train20240105` decision is now `demote @ paper_simulated` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. Its old testnet continuity evidence is archived and cannot authorize a restart. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
@@ -27,6 +27,7 @@
   Protocol v29 is closed with zero survivors. From freeze `4e15d2d`, Federal_Reserve/Inflation/Recession user pageviews each qualified on 1,096 unfilled development days. Duplicate clean-git cash replays from `a19c207` then reject all three attention-relief rules: Fed base/stress -5.226623/-8.097119 USDT; Inflation -17.588427/-20.471992 USDT; Recession +11.952139/+9.071884 USDT with 23/36 months and positive leave-best but only 1/3 positive years. Fills match with zero shorts, blockers, or no-kline hits. Confirmation stays sealed. Do not retune, substitute articles, or ensemble. Paper-shadow policies, SourcePolicy, testnet, live trading, and the future blind are unchanged.
   Protocol v30 is closed with zero survivors. Apple vol relief fails leave-best in development. Amazon fails monthly breadth. Unchanged Google/Alphabet VXGOG relief passed 2020-2022, then failed independently frozen 2023-2025 confirmation: gross/base/stress +18.235660/+5.161518/+1.892982 USDT, 2/3 years, 21/36 positive months, 92 positions, and -10.350719 leave-best base PnL. Duplicate fills from `69fa1a9` match with no shorts, blockers, or no-kline hits. It cannot enter ADR-007 or `paper_shadow`. Do not retune or ensemble. Paper-shadow policies, SourcePolicy, testnet, live trading, and the future blind are unchanged.
   Protocol v31 is closed with zero survivors. VXSLV and VXXLE are provider-rejected on coverage. Unchanged VXTLT five-observation relief fails 2020-2022 development on duplicate clean-git cash replays from `d5eeb39`: gross/base/stress -1.485800/-7.758932/-9.327215 USDT, 1/3 years, 20/36 months, 89 positions, and -15.814085 leave-best base PnL. Fills match with no shorts, blockers, or no-kline hits. Confirmation stays sealed. Do not retune or ensemble. Paper-shadow policies, SourcePolicy, testnet, live trading, and the future blind are unchanged.
+  Protocol v32 is pre-registered and unopened. It locks three five-observation FX implied-vol relief identities on Cboe EUVIX, JYVIX, and BPVIX. Official product pages were inspected; no `*_History.csv` body, factor, signal, or PnL is opened until this freeze is committed and pushed. Each kind may be fetched once. Confirmation and the future blind remain sealed.
 - **Source of truth**: This file for current state; ADRs for durable decisions; `docs/progress/` for detailed historical progress.
 
 This file answers: "Where is the project now, and what should the next agent do?"
@@ -103,6 +104,8 @@ Detailed history archived so far:
   relief; protocol closed after Google/Alphabet confirmation leave-best failure.
 - `docs/progress/phase-2-research-protocol-v31.md` — Cboe silver/energy/long-Treasury
   ETF implied-vol relief; protocol closed after VXTLT development cost/year failure.
+- `docs/progress/phase-2-research-protocol-v32.md` — Cboe FX implied-vol relief;
+  frozen before CSV-body access.
 - `docs/progress/phase-3-testnet-canary-evidence.md` — archived Phase 3 testnet canary evidence ledger.
 - `docs/progress/phase-3-testnet-continuity-plan.md` — archived 14-day testnet continuity procedure and review command.
 - `docs/progress/phase-5-dashboard-history.md` — completed read-only dashboard, AgentAdvice input, passive Phase 6 gate, and dashboard hardening history.
@@ -302,6 +305,7 @@ Immediate focus:
 30. Continue alpha exploration only through a genuinely independent, pre-registered protocol. Do not retune Cboe vol identities already at `paper_shadow`, VIX tenor retries forbidden by v19, DefiLlama expansion, Wikipedia attention, or v30 mega-cap names.
 31. Keep Protocol v31 closed. Any later independent commodity, sector, or duration vol study needs a new identity frozen before data access; it may not continue these three fingerprints, retry VXSLV/VXXLE, retune VXTLT, or open the future blind.
 32. Continue alpha exploration only through a genuinely independent, pre-registered protocol. Do not retune Cboe vol identities already at `paper_shadow`, VIX tenor retries forbidden by v19, DefiLlama expansion, Wikipedia attention, v30 mega-cap names, or v31 VXTLT.
+33. After Protocol v32 is committed and pushed, open each locked Cboe FX CSV once for provider qualification. Do not inspect values for PnL, retune lookbacks, or substitute indices. Keep confirmation and the future blind sealed.
 
 ## Blocked / Deferred
 
@@ -367,6 +371,14 @@ Immediate focus:
   the future blind remain sealed.
 
 ## Latest Verification
+
+On 2026-08-13, after Protocol v32 pre-registration:
+
+- Official Cboe historical-data and EUVIX/JYVIX/BPVIX identity pages were
+  inspected. No historical CSV body, close value, signal, or PnL was opened.
+- The contract locks Euro, Yen, and Pound FX five-observation implied-vol
+  relief, a one-calendar-day lag, one GET per index, unused post-2022 rows,
+  the v7 downtime catalog, and no historical-vintage claim.
 
 On 2026-08-13, after Protocol v31 development:
 
