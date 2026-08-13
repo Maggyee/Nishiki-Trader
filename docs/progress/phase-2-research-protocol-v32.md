@@ -1,7 +1,7 @@
 # Phase 2 Research Protocol v32
 
-- **Status**: pre-registered; BPVIX provider-qualified; EUVIX and JYVIX
-  coverage-rejected; no signal or PnL opened.
+- **Status**: closed; EUVIX and JYVIX coverage-rejected; BPVIX
+  development-rejected.
 - **Mechanisms**: Cboe/CME FX Euro, Yen, and Pound 30-day implied-vol relief
   (EUVIX, JYVIX, BPVIX).
 - **Development**: 2020-01-01 through 2022-12-31; unopened.
@@ -50,3 +50,10 @@ stop at 2022-12-30. EUVIX and JYVIX failed closed after one GET each because
 the development reserve ends before 2022-12-29, with no snapshot written.
 Machine hashes live in `docs/progress/phase-2-research-v32-provider-qualification.json`.
 Signals and PnL remain unopened. Do not retry the rejected kinds.
+
+## Development outcome
+
+Two clean replays of unchanged BPVIX vol relief from `3bb7163` reproduce with
+identical fills and no evidence blockers. The identity is cost-positive but
+fails year breadth, monthly breadth, and leave-best. Protocol v32 is closed.
+Do not retune, sign-flip, or ensemble. Confirmation remains sealed.

@@ -1,0 +1,82 @@
+{
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_confirmation": false,
+    "opens_future_blind": false,
+    "resumes_testnet": false,
+    "touches_live_path": false
+  },
+  "candidates": [
+    {
+      "base_net_pnl": 1.4574184959999972,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:9778a06a8404273c441256208bfbbfe0e46d2eb2462c10bc6d57eacdc9ca41fd",
+          "manifest_sha256": "sha256:53bf8cefbaf82b8bb32b768fea4c02ff0b750bfc9e26ae85fcfad603771250b6",
+          "path": "data/research-v32/backtests/20260813-151337Z-59995a15"
+        },
+        {
+          "fills_sha256": "sha256:9778a06a8404273c441256208bfbbfe0e46d2eb2462c10bc6d57eacdc9ca41fd",
+          "manifest_sha256": "sha256:fc0cdef82adef4471bf91557b384d207c4433fc8f15cb9f9d5c7c1185d0034a5",
+          "path": "data/research-v32/backtests/20260813-151342Z-cdb76eb8"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "reject_candidate",
+      "closed_positions": 41,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [
+        "positive_years_1_below_2",
+        "positive_months_11_below_18",
+        "leave_best_base_net_pnl_not_positive"
+      ],
+      "gross_net_pnl": 5.295399999999997,
+      "key": "pound_fx_vol_relief",
+      "leave_best_base_net_pnl": -7.836344276000001,
+      "model_version": "cboe-bpvix-diff5-negative-lag1d-v1",
+      "performance_pass": false,
+      "positive_months": 11,
+      "positive_years": 1,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 82,
+      "signal_store_sha256": "sha256:6c2061fc742a854671dfa4fd693247d2bcff5c459ae5a450e5cc3889def7e5ea",
+      "source": "rule_cboe_pound_fx_vol_relief_v1",
+      "stress_net_pnl": 0.49792311999999717,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 5.157119981999999,
+        "2021": -1.6108377499999995,
+        "2022": -2.0888637360000004
+      }
+    }
+  ],
+  "confirmation_holdout_status": "sealed_not_opened_no_development_passer",
+  "confirmation_open_eligible_candidates": [],
+  "development_passer_count": 0,
+  "future_blind_status": "sealed_unopened",
+  "protocol_sha256": "sha256:b26031e36e44c3c4b1fa7a0c0b2ce46a351c19badc90db776971c871fe6b3726",
+  "provider_qualification": {
+    "historical_vintage_claim": false,
+    "qualified_candidates": [
+      "pound_fx_vol_relief"
+    ],
+    "rejected_candidates": {
+      "euro_fx_vol_relief": {
+        "reason": "development_reserve_ends_before_2022-12-29",
+        "request_openings": 1,
+        "retry_allowed": false
+      },
+      "yen_fx_vol_relief": {
+        "reason": "development_reserve_ends_before_2022-12-29",
+        "request_openings": 1,
+        "retry_allowed": false
+      }
+    }
+  },
+  "recommendation": "stop_protocol_v32_no_confirmation_open",
+  "schema_version": "research.v32.development_results.v1"
+}
