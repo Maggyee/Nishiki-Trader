@@ -1,0 +1,45 @@
+{
+  "schema_version": "research.data_sources.v30",
+  "status": "locked_before_cboe_single_name_vol_body_access",
+  "provider": "Cboe Global Indices",
+  "authentication": "none",
+  "documentation_url": "https://www.cboe.com/tradable_products/vix/vix_historical_data",
+  "requests": [
+    {
+      "kind": "vxapl",
+      "index": "VXAPL",
+      "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/VXAPL_History.csv",
+      "accepted_columns": [["DATE", "VXAPL"], ["DATE", "OPEN", "HIGH", "LOW", "CLOSE"]],
+      "value_column_by_schema": {"scalar": "VXAPL", "ohlc": "CLOSE"}
+    },
+    {
+      "kind": "vxazn",
+      "index": "VXAZN",
+      "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/VXAZN_History.csv",
+      "accepted_columns": [["DATE", "VXAZN"], ["DATE", "OPEN", "HIGH", "LOW", "CLOSE"]],
+      "value_column_by_schema": {"scalar": "VXAZN", "ohlc": "CLOSE"}
+    },
+    {
+      "kind": "vxgog",
+      "index": "VXGOG",
+      "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/VXGOG_History.csv",
+      "accepted_columns": [["DATE", "VXGOG"], ["DATE", "OPEN", "HIGH", "LOW", "CLOSE"]],
+      "value_column_by_schema": {"scalar": "VXGOG", "ohlc": "CLOSE"}
+    }
+  ],
+  "request_policy": {"method": "GET", "maximum_body_openings_per_kind": 1, "retry_allowed": false},
+  "coverage_gates": {
+    "warmup_start": "2019-11-01",
+    "development_start": "2020-01-01",
+    "development_end": "2022-12-31",
+    "minimum_development_observations": 700,
+    "minimum_warmup_observations": 5,
+    "first_development_observation_no_later_than": "2020-01-03",
+    "last_development_observation_no_earlier_than": "2022-12-29",
+    "maximum_calendar_gap_days": 5,
+    "forward_fill_allowed": false,
+    "interpolation_allowed": false
+  },
+  "failure_policy": "Qualify or reject each kind independently. A failed kind is not retried or substituted and cannot generate signals or PnL; other pre-registered kinds may still be requested once. Development factors may use only 2019-11-01 through 2022-12-31 rows even if the CSV continues later.",
+  "historical_vintage_claim": false
+}
