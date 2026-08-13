@@ -1,0 +1,33 @@
+{
+  "schema_version": "research.protocol.v19",
+  "status": "preregistered_before_cboe_csv_body_access",
+  "frozen_at": "2026-08-13T03:30:00Z",
+  "objective": "Test three new Cboe implied-volatility underliers that are not VIX, OVX, GVZ, VIX9D, VVIX, VXEEM, VXEFA, VXN, or Treasury vol: Russell 2000 (RVX), Dow Jones (VXD), and China ETF (VXFXI) five-observation relief into BTCUSDT Spot.",
+  "data_access_disclosure": {
+    "csv_bodies_opened": false,
+    "returns_computed": false,
+    "pnl_computed": false,
+    "column_choice": "lock OHLC CLOSE before any body access because v17 failed closed on DATE,INDEX and v18 confirmed DATE,OPEN,HIGH,LOW,CLOSE for Cboe daily_prices histories"
+  },
+  "boundaries": {
+    "development_reserve": {"start": "2020-01-01", "end": "2022-12-31", "pnl_status": "unconsumed", "max_request_openings": 3},
+    "confirmation_holdout": {"start": "2023-01-01", "end": "2025-12-31", "pnl_status": "sealed_until_development_pass"},
+    "future_blind": {"start": "2026-09-01", "end": "2027-01-31", "status": "sealed", "shared_v8_blind_unchanged": true}
+  },
+  "cost_scenarios": {
+    "gross": {"fee_bps_per_fill": 0.0, "slippage_bps_per_fill": 0.0},
+    "base": {"fee_bps_per_fill": 10.0, "slippage_bps_per_fill": 2.0},
+    "stress": {"fee_bps_per_fill": 10.0, "slippage_bps_per_fill": 5.0}
+  },
+  "shared_execution": {"venue": "BINANCE", "instrument": "BTCUSDT", "bar_interval": "1h", "account_type": "CASH", "oms_type": "NETTING", "starting_balance_usdt": 100000, "trade_size_btc": 0.001, "position_domain": ["long", "flat"], "fold_initial_state": "flat", "engine": "NautilusTrader"},
+  "gates": {
+    "development": {"base_net_pnl_gt": 0.0, "stress_net_pnl_gt": 0.0, "positive_calendar_years_at_least": 2, "positive_calendar_months_at_least": 18, "closed_positions_at_least": 30, "leave_best_position_base_net_pnl_gt": 0.0, "duplicate_replays_required": 2},
+    "multiple_testing": {"candidate_count_locked": 3, "parameter_grid_search_forbidden": true, "alternate_sign_forbidden": true, "pnl_selected_ensemble_forbidden": true, "failed_candidate_reparameterization_forbidden": true}
+  },
+  "candidates": [
+    {"key": "russell_vol_relief", "source": "rule_russell_vol_relief_v1", "model_version": "cboe-rvx-ohlc5obs-negative-1d-v1", "index": "RVX", "parameters": {"change_observations": 5, "maximum_change": 0.0, "ttl_seconds": 86400, "confidence": 0.75}, "rule": "buy iff the latest completed RVX close minus the close five official observations earlier is strictly negative; flat otherwise"},
+    {"key": "dow_vol_relief", "source": "rule_dow_vol_relief_v1", "model_version": "cboe-vxd-ohlc5obs-negative-1d-v1", "index": "VXD", "parameters": {"change_observations": 5, "maximum_change": 0.0, "ttl_seconds": 86400, "confidence": 0.75}, "rule": "buy iff the latest completed VXD close minus the close five official observations earlier is strictly negative; flat otherwise"},
+    {"key": "china_vol_relief", "source": "rule_china_vol_relief_v1", "model_version": "cboe-vxfxi-ohlc5obs-negative-1d-v1", "index": "VXFXI", "parameters": {"change_observations": 5, "maximum_change": 0.0, "ttl_seconds": 86400, "confidence": 0.75}, "rule": "buy iff the latest completed VXFXI close minus the close five official observations earlier is strictly negative; flat otherwise"}
+  ],
+  "boundaries_effect": {"loads_credentials": false, "mutates_source_policy": false, "touches_v8_or_v16_or_v18_shadow": false, "retries_v17_or_v18_identities": false, "reopens_v7_or_v9": false, "resumes_testnet": false, "touches_live_path": false, "opens_confirmation": false, "opens_future_blind": false}
+}
