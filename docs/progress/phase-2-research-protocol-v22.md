@@ -57,3 +57,14 @@ The qualified snapshot and factor hashes are in
 `docs/progress/phase-2-research-v22-provider-qualification.json`. SKEW and
 COR1M development PnL stays sealed until this qualification is committed and
 pushed.
+
+## Execution-only correction
+
+After qualification was pushed, four attempted processes all exited before
+engine startup because the protocol named the 2023-2025 confirmation catalog
+for a 2020-2022 development run. They wrote no bundle, order, fill, or PnL.
+`docs/progress/phase-2-research-v22-execution-amendment.json` freezes the
+already-audited 2020-2022 downtime-sensitivity catalog for development while
+retaining `data/research-v8/catalog` for confirmation. No candidate identity,
+factor, signal, partition, cost, gate, or trading boundary changes. Valid
+development replay remains sealed until this amendment is committed.

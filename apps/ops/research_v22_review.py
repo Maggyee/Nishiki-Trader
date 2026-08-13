@@ -7,7 +7,11 @@ import json
 from pathlib import Path
 from typing import Any
 
-from apps.ops.research_protocol_v22 import IDENTITIES, load_and_validate
+from apps.ops.research_protocol_v22 import (
+    IDENTITIES,
+    load_and_validate,
+    load_execution_amendment,
+)
 from apps.ops.research_v13_review import build_standard_review
 
 SCHEMA_VERSION = "research.v22.development_results.v1"
@@ -39,6 +43,7 @@ def build_review(
     gap_detail_bytes: bytes,
 ) -> dict[str, Any]:
     qualification = load_provider_qualification()
+    amendment = load_execution_amendment()
     qualified = set(qualification["qualified_candidates"])
     if any(key not in qualified for key, _ in candidate_specs):
         raise ValueError("Protocol v22 review includes a provider-rejected candidate")
@@ -57,6 +62,7 @@ def build_review(
         "rejected_candidates": qualification["rejected_candidates"],
         "historical_vintage_claim": False,
     }
+    result["execution_amendment"] = amendment
     return result
 
 

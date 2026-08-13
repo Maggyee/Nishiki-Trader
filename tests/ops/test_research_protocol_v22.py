@@ -8,6 +8,7 @@ import pytest
 from apps.ops.research_protocol_v22 import (
     DEFAULT_PROTOCOL,
     load_and_validate,
+    load_execution_amendment,
     validate_protocol,
 )
 
@@ -35,3 +36,11 @@ def test_protocol_v22_rejects_opened_history() -> None:
 
     with pytest.raises(ValueError, match="historical data boundary drifted"):
         validate_protocol(payload)
+
+
+def test_protocol_v22_execution_amendment_is_zero_pnl_and_frozen() -> None:
+    result = load_execution_amendment()
+
+    assert result["valid"] is True
+    assert result["development_catalog_path"] == ("data/research-v7-downtime-sensitivity/catalog")
+    assert result["confirmation_catalog_path"] == "data/research-v8/catalog"

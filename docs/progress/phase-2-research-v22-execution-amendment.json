@@ -1,0 +1,41 @@
+{
+  "schema_version": "research.v22.execution_amendment.v1",
+  "status": "frozen_after_zero_pnl_catalog_miss_before_successful_replay",
+  "parent_protocol_sha256": "sha256:ae3edd20007a35470f94a57609e53f994bfb4cdf677318d99b6e3c249989685f",
+  "provider_qualification_sha256": "sha256:e438c6fac4c2055274fd236274f98f4634160cc13e255166d9aa7fbbca12eff1",
+  "trigger": {
+    "failed_process_count": 4,
+    "shared_error": "no bars found in data/research-v8/catalog for bar_type=BTCUSDT.BINANCE-1-HOUR-LAST-EXTERNAL",
+    "backtest_engine_started": false,
+    "bundle_written": false,
+    "orders_created": false,
+    "fills_created": false,
+    "pnl_opened": false
+  },
+  "correction": {
+    "development_catalog_path": "data/research-v7-downtime-sensitivity/catalog",
+    "development_catalog_audit_path": "data/research-v7-downtime-sensitivity/catalog-audit.json",
+    "development_catalog_audit_sha256": "sha256:af334f8ce20ead9dd7e6d0672e2de47548eeaded12e4a6cb61184a22bce3d688",
+    "development_window": {"start": "2020-01-01T00:00:00Z", "end": "2022-12-31T23:00:00Z"},
+    "confirmation_catalog_path": "data/research-v8/catalog",
+    "confirmation_execution_audit_path": "data/research-v8/execution-audit.json",
+    "confirmation_execution_audit_sha256": "sha256:02f3179b79a9720210419241af82ab9563ff2a67cb23f18641934edb3e7caca1",
+    "confirmation_window": {"start": "2023-01-01T00:00:00Z", "end": "2025-12-31T23:00:00Z"}
+  },
+  "unchanged": {
+    "candidate_identities": true,
+    "factor_hashes": true,
+    "signal_rules": true,
+    "signs_and_lookbacks": true,
+    "costs_and_gates": true,
+    "position_size_and_account_type": true,
+    "development_and_confirmation_partitions": true
+  },
+  "boundaries": {
+    "strategy_result_observed_before_correction": false,
+    "confirmation_opened": false,
+    "source_policy_mutated": false,
+    "trading_touched": false,
+    "future_blind_opened": false
+  }
+}

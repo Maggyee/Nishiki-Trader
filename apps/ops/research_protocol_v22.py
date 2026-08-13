@@ -10,6 +10,7 @@ from typing import Any
 
 DEFAULT_PROTOCOL = Path("docs/progress/phase-2-research-protocol-v22.json")
 PROVIDER_CONTRACT = Path("docs/progress/phase-2-research-v22-data-sources.json")
+EXECUTION_AMENDMENT = Path("docs/progress/phase-2-research-v22-execution-amendment.json")
 SCHEMA_VERSION = "research.protocol.v22"
 IDENTITIES = {
     "tail_skew_relief": (
@@ -138,6 +139,47 @@ def validate_provider_contract(payload: dict[str, Any]) -> dict[str, Any]:
     canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), allow_nan=False)
     return {
         "provider_contract_sha256": "sha256:" + hashlib.sha256(canonical.encode()).hexdigest(),
+        "valid": True,
+    }
+
+
+def load_execution_amendment(
+    path: Path = EXECUTION_AMENDMENT,
+) -> dict[str, Any]:
+    payload = json.loads(path.read_text())
+    if (
+        payload.get("schema_version") != "research.v22.execution_amendment.v1"
+        or payload.get("status") != "frozen_after_zero_pnl_catalog_miss_before_successful_replay"
+    ):
+        raise ValueError("Protocol v22 execution amendment identity drifted")
+    if payload.get("parent_protocol_sha256") != load_and_validate()["protocol_sha256"]:
+        raise ValueError("Protocol v22 execution amendment parent drifted")
+    trigger = payload.get("trigger", {})
+    if (
+        trigger.get("failed_process_count") != 4
+        or trigger.get("backtest_engine_started") is not False
+        or trigger.get("bundle_written") is not False
+        or trigger.get("orders_created") is not False
+        or trigger.get("fills_created") is not False
+        or trigger.get("pnl_opened") is not False
+    ):
+        raise ValueError("Protocol v22 zero-PnL correction boundary drifted")
+    correction = payload.get("correction", {})
+    if (
+        correction.get("development_catalog_path")
+        != ("data/research-v7-downtime-sensitivity/catalog")
+        or correction.get("confirmation_catalog_path") != "data/research-v8/catalog"
+    ):
+        raise ValueError("Protocol v22 catalog correction drifted")
+    if not all(payload.get("unchanged", {}).values()) or any(
+        payload.get("boundaries", {}).values()
+    ):
+        raise ValueError("Protocol v22 execution amendment changes research boundaries")
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), allow_nan=False)
+    return {
+        "execution_amendment_sha256": "sha256:" + hashlib.sha256(canonical.encode()).hexdigest(),
+        "development_catalog_path": correction["development_catalog_path"],
+        "confirmation_catalog_path": correction["confirmation_catalog_path"],
         "valid": True,
     }
 
