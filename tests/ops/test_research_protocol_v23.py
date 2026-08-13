@@ -10,6 +10,7 @@ from apps.ops.research_protocol_v23 import (
     load_and_validate,
     validate_protocol,
 )
+from apps.ops.research_v23_review import load_provider_qualification
 
 
 def test_protocol_v23_is_frozen_and_valid() -> None:
@@ -43,3 +44,16 @@ def test_protocol_v23_locks_development_catalog() -> None:
 
     with pytest.raises(ValueError, match="execution contract drifted"):
         validate_protocol(payload)
+
+
+def test_protocol_v23_provider_qualification_is_frozen() -> None:
+    result = load_provider_qualification()
+
+    assert result["classification"] == "provider_qualified"
+    assert result["qualified_candidates"] == [
+        "bitcoin_attention_expansion",
+        "ethereum_attention_expansion",
+        "cryptocurrency_attention_expansion",
+    ]
+    assert result["rejected_candidates"] == {}
+    assert result["historical_vintage_claim"] is False

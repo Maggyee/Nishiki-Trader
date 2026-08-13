@@ -1,0 +1,63 @@
+{
+  "schema_version": "research.v23.provider_qualification.v1",
+  "classification": "provider_qualified",
+  "protocol_sha256": "sha256:564259571881347b7d508cd9dbafbe562d2771f96caacb41c3123303e213f994",
+  "provider_contract_sha256": "sha256:5c03e0dbe9640bd232756596c2a2a20c10a30e66d8a03302f01575ac9b160620",
+  "pre_data_commit": "7a1a1232f4993e3fff3ec2793615a692abbfdefa",
+  "qualified_candidates": [
+    "bitcoin_attention_expansion",
+    "ethereum_attention_expansion",
+    "cryptocurrency_attention_expansion"
+  ],
+  "rejected_candidates": {},
+  "qualified_series": {
+    "bitcoin": {
+      "snapshot_path": "data/research-v23/raw/bitcoin-20260813T050113Z-6e936abf0b8e.json",
+      "snapshot_sha256": "sha256:6e936abf0b8e3dd9e71e625d76065d8c99dee690b22a05af72536990d22ec7ab",
+      "factor_path": "data/research-v23/factors/bitcoin.csv",
+      "factor_sha256": "sha256:3c85490bead26e018b4093aeb4a61912267b9b7522a00dfb1f63fe508d53c929",
+      "factor_row_count": 1157,
+      "development_row_count": 1096,
+      "warmup_row_count": 61,
+      "development_first_date": "2020-01-01",
+      "development_last_date": "2022-12-31",
+      "maximum_calendar_gap_days": 1,
+      "article": "Bitcoin"
+    },
+    "ethereum": {
+      "snapshot_path": "data/research-v23/raw/ethereum-20260813T050117Z-5891b507b014.json",
+      "snapshot_sha256": "sha256:5891b507b01468d6529cac5edc1dbf49fbfe8871151105801020b954441e609c",
+      "factor_path": "data/research-v23/factors/ethereum.csv",
+      "factor_sha256": "sha256:404482f29657dc2dce07e65e014a258f7876c3ef0ac98c676b835f70b3188ed4",
+      "factor_row_count": 1157,
+      "development_row_count": 1096,
+      "warmup_row_count": 61,
+      "development_first_date": "2020-01-01",
+      "development_last_date": "2022-12-31",
+      "maximum_calendar_gap_days": 1,
+      "article": "Ethereum"
+    },
+    "cryptocurrency": {
+      "snapshot_path": "data/research-v23/raw/cryptocurrency-20260813T050119Z-dd20b3d2b2dc.json",
+      "snapshot_sha256": "sha256:dd20b3d2b2dc60a3b496625aa651bf9bfb23a78f28ca10672e78f9e863ae6ddd",
+      "factor_path": "data/research-v23/factors/cryptocurrency.csv",
+      "factor_sha256": "sha256:b05bf499459fe4295de6f2b1d06699bdd0b374d3509fed195c07824203827e68",
+      "factor_row_count": 1157,
+      "development_row_count": 1096,
+      "warmup_row_count": 61,
+      "development_first_date": "2020-01-01",
+      "development_last_date": "2022-12-31",
+      "maximum_calendar_gap_days": 1,
+      "article": "Cryptocurrency"
+    }
+  },
+  "historical_vintage_claim": false,
+  "boundaries": {
+    "signals_generated": false,
+    "pnl_opened": false,
+    "confirmation_opened": false,
+    "source_policy_mutated": false,
+    "trading_touched": false,
+    "future_blind_opened": false
+  }
+}

@@ -1,6 +1,6 @@
 # Phase 2 Research Protocol v23
 
-- **Status**: pre-registered; Wikimedia pageview JSON bodies sealed.
+- **Status**: provider-qualified; 2020-2022 signals and PnL still sealed.
 - **Mechanisms**: English Wikipedia user pageview attention expansion.
 - **Development**: 2020-01-01 through 2022-12-31.
 - **Confirmation**: 2023-01-01 through 2025-12-31, sealed.
@@ -46,3 +46,11 @@ positive months, 30 closed positions, positive leave-best base PnL, and two
 identical clean cash replays. A development passer may only enter a new
 confirmation contract. A confirmed passer may only become eligible for a
 separate ADR-007 `paper_shadow` review.
+
+## Provider qualification
+
+All three articles qualified from freeze `7a1a123`. Each series has 1,157
+unfilled rows, 1,096 development observations from 2020-01-01 through
+2022-12-31, 61 warmup rows, and a one-day maximum gap. Machine hashes live in
+`docs/progress/phase-2-research-v23-provider-qualification.json`. Signals and
+PnL remain unopened.
