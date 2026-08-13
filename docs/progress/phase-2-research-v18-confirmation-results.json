@@ -1,0 +1,59 @@
+{
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_future_blind": false,
+    "resumes_testnet": false,
+    "touches_live_path": false
+  },
+  "candidate": {
+    "base_net_pnl": 60.20779002,
+    "bundle_runs": [
+      {
+        "fills_sha256": "sha256:8180a3c236afa687b738829f99753ebd0a07ee59931c0cffb674482df10124d7",
+        "manifest_sha256": "sha256:f426730ef6430e596177aea042c7f25e16f5503ecbb46c1559c63751a2921624",
+        "path": "data/research-v18/confirmation/backtests/20260813-025742Z-ee8f984a"
+      },
+      {
+        "fills_sha256": "sha256:8180a3c236afa687b738829f99753ebd0a07ee59931c0cffb674482df10124d7",
+        "manifest_sha256": "sha256:2816cd8e110229e7dbc2bc7d51de914bb9bf782d5fef9aed3ea2b07a2ea3329d",
+        "path": "data/research-v18/confirmation/backtests/20260813-025742Z-a8d33179"
+      }
+    ],
+    "calendar_months": 36,
+    "classification": "paper_shadow_review_eligible",
+    "closed_positions": 72,
+    "duplicate_replays": 2,
+    "effective_blockers": [],
+    "evidence_pass": true,
+    "gross_net_pnl": 70.75335,
+    "key": "nasdaq_vol_relief",
+    "leave_best_base_net_pnl": 35.30407596399999,
+    "model_version": "cboe-vxn-ohlc5obs-negative-1d-v1",
+    "performance_pass": true,
+    "positive_months": 20,
+    "positive_years": 3,
+    "reproducible": true,
+    "short_positions": 0,
+    "signal_count": 144,
+    "signal_store_sha256": "e32e16c8c05867bf1dd3fca7519d0b5eb351fc588659c7be262f28e3941cb4f1",
+    "source": "rule_nasdaq_vol_relief_v2",
+    "stress_net_pnl": 57.571400024999996,
+    "verified_no_kline_event_hits": [],
+    "yearly_base_net_pnl": {
+      "2023": 1.020581974,
+      "2024": 24.899782962,
+      "2025": 34.287425084
+    }
+  },
+  "contract_sha256": "sha256:1e166a766cf142f60db988be9114cd629f58c9648cc11423e72da2363e5694aa",
+  "data_qualification": {
+    "classification": "provider_qualified",
+    "confirmation_row_count": 752,
+    "factor_sha256": "sha256:19a832809a56d800eafc1f95e8acf44f670c7be853d4a3f21148a41d90f82e3a",
+    "snapshot_sha256": "sha256:7a92d57150d8be506a15ad14c9af21fd40c85834d78cd7541666b0d9de0d84d1"
+  },
+  "future_blind_status": "sealed_unopened",
+  "recommendation": "enter_paper_shadow_review",
+  "schema_version": "research.v18.confirmation_results.v1"
+}

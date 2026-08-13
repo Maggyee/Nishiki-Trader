@@ -4,7 +4,7 @@
 - **Machine contract**: `docs/progress/phase-2-research-protocol-v18.json`
 - **Provider contract**: `docs/progress/phase-2-research-v18-data-sources.json`
 - **Confirmation contract**: `docs/progress/phase-2-research-v18-confirmation.json`
-- **Status**: VXN confirmation data qualified; confirmation PnL unopened.
+- **Status**: VXN passed independent confirmation; ADR-007 review eligible.
 - **Trading effect**: none.
 
 ## Why this recovery is separate
@@ -83,3 +83,16 @@ used only as indicator warmup. Export used no network request, forward fill,
 return calculation, or future-blind access. The unchanged rule emits 144
 confirmation signals; PnL remains unopened until this qualification is
 committed and pushed.
+
+## Confirmation outcome
+
+Two clean Nautilus replays from pushed commit `9360eb3` have identical fills.
+The unchanged VXN rule passes every frozen 2023-2025 gate: gross/base/stress
+PnL is +70.753350/+60.207790/+57.571400 USDT, all three years and 20/36 months
+are positive, 72 positions close, and leave-best base PnL remains +35.304076
+USDT. There are zero shorts, effective blockers, or events in the one verified
+exchange-unavailable hour.
+
+This result permits a separate identity-specific ADR-007 `paper_shadow`
+policy review only. It does not itself mutate SourcePolicy, authorize orders,
+start a collector, resume testnet/live trading, or open the future blind.
