@@ -1,10 +1,10 @@
 # Phase 2 Research Protocol v31
 
-- **Status**: pre-registered; VXTLT provider-qualified; VXSLV and VXXLE
-  coverage-rejected; no signal or PnL opened.
+- **Status**: closed; VXSLV and VXXLE coverage-rejected; VXTLT
+  development-rejected.
 - **Mechanisms**: Cboe silver ETF, energy-sector ETF, and long-duration Treasury
   ETF 30-day implied-vol relief (VXSLV, VXXLE, VXTLT).
-- **Development**: 2020-01-01 through 2022-12-31; unopened.
+- **Development**: 2020-01-01 through 2022-12-31; VXTLT rejected.
 - **Confirmation**: 2023-01-01 through 2025-12-31; sealed.
 - **Future blind**: sealed.
 - **Trading effect**: none.
@@ -54,3 +54,10 @@ factors stop at 2022-12-30. VXSLV and VXXLE failed closed after one GET each:
 533 development observations versus 700 required, with no snapshot written.
 Machine hashes live in `docs/progress/phase-2-research-v31-provider-qualification.json`.
 Signals and PnL remain unopened. Do not retry the rejected kinds.
+
+## Development outcome
+
+Two clean replays of unchanged VXTLT vol relief from `d5eeb39` reproduce with
+identical fills and no evidence blockers. The identity is cost-negative, has
+only one positive year, and fails leave-best. Protocol v31 is closed. Do not
+retune, sign-flip, or ensemble. Confirmation remains sealed.

@@ -79,7 +79,7 @@ Current Phase 3 progress files:
 - `phase-2-research-protocol-v31.md` freezes three Cboe implied-vol relief
   identities on silver ETF (VXSLV), energy-sector ETF (VXXLE), and
   long-duration Treasury ETF (VXTLT). VXSLV and VXXLE failed coverage;
-  VXTLT is provider-qualified with signals and PnL still unopened.
+  VXTLT failed 2020-2022 development, closing v31.
 
 - `phase-3-testnet-canary-evidence.md` records the testnet session ledger and
   bundle evidence summary.

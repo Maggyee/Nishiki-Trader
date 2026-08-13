@@ -1,0 +1,83 @@
+{
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_confirmation": false,
+    "opens_future_blind": false,
+    "resumes_testnet": false,
+    "touches_live_path": false
+  },
+  "candidates": [
+    {
+      "base_net_pnl": -7.758932168000001,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:234bc70d2b5d4fb3312a4128bbe24c883eb050eb3623e6b092f85d9988e07ef5",
+          "manifest_sha256": "sha256:7eea9158f4281fc3d28d0ef8ba0e77e37f83fdf1f592c66566649da17d8e0069",
+          "path": "data/research-v31/backtests/20260813-143800Z-ab3252c6"
+        },
+        {
+          "fills_sha256": "sha256:234bc70d2b5d4fb3312a4128bbe24c883eb050eb3623e6b092f85d9988e07ef5",
+          "manifest_sha256": "sha256:bfbf8d1590c8d06dd4cdea626224d60a2b1ed4da4c6941afd8c44a9e70173559",
+          "path": "data/research-v31/backtests/20260813-143804Z-0b26bd4f"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "reject_candidate",
+      "closed_positions": 89,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [
+        "base_net_pnl_not_positive",
+        "stress_net_pnl_not_positive",
+        "positive_years_1_below_2",
+        "leave_best_base_net_pnl_not_positive"
+      ],
+      "gross_net_pnl": -1.4858000000000011,
+      "key": "long_treasury_etf_vol_relief",
+      "leave_best_base_net_pnl": -15.814085395999996,
+      "model_version": "cboe-vxtlt-diff5-negative-lag1d-v1",
+      "performance_pass": false,
+      "positive_months": 20,
+      "positive_years": 1,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 177,
+      "signal_store_sha256": "sha256:56b048c11bd14b152b6f6bbbc76955d012ad2c8cf964805c211c3f3b6d4860c6",
+      "source": "rule_cboe_long_treasury_etf_vol_relief_v1",
+      "stress_net_pnl": -9.327215210000002,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 8.938585044,
+        "2021": -8.68397651,
+        "2022": -8.013540702
+      }
+    }
+  ],
+  "confirmation_holdout_status": "sealed_not_opened_no_development_passer",
+  "confirmation_open_eligible_candidates": [],
+  "development_passer_count": 0,
+  "future_blind_status": "sealed_unopened",
+  "protocol_sha256": "sha256:c6620b9943e97b6b2b6f115ed6290f11db94f301399400827bd5d52651638bbc",
+  "provider_qualification": {
+    "historical_vintage_claim": false,
+    "qualified_candidates": [
+      "long_treasury_etf_vol_relief"
+    ],
+    "rejected_candidates": {
+      "energy_sector_vol_relief": {
+        "reason": "development_rows_533_below_locked_minimum_700",
+        "request_openings": 1,
+        "retry_allowed": false
+      },
+      "silver_vol_relief": {
+        "reason": "development_rows_533_below_locked_minimum_700",
+        "request_openings": 1,
+        "retry_allowed": false
+      }
+    }
+  },
+  "recommendation": "stop_protocol_v31_no_confirmation_open",
+  "schema_version": "research.v31.development_results.v1"
+}
