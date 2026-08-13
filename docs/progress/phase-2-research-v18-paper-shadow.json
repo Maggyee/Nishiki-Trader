@@ -1,7 +1,8 @@
 {
   "schema_version": "research.v18.paper_shadow_contract.v1",
-  "status": "policy_reviewed_forward_collection_not_started",
+  "status": "prospectively_locked",
   "locked_at": "2026-08-13T02:59:57Z",
+  "collection_locked_at": "2026-08-13T03:15:00Z",
   "forward_started_at": "2026-08-13T02:59:57Z",
   "candidate": {
     "source": "rule_nasdaq_vol_relief_v2",
@@ -27,11 +28,17 @@
   "collection": {
     "provider": "Cboe Global Markets historical volatility-index data",
     "metric": "VXN daily CLOSE",
-    "decision_lag_calendar_days": 1,
+    "schedule": "weekdays at 03:30 UTC",
+    "vxn_url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/VXN_History.csv",
+    "btc_url": "https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=168",
     "btc_source": "public Binance closed BTCUSDT 1h bars",
+    "vxn_max_age_calendar_days": 4,
+    "btc_interval_seconds": 3600,
+    "btc_closed_bar_lookback": 167,
+    "decision_lag_calendar_days": 1,
     "historical_revision_policy": "fail_closed_and_require_human_review",
     "missing_policy": "no_synthetic_rows_and_no_forward_fill",
-    "collector_implemented": false,
+    "collector_implemented": true,
     "scheduler_installed": false,
     "scheduler_install_requires_explicit_operator_approval": true
   },
@@ -42,6 +49,7 @@
     "qualified_day_requires": [
       "official_vxn_snapshot_verified",
       "decision_time_respects_d_plus_1",
+      "vxn_freshness_within_limit",
       "public_btc_closed_hourly_bars_contiguous_or_exchange_unavailable_window_separately_verified",
       "no_historical_revision",
       "clean_pushed_git_commit"

@@ -1,7 +1,7 @@
 {
   "schema_version": "research.v18.paper_shadow_status_summary.v1",
-  "updated_at": "2026-08-13T02:59:57Z",
-  "contract_sha256": "sha256:41bf36408b55f22ccc6733417f912c5c862af2057e964b8101feaab76e899113",
+  "updated_at": "2026-08-13T03:15:00Z",
+  "contract_sha256": "sha256:78e2f65d76604e35ab4bf4053585b5611894bb74efbd59872e95d4f4e3a7a6f8",
   "review_sha256": "sha256:afc29c0b19daae4036d1e508f84824c9739fddded391e01bf93778ee37b5a974",
   "stage": "paper_shadow",
   "policy": {
@@ -31,10 +31,10 @@
   },
   "scheduler": {
     "installed": false,
-    "collector_implemented": false
+    "collector_implemented": true
   },
   "anomaly_blockers": [],
-  "next_action": "implement_and_review_prospective_collector_before_any_schedule_install",
+  "next_action": "run_day1_from_clean_pushed_commit_then_install_approved_crontab",
   "future_blind_status": "sealed_unopened",
   "paper_simulated_status": "not_authorized",
   "testnet_status": "blocked",

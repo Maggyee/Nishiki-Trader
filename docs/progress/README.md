@@ -32,7 +32,7 @@ Current Phase 3 progress files:
 - `phase-2-research-protocol-v18.md` recovers those rules under new OHLC
   identities. Nasdaq vol relief passed development and independent 2023-2025
   confirmation, then entered identity-specific `paper_shadow` dry-run hold;
-  prospective collection has not started.
+  the fail-closed VXN/BTC collector is frozen before Day 1.
 
 - `phase-3-testnet-canary-evidence.md` records the testnet session ledger and
   bundle evidence summary.

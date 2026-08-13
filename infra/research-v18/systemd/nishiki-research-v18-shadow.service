@@ -1,0 +1,14 @@
+[Unit]
+Description=Nishiki Research Protocol v18 forward paper-shadow collector
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/orca/orca/projects/trader
+ExecStart=/home/orca/orca/projects/trader/.venv/bin/python -m apps.ops.research_v18_shadow_daily --repo-root /home/orca/orca/projects/trader --data-root /home/orca/orca/projects/trader/data/research-v18-forward
+TimeoutStartSec=5min
+Nice=10
+
+[Install]
+WantedBy=default.target

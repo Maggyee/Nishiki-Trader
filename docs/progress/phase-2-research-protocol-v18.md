@@ -4,7 +4,7 @@
 - **Machine contract**: `docs/progress/phase-2-research-protocol-v18.json`
 - **Provider contract**: `docs/progress/phase-2-research-v18-data-sources.json`
 - **Confirmation contract**: `docs/progress/phase-2-research-v18-confirmation.json`
-- **Status**: VXN is `hold @ paper_shadow` under an identity-specific dry-run policy.
+- **Status**: VXN is `hold @ paper_shadow`; collector frozen before Day 1.
 - **Trading effect**: none.
 
 ## Why this recovery is separate
@@ -107,8 +107,9 @@ dry run, and produces zero orders/fills, lag events, data gaps, kill-switches,
 or review blockers.
 
 This is the usable monitoring stage for the strategy, not return evidence and
-not an execution authorization. Forward collection is 0/7 qualified days and
-0/50 new signals; no collector or schedule is installed. Any collector must be
-implemented and reviewed first, and schedule installation requires explicit
-operator approval. `paper_simulated`, testnet/live trading, and the future
-blind remain closed.
+not an execution authorization. Forward collection is 0/7 qualified days and 0/50 new signals. The
+fail-closed VXN/BTC collector is now prospectively locked at weekday 03:30
+UTC, D+1 availability, four-day VXN freshness, 167 closed BTC hours, and
+revision fail-closed. The operator approved crontab installation; Day 1 and
+the host entry must wait until this collector commit is on `origin/main`.
+`paper_simulated`, testnet/live trading, and the future blind remain closed.
