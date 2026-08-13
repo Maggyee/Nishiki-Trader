@@ -4,7 +4,7 @@
 - **Machine contract**: `docs/progress/phase-2-research-protocol-v18.json`
 - **Provider contract**: `docs/progress/phase-2-research-v18-data-sources.json`
 - **Confirmation contract**: `docs/progress/phase-2-research-v18-confirmation.json`
-- **Status**: VXN-only confirmation contract frozen; holdout values still sealed.
+- **Status**: VXN confirmation data qualified; confirmation PnL unopened.
 - **Trading effect**: none.
 
 ## Why this recovery is separate
@@ -73,3 +73,13 @@ The contract and its factor/review code must be committed and pushed before
 2023-2025 value rows are exported. Passing confirmation creates only
 ADR-007 `paper_shadow` review eligibility. It cannot mutate SourcePolicy,
 authorize paper simulation/testnet/live trading, or open the future blind.
+
+## Confirmation data outcome
+
+The locked snapshot supplies 752 unfilled confirmation observations: 250 in
+2023, 252 in 2024, and 250 in 2025. Coverage runs from 2023-01-03 through
+2025-12-31 with a maximum four-calendar-day gap. Forty-two late-2022 rows are
+used only as indicator warmup. Export used no network request, forward fill,
+return calculation, or future-blind access. The unchanged rule emits 144
+confirmation signals; PnL remains unopened until this qualification is
+committed and pushed.
