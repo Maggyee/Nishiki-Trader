@@ -78,3 +78,16 @@ months are positive, 87 positions close, and leave-best base PnL remains
 +7.660115 USDT. Duplicate fills match with zero shorts, blockers, or verified
 no-kline event hits. Confirmation remains sealed until a separate VXD-only
 contract is frozen.
+
+## Confirmation boundary
+
+`docs/progress/phase-2-research-v19-confirmation.json` locks the committed
+development result, exact qualified VXD snapshot, unchanged identity and
+parameters, 2023-2025 partition, one-calendar-day availability lag, execution
+audit, costs, breadth/concentration gates, and two clean replays before any
+confirmation value is exported. It makes no network request.
+
+After this contract is committed and pushed, confirmation data may be
+qualified from the existing immutable snapshot. Passing confirmation creates
+only separate ADR-007 `paper_shadow` review eligibility; it does not mutate a
+policy, authorize orders, or open the future blind.

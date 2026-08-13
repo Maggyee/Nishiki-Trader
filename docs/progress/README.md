@@ -36,7 +36,8 @@ Current Phase 3 progress files:
   weekday 03:30 UTC crontab.
 - `phase-2-research-protocol-v19.md` records the locked RVX/VXD/VXFXI batch:
   RVX was rejected, VXFXI failed provider coverage, and Dow-volatility relief
-  passed development for a separately frozen confirmation.
+  passed development; its VXD-only confirmation contract is frozen before
+  holdout value export.
 - `phase-2-research-protocol-v20.md` locks three OFR financial-stress relief
   mechanisms with a D+5 availability lag before opening the official data body.
 
