@@ -1,0 +1,135 @@
+{
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_confirmation": false,
+    "opens_future_blind": false,
+    "resumes_testnet": false,
+    "touches_live_path": false
+  },
+  "candidates": [
+    {
+      "base_net_pnl": -7.025679607999988,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:db2de9d276ef0c3e03026722e1cc466ba3f178ad5b7c61c06c4026dca2e824fd",
+          "manifest_sha256": "sha256:2157ef2e1ee5919052b582edc6295a5f3a9335d03ce0604afc7265d241eab922",
+          "path": "data/research-v19/backtests/20260813-034342Z-9b54fee3"
+        },
+        {
+          "fills_sha256": "sha256:db2de9d276ef0c3e03026722e1cc466ba3f178ad5b7c61c06c4026dca2e824fd",
+          "manifest_sha256": "sha256:1f36d3924a069cfd915812281c338671226cff4cd5d7af393552b30b0242194e",
+          "path": "data/research-v19/backtests/20260813-034346Z-2c5a589e"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "reject_candidate",
+      "closed_positions": 81,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [
+        "base_net_pnl_not_positive",
+        "stress_net_pnl_not_positive",
+        "leave_best_base_net_pnl_not_positive"
+      ],
+      "gross_net_pnl": -1.259299999999989,
+      "key": "russell_vol_relief",
+      "leave_best_base_net_pnl": -16.254911375999995,
+      "model_version": "cboe-rvx-ohlc5obs-negative-1d-v1",
+      "performance_pass": false,
+      "positive_months": 19,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 161,
+      "signal_store_sha256": "sha256:7d19445350df2551d5d94bf3f01eda83a9ccfe722e1aa331f82b1342f30e9da9",
+      "source": "rule_russell_vol_relief_v1",
+      "stress_net_pnl": -8.467274509999989,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 9.788511544,
+        "2021": 0.36637388200000265,
+        "2022": -17.180565034
+      }
+    },
+    {
+      "base_net_pnl": 17.483701568000008,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:5b6b877c655c6fb854f53f270dbe5e277044afdf544f7ba896082f5caf94141f",
+          "manifest_sha256": "sha256:8b469f6addd7c2d1bffb1b2a5f09018b033ab547f5c77dcfe6082736a6113a69",
+          "path": "data/research-v19/backtests/20260813-034351Z-d521afd0"
+        },
+        {
+          "fills_sha256": "sha256:5b6b877c655c6fb854f53f270dbe5e277044afdf544f7ba896082f5caf94141f",
+          "manifest_sha256": "sha256:e6e4f45ce25565596e21878818e032bdd271fca55f174f4d6d73bfc94d2aaf9b",
+          "path": "data/research-v19/backtests/20260813-034355Z-1b4e203a"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "development_pass_confirmation_open_eligible",
+      "closed_positions": 87,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [],
+      "gross_net_pnl": 23.868440000000007,
+      "key": "dow_vol_relief",
+      "leave_best_base_net_pnl": 7.660115348000005,
+      "model_version": "cboe-vxd-ohlc5obs-negative-1d-v1",
+      "performance_pass": true,
+      "positive_months": 20,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 174,
+      "signal_store_sha256": "sha256:18be49ed24d4f662f8ff6206dccc56b18369f6d52abc30627b1a21a4395b79f8",
+      "source": "rule_dow_vol_relief_v1",
+      "stress_net_pnl": 15.88751696000001,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 7.490353312,
+        "2021": 21.087450995999994,
+        "2022": -11.09410274
+      }
+    },
+    {
+      "classification": "reject_candidate",
+      "development_row_count": 533,
+      "duplicate_replays": 0,
+      "evidence_pass": false,
+      "failure_reasons": [
+        "provider_development_rows_533_below_700"
+      ],
+      "key": "china_vol_relief",
+      "model_version": "cboe-vxfxi-ohlc5obs-negative-1d-v1",
+      "performance_pass": false,
+      "signal_count": 0,
+      "source": "rule_china_vol_relief_v1"
+    }
+  ],
+  "confirmation_holdout_status": "sealed_pending_committed_development_review",
+  "confirmation_open_eligible_candidates": [
+    "dow_vol_relief"
+  ],
+  "development_passer_count": 1,
+  "future_blind_status": "sealed_unopened",
+  "protocol_sha256": "sha256:23ae530d39f09ae0b3cfaccad4f0dea69cc23027cc8d0a28ff4588d228e80482",
+  "provider_qualification": {
+    "classification": "provider_partially_qualified",
+    "development_eligible_candidates": [
+      "russell_vol_relief",
+      "dow_vol_relief"
+    ],
+    "provider_rejected_candidates": {
+      "china_vol_relief": {
+        "reason": "development_rows_533_below_locked_minimum_700",
+        "request_openings": 1,
+        "retry_allowed": false
+      }
+    }
+  },
+  "recommendation": "commit_development_results_before_confirmation_open",
+  "schema_version": "research.v19.development_results.v1"
+}

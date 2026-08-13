@@ -3,7 +3,7 @@
 - **Frozen**: 2026-08-13 before opening any v19 Cboe CSV body.
 - **Machine contract**: `docs/progress/phase-2-research-protocol-v19.json`
 - **Provider contract**: `docs/progress/phase-2-research-v19-data-sources.json`
-- **Status**: RVX/VXD provider-qualified; VXFXI coverage-rejected; development PnL sealed.
+- **Status**: development complete; VXD passed, RVX rejected, VXFXI provider-rejected; confirmation sealed.
 - **Trading effect**: none.
 
 ## Why this batch is allowed
@@ -66,3 +66,15 @@ of 700, so it is provider-rejected without retry or backtest. See
 After this outcome is committed, only RVX and VXD may enter duplicate
 2020-2022 development replays. VXFXI remains the third locked candidate and is
 reported as a data rejection. Confirmation and the future blind stay sealed.
+
+## Development outcome
+
+Duplicate clean-git cash replays from `4f4cbee` rejected RVX after costs and
+classified VXFXI as a provider rejection. Unchanged VXD five-observation relief
+passed every frozen development gate. See
+`docs/retros/2026-08-13-research-v19-size-style-vol-development.md`.
+VXD base/stress PnL is +17.483702/+15.887517 USDT, 2/3 years and 20/36
+months are positive, 87 positions close, and leave-best base PnL remains
++7.660115 USDT. Duplicate fills match with zero shorts, blockers, or verified
+no-kline event hits. Confirmation remains sealed until a separate VXD-only
+contract is frozen.
