@@ -1,7 +1,7 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-08-13 (Protocol v30 Google vol confirmation freeze; values sealed)
+- **Last updated**: 2026-08-13 (Protocol v30 Google vol confirmation data qualified; PnL unopened)
 - **Current phase**: Phase 5 entry (read-only frontend + monitoring; live trading still blocked)
 - **Current objective**: Phase 5 remains active and `stop_before_testnet_resume` remains in force. The original 16-candidate registry and Protocol v2-v5 research identities are frozen. Protocol v5 curve carry and BVOL relief are rejected and the 2026-08..12 blind remains sealed. The provider/timer review is complete: v5 and completed v2 timers are `inactive/disabled`, v5 collector status is `archived`, and a four-day post-window audit found zero new invocations. The retained v5 tree is 13 snapshots / 13 Parquets with zero conflicts; v2 `COMPLETE`, ledger, deployment identity and all recorded checksums remain unchanged. Dashboard renders the archive as a valid terminal state with no retry or operations issue. Independent Protocol v6 remains `blocked_provider_qualification` on the official 12-row grid, with historical development closed.
   The human-reviewed `freqai_linear_v1 / linear-mom-train20240105` decision is now `demote @ paper_simulated` under `SourcePolicy(dry_run=False, position_pct_multiplier=0.1, min_confidence_override=None)`. Its old testnet continuity evidence is archived and cannot authorize a restart. Phase 6 remains closed: ADR-013 is Draft, strict testnet continuity remains `current_qualified_streak_days=0/14`, no live-canary promotion review exists, the first-live-day runbook is Draft, and no live runner is authorized or wired.
@@ -358,10 +358,11 @@ Immediate focus:
 
 ## Latest Verification
 
-On 2026-08-13, after Protocol v30 confirmation pre-registration:
+On 2026-08-13, after Protocol v30 confirmation data qualification:
 
-- The unchanged Google/Alphabet rule is locked to the already-captured VXGOG
-  snapshot. No confirmation close, return, or PnL has been opened.
+- The captured VXGOG snapshot supplied 752 unfilled 2023-2025 rows and 42
+  warmup rows with a four-day maximum gap. No new GET was made. PnL remains
+  unopened.
 
 On 2026-08-13, after Protocol v30 development review:
 
