@@ -1,0 +1,62 @@
+{
+  "schema_version": "research.v18.paper_shadow_contract.v1",
+  "status": "policy_reviewed_forward_collection_not_started",
+  "locked_at": "2026-08-13T02:59:57Z",
+  "forward_started_at": "2026-08-13T02:59:57Z",
+  "candidate": {
+    "source": "rule_nasdaq_vol_relief_v2",
+    "model_version": "cboe-vxn-ohlc5obs-negative-1d-v1",
+    "strategy": "nasdaq_vol_relief",
+    "symbol": "BTCUSDT",
+    "venue": "BINANCE"
+  },
+  "policy": {
+    "stage": "paper_shadow",
+    "dry_run": true,
+    "position_pct_multiplier": 0.2,
+    "min_confidence_override": null
+  },
+  "entry_review": {
+    "decision": "hold",
+    "decision_allowed": true,
+    "path": "docs/progress/phase-2-research-v18-paper-shadow-review.json",
+    "retro_path": "docs/retros/2026-08-13-rule-nasdaq-vol-relief-v2-hold-paper-shadow.md",
+    "evidence_bundle": "data/research-v18/paper/20260813-025939Z-ea651f8d",
+    "manifest_sha256": "sha256:507fe79b3f23fc6f0293cddf165d1a1d5790ecdcafd06bdfda10c6decaecfa08"
+  },
+  "collection": {
+    "provider": "Cboe Global Markets historical volatility-index data",
+    "metric": "VXN daily CLOSE",
+    "decision_lag_calendar_days": 1,
+    "btc_source": "public Binance closed BTCUSDT 1h bars",
+    "historical_revision_policy": "fail_closed_and_require_human_review",
+    "missing_policy": "no_synthetic_rows_and_no_forward_fill",
+    "collector_implemented": false,
+    "scheduler_installed": false,
+    "scheduler_install_requires_explicit_operator_approval": true
+  },
+  "evidence_gate": {
+    "qualified_distinct_utc_collection_days": 7,
+    "new_forward_signal_events": 50,
+    "operator": "or",
+    "qualified_day_requires": [
+      "official_vxn_snapshot_verified",
+      "decision_time_respects_d_plus_1",
+      "public_btc_closed_hourly_bars_contiguous_or_exchange_unavailable_window_separately_verified",
+      "no_historical_revision",
+      "clean_pushed_git_commit"
+    ],
+    "baseline_rule": "events at or before forward_started_at seed state but never count as forward signals",
+    "same_day_rule": "multiple successful attempts count as one qualified UTC day",
+    "promotion_rule": "threshold creates review eligibility only; paper_simulated requires a separate human ADR-007 decision"
+  },
+  "boundaries": {
+    "credentials_loaded": false,
+    "orders_allowed": false,
+    "fills_allowed": false,
+    "paper_simulated_allowed": false,
+    "testnet_allowed": false,
+    "live_allowed": false,
+    "future_blind_opened": false
+  }
+}

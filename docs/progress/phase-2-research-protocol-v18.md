@@ -4,7 +4,7 @@
 - **Machine contract**: `docs/progress/phase-2-research-protocol-v18.json`
 - **Provider contract**: `docs/progress/phase-2-research-v18-data-sources.json`
 - **Confirmation contract**: `docs/progress/phase-2-research-v18-confirmation.json`
-- **Status**: VXN passed independent confirmation; ADR-007 review eligible.
+- **Status**: VXN is `hold @ paper_shadow` under an identity-specific dry-run policy.
 - **Trading effect**: none.
 
 ## Why this recovery is separate
@@ -96,3 +96,19 @@ exchange-unavailable hour.
 This result permits a separate identity-specific ADR-007 `paper_shadow`
 policy review only. It does not itself mutate SourcePolicy, authorize orders,
 start a collector, resume testnet/live trading, or open the future blind.
+
+## ADR-007 paper-shadow decision
+
+The separate policy review records `hold @ paper_shadow` under
+`SourcePolicy(dry_run=True, position_pct_multiplier=0.2,
+min_confidence_override=None)`. A clean catalog-shadow bundle accepts all
+129 in-window signals on the longest contiguous suffix, classifies all 129 as
+dry run, and produces zero orders/fills, lag events, data gaps, kill-switches,
+or review blockers.
+
+This is the usable monitoring stage for the strategy, not return evidence and
+not an execution authorization. Forward collection is 0/7 qualified days and
+0/50 new signals; no collector or schedule is installed. Any collector must be
+implemented and reviewed first, and schedule installation requires explicit
+operator approval. `paper_simulated`, testnet/live trading, and the future
+blind remain closed.

@@ -1,0 +1,84 @@
+{
+  "accepted_signals": 129,
+  "bundle_dir": "data/research-v18/paper/20260813-025939Z-ea651f8d",
+  "bundle_kind": "paper",
+  "bundle_policy_matches_current": true,
+  "bundle_policy_mismatches": [],
+  "bundle_promotion_blockers": [
+    "manual_review_required_before_disabling_dry_run"
+  ],
+  "current_policy": {
+    "dry_run": true,
+    "min_confidence_override": null,
+    "position_pct_multiplier": 0.2
+  },
+  "current_stage": "paper_shadow",
+  "data_gap_signals": 0,
+  "decision": "hold",
+  "decision_allowed": true,
+  "decision_counts": {
+    "target_flat": 65,
+    "target_long": 64
+  },
+  "decision_reasons": [
+    "hold_gates_passed"
+  ],
+  "dry_run_signals": 129,
+  "expired_signals": 0,
+  "generated_at": "2026-08-13T02:59:57Z",
+  "git_commit": "4f2c8a48748a49c8a0fba03449f16f603b3f335b",
+  "git_dirty": false,
+  "heartbeat_count": 24322,
+  "kill_switch_fired": false,
+  "kill_switch_signals": 0,
+  "manifest_sha256": "507fe79b3f23fc6f0293cddf165d1a1d5790ecdcafd06bdfda10c6decaecfa08",
+  "max_drawdown_abs_by_currency": {
+    "USDT": 0.0
+  },
+  "max_drawdown_pct_by_currency": {
+    "USDT": 0.0
+  },
+  "missing_metrics": [],
+  "model_version": "cboe-vxn-ohlc5obs-negative-1d-v1",
+  "operator": "nishiki",
+  "paper_simulated_retro_path": null,
+  "pnl_total_by_currency": {
+    "USDT": 0.0
+  },
+  "policy_diff": {},
+  "policy_evidence_path": "data/research-v18/paper/20260813-025939Z-ea651f8d/run_manifest.json",
+  "policy_evidence_sha256": "507fe79b3f23fc6f0293cddf165d1a1d5790ecdcafd06bdfda10c6decaecfa08",
+  "previous_run_id": null,
+  "promotion_gate_blockers": [],
+  "rationale": "The exact VXN-relief identity passed prospectively frozen 2023-2025 confirmation. The longest contiguous catalog suffix after the separately audited Binance exchange-unavailable hour verifies 129 of 129 SignalEvent v1 rows under the identity-specific dry-run policy with zero orders, fills, schema, authorization, freshness, lag, kill-switch, or data-gap blockers. Historical replay is stage-entry plumbing evidence only; a separate review remains mandatory before paper_simulated.",
+  "reason_counts": {
+    "dry_run": 129
+  },
+  "restart_sequence": 0,
+  "review_blockers": [],
+  "run_id": "20260813-025939Z-ea651f8d",
+  "runtime_data_gaps": 0,
+  "runtime_data_mode": "catalog_polling",
+  "runtime_mode": "paper",
+  "runtime_order_mode": "simulated",
+  "session_days_inclusive": 1014,
+  "signal_lag_signals": 0,
+  "signal_rows": 129,
+  "skipped_signals": 0,
+  "source": "rule_nasdaq_vol_relief_v2",
+  "target_policy": {
+    "dry_run": true,
+    "min_confidence_override": null,
+    "position_pct_multiplier": 0.2
+  },
+  "target_stage": "paper_shadow",
+  "testnet_runbook_signoff_path": null,
+  "totals": {
+    "events": 129,
+    "fills": 0,
+    "iterations": 24322,
+    "orders": 0,
+    "positions": 0
+  },
+  "unauthorized_signals": 0
+}
