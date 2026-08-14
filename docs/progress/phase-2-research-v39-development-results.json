@@ -1,0 +1,66 @@
+{
+  "best_candidate": "lovol_expansion",
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_confirmation_early": false,
+    "opens_future_blind": false,
+    "touches_live_path": false
+  },
+  "candidates": {
+    "cndr_expansion": {
+      "base_net_pnl": 6.6998706600000055,
+      "classification": "development_rejected",
+      "closed_positions": 64,
+      "duplicate_replays": 2,
+      "key": "cndr_expansion",
+      "leave_best_base_net_pnl": -5.9050354319999965,
+      "model_version": "cboe-cndr-diff5-positive-lag1d-v1",
+      "pass_gates": false,
+      "positive_months": 20,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "source": "rule_cboe_cndr_expansion_v1",
+      "stress_net_pnl": 5.576055825000006
+    },
+    "lovol_expansion": {
+      "base_net_pnl": 19.177515207999996,
+      "classification": "development_pass_confirmation_open_eligible",
+      "closed_positions": 73,
+      "duplicate_replays": 2,
+      "key": "lovol_expansion",
+      "leave_best_base_net_pnl": 5.836824584,
+      "model_version": "cboe-lovol-diff5-positive-lag1d-v1",
+      "pass_gates": true,
+      "positive_months": 21,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "source": "rule_cboe_lovol_expansion_v1",
+      "stress_net_pnl": 17.888514009999994
+    },
+    "putd_expansion": {
+      "base_net_pnl": 10.754877316000007,
+      "classification": "development_rejected",
+      "closed_positions": 63,
+      "duplicate_replays": 2,
+      "key": "putd_expansion",
+      "leave_best_base_net_pnl": -6.971512924000004,
+      "model_version": "cboe-putd-diff5-positive-lag1d-v1",
+      "pass_gates": false,
+      "positive_months": 16,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "source": "rule_cboe_putd_expansion_v1",
+      "stress_net_pnl": 9.608079145000007
+    }
+  },
+  "evaluated_at": "2026-08-14T09:02:37.203912Z",
+  "passing_candidates": [
+    "lovol_expansion"
+  ],
+  "protocol_sha256": "sha256:bad0e5067aab22abbb4fe260a84e4966708c22c7777c5c0d66fedc414ddc14e3",
+  "schema_version": "research.v39.development_results.v1"
+}
