@@ -1,0 +1,51 @@
+{
+  "boundaries": {
+    "confirmation_values_opened": false,
+    "future_blind_opened": false,
+    "historical_vintage_claim": false,
+    "network_requests_closed_after_snapshot": true
+  },
+  "development_factors": {
+    "btc_prem_diff5_loose": {
+      "development_row_count": 1090,
+      "first_date": "2020-01-01",
+      "kind": "btc_prem_diff5_loose",
+      "last_date": "2022-12-31",
+      "path": "data/research-v46/factors/btc_prem_diff5_loose_development.csv",
+      "row_count": 1090,
+      "sha256": "sha256:b27ef705608a5ef97ecc9e4bfc5042dc7c8a5cc9ab012d8d3da6b0b62d719f7d",
+      "snapshot_sha256": "sha256:ee24ca672cb3a48f1291a076f5677e7ea9bc8ad4c5ac38868d15b92680a7c2a3",
+      "warmup_row_count": 0
+    },
+    "btc_prem_diff5_minhold2": {
+      "development_row_count": 1090,
+      "first_date": "2020-01-01",
+      "kind": "btc_prem_diff5_minhold2",
+      "last_date": "2022-12-31",
+      "path": "data/research-v46/factors/btc_prem_diff5_minhold2_development.csv",
+      "row_count": 1090,
+      "sha256": "sha256:ed1aea09fedf95d7710d5058e5383847fabc3a2747ba10f47e41ac4c274ef186",
+      "snapshot_sha256": "sha256:ee24ca672cb3a48f1291a076f5677e7ea9bc8ad4c5ac38868d15b92680a7c2a3",
+      "warmup_row_count": 0
+    },
+    "btc_prem_diff5_negative": {
+      "development_row_count": 1090,
+      "first_date": "2020-01-01",
+      "kind": "btc_prem_diff5_negative",
+      "last_date": "2022-12-31",
+      "path": "data/research-v46/factors/btc_prem_diff5_negative_development.csv",
+      "row_count": 1090,
+      "sha256": "sha256:ed1aea09fedf95d7710d5058e5383847fabc3a2747ba10f47e41ac4c274ef186",
+      "snapshot_sha256": "sha256:ee24ca672cb3a48f1291a076f5677e7ea9bc8ad4c5ac38868d15b92680a7c2a3",
+      "warmup_row_count": 0
+    }
+  },
+  "evaluated_at": "2026-08-14T09:59:38.423663Z",
+  "passed": true,
+  "premium_row_count": 2396,
+  "protocol": "docs/progress/phase-2-research-protocol-v46.json",
+  "schema_version": "research.v46.provider_qualification.v1",
+  "snapshot_path": "data/research-v46/raw/binance-vision-btc-prem-20260814T095938Z-ee24ca672cb3.json",
+  "snapshot_sha256": "sha256:ee24ca672cb3a48f1291a076f5677e7ea9bc8ad4c5ac38868d15b92680a7c2a3",
+  "vintage_id": "binance-vision-btc-prem:2026-08-14T09:59:38.423663+00:00:ee24ca672cb3"
+}

@@ -1,0 +1,18 @@
+{
+  "schema_version": "research.v46.confirmation_data_sources.v1",
+  "provider": "Binance Public Vision Futures Archive",
+  "symbols": {
+    "btc_premium": {
+      "symbol": "BTCUSDT",
+      "base_url": "https://data.binance.vision/data/futures/um/monthly/premiumIndexKlines/BTCUSDT/1d/",
+      "format": "csv_daily_kline"
+    }
+  },
+  "candidate": "btc_prem_diff5_negative",
+  "metric_formula": "Premium(D) - Premium(D-5) < 0.0",
+  "boundaries": {
+    "loads_credentials": false,
+    "historical_vintage_claim": false,
+    "point_in_time_interpretation": "binance_vision_premium_index_closed_daily_bars_lagged_1_calendar_day"
+  }
+}
