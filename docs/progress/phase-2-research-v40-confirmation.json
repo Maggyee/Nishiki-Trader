@@ -1,0 +1,81 @@
+{
+  "schema_version": "research.protocol.v40.confirmation.v1",
+  "name": "Phase 2 Alpha Research Protocol v40 Confirmation Contract (VXN NASDAQ Volatility Relief Expansion)",
+  "status": "preregistered_before_confirmation_open",
+  "frozen_at": "2026-08-14T09:08:15Z",
+  "parent_protocol": "docs/progress/phase-2-research-protocol-v40.json",
+  "parent_protocol_sha256": "sha256:dc454a42609bc85bfc37788c4904ef5c8d066c4b15be6e8adf9d714e595f5730",
+  "development_results": "docs/progress/phase-2-research-v40-development-results.json",
+  "candidate": {
+    "key": "vxn_relief",
+    "source": "rule_cboe_vxn_relief_v1",
+    "model_version": "cboe-vxn-diff5-negative-lag1d-v1",
+    "index": "VXN",
+    "kind": "vxn",
+    "parameters": {
+      "change_observations": 5,
+      "direction": "negative",
+      "threshold": 0.0,
+      "publication_lag_calendar_days": 1,
+      "ttl_seconds": 86400,
+      "confidence": 0.75
+    },
+    "rule": "buy iff VXN minus its value five official observations earlier is strictly negative; flat otherwise; begin flat and emit only on state change"
+  },
+  "data_contract": {
+    "provider": "Cboe Global Indices",
+    "raw_snapshot": "data/research-v40/raw/vxn-20260814T090639Z-9ac25124913a.json",
+    "raw_snapshot_sha256": "sha256:9ac25124913a7ca3114900033a4b088b776461f6dfb8181ad1c482a5e50deeac",
+    "publication_lag_calendar_days": 1,
+    "warmup_start": "2022-11-01",
+    "confirmation_start": "2023-01-01",
+    "confirmation_end": "2025-12-31",
+    "future_blind_start": "2026-09-01",
+    "future_blind_end": "2027-01-31",
+    "missing_value_policy": "drop missing official observation; never forward-fill across trading days; never interpolate",
+    "historical_vintage_claim": false
+  },
+  "execution_contract": {
+    "instrument": "BTCUSDT.BINANCE",
+    "bar_type": "BTCUSDT.BINANCE-1-HOUR-LAST-EXTERNAL",
+    "venue": "BINANCE",
+    "account_type": "cash",
+    "oms_type": "netting",
+    "starting_balance": 100000.0,
+    "trade_size": 0.001,
+    "min_confidence": 0.55,
+    "confirmation_catalog": "data/research-v8/catalog"
+  },
+  "cost_scenarios": {
+    "gross": {
+      "fee_bps_per_fill": 0.0,
+      "slippage_bps_per_fill": 0.0
+    },
+    "base": {
+      "fee_bps_per_fill": 10.0,
+      "slippage_bps_per_fill": 2.0
+    },
+    "stress": {
+      "fee_bps_per_fill": 10.0,
+      "slippage_bps_per_fill": 5.0
+    }
+  },
+  "gates": {
+    "base_net_pnl_gt": 0.0,
+    "stress_net_pnl_gt": 0.0,
+    "positive_calendar_years_at_least": 2,
+    "positive_calendar_months_at_least": 18,
+    "closed_positions_at_least": 30,
+    "leave_best_position_base_net_pnl_gt": 0.0,
+    "duplicate_replays_required": 2,
+    "spot_long_flat_only": true,
+    "evidence_blockers_required": 0
+  },
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "resumes_testnet": false,
+    "touches_live_path": false,
+    "opens_future_blind": false
+  }
+}
