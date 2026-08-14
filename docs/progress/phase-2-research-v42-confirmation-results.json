@@ -1,0 +1,30 @@
+{
+  "base_net_pnl": 55.50949322,
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_future_blind": false,
+    "touches_live_path": false
+  },
+  "candidate": "vix6m_relief",
+  "classification": "paper_shadow_review_eligible",
+  "closed_positions": 74,
+  "confirmation_sha256": "sha256:72a8a47ff9597fd8defb9db7a86061932814b973d6b5a3dcce7df079e133884b",
+  "duplicate_replays": 2,
+  "evaluated_at": "2026-08-14T09:26:15.104155Z",
+  "leave_best_base_net_pnl": 39.151533115999996,
+  "model_version": "cboe-vix6m-diff5-negative-lag1d-v1",
+  "pass_gates": true,
+  "positive_months": 20,
+  "positive_years": 3,
+  "reproducible": true,
+  "schema_version": "research.v42.confirmation_results.v1",
+  "short_positions": 0,
+  "source": "rule_cboe_vix6m_relief_v1",
+  "stress_net_pnl": 52.695679025000004,
+  "yearly_base_net_pnl": {
+    "2023": 4.037490108000001,
+    "2024": 33.965464472,
+    "2025": 17.506538640000002
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "factor_summary": {
+    "development_row_count": 794,
+    "first_date": "2022-11-01",
+    "kind": "vix6m",
+    "last_date": "2025-12-31",
+    "path": "data/research-v42/factors/vix6m_confirmation.csv",
+    "row_count": 794,
+    "sha256": "sha256:4b58a73f78cd19f09ebdb7ae457fb533eab949a0cbf243bf4c0278e0a7dd3c20",
+    "snapshot_sha256": "sha256:a1e4edbf997e49f56102b1fb7dbff06d270c1be43eb42ec32e32b8439be8bc81",
+    "warmup_row_count": 0
+  },
+  "schema_version": "research.v42.confirmation_data_sources.v1",
+  "snapshot_path": "data/research-v42/raw/cboe-vix6m-20260814T092435Z-a1e4edbf997e.json",
+  "snapshot_sha256": "sha256:a1e4edbf997e49f56102b1fb7dbff06d270c1be43eb42ec32e32b8439be8bc81"
+}

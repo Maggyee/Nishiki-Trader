@@ -50,25 +50,41 @@ def fetch_monthly_kline_zip(symbol: str, year: int, month: int, fetch: Fetch = _
         raw_zip = fetch(url)
     except Exception:
         return []
-    z = zipfile.ZipFile(io.BytesIO(raw_zip))
+    try:
+        z = zipfile.ZipFile(io.BytesIO(raw_zip))
+    except Exception:
+        return []
     content = z.read(z.namelist()[0]).decode("utf-8")
     rows: list[dict[str, Any]] = []
     for line in content.strip().splitlines():
         if not line or "open_time" in line:
             continue
         parts = line.split(",")
-        ts = int(parts[0])
-        d = datetime.fromtimestamp(ts / 1000, tz=UTC).date().isoformat()
-        rows.append(
-            {
-                "date": d,
-                "open": float(parts[1]),
-                "high": float(parts[2]),
-                "low": float(parts[3]),
-                "close": float(parts[4]),
-                "volume": float(parts[5]),
-            }
-        )
+        if len(parts) < 6:
+            continue
+        try:
+            ts = int(parts[0])
+            if ts > 1e16:
+                ts_sec = ts / 1e9
+            elif ts > 1e13:
+                ts_sec = ts / 1e6
+            elif ts > 1e10:
+                ts_sec = ts / 1e3
+            else:
+                ts_sec = float(ts)
+            d = datetime.fromtimestamp(ts_sec, tz=UTC).date().isoformat()
+            rows.append(
+                {
+                    "date": d,
+                    "open": float(parts[1]),
+                    "high": float(parts[2]),
+                    "low": float(parts[3]),
+                    "close": float(parts[4]),
+                    "volume": float(parts[5]),
+                }
+            )
+        except Exception:
+            continue
     return rows
 
 

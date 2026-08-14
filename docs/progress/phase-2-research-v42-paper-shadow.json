@@ -1,0 +1,27 @@
+{
+  "schema_version": "research.protocol.v42.paper_shadow.v1",
+  "strategy": "vix6m_relief",
+  "source": "rule_cboe_vix6m_relief_v1",
+  "model_version": "cboe-vix6m-diff5-negative-lag1d-v1",
+  "status": "active_paper_shadow",
+  "candidate": {
+    "key": "vix6m_relief",
+    "parameters": {
+      "change_observations": 5,
+      "direction": "negative",
+      "threshold": 0.0,
+      "publication_lag_calendar_days": 1,
+      "ttl_seconds": 86400,
+      "confidence": 0.75
+    }
+  },
+  "cadence": "daily_weekday_0345_utc",
+  "crontab_entry": "45 3 * * 1-5 cd /home/orca/orca/projects/trader && /home/orca/orca/projects/trader/.venv/bin/python -m apps.ops.research_v42_shadow_daily >> /home/orca/orca/projects/trader/data/research-v42/shadow/cron.log 2>&1",
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "resumes_testnet": false,
+    "touches_live_path": false,
+    "future_blind_opened": false
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "boundaries": {
+    "confirmation_values_opened": false,
+    "future_blind_opened": false,
+    "historical_vintage_claim": false,
+    "network_requests_closed_after_snapshot": true
+  },
+  "development_factors": {
+    "vix3m": {
+      "development_row_count": 756,
+      "first_date": "2019-11-01",
+      "kind": "vix3m",
+      "last_date": "2022-12-30",
+      "path": "data/research-v42/factors/vix3m_development.csv",
+      "row_count": 797,
+      "sha256": "sha256:e0eda913fe02743d837e400b68a0c551eab2dcc457a2f5c1f620ae7a8124184f",
+      "snapshot_sha256": "sha256:88aaeb1dba26f2ef7a4fb429ad20ae8f1b91f943cd8500ff91273d5d3f4e061a",
+      "warmup_row_count": 41
+    },
+    "vix6m": {
+      "development_row_count": 756,
+      "first_date": "2019-11-01",
+      "kind": "vix6m",
+      "last_date": "2022-12-30",
+      "path": "data/research-v42/factors/vix6m_development.csv",
+      "row_count": 797,
+      "sha256": "sha256:57706776f82b670e8e5d87f31be875d8f016c9f05f15a1ed6ac0cfaf8706ce7a",
+      "snapshot_sha256": "sha256:a1e4edbf997e49f56102b1fb7dbff06d270c1be43eb42ec32e32b8439be8bc81",
+      "warmup_row_count": 41
+    },
+    "vix9d": {
+      "development_row_count": 756,
+      "first_date": "2019-11-01",
+      "kind": "vix9d",
+      "last_date": "2022-12-30",
+      "path": "data/research-v42/factors/vix9d_development.csv",
+      "row_count": 797,
+      "sha256": "sha256:4f6d93e4f7344e3b45c2181425a0a6fc0c151b7c6f2f1bd5254a8c15bfd38b52",
+      "snapshot_sha256": "sha256:b3b103b6035b95eb38b89e89a632aa5178cd326fc10409f987c34b3eb42536fd",
+      "warmup_row_count": 41
+    }
+  },
+  "evaluated_at": "2026-08-14T09:24:35.833694Z",
+  "passed": true,
+  "protocol": "docs/progress/phase-2-research-protocol-v42.json",
+  "results": {
+    "vix3m": {
+      "audit": {
+        "first_date": "2009-09-18",
+        "kind": "vix3m",
+        "last_date": "2026-08-13",
+        "total_rows": 4251
+      },
+      "snapshot_path": "data/research-v42/raw/cboe-vix3m-20260814T092435Z-88aaeb1dba26.json",
+      "snapshot_sha256": "sha256:88aaeb1dba26f2ef7a4fb429ad20ae8f1b91f943cd8500ff91273d5d3f4e061a",
+      "vintage_id": "cboe-vix3m:2026-08-14T09:24:35.833694+00:00:88aaeb1dba26"
+    },
+    "vix6m": {
+      "audit": {
+        "first_date": "2008-01-02",
+        "kind": "vix6m",
+        "last_date": "2026-08-13",
+        "total_rows": 4683
+      },
+      "snapshot_path": "data/research-v42/raw/cboe-vix6m-20260814T092435Z-a1e4edbf997e.json",
+      "snapshot_sha256": "sha256:a1e4edbf997e49f56102b1fb7dbff06d270c1be43eb42ec32e32b8439be8bc81",
+      "vintage_id": "cboe-vix6m:2026-08-14T09:24:35.833694+00:00:a1e4edbf997e"
+    },
+    "vix9d": {
+      "audit": {
+        "first_date": "2011-01-04",
+        "kind": "vix9d",
+        "last_date": "2026-08-13",
+        "total_rows": 3925
+      },
+      "snapshot_path": "data/research-v42/raw/cboe-vix9d-20260814T092435Z-b3b103b6035b.json",
+      "snapshot_sha256": "sha256:b3b103b6035b95eb38b89e89a632aa5178cd326fc10409f987c34b3eb42536fd",
+      "vintage_id": "cboe-vix9d:2026-08-14T09:24:35.833694+00:00:b3b103b6035b"
+    }
+  },
+  "schema_version": "research.v42.provider_qualification.v1"
+}
