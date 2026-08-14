@@ -1,0 +1,67 @@
+{
+  "best_candidate": "cll_expansion",
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_confirmation_early": false,
+    "opens_future_blind": false,
+    "touches_live_path": false
+  },
+  "candidates": {
+    "cll_expansion": {
+      "base_net_pnl": 28.292012396000004,
+      "classification": "development_pass_confirmation_open_eligible",
+      "closed_positions": 74,
+      "duplicate_replays": 2,
+      "key": "cll_expansion",
+      "leave_best_base_net_pnl": 10.241580251999999,
+      "model_version": "cboe-cll-diff5-positive-lag1d-v1",
+      "pass_gates": true,
+      "positive_months": 21,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "source": "rule_cboe_cll_expansion_v1",
+      "stress_net_pnl": 26.949552995
+    },
+    "pput_expansion": {
+      "base_net_pnl": 18.097933511999994,
+      "classification": "development_pass_confirmation_open_eligible",
+      "closed_positions": 76,
+      "duplicate_replays": 2,
+      "key": "pput_expansion",
+      "leave_best_base_net_pnl": 0.047501367999998934,
+      "model_version": "cboe-pput-diff5-positive-lag1d-v1",
+      "pass_gates": true,
+      "positive_months": 19,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "source": "rule_cboe_pput_expansion_v1",
+      "stress_net_pnl": 16.765966889999994
+    },
+    "vpd_expansion": {
+      "base_net_pnl": 12.979304620000002,
+      "classification": "development_rejected",
+      "closed_positions": 76,
+      "duplicate_replays": 2,
+      "key": "vpd_expansion",
+      "leave_best_base_net_pnl": -3.1596754879999978,
+      "model_version": "cboe-vpd-diff5-positive-lag1d-v1",
+      "pass_gates": false,
+      "positive_months": 19,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "source": "rule_cboe_vpd_expansion_v1",
+      "stress_net_pnl": 11.659328275000002
+    }
+  },
+  "evaluated_at": "2026-08-14T08:57:42.223811Z",
+  "passing_candidates": [
+    "pput_expansion",
+    "cll_expansion"
+  ],
+  "protocol_sha256": "sha256:16a55e2c79a09605c50c9861258bc0b0e9327d8e62bd69dc291af90c22ef5dca",
+  "schema_version": "research.v38.development_results.v1"
+}
