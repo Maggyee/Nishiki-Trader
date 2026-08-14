@@ -1,0 +1,13 @@
+{
+  "health": "HEALTHY",
+  "last_observation_date": "2026-08-13",
+  "last_run_at": "2026-08-14T09:10:50.007956Z",
+  "latest_factor_sha256": "sha256:003c2dfa15f48a7052c6a5c8f7c0f2b17425c21a631c56ecd70f84a8a8c5c541",
+  "latest_snapshot_sha256": "sha256:9ac25124913a7ca3114900033a4b088b776461f6dfb8181ad1c482a5e50deeac",
+  "model_version": "cboe-vxn-diff5-negative-lag1d-v1",
+  "schema_version": "research.protocol.v40.paper_shadow_status.v1",
+  "source": "rule_cboe_vxn_relief_v1",
+  "strategy": "vxn_relief",
+  "total_days_collected": 2,
+  "total_signals_stored": 15
+}

@@ -1,0 +1,42 @@
+{
+  "schema_version": "research.protocol.v40.paper_shadow.v1",
+  "name": "Phase 2 Alpha Research Protocol v40 Paper Shadow Specification (VXN NASDAQ Volatility Relief Expansion)",
+  "status": "active_paper_shadow",
+  "activated_at": "2026-08-14T09:09:45Z",
+  "strategy": {
+    "key": "vxn_relief",
+    "source": "rule_cboe_vxn_relief_v1",
+    "model_version": "cboe-vxn-diff5-negative-lag1d-v1",
+    "index": "VXN",
+    "parameters": {
+      "change_observations": 5,
+      "direction": "negative",
+      "threshold": 0.0,
+      "publication_lag_calendar_days": 1,
+      "ttl_seconds": 86400,
+      "confidence": 0.75
+    }
+  },
+  "cadence": {
+    "schedule": "0 3 * * 1-5",
+    "timezone": "UTC",
+    "description": "Daily weekday run at 03:00 UTC after Cboe publishes previous day official index values"
+  },
+  "paths": {
+    "raw_dir": "data/research-v40/shadow/raw",
+    "factors_dir": "data/research-v40/shadow/factors",
+    "signal_store": "data/research-v40/shadow/signals.db",
+    "state_file": "data/research-v40/shadow/state.json",
+    "status_file": "docs/progress/phase-2-research-v40-paper-shadow-status.json"
+  },
+  "qualification_gates": {
+    "required_forward_days": 7,
+    "max_signal_count": 50,
+    "zero_drift": true
+  },
+  "boundaries": {
+    "loads_credentials": false,
+    "touches_live_path": false,
+    "resumes_testnet": false
+  }
+}

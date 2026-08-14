@@ -1,0 +1,59 @@
+{
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_future_blind": false,
+    "resumes_testnet": false,
+    "touches_live_path": false
+  },
+  "candidate": {
+    "base_net_pnl": 60.20779002,
+    "bundle_runs": [
+      {
+        "fills_sha256": "sha256:4760d48207f51d82d8991190cb6196dea652e15be0d07d01e360be1125aa475d",
+        "manifest_sha256": "sha256:a5838f52959d36bb7fe0e610b2c1a7c84a75ce07a7cda1c496e87ee3db695cbf",
+        "path": "data/research-v40/backtests/vxn-conf-a/20260814-090916Z-dd01703a"
+      },
+      {
+        "fills_sha256": "sha256:4760d48207f51d82d8991190cb6196dea652e15be0d07d01e360be1125aa475d",
+        "manifest_sha256": "sha256:3302c75fcac5d711246420f7ef447ec8b83e4b8d8a7f36dd4d3057f64e6507fa",
+        "path": "data/research-v40/backtests/vxn-conf-b/20260814-090920Z-9ab102e8"
+      }
+    ],
+    "calendar_months": 36,
+    "classification": "paper_shadow_review_eligible",
+    "closed_positions": 72,
+    "duplicate_replays": 2,
+    "effective_blockers": [],
+    "evidence_pass": true,
+    "gross_net_pnl": 70.75335,
+    "key": "vxn_relief",
+    "leave_best_base_net_pnl": 35.30407596399999,
+    "model_version": "cboe-vxn-diff5-negative-lag1d-v1",
+    "performance_pass": true,
+    "positive_months": 20,
+    "positive_years": 3,
+    "reproducible": true,
+    "short_positions": 0,
+    "signal_count": 144,
+    "signal_store_sha256": "af0a62a9fd61632b4a902ada5333cc248452a74cc62b8b7950f9238b190dd0c6",
+    "source": "rule_cboe_vxn_relief_v1",
+    "stress_net_pnl": 57.571400024999996,
+    "verified_no_kline_event_hits": [],
+    "yearly_base_net_pnl": {
+      "2023": 1.020581974,
+      "2024": 24.899782962,
+      "2025": 34.287425084
+    }
+  },
+  "contract_sha256": "sha256:6c6c3705578c3e8417551990f251502dfa978b529ebdfd0a669b8bb346fa5db7",
+  "data_qualification": {
+    "confirmation_row_count": 752,
+    "factor_sha256": "sha256:ad0926340f51f3d25116fd8ab1d626fce5bca7ed312663eaf1489651343e69f1",
+    "schema_version": "research.v40.confirmation.data_sources.v1",
+    "snapshot_sha256": "sha256:9ac25124913a7ca3114900033a4b088b776461f6dfb8181ad1c482a5e50deeac"
+  },
+  "future_blind_status": "sealed_unopened",
+  "recommendation": "enter_paper_shadow_review",
+  "schema_version": "research.v40.confirmation_results.v1"
+}

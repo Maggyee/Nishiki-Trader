@@ -1,0 +1,14 @@
+{
+  "confirmation_row_count": 752,
+  "factor_csv_path": "data/research-v40/factors/vxn_confirmation.csv",
+  "factor_csv_sha256": "sha256:ad0926340f51f3d25116fd8ab1d626fce5bca7ed312663eaf1489651343e69f1",
+  "first_confirmation_date": "2023-01-03",
+  "historical_vintage_claim": false,
+  "last_confirmation_date": "2025-12-31",
+  "network_accessed": false,
+  "row_count": 794,
+  "schema_version": "research.v40.confirmation.data_sources.v1",
+  "snapshot_path": "data/research-v40/raw/vxn-20260814T090639Z-9ac25124913a.json",
+  "snapshot_sha256": "sha256:9ac25124913a7ca3114900033a4b088b776461f6dfb8181ad1c482a5e50deeac",
+  "warmup_row_count": 42
+}
