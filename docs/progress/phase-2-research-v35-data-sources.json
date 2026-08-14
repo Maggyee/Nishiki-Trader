@@ -1,0 +1,69 @@
+{
+  "schema_version": "research.data_sources.v35",
+  "provider": "Cboe Global Indices",
+  "requests": [
+    {
+      "kind": "irx",
+      "index": "IRX",
+      "name": "Cboe 13-Week Treasury Bill Index",
+      "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/IRX_History.csv",
+      "accepted_columns": [
+        ["DATE", "IRX"],
+        ["DATE", "OPEN", "HIGH", "LOW", "CLOSE"]
+      ],
+      "value_column_by_schema": {
+        "scalar": "IRX",
+        "ohlc": "CLOSE"
+      },
+      "coverage_gates": {
+        "development_minimum_observations": 700,
+        "development_first_observation_on_or_before": "2020-01-05",
+        "development_last_observation_on_or_after": "2022-12-28",
+        "warmup_minimum_observations": 5,
+        "maximum_calendar_gap_days": 5
+      }
+    },
+    {
+      "kind": "vix1y",
+      "index": "VIX1Y",
+      "name": "Cboe 1-Year Volatility Index",
+      "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX1Y_History.csv",
+      "accepted_columns": [
+        ["DATE", "VIX1Y"],
+        ["DATE", "OPEN", "HIGH", "LOW", "CLOSE"]
+      ],
+      "value_column_by_schema": {
+        "scalar": "VIX1Y",
+        "ohlc": "CLOSE"
+      },
+      "coverage_gates": {
+        "development_minimum_observations": 700,
+        "development_first_observation_on_or_before": "2020-01-05",
+        "development_last_observation_on_or_after": "2022-12-28",
+        "warmup_minimum_observations": 5,
+        "maximum_calendar_gap_days": 5
+      }
+    },
+    {
+      "kind": "vix6m",
+      "index": "VIX6M",
+      "name": "Cboe 6-Month Volatility Index",
+      "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX6M_History.csv",
+      "accepted_columns": [
+        ["DATE", "VIX6M"],
+        ["DATE", "OPEN", "HIGH", "LOW", "CLOSE"]
+      ],
+      "value_column_by_schema": {
+        "scalar": "VIX6M",
+        "ohlc": "CLOSE"
+      },
+      "coverage_gates": {
+        "development_minimum_observations": 700,
+        "development_first_observation_on_or_before": "2020-01-05",
+        "development_last_observation_on_or_after": "2022-12-28",
+        "warmup_minimum_observations": 5,
+        "maximum_calendar_gap_days": 5
+      }
+    }
+  ]
+}
