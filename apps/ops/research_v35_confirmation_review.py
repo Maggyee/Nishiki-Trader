@@ -1,153 +1,224 @@
-"""Evaluate the frozen Protocol v35 confirmation candidate against 2023-2025 replay bundles."""
+"""Apply the frozen v35 gates to duplicate VIX1Y confirmation bundles."""
 
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-import pandas as pd
-
-from apps.ops.research_v35_confirmation import DEFAULT_CONTRACT, load_and_validate
-from apps.strategies_nautilus.result_schema import load_bundle_summary
+from apps.ops.alpha_review import _analyze_bundle, _runs_reproducible
+from apps.ops.research_protocol_v35 import IDENTITIES
+from apps.ops.research_v8_execution import SCHEMA_VERSION as EXECUTION_SCHEMA
+from apps.ops.research_v8_review import _effective_bundle_blockers, _event_timestamps
+from apps.ops.research_v9_review import STEP_NS, _months
+from apps.ops.research_v35_confirmation import load_and_validate
 
 SCHEMA_VERSION = "research.v35.confirmation_results.v1"
-CONFIRMATION_DATA_SOURCES = Path(
-    "docs/progress/phase-2-research-v35-confirmation-data-sources.json"
+DATA_SCHEMA_VERSION = "research.v35.confirmation.data_sources.v1"
+CANDIDATE = "vix1y_relief"
+SNAPSHOT_SHA256 = (
+    "sha256:3d61344be84e5c27b1e4afc8bb4c8ad7685617224f618c578e1627ed9e892241"
 )
+EXECUTION_AUDIT_PATH = Path("data/research-v8/execution-audit.json")
+EXECUTION_AUDIT_SHA256 = (
+    "sha256:02f3179b79a9720210419241af82ab9563ff2a67cb23f18641934edb3e7caca1"
+)
+GATES = {
+    "base_net_pnl_gt": 0.0,
+    "stress_net_pnl_gt": 0.0,
+    "positive_calendar_years_at_least": 2,
+    "positive_calendar_months_at_least": 18,
+    "closed_positions_at_least": 30,
+    "leave_best_position_base_net_pnl_gt": 0.0,
+    "duplicate_replays_required": 2,
+    "spot_long_flat_only": True,
+    "evidence_blockers_required": 0,
+}
 
 
-def _sha256(data: bytes) -> str:
-    return "sha256:" + hashlib.sha256(data).hexdigest()
+def _sha256(path: Path) -> str:
+    return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def evaluate_confirmation(
-    bundle_a_path: Path,
-    bundle_b_path: Path,
-    *,
-    contract_path: Path = DEFAULT_CONTRACT,
-    data_sources_path: Path = CONFIRMATION_DATA_SOURCES,
+def _classification(performance_pass: bool, evidence_pass: bool) -> str:
+    if performance_pass and evidence_pass:
+        return "paper_shadow_review_eligible"
+    if evidence_pass:
+        return "reject_candidate"
+    return "insufficient_confirmation_evidence"
+
+
+def _validate_data_qualification(payload: dict[str, Any], contract_sha256: str) -> None:
+    if (
+        payload.get("schema_version") != DATA_SCHEMA_VERSION
+        or payload.get("snapshot_sha256") != SNAPSHOT_SHA256
+    ):
+        raise ValueError("Protocol v35 confirmation data qualification drifted")
+    factor_path = Path(str(payload.get("factor_csv_path", "")))
+    if not factor_path.is_file() or payload.get("factor_csv_sha256") != _sha256(factor_path):
+        raise ValueError("Protocol v35 confirmation factor fingerprint drifted")
+    if int(payload.get("confirmation_row_count", 0)) < 700 or int(payload.get("warmup_row_count", 0)) < 5:
+        raise ValueError("Protocol v35 confirmation data evidence is insufficient")
+
+
+def _load_execution_audit(path: Path) -> dict[str, Any]:
+    if path != EXECUTION_AUDIT_PATH or _sha256(path) != EXECUTION_AUDIT_SHA256:
+        raise ValueError("Protocol v35 confirmation execution audit drifted")
+    payload = json.loads(path.read_text())
+    if payload.get("schema_version") != EXECUTION_SCHEMA:
+        raise ValueError("Protocol v35 confirmation execution audit schema drifted")
+    if payload.get("passed") is not True:
+        raise ValueError("Protocol v35 confirmation execution audit did not pass")
+    return payload
+
+
+def build_review(
+    bundle_paths: list[Path],
+    execution_audit: dict[str, Any],
+    data_qualification: dict[str, Any],
 ) -> dict[str, Any]:
-    validation = load_and_validate(contract_path)
-    contract = json.loads(contract_path.read_text())
-    data_sources = json.loads(data_sources_path.read_text())
-    if data_sources.get("schema_version") != "research.v35.confirmation.data_sources.v1":
-        raise ValueError("confirmation data sources schema drifted")
+    contract = load_and_validate()
+    if len(bundle_paths) != int(GATES["duplicate_replays_required"]):
+        raise ValueError("Protocol v35 confirmation requires exactly two bundles")
+    _validate_data_qualification(data_qualification, contract["contract_sha256"])
 
-    summary_a = load_bundle_summary(bundle_a_path)
-    summary_b = load_bundle_summary(bundle_b_path)
-    if summary_a.pnl_total_by_currency != summary_b.pnl_total_by_currency:
-        raise ValueError("duplicate replays produced divergent pnl summaries")
+    start = datetime(2023, 1, 1, tzinfo=UTC)
+    end = datetime(2026, 1, 1, tzinfo=UTC)
+    runs = [
+        _analyze_bundle(
+            path,
+            start_ns=int(start.timestamp() * 1_000_000_000),
+            end_exclusive_ns=int(end.timestamp() * 1_000_000_000),
+            months=_months(2023, 2025),
+            bar_interval_ns=STEP_NS,
+        )
+        for path in bundle_paths
+    ]
+    if any((run["source"], run["model_version"]) != IDENTITIES[CANDIDATE] for run in runs):
+        raise ValueError("Protocol v35 confirmation bundle identity drifted")
+    primary = runs[0]
+    if len(primary["monthly_metrics"]) != 36:
+        raise ValueError("Protocol v35 confirmation requires 36 months")
 
-    fills_a = (bundle_a_path / "fills.parquet").read_bytes()
-    fills_b = (bundle_b_path / "fills.parquet").read_bytes()
-    if hashlib.sha256(fills_a).hexdigest() != hashlib.sha256(fills_b).hexdigest():
-        raise ValueError("duplicate replays did not produce bitwise identical fills")
+    yearly = {"2023": 0.0, "2024": 0.0, "2025": 0.0}
+    positive_months = 0
+    for row in primary["monthly_metrics"]:
+        base = float(row["scenarios"]["base"]["net_pnl"])
+        yearly[str(row["month"])[:4]] += base
+        positive_months += int(base > 0.0)
+    scenario = primary["scenario_metrics"]
+    gross = float(scenario["gross"]["net_pnl"])
+    base = float(scenario["base"]["net_pnl"])
+    stress = float(scenario["stress"]["net_pnl"])
+    leave_best = float(primary["base_net_without_best_position"])
 
-    fills_df = pd.read_parquet(bundle_a_path / "fills.parquet")
-    positions_df = pd.read_parquet(bundle_a_path / "positions.parquet")
-
-    base_net_pnl = float(summary_a.pnl_total_by_currency.get("USDT", 0.0))
-    closed_positions = len(positions_df)
-    short_positions = int((positions_df["side"].astype(str) == "SHORT").sum()) if not positions_df.empty else 0
-
-    if not positions_df.empty and "realized_pnl" in positions_df.columns:
-        best_pnl = float(positions_df["realized_pnl"].max())
-        leave_best = base_net_pnl - best_pnl
-    else:
-        leave_best = base_net_pnl
-
-    fee_total = float(summary_a.commission_total_by_currency.get("USDT", 0.0))
-    stress_extra_bps = 3.0
-    if not fills_df.empty and "quote_amount" in fills_df.columns:
-        volume = float(fills_df["quote_amount"].sum())
-        stress_extra = volume * (stress_extra_bps / 10000.0)
-    else:
-        stress_extra = 0.0
-    stress_net_pnl = base_net_pnl - stress_extra
-
-    if not positions_df.empty and "ts_closed" in positions_df.columns:
-        positions_df["dt_closed"] = pd.to_datetime(positions_df["ts_closed"], utc=True)
-        positions_df["year"] = positions_df["dt_closed"].dt.year
-        positions_df["year_month"] = positions_df["dt_closed"].dt.to_period("M")
-        yearly_pnl = positions_df.groupby("year")["realized_pnl"].sum().to_dict()
-        monthly_pnl = positions_df.groupby("year_month")["realized_pnl"].sum().to_dict()
-        positive_years = sum(1 for v in yearly_pnl.values() if v > 0)
-        positive_months = sum(1 for v in monthly_pnl.values() if v > 0)
-    else:
-        positive_years = 0
-        positive_months = 0
-
-    gates = contract["gates"]
-    pass_base = base_net_pnl > gates["base_net_pnl_gt"]
-    pass_stress = stress_net_pnl > gates["stress_net_pnl_gt"]
-    pass_years = positive_years >= gates["positive_calendar_years_at_least"]
-    pass_months = positive_months >= gates["positive_calendar_months_at_least"]
-    pass_positions = closed_positions >= gates["closed_positions_at_least"]
-    pass_leave_best = leave_best > gates["leave_best_position_base_net_pnl_gt"]
-    pass_no_shorts = short_positions == 0
-
-    all_passed = (
-        pass_base
-        and pass_stress
-        and pass_years
-        and pass_months
-        and pass_positions
-        and pass_leave_best
-        and pass_no_shorts
-    )
-
-    candidate_result = {
-        "key": contract["candidate"]["key"],
-        "source": contract["candidate"]["source"],
-        "model_version": contract["candidate"]["model_version"],
-        "base_net_pnl": base_net_pnl,
-        "stress_net_pnl": stress_net_pnl,
-        "fee_total": fee_total,
-        "closed_positions": closed_positions,
-        "short_positions": short_positions,
-        "leave_best_base_net_pnl": leave_best,
-        "positive_years": positive_years,
-        "positive_months": positive_months,
-        "duplicate_replays": 2,
-        "reproducible": True,
-        "performance_pass": all_passed,
-        "evidence_pass": True,
-        "classification": "paper_shadow_review_eligible" if all_passed else "confirmation_rejected",
+    verified_hours = {
+        timestamp
+        for window in execution_audit.get("verified_no_kline_windows", [])
+        if window.get("classification") == "exchange_unavailable_not_missing_market_data"
+        for timestamp in range(
+            int(window["start_ts_ns"]),
+            int(window["end_ts_ns"]) + STEP_NS,
+            STEP_NS,
+        )
     }
-
-    result = {
+    event_hits = sorted(
+        verified_hours.intersection(
+            timestamp for path in bundle_paths for timestamp in _event_timestamps(path)
+        )
+    )
+    effective_blockers = _effective_bundle_blockers(list(primary["blockers"]), execution_audit)
+    reproducible = _runs_reproducible(runs)
+    positive_years = sum(value > 0.0 for value in yearly.values())
+    positions = int(primary["closed_positions"])
+    performance_pass = bool(
+        base > float(GATES["base_net_pnl_gt"])
+        and stress > float(GATES["stress_net_pnl_gt"])
+        and positive_years >= int(GATES["positive_calendar_years_at_least"])
+        and positive_months >= int(GATES["positive_calendar_months_at_least"])
+        and positions >= int(GATES["closed_positions_at_least"])
+        and leave_best > float(GATES["leave_best_position_base_net_pnl_gt"])
+    )
+    evidence_pass = bool(
+        execution_audit.get("passed") is True
+        and int(primary["short_positions"]) == 0
+        and reproducible
+        and not event_hits
+        and not effective_blockers
+    )
+    manifest = json.loads((bundle_paths[0] / "run_manifest.json").read_text())
+    candidate = {
+        "key": CANDIDATE,
+        "source": primary["source"],
+        "model_version": primary["model_version"],
+        "signal_count": int(manifest["signal_source"]["row_count"]),
+        "gross_net_pnl": gross,
+        "base_net_pnl": base,
+        "stress_net_pnl": stress,
+        "positive_years": positive_years,
+        "yearly_base_net_pnl": yearly,
+        "positive_months": positive_months,
+        "calendar_months": 36,
+        "closed_positions": positions,
+        "leave_best_base_net_pnl": leave_best,
+        "duplicate_replays": len(runs),
+        "reproducible": reproducible,
+        "short_positions": int(primary["short_positions"]),
+        "verified_no_kline_event_hits": event_hits,
+        "effective_blockers": effective_blockers,
+        "performance_pass": performance_pass,
+        "evidence_pass": evidence_pass,
+        "classification": _classification(performance_pass, evidence_pass),
+        "signal_store_sha256": manifest["signal_source"]["store_sha256"],
+        "bundle_runs": [
+            {
+                "path": str(path),
+                "manifest_sha256": _sha256(path / "run_manifest.json"),
+                "fills_sha256": _sha256(path / "fills.parquet"),
+            }
+            for path in bundle_paths
+        ],
+    }
+    return {
         "schema_version": SCHEMA_VERSION,
-        "contract_sha256": validation["contract_sha256"],
-        "evaluated_at": "2026-08-14T01:58:00Z",
-        "passed": all_passed,
-        "candidate": candidate_result,
-        "recommendation": "enter_paper_shadow_review" if all_passed else "reject_candidate_protocol_closed",
+        "contract_sha256": contract["contract_sha256"],
+        "data_qualification": {
+            "schema_version": data_qualification["schema_version"],
+            "confirmation_row_count": data_qualification["confirmation_row_count"],
+            "snapshot_sha256": data_qualification["snapshot_sha256"],
+            "factor_sha256": data_qualification["factor_csv_sha256"],
+        },
+        "candidate": candidate,
+        "recommendation": (
+            "enter_paper_shadow_review"
+            if candidate["classification"] == "paper_shadow_review_eligible"
+            else "stop_protocol_v35_confirmation_failed"
+        ),
+        "future_blind_status": "sealed_unopened",
         "boundaries": {
-            "loads_credentials": False,
             "mutates_source_policy": False,
+            "resumes_testnet": False,
+            "loads_credentials": False,
             "touches_live_path": False,
             "opens_future_blind": False,
         },
     }
-    return result
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--bundle-a", type=Path, required=True)
-    parser.add_argument("--bundle-b", type=Path, required=True)
-    parser.add_argument("--contract", type=Path, default=DEFAULT_CONTRACT)
-    parser.add_argument("--data-sources", type=Path, default=CONFIRMATION_DATA_SOURCES)
+    parser.add_argument("--bundle", type=Path, action="append", required=True)
+    parser.add_argument("--execution-audit", type=Path, default=EXECUTION_AUDIT_PATH)
+    parser.add_argument("--data-qualification", type=Path, required=True)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args(argv)
-    result = evaluate_confirmation(
-        args.bundle_a,
-        args.bundle_b,
-        contract_path=args.contract,
-        data_sources_path=args.data_sources,
+    result = build_review(
+        args.bundle,
+        _load_execution_audit(args.execution_audit),
+        json.loads(args.data_qualification.read_text()),
     )
     rendered = json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + "\n"
     if args.output:
