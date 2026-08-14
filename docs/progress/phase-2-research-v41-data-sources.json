@@ -1,0 +1,29 @@
+{
+  "schema_version": "research.data_sources.v41.v1",
+  "provider": "Binance Public Vision Kline Archive",
+  "metrics": {
+    "eth_btc_rs": {
+      "metric_name": "ETH/BTC Price Ratio",
+      "formula": "ETH_Close / BTC_Close",
+      "inputs": ["BTCUSDT", "ETHUSDT"],
+      "method": "GET_MONTHLY_ARCHIVE"
+    },
+    "btc_parkinson": {
+      "metric_name": "BTC Parkinson Realized Volatility",
+      "formula": "sqrt((ln(BTC_High / BTC_Low)^2) / (4 * ln(2)))",
+      "inputs": ["BTCUSDT"],
+      "method": "GET_MONTHLY_ARCHIVE"
+    },
+    "btc_obv": {
+      "metric_name": "BTC On-Balance Volume",
+      "formula": "cumsum(sign(diff(BTC_Close)) * BTC_Volume)",
+      "inputs": ["BTCUSDT"],
+      "method": "GET_MONTHLY_ARCHIVE"
+    }
+  },
+  "boundaries": {
+    "loads_credentials": false,
+    "historical_vintage_claim": false,
+    "point_in_time_interpretation": "binance_vision_closed_daily_bars_lagged_1_calendar_day"
+  }
+}
