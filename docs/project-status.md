@@ -108,6 +108,8 @@ Detailed history archived so far:
   protocol closed after BPVIX development concentration failure.
 - `docs/progress/phase-2-research-protocol-v33.md` — Cboe correlation term structure
   (COR3M, COR6M, COR1Y); protocol closed after COR1Y confirmation activity/breadth failure.
+- `docs/progress/phase-2-research-protocol-v34.md` — Cboe benchmark Treasury yield relief
+  (FVX, TNX, TYX) pre-registration; historical development unopened.
 - `docs/progress/phase-3-testnet-canary-evidence.md` — archived Phase 3 testnet canary evidence ledger.
 - `docs/progress/phase-3-testnet-continuity-plan.md` — archived 14-day testnet continuity procedure and review command.
 - `docs/progress/phase-5-dashboard-history.md` — completed read-only dashboard, AgentAdvice input, passive Phase 6 gate, and dashboard hardening history.

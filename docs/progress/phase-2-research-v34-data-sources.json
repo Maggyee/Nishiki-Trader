@@ -1,0 +1,69 @@
+{
+  "schema_version": "research.data_sources.v34",
+  "provider": "Cboe Global Indices",
+  "requests": [
+    {
+      "kind": "fvx",
+      "index": "FVX",
+      "name": "Cboe 5-Year Treasury Note Yield Index",
+      "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/FVX_History.csv",
+      "accepted_columns": [
+        ["DATE", "FVX"],
+        ["DATE", "OPEN", "HIGH", "LOW", "CLOSE"]
+      ],
+      "value_column_by_schema": {
+        "scalar": "FVX",
+        "ohlc": "CLOSE"
+      },
+      "coverage_gates": {
+        "development_minimum_observations": 700,
+        "development_first_observation_on_or_before": "2020-01-05",
+        "development_last_observation_on_or_after": "2022-12-28",
+        "warmup_minimum_observations": 5,
+        "maximum_calendar_gap_days": 5
+      }
+    },
+    {
+      "kind": "tnx",
+      "index": "TNX",
+      "name": "Cboe 10-Year Treasury Note Yield Index",
+      "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/TNX_History.csv",
+      "accepted_columns": [
+        ["DATE", "TNX"],
+        ["DATE", "OPEN", "HIGH", "LOW", "CLOSE"]
+      ],
+      "value_column_by_schema": {
+        "scalar": "TNX",
+        "ohlc": "CLOSE"
+      },
+      "coverage_gates": {
+        "development_minimum_observations": 700,
+        "development_first_observation_on_or_before": "2020-01-05",
+        "development_last_observation_on_or_after": "2022-12-28",
+        "warmup_minimum_observations": 5,
+        "maximum_calendar_gap_days": 5
+      }
+    },
+    {
+      "kind": "tyx",
+      "index": "TYX",
+      "name": "Cboe 30-Year Treasury Bond Yield Index",
+      "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/TYX_History.csv",
+      "accepted_columns": [
+        ["DATE", "TYX"],
+        ["DATE", "OPEN", "HIGH", "LOW", "CLOSE"]
+      ],
+      "value_column_by_schema": {
+        "scalar": "TYX",
+        "ohlc": "CLOSE"
+      },
+      "coverage_gates": {
+        "development_minimum_observations": 700,
+        "development_first_observation_on_or_before": "2020-01-05",
+        "development_last_observation_on_or_after": "2022-12-28",
+        "warmup_minimum_observations": 5,
+        "maximum_calendar_gap_days": 5
+      }
+    }
+  ]
+}
