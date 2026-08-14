@@ -1,0 +1,67 @@
+{
+  "best_candidate": "btc_prem_diff5_tight",
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_confirmation_early": false,
+    "opens_future_blind": false,
+    "touches_live_path": false
+  },
+  "candidates": {
+    "btc_prem_diff4_negative": {
+      "base_net_pnl": 2.987515488000011,
+      "classification": "development_rejected",
+      "closed_positions": 227,
+      "duplicate_replays": 2,
+      "key": "btc_prem_diff4_negative",
+      "leave_best_base_net_pnl": -3.169826004000002,
+      "model_version": "crypto-btc-prem-diff4-negative-lag1d-v1",
+      "pass_gates": false,
+      "positive_months": 20,
+      "positive_years": 1,
+      "reproducible": true,
+      "short_positions": 0,
+      "source": "rule_crypto_prem_relief_diff4_v1",
+      "stress_net_pnl": -1.0329506399999886
+    },
+    "btc_prem_diff5_negative": {
+      "base_net_pnl": 8.472815332000001,
+      "classification": "development_pass_confirmation_open_eligible",
+      "closed_positions": 229,
+      "duplicate_replays": 2,
+      "key": "btc_prem_diff5_negative",
+      "leave_best_base_net_pnl": 0.532587675999995,
+      "model_version": "crypto-btc-prem-diff5-negative-lag1d-v1",
+      "pass_gates": true,
+      "positive_months": 20,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "source": "rule_crypto_prem_relief_v1",
+      "stress_net_pnl": 4.3562666650000015
+    },
+    "btc_prem_diff5_tight": {
+      "base_net_pnl": 10.893997531999998,
+      "classification": "development_pass_confirmation_open_eligible",
+      "closed_positions": 228,
+      "duplicate_replays": 2,
+      "key": "btc_prem_diff5_tight",
+      "leave_best_base_net_pnl": 2.9537698759999937,
+      "model_version": "crypto-btc-prem-diff5-tight-lag1d-v1",
+      "pass_gates": true,
+      "positive_months": 20,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "source": "rule_crypto_prem_relief_tight_v1",
+      "stress_net_pnl": 6.771829414999999
+    }
+  },
+  "evaluated_at": "2026-08-14T09:56:44.376069Z",
+  "passing_candidates": [
+    "btc_prem_diff5_negative",
+    "btc_prem_diff5_tight"
+  ],
+  "protocol_sha256": "sha256:4effb9fb31f559ed4a01e7b890ff20d5a69a3e5869fc763e92ea04248c6a5d47",
+  "schema_version": "research.v45.development_results.v1"
+}
