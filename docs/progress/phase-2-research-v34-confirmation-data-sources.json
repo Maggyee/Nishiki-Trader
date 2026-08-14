@@ -1,0 +1,26 @@
+{
+  "schema_version": "research.data_sources.v34.confirmation.v1",
+  "provider": "Cboe Global Indices",
+  "candidate": "fvx_relief",
+  "index": "FVX",
+  "source_snapshot": {
+    "path": "data/research-v34/raw/fvx-20260814T014407Z-75b2f82d3153.json",
+    "snapshot_sha256": "sha256:75b2f82d31537e642123f62f7d44c732bc930e6c89aa74588fe88ed5579fc6ee"
+  },
+  "factor_csv": {
+    "path": "data/research-v34/factors/fvx-confirmation-factors.csv",
+    "sha256": "sha256:b715f9f9ca835619f1d303a312c21a0fd3b86bc7155c4c34b4662cd613ae925b",
+    "row_count": 794,
+    "confirmation_row_count": 752,
+    "warmup_row_count": 42,
+    "first_date": "2022-11-01",
+    "last_date": "2025-12-31"
+  },
+  "audit": {
+    "schema": "scalar",
+    "value_column": "FVX",
+    "new_network_request_required": false,
+    "forward_fill_used": false,
+    "interpolation_used": false
+  }
+}
