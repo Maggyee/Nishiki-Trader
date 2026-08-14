@@ -1,0 +1,91 @@
+{
+  "boundaries": {
+    "confirmation_values_opened": false,
+    "future_blind_opened": false,
+    "historical_vintage_claim": false,
+    "network_requests_closed_after_snapshot": true
+  },
+  "development_factors": {
+    "cndr": {
+      "development_row_count": 755,
+      "first_date": "2019-11-01",
+      "kind": "cndr",
+      "last_date": "2022-12-30",
+      "path": "data/research-v39/factors/cndr_development.csv",
+      "row_count": 796,
+      "sha256": "sha256:14cdcd8b564887d353d128b88143c915d42e00c4f5a51b835233e9942f27800e",
+      "snapshot_sha256": "sha256:45bbc06de44815f19d3f5265fd1e8ded2e2e70ae36c50b8bfa6586c187fa6567",
+      "warmup_row_count": 41
+    },
+    "lovol": {
+      "development_row_count": 755,
+      "first_date": "2019-11-01",
+      "kind": "lovol",
+      "last_date": "2022-12-30",
+      "path": "data/research-v39/factors/lovol_development.csv",
+      "row_count": 796,
+      "sha256": "sha256:5bf0999059132c10fa5220b0e19b3d9ab0b4e2352d394567be3185bd40ef70f4",
+      "snapshot_sha256": "sha256:d871aaddf3c2fa09d74f842e8000566c3c3d1c18262f46714b8a157f7c72c6a4",
+      "warmup_row_count": 41
+    },
+    "putd": {
+      "development_row_count": 756,
+      "first_date": "2019-11-01",
+      "kind": "putd",
+      "last_date": "2022-12-30",
+      "path": "data/research-v39/factors/putd_development.csv",
+      "row_count": 797,
+      "sha256": "sha256:c25f0b43392324bb13ccf2dff44136eeaf8caa4278fbbdabe751cc9ab8e5aed6",
+      "snapshot_sha256": "sha256:bb14078229a7cdb086b20cc4af2ed9282a8c02a0d2a8e9480ea9d2ec3b41d127",
+      "warmup_row_count": 41
+    }
+  },
+  "evaluated_at": "2026-08-14T09:01:31.113202Z",
+  "passed": true,
+  "protocol": "docs/progress/phase-2-research-protocol-v39.json",
+  "schema_version": "research.provider_qualification.v39.v1",
+  "sources": {
+    "cndr": {
+      "audit": {
+        "first_date": "1986-06-20",
+        "kind": "cndr",
+        "last_date": "2026-08-13",
+        "max_gap_days": 7,
+        "row_count": 10109
+      },
+      "kind": "cndr",
+      "row_count": 10109,
+      "snapshot_path": "data/research-v39/raw/cndr-20260814T090128Z-45bbc06de448.json",
+      "snapshot_sha256": "sha256:45bbc06de44815f19d3f5265fd1e8ded2e2e70ae36c50b8bfa6586c187fa6567",
+      "vintage_id": "cboe-cndr:2026-08-14T09:01:28.643616+00:00:45bbc06de448"
+    },
+    "lovol": {
+      "audit": {
+        "first_date": "2006-03-21",
+        "kind": "lovol",
+        "last_date": "2026-08-13",
+        "max_gap_days": 5,
+        "row_count": 5129
+      },
+      "kind": "lovol",
+      "row_count": 5129,
+      "snapshot_path": "data/research-v39/raw/lovol-20260814T090129Z-d871aaddf3c2.json",
+      "snapshot_sha256": "sha256:d871aaddf3c2fa09d74f842e8000566c3c3d1c18262f46714b8a157f7c72c6a4",
+      "vintage_id": "cboe-lovol:2026-08-14T09:01:29.471641+00:00:d871aaddf3c2"
+    },
+    "putd": {
+      "audit": {
+        "first_date": "2006-01-03",
+        "kind": "putd",
+        "last_date": "2026-08-13",
+        "max_gap_days": 5,
+        "row_count": 5185
+      },
+      "kind": "putd",
+      "row_count": 5185,
+      "snapshot_path": "data/research-v39/raw/putd-20260814T090130Z-bb14078229a7.json",
+      "snapshot_sha256": "sha256:bb14078229a7cdb086b20cc4af2ed9282a8c02a0d2a8e9480ea9d2ec3b41d127",
+      "vintage_id": "cboe-putd:2026-08-14T09:01:30.313571+00:00:bb14078229a7"
+    }
+  }
+}
