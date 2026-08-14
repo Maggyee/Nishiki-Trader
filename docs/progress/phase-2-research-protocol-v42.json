@@ -1,0 +1,122 @@
+{
+  "schema_version": "research.protocol.v42.v1",
+  "name": "Phase 2 Alpha Research Protocol v42 (Cboe Volatility Term Structure & Horizon Relief Expansion)",
+  "status": "preregistered_before_data_collection",
+  "preregistered_at": "2026-08-14T09:23:40Z",
+  "data_contract": {
+    "provider": "Cboe Global Indices (Daily Prices History CSVs)",
+    "symbols": {
+      "vix9d": {
+        "ticker": "VIX9D",
+        "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX9D_History.csv"
+      },
+      "vix3m": {
+        "ticker": "VIX3M",
+        "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX3M_History.csv"
+      },
+      "vix6m": {
+        "ticker": "VIX6M",
+        "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX6M_History.csv"
+      }
+    },
+    "publication_lag_calendar_days": 1,
+    "development_start": "2020-01-01",
+    "development_end": "2022-12-31",
+    "confirmation_start": "2023-01-01",
+    "confirmation_end": "2025-12-31",
+    "future_blind_start": "2026-09-01",
+    "future_blind_end": "2027-01-31",
+    "warmup_start": "2019-11-01",
+    "missing_value_policy": "drop missing official observation; never forward-fill across trading days; never interpolate",
+    "historical_vintage_claim": false
+  },
+  "candidates": {
+    "vix9d_relief": {
+      "source": "rule_cboe_vix9d_relief_v1",
+      "model_version": "cboe-vix9d-diff5-negative-lag1d-v1",
+      "metric": "VIX9D",
+      "parameters": {
+        "change_observations": 5,
+        "direction": "negative",
+        "threshold": 0.0,
+        "publication_lag_calendar_days": 1,
+        "ttl_seconds": 86400,
+        "confidence": 0.75
+      },
+      "rule": "buy iff daily Cboe 9-Day Volatility Index close minus its value five daily observations earlier is strictly negative; flat otherwise; begin flat and emit only on state change"
+    },
+    "vix3m_relief": {
+      "source": "rule_cboe_vix3m_relief_v1",
+      "model_version": "cboe-vix3m-diff5-negative-lag1d-v1",
+      "metric": "VIX3M",
+      "parameters": {
+        "change_observations": 5,
+        "direction": "negative",
+        "threshold": 0.0,
+        "publication_lag_calendar_days": 1,
+        "ttl_seconds": 86400,
+        "confidence": 0.75
+      },
+      "rule": "buy iff daily Cboe 3-Month Volatility Index close minus its value five daily observations earlier is strictly negative; flat otherwise; begin flat and emit only on state change"
+    },
+    "vix6m_relief": {
+      "source": "rule_cboe_vix6m_relief_v1",
+      "model_version": "cboe-vix6m-diff5-negative-lag1d-v1",
+      "metric": "VIX6M",
+      "parameters": {
+        "change_observations": 5,
+        "direction": "negative",
+        "threshold": 0.0,
+        "publication_lag_calendar_days": 1,
+        "ttl_seconds": 86400,
+        "confidence": 0.75
+      },
+      "rule": "buy iff daily Cboe 6-Month Volatility Index close minus its value five daily observations earlier is strictly negative; flat otherwise; begin flat and emit only on state change"
+    }
+  },
+  "execution_contract": {
+    "instrument": "BTCUSDT.BINANCE",
+    "bar_type": "BTCUSDT.BINANCE-1-HOUR-LAST-EXTERNAL",
+    "venue": "BINANCE",
+    "account_type": "cash",
+    "oms_type": "netting",
+    "starting_balance": 100000.0,
+    "trade_size": 0.001,
+    "min_confidence": 0.55,
+    "development_catalog": "data/research-v7-downtime-sensitivity/catalog",
+    "confirmation_catalog": "data/research-v8/catalog"
+  },
+  "cost_scenarios": {
+    "gross": {
+      "fee_bps_per_fill": 0.0,
+      "slippage_bps_per_fill": 0.0
+    },
+    "base": {
+      "fee_bps_per_fill": 10.0,
+      "slippage_bps_per_fill": 2.0
+    },
+    "stress": {
+      "fee_bps_per_fill": 10.0,
+      "slippage_bps_per_fill": 5.0
+    }
+  },
+  "gates": {
+    "base_net_pnl_gt": 0.0,
+    "stress_net_pnl_gt": 0.0,
+    "positive_calendar_years_at_least": 2,
+    "positive_calendar_months_at_least": 18,
+    "closed_positions_at_least": 30,
+    "leave_best_position_base_net_pnl_gt": 0.0,
+    "duplicate_replays_required": 2,
+    "spot_long_flat_only": true,
+    "evidence_blockers_required": 0
+  },
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "resumes_testnet": false,
+    "touches_live_path": false,
+    "opens_confirmation_early": false,
+    "opens_future_blind": false
+  }
+}

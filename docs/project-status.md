@@ -124,6 +124,8 @@ Detailed history archived so far:
   (VXN, RVX, VXD); VXN passed 2023-2025 confirmation, held at `paper_shadow`, Day 1 qualified (2/7 runs, 15 signals), weekday 03:15 UTC crontab installed.
 - `docs/progress/phase-2-research-protocol-v41.md` — BTC/ETH crypto-native alpha exploration
   (ETH/BTC RS, BTC Parkinson, BTC OBV); protocol closed after all three candidates failed development gates.
+- `docs/progress/phase-2-research-protocol-v42.md` — Cboe volatility term structure & horizon relief expansion
+  (VIX9D, VIX3M, VIX6M) pre-registration; historical development unopened.
 - `docs/progress/phase-3-testnet-canary-evidence.md` — archived Phase 3 testnet canary evidence ledger.
 - `docs/progress/phase-3-testnet-continuity-plan.md` — archived 14-day testnet continuity procedure and review command.
 - `docs/progress/phase-5-dashboard-history.md` — completed read-only dashboard, AgentAdvice input, passive Phase 6 gate, and dashboard hardening history.
