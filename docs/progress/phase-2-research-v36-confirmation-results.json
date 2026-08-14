@@ -1,0 +1,59 @@
+{
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_future_blind": false,
+    "resumes_testnet": false,
+    "touches_live_path": false
+  },
+  "candidate": {
+    "base_net_pnl": 57.462441864,
+    "bundle_runs": [
+      {
+        "fills_sha256": "sha256:85749cf01bfd96c88af258c11d011160419cd4bfaf29ddb813dfe420a5de173b",
+        "manifest_sha256": "sha256:410f99eb2bcc018aebba3e31e8cc4347322fae279e592bfb688a5c067aef7f4b",
+        "path": "data/research-v36/backtests/vpn-conf-a/20260814-022321Z-caba0792"
+      },
+      {
+        "fills_sha256": "sha256:85749cf01bfd96c88af258c11d011160419cd4bfaf29ddb813dfe420a5de173b",
+        "manifest_sha256": "sha256:cfed928f0578e88a165658a1b2141f010ad22fa5a3a876a7c05832a15703e668",
+        "path": "data/research-v36/backtests/vpn-conf-b/20260814-022326Z-4203e517"
+      }
+    ],
+    "calendar_months": 36,
+    "classification": "paper_shadow_review_eligible",
+    "closed_positions": 65,
+    "duplicate_replays": 2,
+    "effective_blockers": [],
+    "evidence_pass": true,
+    "gross_net_pnl": 68.52198,
+    "key": "vpn_expansion",
+    "leave_best_base_net_pnl": 37.752997112,
+    "model_version": "cboe-vpn-diff5-positive-lag1d-v1",
+    "performance_pass": true,
+    "positive_months": 19,
+    "positive_years": 3,
+    "reproducible": true,
+    "short_positions": 0,
+    "signal_count": 129,
+    "signal_store_sha256": "fe5c5633929afc0769bce4a423ab3318bde91e46e6e563582f2d71a61eee971e",
+    "source": "rule_cboe_vpn_expansion_v1",
+    "stress_net_pnl": 54.697557329999995,
+    "verified_no_kline_event_hits": [],
+    "yearly_base_net_pnl": {
+      "2023": 12.614398598,
+      "2024": 36.917108358,
+      "2025": 7.930934908000004
+    }
+  },
+  "contract_sha256": "sha256:e14b948ce21148a28278b0654a2974461c3ade50a1d7b01da2dd6c2a943335bd",
+  "data_qualification": {
+    "confirmation_row_count": 752,
+    "factor_sha256": "sha256:5099f4a8fb7d4142954fa2fb31ea12011737acbb7dd3ce43499e4f844196272e",
+    "schema_version": "research.v36.confirmation.data_sources.v1",
+    "snapshot_sha256": "sha256:94c8236f2f23880832625de852b652992a75ee7b190b8f16500f793051bc47f6"
+  },
+  "future_blind_status": "sealed_unopened",
+  "recommendation": "enter_paper_shadow_review",
+  "schema_version": "research.v36.confirmation_results.v1"
+}
