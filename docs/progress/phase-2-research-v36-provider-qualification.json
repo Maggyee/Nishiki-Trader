@@ -1,0 +1,91 @@
+{
+  "boundaries": {
+    "confirmation_values_opened": false,
+    "future_blind_opened": false,
+    "historical_vintage_claim": false,
+    "network_requests_closed_after_snapshot": true
+  },
+  "development_factors": {
+    "bxm": {
+      "development_row_count": 755,
+      "first_date": "2019-11-01",
+      "kind": "bxm",
+      "last_date": "2022-12-30",
+      "path": "data/research-v36/factors/bxm_development.csv",
+      "row_count": 796,
+      "sha256": "sha256:1cba00b27e5613005e8f206535d521a76f823260d02f5b8693ec0eb151882f7e",
+      "snapshot_sha256": "sha256:ea7ebe2aa9898b423161c2f2477dac704d8a0197923932baefa4a919aa82503f",
+      "warmup_row_count": 41
+    },
+    "put": {
+      "development_row_count": 756,
+      "first_date": "2019-11-01",
+      "kind": "put",
+      "last_date": "2022-12-30",
+      "path": "data/research-v36/factors/put_development.csv",
+      "row_count": 797,
+      "sha256": "sha256:46f91374cfcd10ccf4a0267b18b87f3f5611bdfa08363909c5ddba0b7cf9981a",
+      "snapshot_sha256": "sha256:a07b2447dab766087625c44735a7787dffd9e701d51a7505d58555937492be92",
+      "warmup_row_count": 41
+    },
+    "vpn": {
+      "development_row_count": 754,
+      "first_date": "2019-11-01",
+      "kind": "vpn",
+      "last_date": "2022-12-30",
+      "path": "data/research-v36/factors/vpn_development.csv",
+      "row_count": 795,
+      "sha256": "sha256:66f5ee4f7fa748ade197aa5238b1db2009538644fb3f34a3aa091f915a29bbdc",
+      "snapshot_sha256": "sha256:94c8236f2f23880832625de852b652992a75ee7b190b8f16500f793051bc47f6",
+      "warmup_row_count": 41
+    }
+  },
+  "evaluated_at": "2026-08-14T02:21:01.565575Z",
+  "passed": true,
+  "protocol": "docs/progress/phase-2-research-protocol-v36.json",
+  "schema_version": "research.provider_qualification.v36.v1",
+  "sources": {
+    "bxm": {
+      "audit": {
+        "first_date": "2002-03-22",
+        "kind": "bxm",
+        "last_date": "2026-08-13",
+        "max_gap_days": 5,
+        "row_count": 6135
+      },
+      "kind": "bxm",
+      "row_count": 6135,
+      "snapshot_path": "data/research-v36/raw/bxm-20260814T022100Z-a919aa82503f.json",
+      "snapshot_sha256": "sha256:ea7ebe2aa9898b423161c2f2477dac704d8a0197923932baefa4a919aa82503f",
+      "vintage_id": "cboe-bxm:2026-08-14T02:21:00.573421+00:00:a919aa82503f"
+    },
+    "put": {
+      "audit": {
+        "first_date": "1991-03-04",
+        "kind": "put",
+        "last_date": "2026-08-13",
+        "max_gap_days": 1159,
+        "row_count": 4941
+      },
+      "kind": "put",
+      "row_count": 4941,
+      "snapshot_path": "data/research-v36/raw/put-20260814T022059Z-55937492be92.json",
+      "snapshot_sha256": "sha256:a07b2447dab766087625c44735a7787dffd9e701d51a7505d58555937492be92",
+      "vintage_id": "cboe-put:2026-08-14T02:20:59.797463+00:00:55937492be92"
+    },
+    "vpn": {
+      "audit": {
+        "first_date": "2008-06-04",
+        "kind": "vpn",
+        "last_date": "2026-08-13",
+        "max_gap_days": 5,
+        "row_count": 4572
+      },
+      "kind": "vpn",
+      "row_count": 4572,
+      "snapshot_path": "data/research-v36/raw/vpn-20260814T022059Z-793051bc47f6.json",
+      "snapshot_sha256": "sha256:94c8236f2f23880832625de852b652992a75ee7b190b8f16500f793051bc47f6",
+      "vintage_id": "cboe-vpn:2026-08-14T02:20:59.021598+00:00:793051bc47f6"
+    }
+  }
+}
