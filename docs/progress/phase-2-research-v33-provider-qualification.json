@@ -1,0 +1,63 @@
+{
+  "schema_version": "research.v33.provider_qualification.v1",
+  "classification": "fully_provider_qualified",
+  "protocol_sha256": "sha256:4cd63886f2eb6929a1a287bc36416bf864f009c27b5698fa77eaa80bc46f4561",
+  "provider_contract_sha256": "sha256:012849b1afbfb57c2dbe910eb185dfbdd88f030df1e88ff8a75ee42457287408",
+  "qualified_candidates": ["cor3m_relief", "cor6m_relief", "cor1y_relief"],
+  "rejected_candidates": {},
+  "qualified_series": {
+    "cor3m": {
+      "snapshot_path": "data/research-v33/raw/cor3m-20260814T013536Z-32bade5ab12d.json",
+      "snapshot_sha256": "sha256:32bade5ab12d2bebeda54408177cc4aef4c4f4d89e7f5367a4c96c47ae4b006c",
+      "factor_path": "data/research-v33/factors/cor3m-development-factors.csv",
+      "factor_sha256": "sha256:70301d55733bb959b6fa4c8b892d73f0321692ac2e153b473046ea4da939f20d",
+      "factor_row_count": 796,
+      "development_row_count": 755,
+      "warmup_row_count": 41,
+      "development_first_date": "2020-01-02",
+      "development_last_date": "2022-12-30",
+      "maximum_calendar_gap_days": 4,
+      "schema": "ohlc",
+      "value_column": "CLOSE"
+    },
+    "cor6m": {
+      "snapshot_path": "data/research-v33/raw/cor6m-20260814T013539Z-82b96fa41fd3.json",
+      "snapshot_sha256": "sha256:82b96fa41fd30d5a22326ac055e93798dbdfda2e749f7aa70cd9024bf41df04b",
+      "factor_path": "data/research-v33/factors/cor6m-development-factors.csv",
+      "factor_sha256": "sha256:ab7232f47d351c03c2b34ce580bc2dcae2890e88a611f61c603247845a05930b",
+      "factor_row_count": 797,
+      "development_row_count": 756,
+      "warmup_row_count": 41,
+      "development_first_date": "2020-01-02",
+      "development_last_date": "2022-12-30",
+      "maximum_calendar_gap_days": 4,
+      "schema": "ohlc",
+      "value_column": "CLOSE"
+    },
+    "cor1y": {
+      "snapshot_path": "data/research-v33/raw/cor1y-20260814T013543Z-0cba3dd6341e.json",
+      "snapshot_sha256": "sha256:0cba3dd6341e6b5d73276b70bb5e61a5db63825333baf0d28111596e47ea3875",
+      "factor_path": "data/research-v33/factors/cor1y-development-factors.csv",
+      "factor_sha256": "sha256:341cb294d0de08e1bd0e38bbf9414aea961ee804564665883db531cb3923c92b",
+      "factor_row_count": 797,
+      "development_row_count": 756,
+      "warmup_row_count": 41,
+      "development_first_date": "2020-01-02",
+      "development_last_date": "2022-12-30",
+      "maximum_calendar_gap_days": 4,
+      "schema": "ohlc",
+      "value_column": "CLOSE"
+    }
+  },
+  "rejected_series": {},
+  "historical_vintage_claim": false,
+  "boundaries": {
+    "factor_values_reported": false,
+    "signals_generated": false,
+    "pnl_opened": false,
+    "confirmation_opened": false,
+    "source_policy_mutated": false,
+    "trading_touched": false,
+    "future_blind_opened": false
+  }
+}
