@@ -1,0 +1,128 @@
+{
+  "schema_version": "research.protocol.v37.v1",
+  "name": "Phase 2 Alpha Research Protocol v37 (Cboe Cross-Asset Equity BuyWrite & Tech Overwrite Expansion)",
+  "status": "preregistered_before_data_collection",
+  "preregistered_at": "2026-08-14T08:50:00Z",
+  "data_contract": {
+    "provider": "Cboe Global Indices",
+    "indices": {
+      "bxn": {
+        "index_name": "Cboe NASDAQ-100 BuyWrite Index",
+        "ticker": "BXN",
+        "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/BXN_History.csv"
+      },
+      "bxy": {
+        "index_name": "Cboe S&P 500 2% OTM BuyWrite Index",
+        "ticker": "BXY",
+        "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/BXY_History.csv"
+      },
+      "bxr": {
+        "index_name": "Cboe Russell 2000 BuyWrite Index",
+        "ticker": "BXR",
+        "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/BXR_History.csv"
+      }
+    },
+    "publication_lag_calendar_days": 1,
+    "development_start": "2020-01-01",
+    "development_end": "2022-12-31",
+    "confirmation_start": "2023-01-01",
+    "confirmation_end": "2025-12-31",
+    "future_blind_start": "2026-09-01",
+    "future_blind_end": "2027-01-31",
+    "warmup_start": "2019-11-01",
+    "missing_value_policy": "drop missing official observation; never forward-fill across trading days; never interpolate",
+    "historical_vintage_claim": false
+  },
+  "candidates": {
+    "bxn_expansion": {
+      "source": "rule_cboe_bxn_expansion_v1",
+      "model_version": "cboe-bxn-diff5-positive-lag1d-v1",
+      "index": "BXN",
+      "kind": "bxn",
+      "parameters": {
+        "change_observations": 5,
+        "direction": "positive",
+        "threshold": 0.0,
+        "publication_lag_calendar_days": 1,
+        "ttl_seconds": 86400,
+        "confidence": 0.75
+      },
+      "rule": "buy iff BXN minus its value five official observations earlier is strictly positive; flat otherwise; begin flat and emit only on state change"
+    },
+    "bxy_expansion": {
+      "source": "rule_cboe_bxy_expansion_v1",
+      "model_version": "cboe-bxy-diff5-positive-lag1d-v1",
+      "index": "BXY",
+      "kind": "bxy",
+      "parameters": {
+        "change_observations": 5,
+        "direction": "positive",
+        "threshold": 0.0,
+        "publication_lag_calendar_days": 1,
+        "ttl_seconds": 86400,
+        "confidence": 0.75
+      },
+      "rule": "buy iff BXY minus its value five official observations earlier is strictly positive; flat otherwise; begin flat and emit only on state change"
+    },
+    "bxr_expansion": {
+      "source": "rule_cboe_bxr_expansion_v1",
+      "model_version": "cboe-bxr-diff5-positive-lag1d-v1",
+      "index": "BXR",
+      "kind": "bxr",
+      "parameters": {
+        "change_observations": 5,
+        "direction": "positive",
+        "threshold": 0.0,
+        "publication_lag_calendar_days": 1,
+        "ttl_seconds": 86400,
+        "confidence": 0.75
+      },
+      "rule": "buy iff BXR minus its value five official observations earlier is strictly positive; flat otherwise; begin flat and emit only on state change"
+    }
+  },
+  "execution_contract": {
+    "instrument": "BTCUSDT.BINANCE",
+    "bar_type": "BTCUSDT.BINANCE-1-HOUR-LAST-EXTERNAL",
+    "venue": "BINANCE",
+    "account_type": "cash",
+    "oms_type": "netting",
+    "starting_balance": 100000.0,
+    "trade_size": 0.001,
+    "min_confidence": 0.55,
+    "development_catalog": "data/research-v7-downtime-sensitivity/catalog",
+    "confirmation_catalog": "data/research-v8/catalog"
+  },
+  "cost_scenarios": {
+    "gross": {
+      "fee_bps_per_fill": 0.0,
+      "slippage_bps_per_fill": 0.0
+    },
+    "base": {
+      "fee_bps_per_fill": 10.0,
+      "slippage_bps_per_fill": 2.0
+    },
+    "stress": {
+      "fee_bps_per_fill": 10.0,
+      "slippage_bps_per_fill": 5.0
+    }
+  },
+  "gates": {
+    "base_net_pnl_gt": 0.0,
+    "stress_net_pnl_gt": 0.0,
+    "positive_calendar_years_at_least": 2,
+    "positive_calendar_months_at_least": 18,
+    "closed_positions_at_least": 30,
+    "leave_best_position_base_net_pnl_gt": 0.0,
+    "duplicate_replays_required": 2,
+    "spot_long_flat_only": true,
+    "evidence_blockers_required": 0
+  },
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "resumes_testnet": false,
+    "touches_live_path": false,
+    "opens_confirmation_early": false,
+    "opens_future_blind": false
+  }
+}

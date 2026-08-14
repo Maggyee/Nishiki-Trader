@@ -1,0 +1,35 @@
+{
+  "schema_version": "research.data_sources.v37.v1",
+  "provider": "Cboe Global Indices",
+  "indices": {
+    "bxn": {
+      "ticker": "BXN",
+      "name": "Cboe NASDAQ-100 BuyWrite Index",
+      "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/BXN_History.csv",
+      "method": "GET",
+      "field_name": "CLOSE",
+      "format": "csv"
+    },
+    "bxy": {
+      "ticker": "BXY",
+      "name": "Cboe S&P 500 2% OTM BuyWrite Index",
+      "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/BXY_History.csv",
+      "method": "GET",
+      "field_name": "CLOSE",
+      "format": "csv"
+    },
+    "bxr": {
+      "ticker": "BXR",
+      "name": "Cboe Russell 2000 BuyWrite Index",
+      "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/BXR_History.csv",
+      "method": "GET",
+      "field_name": "CLOSE",
+      "format": "csv"
+    }
+  },
+  "boundaries": {
+    "loads_credentials": false,
+    "historical_vintage_claim": false,
+    "point_in_time_interpretation": "cboe_current_history_lagged_1_calendar_day"
+  }
+}
