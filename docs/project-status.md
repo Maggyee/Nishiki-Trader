@@ -120,6 +120,8 @@ Detailed history archived so far:
   (VPD, PPUT, CLL); protocol closed after CLL confirmation monthly breadth and leave-best failure.
 - `docs/progress/phase-2-research-protocol-v39.md` — Cboe low volatility & non-directional option harvest expansion
   (LOVOL, PUTD, CNDR); protocol closed after LOVOL confirmation monthly breadth failure.
+- `docs/progress/phase-2-research-protocol-v40.md` — Cboe cross-asset equity implied volatility relief expansion
+  (VXN, RVX, VXD) pre-registration; historical development unopened.
 - `docs/progress/phase-3-testnet-canary-evidence.md` — archived Phase 3 testnet canary evidence ledger.
 - `docs/progress/phase-3-testnet-continuity-plan.md` — archived 14-day testnet continuity procedure and review command.
 - `docs/progress/phase-5-dashboard-history.md` — completed read-only dashboard, AgentAdvice input, passive Phase 6 gate, and dashboard hardening history.
