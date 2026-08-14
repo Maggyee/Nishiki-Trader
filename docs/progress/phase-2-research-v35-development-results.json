@@ -1,0 +1,194 @@
+{
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_confirmation": false,
+    "opens_future_blind": false,
+    "resumes_testnet": false,
+    "touches_live_path": false
+  },
+  "candidates": [
+    {
+      "base_net_pnl": 16.018913791999996,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:67ea2f29ab5adfdb15645387cc927078a90b6dc4feb93739e8054e54aae362a2",
+          "manifest_sha256": "sha256:f7a5b6afa09cabe3cd6ec9958d9a9b85519e1e0d620c621745bcac2b49d8c900",
+          "path": "data/research-v35/backtests/irx-a/20260814-015544Z-21dced77"
+        },
+        {
+          "fills_sha256": "sha256:67ea2f29ab5adfdb15645387cc927078a90b6dc4feb93739e8054e54aae362a2",
+          "manifest_sha256": "sha256:4ecb0737dc4a0f5239a3a7e52ec1b9c674185065b2e059c103167acc07ec24f0",
+          "path": "data/research-v35/backtests/irx-b/20260814-015547Z-22a539a9"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "development_pass_confirmation_open_eligible",
+      "closed_positions": 64,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [],
+      "gross_net_pnl": 20.569519999999997,
+      "key": "irx_relief",
+      "leave_best_base_net_pnl": 6.42769028,
+      "model_version": "cboe-irx-diff5-negative-lag1d-v1",
+      "performance_pass": true,
+      "positive_months": 20,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 128,
+      "signal_store_sha256": "sha256:842caf1f6d11a7844db79f5f7811e312b18301a0eea3db955d4080d1220b7c3b",
+      "source": "rule_cboe_irx_relief_v1",
+      "stress_net_pnl": 14.881262239999995,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 8.980023186,
+        "2021": 10.882098757999998,
+        "2022": -3.8432081520000008
+      }
+    },
+    {
+      "base_net_pnl": 37.140382928,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:2da73fd867bad3455b74afff315ceaa698b2334f4858f138407b0b0754679d4e",
+          "manifest_sha256": "sha256:5ae110197862200eb90f14f738f411c789129c47df02dc1bf2f3d8822d80287c",
+          "path": "data/research-v35/backtests/vix1y-a/20260814-015553Z-ca38de99"
+        },
+        {
+          "fills_sha256": "sha256:2da73fd867bad3455b74afff315ceaa698b2334f4858f138407b0b0754679d4e",
+          "manifest_sha256": "sha256:7b97e9744e06031004a21170112946f1f43cf4e43086b774704921c49fe59246",
+          "path": "data/research-v35/backtests/vix1y-b/20260814-015557Z-f93c54e7"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "development_pass_confirmation_open_eligible",
+      "closed_positions": 81,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [],
+      "gross_net_pnl": 42.60038,
+      "key": "vix1y_relief",
+      "leave_best_base_net_pnl": 21.396654748000003,
+      "model_version": "cboe-vix1y-diff5-negative-lag1d-v1",
+      "performance_pass": true,
+      "positive_months": 21,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 161,
+      "signal_store_sha256": "sha256:b9af485cf4b85f3e0f22a70531fddde171e25d0761836769e3ab470e9fa08838",
+      "source": "rule_cboe_vix1y_relief_v1",
+      "stress_net_pnl": 35.77538366,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 9.200291026,
+        "2021": 36.016699837999994,
+        "2022": -8.076607936
+      }
+    },
+    {
+      "base_net_pnl": 22.131315483999995,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:9da1b44019da1b919c21e4444cbe964c8b31d27aab8f6ae9ee912bd41d9ec415",
+          "manifest_sha256": "sha256:1dfcf64341388664bcab15084d6e4cfb612aaa1629345c05ab90e1aafef3b3e9",
+          "path": "data/research-v35/backtests/vix6m-a/20260814-015606Z-180727e8"
+        },
+        {
+          "fills_sha256": "sha256:9da1b44019da1b919c21e4444cbe964c8b31d27aab8f6ae9ee912bd41d9ec415",
+          "manifest_sha256": "sha256:a8eea14253189c0159aa807dd9b0db32caeb23557127bc44c844503a9888bdb7",
+          "path": "data/research-v35/backtests/vix6m-b/20260814-015610Z-cb9d749c"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "development_pass_confirmation_open_eligible",
+      "closed_positions": 86,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [],
+      "gross_net_pnl": 27.959769999999995,
+      "key": "vix6m_relief",
+      "leave_best_base_net_pnl": 15.078163496000002,
+      "model_version": "cboe-vix6m-diff5-negative-lag1d-v1",
+      "performance_pass": true,
+      "positive_months": 21,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 171,
+      "signal_store_sha256": "sha256:e79d390025cce39341d8970bb9166f5c73a4837413c42335bb6e61b02529deee",
+      "source": "rule_cboe_vix6m_relief_v1",
+      "stress_net_pnl": 20.674201854999996,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 11.514141733999999,
+        "2021": 22.969607270000004,
+        "2022": -12.352433520000003
+      }
+    }
+  ],
+  "confirmation_holdout_status": "sealed_pending_committed_development_review",
+  "confirmation_open_eligible_candidates": [
+    "irx_relief",
+    "vix1y_relief",
+    "vix6m_relief"
+  ],
+  "development_passer_count": 3,
+  "future_blind_status": "sealed_unopened",
+  "protocol_sha256": "sha256:bb1622cd2335e684adbe545232f0868110b6dbb27ed20c3d736e74afac1c0c9e",
+  "provider_qualification": {
+    "historical_vintage_claim": false,
+    "qualified_candidates": [
+      {
+        "development_row_count": 757,
+        "factor_csv_path": "data/research-v35/factors/irx_development.csv",
+        "factor_csv_sha256": "sha256:faa0a6ddeab5b5cfb2484cb2454165ba05dd24de9e4ca756efc21926022a86dd",
+        "first_development_date": "2020-01-02",
+        "index": "IRX",
+        "key": "irx_relief",
+        "last_development_date": "2022-12-30",
+        "maximum_calendar_gap_days": 4,
+        "row_count": 798,
+        "snapshot_path": "data/research-v35/raw/irx-20260814T015435Z-d202531a22d3.json",
+        "snapshot_sha256": "sha256:d202531a22d37e3fcdd117c0c1e2f938d88a922d76da48b52fc408450b0d31cb",
+        "warmup_row_count": 41
+      },
+      {
+        "development_row_count": 756,
+        "factor_csv_path": "data/research-v35/factors/vix1y_development.csv",
+        "factor_csv_sha256": "sha256:effd501235910644a76ab350520451d676783483c5db4da40a01b5358866ad70",
+        "first_development_date": "2020-01-02",
+        "index": "VIX1Y",
+        "key": "vix1y_relief",
+        "last_development_date": "2022-12-30",
+        "maximum_calendar_gap_days": 4,
+        "row_count": 797,
+        "snapshot_path": "data/research-v35/raw/vix1y-20260814T015507Z-3d61344be84e.json",
+        "snapshot_sha256": "sha256:3d61344be84e5c27b1e4afc8bb4c8ad7685617224f618c578e1627ed9e892241",
+        "warmup_row_count": 41
+      },
+      {
+        "development_row_count": 756,
+        "factor_csv_path": "data/research-v35/factors/vix6m_development.csv",
+        "factor_csv_sha256": "sha256:7287fe5949a11eed1d970a794c4a5e8d260fedaa0eaf23e38b443f604c0d5096",
+        "first_development_date": "2020-01-02",
+        "index": "VIX6M",
+        "key": "vix6m_relief",
+        "last_development_date": "2022-12-30",
+        "maximum_calendar_gap_days": 4,
+        "row_count": 797,
+        "snapshot_path": "data/research-v35/raw/vix6m-20260814T015508Z-d1f14aef0a1f.json",
+        "snapshot_sha256": "sha256:d1f14aef0a1f202ac7e6ccd0b591a10ec4bf49c4de9d52c0f51a5d64ac860141",
+        "warmup_row_count": 41
+      }
+    ],
+    "rejected_candidates": []
+  },
+  "recommendation": "commit_development_results_before_confirmation_open",
+  "schema_version": "research.v35.development_results.v1"
+}
