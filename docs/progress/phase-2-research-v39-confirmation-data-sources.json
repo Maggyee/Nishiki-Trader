@@ -1,0 +1,14 @@
+{
+  "confirmation_row_count": 752,
+  "factor_csv_path": "data/research-v39/factors/lovol_confirmation.csv",
+  "factor_csv_sha256": "sha256:c0f1ec35d4788c7967e462ec802b68c835e7f1e53a48af0370ddd08c1e718b43",
+  "first_confirmation_date": "2023-01-03",
+  "historical_vintage_claim": false,
+  "last_confirmation_date": "2025-12-31",
+  "network_accessed": false,
+  "row_count": 794,
+  "schema_version": "research.v39.confirmation.data_sources.v1",
+  "snapshot_path": "data/research-v39/raw/lovol-20260814T090129Z-d871aaddf3c2.json",
+  "snapshot_sha256": "sha256:d871aaddf3c2fa09d74f842e8000566c3c3d1c18262f46714b8a157f7c72c6a4",
+  "warmup_row_count": 42
+}
