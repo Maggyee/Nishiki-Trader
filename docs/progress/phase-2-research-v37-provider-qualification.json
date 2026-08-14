@@ -1,0 +1,91 @@
+{
+  "boundaries": {
+    "confirmation_values_opened": false,
+    "future_blind_opened": false,
+    "historical_vintage_claim": false,
+    "network_requests_closed_after_snapshot": true
+  },
+  "development_factors": {
+    "bxn": {
+      "development_row_count": 755,
+      "first_date": "2019-11-01",
+      "kind": "bxn",
+      "last_date": "2022-12-30",
+      "path": "data/research-v37/factors/bxn_development.csv",
+      "row_count": 796,
+      "sha256": "sha256:a303103c6463b8f588d95b53c5f07a81fc52ac7f8aad4fdfd11c4964291bc7e4",
+      "snapshot_sha256": "sha256:ef57f729911830c7cd780d15271d012d33cff7ee1ab1ed3a474a1ffdeede3561",
+      "warmup_row_count": 41
+    },
+    "bxr": {
+      "development_row_count": 755,
+      "first_date": "2019-11-01",
+      "kind": "bxr",
+      "last_date": "2022-12-30",
+      "path": "data/research-v37/factors/bxr_development.csv",
+      "row_count": 796,
+      "sha256": "sha256:c29c1756275762b093b6e564be2005b9dd687155163ed60ee1c8e83e572f9f82",
+      "snapshot_sha256": "sha256:bc0be77f9b926b6996bd47afca83bf25c6086ae49bd64b727512667307f6471b",
+      "warmup_row_count": 41
+    },
+    "bxy": {
+      "development_row_count": 755,
+      "first_date": "2019-11-01",
+      "kind": "bxy",
+      "last_date": "2022-12-30",
+      "path": "data/research-v37/factors/bxy_development.csv",
+      "row_count": 796,
+      "sha256": "sha256:453019f311f85a17b9dec5bc0266e519efa54585a44675f02da7c67f7a992696",
+      "snapshot_sha256": "sha256:e023c922c476d26a17560a28fc83ace2921242a05f4dad753cfda6a55375a0f5",
+      "warmup_row_count": 41
+    }
+  },
+  "evaluated_at": "2026-08-14T08:51:24.675270Z",
+  "passed": true,
+  "protocol": "docs/progress/phase-2-research-protocol-v37.json",
+  "schema_version": "research.provider_qualification.v37.v1",
+  "sources": {
+    "bxn": {
+      "audit": {
+        "first_date": "2009-09-18",
+        "kind": "bxn",
+        "last_date": "2026-08-13",
+        "max_gap_days": 5,
+        "row_count": 4248
+      },
+      "kind": "bxn",
+      "row_count": 4248,
+      "snapshot_path": "data/research-v37/raw/bxn-20260814T085121Z-ef57f7299118.json",
+      "snapshot_sha256": "sha256:ef57f729911830c7cd780d15271d012d33cff7ee1ab1ed3a474a1ffdeede3561",
+      "vintage_id": "cboe-bxn:2026-08-14T08:51:21.712106+00:00:ef57f7299118"
+    },
+    "bxr": {
+      "audit": {
+        "first_date": "2000-12-29",
+        "kind": "bxr",
+        "last_date": "2026-08-13",
+        "max_gap_days": 7,
+        "row_count": 6439
+      },
+      "kind": "bxr",
+      "row_count": 6439,
+      "snapshot_path": "data/research-v37/raw/bxr-20260814T085122Z-bc0be77f9b92.json",
+      "snapshot_sha256": "sha256:bc0be77f9b926b6996bd47afca83bf25c6086ae49bd64b727512667307f6471b",
+      "vintage_id": "cboe-bxr:2026-08-14T08:51:22.518917+00:00:bc0be77f9b92"
+    },
+    "bxy": {
+      "audit": {
+        "first_date": "1988-06-01",
+        "kind": "bxy",
+        "last_date": "2026-08-13",
+        "max_gap_days": 7,
+        "row_count": 9617
+      },
+      "kind": "bxy",
+      "row_count": 9617,
+      "snapshot_path": "data/research-v37/raw/bxy-20260814T085123Z-e023c922c476.json",
+      "snapshot_sha256": "sha256:e023c922c476d26a17560a28fc83ace2921242a05f4dad753cfda6a55375a0f5",
+      "vintage_id": "cboe-bxy:2026-08-14T08:51:23.849001+00:00:e023c922c476"
+    }
+  }
+}
