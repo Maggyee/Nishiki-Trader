@@ -1,0 +1,122 @@
+{
+  "schema_version": "research.protocol.v43.v1",
+  "name": "Phase 2 Alpha Research Protocol v43 (Crypto-Native Volume-Confirmed Trend & Momentum Regimes)",
+  "status": "preregistered_before_data_collection",
+  "preregistered_at": "2026-08-14T09:35:10Z",
+  "data_contract": {
+    "provider": "Binance Public Vision Kline Archive",
+    "symbols": {
+      "btc": {
+        "symbol": "BTCUSDT",
+        "base_url": "https://data.binance.vision/data/spot/monthly/klines/BTCUSDT/1d/"
+      }
+    },
+    "publication_lag_calendar_days": 1,
+    "development_start": "2020-01-01",
+    "development_end": "2022-12-31",
+    "confirmation_start": "2023-01-01",
+    "confirmation_end": "2025-12-31",
+    "future_blind_start": "2026-09-01",
+    "future_blind_end": "2027-01-31",
+    "warmup_start": "2019-10-01",
+    "missing_value_policy": "drop missing official observation; never forward-fill across trading days; never interpolate",
+    "historical_vintage_claim": false
+  },
+  "candidates": {
+    "btc_macd_vol_confirmed": {
+      "source": "rule_crypto_btc_macd_vol_v1",
+      "model_version": "crypto-btc-macd12-26-9-vol080-lag1d-v1",
+      "metric": "BTC_MACD_VOL080",
+      "parameters": {
+        "fast_period": 12,
+        "slow_period": 26,
+        "signal_period": 9,
+        "volume_ma_period": 20,
+        "volume_threshold_ratio": 0.8,
+        "publication_lag_calendar_days": 1,
+        "ttl_seconds": 86400,
+        "confidence": 0.75
+      },
+      "rule": "buy iff daily MACD(12,26,9) line is strictly greater than signal line and daily volume is strictly greater than 0.80 times 20-day SMA volume; flat otherwise; begin flat and emit only on state change"
+    },
+    "btc_macd_rsi_vol_confirmed": {
+      "source": "rule_crypto_btc_macd_rsi_vol_v1",
+      "model_version": "crypto-btc-macd12-26-9-rsi45-vol080-lag1d-v1",
+      "metric": "BTC_MACD_RSI45_VOL080",
+      "parameters": {
+        "fast_period": 12,
+        "slow_period": 26,
+        "signal_period": 9,
+        "rsi_period": 14,
+        "rsi_threshold": 45.0,
+        "volume_ma_period": 20,
+        "volume_threshold_ratio": 0.8,
+        "publication_lag_calendar_days": 1,
+        "ttl_seconds": 86400,
+        "confidence": 0.75
+      },
+      "rule": "buy iff daily MACD(12,26,9) line is strictly greater than signal line, RSI(14) is strictly greater than 45.0, and daily volume is strictly greater than 0.80 times 20-day SMA volume; flat otherwise; begin flat and emit only on state change"
+    },
+    "btc_macd_vol_tight": {
+      "source": "rule_crypto_btc_macd_vol_tight_v1",
+      "model_version": "crypto-btc-macd12-26-9-vol085-lag1d-v1",
+      "metric": "BTC_MACD_VOL085",
+      "parameters": {
+        "fast_period": 12,
+        "slow_period": 26,
+        "signal_period": 9,
+        "volume_ma_period": 20,
+        "volume_threshold_ratio": 0.85,
+        "publication_lag_calendar_days": 1,
+        "ttl_seconds": 86400,
+        "confidence": 0.75
+      },
+      "rule": "buy iff daily MACD(12,26,9) line is strictly greater than signal line and daily volume is strictly greater than 0.85 times 20-day SMA volume; flat otherwise; begin flat and emit only on state change"
+    }
+  },
+  "execution_contract": {
+    "instrument": "BTCUSDT.BINANCE",
+    "bar_type": "BTCUSDT.BINANCE-1-HOUR-LAST-EXTERNAL",
+    "venue": "BINANCE",
+    "account_type": "cash",
+    "oms_type": "netting",
+    "starting_balance": 100000.0,
+    "trade_size": 0.001,
+    "min_confidence": 0.55,
+    "development_catalog": "data/research-v7-downtime-sensitivity/catalog",
+    "confirmation_catalog": "data/research-v8/catalog"
+  },
+  "cost_scenarios": {
+    "gross": {
+      "fee_bps_per_fill": 0.0,
+      "slippage_bps_per_fill": 0.0
+    },
+    "base": {
+      "fee_bps_per_fill": 10.0,
+      "slippage_bps_per_fill": 2.0
+    },
+    "stress": {
+      "fee_bps_per_fill": 10.0,
+      "slippage_bps_per_fill": 5.0
+    }
+  },
+  "gates": {
+    "base_net_pnl_gt": 0.0,
+    "stress_net_pnl_gt": 0.0,
+    "positive_calendar_years_at_least": 2,
+    "positive_calendar_months_at_least": 18,
+    "closed_positions_at_least": 30,
+    "leave_best_position_base_net_pnl_gt": 0.0,
+    "duplicate_replays_required": 2,
+    "spot_long_flat_only": true,
+    "evidence_blockers_required": 0
+  },
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "resumes_testnet": false,
+    "touches_live_path": false,
+    "opens_confirmation_early": false,
+    "opens_future_blind": false
+  }
+}
