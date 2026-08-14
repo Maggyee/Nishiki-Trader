@@ -1,0 +1,35 @@
+{
+  "schema_version": "research.data_sources.v38.v1",
+  "provider": "Cboe Global Indices",
+  "indices": {
+    "vpd": {
+      "ticker": "VPD",
+      "name": "Cboe VIX Premium Strategy Daily Index",
+      "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/VPD_History.csv",
+      "method": "GET",
+      "field_name": "CLOSE",
+      "format": "csv"
+    },
+    "pput": {
+      "ticker": "PPUT",
+      "name": "Cboe S&P 500 5% Protective Put Index",
+      "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/PPUT_History.csv",
+      "method": "GET",
+      "field_name": "CLOSE",
+      "format": "csv"
+    },
+    "cll": {
+      "ticker": "CLL",
+      "name": "Cboe S&P 500 95-110 Collar Index",
+      "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/CLL_History.csv",
+      "method": "GET",
+      "field_name": "CLOSE",
+      "format": "csv"
+    }
+  },
+  "boundaries": {
+    "loads_credentials": false,
+    "historical_vintage_claim": false,
+    "point_in_time_interpretation": "cboe_current_history_lagged_1_calendar_day"
+  }
+}
