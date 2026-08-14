@@ -1,0 +1,66 @@
+{
+  "best_candidate": "vix6m_relief",
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_confirmation_early": false,
+    "opens_future_blind": false,
+    "touches_live_path": false
+  },
+  "candidates": {
+    "vix3m_relief": {
+      "base_net_pnl": 2.507480568000003,
+      "classification": "development_rejected",
+      "closed_positions": 84,
+      "duplicate_replays": 2,
+      "key": "vix3m_relief",
+      "leave_best_base_net_pnl": -7.316105652000002,
+      "model_version": "cboe-vix3m-diff5-negative-lag1d-v1",
+      "pass_gates": false,
+      "positive_months": 20,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "source": "rule_cboe_vix3m_relief_v1",
+      "stress_net_pnl": 0.9845657100000036
+    },
+    "vix6m_relief": {
+      "base_net_pnl": 22.131315483999995,
+      "classification": "development_pass_confirmation_open_eligible",
+      "closed_positions": 86,
+      "duplicate_replays": 2,
+      "key": "vix6m_relief",
+      "leave_best_base_net_pnl": 15.078163496000002,
+      "model_version": "cboe-vix6m-diff5-negative-lag1d-v1",
+      "pass_gates": true,
+      "positive_months": 21,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "source": "rule_cboe_vix6m_relief_v1",
+      "stress_net_pnl": 20.674201854999996
+    },
+    "vix9d_relief": {
+      "base_net_pnl": 7.994479791999996,
+      "classification": "development_rejected",
+      "closed_positions": 87,
+      "duplicate_replays": 2,
+      "key": "vix9d_relief",
+      "leave_best_base_net_pnl": -2.9177884400000025,
+      "model_version": "cboe-vix9d-diff5-negative-lag1d-v1",
+      "pass_gates": false,
+      "positive_months": 19,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "source": "rule_cboe_vix9d_relief_v1",
+      "stress_net_pnl": 6.4434297399999965
+    }
+  },
+  "evaluated_at": "2026-08-14T09:25:17.411620Z",
+  "passing_candidates": [
+    "vix6m_relief"
+  ],
+  "protocol_sha256": "sha256:d888e0eb8f0839f69d504081e47b1d95522a2056a4b18e65d3d7bd23db18f85a",
+  "schema_version": "research.v42.development_results.v1"
+}
