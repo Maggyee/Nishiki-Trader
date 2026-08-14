@@ -113,7 +113,7 @@ Detailed history archived so far:
 - `docs/progress/phase-2-research-protocol-v35.md` — Cboe long vol & money market relief
   (IRX, VIX1Y, VIX6M); protocol closed after VIX1Y confirmation monthly breadth failure.
 - `docs/progress/phase-2-research-protocol-v36.md` — Cboe option strategy & variance premium expansion
-  (VPN, PUT, BXM); VPN and BXM passed development; confirmation holdout sealed.
+  (VPN, PUT, BXM); VPN and BXM passed development; VPN confirmation pre-registered.
 - `docs/progress/phase-3-testnet-canary-evidence.md` — archived Phase 3 testnet canary evidence ledger.
 - `docs/progress/phase-3-testnet-continuity-plan.md` — archived 14-day testnet continuity procedure and review command.
 - `docs/progress/phase-5-dashboard-history.md` — completed read-only dashboard, AgentAdvice input, passive Phase 6 gate, and dashboard hardening history.
