@@ -1,0 +1,128 @@
+{
+  "schema_version": "research.protocol.v39.v1",
+  "name": "Phase 2 Alpha Research Protocol v39 (Cboe Low Volatility & Non-Directional Option Harvest Expansion)",
+  "status": "preregistered_before_data_collection",
+  "preregistered_at": "2026-08-14T09:00:00Z",
+  "data_contract": {
+    "provider": "Cboe Global Indices",
+    "indices": {
+      "lovol": {
+        "index_name": "Cboe S&P 500 Low Volatility Index",
+        "ticker": "LOVOL",
+        "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/LOVOL_History.csv"
+      },
+      "putd": {
+        "index_name": "Cboe S&P 500 PutWrite Daily Index",
+        "ticker": "PUTD",
+        "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/PUTD_History.csv"
+      },
+      "cndr": {
+        "index_name": "Cboe S&P 500 Iron Condor Index",
+        "ticker": "CNDR",
+        "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/CNDR_History.csv"
+      }
+    },
+    "publication_lag_calendar_days": 1,
+    "development_start": "2020-01-01",
+    "development_end": "2022-12-31",
+    "confirmation_start": "2023-01-01",
+    "confirmation_end": "2025-12-31",
+    "future_blind_start": "2026-09-01",
+    "future_blind_end": "2027-01-31",
+    "warmup_start": "2019-11-01",
+    "missing_value_policy": "drop missing official observation; never forward-fill across trading days; never interpolate",
+    "historical_vintage_claim": false
+  },
+  "candidates": {
+    "lovol_expansion": {
+      "source": "rule_cboe_lovol_expansion_v1",
+      "model_version": "cboe-lovol-diff5-positive-lag1d-v1",
+      "index": "LOVOL",
+      "kind": "lovol",
+      "parameters": {
+        "change_observations": 5,
+        "direction": "positive",
+        "threshold": 0.0,
+        "publication_lag_calendar_days": 1,
+        "ttl_seconds": 86400,
+        "confidence": 0.75
+      },
+      "rule": "buy iff LOVOL minus its value five official observations earlier is strictly positive; flat otherwise; begin flat and emit only on state change"
+    },
+    "putd_expansion": {
+      "source": "rule_cboe_putd_expansion_v1",
+      "model_version": "cboe-putd-diff5-positive-lag1d-v1",
+      "index": "PUTD",
+      "kind": "putd",
+      "parameters": {
+        "change_observations": 5,
+        "direction": "positive",
+        "threshold": 0.0,
+        "publication_lag_calendar_days": 1,
+        "ttl_seconds": 86400,
+        "confidence": 0.75
+      },
+      "rule": "buy iff PUTD minus its value five official observations earlier is strictly positive; flat otherwise; begin flat and emit only on state change"
+    },
+    "cndr_expansion": {
+      "source": "rule_cboe_cndr_expansion_v1",
+      "model_version": "cboe-cndr-diff5-positive-lag1d-v1",
+      "index": "CNDR",
+      "kind": "cndr",
+      "parameters": {
+        "change_observations": 5,
+        "direction": "positive",
+        "threshold": 0.0,
+        "publication_lag_calendar_days": 1,
+        "ttl_seconds": 86400,
+        "confidence": 0.75
+      },
+      "rule": "buy iff CNDR minus its value five official observations earlier is strictly positive; flat otherwise; begin flat and emit only on state change"
+    }
+  },
+  "execution_contract": {
+    "instrument": "BTCUSDT.BINANCE",
+    "bar_type": "BTCUSDT.BINANCE-1-HOUR-LAST-EXTERNAL",
+    "venue": "BINANCE",
+    "account_type": "cash",
+    "oms_type": "netting",
+    "starting_balance": 100000.0,
+    "trade_size": 0.001,
+    "min_confidence": 0.55,
+    "development_catalog": "data/research-v7-downtime-sensitivity/catalog",
+    "confirmation_catalog": "data/research-v8/catalog"
+  },
+  "cost_scenarios": {
+    "gross": {
+      "fee_bps_per_fill": 0.0,
+      "slippage_bps_per_fill": 0.0
+    },
+    "base": {
+      "fee_bps_per_fill": 10.0,
+      "slippage_bps_per_fill": 2.0
+    },
+    "stress": {
+      "fee_bps_per_fill": 10.0,
+      "slippage_bps_per_fill": 5.0
+    }
+  },
+  "gates": {
+    "base_net_pnl_gt": 0.0,
+    "stress_net_pnl_gt": 0.0,
+    "positive_calendar_years_at_least": 2,
+    "positive_calendar_months_at_least": 18,
+    "closed_positions_at_least": 30,
+    "leave_best_position_base_net_pnl_gt": 0.0,
+    "duplicate_replays_required": 2,
+    "spot_long_flat_only": true,
+    "evidence_blockers_required": 0
+  },
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "resumes_testnet": false,
+    "touches_live_path": false,
+    "opens_confirmation_early": false,
+    "opens_future_blind": false
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "schema_version": "research.data_sources.v39.v1",
+  "provider": "Cboe Global Indices",
+  "indices": {
+    "lovol": {
+      "ticker": "LOVOL",
+      "name": "Cboe S&P 500 Low Volatility Index",
+      "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/LOVOL_History.csv",
+      "method": "GET",
+      "field_name": "CLOSE",
+      "format": "csv"
+    },
+    "putd": {
+      "ticker": "PUTD",
+      "name": "Cboe S&P 500 PutWrite Daily Index",
+      "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/PUTD_History.csv",
+      "method": "GET",
+      "field_name": "PUTD",
+      "format": "csv"
+    },
+    "cndr": {
+      "ticker": "CNDR",
+      "name": "Cboe S&P 500 Iron Condor Index",
+      "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/CNDR_History.csv",
+      "method": "GET",
+      "field_name": "CNDR",
+      "format": "csv"
+    }
+  },
+  "boundaries": {
+    "loads_credentials": false,
+    "historical_vintage_claim": false,
+    "point_in_time_interpretation": "cboe_current_history_lagged_1_calendar_day"
+  }
+}
