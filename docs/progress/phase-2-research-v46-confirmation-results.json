@@ -1,0 +1,30 @@
+{
+  "base_net_pnl": 13.681344135999993,
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_future_blind": false,
+    "touches_live_path": false
+  },
+  "candidate": "btc_prem_diff5_negative",
+  "classification": "confirmation_passed_paper_shadow_eligible",
+  "closed_positions": 218,
+  "duplicate_replays": 2,
+  "evaluated_at": "2026-08-14T10:02:51.769922Z",
+  "leave_best_base_net_pnl": 7.2171374319999995,
+  "model_version": "crypto-btc-prem-diff5-negative-lag1d-v1",
+  "pass_gates": true,
+  "positive_months": 21,
+  "positive_years": 2,
+  "protocol_sha256": "sha256:78355bca3cfd3133bceacd6e55479ab0a72ecec5865ea2abaa44c54e0f6d3272",
+  "reproducible": true,
+  "schema_version": "research.v46.confirmation_results.v1",
+  "short_positions": 0,
+  "source": "rule_crypto_prem_relief_v1",
+  "stress_net_pnl": 5.039735169999991,
+  "yearly_metrics": {
+    "2023": 16.648656998,
+    "2024": 20.780559361999998,
+    "2025": -23.747872224000005
+  }
+}

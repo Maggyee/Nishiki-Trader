@@ -133,7 +133,7 @@ Detailed history archived so far:
 - `docs/progress/phase-2-research-protocol-v45.md` — Binance Perpetual Premium Index sentiment & basis relief
   (BTC Premium 5-day delta relief); protocol closed after tight candidate missed stress net PnL (-0.44 USDT under 15 bps stress).
 - `docs/progress/phase-2-research-protocol-v46.md` — Binance Perpetual Premium Index standard basis relief
-  (BTC Premium 5-day delta < 0.0 standard relief); `btc_prem_diff5_negative` passed development (+8.47 USDT base, 2/3 years, 20/36 months, leave-best +0.53 USDT); confirmation pre-registered.
+  (BTC Premium 5-day delta < 0.0 standard relief); passed 2023-2025 confirmation (+13.68 USDT base, 2/3 positive years, 21/36 positive months, leave-best +7.22 USDT), held at `paper_shadow`, Day 1 qualified (1/7 runs, 99 signals), daily 04:00 UTC crontab installed.
 - `docs/progress/phase-3-testnet-canary-evidence.md` — archived Phase 3 testnet canary evidence ledger.
 - `docs/progress/phase-3-testnet-continuity-plan.md` — archived 14-day testnet continuity procedure and review command.
 - `docs/progress/phase-5-dashboard-history.md` — completed read-only dashboard, AgentAdvice input, passive Phase 6 gate, and dashboard hardening history.

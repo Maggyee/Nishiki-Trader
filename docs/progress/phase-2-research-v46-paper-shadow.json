@@ -1,0 +1,30 @@
+{
+  "schema_version": "research.v46.paper_shadow.v1",
+  "name": "Phase 2 Research Protocol v46 Paper Shadow Stage Policy",
+  "candidate": "btc_prem_diff5_negative",
+  "source": "rule_crypto_prem_relief_v1",
+  "model_version": "crypto-btc-prem-diff5-negative-lag1d-v1",
+  "stage": "paper_shadow",
+  "decision": "hold",
+  "policy": {
+    "source": "rule_crypto_prem_relief_v1",
+    "model_version": "crypto-btc-prem-diff5-negative-lag1d-v1",
+    "dry_run": true,
+    "position_pct_multiplier": 0.2,
+    "min_confidence_override": null
+  },
+  "instrument": "BTCUSDT.BINANCE",
+  "bar_type": "BTCUSDT.BINANCE-1-HOUR-LAST-EXTERNAL",
+  "schedule": {
+    "cadence": "daily",
+    "cron_expression": "0 4 * * *",
+    "target": "apps.ops.research_v46_shadow_daily"
+  },
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "resumes_testnet": false,
+    "touches_live_path": false,
+    "opens_future_blind": false
+  }
+}
