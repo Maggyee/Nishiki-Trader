@@ -1,0 +1,67 @@
+{
+  "best_candidate": "vxn_relief",
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_confirmation_early": false,
+    "opens_future_blind": false,
+    "touches_live_path": false
+  },
+  "candidates": {
+    "rvx_relief": {
+      "base_net_pnl": -7.025679607999988,
+      "classification": "development_rejected",
+      "closed_positions": 81,
+      "duplicate_replays": 2,
+      "key": "rvx_relief",
+      "leave_best_base_net_pnl": -16.254911375999995,
+      "model_version": "cboe-rvx-diff5-negative-lag1d-v1",
+      "pass_gates": false,
+      "positive_months": 19,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "source": "rule_cboe_rvx_relief_v1",
+      "stress_net_pnl": -8.467274509999989
+    },
+    "vxd_relief": {
+      "base_net_pnl": 17.483701568000008,
+      "classification": "development_pass_confirmation_open_eligible",
+      "closed_positions": 87,
+      "duplicate_replays": 2,
+      "key": "vxd_relief",
+      "leave_best_base_net_pnl": 7.660115348000005,
+      "model_version": "cboe-vxd-diff5-negative-lag1d-v1",
+      "pass_gates": true,
+      "positive_months": 20,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "source": "rule_cboe_vxd_relief_v1",
+      "stress_net_pnl": 15.88751696000001
+    },
+    "vxn_relief": {
+      "base_net_pnl": 14.12856161200001,
+      "classification": "development_pass_confirmation_open_eligible",
+      "closed_positions": 81,
+      "duplicate_replays": 2,
+      "key": "vxn_relief",
+      "leave_best_base_net_pnl": 3.151905300000003,
+      "model_version": "cboe-vxn-diff5-negative-lag1d-v1",
+      "pass_gates": true,
+      "positive_months": 21,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "source": "rule_cboe_vxn_relief_v1",
+      "stress_net_pnl": 12.63199451500001
+    }
+  },
+  "evaluated_at": "2026-08-14T09:07:42.860962Z",
+  "passing_candidates": [
+    "vxn_relief",
+    "vxd_relief"
+  ],
+  "protocol_sha256": "sha256:dc454a42609bc85bfc37788c4904ef5c8d066c4b15be6e8adf9d714e595f5730",
+  "schema_version": "research.v40.development_results.v1"
+}
