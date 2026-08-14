@@ -1,0 +1,54 @@
+{
+  "schema_version": "research.v34.paper_shadow_contract.v1",
+  "name": "Protocol v34 FVX Forward Paper-Shadow Contract",
+  "status": "prospectively_locked",
+  "frozen_at": "2026-08-14T02:13:00Z",
+  "forward_started_at": "2026-08-14T00:00:00Z",
+  "confirmation_evidence": {
+    "confirmation_results": "docs/progress/phase-2-research-v34-confirmation-results.json",
+    "classification": "paper_shadow_review_eligible",
+    "base_net_pnl": 70.707544,
+    "positive_years": 3,
+    "positive_months": 23,
+    "closed_positions": 79
+  },
+  "candidate": {
+    "source": "rule_cboe_fvx_relief_v1",
+    "model_version": "cboe-fvx-diff5-negative-lag1d-v1",
+    "candidate_key": "fvx_relief",
+    "index": "FVX",
+    "symbol": "BTCUSDT",
+    "venue": "BINANCE"
+  },
+  "policy": {
+    "stage": "paper_shadow",
+    "dry_run": true,
+    "position_pct_multiplier": 0.2,
+    "min_confidence_override": null
+  },
+  "collection": {
+    "fvx_url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/FVX_History.csv",
+    "btc_url": "https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=168",
+    "schedule": "weekdays at 02:45 UTC",
+    "fvx_max_age_calendar_days": 4,
+    "btc_closed_bar_lookback": 167,
+    "decision_lag_calendar_days": 1,
+    "collector_implemented": true,
+    "missing_policy": "no_synthetic_rows_and_no_forward_fill",
+    "historical_revision_policy": "fail_closed_and_require_human_review"
+  },
+  "evidence_gate": {
+    "qualified_distinct_utc_collection_days": 7,
+    "new_forward_signal_events": 50,
+    "operator": "or",
+    "zero_anomalies_required": true
+  },
+  "boundaries": {
+    "loads_credentials": false,
+    "orders_submitted": false,
+    "fills_created": false,
+    "testnet_touched": false,
+    "live_path_touched": false,
+    "future_blind_opened": false
+  }
+}
