@@ -1,0 +1,63 @@
+{
+  "schema_version": "research.v34.provider_qualification.v1",
+  "classification": "fully_provider_qualified",
+  "protocol_sha256": "sha256:3764bb1c63c004fe511f665a677730f8dfae40a315a55bdebed17271c5eae082",
+  "provider_contract_sha256": "sha256:8acce50c20f5148d1dd7bf66df010cb9b94b67acba2e2ad233b5a9ba00feba8c",
+  "qualified_candidates": ["fvx_relief", "tnx_relief", "tyx_relief"],
+  "rejected_candidates": {},
+  "qualified_series": {
+    "fvx": {
+      "snapshot_path": "data/research-v34/raw/fvx-20260814T014407Z-75b2f82d3153.json",
+      "snapshot_sha256": "sha256:75b2f82d31537e642123f62f7d44c732bc930e6c89aa74588fe88ed5579fc6ee",
+      "factor_path": "data/research-v34/factors/fvx-development-factors.csv",
+      "factor_sha256": "sha256:434e73a54e103149d6e2d7f64bd17fd66e6c5c68ddf806afe599cf980025574d",
+      "factor_row_count": 798,
+      "development_row_count": 757,
+      "warmup_row_count": 41,
+      "development_first_date": "2020-01-02",
+      "development_last_date": "2022-12-30",
+      "maximum_calendar_gap_days": 4,
+      "schema": "scalar",
+      "value_column": "FVX"
+    },
+    "tnx": {
+      "snapshot_path": "data/research-v34/raw/tnx-20260814T014410Z-d62fa5e009ee.json",
+      "snapshot_sha256": "sha256:d62fa5e009eefeafcd17284c2456cfc01aa9aa89c6b55c35feb7f667df61b7ed",
+      "factor_path": "data/research-v34/factors/tnx-development-factors.csv",
+      "factor_sha256": "sha256:3256879fa39c4d01f363098eb30e8dbad16671befca496b9ddc41e46188b5a4c",
+      "factor_row_count": 798,
+      "development_row_count": 757,
+      "warmup_row_count": 41,
+      "development_first_date": "2020-01-02",
+      "development_last_date": "2022-12-30",
+      "maximum_calendar_gap_days": 4,
+      "schema": "scalar",
+      "value_column": "TNX"
+    },
+    "tyx": {
+      "snapshot_path": "data/research-v34/raw/tyx-20260814T014415Z-862cc4fd2a3c.json",
+      "snapshot_sha256": "sha256:862cc4fd2a3c9a80e9de710ffeddb2a4118f09eaff7a3ff1253079e556c59227",
+      "factor_path": "data/research-v34/factors/tyx-development-factors.csv",
+      "factor_sha256": "sha256:23130a702ea41c9bfbd83e88ca1ce378d85cee00324ccc6df897f8e63c4168d1",
+      "factor_row_count": 798,
+      "development_row_count": 757,
+      "warmup_row_count": 41,
+      "development_first_date": "2020-01-02",
+      "development_last_date": "2022-12-30",
+      "maximum_calendar_gap_days": 4,
+      "schema": "scalar",
+      "value_column": "TYX"
+    }
+  },
+  "rejected_series": {},
+  "historical_vintage_claim": false,
+  "boundaries": {
+    "factor_values_reported": false,
+    "signals_generated": false,
+    "pnl_opened": false,
+    "confirmation_opened": false,
+    "source_policy_mutated": false,
+    "trading_touched": false,
+    "future_blind_opened": false
+  }
+}
