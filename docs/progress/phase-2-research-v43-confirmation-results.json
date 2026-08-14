@@ -1,0 +1,30 @@
+{
+  "base_net_pnl": 17.37043969600001,
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_future_blind": false,
+    "touches_live_path": false
+  },
+  "candidate": "btc_macd_vol_confirmed",
+  "classification": "reject_candidate",
+  "closed_positions": 104,
+  "confirmation_sha256": "sha256:a25d426b14d7a980788ccb7519ad8db9134bab653aec28410243fd455e824bb8",
+  "duplicate_replays": 2,
+  "evaluated_at": "2026-08-14T09:38:47.605182Z",
+  "leave_best_base_net_pnl": 7.348095284000003,
+  "model_version": "crypto-btc-macd12-26-9-vol080-lag1d-v1",
+  "pass_gates": false,
+  "positive_months": 15,
+  "positive_years": 2,
+  "reproducible": true,
+  "schema_version": "research.v43.confirmation_results.v1",
+  "short_positions": 0,
+  "source": "rule_crypto_btc_macd_vol_v1",
+  "stress_net_pnl": 13.097084620000011,
+  "yearly_base_net_pnl": {
+    "2023": 8.409510132,
+    "2024": 11.737068196,
+    "2025": -2.7761386319999977
+  }
+}

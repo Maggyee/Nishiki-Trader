@@ -1,0 +1,30 @@
+{
+  "schema_version": "research.data_sources.v44.v1",
+  "provider": "Binance Public Vision Kline Archive",
+  "symbols": {
+    "btc": {
+      "symbol": "BTCUSDT",
+      "base_url": "https://data.binance.vision/data/spot/monthly/klines/BTCUSDT/1d/",
+      "format": "csv_daily_kline"
+    }
+  },
+  "metrics": {
+    "btc_trend_or_rsi20": {
+      "metric_name": "BTC MACD(12,26,9) > 0 or RSI(2) < 20",
+      "formula": "MACD_Line > Signal_Line or RSI2 < 20.0"
+    },
+    "btc_trend_or_rsi15": {
+      "metric_name": "BTC MACD(12,26,9) > 0 or RSI(2) < 15",
+      "formula": "MACD_Line > Signal_Line or RSI2 < 15.0"
+    },
+    "btc_trend_or_rsi10": {
+      "metric_name": "BTC MACD(12,26,9) > 0 or RSI(2) < 10",
+      "formula": "MACD_Line > Signal_Line or RSI2 < 10.0"
+    }
+  },
+  "boundaries": {
+    "loads_credentials": false,
+    "historical_vintage_claim": false,
+    "point_in_time_interpretation": "binance_vision_daily_kline_lagged_1_calendar_day"
+  }
+}

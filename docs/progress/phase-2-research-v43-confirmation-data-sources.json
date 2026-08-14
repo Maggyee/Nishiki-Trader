@@ -1,0 +1,16 @@
+{
+  "factor_summary": {
+    "development_row_count": 1188,
+    "first_date": "2022-10-01",
+    "kind": "btc_macd_vol_confirmed",
+    "last_date": "2025-12-31",
+    "path": "data/research-v43/factors/btc_macd_vol_confirmed_confirmation.csv",
+    "row_count": 1188,
+    "sha256": "sha256:e0e2efd0880f50fa3dbdb62f947560075ed218c44c201f54c1b837de8d641ae5",
+    "snapshot_sha256": "sha256:e448a3d95618ccad1eb28d48a1faefd00d51698255e9412dba1104606ecbfb98",
+    "warmup_row_count": 0
+  },
+  "schema_version": "research.v43.confirmation_data_sources.v1",
+  "snapshot_path": "data/research-v43/raw/binance-vision-btc-20260814T093709Z-e448a3d95618.json",
+  "snapshot_sha256": "sha256:e448a3d95618ccad1eb28d48a1faefd00d51698255e9412dba1104606ecbfb98"
+}
