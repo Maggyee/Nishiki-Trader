@@ -114,13 +114,13 @@ def parse_and_audit_csv(kind: str, raw: bytes) -> tuple[list[dict[str, Any]], di
             raise ValueError(f"{kind} DATE values must be unique and increasing")
         previous = observed
         value = _finite(row[value_column], f"rows[{index}].{value_column}")
-        if value <= 0.0:
+        if kind not in ("irx",) and value <= 0.0:
             raise ValueError(f"{kind} values must be strictly positive")
         if schema == "ohlc":
             open_value = _finite(row["OPEN"], f"rows[{index}].OPEN")
             high = _finite(row["HIGH"], f"rows[{index}].HIGH")
             low = _finite(row["LOW"], f"rows[{index}].LOW")
-            if low > min(open_value, value) or high < max(open_value, value) or high < low:
+            if observed >= WARMUP_START and (low > min(open_value, value) or high < max(open_value, value) or high < low):
                 raise ValueError(f"{kind} row {index} has invalid OHLC bounds")
         rows.append({"date": observed.isoformat(), "value": value})
     if not rows:

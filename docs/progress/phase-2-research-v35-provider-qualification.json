@@ -1,0 +1,63 @@
+{
+  "schema_version": "research.v35.provider_qualification.v1",
+  "qualified_at": "2026-08-14T01:55:15Z",
+  "protocol_sha256": "sha256:bb1622cd2335e684adbe545232f0868110b6dbb27ed20c3d736e74afac1c0c9e",
+  "provider_contract_sha256": "sha256:03c1402b57c6f6414811b17972ab6081d2f4316121587ae06e32413be8c81ea8",
+  "provider": "Cboe Global Indices",
+  "historical_vintage_claim": false,
+  "qualified_candidates": [
+    {
+      "key": "irx_relief",
+      "index": "IRX",
+      "snapshot_path": "data/research-v35/raw/irx-20260814T015435Z-d202531a22d3.json",
+      "snapshot_sha256": "sha256:d202531a22d37e3fcdd117c0c1e2f938d88a922d76da48b52fc408450b0d31cb",
+      "factor_csv_path": "data/research-v35/factors/irx_development.csv",
+      "factor_csv_sha256": "sha256:faa0a6ddeab5b5cfb2484cb2454165ba05dd24de9e4ca756efc21926022a86dd",
+      "row_count": 798,
+      "development_row_count": 757,
+      "warmup_row_count": 41,
+      "first_development_date": "2020-01-02",
+      "last_development_date": "2022-12-30",
+      "maximum_calendar_gap_days": 4
+    },
+    {
+      "key": "vix1y_relief",
+      "index": "VIX1Y",
+      "snapshot_path": "data/research-v35/raw/vix1y-20260814T015507Z-3d61344be84e.json",
+      "snapshot_sha256": "sha256:3d61344be84e5c27b1e4afc8bb4c8ad7685617224f618c578e1627ed9e892241",
+      "factor_csv_path": "data/research-v35/factors/vix1y_development.csv",
+      "factor_csv_sha256": "sha256:effd501235910644a76ab350520451d676783483c5db4da40a01b5358866ad70",
+      "row_count": 797,
+      "development_row_count": 756,
+      "warmup_row_count": 41,
+      "first_development_date": "2020-01-02",
+      "last_development_date": "2022-12-30",
+      "maximum_calendar_gap_days": 4
+    },
+    {
+      "key": "vix6m_relief",
+      "index": "VIX6M",
+      "snapshot_path": "data/research-v35/raw/vix6m-20260814T015508Z-d1f14aef0a1f.json",
+      "snapshot_sha256": "sha256:d1f14aef0a1f202ac7e6ccd0b591a10ec4bf49c4de9d52c0f51a5d64ac860141",
+      "factor_csv_path": "data/research-v35/factors/vix6m_development.csv",
+      "factor_csv_sha256": "sha256:7287fe5949a11eed1d970a794c4a5e8d260fedaa0eaf23e38b443f604c0d5096",
+      "row_count": 797,
+      "development_row_count": 756,
+      "warmup_row_count": 41,
+      "first_development_date": "2020-01-02",
+      "last_development_date": "2022-12-30",
+      "maximum_calendar_gap_days": 4
+    }
+  ],
+  "rejected_candidates": [],
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "resumes_testnet": false,
+    "touches_live_path": false,
+    "signals_generated": false,
+    "pnl_opened": false,
+    "confirmation_opened": false,
+    "future_blind_opened": false
+  }
+}
