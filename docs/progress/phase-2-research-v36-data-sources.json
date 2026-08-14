@@ -1,0 +1,44 @@
+{
+  "schema_version": "research.data_sources.v36.v1",
+  "protocol": "docs/progress/phase-2-research-protocol-v36.json",
+  "provider": "Cboe Global Indices",
+  "endpoints": {
+    "vpn": {
+      "kind": "vpn",
+      "index": "VPN",
+      "name": "Cboe VIX Premium Strategy Index",
+      "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/VPN_History.csv",
+      "schema_type": "scalar",
+      "date_column": "DATE",
+      "value_column": "VPN"
+    },
+    "put": {
+      "kind": "put",
+      "index": "PUT",
+      "name": "Cboe S&P 500 PutWrite Index",
+      "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/PUT_History.csv",
+      "schema_type": "scalar",
+      "date_column": "DATE",
+      "value_column": "PUT"
+    },
+    "bxm": {
+      "kind": "bxm",
+      "index": "BXM",
+      "name": "Cboe S&P 500 BuyWrite Index",
+      "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/BXM_History.csv",
+      "schema_type": "scalar",
+      "date_column": "DATE",
+      "value_column": "BXM"
+    }
+  },
+  "constraints": {
+    "publication_lag_calendar_days": 1,
+    "development_start": "2020-01-01",
+    "development_end": "2022-12-31",
+    "warmup_start": "2019-11-01",
+    "confirmation_start": "2023-01-01",
+    "confirmation_end": "2025-12-31",
+    "minimum_development_rows": 700,
+    "maximum_calendar_gap_days": 5
+  }
+}
