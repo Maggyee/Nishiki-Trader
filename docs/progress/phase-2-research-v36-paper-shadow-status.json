@@ -1,0 +1,33 @@
+{
+  "anomaly_blockers": [],
+  "attempt_count": 1,
+  "contract_sha256": "sha256:e28dfef997a9675a86da1a46ceb8f93c0826c19b5a5a06a13d6cec41bb5046fe",
+  "future_blind_status": "sealed_unopened",
+  "gate": {
+    "days": 7,
+    "operator": "or",
+    "signals": 50
+  },
+  "latest_attempt_id": "20260814T022435Z-793051bc47f6",
+  "live_status": "blocked",
+  "new_forward_signal_count": 0,
+  "new_forward_signal_ids": [],
+  "next_action": "continue_paper_shadow_collection",
+  "paper_simulated_status": "not_authorized",
+  "policy": {
+    "dry_run": true,
+    "min_confidence_override": null,
+    "position_pct_multiplier": 0.2,
+    "stage": "paper_shadow"
+  },
+  "qualified_collection_dates": [
+    "2026-08-14"
+  ],
+  "qualified_day_count": 1,
+  "review_eligible": false,
+  "schema_version": "research.v36.paper_shadow_status.v1",
+  "stage": "paper_shadow",
+  "testnet_status": "blocked",
+  "threshold_met": false,
+  "updated_at": "2026-08-14T02:24:35.400370Z"
+}
