@@ -1,0 +1,67 @@
+{
+  "best_candidate": "bxm_expansion",
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_confirmation_early": false,
+    "opens_future_blind": false,
+    "touches_live_path": false
+  },
+  "candidates": {
+    "bxm_expansion": {
+      "base_net_pnl": 24.739579040000002,
+      "classification": "development_pass_confirmation_open_eligible",
+      "closed_positions": 57,
+      "duplicate_replays": 2,
+      "key": "bxm_expansion",
+      "leave_best_base_net_pnl": 4.740220780000001,
+      "model_version": "cboe-bxm-diff5-positive-lag1d-v1",
+      "pass_gates": true,
+      "positive_months": 18,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "source": "rule_cboe_bxm_expansion_v1",
+      "stress_net_pnl": 24.739579040000002
+    },
+    "put_expansion": {
+      "base_net_pnl": 13.0319902,
+      "classification": "development_rejected",
+      "closed_positions": 59,
+      "duplicate_replays": 2,
+      "key": "put_expansion",
+      "leave_best_base_net_pnl": -6.967368060000002,
+      "model_version": "cboe-put-diff5-positive-lag1d-v1",
+      "pass_gates": false,
+      "positive_months": 16,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "source": "rule_cboe_put_expansion_v1",
+      "stress_net_pnl": 13.0319902
+    },
+    "vpn_expansion": {
+      "base_net_pnl": 24.425671490000003,
+      "classification": "development_pass_confirmation_open_eligible",
+      "closed_positions": 77,
+      "duplicate_replays": 2,
+      "key": "vpn_expansion",
+      "leave_best_base_net_pnl": 9.139665300000003,
+      "model_version": "cboe-vpn-diff5-positive-lag1d-v1",
+      "pass_gates": true,
+      "positive_months": 20,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "source": "rule_cboe_vpn_expansion_v1",
+      "stress_net_pnl": 24.425671490000003
+    }
+  },
+  "evaluated_at": "2026-08-14T02:20:00Z",
+  "passing_candidates": [
+    "vpn_expansion",
+    "bxm_expansion"
+  ],
+  "protocol_sha256": "sha256:c6617ff0b37173c4959fd9fe1b5c676f10f6aeb04d6daed009c14be32ff0529c",
+  "schema_version": "research.v36.development_results.v1"
+}
