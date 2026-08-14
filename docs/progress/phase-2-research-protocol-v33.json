@@ -1,0 +1,115 @@
+{
+  "schema_version": "research.protocol.v33",
+  "status": "preregistered_before_cboe_correlation_term_structure_body_access",
+  "created_at": "2026-08-14T01:34:00Z",
+  "author": "nishiki",
+  "objective": "Test whether falling medium-to-long term Cboe implied correlation (COR3M, COR6M, COR1Y) provides an independent risk-on alpha mechanism for BTC Spot without retuning single-tenor COR1M or option surface shape.",
+  "data_access_disclosure": {
+    "historical_csv_bodies_opened": false,
+    "development_factor_values_opened": false,
+    "confirmation_factor_values_opened": false,
+    "strategy_specific_pnl_opened": false,
+    "public_methodology_and_endpoints_reviewed": true
+  },
+  "data_contract": {
+    "provider_contract": "docs/progress/phase-2-research-v33-data-sources.json",
+    "conservative_decision_lag_calendar_days": 1,
+    "historical_vintage_claim": false
+  },
+  "candidates": [
+    {
+      "key": "cor3m_relief",
+      "index": "COR3M",
+      "source": "rule_cboe_cor3m_relief_v1",
+      "model_version": "cboe-cor3m-diff5-negative-lag1d-v1",
+      "parameters": {
+        "change_observations": 5,
+        "direction": "negative",
+        "threshold": 0.0,
+        "publication_lag_calendar_days": 1,
+        "ttl_seconds": 86400,
+        "confidence": 0.75
+      }
+    },
+    {
+      "key": "cor6m_relief",
+      "index": "COR6M",
+      "source": "rule_cboe_cor6m_relief_v1",
+      "model_version": "cboe-cor6m-diff5-negative-lag1d-v1",
+      "parameters": {
+        "change_observations": 5,
+        "direction": "negative",
+        "threshold": 0.0,
+        "publication_lag_calendar_days": 1,
+        "ttl_seconds": 86400,
+        "confidence": 0.75
+      }
+    },
+    {
+      "key": "cor1y_relief",
+      "index": "COR1Y",
+      "source": "rule_cboe_cor1y_relief_v1",
+      "model_version": "cboe-cor1y-diff5-negative-lag1d-v1",
+      "parameters": {
+        "change_observations": 5,
+        "direction": "negative",
+        "threshold": 0.0,
+        "publication_lag_calendar_days": 1,
+        "ttl_seconds": 86400,
+        "confidence": 0.75
+      }
+    }
+  ],
+  "execution": {
+    "instrument_id": "BTCUSDT.BINANCE",
+    "bar_type": "BTCUSDT.BINANCE-1-HOUR-LAST-EXTERNAL",
+    "development_catalog_path": "data/research-v7-downtime-sensitivity/catalog",
+    "confirmation_catalog_path": "data/research-v8/catalog",
+    "trade_size_btc": 0.001,
+    "starting_balance_usdt": 100000,
+    "account_type": "cash",
+    "min_confidence": 0.55,
+    "long_flat_only": true,
+    "costs_usdt_per_closed_position": {
+      "gross": 0.0,
+      "base": 0.08,
+      "stress": 0.10
+    }
+  },
+  "partitions": {
+    "warmup": {"start": "2019-11-01", "end": "2019-12-31"},
+    "development": {"start": "2020-01-01", "end": "2022-12-31"},
+    "confirmation": {"start": "2023-01-01", "end": "2025-12-31", "status": "sealed_unopened"},
+    "future_blind": {"start": "2026-09-01", "end": "2027-01-31", "status": "sealed_unopened"}
+  },
+  "gates": {
+    "development": {
+      "base_net_pnl_gt": 0.0,
+      "stress_net_pnl_gt": 0.0,
+      "positive_calendar_years_at_least": 2,
+      "positive_calendar_months_at_least": 18,
+      "closed_positions_at_least": 30,
+      "leave_best_position_base_net_pnl_gt": 0.0,
+      "duplicate_replays_required": 2
+    },
+    "multiple_testing": {
+      "candidate_count_locked": 3,
+      "parameter_grid_search_forbidden": true,
+      "alternate_sign_forbidden": true,
+      "pnl_selected_ensemble_forbidden": true,
+      "failed_candidate_reparameterization_forbidden": true
+    }
+  },
+  "outcomes": {
+    "development_pass": "qualifies candidate to open a separately committed confirmation protocol",
+    "development_fail": "candidate is permanently rejected; confirmation remains sealed",
+    "provider_blocked": "protocol closes at qualification with zero factor values or PnL opened"
+  },
+  "boundaries_effect": {
+    "mutates_source_policy": false,
+    "loads_credentials": false,
+    "resumes_testnet": false,
+    "touches_live_path": false,
+    "opens_future_blind": false
+  }
+}
