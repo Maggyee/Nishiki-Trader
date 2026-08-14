@@ -1,0 +1,81 @@
+{
+  "schema_version": "research.protocol.v38.confirmation.v1",
+  "name": "Phase 2 Alpha Research Protocol v38 Confirmation Contract (CLL S&P 500 Collar Expansion)",
+  "status": "preregistered_before_confirmation_open",
+  "frozen_at": "2026-08-14T08:58:30Z",
+  "parent_protocol": "docs/progress/phase-2-research-protocol-v38.json",
+  "parent_protocol_sha256": "sha256:16a55e2c79a09605c50c9861258bc0b0e9327d8e62bd69dc291af90c22ef5dca",
+  "development_results": "docs/progress/phase-2-research-v38-development-results.json",
+  "candidate": {
+    "key": "cll_expansion",
+    "source": "rule_cboe_cll_expansion_v1",
+    "model_version": "cboe-cll-diff5-positive-lag1d-v1",
+    "index": "CLL",
+    "kind": "cll",
+    "parameters": {
+      "change_observations": 5,
+      "direction": "positive",
+      "threshold": 0.0,
+      "publication_lag_calendar_days": 1,
+      "ttl_seconds": 86400,
+      "confidence": 0.75
+    },
+    "rule": "buy iff CLL minus its value five official observations earlier is strictly positive; flat otherwise; begin flat and emit only on state change"
+  },
+  "data_contract": {
+    "provider": "Cboe Global Indices",
+    "raw_snapshot": "data/research-v38/raw/cll-20260814T085625Z-2c5abb4015bf.json",
+    "raw_snapshot_sha256": "sha256:2c5abb4015bffe2532ddc0c1348f0d70c4ca22cd6a0dab02841b5736fe501a1c",
+    "publication_lag_calendar_days": 1,
+    "warmup_start": "2022-11-01",
+    "confirmation_start": "2023-01-01",
+    "confirmation_end": "2025-12-31",
+    "future_blind_start": "2026-09-01",
+    "future_blind_end": "2027-01-31",
+    "missing_value_policy": "drop missing official observation; never forward-fill across trading days; never interpolate",
+    "historical_vintage_claim": false
+  },
+  "execution_contract": {
+    "instrument": "BTCUSDT.BINANCE",
+    "bar_type": "BTCUSDT.BINANCE-1-HOUR-LAST-EXTERNAL",
+    "venue": "BINANCE",
+    "account_type": "cash",
+    "oms_type": "netting",
+    "starting_balance": 100000.0,
+    "trade_size": 0.001,
+    "min_confidence": 0.55,
+    "confirmation_catalog": "data/research-v8/catalog"
+  },
+  "cost_scenarios": {
+    "gross": {
+      "fee_bps_per_fill": 0.0,
+      "slippage_bps_per_fill": 0.0
+    },
+    "base": {
+      "fee_bps_per_fill": 10.0,
+      "slippage_bps_per_fill": 2.0
+    },
+    "stress": {
+      "fee_bps_per_fill": 10.0,
+      "slippage_bps_per_fill": 5.0
+    }
+  },
+  "gates": {
+    "base_net_pnl_gt": 0.0,
+    "stress_net_pnl_gt": 0.0,
+    "positive_calendar_years_at_least": 2,
+    "positive_calendar_months_at_least": 18,
+    "closed_positions_at_least": 30,
+    "leave_best_position_base_net_pnl_gt": 0.0,
+    "duplicate_replays_required": 2,
+    "spot_long_flat_only": true,
+    "evidence_blockers_required": 0
+  },
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "resumes_testnet": false,
+    "touches_live_path": false,
+    "opens_future_blind": false
+  }
+}
