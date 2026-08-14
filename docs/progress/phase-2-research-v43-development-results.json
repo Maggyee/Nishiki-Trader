@@ -1,0 +1,68 @@
+{
+  "best_candidate": "btc_macd_vol_confirmed",
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_confirmation_early": false,
+    "opens_future_blind": false,
+    "touches_live_path": false
+  },
+  "candidates": {
+    "btc_macd_rsi_vol_confirmed": {
+      "base_net_pnl": 18.245946775999997,
+      "classification": "development_pass_confirmation_open_eligible",
+      "closed_positions": 97,
+      "duplicate_replays": 2,
+      "key": "btc_macd_rsi_vol_confirmed",
+      "leave_best_base_net_pnl": 6.993303392,
+      "model_version": "crypto-btc-macd12-26-9-rsi45-vol080-lag1d-v1",
+      "pass_gates": true,
+      "positive_months": 18,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "source": "rule_crypto_btc_macd_rsi_vol_v1",
+      "stress_net_pnl": 16.576188469999998
+    },
+    "btc_macd_vol_confirmed": {
+      "base_net_pnl": 20.349359156000002,
+      "classification": "development_pass_confirmation_open_eligible",
+      "closed_positions": 106,
+      "duplicate_replays": 2,
+      "key": "btc_macd_vol_confirmed",
+      "leave_best_base_net_pnl": 9.096715771999998,
+      "model_version": "crypto-btc-macd12-26-9-vol080-lag1d-v1",
+      "pass_gates": true,
+      "positive_months": 20,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "source": "rule_crypto_btc_macd_vol_v1",
+      "stress_net_pnl": 18.513286445000002
+    },
+    "btc_macd_vol_tight": {
+      "base_net_pnl": 15.277697500000002,
+      "classification": "development_pass_confirmation_open_eligible",
+      "closed_positions": 108,
+      "duplicate_replays": 2,
+      "key": "btc_macd_vol_tight",
+      "leave_best_base_net_pnl": 4.025054115999998,
+      "model_version": "crypto-btc-macd12-26-9-vol085-lag1d-v1",
+      "pass_gates": true,
+      "positive_months": 18,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "source": "rule_crypto_btc_macd_vol_tight_v1",
+      "stress_net_pnl": 13.460464375000003
+    }
+  },
+  "evaluated_at": "2026-08-14T09:37:49.618843Z",
+  "passing_candidates": [
+    "btc_macd_vol_confirmed",
+    "btc_macd_rsi_vol_confirmed",
+    "btc_macd_vol_tight"
+  ],
+  "protocol_sha256": "sha256:eb2f581d85b3b139432690dacc69b3f1ec7365188dc531c25ed2d61e41c9446b",
+  "schema_version": "research.v43.development_results.v1"
+}
