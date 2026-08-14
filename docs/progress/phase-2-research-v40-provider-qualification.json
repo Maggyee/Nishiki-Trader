@@ -1,0 +1,91 @@
+{
+  "boundaries": {
+    "confirmation_values_opened": false,
+    "future_blind_opened": false,
+    "historical_vintage_claim": false,
+    "network_requests_closed_after_snapshot": true
+  },
+  "development_factors": {
+    "rvx": {
+      "development_row_count": 755,
+      "first_date": "2019-11-01",
+      "kind": "rvx",
+      "last_date": "2022-12-30",
+      "path": "data/research-v40/factors/rvx_development.csv",
+      "row_count": 796,
+      "sha256": "sha256:2794ff79cc5cf84bcf852cb68557da35fa536d21fee4db20b620accb761c0f8a",
+      "snapshot_sha256": "sha256:cdc449ae6ef6406e83eb7e5eef9326bf1fd92f02c354c9a07b46e7adc269f075",
+      "warmup_row_count": 41
+    },
+    "vxd": {
+      "development_row_count": 758,
+      "first_date": "2019-11-01",
+      "kind": "vxd",
+      "last_date": "2022-12-30",
+      "path": "data/research-v40/factors/vxd_development.csv",
+      "row_count": 799,
+      "sha256": "sha256:795ef8a52d1a61976e45cfecbd8c88fea8293065541ebbecab87e7ce5decf7e0",
+      "snapshot_sha256": "sha256:f0658faf3a61a9e7ed47b8679bf08ca4f10418c75081cc08475c30b477897fdc",
+      "warmup_row_count": 41
+    },
+    "vxn": {
+      "development_row_count": 758,
+      "first_date": "2019-11-01",
+      "kind": "vxn",
+      "last_date": "2022-12-30",
+      "path": "data/research-v40/factors/vxn_development.csv",
+      "row_count": 799,
+      "sha256": "sha256:7799ae0cf6640bcc9a74f837b9793fd6495703dfc4025af5b87d25e568b8400a",
+      "snapshot_sha256": "sha256:9ac25124913a7ca3114900033a4b088b776461f6dfb8181ad1c482a5e50deeac",
+      "warmup_row_count": 41
+    }
+  },
+  "evaluated_at": "2026-08-14T09:06:40.037115Z",
+  "passed": true,
+  "protocol": "docs/progress/phase-2-research-protocol-v40.json",
+  "schema_version": "research.provider_qualification.v40.v1",
+  "sources": {
+    "rvx": {
+      "audit": {
+        "first_date": "2009-09-16",
+        "kind": "rvx",
+        "last_date": "2026-08-13",
+        "max_gap_days": 5,
+        "row_count": 4248
+      },
+      "kind": "rvx",
+      "row_count": 4248,
+      "snapshot_path": "data/research-v40/raw/rvx-20260814T090638Z-cdc449ae6ef6.json",
+      "snapshot_sha256": "sha256:cdc449ae6ef6406e83eb7e5eef9326bf1fd92f02c354c9a07b46e7adc269f075",
+      "vintage_id": "cboe-rvx:2026-08-14T09:06:38.037542+00:00:cdc449ae6ef6"
+    },
+    "vxd": {
+      "audit": {
+        "first_date": "2009-09-18",
+        "kind": "vxd",
+        "last_date": "2026-08-13",
+        "max_gap_days": 5,
+        "row_count": 4251
+      },
+      "kind": "vxd",
+      "row_count": 4251,
+      "snapshot_path": "data/research-v40/raw/vxd-20260814T090638Z-f0658faf3a61.json",
+      "snapshot_sha256": "sha256:f0658faf3a61a9e7ed47b8679bf08ca4f10418c75081cc08475c30b477897fdc",
+      "vintage_id": "cboe-vxd:2026-08-14T09:06:38.858612+00:00:f0658faf3a61"
+    },
+    "vxn": {
+      "audit": {
+        "first_date": "2009-09-14",
+        "kind": "vxn",
+        "last_date": "2026-08-13",
+        "max_gap_days": 5,
+        "row_count": 4257
+      },
+      "kind": "vxn",
+      "row_count": 4257,
+      "snapshot_path": "data/research-v40/raw/vxn-20260814T090639Z-9ac25124913a.json",
+      "snapshot_sha256": "sha256:9ac25124913a7ca3114900033a4b088b776461f6dfb8181ad1c482a5e50deeac",
+      "vintage_id": "cboe-vxn:2026-08-14T09:06:39.255527+00:00:9ac25124913a"
+    }
+  }
+}
