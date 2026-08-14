@@ -1,0 +1,51 @@
+{
+  "boundaries": {
+    "confirmation_values_opened": false,
+    "future_blind_opened": false,
+    "historical_vintage_claim": false,
+    "network_requests_closed_after_snapshot": true
+  },
+  "btc_row_count": 2496,
+  "development_factors": {
+    "btc_trend_pullback_rsi10": {
+      "development_row_count": 1096,
+      "first_date": "2019-10-01",
+      "kind": "btc_trend_pullback_rsi10",
+      "last_date": "2022-12-31",
+      "path": "data/research-v44/factors/btc_trend_pullback_rsi10_development.csv",
+      "row_count": 1188,
+      "sha256": "sha256:a42578a2062bd2ff52b67c86f684c5bb90bf302e2a165d925ff3dfc5c57fecc9",
+      "snapshot_sha256": "sha256:c94ea04fe2e649b2e1769ddf5ce7f06f132be8bbdc9892d324b81e63220f41ea",
+      "warmup_row_count": 92
+    },
+    "btc_trend_pullback_rsi15": {
+      "development_row_count": 1096,
+      "first_date": "2019-10-01",
+      "kind": "btc_trend_pullback_rsi15",
+      "last_date": "2022-12-31",
+      "path": "data/research-v44/factors/btc_trend_pullback_rsi15_development.csv",
+      "row_count": 1188,
+      "sha256": "sha256:114c53e417130e7f47e20d177abb0c1a885bc37f2822e98f793083d99c0bcdcf",
+      "snapshot_sha256": "sha256:c94ea04fe2e649b2e1769ddf5ce7f06f132be8bbdc9892d324b81e63220f41ea",
+      "warmup_row_count": 92
+    },
+    "btc_trend_pullback_rsi20": {
+      "development_row_count": 1096,
+      "first_date": "2019-10-01",
+      "kind": "btc_trend_pullback_rsi20",
+      "last_date": "2022-12-31",
+      "path": "data/research-v44/factors/btc_trend_pullback_rsi20_development.csv",
+      "row_count": 1188,
+      "sha256": "sha256:804ac82e7b762687a8a22bb4cd2b9c4a50d1cfb870ad3eb2730dfeafa5b8141a",
+      "snapshot_sha256": "sha256:c94ea04fe2e649b2e1769ddf5ce7f06f132be8bbdc9892d324b81e63220f41ea",
+      "warmup_row_count": 92
+    }
+  },
+  "evaluated_at": "2026-08-14T09:47:10.584488Z",
+  "passed": true,
+  "protocol": "docs/progress/phase-2-research-protocol-v44.json",
+  "schema_version": "research.v44.provider_qualification.v1",
+  "snapshot_path": "data/research-v44/raw/binance-vision-btc-20260814T094710Z-c94ea04fe2e6.json",
+  "snapshot_sha256": "sha256:c94ea04fe2e649b2e1769ddf5ce7f06f132be8bbdc9892d324b81e63220f41ea",
+  "vintage_id": "binance-vision-btc:2026-08-14T09:47:10.584488+00:00:c94ea04fe2e6"
+}

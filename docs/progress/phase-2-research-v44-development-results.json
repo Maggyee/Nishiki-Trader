@@ -1,0 +1,64 @@
+{
+  "best_candidate": null,
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_confirmation_early": false,
+    "opens_future_blind": false,
+    "touches_live_path": false
+  },
+  "candidates": {
+    "btc_trend_pullback_rsi10": {
+      "base_net_pnl": 24.138874835999996,
+      "classification": "development_rejected",
+      "closed_positions": 74,
+      "duplicate_replays": 2,
+      "key": "btc_trend_pullback_rsi10",
+      "leave_best_base_net_pnl": 7.836347247999999,
+      "model_version": "crypto-btc-macd12-26-9-or-rsi2-lt10-lag1d-v1",
+      "pass_gates": false,
+      "positive_months": 14,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "source": "rule_crypto_trend_pullback_rsi10_v1",
+      "stress_net_pnl": 22.732311044999996
+    },
+    "btc_trend_pullback_rsi15": {
+      "base_net_pnl": 22.143171020000004,
+      "classification": "development_rejected",
+      "closed_positions": 82,
+      "duplicate_replays": 2,
+      "key": "btc_trend_pullback_rsi15",
+      "leave_best_base_net_pnl": 5.840643432,
+      "model_version": "crypto-btc-macd12-26-9-or-rsi2-lt15-lag1d-v1",
+      "pass_gates": false,
+      "positive_months": 15,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "source": "rule_crypto_trend_pullback_rsi15_v1",
+      "stress_net_pnl": 20.583816275000004
+    },
+    "btc_trend_pullback_rsi20": {
+      "base_net_pnl": 24.601199027999996,
+      "classification": "development_rejected",
+      "closed_positions": 87,
+      "duplicate_replays": 2,
+      "key": "btc_trend_pullback_rsi20",
+      "leave_best_base_net_pnl": 8.298671440000003,
+      "model_version": "crypto-btc-macd12-26-9-or-rsi2-lt20-lag1d-v1",
+      "pass_gates": false,
+      "positive_months": 15,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "source": "rule_crypto_trend_pullback_v1",
+      "stress_net_pnl": 22.939506284999993
+    }
+  },
+  "evaluated_at": "2026-08-14T09:48:48.085814Z",
+  "passing_candidates": [],
+  "protocol_sha256": "sha256:82f7c24eeeea9a703e54f02f0e0ad7905893339ecd34b277bd9e0f44bfeb783c",
+  "schema_version": "research.v44.development_results.v1"
+}
