@@ -2,16 +2,14 @@ from __future__ import annotations
 
 import copy
 import json
+from datetime import date, timedelta
+from pathlib import Path
 
 import pytest
-
-from pathlib import Path
 
 from apps.ops.research_v30_confirmation import DEFAULT_CONTRACT, validate_contract
 from apps.ops.research_v30_confirmation_factor import _audit_confirmation_rows
 from apps.ops.research_v30_confirmation_review import _classification
-
-from datetime import date, timedelta
 
 
 def _payload() -> dict:
