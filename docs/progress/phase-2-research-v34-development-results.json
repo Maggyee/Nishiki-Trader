@@ -1,0 +1,155 @@
+{
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_confirmation": false,
+    "opens_future_blind": false,
+    "resumes_testnet": false,
+    "touches_live_path": false
+  },
+  "candidates": [
+    {
+      "base_net_pnl": 35.20937333199999,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:33b9408321dc9b159a06c6d81997e8a2deae4119da481e5b3c652ebb506ce2e9",
+          "manifest_sha256": "sha256:9e208913fe3580c423da7c001ea22b70673ecc1e997b631484d047f03b2cc3d0",
+          "path": "data/research-v34/backtests/fvx_relief_run1/20260814-014501Z-ce990d2f"
+        },
+        {
+          "fills_sha256": "sha256:33b9408321dc9b159a06c6d81997e8a2deae4119da481e5b3c652ebb506ce2e9",
+          "manifest_sha256": "sha256:874c9a4ee72a7a7042d23b19b3013b582d86bf3de7b3238574be18c492484e80",
+          "path": "data/research-v34/backtests/fvx_relief_run2/20260814-014505Z-3614bead"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "development_pass_confirmation_open_eligible",
+      "closed_positions": 86,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [],
+      "gross_net_pnl": 41.203869999999995,
+      "key": "fvx_relief",
+      "leave_best_base_net_pnl": 28.3027727,
+      "model_version": "cboe-fvx-diff5-negative-lag1d-v1",
+      "performance_pass": true,
+      "positive_months": 23,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 172,
+      "signal_store_sha256": "sha256:1b4e33682ffe7191e081b1014b36fb20be2f0e46d30190ca1fd4ccf7b8b2eed2",
+      "source": "rule_cboe_fvx_relief_v1",
+      "stress_net_pnl": 33.710749164999996,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 12.983227592,
+        "2021": 24.151674988,
+        "2022": -1.9255292479999992
+      }
+    },
+    {
+      "base_net_pnl": 30.663214288,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:b81feaa4e74e2b3c4f3e88bac53f19e8c80334c7c7929764fa6dd57e8e5a0acb",
+          "manifest_sha256": "sha256:e4d01f128414430727c78ccd7868f37c5ec575c6ab2832babef99504a6ac9cff",
+          "path": "data/research-v34/backtests/tnx_relief_run1/20260814-014513Z-8d5b8fac"
+        },
+        {
+          "fills_sha256": "sha256:b81feaa4e74e2b3c4f3e88bac53f19e8c80334c7c7929764fa6dd57e8e5a0acb",
+          "manifest_sha256": "sha256:3fb9bef6270e37b4177f58b357eb4f3e410d5e2a43209ea823f1ba1e30f7c96a",
+          "path": "data/research-v34/backtests/tnx_relief_run2/20260814-014517Z-116d87ff"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "development_pass_confirmation_open_eligible",
+      "closed_positions": 84,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [],
+      "gross_net_pnl": 36.38722,
+      "key": "tnx_relief",
+      "leave_best_base_net_pnl": 23.793932696000002,
+      "model_version": "cboe-tnx-diff5-negative-lag1d-v1",
+      "performance_pass": true,
+      "positive_months": 19,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 168,
+      "signal_store_sha256": "sha256:c0d1ebc345231cf9295548a66bd06608f4b2990c62a88f97350394934b836327",
+      "source": "rule_cboe_tnx_relief_v1",
+      "stress_net_pnl": 29.23221286,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 13.164986828,
+        "2021": 21.654652867999996,
+        "2022": -4.156425408
+      }
+    },
+    {
+      "base_net_pnl": 14.215863140000002,
+      "bundle_runs": [
+        {
+          "fills_sha256": "sha256:4823d17a85a613000c2155e838ffe5032298014b938e7342ec964755a30e566d",
+          "manifest_sha256": "sha256:4fb94e671690c787189760003573d287de5df23065254dbb4691744dc0b27d20",
+          "path": "data/research-v34/backtests/tyx_relief_run1/20260814-014525Z-2f832f5b"
+        },
+        {
+          "fills_sha256": "sha256:4823d17a85a613000c2155e838ffe5032298014b938e7342ec964755a30e566d",
+          "manifest_sha256": "sha256:1a020d99dd0e0691509291962d631911e1fa2fbfc01d452d381b364db4ac846e",
+          "path": "data/research-v34/backtests/tyx_relief_run2/20260814-014529Z-fdd72d01"
+        }
+      ],
+      "calendar_months": 36,
+      "classification": "development_pass_confirmation_open_eligible",
+      "closed_positions": 79,
+      "duplicate_replays": 2,
+      "effective_blockers": [],
+      "evidence_pass": true,
+      "failure_reasons": [],
+      "gross_net_pnl": 19.68233,
+      "key": "tyx_relief",
+      "leave_best_base_net_pnl": 6.469592911999998,
+      "model_version": "cboe-tyx-diff5-negative-lag1d-v1",
+      "performance_pass": true,
+      "positive_months": 20,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "signal_count": 158,
+      "signal_store_sha256": "sha256:8dc4c1a9518be3d11b1dcbec18add9215cabc2df81e786b5ae32f90a417e2e2d",
+      "source": "rule_cboe_tyx_relief_v1",
+      "stress_net_pnl": 12.849246425000002,
+      "verified_no_kline_event_hits": [],
+      "yearly_base_net_pnl": {
+        "2020": 12.581266056,
+        "2021": 5.860055347999998,
+        "2022": -4.225458264000001
+      }
+    }
+  ],
+  "confirmation_holdout_status": "sealed_pending_committed_development_review",
+  "confirmation_open_eligible_candidates": [
+    "fvx_relief",
+    "tnx_relief",
+    "tyx_relief"
+  ],
+  "development_passer_count": 3,
+  "future_blind_status": "sealed_unopened",
+  "protocol_sha256": "sha256:3764bb1c63c004fe511f665a677730f8dfae40a315a55bdebed17271c5eae082",
+  "provider_qualification": {
+    "historical_vintage_claim": false,
+    "qualified_candidates": [
+      "fvx_relief",
+      "tnx_relief",
+      "tyx_relief"
+    ],
+    "rejected_candidates": {}
+  },
+  "recommendation": "commit_development_results_before_confirmation_open",
+  "schema_version": "research.v34.development_results.v1"
+}
