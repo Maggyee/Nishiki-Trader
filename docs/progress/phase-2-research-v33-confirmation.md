@@ -1,6 +1,6 @@
 # Phase 2 Research Protocol v33 Confirmation
 
-- **Status**: pre-registered before COR1Y confirmation value access.
+- **Status**: confirmation failed; protocol closed.
 - **Candidate**: unchanged Cboe 1-Year Implied Correlation Relief (`cor1y_relief`).
 - **Confirmation window**: 2023-01-01 through 2025-12-31.
 - **Future blind**: sealed.

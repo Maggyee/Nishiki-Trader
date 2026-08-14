@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import json
 from datetime import date, timedelta
+from pathlib import Path
 
 import pytest
 
@@ -74,3 +75,18 @@ def test_v33_confirmation_classification() -> None:
     assert _classification(True, True) == "paper_shadow_review_eligible"
     assert _classification(False, True) == "reject_candidate"
     assert _classification(True, False) == "insufficient_confirmation_evidence"
+
+
+def test_v33_confirmation_results_reject_cor1y_relief() -> None:
+    payload = json.loads(
+        Path("docs/progress/phase-2-research-v33-confirmation-results.json").read_text()
+    )
+
+    assert payload["recommendation"] == "stop_protocol_v33_confirmation_failed"
+    assert payload["candidate"]["classification"] == "reject_candidate"
+    assert payload["candidate"]["key"] == "cor1y_relief"
+    assert payload["candidate"]["reproducible"] is True
+    assert payload["candidate"]["closed_positions"] < 30
+    assert payload["candidate"]["leave_best_base_net_pnl"] <= 0
+    assert payload["boundaries"]["opens_future_blind"] is False
+
