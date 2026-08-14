@@ -1,0 +1,64 @@
+{
+  "best_candidate": null,
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_confirmation_early": false,
+    "opens_future_blind": false,
+    "touches_live_path": false
+  },
+  "candidates": {
+    "btc_obv_expansion": {
+      "base_net_pnl": 5.555788708000009,
+      "classification": "development_rejected",
+      "closed_positions": 139,
+      "duplicate_replays": 2,
+      "key": "btc_obv_expansion",
+      "leave_best_base_net_pnl": -7.7904075919999975,
+      "model_version": "crypto-btc-obv-diff5-positive-lag1d-v1",
+      "pass_gates": false,
+      "positive_months": 15,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "source": "rule_crypto_btc_obv_v1",
+      "stress_net_pnl": 3.1652583850000084
+    },
+    "btc_parkinson_vol_relief": {
+      "base_net_pnl": -50.17277672,
+      "classification": "development_rejected",
+      "closed_positions": 248,
+      "duplicate_replays": 2,
+      "key": "btc_parkinson_vol_relief",
+      "leave_best_base_net_pnl": -58.097465752000005,
+      "model_version": "crypto-btc-parkinson-diff5-negative-lag1d-v1",
+      "pass_gates": false,
+      "positive_months": 20,
+      "positive_years": 1,
+      "reproducible": true,
+      "short_positions": 0,
+      "source": "rule_crypto_btc_parkinson_v1",
+      "stress_net_pnl": -54.5552159
+    },
+    "eth_btc_rs_expansion": {
+      "base_net_pnl": -4.312203664000004,
+      "classification": "development_rejected",
+      "closed_positions": 117,
+      "duplicate_replays": 2,
+      "key": "eth_btc_rs_expansion",
+      "leave_best_base_net_pnl": -12.688845015999998,
+      "model_version": "crypto-eth-btc-diff5-positive-lag1d-v1",
+      "pass_gates": false,
+      "positive_months": 18,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "source": "rule_crypto_eth_btc_rs_v1",
+      "stress_net_pnl": -6.276174580000003
+    }
+  },
+  "evaluated_at": "2026-08-14T09:21:55.877782Z",
+  "passing_candidates": [],
+  "protocol_sha256": "sha256:317528d3d3b063e47422a0596ed9e439a8ded04d097833ea359455748ff875d8",
+  "schema_version": "research.v41.development_results.v1"
+}

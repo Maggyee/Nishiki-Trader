@@ -1,0 +1,52 @@
+{
+  "boundaries": {
+    "confirmation_values_opened": false,
+    "future_blind_opened": false,
+    "historical_vintage_claim": false,
+    "network_requests_closed_after_snapshot": true
+  },
+  "btc_row_count": 2465,
+  "development_factors": {
+    "btc_obv": {
+      "development_row_count": 1096,
+      "first_date": "2019-11-01",
+      "kind": "btc_obv",
+      "last_date": "2022-12-31",
+      "path": "data/research-v41/factors/btc_obv_development.csv",
+      "row_count": 1157,
+      "sha256": "sha256:a9ed5ee7d26e63db20dff963f78cb57481a31a36586312e8e5543a372f7e0ee4",
+      "snapshot_sha256": "sha256:cf315e6546af826d232d3dd3a0b78d59922b635d4159a999e800291c116912a0",
+      "warmup_row_count": 61
+    },
+    "btc_parkinson": {
+      "development_row_count": 1096,
+      "first_date": "2019-11-01",
+      "kind": "btc_parkinson",
+      "last_date": "2022-12-31",
+      "path": "data/research-v41/factors/btc_parkinson_development.csv",
+      "row_count": 1157,
+      "sha256": "sha256:b06f226ef5a32e5e1a75b749056cbfc298548ebfe36332d03f48a080de92e702",
+      "snapshot_sha256": "sha256:cf315e6546af826d232d3dd3a0b78d59922b635d4159a999e800291c116912a0",
+      "warmup_row_count": 61
+    },
+    "eth_btc_rs": {
+      "development_row_count": 1096,
+      "first_date": "2019-11-01",
+      "kind": "eth_btc_rs",
+      "last_date": "2022-12-31",
+      "path": "data/research-v41/factors/eth_btc_rs_development.csv",
+      "row_count": 1157,
+      "sha256": "sha256:13a0552dc2edd60a0762ba4cf3345fb1d194ff3c08da5da737f338b047ccec65",
+      "snapshot_sha256": "sha256:cf315e6546af826d232d3dd3a0b78d59922b635d4159a999e800291c116912a0",
+      "warmup_row_count": 61
+    }
+  },
+  "eth_row_count": 2465,
+  "evaluated_at": "2026-08-14T09:20:41.023491Z",
+  "passed": true,
+  "protocol": "docs/progress/phase-2-research-protocol-v41.json",
+  "schema_version": "research.provider_qualification.v41.v1",
+  "snapshot_path": "data/research-v41/raw/binance-vision-btc-eth-20260814T092041Z-cf315e6546af.json",
+  "snapshot_sha256": "sha256:cf315e6546af826d232d3dd3a0b78d59922b635d4159a999e800291c116912a0",
+  "vintage_id": "binance-vision-btc-eth:2026-08-14T09:20:41.023491+00:00:cf315e6546af"
+}
