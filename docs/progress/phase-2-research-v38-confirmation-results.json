@@ -1,0 +1,59 @@
+{
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_future_blind": false,
+    "resumes_testnet": false,
+    "touches_live_path": false
+  },
+  "candidate": {
+    "base_net_pnl": 8.314709628,
+    "bundle_runs": [
+      {
+        "fills_sha256": "sha256:9279ab80f8114b855794e2fa97f98965a2d5b130054749426c44050f9fb27ac6",
+        "manifest_sha256": "sha256:c87f45caad1a3bbde77da7d96251412a46e2064c5d0331101ad495be91e9b959",
+        "path": "data/research-v38/backtests/cll-conf-a/20260814-085921Z-b64604ad"
+      },
+      {
+        "fills_sha256": "sha256:9279ab80f8114b855794e2fa97f98965a2d5b130054749426c44050f9fb27ac6",
+        "manifest_sha256": "sha256:d0ee91276e5d5af489bbc91374f22e9f72e85adb1691403b5bd639e7d6ea6138",
+        "path": "data/research-v38/backtests/cll-conf-b/20260814-085925Z-c8344add"
+      }
+    ],
+    "calendar_months": 36,
+    "classification": "reject_candidate",
+    "closed_positions": 76,
+    "duplicate_replays": 2,
+    "effective_blockers": [],
+    "evidence_pass": true,
+    "gross_net_pnl": 20.36181,
+    "key": "cll_expansion",
+    "leave_best_base_net_pnl": -8.109171276,
+    "model_version": "cboe-cll-diff5-positive-lag1d-v1",
+    "performance_pass": false,
+    "positive_months": 15,
+    "positive_years": 2,
+    "reproducible": true,
+    "short_positions": 0,
+    "signal_count": 151,
+    "signal_store_sha256": "2e228068c88da725edc680a006b9aeb923ea30faea215bd920ace5f867bfb6e4",
+    "source": "rule_cboe_cll_expansion_v1",
+    "stress_net_pnl": 5.302934534999999,
+    "verified_no_kline_event_hits": [],
+    "yearly_base_net_pnl": {
+      "2023": 10.351778216000001,
+      "2024": 15.630208012000002,
+      "2025": -17.667276599999997
+    }
+  },
+  "contract_sha256": "sha256:f6b2b3246ef494b9f163f5d9a355810dae752c89030a7321850bf122d7a1b7cf",
+  "data_qualification": {
+    "confirmation_row_count": 752,
+    "factor_sha256": "sha256:d25e3bfcf8ccc0a41e73f166f5c36f0254160c8321d8c9610a2e158dd7188899",
+    "schema_version": "research.v38.confirmation.data_sources.v1",
+    "snapshot_sha256": "sha256:2c5abb4015bffe2532ddc0c1348f0d70c4ca22cd6a0dab02841b5736fe501a1c"
+  },
+  "future_blind_status": "sealed_unopened",
+  "recommendation": "stop_protocol_v38_confirmation_failed",
+  "schema_version": "research.v38.confirmation_results.v1"
+}
