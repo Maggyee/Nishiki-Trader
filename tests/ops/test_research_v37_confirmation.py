@@ -22,3 +22,16 @@ def test_v37_confirmation_rejects_candidate_drift() -> None:
     payload["candidate"]["key"] = "wrong_candidate"
     with pytest.raises(ValueError, match="candidate drifted"):
         validate_contract(payload)
+
+
+def test_v37_confirmation_results_recorded_and_rejected() -> None:
+    from pathlib import Path
+    results_path = Path("docs/progress/phase-2-research-v37-confirmation-results.json")
+    payload = json.loads(results_path.read_text())
+    assert payload["schema_version"] == "research.v37.confirmation_results.v1"
+    assert payload["recommendation"] == "stop_protocol_v37_confirmation_failed"
+    candidate = payload["candidate"]
+    assert candidate["key"] == "bxn_expansion"
+    assert candidate["classification"] == "reject_candidate"
+    assert candidate["performance_pass"] is False
+    assert candidate["positive_months"] == 15

@@ -1,0 +1,59 @@
+{
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_future_blind": false,
+    "resumes_testnet": false,
+    "touches_live_path": false
+  },
+  "candidate": {
+    "base_net_pnl": 4.4550053799999985,
+    "bundle_runs": [
+      {
+        "fills_sha256": "sha256:755ddf23e6b22adb7eb5a74cde01b7955b2c8504933225b846ca216de6535f6d",
+        "manifest_sha256": "sha256:7372eed8376fbccabfe2c38a180159bf6b91e81712f7157649bec6a1206b6a0e",
+        "path": "data/research-v37/backtests/bxn-conf-a/20260814-085406Z-1e126bfe"
+      },
+      {
+        "fills_sha256": "sha256:755ddf23e6b22adb7eb5a74cde01b7955b2c8504933225b846ca216de6535f6d",
+        "manifest_sha256": "sha256:a06c5c12e0f5817a625e35b3c1e495f7e673e2ffc0cae6e560521a33097186b7",
+        "path": "data/research-v37/backtests/bxn-conf-b/20260814-085410Z-97c165a3"
+      }
+    ],
+    "calendar_months": 36,
+    "classification": "reject_candidate",
+    "closed_positions": 59,
+    "duplicate_replays": 2,
+    "effective_blockers": [],
+    "evidence_pass": true,
+    "gross_net_pnl": 13.863789999999998,
+    "key": "bxn_expansion",
+    "leave_best_base_net_pnl": -12.045687588000003,
+    "model_version": "cboe-bxn-diff5-positive-lag1d-v1",
+    "performance_pass": false,
+    "positive_months": 15,
+    "positive_years": 2,
+    "reproducible": true,
+    "short_positions": 0,
+    "signal_count": 117,
+    "signal_store_sha256": "3a2da6f96e4da2e13589cf6fa219fea3fe16b565f24614b239aa4abf3c31df1b",
+    "source": "rule_cboe_bxn_expansion_v1",
+    "stress_net_pnl": 2.1028092249999983,
+    "verified_no_kline_event_hits": [],
+    "yearly_base_net_pnl": {
+      "2023": 11.035143932,
+      "2024": 27.836265229999995,
+      "2025": -34.416403781999996
+    }
+  },
+  "contract_sha256": "sha256:88b18c6c3b6b2d75d91b3292016ad2e3a7398d31f664460d506f73b345ff92b7",
+  "data_qualification": {
+    "confirmation_row_count": 752,
+    "factor_sha256": "sha256:7ca08aab6c058b56de937ea3dc4750b519e8c904f4f70c414298a276982ef75e",
+    "schema_version": "research.v37.confirmation.data_sources.v1",
+    "snapshot_sha256": "sha256:ef57f729911830c7cd780d15271d012d33cff7ee1ab1ed3a474a1ffdeede3561"
+  },
+  "future_blind_status": "sealed_unopened",
+  "recommendation": "stop_protocol_v37_confirmation_failed",
+  "schema_version": "research.v37.confirmation_results.v1"
+}
