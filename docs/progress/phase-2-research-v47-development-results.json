@@ -1,0 +1,68 @@
+{
+  "best_candidate": "btc_rvol_relief_5_20_loose",
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_confirmation_early": false,
+    "opens_future_blind": false,
+    "touches_live_path": false
+  },
+  "candidates": {
+    "btc_rvol_relief_5_20": {
+      "base_net_pnl": 20.76678534,
+      "classification": "development_pass_confirmation_open_eligible",
+      "closed_positions": 108,
+      "duplicate_replays": 2,
+      "key": "btc_rvol_relief_5_20",
+      "leave_best_base_net_pnl": 7.309927112000002,
+      "model_version": "crypto-btc-rvol-relief-5-20-lag1d-v1",
+      "pass_gates": true,
+      "positive_months": 22,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "source": "rule_crypto_rvol_relief_v1",
+      "stress_net_pnl": 18.776864175
+    },
+    "btc_rvol_relief_5_20_loose": {
+      "base_net_pnl": 25.617140324000005,
+      "classification": "development_pass_confirmation_open_eligible",
+      "closed_positions": 107,
+      "duplicate_replays": 2,
+      "key": "btc_rvol_relief_5_20_loose",
+      "leave_best_base_net_pnl": 12.160282096000001,
+      "model_version": "crypto-btc-rvol-relief-loose-lag1d-v1",
+      "pass_gates": true,
+      "positive_months": 21,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "source": "rule_crypto_rvol_relief_loose_v1",
+      "stress_net_pnl": 23.629902905000005
+    },
+    "btc_rvol_relief_5_20_minhold2": {
+      "base_net_pnl": 20.76678534,
+      "classification": "development_pass_confirmation_open_eligible",
+      "closed_positions": 108,
+      "duplicate_replays": 2,
+      "key": "btc_rvol_relief_5_20_minhold2",
+      "leave_best_base_net_pnl": 7.309927112000002,
+      "model_version": "crypto-btc-rvol-relief-minhold2-lag1d-v1",
+      "pass_gates": true,
+      "positive_months": 22,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "source": "rule_crypto_rvol_relief_minhold2_v1",
+      "stress_net_pnl": 18.776864175
+    }
+  },
+  "evaluated_at": "2026-08-17T08:11:24.683502Z",
+  "passing_candidates": [
+    "btc_rvol_relief_5_20",
+    "btc_rvol_relief_5_20_loose",
+    "btc_rvol_relief_5_20_minhold2"
+  ],
+  "protocol_sha256": "sha256:c5736cad36a1cdaf2190956ca980dcbbe1db83d74fd9661260bc8c52cf1b2a7c",
+  "schema_version": "research.v47.development_results.v1"
+}

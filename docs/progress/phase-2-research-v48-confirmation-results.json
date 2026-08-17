@@ -1,0 +1,30 @@
+{
+  "base_net_pnl": 27.71071635600001,
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_future_blind": false,
+    "touches_live_path": false
+  },
+  "candidate": "btc_basis_below_ma10",
+  "classification": "confirmation_passed_paper_shadow_eligible",
+  "closed_positions": 209,
+  "duplicate_replays": 2,
+  "evaluated_at": "2026-08-17T08:17:19.447697Z",
+  "leave_best_base_net_pnl": 18.867564603999995,
+  "model_version": "crypto-btc-basis-below-ma10-lag1d-v1",
+  "pass_gates": true,
+  "positive_months": 20,
+  "positive_years": 2,
+  "protocol_sha256": "sha256:58c823d53d1a5e22faad6cb65650c33dea57818e1bba25cf1c32a6803592ac78",
+  "reproducible": true,
+  "schema_version": "research.v48.confirmation_results.v1",
+  "short_positions": 0,
+  "source": "rule_crypto_basis_relief_v1",
+  "stress_net_pnl": 19.535757945000015,
+  "yearly_metrics": {
+    "2023": 12.884454680000001,
+    "2024": 31.522001471999996,
+    "2025": -16.695739796000005
+  }
+}

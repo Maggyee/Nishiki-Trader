@@ -1,0 +1,80 @@
+{
+  "schema_version": "research.v47.confirmation.v1",
+  "name": "Phase 2 Alpha Research Protocol v47 Confirmation (Binance BTC Realized Volatility Relief)",
+  "status": "preregistered_before_confirmation_unseal",
+  "preregistered_at": "2026-08-17T08:12:00Z",
+  "data_contract": {
+    "provider": "Binance Public Spot Market Data",
+    "symbols": {
+      "btc_spot": {
+        "symbol": "BTCUSDT",
+        "base_url": "https://data.binance.vision/data/spot/monthly/klines/BTCUSDT/1d/"
+      }
+    },
+    "publication_lag_calendar_days": 1,
+    "confirmation_start": "2023-01-01",
+    "confirmation_end": "2025-12-31",
+    "future_blind_start": "2026-09-01",
+    "future_blind_end": "2027-01-31",
+    "missing_value_policy": "drop missing official observation; forward-fill within weekend/holiday gaps only; never interpolate",
+    "historical_vintage_claim": false
+  },
+  "candidate": {
+    "key": "btc_rvol_relief_5_20",
+    "source": "rule_crypto_rvol_relief_v1",
+    "model_version": "crypto-btc-rvol-relief-5-20-lag1d-v1",
+    "metric": "BTC_RVOL_RELIEF_5_20",
+    "parameters": {
+      "short_window": 5,
+      "long_window": 20,
+      "threshold_multiplier": 1.0,
+      "publication_lag_calendar_days": 1,
+      "ttl_seconds": 86400,
+      "confidence": 0.75
+    },
+    "rule": "buy iff 5-day daily close-to-close realized volatility is strictly less than 20-day realized volatility; flat otherwise; begin flat and emit only on state change"
+  },
+  "execution_contract": {
+    "instrument": "BTCUSDT.BINANCE",
+    "bar_type": "BTCUSDT.BINANCE-1-HOUR-LAST-EXTERNAL",
+    "venue": "BINANCE",
+    "account_type": "cash",
+    "oms_type": "netting",
+    "starting_balance": 100000.0,
+    "trade_size": 0.001,
+    "min_confidence": 0.55,
+    "confirmation_catalog": "data/research-v8/catalog"
+  },
+  "cost_scenarios": {
+    "gross": {
+      "fee_bps_per_fill": 0.0,
+      "slippage_bps_per_fill": 0.0
+    },
+    "base": {
+      "fee_bps_per_fill": 10.0,
+      "slippage_bps_per_fill": 2.0
+    },
+    "stress": {
+      "fee_bps_per_fill": 10.0,
+      "slippage_bps_per_fill": 5.0
+    }
+  },
+  "gates": {
+    "base_net_pnl_gt": 0.0,
+    "stress_net_pnl_gt": 0.0,
+    "positive_calendar_years_at_least": 2,
+    "positive_calendar_months_at_least": 18,
+    "closed_positions_at_least": 30,
+    "leave_best_position_base_net_pnl_gt": 0.0,
+    "duplicate_replays_required": 2,
+    "spot_long_flat_only": true,
+    "evidence_blockers_required": 0
+  },
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "resumes_testnet": false,
+    "touches_live_path": false,
+    "opens_future_blind": false
+  }
+}

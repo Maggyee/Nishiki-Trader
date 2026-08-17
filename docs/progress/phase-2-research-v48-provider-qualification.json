@@ -1,0 +1,51 @@
+{
+  "basis_row_count": 2386,
+  "boundaries": {
+    "confirmation_values_opened": false,
+    "future_blind_opened": false,
+    "historical_vintage_claim": false,
+    "network_requests_closed_after_snapshot": true
+  },
+  "development_factors": {
+    "btc_basis_below_ma10": {
+      "development_row_count": 1083,
+      "first_date": "2020-01-01",
+      "kind": "btc_basis_below_ma10",
+      "last_date": "2022-12-31",
+      "path": "data/research-v48/factors/btc_basis_below_ma10_development.csv",
+      "row_count": 1083,
+      "sha256": "sha256:aa1dc7871e9751278e35f78794fb9f61156adfde6dc100ce2950ee066b68c069",
+      "snapshot_sha256": "sha256:c01428d91b7b292677b112ee8dfed99a17d14548b74abdf454fb3500742258ea",
+      "warmup_row_count": 0
+    },
+    "btc_basis_below_ma10_minhold2": {
+      "development_row_count": 1083,
+      "first_date": "2020-01-01",
+      "kind": "btc_basis_below_ma10_minhold2",
+      "last_date": "2022-12-31",
+      "path": "data/research-v48/factors/btc_basis_below_ma10_minhold2_development.csv",
+      "row_count": 1083,
+      "sha256": "sha256:aa1dc7871e9751278e35f78794fb9f61156adfde6dc100ce2950ee066b68c069",
+      "snapshot_sha256": "sha256:c01428d91b7b292677b112ee8dfed99a17d14548b74abdf454fb3500742258ea",
+      "warmup_row_count": 0
+    },
+    "btc_basis_below_ma14": {
+      "development_row_count": 1083,
+      "first_date": "2020-01-01",
+      "kind": "btc_basis_below_ma14",
+      "last_date": "2022-12-31",
+      "path": "data/research-v48/factors/btc_basis_below_ma14_development.csv",
+      "row_count": 1083,
+      "sha256": "sha256:0aaebef0d1d029e231d3f7920ced6dfd7ecc584332d4b09e1788faaaa776dd1a",
+      "snapshot_sha256": "sha256:c01428d91b7b292677b112ee8dfed99a17d14548b74abdf454fb3500742258ea",
+      "warmup_row_count": 0
+    }
+  },
+  "evaluated_at": "2026-08-17T08:15:32.337719Z",
+  "passed": true,
+  "protocol": "docs/progress/phase-2-research-protocol-v48.json",
+  "schema_version": "research.v48.provider_qualification.v1",
+  "snapshot_path": "data/research-v48/raw/binance-vision-btc-basis-20260817T081532Z-c01428d91b7b.json",
+  "snapshot_sha256": "sha256:c01428d91b7b292677b112ee8dfed99a17d14548b74abdf454fb3500742258ea",
+  "vintage_id": "binance-vision-btc-basis:2026-08-17T08:15:32.337719+00:00:c01428d91b7b"
+}

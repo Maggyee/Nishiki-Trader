@@ -1,0 +1,51 @@
+{
+  "boundaries": {
+    "confirmation_values_opened": false,
+    "future_blind_opened": false,
+    "historical_vintage_claim": false,
+    "network_requests_closed_after_snapshot": true
+  },
+  "development_factors": {
+    "btc_rvol_relief_5_20": {
+      "development_row_count": 1096,
+      "first_date": "2019-10-01",
+      "kind": "btc_rvol_relief_5_20",
+      "last_date": "2022-12-31",
+      "path": "data/research-v47/factors/btc_rvol_relief_5_20_development.csv",
+      "row_count": 1188,
+      "sha256": "sha256:0394dc94bfcccab0d408485783320423392189dbb1b7fdd0c0774ad5cb9eabb4",
+      "snapshot_sha256": "sha256:4299a9f50f99067352075c875a78629c018fc86c7e752a0bd9daa2a2901d51c4",
+      "warmup_row_count": 92
+    },
+    "btc_rvol_relief_5_20_loose": {
+      "development_row_count": 1096,
+      "first_date": "2019-10-01",
+      "kind": "btc_rvol_relief_5_20_loose",
+      "last_date": "2022-12-31",
+      "path": "data/research-v47/factors/btc_rvol_relief_5_20_loose_development.csv",
+      "row_count": 1188,
+      "sha256": "sha256:449a52dce2dc886de9f3143dbe61afb9602b99125e4c273b151e9dca77d8a93c",
+      "snapshot_sha256": "sha256:4299a9f50f99067352075c875a78629c018fc86c7e752a0bd9daa2a2901d51c4",
+      "warmup_row_count": 92
+    },
+    "btc_rvol_relief_5_20_minhold2": {
+      "development_row_count": 1096,
+      "first_date": "2019-10-01",
+      "kind": "btc_rvol_relief_5_20_minhold2",
+      "last_date": "2022-12-31",
+      "path": "data/research-v47/factors/btc_rvol_relief_5_20_minhold2_development.csv",
+      "row_count": 1188,
+      "sha256": "sha256:0394dc94bfcccab0d408485783320423392189dbb1b7fdd0c0774ad5cb9eabb4",
+      "snapshot_sha256": "sha256:4299a9f50f99067352075c875a78629c018fc86c7e752a0bd9daa2a2901d51c4",
+      "warmup_row_count": 92
+    }
+  },
+  "evaluated_at": "2026-08-17T08:10:24.060346Z",
+  "passed": true,
+  "protocol": "docs/progress/phase-2-research-protocol-v47.json",
+  "schema_version": "research.v47.provider_qualification.v1",
+  "snapshot_path": "data/research-v47/raw/binance-vision-btc-spot-20260817T081024Z-4299a9f50f99.json",
+  "snapshot_sha256": "sha256:4299a9f50f99067352075c875a78629c018fc86c7e752a0bd9daa2a2901d51c4",
+  "spot_row_count": 2192,
+  "vintage_id": "binance-vision-btc-spot:2026-08-17T08:10:24.060346+00:00:4299a9f50f99"
+}

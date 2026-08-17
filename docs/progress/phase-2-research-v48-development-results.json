@@ -1,0 +1,68 @@
+{
+  "best_candidate": "btc_basis_below_ma10",
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_confirmation_early": false,
+    "opens_future_blind": false,
+    "touches_live_path": false
+  },
+  "candidates": {
+    "btc_basis_below_ma10": {
+      "base_net_pnl": 8.929955424000003,
+      "classification": "development_pass_confirmation_open_eligible",
+      "closed_positions": 211,
+      "duplicate_replays": 2,
+      "key": "btc_basis_below_ma10",
+      "leave_best_base_net_pnl": 2.236117447999999,
+      "model_version": "crypto-btc-basis-below-ma10-lag1d-v1",
+      "pass_gates": true,
+      "positive_months": 21,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "source": "rule_crypto_basis_relief_v1",
+      "stress_net_pnl": 5.274524280000003
+    },
+    "btc_basis_below_ma10_minhold2": {
+      "base_net_pnl": 8.929955424000003,
+      "classification": "development_pass_confirmation_open_eligible",
+      "closed_positions": 211,
+      "duplicate_replays": 2,
+      "key": "btc_basis_below_ma10_minhold2",
+      "leave_best_base_net_pnl": 2.236117447999999,
+      "model_version": "crypto-btc-basis-below-ma10-minhold2-lag1d-v1",
+      "pass_gates": true,
+      "positive_months": 21,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "source": "rule_crypto_basis_relief_minhold2_v1",
+      "stress_net_pnl": 5.274524280000003
+    },
+    "btc_basis_below_ma14": {
+      "base_net_pnl": 7.247083463999998,
+      "classification": "development_pass_confirmation_open_eligible",
+      "closed_positions": 199,
+      "duplicate_replays": 2,
+      "key": "btc_basis_below_ma14",
+      "leave_best_base_net_pnl": 0.553245488,
+      "model_version": "crypto-btc-basis-below-ma14-lag1d-v1",
+      "pass_gates": true,
+      "positive_months": 18,
+      "positive_years": 2,
+      "reproducible": true,
+      "short_positions": 0,
+      "source": "rule_crypto_basis_relief_ma14_v1",
+      "stress_net_pnl": 3.780729329999999
+    }
+  },
+  "evaluated_at": "2026-08-17T08:16:29.809037Z",
+  "passing_candidates": [
+    "btc_basis_below_ma10",
+    "btc_basis_below_ma14",
+    "btc_basis_below_ma10_minhold2"
+  ],
+  "protocol_sha256": "sha256:4cb05f14eab02ec25809103f0f0aae15f87563478a9c4f4a70b094a60f3a8e8e",
+  "schema_version": "research.v48.development_results.v1"
+}

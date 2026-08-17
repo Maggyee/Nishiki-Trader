@@ -1,0 +1,18 @@
+{
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "touches_live_path": false
+  },
+  "candidate": "btc_basis_below_ma10",
+  "evaluated_at": "2026-08-17T08:18:53.861488Z",
+  "last_snapshot_sha256": "sha256:23aa203900f14dc4cfe0280848a11f5c24c733508607b411a91bfdd41f9be754",
+  "model_version": "crypto-btc-basis-below-ma10-lag1d-v1",
+  "qualified_runs": 1,
+  "schema_version": "research.protocol.v48.paper_shadow_status.v1",
+  "signal_store_path": "data/research-v48/shadow/signals.db",
+  "source": "rule_crypto_basis_relief_v1",
+  "status": "HEALTHY",
+  "target_runs": 7,
+  "total_signals_stored": 93
+}

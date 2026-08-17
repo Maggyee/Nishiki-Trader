@@ -1,0 +1,30 @@
+{
+  "base_net_pnl": 15.345599888,
+  "boundaries": {
+    "loads_credentials": false,
+    "mutates_source_policy": false,
+    "opens_future_blind": false,
+    "touches_live_path": false
+  },
+  "candidate": "btc_rvol_relief_5_20",
+  "classification": "confirmation_rejected",
+  "closed_positions": 63,
+  "duplicate_replays": 2,
+  "evaluated_at": "2026-08-17T08:12:10.999840Z",
+  "leave_best_base_net_pnl": 7.9634082799999995,
+  "model_version": "crypto-btc-rvol-relief-5-20-lag1d-v1",
+  "pass_gates": false,
+  "positive_months": 16,
+  "positive_years": 2,
+  "protocol_sha256": "sha256:784d3ebcdacb4828cf8950ed814b168c9d28a2bec0803427975db74f1eba2bad",
+  "reproducible": true,
+  "schema_version": "research.v47.confirmation_results.v1",
+  "short_positions": 0,
+  "source": "rule_crypto_rvol_relief_v1",
+  "stress_net_pnl": 13.521474860000001,
+  "yearly_metrics": {
+    "2023": 15.987341996000001,
+    "2024": 5.4927597159999975,
+    "2025": -6.134501824
+  }
+}

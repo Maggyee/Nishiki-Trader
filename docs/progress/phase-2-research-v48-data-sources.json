@@ -1,0 +1,35 @@
+{
+  "schema_version": "research.data_sources.v48.v1",
+  "provider": "Binance Public Vision Futures Archive",
+  "symbols": {
+    "btc_index": {
+      "symbol": "BTCUSDT",
+      "base_url": "https://data.binance.vision/data/futures/um/monthly/indexPriceKlines/BTCUSDT/1d/",
+      "format": "csv_daily_kline"
+    },
+    "btc_mark": {
+      "symbol": "BTCUSDT",
+      "base_url": "https://data.binance.vision/data/futures/um/monthly/markPriceKlines/BTCUSDT/1d/",
+      "format": "csv_daily_kline"
+    }
+  },
+  "metrics": {
+    "btc_basis_below_ma10": {
+      "metric_name": "BTC Basis < 10-day MA(Basis)",
+      "formula": "Basis(D) < MA_10(Basis)"
+    },
+    "btc_basis_below_ma14": {
+      "metric_name": "BTC Basis < 14-day MA(Basis)",
+      "formula": "Basis(D) < MA_14(Basis)"
+    },
+    "btc_basis_below_ma10_minhold2": {
+      "metric_name": "BTC Basis < 10-day MA(Basis) (min hold 2d)",
+      "formula": "Basis(D) < MA_10(Basis) with min 2d hold"
+    }
+  },
+  "boundaries": {
+    "loads_credentials": false,
+    "historical_vintage_claim": false,
+    "point_in_time_interpretation": "binance_vision_basis_closed_daily_bars_lagged_1_calendar_day"
+  }
+}
