@@ -179,13 +179,21 @@ def run_daily_shadow_collection(
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-once", action="store_true", help="Execute one daily shadow collection run")
+    parser.add_argument("--raw-dir", type=Path, default=RAW_DIR)
+    parser.add_argument("--factors-dir", type=Path, default=FACTORS_DIR)
+    parser.add_argument("--signal-store", type=Path, default=SIGNAL_STORE_PATH)
+    parser.add_argument("--state-file", type=Path, default=STATE_FILE)
+    parser.add_argument("--status-file", type=Path, default=STATUS_FILE)
     args = parser.parse_args(argv)
-    if args.run_once:
-        status = run_daily_shadow_collection()
-        print(json.dumps(status, indent=2, sort_keys=True))
-        return 0
-    parser.error("--run-once is required")
-    return 1
+    status = run_daily_shadow_collection(
+        raw_dir=args.raw_dir,
+        factors_dir=args.factors_dir,
+        signal_store_path=args.signal_store,
+        state_file=args.state_file,
+        status_file=args.status_file,
+    )
+    print(json.dumps(status, indent=2, sort_keys=True))
+    return 0
 
 
 if __name__ == "__main__":
