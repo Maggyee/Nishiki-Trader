@@ -1,0 +1,408 @@
+{
+  "boundaries": {
+    "dry_run": true,
+    "future_blind_sealed": true,
+    "live_trading_blocked": true,
+    "phase_6_gate_closed": true
+  },
+  "candidates": [
+    {
+      "anomaly_blockers": [],
+      "buy_count": 20,
+      "category": "Commodity / Gold Vol",
+      "crontab_schedule": "weekdays at 02:30 UTC",
+      "db_path": "data/research-v8-forward/signals.db",
+      "flat_count": 20,
+      "gate_days": 7,
+      "model_version": "cboe-gvz5obs-negative-1d-v1",
+      "name": "Cboe GVZ Gold Volatility Relief",
+      "policy": {
+        "dry_run": true,
+        "min_confidence_override": null,
+        "position_pct_multiplier": 0.2
+      },
+      "protocol": "v8",
+      "qualified_days": 5,
+      "review_eligible": false,
+      "signals_count": 40,
+      "source": "rule_gold_vol_relief_v1",
+      "stage": "paper_shadow",
+      "status_path": "docs/progress/phase-2-research-v8-paper-shadow-status.json",
+      "threshold_met": false
+    },
+    {
+      "anomaly_blockers": [],
+      "buy_count": 48,
+      "category": "Fixed Income / Duration",
+      "crontab_schedule": "weekdays at 12:30 UTC",
+      "db_path": "data/research-v16-forward/signals.db",
+      "flat_count": 48,
+      "gate_days": 7,
+      "model_version": "treasury-nominal10-absdiff5-20-negative-lag2d-v1",
+      "name": "U.S. Treasury 10Y Volatility Relief",
+      "policy": {
+        "dry_run": true,
+        "min_confidence_override": null,
+        "position_pct_multiplier": 0.2
+      },
+      "protocol": "v16",
+      "qualified_days": 4,
+      "review_eligible": false,
+      "signals_count": 96,
+      "source": "rule_us_treasury_volatility_relief_v2",
+      "stage": "paper_shadow",
+      "status_path": "docs/progress/phase-2-research-v16-paper-shadow-status.json",
+      "threshold_met": false
+    },
+    {
+      "anomaly_blockers": [],
+      "buy_count": 21,
+      "category": "Equity Tech Volatility",
+      "crontab_schedule": "weekdays at 03:30 UTC",
+      "db_path": "data/research-v18-forward/signals.db",
+      "flat_count": 21,
+      "gate_days": 7,
+      "model_version": "cboe-vxn-ohlc5obs-negative-1d-v1",
+      "name": "Cboe VXN Nasdaq Volatility OHLC Relief",
+      "policy": {
+        "dry_run": true,
+        "min_confidence_override": null,
+        "position_pct_multiplier": 0.2
+      },
+      "protocol": "v18",
+      "qualified_days": 3,
+      "review_eligible": false,
+      "signals_count": 42,
+      "source": "rule_nasdaq_vol_relief_v2",
+      "stage": "paper_shadow",
+      "status_path": "docs/progress/phase-2-research-v18-paper-shadow-status.json",
+      "threshold_met": false
+    },
+    {
+      "anomaly_blockers": [],
+      "buy_count": 0,
+      "category": "Option Surface / Correlation",
+      "crontab_schedule": "weekdays at 04:30 UTC",
+      "db_path": "data/research-v22-forward/signals.db",
+      "flat_count": 0,
+      "gate_days": 7,
+      "model_version": "cboe-cor1m-diff5-negative-lag1d-v1",
+      "name": "Cboe COR1M 1-Month Implied Correlation Relief",
+      "policy": {
+        "dry_run": true,
+        "min_confidence_override": null,
+        "position_pct_multiplier": 0.2,
+        "stage": "paper_shadow"
+      },
+      "protocol": "v22",
+      "qualified_days": 1,
+      "review_eligible": false,
+      "signals_count": 0,
+      "source": "rule_cboe_implied_correlation_relief_v1",
+      "stage": "paper_shadow",
+      "status_path": "docs/progress/phase-2-research-v22-paper-shadow-status.json",
+      "threshold_met": false
+    },
+    {
+      "anomaly_blockers": [],
+      "buy_count": 0,
+      "category": "Fixed Income / Yield",
+      "crontab_schedule": "weekdays at 02:45 UTC",
+      "db_path": "data/research-v34-forward/signals.db",
+      "flat_count": 0,
+      "gate_days": 7,
+      "model_version": "cboe-fvx-diff5-negative-lag1d-v1",
+      "name": "Cboe FVX 5-Year Treasury Yield Relief",
+      "policy": {
+        "dry_run": true,
+        "min_confidence_override": null,
+        "position_pct_multiplier": 0.2,
+        "stage": "paper_shadow"
+      },
+      "protocol": "v34",
+      "qualified_days": 3,
+      "review_eligible": false,
+      "signals_count": 0,
+      "source": "rule_cboe_fvx_relief_v1",
+      "stage": "paper_shadow",
+      "status_path": "docs/progress/phase-2-research-v34-paper-shadow-status.json",
+      "threshold_met": false
+    },
+    {
+      "anomaly_blockers": [],
+      "buy_count": 0,
+      "category": "Option Strategy / Variance",
+      "crontab_schedule": "weekdays at 03:00 UTC",
+      "db_path": "data/research-v36-forward/signals.db",
+      "flat_count": 0,
+      "gate_days": 7,
+      "model_version": "cboe-vpn-diff5-negative-lag1d-v1",
+      "name": "Cboe VPN Option Strategy Relief",
+      "policy": {
+        "dry_run": true,
+        "min_confidence_override": null,
+        "position_pct_multiplier": 0.2,
+        "stage": "paper_shadow"
+      },
+      "protocol": "v36",
+      "qualified_days": 3,
+      "review_eligible": false,
+      "signals_count": 0,
+      "source": "rule_cboe_vpn_relief_v1",
+      "stage": "paper_shadow",
+      "status_path": "docs/progress/phase-2-research-v36-paper-shadow-status.json",
+      "threshold_met": false
+    },
+    {
+      "anomaly_blockers": [],
+      "buy_count": 12,
+      "category": "Equity Tech Volatility",
+      "crontab_schedule": "weekdays at 03:15 UTC (7d complete)",
+      "db_path": "data/research-v40/shadow/signals.db",
+      "flat_count": 8,
+      "gate_days": 7,
+      "model_version": "cboe-vxn-diff5-negative-lag1d-v1",
+      "name": "Cboe VXN Cross-Asset Equity Implied Vol Relief",
+      "policy": {
+        "dry_run": true,
+        "min_confidence_override": null,
+        "position_pct_multiplier": 0.2
+      },
+      "protocol": "v40",
+      "qualified_days": 7,
+      "review_eligible": true,
+      "signals_count": 20,
+      "source": "rule_cboe_vxn_relief_v1",
+      "stage": "paper_shadow",
+      "status_path": "docs/progress/phase-2-research-v40-paper-shadow-status.json",
+      "threshold_met": true
+    },
+    {
+      "anomaly_blockers": [],
+      "buy_count": 15,
+      "category": "Volatility Term Structure",
+      "crontab_schedule": "weekdays at 03:45 UTC (7d complete)",
+      "db_path": "data/research-v42/shadow/signals.db",
+      "flat_count": 10,
+      "gate_days": 7,
+      "model_version": "cboe-vix6m-diff5-negative-lag1d-v1",
+      "name": "Cboe VIX6M Term Structure Volatility Relief",
+      "policy": {
+        "dry_run": true,
+        "min_confidence_override": null,
+        "position_pct_multiplier": 0.2
+      },
+      "protocol": "v42",
+      "qualified_days": 7,
+      "review_eligible": true,
+      "signals_count": 25,
+      "source": "rule_cboe_vix6m_relief_v1",
+      "stage": "paper_shadow",
+      "status_path": "docs/progress/phase-2-research-v42-paper-shadow-status.json",
+      "threshold_met": true
+    },
+    {
+      "anomaly_blockers": [],
+      "buy_count": 50,
+      "category": "Crypto Perpetual Derivatives",
+      "crontab_schedule": "daily at 04:00 UTC (8r complete)",
+      "db_path": "data/research-v46/shadow/signals.db",
+      "flat_count": 49,
+      "gate_days": 7,
+      "model_version": "crypto-btc-prem-diff5-negative-lag1d-v1",
+      "name": "Binance BTC Perpetual Premium Index Delta Relief",
+      "policy": {
+        "dry_run": true,
+        "min_confidence_override": null,
+        "position_pct_multiplier": 0.2
+      },
+      "protocol": "v46",
+      "qualified_days": 8,
+      "review_eligible": true,
+      "signals_count": 99,
+      "source": "rule_crypto_prem_relief_v1",
+      "stage": "paper_shadow",
+      "status_path": "docs/progress/phase-2-research-v46-paper-shadow-status.json",
+      "threshold_met": true
+    },
+    {
+      "anomaly_blockers": [],
+      "buy_count": 47,
+      "category": "Crypto Spot-Perp Basis",
+      "crontab_schedule": "daily at 04:15 UTC (7r complete)",
+      "db_path": "data/research-v48/shadow/signals.db",
+      "flat_count": 46,
+      "gate_days": 7,
+      "model_version": "crypto-btc-basis-below-ma10-lag1d-v1",
+      "name": "Binance BTC Perpetual Basis MA10 Relief",
+      "policy": {
+        "dry_run": true,
+        "min_confidence_override": null,
+        "position_pct_multiplier": 0.2
+      },
+      "protocol": "v48",
+      "qualified_days": 7,
+      "review_eligible": true,
+      "signals_count": 93,
+      "source": "rule_crypto_basis_relief_v1",
+      "stage": "paper_shadow",
+      "status_path": "docs/progress/phase-2-research-v48-paper-shadow-status.json",
+      "threshold_met": true
+    }
+  ],
+  "metrics": {
+    "active_series_count": 7,
+    "avg_cross_correlation": 0.1124,
+    "candidate_count": 10,
+    "correlation_matrix": {
+      "v16": {
+        "v16": 1.0,
+        "v18": -0.0552,
+        "v40": 0.0212,
+        "v42": 0.0348,
+        "v46": -0.1218,
+        "v48": -0.1875,
+        "v8": -0.0102
+      },
+      "v18": {
+        "v16": -0.0552,
+        "v18": 1.0,
+        "v40": 0.3998,
+        "v42": 0.098,
+        "v46": 0.049,
+        "v48": 0.1734,
+        "v8": 0.2756
+      },
+      "v40": {
+        "v16": 0.0212,
+        "v18": 0.3998,
+        "v40": 1.0,
+        "v42": 0.5709,
+        "v46": 0.0159,
+        "v48": 0.0727,
+        "v8": 0.2734
+      },
+      "v42": {
+        "v16": 0.0348,
+        "v18": 0.098,
+        "v40": 0.5709,
+        "v42": 1.0,
+        "v46": 0.0714,
+        "v48": 0.1256,
+        "v8": 0.167
+      },
+      "v46": {
+        "v16": -0.1218,
+        "v18": 0.049,
+        "v40": 0.0159,
+        "v42": 0.0714,
+        "v46": 1.0,
+        "v48": 0.4091,
+        "v8": -0.0918
+      },
+      "v48": {
+        "v16": -0.1875,
+        "v18": 0.1734,
+        "v40": 0.0727,
+        "v42": 0.1256,
+        "v46": 0.4091,
+        "v48": 1.0,
+        "v8": 0.07
+      },
+      "v8": {
+        "v16": -0.0102,
+        "v18": 0.2756,
+        "v40": 0.2734,
+        "v42": 0.167,
+        "v46": -0.0918,
+        "v48": 0.07,
+        "v8": 1.0
+      }
+    },
+    "first_observed_date": "2025-02-05",
+    "last_observed_date": "2026-08-20",
+    "overlap_matrix": {
+      "v16": {
+        "v16": 1.0,
+        "v18": 0.0455,
+        "v40": 0.0526,
+        "v42": 0.0678,
+        "v46": 0.0652,
+        "v48": 0.0326,
+        "v8": 0.0625
+      },
+      "v18": {
+        "v16": 0.0455,
+        "v18": 1.0,
+        "v40": 0.2692,
+        "v42": 0.0909,
+        "v46": 0.0923,
+        "v48": 0.1525,
+        "v8": 0.2059
+      },
+      "v40": {
+        "v16": 0.0526,
+        "v18": 0.2692,
+        "v40": 1.0,
+        "v42": 0.4211,
+        "v46": 0.0508,
+        "v48": 0.0727,
+        "v8": 0.1852
+      },
+      "v42": {
+        "v16": 0.0678,
+        "v18": 0.0909,
+        "v40": 0.4211,
+        "v42": 1.0,
+        "v46": 0.0833,
+        "v48": 0.1071,
+        "v8": 0.129
+      },
+      "v46": {
+        "v16": 0.0652,
+        "v18": 0.0923,
+        "v40": 0.0508,
+        "v42": 0.0833,
+        "v46": 1.0,
+        "v48": 0.3662,
+        "v8": 0.0294
+      },
+      "v48": {
+        "v16": 0.0326,
+        "v18": 0.1525,
+        "v40": 0.0727,
+        "v42": 0.1071,
+        "v46": 0.3662,
+        "v48": 1.0,
+        "v8": 0.0984
+      },
+      "v8": {
+        "v16": 0.0625,
+        "v18": 0.2059,
+        "v40": 0.1852,
+        "v42": 0.129,
+        "v46": 0.0294,
+        "v48": 0.0984,
+        "v8": 1.0
+      }
+    },
+    "portfolio_exposure_stats": {
+      "active_strategy_count_distribution": {
+        "0": 90,
+        "1": 86,
+        "2": 31,
+        "3": 12,
+        "4": 2,
+        "5": 3,
+        "6": 1
+      },
+      "max_aggregate_leverage_multiplier": 1.2,
+      "max_concurrent_active_strategies": 6,
+      "mean_aggregate_leverage_multiplier": 0.19,
+      "mean_concurrent_active_strategies": 0.95
+    },
+    "total_days_observed": 225
+  },
+  "schema_version": "research.portfolio_shadow_monitor.v1",
+  "updated_at": "2026-08-24T01:56:29.917689Z"
+}
