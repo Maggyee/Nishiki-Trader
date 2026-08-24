@@ -1,12 +1,15 @@
 {
   "schema_version": "research.v22.paper_shadow_contract.v1",
-  "status": "policy_reviewed_forward_collection_not_started",
+  "name": "Protocol v22 COR1M Forward Paper-Shadow Contract",
+  "status": "prospectively_locked",
   "locked_at": "2026-08-13T04:59:26Z",
   "forward_started_at": "2026-08-13T04:59:26Z",
   "candidate": {
     "source": "rule_cboe_implied_correlation_relief_v1",
     "model_version": "cboe-cor1m-diff5-negative-lag1d-v1",
     "strategy": "implied_correlation_relief",
+    "candidate_key": "implied_correlation_relief",
+    "index": "COR1M",
     "symbol": "BTCUSDT",
     "venue": "BINANCE"
   },
@@ -27,11 +30,16 @@
   "collection": {
     "provider": "Cboe Global Indices COR1M historical data",
     "metric": "COR1M daily CLOSE",
+    "cor1m_url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/COR1M_History.csv",
+    "btc_url": "https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=168",
+    "schedule": "weekdays at 03:00 UTC",
+    "cor1m_max_age_calendar_days": 4,
+    "btc_closed_bar_lookback": 167,
     "decision_lag_calendar_days": 1,
     "btc_source": "public Binance closed BTCUSDT 1h bars",
     "historical_revision_policy": "fail_closed_and_require_human_review",
     "missing_policy": "no_synthetic_rows_and_no_forward_fill",
-    "collector_implemented": false,
+    "collector_implemented": true,
     "scheduler_installed": false,
     "scheduler_install_requires_explicit_operator_approval": true
   },
