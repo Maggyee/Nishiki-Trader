@@ -6,10 +6,10 @@ Automated prospective collection and verification for Protocol v22 Cboe 1-Month 
 
 ## Schedule
 
-Weekdays at 03:00 UTC (`00 3 * * 1-5`) via the `orca` user crontab:
+Weekdays at 04:30 UTC (`30 4 * * 1-5`) via the `orca` user crontab:
 
 ```bash
-00 3 * * 1-5 cd /home/orca/orca/projects/trader && /home/orca/orca/projects/trader/.venv/bin/python -m apps.ops.research_v22_shadow_daily --repo-root /home/orca/orca/projects/trader --data-root /home/orca/orca/projects/trader/data/research-v22-forward >> /home/orca/orca/projects/trader/data/research-v22-forward/cron.log 2>&1
+30 4 * * 1-5 cd /home/orca/orca/projects/trader && /home/orca/orca/projects/trader/.venv/bin/python -m apps.ops.research_v22_shadow_daily --repo-root /home/orca/orca/projects/trader --data-root /home/orca/orca/projects/trader/data/research-v22-forward >> /home/orca/orca/projects/trader/data/research-v22-forward/cron.log 2>&1
 ```
 
 ## Boundaries

@@ -1,42 +1,33 @@
 {
-  "schema_version": "research.v22.paper_shadow_status_summary.v1",
-  "updated_at": "2026-08-13T04:59:26Z",
-  "contract_sha256": "sha256:461dcdb655bc85467737cff7152ee5fdcd4f63429fa2fcf039510446cd6c3ef3",
-  "review_sha256": "sha256:6f56749836eb21451a0aa006d8f90f86301e29062e6d14a3dc36fb5336d1d4e3",
-  "stage": "paper_shadow",
+  "anomaly_blockers": [],
+  "attempt_count": 1,
+  "contract_sha256": "sha256:f003b28ff910ab2bc676cd98eae548095ddfe198b3d082fc819ad3b2343b3980",
+  "future_blind_status": "sealed_unopened",
+  "gate": {
+    "days": 7,
+    "operator": "or",
+    "signals": 50
+  },
+  "latest_attempt_id": "20260824T015352Z-1b1dcbf92915",
+  "live_status": "blocked",
+  "new_forward_signal_count": 0,
+  "new_forward_signal_ids": [],
+  "next_action": "continue_paper_shadow_collection",
+  "paper_simulated_status": "not_authorized",
   "policy": {
     "dry_run": true,
+    "min_confidence_override": null,
     "position_pct_multiplier": 0.2,
-    "min_confidence_override": null
+    "stage": "paper_shadow"
   },
-  "forward_gate": {
-    "qualified_day_count": 0,
-    "required_days": 7,
-    "new_forward_signal_count": 0,
-    "required_signals": 50,
-    "operator": "or",
-    "threshold_met": false,
-    "review_eligible": false
-  },
-  "entry_evidence": {
-    "historical_replay_only": true,
-    "signal_rows": 141,
-    "accepted_signals": 141,
-    "dry_run_signals": 141,
-    "orders": 0,
-    "fills": 0,
-    "review_blockers": [],
-    "decision": "hold",
-    "decision_allowed": true
-  },
-  "scheduler": {
-    "installed": false,
-    "collector_implemented": false
-  },
-  "anomaly_blockers": [],
-  "next_action": "implement_and_review_prospective_collector_before_any_schedule_install",
-  "future_blind_status": "sealed_unopened",
-  "paper_simulated_status": "not_authorized",
+  "qualified_collection_dates": [
+    "2026-08-24"
+  ],
+  "qualified_day_count": 1,
+  "review_eligible": false,
+  "schema_version": "research.v22.paper_shadow_status.v1",
+  "stage": "paper_shadow",
   "testnet_status": "blocked",
-  "live_status": "blocked"
+  "threshold_met": false,
+  "updated_at": "2026-08-24T01:53:52.871426Z"
 }
