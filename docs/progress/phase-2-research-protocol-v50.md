@@ -1,6 +1,17 @@
 # Research Protocol v50 — BTC Funding-Rate Positioning States (ADR-014 / backlog B2)
 
-- **Status**: Pre-registered (frozen before any funding value was fetched)
+> **2026-08-27 addendum — CLOSED at `blocked_provider_qualification`.** The
+> frozen development fetch range began at 2019-12, but the Binance Vision
+> monthly `fundingRate` archive for BTCUSDT starts at 2020-01: the very first
+> `fetch-dev` GET returned HTTP 404 before any archive or value was opened
+> (zero files on disk). Evidence:
+> `docs/progress/phase-2-research-v50-provider-qualification.json`. Per the
+> v17 → v18 precedent, the unchanged rules were re-registered under new
+> identities with a corrected data contract as **Protocol v51**
+> (`docs/progress/phase-2-research-protocol-v51.md`). Do not retry v50's
+> fetch or reuse its identities.
+
+- **Status**: Closed — `blocked_provider_qualification` (was: pre-registered, frozen before any funding value was fetched)
 - **Date frozen**: 2026-08-27
 - **Mechanism family**: `crypto_derivatives_structure` (open; registered in
   `docs/progress/research-mechanism-family-registry.json`)

@@ -1328,19 +1328,47 @@
           "source": "rule_crypto_funding_below_baseline_v1",
           "model_version": "crypto-btc-funding-mean72h-below-1bp8h-v1",
           "family": "crypto_derivatives_structure",
-          "outcome": "pre_registered"
+          "outcome": "provider_blocked"
         },
         {
           "key": "fund_neg_3d",
           "source": "rule_crypto_funding_negative_v1",
           "model_version": "crypto-btc-funding-sum72h-negative-v1",
           "family": "crypto_derivatives_structure",
-          "outcome": "pre_registered"
+          "outcome": "provider_blocked"
         },
         {
           "key": "fund_overheat_flat_3d",
           "source": "rule_crypto_funding_overheat_flat_v1",
           "model_version": "crypto-btc-funding-mean72h-overheat5bp8h-flat-v1",
+          "family": "crypto_derivatives_structure",
+          "outcome": "provider_blocked"
+        }
+      ]
+    },
+    {
+      "protocol": 51,
+      "default_family": "crypto_derivatives_structure",
+      "mechanism": "BTC settled funding-rate positioning states \u2014 provider-corrected recovery of v50 with 2020-01 archive start (ADR-014 B2, v17->v18 pattern)",
+      "candidates": [
+        {
+          "key": "fund_below_baseline_3d",
+          "source": "rule_crypto_funding_below_baseline_v2",
+          "model_version": "crypto-btc-funding-mean72h-below-1bp8h-v2",
+          "family": "crypto_derivatives_structure",
+          "outcome": "pre_registered"
+        },
+        {
+          "key": "fund_neg_3d",
+          "source": "rule_crypto_funding_negative_v2",
+          "model_version": "crypto-btc-funding-sum72h-negative-v2",
+          "family": "crypto_derivatives_structure",
+          "outcome": "pre_registered"
+        },
+        {
+          "key": "fund_overheat_flat_3d",
+          "source": "rule_crypto_funding_overheat_flat_v2",
+          "model_version": "crypto-btc-funding-mean72h-overheat5bp8h-flat-v2",
           "family": "crypto_derivatives_structure",
           "outcome": "pre_registered"
         }
@@ -1478,12 +1506,12 @@
     }
   ],
   "totals": {
-    "protocol_count": 49,
+    "protocol_count": 50,
     "legacy_candidate_count": 16,
-    "candidate_rows": 150,
-    "unique_identities": 147,
+    "candidate_rows": 153,
+    "unique_identities": 150,
     "unique_identities_pnl_opened": 109,
-    "unique_identities_provider_blocked": 33,
+    "unique_identities_provider_blocked": 36,
     "survivors_paper_shadow": 10,
     "confirmation_opened": 22
   }

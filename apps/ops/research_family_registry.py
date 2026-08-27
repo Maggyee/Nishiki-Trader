@@ -1314,6 +1314,32 @@ PROTOCOLS: tuple[dict[str, Any], ...] = (
         ],
     },
     {
+        "protocol": 51,
+        "family": "crypto_derivatives_structure",
+        "mechanism": "BTC settled funding-rate positioning states — provider-corrected "
+        "recovery of v50 with 2020-01 archive start (ADR-014 B2, v17->v18 pattern)",
+        "candidates": [
+            _c(
+                "fund_neg_3d",
+                "rule_crypto_funding_negative_v2",
+                "crypto-btc-funding-sum72h-negative-v2",
+                "pre_registered",
+            ),
+            _c(
+                "fund_below_baseline_3d",
+                "rule_crypto_funding_below_baseline_v2",
+                "crypto-btc-funding-mean72h-below-1bp8h-v2",
+                "pre_registered",
+            ),
+            _c(
+                "fund_overheat_flat_3d",
+                "rule_crypto_funding_overheat_flat_v2",
+                "crypto-btc-funding-mean72h-overheat5bp8h-flat-v2",
+                "pre_registered",
+            ),
+        ],
+    },
+    {
         "protocol": 50,
         "family": "crypto_derivatives_structure",
         "mechanism": "BTC settled funding-rate positioning states (contrarian short-crowding, "
@@ -1323,19 +1349,19 @@ PROTOCOLS: tuple[dict[str, Any], ...] = (
                 "fund_neg_3d",
                 "rule_crypto_funding_negative_v1",
                 "crypto-btc-funding-sum72h-negative-v1",
-                "pre_registered",
+                "provider_blocked",
             ),
             _c(
                 "fund_below_baseline_3d",
                 "rule_crypto_funding_below_baseline_v1",
                 "crypto-btc-funding-mean72h-below-1bp8h-v1",
-                "pre_registered",
+                "provider_blocked",
             ),
             _c(
                 "fund_overheat_flat_3d",
                 "rule_crypto_funding_overheat_flat_v1",
                 "crypto-btc-funding-mean72h-overheat5bp8h-flat-v1",
-                "pre_registered",
+                "provider_blocked",
             ),
         ],
     },

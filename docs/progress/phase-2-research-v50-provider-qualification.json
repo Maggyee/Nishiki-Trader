@@ -1,0 +1,27 @@
+{
+  "schema_version": "research.protocol.v50.v1.provider_qualification",
+  "contract_sha256": "sha256:67995bc5882383f6411496e5d4544a47e86cfa04ba1189c4164094214632ea46",
+  "frozen_at_commit": "8e23784",
+  "qualified": false,
+  "classification": "blocked_provider_qualification",
+  "errors": [
+    "frozen development month 2019-12 does not exist in the Binance Vision USD-M fundingRate archive for BTCUSDT (HTTP 404 on both the zip and its CHECKSUM); the archive starts at 2020-01"
+  ],
+  "existence_probe_http_codes": {
+    "BTCUSDT-fundingRate-2019-12.zip": 404,
+    "BTCUSDT-fundingRate-2019-12.zip.CHECKSUM": 404,
+    "BTCUSDT-fundingRate-2020-01.zip": 200,
+    "BTCUSDT-fundingRate-2020-01.zip.CHECKSUM": 200,
+    "BTCUSDT-fundingRate-2020-02.zip": 200
+  },
+  "evidence": "the first fetch-dev GET failed on the first frozen month before any archive was written; data/research-v50/funding contained zero files afterward",
+  "data_values_opened": false,
+  "archives_downloaded": 0,
+  "recovery": "Protocol v51 (apps/ops/research_protocol_v51.py) re-registers the unchanged rules under new identities with development months corrected to 2020-01..2022-12, following the v17 -> v18 precedent",
+  "boundaries": {
+    "writes_signal_events": false,
+    "mutates_source_policy": false,
+    "opens_future_blind": false,
+    "touches_live_path": false
+  }
+}
