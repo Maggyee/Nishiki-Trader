@@ -1,0 +1,139 @@
+{
+  "best_candidate": null,
+  "boundaries": {
+    "confirmation_data_fetched": false,
+    "mutates_source_policy": false,
+    "opens_confirmation_early": false,
+    "opens_future_blind": false,
+    "touches_live_path": false,
+    "writes_signal_events": false
+  },
+  "btc_buy_and_hold_pnl_100usdt": 129.7284348375539,
+  "candidates": {
+    "xs_lowvol_30d": {
+      "base_net_pnl": -492.8881994538573,
+      "closed_leg_positions": 250,
+      "daily_base_pnl_sha256": "550bce40d411238a3012ea0725687e738f6d02b5688496e613bcd52da18b4615",
+      "duplicate_replays": 2,
+      "gates": {
+        "benchmark_floor": 0.0,
+        "checks": {
+          "activity_floor": true,
+          "base_net_pnl_positive": false,
+          "benchmark_relative": false,
+          "leave_best_positive": false,
+          "months_breadth": true,
+          "permutation_p": false,
+          "stress_net_pnl_positive": false,
+          "years_breadth": true
+        },
+        "pass_gates": false,
+        "permutation_p_value": 0.7780110994450278
+      },
+      "gross_net_pnl": -432.8881994538572,
+      "key": "xs_lowvol_30d",
+      "leave_best_leg_base_net_pnl": -648.1017935843937,
+      "mean_holding_days": 26.16,
+      "model_version": "crypto-xs-lowvol30d-top3-bottom3-weekly-v1",
+      "months_total": 36,
+      "net_exposure_fraction": 0.0,
+      "pass_gates": false,
+      "positive_months": 19,
+      "positive_years": 2,
+      "rebalances": 156,
+      "replay_fingerprints": [
+        "d94b832e8c1f9df483244e010baffe9c8ffa2e6af46cc0c833f874d90d08f566",
+        "d94b832e8c1f9df483244e010baffe9c8ffa2e6af46cc0c833f874d90d08f566"
+      ],
+      "reproducible": true,
+      "source": "rule_crypto_xs_lowvol_ls_v1",
+      "stress_net_pnl": -507.8881994538571
+    },
+    "xs_mom_30d": {
+      "base_net_pnl": 426.7109828134329,
+      "closed_leg_positions": 429,
+      "daily_base_pnl_sha256": "2445fc130da16fa2672465d61e55c09073a9bb36f2b05ebef1cc0a686a943290",
+      "duplicate_replays": 2,
+      "gates": {
+        "benchmark_floor": 0.0,
+        "checks": {
+          "activity_floor": true,
+          "base_net_pnl_positive": true,
+          "benchmark_relative": true,
+          "leave_best_positive": true,
+          "months_breadth": false,
+          "permutation_p": true,
+          "stress_net_pnl_positive": true,
+          "years_breadth": true
+        },
+        "pass_gates": false,
+        "permutation_p_value": 0.05559722013899305
+      },
+      "gross_net_pnl": 529.6709828134328,
+      "key": "xs_mom_30d",
+      "leave_best_leg_base_net_pnl": 226.35781903840027,
+      "mean_holding_days": 15.244755244755245,
+      "model_version": "crypto-xs-mom30d-top3-bottom3-weekly-v1",
+      "months_total": 36,
+      "net_exposure_fraction": 0.0,
+      "pass_gates": false,
+      "positive_months": 17,
+      "positive_years": 2,
+      "rebalances": 156,
+      "replay_fingerprints": [
+        "1dc40182a846d62ff3d1818cfb0b65103a3e54380e685431a41613ad3f86fa51",
+        "1dc40182a846d62ff3d1818cfb0b65103a3e54380e685431a41613ad3f86fa51"
+      ],
+      "reproducible": true,
+      "source": "rule_crypto_xs_momentum_ls_v1",
+      "stress_net_pnl": 400.97098281343284
+    },
+    "xs_rev_7d": {
+      "base_net_pnl": -739.0994331929628,
+      "closed_leg_positions": 771,
+      "daily_base_pnl_sha256": "e34fa1bf49e2f4f41b5cd0420d255cfb35ee49d60f0a6464da4539697f9074a6",
+      "duplicate_replays": 2,
+      "gates": {
+        "benchmark_floor": 0.0,
+        "checks": {
+          "activity_floor": true,
+          "base_net_pnl_positive": false,
+          "benchmark_relative": false,
+          "leave_best_positive": false,
+          "months_breadth": false,
+          "permutation_p": false,
+          "stress_net_pnl_positive": false,
+          "years_breadth": false
+        },
+        "pass_gates": false,
+        "permutation_p_value": 0.9190040497975102
+      },
+      "gross_net_pnl": -554.0594331929628,
+      "key": "xs_rev_7d",
+      "leave_best_leg_base_net_pnl": -811.0616443557306,
+      "mean_holding_days": 8.482490272373541,
+      "model_version": "crypto-xs-rev7d-top3-bottom3-weekly-v1",
+      "months_total": 36,
+      "net_exposure_fraction": 0.0,
+      "pass_gates": false,
+      "positive_months": 17,
+      "positive_years": 0,
+      "rebalances": 156,
+      "replay_fingerprints": [
+        "64cb4d92db825597f7df25779e8290c48453932b1d1fb966f8413daebaadbaa0",
+        "64cb4d92db825597f7df25779e8290c48453932b1d1fb966f8413daebaadbaa0"
+      ],
+      "reproducible": true,
+      "source": "rule_crypto_xs_reversal_ls_v1",
+      "stress_net_pnl": -785.3594331929628
+    }
+  },
+  "classification": "development_rejected",
+  "contract_sha256": "sha256:0db7579a8eca892203e762796f3bd387747b398fc3d05c2da9ad5cb51f8d096b",
+  "development_passers": [],
+  "schema_version": "research.protocol.v52.v1.development_results",
+  "window": [
+    "2020-01-01",
+    "2022-12-31"
+  ]
+}
