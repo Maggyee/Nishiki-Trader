@@ -1356,21 +1356,21 @@
           "source": "rule_crypto_funding_below_baseline_v2",
           "model_version": "crypto-btc-funding-mean72h-below-1bp8h-v2",
           "family": "crypto_derivatives_structure",
-          "outcome": "pre_registered"
+          "outcome": "development_rejected"
         },
         {
           "key": "fund_neg_3d",
           "source": "rule_crypto_funding_negative_v2",
           "model_version": "crypto-btc-funding-sum72h-negative-v2",
           "family": "crypto_derivatives_structure",
-          "outcome": "pre_registered"
+          "outcome": "development_rejected"
         },
         {
           "key": "fund_overheat_flat_3d",
           "source": "rule_crypto_funding_overheat_flat_v2",
           "model_version": "crypto-btc-funding-mean72h-overheat5bp8h-flat-v2",
           "family": "crypto_derivatives_structure",
-          "outcome": "pre_registered"
+          "outcome": "development_rejected"
         }
       ]
     }
@@ -1510,7 +1510,7 @@
     "legacy_candidate_count": 16,
     "candidate_rows": 153,
     "unique_identities": 150,
-    "unique_identities_pnl_opened": 109,
+    "unique_identities_pnl_opened": 112,
     "unique_identities_provider_blocked": 36,
     "survivors_paper_shadow": 10,
     "confirmation_opened": 22
