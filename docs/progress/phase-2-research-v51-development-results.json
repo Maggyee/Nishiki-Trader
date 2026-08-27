@@ -1,0 +1,137 @@
+{
+  "best_candidate": null,
+  "boundaries": {
+    "confirmation_data_fetched": false,
+    "mutates_source_policy": false,
+    "opens_confirmation_early": false,
+    "opens_future_blind": false,
+    "touches_live_path": false,
+    "writes_signal_events": false
+  },
+  "buy_and_hold": {
+    "first_close": 7200.85,
+    "last_close": 16542.4,
+    "months_positive": 18,
+    "months_total": 36,
+    "pnl": 9.341550000000002,
+    "years_positive": 2
+  },
+  "candidates": {
+    "fund_below_baseline_3d": {
+      "base_net_pnl": -1.1037823439999839,
+      "closed_positions": 21,
+      "duplicate_replays": 2,
+      "gates": {
+        "benchmark_floor": 5.68504913321168,
+        "bootstrap_p_value": 0.6009199540022999,
+        "checks": {
+          "activity_floor": false,
+          "base_net_pnl_positive": false,
+          "benchmark_relative": false,
+          "bootstrap_p": false,
+          "leave_best_positive": false,
+          "months_breadth": true,
+          "stress_net_pnl_positive": false,
+          "years_breadth": true
+        },
+        "pass_gates": false
+      },
+      "key": "fund_below_baseline_3d",
+      "leave_best_base_net_pnl": -13.356937447999982,
+      "mean_holding_days": 31.761904761904763,
+      "model_version": "crypto-btc-funding-mean72h-below-1bp8h-v2",
+      "months_total": 36,
+      "pass_gates": false,
+      "positive_months": 19,
+      "positive_years": 2,
+      "replay_fingerprints": [
+        "1b264a86261337802ccf2585383c0ece2039a14c53c0546c643bdc442952202b",
+        "1b264a86261337802ccf2585383c0ece2039a14c53c0546c643bdc442952202b"
+      ],
+      "reproducible": true,
+      "source": "rule_crypto_funding_below_baseline_v2",
+      "stress_net_pnl": -1.4814879299999841,
+      "time_in_market_fraction": 0.6085766423357665
+    },
+    "fund_neg_3d": {
+      "base_net_pnl": 16.683123272000003,
+      "closed_positions": 31,
+      "duplicate_replays": 2,
+      "gates": {
+        "benchmark_floor": 1.1336005018248176,
+        "bootstrap_p_value": 0.09594520273986301,
+        "checks": {
+          "activity_floor": false,
+          "base_net_pnl_positive": true,
+          "benchmark_relative": true,
+          "bootstrap_p": true,
+          "leave_best_positive": true,
+          "months_breadth": false,
+          "stress_net_pnl_positive": true,
+          "years_breadth": true
+        },
+        "pass_gates": false
+      },
+      "key": "fund_neg_3d",
+      "leave_best_base_net_pnl": 6.537685164000003,
+      "mean_holding_days": 4.290322580645161,
+      "model_version": "crypto-btc-funding-sum72h-negative-v2",
+      "months_total": 36,
+      "pass_gates": false,
+      "positive_months": 13,
+      "positive_years": 3,
+      "replay_fingerprints": [
+        "bb85c858d59da15ea5f1a4353f032c5c9225252d4707e240ab2b245a61bf998c",
+        "bb85c858d59da15ea5f1a4353f032c5c9225252d4707e240ab2b245a61bf998c"
+      ],
+      "reproducible": true,
+      "source": "rule_crypto_funding_negative_v2",
+      "stress_net_pnl": 16.238459090000006,
+      "time_in_market_fraction": 0.12135036496350365
+    },
+    "fund_overheat_flat_3d": {
+      "base_net_pnl": 6.550978532000015,
+      "closed_positions": 18,
+      "duplicate_replays": 2,
+      "gates": {
+        "benchmark_floor": 8.514788731751826,
+        "bootstrap_p_value": 0.5166741662916854,
+        "checks": {
+          "activity_floor": false,
+          "base_net_pnl_positive": true,
+          "benchmark_relative": false,
+          "bootstrap_p": false,
+          "leave_best_positive": false,
+          "months_breadth": true,
+          "stress_net_pnl_positive": true,
+          "years_breadth": true
+        },
+        "pass_gates": false
+      },
+      "key": "fund_overheat_flat_3d",
+      "leave_best_base_net_pnl": -5.129823395999984,
+      "mean_holding_days": 55.5,
+      "model_version": "crypto-btc-funding-mean72h-overheat5bp8h-flat-v2",
+      "months_total": 36,
+      "pass_gates": false,
+      "positive_months": 18,
+      "positive_years": 2,
+      "replay_fingerprints": [
+        "9825b273c9fc0df5ba17a2185d9dc5f88ebfc1553c4576821db6811658ca7b96",
+        "9825b273c9fc0df5ba17a2185d9dc5f88ebfc1553c4576821db6811658ca7b96"
+      ],
+      "reproducible": true,
+      "source": "rule_crypto_funding_overheat_flat_v2",
+      "stress_net_pnl": 6.193305665000016,
+      "time_in_market_fraction": 0.9114963503649635
+    }
+  },
+  "classification": "development_rejected",
+  "contract_sha256": "sha256:f42e3157fbad56ee210d49075b34adfb36b7816f77e13224565f4f7d779260ae",
+  "development_passers": [],
+  "schema_version": "research.protocol.v51.v1.development_results",
+  "window": [
+    "2020-01-01",
+    "2022-12-31"
+  ]
+}
