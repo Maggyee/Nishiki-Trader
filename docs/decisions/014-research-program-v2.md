@@ -227,5 +227,37 @@ update that file, not this ADR.
 - [x] `apps/ops/research_family_registry.py` + committed registry JSON; `--check` green in tests.
 - [x] `apps/ops/research_meta_analysis.py` + first committed report (JSON + MD).
 - [x] `docs/project-status.md` updated; reading list rows added.
-- [ ] First Gates-v2 protocol (v49+) pre-registered under §3.4/§4 (future work).
+- [x] First Gates-v2 protocols pre-registered and executed under §3.4/§4 (v49–v52).
 - [ ] Shared collector framework (§6.4) implemented (future work).
+
+## 11. Proposed revision: class-adaptive breadth gate (Draft — NOT in force)
+
+- **Status**: Draft, 2026-08-27. Requires explicit operator acceptance before
+  any protocol may freeze against it. Until accepted, §4 applies unchanged.
+
+Motivation (two independent outcomes, not one candidate's appeal): the fixed
+`positive months ≥ 50% of window months` gate implicitly assumes an
+always-in-market strategy with a roughly symmetric monthly PnL distribution.
+Protocol v51 showed it is structurally unreachable for episodic low-exposure
+rules (months without exposure can never count positive); protocol v52
+showed it binds against continuous dollar-neutral books whose monthly PnL is
+right-skewed (`docs/retros/2026-08-27-research-v50-v51-funding-states.md`,
+`docs/retros/2026-08-27-research-v52-cross-sectional-development.md`).
+
+Proposed rule (replaces the fixed months floor; every other §4 gate
+unchanged): **the candidate's positive-month count must exceed the median
+positive-month count of its own null distribution** — the identical
+random-timing or rank-permutation null already required for the p-value
+gate, evaluated on the same window, construction, and costs. Properties:
+
+- self-calibrating per strategy class (recovers ≈18/36 for always-in-market
+  relief rules; adapts for episodic and long/short classes);
+- not reverse-engineerable from any single candidate, because the threshold
+  is a property of the frozen null, not of observed results;
+- reported alongside the fixed-floor number in every stage output for
+  comparability with sealed protocols.
+
+Constraints on adoption: applies only to protocols frozen AFTER operator
+acceptance; the dead v49–v52 identities may not be resurrected under it; a
+re-test of any mechanism they touched requires a genuinely new
+pre-registered identity (§3.4 and warnings W2/W3 apply in full).
