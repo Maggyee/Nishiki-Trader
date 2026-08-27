@@ -1,0 +1,1448 @@
+{
+  "schema_version": "research.mechanism_family_registry.v1",
+  "as_of": "2026-08-27",
+  "adr": "docs/decisions/014-research-program-v2.md",
+  "families": {
+    "attention_sentiment": {
+      "rationale": "Wikipedia pageviews (v23, v29) and Fear & Greed (v24) rejected in development three protocols in a row.",
+      "status": "deprioritized"
+    },
+    "cross_sectional_relative": {
+      "rationale": "Cross-sectional long/short or rotation across liquid crypto assets. Legacy rotation rules (xs momentum, relative value, diversified momentum, low-vol rotation) were rejected as long-only rotations in the 16-candidate era; a market-neutral portfolio construction remains untested (backlog B3).",
+      "status": "open"
+    },
+    "crypto_derivatives_structure": {
+      "rationale": "Perpetual/futures structure signals native to the traded venue: premium index, basis, funding, term structure. Only crypto-native family with confirmed survivors (v46 premium, v48 basis). 24/7 official archives; point-in-time by construction.",
+      "status": "open"
+    },
+    "crypto_fundamentals_onchain": {
+      "rationale": "Coin Metrics network fundamentals: hashrate and fee demand rejected (v11), activity expansion rejected (v13), valuation batch provider-blocked (v14). MVRV-below-one remains an undersampled lead (7 positions) usable only via a new prospectively frozen identity.",
+      "status": "deprioritized"
+    },
+    "crypto_price_ta": {
+      "rationale": "Single-rule technical conditions on BTC's own price/volume series (breakout, MACD, RSI pullback, OBV, realized-vol relief, Parkinson). Rejected across the legacy 16, v41, v43, v44, and v47; new members need a written statement of what is mechanically different.",
+      "status": "deprioritized"
+    },
+    "defi_activity": {
+      "rationale": "DefiLlama TVL/DEX/fees/OI aggregates rejected or provider-blocked across v25-v28.",
+      "status": "deprioritized"
+    },
+    "event_calendar": {
+      "rationale": "Deterministic clock effects (funding settlement, session overlaps, month-end). No protocol has tested this axis (backlog B5).",
+      "status": "open"
+    },
+    "external_index_relief": {
+      "rationale": "Short-window decline/relief/expansion conditions on non-crypto external index levels (implied vol, implied correlation, strategy/buywrite indices, Treasury yields and their volatility, financial-stress composites) mapped to long/flat BTC. Produced all ten paper_shadow survivors and dozens of rejects; marginal members add correlated beta, not new alpha (ADR-014 \u00a73.3). Family-mining evidence: v35's primary VIX1Y failed confirmation while its dev-passed sibling VIX6M was re-registered by v42 and confirmed; VXN was confirmed twice under two near-identical rules (v18 OHLC, v40 diff5).",
+      "status": "saturated"
+    },
+    "linear_ml": {
+      "rationale": "Single-model linear momentum (freqai_linear_v1 lineage) demoted after 152-day paper evidence showed no post-cost edge; superseded by multifactor_ml (ADR-014 \u00a77).",
+      "status": "deprioritized"
+    },
+    "macro_liquidity_flows": {
+      "rationale": "US net-liquidity aggregates (WALCL et al.); v21 closed at provider qualification. Any retry needs a new frozen provider identity.",
+      "status": "blocked_provider"
+    },
+    "microstructure_flow": {
+      "rationale": "Order-flow and positioning: book depth, taker imbalance, OI dynamics. v6 was provider-blocked and legacy flow rules were rejected, which leaves the mechanism under-tested rather than falsified.",
+      "status": "open"
+    },
+    "multifactor_ml": {
+      "rationale": "ADR-014 \u00a77 ML restart: one pre-registered regularized multi-factor model over the archived point-in-time panel (backlog B1). Supersedes linear_ml.",
+      "status": "planned"
+    },
+    "portfolio_overlay": {
+      "rationale": "Vol-targeted sizing and allocation overlays evaluated at shadow portfolio level (ADR-014 \u00a76, backlog B7); not a tradable alpha identity.",
+      "status": "planned"
+    },
+    "stablecoin_liquidity": {
+      "rationale": "Stablecoin supply expansion as crypto liquidity impulse. v11 flagged insufficient evidence (7 positions); v12 holds an active forward-only data contract. Do not re-propose as new (see backlog B8).",
+      "status": "open"
+    },
+    "two_sided_regime": {
+      "rationale": "Short/two-sided expressions of regime states. Every tested rule to date is spot long/flat; the short half is unexplored (backlog B4).",
+      "status": "open"
+    }
+  },
+  "protocols": [
+    {
+      "protocol": 2,
+      "default_family": "crypto_derivatives_structure",
+      "mechanism": "Binance option risk premium / futures basis curve / stablecoin transfer",
+      "candidates": [
+        {
+          "key": "futures_basis_curve",
+          "source": "rule_futures_basis_curve_v1",
+          "model_version": "front-next-contango-sign-1d-v1",
+          "family": "crypto_derivatives_structure",
+          "outcome": "provider_blocked"
+        },
+        {
+          "key": "option_risk_premium",
+          "source": "rule_option_risk_premium_v1",
+          "model_version": "structural-rn-excessret30d-sign-v1",
+          "family": "crypto_derivatives_structure",
+          "outcome": "provider_blocked"
+        },
+        {
+          "key": "stablecoin_liquidity",
+          "source": "rule_stablecoin_liquidity_v1",
+          "model_version": "supply30d-transfer7d-positive-1d-v1",
+          "family": "stablecoin_liquidity",
+          "outcome": "provider_blocked"
+        }
+      ]
+    },
+    {
+      "protocol": 3,
+      "default_family": "external_index_relief",
+      "mechanism": "Macro/native relief: hashrate recovery, DXY weakness, VIX relief",
+      "candidates": [
+        {
+          "key": "equity_vol_relief",
+          "source": "rule_equity_vol_relief_v1",
+          "model_version": "vix5d-negative-1d-v1",
+          "family": "external_index_relief",
+          "outcome": "provider_blocked"
+        },
+        {
+          "key": "miner_hashrate_recovery",
+          "source": "rule_miner_hashrate_recovery_v1",
+          "model_version": "hashrate7-30-positive-1d-v1",
+          "family": "crypto_fundamentals_onchain",
+          "outcome": "not_opened"
+        },
+        {
+          "key": "usd_weakness",
+          "source": "rule_usd_weakness_v1",
+          "model_version": "dxy20d-negative-1d-v1",
+          "family": "external_index_relief",
+          "outcome": "provider_blocked"
+        }
+      ]
+    },
+    {
+      "protocol": 4,
+      "default_family": "external_index_relief",
+      "mechanism": "FRED recovery of v3 DXY/VIX routes",
+      "candidates": [
+        {
+          "key": "broad_usd_weakness_impulse",
+          "source": "rule_broad_usd_weakness_v1",
+          "model_version": "fred-dtwexbgs20obs-negative-1d-v1",
+          "family": "external_index_relief",
+          "outcome": "provider_blocked"
+        },
+        {
+          "key": "equity_vol_relief_fred",
+          "source": "rule_equity_vol_relief_v2",
+          "model_version": "fred-vixcls5obs-negative-1d-v1",
+          "family": "external_index_relief",
+          "outcome": "provider_blocked"
+        }
+      ]
+    },
+    {
+      "protocol": 5,
+      "default_family": "crypto_derivatives_structure",
+      "mechanism": "Binance-native curve carry and BVOL implied-vol relief (BTC+ETH)",
+      "candidates": [
+        {
+          "key": "binance_bvol_relief",
+          "source": "rule_binance_bvol_relief_v1",
+          "model_version": "btc-eth-bvol5d-negative-daily-lag2-v1",
+          "family": "crypto_derivatives_structure",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "binance_curve_carry",
+          "source": "rule_binance_curve_carry_v1",
+          "model_version": "btc-eth-front-next-positive-steep-daily-v1",
+          "family": "crypto_derivatives_structure",
+          "outcome": "provider_blocked"
+        }
+      ]
+    },
+    {
+      "protocol": 6,
+      "default_family": "microstructure_flow",
+      "mechanism": "USD-M perpetual book-depth imbalance",
+      "candidates": [
+        {
+          "key": "book_depth_imbalance",
+          "source": "rule_binance_book_depth_imbalance_v1",
+          "model_version": "btc-eth-usdm-bidask1pct-daily-median-lag2-v1",
+          "family": "microstructure_flow",
+          "outcome": "provider_blocked"
+        }
+      ]
+    },
+    {
+      "protocol": 7,
+      "default_family": "external_index_relief",
+      "mechanism": "Cboe cross-asset vol relief (VIX, OVX, GVZ)",
+      "candidates": [
+        {
+          "key": "energy_vol_relief",
+          "source": "rule_energy_vol_relief_v1",
+          "model_version": "cboe-ovx5obs-negative-1d-v1",
+          "family": "external_index_relief",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "equity_vol_relief",
+          "source": "rule_equity_vol_relief_v3",
+          "model_version": "cboe-vix5obs-negative-1d-v1",
+          "family": "external_index_relief",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "gold_vol_relief",
+          "source": "rule_gold_vol_relief_v1",
+          "model_version": "cboe-gvz5obs-negative-1d-v1",
+          "family": "external_index_relief",
+          "outcome": "superseded_by_later_protocol"
+        }
+      ]
+    },
+    {
+      "protocol": 8,
+      "default_family": "external_index_relief",
+      "mechanism": "GVZ relief independent confirmation",
+      "candidates": [
+        {
+          "key": "gold_vol_relief",
+          "source": "rule_gold_vol_relief_v1",
+          "model_version": "cboe-gvz5obs-negative-1d-v1",
+          "family": "external_index_relief",
+          "outcome": "confirmation_passed_paper_shadow"
+        }
+      ]
+    },
+    {
+      "protocol": 9,
+      "default_family": "external_index_relief",
+      "mechanism": "Cboe option-risk curve (VIX9D<VIX) and VVIX relief",
+      "candidates": [
+        {
+          "key": "equity_vol_curve",
+          "source": "rule_equity_vol_curve_v1",
+          "model_version": "cboe-vix9d-below-vix-1d-v1",
+          "family": "external_index_relief",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "vol_of_vol_relief",
+          "source": "rule_vol_of_vol_relief_v1",
+          "model_version": "cboe-vvix5obs-negative-1d-v1",
+          "family": "external_index_relief",
+          "outcome": "development_rejected"
+        }
+      ]
+    },
+    {
+      "protocol": 10,
+      "default_family": "crypto_fundamentals_onchain",
+      "mechanism": "Coin Metrics status-time fundamentals (route without vintage metadata)",
+      "candidates": [
+        {
+          "key": "btc_fee_demand",
+          "source": "rule_btc_fee_demand_v1",
+          "model_version": "coinmetrics-feetotntv7-30-positive-1d-v1",
+          "family": "crypto_fundamentals_onchain",
+          "outcome": "provider_blocked"
+        },
+        {
+          "key": "miner_hashrate_recovery",
+          "source": "rule_miner_hashrate_recovery_v2",
+          "model_version": "coinmetrics-hashrate7-30-positive-1d-v1",
+          "family": "crypto_fundamentals_onchain",
+          "outcome": "provider_blocked"
+        },
+        {
+          "key": "stablecoin_liquidity_expansion",
+          "source": "rule_stablecoin_liquidity_v1",
+          "model_version": "coinmetrics-usdt-usdc-splycur30d-positive-1d-v1",
+          "family": "stablecoin_liquidity",
+          "outcome": "provider_blocked"
+        }
+      ]
+    },
+    {
+      "protocol": 11,
+      "default_family": "crypto_fundamentals_onchain",
+      "mechanism": "Coin Metrics fundamentals under D+2 finalized-ledger reconstruction",
+      "candidates": [
+        {
+          "key": "btc_fee_demand",
+          "source": "rule_btc_fee_demand_v2",
+          "model_version": "chainfinalized-feetotntv7-30-positive-lag2d-v1",
+          "family": "crypto_fundamentals_onchain",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "miner_hashrate_recovery",
+          "source": "rule_miner_hashrate_recovery_v3",
+          "model_version": "chainfinalized-hashrate7-30-positive-lag2d-v1",
+          "family": "crypto_fundamentals_onchain",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "stablecoin_liquidity_expansion",
+          "source": "rule_stablecoin_liquidity_v2",
+          "model_version": "chainfinalized-usdt-usdc-splycur30d-positive-lag2d-v1",
+          "family": "stablecoin_liquidity",
+          "outcome": "insufficient_evidence"
+        }
+      ]
+    },
+    {
+      "protocol": 12,
+      "default_family": "stablecoin_liquidity",
+      "mechanism": "USDT+USDC 30-observation expansion, forward-only data contract",
+      "candidates": [
+        {
+          "key": "stablecoin_liquidity_forward",
+          "source": "rule_stablecoin_liquidity_v3",
+          "model_version": "forward-usdt-usdc-splycur30d-positive-d2-v1",
+          "family": "stablecoin_liquidity",
+          "outcome": "forward_data_candidate"
+        }
+      ]
+    },
+    {
+      "protocol": 13,
+      "default_family": "crypto_fundamentals_onchain",
+      "mechanism": "BTC network mechanisms: activity expansion, MVRV distress",
+      "candidates": [
+        {
+          "key": "active_address_expansion",
+          "source": "rule_btc_active_address_expansion_v1",
+          "model_version": "chainfinalized-adractcnt7-30-positive-lag2d-v1",
+          "family": "crypto_fundamentals_onchain",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "mvrv_distress",
+          "source": "rule_btc_mvrv_distress_v1",
+          "model_version": "chainfinalized-mvrv-below1-lag2d-v1",
+          "family": "crypto_fundamentals_onchain",
+          "outcome": "insufficient_evidence"
+        },
+        {
+          "key": "transfer_count_expansion",
+          "source": "rule_btc_transfer_expansion_v1",
+          "model_version": "chainfinalized-txtfrcnt7-30-positive-lag2d-v1",
+          "family": "crypto_fundamentals_onchain",
+          "outcome": "development_rejected"
+        }
+      ]
+    },
+    {
+      "protocol": 14,
+      "default_family": "crypto_fundamentals_onchain",
+      "mechanism": "BTC valuation mechanisms (realized cap, NVT, SOPR)",
+      "candidates": [
+        {
+          "key": "nvt_compression",
+          "source": "rule_btc_nvt_compression_v1",
+          "model_version": "chainfinalized-nvtadj7-30-negative-lag2d-v1",
+          "family": "crypto_fundamentals_onchain",
+          "outcome": "provider_blocked"
+        },
+        {
+          "key": "realized_cap_expansion",
+          "source": "rule_btc_realized_cap_expansion_v1",
+          "model_version": "chainfinalized-caprealusd7-30-positive-lag2d-v1",
+          "family": "crypto_fundamentals_onchain",
+          "outcome": "provider_blocked"
+        },
+        {
+          "key": "sopr_capitulation",
+          "source": "rule_btc_sopr_capitulation_v1",
+          "model_version": "chainfinalized-sopr7-below1-lag2d-v1",
+          "family": "crypto_fundamentals_onchain",
+          "outcome": "provider_blocked"
+        }
+      ]
+    },
+    {
+      "protocol": 15,
+      "default_family": "external_index_relief",
+      "mechanism": "US rate mechanisms via FRED (real yield, curve, yield volatility)",
+      "candidates": [
+        {
+          "key": "real_yield_relief",
+          "source": "rule_us_real_yield_relief_v1",
+          "model_version": "fred-dfii10-5-20-negative-lag4d-v1",
+          "family": "external_index_relief",
+          "outcome": "provider_blocked"
+        },
+        {
+          "key": "treasury_volatility_relief",
+          "source": "rule_us_treasury_volatility_relief_v1",
+          "model_version": "fred-dgs10-absdiff5-20-negative-lag4d-v1",
+          "family": "external_index_relief",
+          "outcome": "provider_blocked"
+        },
+        {
+          "key": "yield_curve_steepening",
+          "source": "rule_us_yield_curve_steepening_v1",
+          "model_version": "fred-t10y2y-5-20-positive-lag4d-v1",
+          "family": "external_index_relief",
+          "outcome": "provider_blocked"
+        }
+      ]
+    },
+    {
+      "protocol": 16,
+      "default_family": "external_index_relief",
+      "mechanism": "Treasury-direct rate mechanisms (recovery of v15 routes)",
+      "candidates": [
+        {
+          "key": "real_yield_relief",
+          "source": "rule_us_real_yield_relief_v2",
+          "model_version": "treasury-real10-5-20-negative-lag2d-v1",
+          "family": "external_index_relief",
+          "outcome": "insufficient_evidence"
+        },
+        {
+          "key": "treasury_volatility_relief",
+          "source": "rule_us_treasury_volatility_relief_v2",
+          "model_version": "treasury-nominal10-absdiff5-20-negative-lag2d-v1",
+          "family": "external_index_relief",
+          "outcome": "confirmation_passed_paper_shadow"
+        },
+        {
+          "key": "yield_curve_steepening",
+          "source": "rule_us_yield_curve_steepening_v2",
+          "model_version": "treasury-10y2y-5-20-positive-lag2d-v1",
+          "family": "external_index_relief",
+          "outcome": "insufficient_evidence"
+        }
+      ]
+    },
+    {
+      "protocol": 17,
+      "default_family": "external_index_relief",
+      "mechanism": "Cboe geographic vol relief (VXEEM/VXEFA/VXN close-only route)",
+      "candidates": [
+        {
+          "key": "eafe_vol_relief",
+          "source": "rule_eafe_vol_relief_v1",
+          "model_version": "cboe-vxefa5obs-negative-1d-v1",
+          "family": "external_index_relief",
+          "outcome": "provider_blocked"
+        },
+        {
+          "key": "em_vol_relief",
+          "source": "rule_em_vol_relief_v1",
+          "model_version": "cboe-vxeem5obs-negative-1d-v1",
+          "family": "external_index_relief",
+          "outcome": "provider_blocked"
+        },
+        {
+          "key": "nasdaq_vol_relief",
+          "source": "rule_nasdaq_vol_relief_v1",
+          "model_version": "cboe-vxn5obs-negative-1d-v1",
+          "family": "external_index_relief",
+          "outcome": "provider_blocked"
+        }
+      ]
+    },
+    {
+      "protocol": 18,
+      "default_family": "external_index_relief",
+      "mechanism": "OHLC recovery of v17 geographic vol relief",
+      "candidates": [
+        {
+          "key": "eafe_vol_relief",
+          "source": "rule_eafe_vol_relief_v2",
+          "model_version": "cboe-vxefa-ohlc5obs-negative-1d-v1",
+          "family": "external_index_relief",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "em_vol_relief",
+          "source": "rule_em_vol_relief_v2",
+          "model_version": "cboe-vxeem-ohlc5obs-negative-1d-v1",
+          "family": "external_index_relief",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "nasdaq_vol_relief",
+          "source": "rule_nasdaq_vol_relief_v2",
+          "model_version": "cboe-vxn-ohlc5obs-negative-1d-v1",
+          "family": "external_index_relief",
+          "outcome": "confirmation_passed_paper_shadow"
+        }
+      ]
+    },
+    {
+      "protocol": 19,
+      "default_family": "external_index_relief",
+      "mechanism": "Cboe size/style/China vol relief (RVX, VXD, VXFXI)",
+      "candidates": [
+        {
+          "key": "china_vol_relief",
+          "source": "rule_china_vol_relief_v1",
+          "model_version": "cboe-vxfxi-ohlc5obs-negative-1d-v1",
+          "family": "external_index_relief",
+          "outcome": "provider_blocked"
+        },
+        {
+          "key": "dow_vol_relief",
+          "source": "rule_dow_vol_relief_v1",
+          "model_version": "cboe-vxd-ohlc5obs-negative-1d-v1",
+          "family": "external_index_relief",
+          "outcome": "confirmation_rejected"
+        },
+        {
+          "key": "russell_vol_relief",
+          "source": "rule_russell_vol_relief_v1",
+          "model_version": "cboe-rvx-ohlc5obs-negative-1d-v1",
+          "family": "external_index_relief",
+          "outcome": "development_rejected"
+        }
+      ]
+    },
+    {
+      "protocol": 20,
+      "default_family": "external_index_relief",
+      "mechanism": "OFR financial-stress relief (total, credit, safe assets)",
+      "candidates": [
+        {
+          "key": "credit_stress_relief",
+          "source": "rule_ofr_credit_stress_relief_v1",
+          "model_version": "ofr-fsi-credit-diff5-negative-lag5d-v1",
+          "family": "external_index_relief",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "safe_asset_stress_relief",
+          "source": "rule_ofr_safe_asset_stress_relief_v1",
+          "model_version": "ofr-fsi-safe-assets-diff5-negative-lag5d-v1",
+          "family": "external_index_relief",
+          "outcome": "confirmation_rejected"
+        },
+        {
+          "key": "systemic_stress_relief",
+          "source": "rule_ofr_systemic_stress_relief_v1",
+          "model_version": "ofr-fsi-total-diff5-negative-lag5d-v1",
+          "family": "external_index_relief",
+          "outcome": "development_rejected"
+        }
+      ]
+    },
+    {
+      "protocol": 21,
+      "default_family": "macro_liquidity_flows",
+      "mechanism": "US net liquidity expansion (WALCL - TGA - RRP)",
+      "candidates": [
+        {
+          "key": "net_usd_liquidity_expansion",
+          "source": "rule_us_net_liquidity_expansion_v1",
+          "model_version": "fred-walcl-wdtgal-rrpontsyd-diff4w-positive-lag7d-v1",
+          "family": "macro_liquidity_flows",
+          "outcome": "provider_blocked"
+        }
+      ]
+    },
+    {
+      "protocol": 22,
+      "default_family": "external_index_relief",
+      "mechanism": "Cboe option surface (COR1M, DSPX, SKEW)",
+      "candidates": [
+        {
+          "key": "implied_correlation_relief",
+          "source": "rule_cboe_implied_correlation_relief_v1",
+          "model_version": "cboe-cor1m-diff5-negative-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "confirmation_passed_paper_shadow"
+        },
+        {
+          "key": "implied_dispersion_expansion",
+          "source": "rule_cboe_implied_dispersion_expansion_v1",
+          "model_version": "cboe-dspx-diff5-positive-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "provider_blocked"
+        },
+        {
+          "key": "tail_skew_relief",
+          "source": "rule_cboe_tail_skew_relief_v1",
+          "model_version": "cboe-skew-diff5-negative-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "development_rejected"
+        }
+      ]
+    },
+    {
+      "protocol": 23,
+      "default_family": "attention_sentiment",
+      "mechanism": "Wikipedia crypto-article attention expansion",
+      "candidates": [
+        {
+          "key": "bitcoin_attention_expansion",
+          "source": "rule_wikipedia_bitcoin_attention_expansion_v1",
+          "model_version": "wikimedia-enwiki-bitcoin-pageviews-diff5-positive-lag2d-v1",
+          "family": "attention_sentiment",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "cryptocurrency_attention_expansion",
+          "source": "rule_wikipedia_cryptocurrency_attention_expansion_v1",
+          "model_version": "wikimedia-enwiki-cryptocurrency-pageviews-diff5-positive-lag2d-v1",
+          "family": "attention_sentiment",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "ethereum_attention_expansion",
+          "source": "rule_wikipedia_ethereum_attention_expansion_v1",
+          "model_version": "wikimedia-enwiki-ethereum-pageviews-diff5-positive-lag2d-v1",
+          "family": "attention_sentiment",
+          "outcome": "development_rejected"
+        }
+      ]
+    },
+    {
+      "protocol": 24,
+      "default_family": "attention_sentiment",
+      "mechanism": "Crypto Fear & Greed classification holds",
+      "candidates": [
+        {
+          "key": "extreme_fear_hold",
+          "source": "rule_alternative_extreme_fear_hold_v1",
+          "model_version": "alternative-fng-extreme-fear-lag2d-v1",
+          "family": "attention_sentiment",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "fear_hold",
+          "source": "rule_alternative_fear_hold_v1",
+          "model_version": "alternative-fng-fear-or-extreme-fear-lag2d-v1",
+          "family": "attention_sentiment",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "non_greed_hold",
+          "source": "rule_alternative_non_greed_hold_v1",
+          "model_version": "alternative-fng-not-greed-or-extreme-greed-lag2d-v1",
+          "family": "attention_sentiment",
+          "outcome": "development_rejected"
+        }
+      ]
+    },
+    {
+      "protocol": 25,
+      "default_family": "defi_activity",
+      "mechanism": "DefiLlama TVL expansion",
+      "candidates": [
+        {
+          "key": "all_chains_tvl_expansion",
+          "source": "rule_defillama_all_chains_tvl_expansion_v1",
+          "model_version": "defillama-all-chains-tvl-diff5-positive-lag2d-v1",
+          "family": "defi_activity",
+          "outcome": "confirmation_rejected"
+        },
+        {
+          "key": "bitcoin_tvl_expansion",
+          "source": "rule_defillama_bitcoin_tvl_expansion_v1",
+          "model_version": "defillama-bitcoin-tvl-diff5-positive-lag2d-v1",
+          "family": "defi_activity",
+          "outcome": "provider_blocked"
+        },
+        {
+          "key": "ethereum_tvl_expansion",
+          "source": "rule_defillama_ethereum_tvl_expansion_v1",
+          "model_version": "defillama-ethereum-tvl-diff5-positive-lag2d-v1",
+          "family": "defi_activity",
+          "outcome": "development_rejected"
+        }
+      ]
+    },
+    {
+      "protocol": 26,
+      "default_family": "defi_activity",
+      "mechanism": "DefiLlama DEX volume expansion",
+      "candidates": [
+        {
+          "key": "all_dex_volume_expansion",
+          "source": "rule_defillama_all_dex_volume_expansion_v1",
+          "model_version": "defillama-all-dexs-vol-diff5-positive-lag2d-v1",
+          "family": "defi_activity",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "ethereum_dex_volume_expansion",
+          "source": "rule_defillama_ethereum_dex_volume_expansion_v1",
+          "model_version": "defillama-ethereum-dex-vol-diff5-positive-lag2d-v1",
+          "family": "defi_activity",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "solana_dex_volume_expansion",
+          "source": "rule_defillama_solana_dex_volume_expansion_v1",
+          "model_version": "defillama-solana-dex-vol-diff5-positive-lag2d-v1",
+          "family": "defi_activity",
+          "outcome": "provider_blocked"
+        }
+      ]
+    },
+    {
+      "protocol": 27,
+      "default_family": "defi_activity",
+      "mechanism": "DefiLlama protocol fee/revenue expansion",
+      "candidates": [
+        {
+          "key": "all_fees_expansion",
+          "source": "rule_defillama_all_fees_expansion_v1",
+          "model_version": "defillama-all-fees-diff5-positive-lag2d-v1",
+          "family": "defi_activity",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "all_holders_revenue_expansion",
+          "source": "rule_defillama_all_holders_revenue_expansion_v1",
+          "model_version": "defillama-all-holders-revenue-diff5-positive-lag2d-v1",
+          "family": "defi_activity",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "all_revenue_expansion",
+          "source": "rule_defillama_all_revenue_expansion_v1",
+          "model_version": "defillama-all-revenue-diff5-positive-lag2d-v1",
+          "family": "defi_activity",
+          "outcome": "development_rejected"
+        }
+      ]
+    },
+    {
+      "protocol": 28,
+      "default_family": "defi_activity",
+      "mechanism": "DefiLlama options notional/premium and perp OI expansion",
+      "candidates": [
+        {
+          "key": "open_interest_expansion",
+          "source": "rule_defillama_open_interest_expansion_v1",
+          "model_version": "defillama-open-interest-diff5-positive-lag2d-v1",
+          "family": "defi_activity",
+          "outcome": "provider_blocked"
+        },
+        {
+          "key": "options_notional_expansion",
+          "source": "rule_defillama_options_notional_expansion_v1",
+          "model_version": "defillama-options-notional-diff5-positive-lag2d-v1",
+          "family": "defi_activity",
+          "outcome": "provider_blocked"
+        },
+        {
+          "key": "options_premium_expansion",
+          "source": "rule_defillama_options_premium_expansion_v1",
+          "model_version": "defillama-options-premium-diff5-positive-lag2d-v1",
+          "family": "defi_activity",
+          "outcome": "provider_blocked"
+        }
+      ]
+    },
+    {
+      "protocol": 29,
+      "default_family": "attention_sentiment",
+      "mechanism": "Wikipedia macro-article attention relief",
+      "candidates": [
+        {
+          "key": "fed_attention_relief",
+          "source": "rule_wikipedia_fed_attention_relief_v1",
+          "model_version": "wikimedia-enwiki-federal-reserve-pageviews-diff5-negative-lag2d-v1",
+          "family": "attention_sentiment",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "inflation_attention_relief",
+          "source": "rule_wikipedia_inflation_attention_relief_v1",
+          "model_version": "wikimedia-enwiki-inflation-pageviews-diff5-negative-lag2d-v1",
+          "family": "attention_sentiment",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "recession_attention_relief",
+          "source": "rule_wikipedia_recession_attention_relief_v1",
+          "model_version": "wikimedia-enwiki-recession-pageviews-diff5-negative-lag2d-v1",
+          "family": "attention_sentiment",
+          "outcome": "development_rejected"
+        }
+      ]
+    },
+    {
+      "protocol": 30,
+      "default_family": "external_index_relief",
+      "mechanism": "Cboe single-name vol relief (VXAPL, VXAZN, VXGOG)",
+      "candidates": [
+        {
+          "key": "amazon_vol_relief",
+          "source": "rule_cboe_amazon_vol_relief_v1",
+          "model_version": "cboe-vxazn-diff5-negative-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "apple_vol_relief",
+          "source": "rule_cboe_apple_vol_relief_v1",
+          "model_version": "cboe-vxapl-diff5-negative-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "google_vol_relief",
+          "source": "rule_cboe_google_vol_relief_v1",
+          "model_version": "cboe-vxgog-diff5-negative-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "confirmation_rejected"
+        }
+      ]
+    },
+    {
+      "protocol": 31,
+      "default_family": "external_index_relief",
+      "mechanism": "Cboe commodity/sector/duration vol relief (VXSLV, VXXLE, VXTLT)",
+      "candidates": [
+        {
+          "key": "energy_sector_vol_relief",
+          "source": "rule_cboe_energy_sector_vol_relief_v1",
+          "model_version": "cboe-vxxle-diff5-negative-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "provider_blocked"
+        },
+        {
+          "key": "long_treasury_etf_vol_relief",
+          "source": "rule_cboe_long_treasury_etf_vol_relief_v1",
+          "model_version": "cboe-vxtlt-diff5-negative-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "silver_vol_relief",
+          "source": "rule_cboe_silver_vol_relief_v1",
+          "model_version": "cboe-vxslv-diff5-negative-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "provider_blocked"
+        }
+      ]
+    },
+    {
+      "protocol": 32,
+      "default_family": "external_index_relief",
+      "mechanism": "Cboe FX vol relief (EUVIX, BPVIX, JYVIX)",
+      "candidates": [
+        {
+          "key": "euro_fx_vol_relief",
+          "source": "rule_cboe_euro_fx_vol_relief_v1",
+          "model_version": "cboe-euvix-diff5-negative-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "provider_blocked"
+        },
+        {
+          "key": "pound_fx_vol_relief",
+          "source": "rule_cboe_pound_fx_vol_relief_v1",
+          "model_version": "cboe-bpvix-diff5-negative-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "yen_fx_vol_relief",
+          "source": "rule_cboe_yen_fx_vol_relief_v1",
+          "model_version": "cboe-jyvix-diff5-negative-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "provider_blocked"
+        }
+      ]
+    },
+    {
+      "protocol": 33,
+      "default_family": "external_index_relief",
+      "mechanism": "Cboe implied-correlation term structure (COR3M, COR6M, COR1Y)",
+      "candidates": [
+        {
+          "key": "cor1y_relief",
+          "source": "rule_cboe_cor1y_relief_v1",
+          "model_version": "cboe-cor1y-diff5-negative-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "confirmation_rejected"
+        },
+        {
+          "key": "cor3m_relief",
+          "source": "rule_cboe_cor3m_relief_v1",
+          "model_version": "cboe-cor3m-diff5-negative-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "cor6m_relief",
+          "source": "rule_cboe_cor6m_relief_v1",
+          "model_version": "cboe-cor6m-diff5-negative-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "development_rejected"
+        }
+      ]
+    },
+    {
+      "protocol": 34,
+      "default_family": "external_index_relief",
+      "mechanism": "Cboe benchmark Treasury yield relief (FVX, TNX, TYX)",
+      "candidates": [
+        {
+          "key": "fvx_relief",
+          "source": "rule_cboe_fvx_relief_v1",
+          "model_version": "cboe-fvx-diff5-negative-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "confirmation_passed_paper_shadow"
+        },
+        {
+          "key": "tnx_relief",
+          "source": "rule_cboe_tnx_relief_v1",
+          "model_version": "cboe-tnx-diff5-negative-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "development_passed_not_advanced"
+        },
+        {
+          "key": "tyx_relief",
+          "source": "rule_cboe_tyx_relief_v1",
+          "model_version": "cboe-tyx-diff5-negative-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "development_passed_not_advanced"
+        }
+      ]
+    },
+    {
+      "protocol": 35,
+      "default_family": "external_index_relief",
+      "mechanism": "Cboe long vol & money market relief (IRX, VIX1Y, VIX6M)",
+      "candidates": [
+        {
+          "key": "irx_relief",
+          "source": "rule_cboe_irx_relief_v1",
+          "model_version": "cboe-irx-diff5-negative-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "development_passed_not_advanced"
+        },
+        {
+          "key": "vix1y_relief",
+          "source": "rule_cboe_vix1y_relief_v1",
+          "model_version": "cboe-vix1y-diff5-negative-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "confirmation_rejected"
+        },
+        {
+          "key": "vix6m_relief",
+          "source": "rule_cboe_vix6m_relief_v1",
+          "model_version": "cboe-vix6m-diff5-negative-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "superseded_by_later_protocol"
+        }
+      ]
+    },
+    {
+      "protocol": 36,
+      "default_family": "external_index_relief",
+      "mechanism": "Cboe option strategy & variance premium expansion (VPN, PUT, BXM)",
+      "candidates": [
+        {
+          "key": "bxm_expansion",
+          "source": "rule_cboe_bxm_expansion_v1",
+          "model_version": "cboe-bxm-diff5-positive-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "development_passed_not_advanced"
+        },
+        {
+          "key": "put_expansion",
+          "source": "rule_cboe_put_expansion_v1",
+          "model_version": "cboe-put-diff5-positive-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "vpn_expansion",
+          "source": "rule_cboe_vpn_expansion_v1",
+          "model_version": "cboe-vpn-diff5-positive-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "confirmation_passed_paper_shadow"
+        }
+      ]
+    },
+    {
+      "protocol": 37,
+      "default_family": "external_index_relief",
+      "mechanism": "Cboe buywrite & tech overwrite expansion (BXN, BXY, BXR)",
+      "candidates": [
+        {
+          "key": "bxn_expansion",
+          "source": "rule_cboe_bxn_expansion_v1",
+          "model_version": "cboe-bxn-diff5-positive-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "confirmation_rejected"
+        },
+        {
+          "key": "bxr_expansion",
+          "source": "rule_cboe_bxr_expansion_v1",
+          "model_version": "cboe-bxr-diff5-positive-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "bxy_expansion",
+          "source": "rule_cboe_bxy_expansion_v1",
+          "model_version": "cboe-bxy-diff5-positive-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "development_passed_not_advanced"
+        }
+      ]
+    },
+    {
+      "protocol": 38,
+      "default_family": "external_index_relief",
+      "mechanism": "Cboe hedged equity & daily VRP expansion (VPD, PPUT, CLL)",
+      "candidates": [
+        {
+          "key": "cll_expansion",
+          "source": "rule_cboe_cll_expansion_v1",
+          "model_version": "cboe-cll-diff5-positive-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "confirmation_rejected"
+        },
+        {
+          "key": "pput_expansion",
+          "source": "rule_cboe_pput_expansion_v1",
+          "model_version": "cboe-pput-diff5-positive-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "development_passed_not_advanced"
+        },
+        {
+          "key": "vpd_expansion",
+          "source": "rule_cboe_vpd_expansion_v1",
+          "model_version": "cboe-vpd-diff5-positive-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "development_rejected"
+        }
+      ]
+    },
+    {
+      "protocol": 39,
+      "default_family": "external_index_relief",
+      "mechanism": "Cboe low-vol & non-directional harvest expansion (LOVOL, PUTD, CNDR)",
+      "candidates": [
+        {
+          "key": "cndr_expansion",
+          "source": "rule_cboe_cndr_expansion_v1",
+          "model_version": "cboe-cndr-diff5-positive-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "lovol_expansion",
+          "source": "rule_cboe_lovol_expansion_v1",
+          "model_version": "cboe-lovol-diff5-positive-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "confirmation_rejected"
+        },
+        {
+          "key": "putd_expansion",
+          "source": "rule_cboe_putd_expansion_v1",
+          "model_version": "cboe-putd-diff5-positive-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "development_rejected"
+        }
+      ]
+    },
+    {
+      "protocol": 40,
+      "default_family": "external_index_relief",
+      "mechanism": "Cboe cross-asset equity vol relief expansion (VXN, RVX, VXD diff5 route)",
+      "candidates": [
+        {
+          "key": "rvx_relief",
+          "source": "rule_cboe_rvx_relief_v1",
+          "model_version": "cboe-rvx-diff5-negative-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "vxd_relief",
+          "source": "rule_cboe_vxd_relief_v1",
+          "model_version": "cboe-vxd-diff5-negative-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "development_passed_not_advanced"
+        },
+        {
+          "key": "vxn_relief",
+          "source": "rule_cboe_vxn_relief_v1",
+          "model_version": "cboe-vxn-diff5-negative-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "confirmation_passed_paper_shadow"
+        }
+      ]
+    },
+    {
+      "protocol": 41,
+      "default_family": "crypto_price_ta",
+      "mechanism": "BTC/ETH crypto-native TA (ETH/BTC RS, Parkinson vol relief, OBV)",
+      "candidates": [
+        {
+          "key": "btc_obv_expansion",
+          "source": "rule_crypto_btc_obv_v1",
+          "model_version": "crypto-btc-obv-diff5-positive-lag1d-v1",
+          "family": "crypto_price_ta",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "btc_parkinson_vol_relief",
+          "source": "rule_crypto_btc_parkinson_v1",
+          "model_version": "crypto-btc-parkinson-diff5-negative-lag1d-v1",
+          "family": "crypto_price_ta",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "eth_btc_rs_expansion",
+          "source": "rule_crypto_eth_btc_rs_v1",
+          "model_version": "crypto-eth-btc-diff5-positive-lag1d-v1",
+          "family": "crypto_price_ta",
+          "outcome": "development_rejected"
+        }
+      ]
+    },
+    {
+      "protocol": 42,
+      "default_family": "external_index_relief",
+      "mechanism": "Cboe vol term-structure relief (VIX9D, VIX3M, VIX6M)",
+      "candidates": [
+        {
+          "key": "vix3m_relief",
+          "source": "rule_cboe_vix3m_relief_v1",
+          "model_version": "cboe-vix3m-diff5-negative-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "vix6m_relief",
+          "source": "rule_cboe_vix6m_relief_v1",
+          "model_version": "cboe-vix6m-diff5-negative-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "confirmation_passed_paper_shadow"
+        },
+        {
+          "key": "vix9d_relief",
+          "source": "rule_cboe_vix9d_relief_v1",
+          "model_version": "cboe-vix9d-diff5-negative-lag1d-v1",
+          "family": "external_index_relief",
+          "outcome": "development_rejected"
+        }
+      ]
+    },
+    {
+      "protocol": 43,
+      "default_family": "crypto_price_ta",
+      "mechanism": "BTC volume-confirmed MACD trend regimes",
+      "candidates": [
+        {
+          "key": "btc_macd_rsi_vol_confirmed",
+          "source": "rule_crypto_btc_macd_rsi_vol_v1",
+          "model_version": "crypto-btc-macd12-26-9-rsi45-vol080-lag1d-v1",
+          "family": "crypto_price_ta",
+          "outcome": "development_passed_not_advanced"
+        },
+        {
+          "key": "btc_macd_vol_confirmed",
+          "source": "rule_crypto_btc_macd_vol_v1",
+          "model_version": "crypto-btc-macd12-26-9-vol080-lag1d-v1",
+          "family": "crypto_price_ta",
+          "outcome": "confirmation_rejected"
+        },
+        {
+          "key": "btc_macd_vol_tight",
+          "source": "rule_crypto_btc_macd_vol_tight_v1",
+          "model_version": "crypto-btc-macd12-26-9-vol085-lag1d-v1",
+          "family": "crypto_price_ta",
+          "outcome": "development_passed_not_advanced"
+        }
+      ]
+    },
+    {
+      "protocol": 44,
+      "default_family": "crypto_price_ta",
+      "mechanism": "BTC trend-following OR 2-day RSI oversold pullbacks",
+      "candidates": [
+        {
+          "key": "btc_trend_pullback_rsi10",
+          "source": "rule_crypto_trend_pullback_rsi10_v1",
+          "model_version": "crypto-btc-macd12-26-9-or-rsi2-lt10-lag1d-v1",
+          "family": "crypto_price_ta",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "btc_trend_pullback_rsi15",
+          "source": "rule_crypto_trend_pullback_rsi15_v1",
+          "model_version": "crypto-btc-macd12-26-9-or-rsi2-lt15-lag1d-v1",
+          "family": "crypto_price_ta",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "btc_trend_pullback_rsi20",
+          "source": "rule_crypto_trend_pullback_v1",
+          "model_version": "crypto-btc-macd12-26-9-or-rsi2-lt20-lag1d-v1",
+          "family": "crypto_price_ta",
+          "outcome": "development_rejected"
+        }
+      ]
+    },
+    {
+      "protocol": 45,
+      "default_family": "crypto_derivatives_structure",
+      "mechanism": "Binance perpetual premium-index delta relief (first batch)",
+      "candidates": [
+        {
+          "key": "btc_prem_diff4_negative",
+          "source": "rule_crypto_prem_relief_diff4_v1",
+          "model_version": "crypto-btc-prem-diff4-negative-lag1d-v1",
+          "family": "crypto_derivatives_structure",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "btc_prem_diff5_negative",
+          "source": "rule_crypto_prem_relief_v1",
+          "model_version": "crypto-btc-prem-diff5-negative-lag1d-v1",
+          "family": "crypto_derivatives_structure",
+          "outcome": "superseded_by_later_protocol"
+        },
+        {
+          "key": "btc_prem_diff5_tight",
+          "source": "rule_crypto_prem_relief_tight_v1",
+          "model_version": "crypto-btc-prem-diff5-tight-lag1d-v1",
+          "family": "crypto_derivatives_structure",
+          "outcome": "confirmation_rejected"
+        }
+      ]
+    },
+    {
+      "protocol": 46,
+      "default_family": "crypto_derivatives_structure",
+      "mechanism": "Binance perpetual premium-index standard relief (confirmation of v45 sibling)",
+      "candidates": [
+        {
+          "key": "btc_prem_diff5_loose",
+          "source": "rule_crypto_prem_relief_loose_v1",
+          "model_version": "crypto-btc-prem-diff5-loose-lag1d-v1",
+          "family": "crypto_derivatives_structure",
+          "outcome": "development_rejected"
+        },
+        {
+          "key": "btc_prem_diff5_minhold2",
+          "source": "rule_crypto_prem_relief_minhold2_v1",
+          "model_version": "crypto-btc-prem-diff5-minhold2-lag1d-v1",
+          "family": "crypto_derivatives_structure",
+          "outcome": "development_passed_not_advanced"
+        },
+        {
+          "key": "btc_prem_diff5_negative",
+          "source": "rule_crypto_prem_relief_v1",
+          "model_version": "crypto-btc-prem-diff5-negative-lag1d-v1",
+          "family": "crypto_derivatives_structure",
+          "outcome": "confirmation_passed_paper_shadow"
+        }
+      ]
+    },
+    {
+      "protocol": 47,
+      "default_family": "crypto_price_ta",
+      "mechanism": "BTC realized-volatility relief",
+      "candidates": [
+        {
+          "key": "btc_rvol_relief_5_20",
+          "source": "rule_crypto_rvol_relief_v1",
+          "model_version": "crypto-btc-rvol-relief-5-20-lag1d-v1",
+          "family": "crypto_price_ta",
+          "outcome": "confirmation_rejected"
+        },
+        {
+          "key": "btc_rvol_relief_5_20_loose",
+          "source": "rule_crypto_rvol_relief_loose_v1",
+          "model_version": "crypto-btc-rvol-relief-loose-lag1d-v1",
+          "family": "crypto_price_ta",
+          "outcome": "development_passed_not_advanced"
+        },
+        {
+          "key": "btc_rvol_relief_5_20_minhold2",
+          "source": "rule_crypto_rvol_relief_minhold2_v1",
+          "model_version": "crypto-btc-rvol-relief-minhold2-lag1d-v1",
+          "family": "crypto_price_ta",
+          "outcome": "development_passed_not_advanced"
+        }
+      ]
+    },
+    {
+      "protocol": 48,
+      "default_family": "crypto_derivatives_structure",
+      "mechanism": "Binance perpetual basis moving-average relief",
+      "candidates": [
+        {
+          "key": "btc_basis_below_ma10",
+          "source": "rule_crypto_basis_relief_v1",
+          "model_version": "crypto-btc-basis-below-ma10-lag1d-v1",
+          "family": "crypto_derivatives_structure",
+          "outcome": "confirmation_passed_paper_shadow"
+        },
+        {
+          "key": "btc_basis_below_ma10_minhold2",
+          "source": "rule_crypto_basis_relief_minhold2_v1",
+          "model_version": "crypto-btc-basis-below-ma10-minhold2-lag1d-v1",
+          "family": "crypto_derivatives_structure",
+          "outcome": "development_passed_not_advanced"
+        },
+        {
+          "key": "btc_basis_below_ma14",
+          "source": "rule_crypto_basis_relief_ma14_v1",
+          "model_version": "crypto-btc-basis-below-ma14-lag1d-v1",
+          "family": "crypto_derivatives_structure",
+          "outcome": "development_passed_not_advanced"
+        }
+      ]
+    }
+  ],
+  "legacy_candidates": [
+    {
+      "key": "linear_ml",
+      "source": "freqai_linear_walkforward_v1",
+      "model_version": "ridge-wf60d-cost30bp-v1",
+      "outcome": "legacy_reject",
+      "family": "linear_ml",
+      "legacy_classification": "reject"
+    },
+    {
+      "key": "diversified_momentum",
+      "source": "rule_alt_diversified_momentum_v1",
+      "model_version": "bnb-xrp-ada-ret90-weekly-equal16-v1",
+      "outcome": "legacy_reject",
+      "family": "cross_sectional_relative",
+      "legacy_classification": "reject"
+    },
+    {
+      "key": "low_volatility_rotation",
+      "source": "rule_alt_low_vol_rotation_v1",
+      "model_version": "bnb-xrp-ada-ret90-lowvol30-weekly-cash-v1",
+      "outcome": "legacy_reject",
+      "family": "cross_sectional_relative",
+      "legacy_classification": "reject"
+    },
+    {
+      "key": "breakout",
+      "source": "rule_breakout_v1",
+      "model_version": "donchian20-10-atr14x0.25-15m",
+      "outcome": "legacy_reject",
+      "family": "crypto_price_ta",
+      "legacy_classification": "reject"
+    },
+    {
+      "key": "absolute_momentum",
+      "source": "rule_dual_momentum_v1",
+      "model_version": "ret20-60-positive-1d-v1",
+      "outcome": "legacy_reject",
+      "family": "crypto_price_ta",
+      "legacy_classification": "reject"
+    },
+    {
+      "key": "flow_exhaustion",
+      "source": "rule_flow_exhaustion_v1",
+      "model_version": "retq10-180-buyshare0.40-vol2x-exit12h-4h-v1",
+      "outcome": "legacy_reject",
+      "family": "microstructure_flow",
+      "legacy_classification": "reject"
+    },
+    {
+      "key": "funding_crowding",
+      "source": "rule_funding_crowding_rotation_v1",
+      "model_version": "ret90-funding7d-z30lt1.5-weekly-cash-v1",
+      "outcome": "legacy_reject",
+      "family": "microstructure_flow",
+      "legacy_classification": "reject"
+    },
+    {
+      "key": "market_breadth",
+      "source": "rule_market_breadth_v1",
+      "model_version": "breadth2of3-sma100-btc20-v1",
+      "outcome": "legacy_reject",
+      "family": "crypto_price_ta",
+      "legacy_classification": "reject"
+    },
+    {
+      "key": "mean_reversion",
+      "source": "rule_mean_reversion_v1",
+      "model_version": "z20-rsi2-exitmean-time24h-4h-v1",
+      "outcome": "legacy_reject",
+      "family": "crypto_price_ta",
+      "legacy_classification": "reject"
+    },
+    {
+      "key": "pullback_continuation",
+      "source": "rule_pullback_regime_v1",
+      "model_version": "daily50-200-1h24-pullback-giveback1.25-v1",
+      "outcome": "legacy_reject",
+      "family": "crypto_price_ta",
+      "legacy_classification": "reject"
+    },
+    {
+      "key": "relative_value",
+      "source": "rule_relative_value_rotation_v1",
+      "model_version": "ethbtc-z20x1.5-weekly-cash-v1",
+      "outcome": "legacy_reject",
+      "family": "cross_sectional_relative",
+      "legacy_classification": "reject"
+    },
+    {
+      "key": "taker_flow",
+      "source": "rule_taker_flow_rotation_v1",
+      "model_version": "buyshare7d-ret20-weekly-cash-v1",
+      "outcome": "legacy_reject",
+      "family": "microstructure_flow",
+      "legacy_classification": "reject"
+    },
+    {
+      "key": "trend_regime",
+      "source": "rule_trend_regime_v1",
+      "model_version": "ema24-96-1h-mom24-atr14x0.5-v1",
+      "outcome": "legacy_reject",
+      "family": "crypto_price_ta",
+      "legacy_classification": "reject"
+    },
+    {
+      "key": "volatility_breakout",
+      "source": "rule_vol_squeeze_v1",
+      "model_version": "bb20-kc20x1.5-breakout20-chandelier3-4h-v1",
+      "outcome": "legacy_reject",
+      "family": "crypto_price_ta",
+      "legacy_classification": "reject"
+    },
+    {
+      "key": "volume_breakout",
+      "source": "rule_volume_breakout_v1",
+      "model_version": "price20-obv20-volume2x-exit10-4h-v1",
+      "outcome": "legacy_reject",
+      "family": "crypto_price_ta",
+      "legacy_classification": "reject"
+    },
+    {
+      "key": "cross_sectional_momentum",
+      "source": "rule_xs_momentum_rotation_v1",
+      "model_version": "btc-eth-sol-ret90-monthly-cash-v1",
+      "outcome": "legacy_reject",
+      "family": "cross_sectional_relative",
+      "legacy_classification": "reject"
+    }
+  ],
+  "totals": {
+    "protocol_count": 47,
+    "legacy_candidate_count": 16,
+    "candidate_rows": 146,
+    "unique_identities": 143,
+    "unique_identities_pnl_opened": 108,
+    "unique_identities_provider_blocked": 33,
+    "survivors_paper_shadow": 10,
+    "confirmation_opened": 22
+  }
+}

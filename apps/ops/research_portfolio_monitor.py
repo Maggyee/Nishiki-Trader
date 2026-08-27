@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import json
 import math
-import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -13,7 +12,6 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from apps.bridge.signal_event import SignalEvent
 from apps.bridge.store import SignalStore
 
 SCHEMA_VERSION = "research.portfolio_shadow_monitor.v1"
@@ -413,10 +411,12 @@ def generate_portfolio_markdown_report(
 
 
 def run_monitor(
-    repo_root: Path = Path.cwd(),
+    repo_root: Path | None = None,
     output_json_path: Path | None = DEFAULT_OUTPUT_JSON,
     output_md_path: Path | None = DEFAULT_OUTPUT_MD,
 ) -> dict[str, Any]:
+    if repo_root is None:
+        repo_root = Path.cwd()
     candidates = load_candidate_data(repo_root)
     metrics = compute_portfolio_metrics(candidates)
 

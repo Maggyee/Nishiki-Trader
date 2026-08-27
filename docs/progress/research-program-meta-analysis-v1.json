@@ -1,0 +1,209 @@
+{
+  "schema_version": "research.meta_analysis.v1",
+  "adr": "docs/decisions/014-research-program-v2.md",
+  "boundaries": {
+    "writes_signal_events": false,
+    "mutates_source_policy": false,
+    "opens_future_blind": false,
+    "touches_live_path": false,
+    "windows": {
+      "development": [
+        "2020-01-01",
+        "2022-12-31"
+      ],
+      "confirmation": [
+        "2023-01-01",
+        "2025-12-31"
+      ]
+    }
+  },
+  "inputs": {
+    "closes_csv": "data/meta/btcusdt-1d-closes-2020-2025.csv",
+    "closes_sha256": "ad1dd81d4f6e174c4ab46ef5b3ea0e7a048239e470ef81fc30d2f123fdf10f12",
+    "closes_rows": 2192,
+    "registry": "docs/progress/research-mechanism-family-registry.json",
+    "registry_as_of": "2026-08-27"
+  },
+  "buy_and_hold": {
+    "trade_size_btc": 0.001,
+    "development": {
+      "pnl": 9.341550000000002,
+      "months_total": 36,
+      "months_positive": 18,
+      "years_positive": 2,
+      "first_close": 7200.85,
+      "last_close": 16542.4
+    },
+    "confirmation": {
+      "pnl": 71.03147,
+      "months_total": 36,
+      "months_positive": 23,
+      "years_positive": 2,
+      "first_close": 16616.75,
+      "last_close": 87648.22
+    }
+  },
+  "survivors": [
+    {
+      "source": "rule_cboe_implied_correlation_relief_v1",
+      "model_version": "cboe-cor1m-diff5-negative-lag1d-v1",
+      "base_net_pnl": 29.737094503999995,
+      "stress_net_pnl": 26.745253129999995,
+      "positive_months": 18,
+      "closed_positions": 78,
+      "leave_best_base_net_pnl": 14.242904927999998,
+      "evidence_path": "D:/Users/yuqi.mai/Desktop/trader/docs/progress/phase-2-research-v22-confirmation-results.json",
+      "capture_ratio_vs_bh_conf": 0.4186467562053833,
+      "months_breadth_binom_p_vs_bh": 0.9699072684376531
+    },
+    {
+      "source": "rule_cboe_fvx_relief_v1",
+      "model_version": "cboe-fvx-diff5-negative-lag1d-v1",
+      "base_net_pnl": 70.70754398800001,
+      "stress_net_pnl": 67.57134248500002,
+      "positive_months": 23,
+      "closed_positions": 79,
+      "leave_best_base_net_pnl": 58.357464272,
+      "evidence_path": "D:/Users/yuqi.mai/Desktop/trader/docs/progress/phase-2-research-v34-confirmation-results.json",
+      "capture_ratio_vs_bh_conf": 0.995439683115104,
+      "months_breadth_binom_p_vs_bh": 0.5748912562032295
+    },
+    {
+      "source": "rule_gold_vol_relief_v1",
+      "model_version": "cboe-gvz5obs-negative-1d-v1",
+      "base_net_pnl": 25.180955072,
+      "stress_net_pnl": 21.73794884,
+      "positive_months": 19,
+      "closed_positions": 83,
+      "leave_best_base_net_pnl": 12.855628292,
+      "evidence_path": "D:/Users/yuqi.mai/Desktop/trader/docs/progress/phase-2-research-v8-confirmation-results.json",
+      "capture_ratio_vs_bh_conf": 0.35450420879646727,
+      "months_breadth_binom_p_vs_bh": 0.9387869185733984
+    },
+    {
+      "source": "rule_cboe_vix6m_relief_v1",
+      "model_version": "cboe-vix6m-diff5-negative-lag1d-v1",
+      "base_net_pnl": 55.50949322,
+      "stress_net_pnl": 52.695679025000004,
+      "positive_months": 20,
+      "closed_positions": 74,
+      "leave_best_base_net_pnl": 39.151533115999996,
+      "evidence_path": "D:/Users/yuqi.mai/Desktop/trader/docs/progress/phase-2-research-v42-confirmation-results.json",
+      "capture_ratio_vs_bh_conf": 0.7814774665370152,
+      "months_breadth_binom_p_vs_bh": 0.8866256843879677
+    },
+    {
+      "source": "rule_cboe_vpn_expansion_v1",
+      "model_version": "cboe-vpn-diff5-positive-lag1d-v1",
+      "base_net_pnl": 57.462441864,
+      "stress_net_pnl": 54.697557329999995,
+      "positive_months": 19,
+      "closed_positions": 65,
+      "leave_best_base_net_pnl": 37.752997112,
+      "evidence_path": "D:/Users/yuqi.mai/Desktop/trader/docs/progress/phase-2-research-v36-confirmation-results.json",
+      "capture_ratio_vs_bh_conf": 0.808971598982817,
+      "months_breadth_binom_p_vs_bh": 0.9387869185733984
+    },
+    {
+      "source": "rule_cboe_vxn_relief_v1",
+      "model_version": "cboe-vxn-diff5-negative-lag1d-v1",
+      "base_net_pnl": 60.20779002,
+      "stress_net_pnl": 57.571400024999996,
+      "positive_months": 20,
+      "closed_positions": 72,
+      "leave_best_base_net_pnl": 35.30407596399999,
+      "evidence_path": "D:/Users/yuqi.mai/Desktop/trader/docs/progress/phase-2-research-v40-confirmation-results.json",
+      "capture_ratio_vs_bh_conf": 0.8476213433285275,
+      "months_breadth_binom_p_vs_bh": 0.8866256843879677
+    },
+    {
+      "source": "rule_nasdaq_vol_relief_v2",
+      "model_version": "cboe-vxn-ohlc5obs-negative-1d-v1",
+      "base_net_pnl": 60.20779002,
+      "stress_net_pnl": 57.571400024999996,
+      "positive_months": 20,
+      "closed_positions": 72,
+      "leave_best_base_net_pnl": 35.30407596399999,
+      "evidence_path": "D:/Users/yuqi.mai/Desktop/trader/docs/progress/phase-2-research-v18-confirmation-results.json",
+      "capture_ratio_vs_bh_conf": 0.8476213433285275,
+      "months_breadth_binom_p_vs_bh": 0.8866256843879677
+    },
+    {
+      "source": "rule_crypto_basis_relief_v1",
+      "model_version": "crypto-btc-basis-below-ma10-lag1d-v1",
+      "base_net_pnl": 27.71071635600001,
+      "stress_net_pnl": 19.535757945000015,
+      "positive_months": 20,
+      "closed_positions": 209,
+      "leave_best_base_net_pnl": 18.867564603999995,
+      "evidence_path": "D:/Users/yuqi.mai/Desktop/trader/docs/progress/phase-2-research-v48-confirmation-results.json",
+      "capture_ratio_vs_bh_conf": 0.39011886359665665,
+      "months_breadth_binom_p_vs_bh": 0.8866256843879677
+    },
+    {
+      "source": "rule_crypto_prem_relief_v1",
+      "model_version": "crypto-btc-prem-diff5-negative-lag1d-v1",
+      "base_net_pnl": 13.681344135999993,
+      "stress_net_pnl": 5.039735169999991,
+      "positive_months": 21,
+      "closed_positions": 218,
+      "leave_best_base_net_pnl": 7.2171374319999995,
+      "evidence_path": "D:/Users/yuqi.mai/Desktop/trader/docs/progress/phase-2-research-v46-confirmation-results.json",
+      "capture_ratio_vs_bh_conf": 0.19260961565345605,
+      "months_breadth_binom_p_vs_bh": 0.8081832129783392
+    },
+    {
+      "source": "rule_us_treasury_volatility_relief_v2",
+      "model_version": "treasury-nominal10-absdiff5-20-negative-lag2d-v1",
+      "base_net_pnl": 37.66872503599999,
+      "stress_net_pnl": 34.41114879499999,
+      "positive_months": 19,
+      "closed_positions": 80,
+      "leave_best_base_net_pnl": 19.510103040000004,
+      "evidence_path": "D:/Users/yuqi.mai/Desktop/trader/docs/progress/phase-2-research-v16-confirmation-results.json",
+      "capture_ratio_vs_bh_conf": 0.5303103685732534,
+      "months_breadth_binom_p_vs_bh": 0.9387869185733984
+    }
+  ],
+  "random_timing_null": {
+    "n_trials": 20000,
+    "seed": 20260827,
+    "p_dev_pass": 0.14615,
+    "p_conf_pass_given_dev": 0.5053027711255559,
+    "p_two_stage_pass": 0.07385,
+    "dev_base_pnl_quantiles": {
+      "q50": -1.7584853079999814,
+      "q90": 24.45168684720002
+    },
+    "conf_base_pnl_mean_given_two_stage": 40.81289536795668,
+    "params": {
+      "fraction_range": [
+        0.2,
+        0.8
+      ],
+      "hold_days_range": [
+        2.0,
+        30.0
+      ],
+      "gates": {
+        "base_net_pnl_gt": 0.0,
+        "stress_net_pnl_gt": 0.0,
+        "positive_calendar_years_at_least": 2,
+        "positive_calendar_months_at_least": 18,
+        "closed_positions_at_least": 30,
+        "leave_best_position_base_net_pnl_gt": 0.0
+      },
+      "costs_bps_per_fill": {
+        "base": 12.0,
+        "stress": 15.0
+      }
+    }
+  },
+  "program_multiplicity": {
+    "identities_pnl_opened": 108,
+    "observed_two_stage_survivors": 10,
+    "expected_lucky_two_stage_survivors": 7.9758,
+    "p_observed_or_more_by_luck": 0.2753635937340008,
+    "note": "Null assumes independent random long/flat timing per identity on BTCUSDT with survivor-like exposure and holding cadence, evaluated under the historical two-stage gate set. Family correlation between identities makes the effective trial count lower and the null conservative in that direction; selective advancement of the best development sibling makes it anti-conservative. Read as calibration, not as a verdict."
+  }
+}
