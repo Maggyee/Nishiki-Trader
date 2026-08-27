@@ -1,0 +1,117 @@
+{
+  "boundaries": {
+    "mutates_source_policy": false,
+    "opens_confirmation_early": false,
+    "opens_future_blind": false,
+    "touches_live_path": false,
+    "writes_signal_events": false
+  },
+  "buy_and_hold": {
+    "first_close": 9232.0,
+    "last_close": 16542.4,
+    "months_positive": 15,
+    "months_total": 30,
+    "pnl": 7.310400000000001,
+    "years_positive": 2
+  },
+  "candidate": {
+    "base_net_pnl": 11.989617307999985,
+    "closed_positions": 94,
+    "leave_best_base_net_pnl": -1.0610778720000162,
+    "mean_holding_days": 5.51063829787234,
+    "months_total": 30,
+    "positive_months": 15,
+    "positive_years": 2,
+    "stress_net_pnl": 10.057094134999984,
+    "time_in_market_fraction": 0.5667396061269147
+  },
+  "classification": "development_rejected",
+  "contract_sha256": "sha256:4359fd180af376a424decd0edd62dc10a92b75816dd2314182b6f5c8419cc626",
+  "duplicate_replays": 2,
+  "gates": {
+    "benchmark_floor": 4.143093216630198,
+    "bootstrap_p_value": 0.21968901554922254,
+    "checks": {
+      "activity_floor": true,
+      "base_net_pnl_positive": true,
+      "benchmark_relative": true,
+      "bootstrap_p": false,
+      "leave_best_positive": false,
+      "months_breadth": true,
+      "stress_net_pnl_positive": true,
+      "years_breadth": true
+    },
+    "pass_gates": false
+  },
+  "model_version": "panel17-ridge-mwf-oos2020h2-v1",
+  "pass_gates": false,
+  "per_alpha_candidates": {
+    "1.0": {
+      "base_net_pnl": -4.795633391999997,
+      "closed_positions": 95,
+      "leave_best_base_net_pnl": -14.995688091999998,
+      "mean_holding_days": 5.315789473684211,
+      "months_total": 30,
+      "positive_months": 14,
+      "positive_years": 2,
+      "stress_net_pnl": -6.816196739999999,
+      "time_in_market_fraction": 0.5525164113785558
+    },
+    "10.0": {
+      "base_net_pnl": 11.989617307999985,
+      "closed_positions": 94,
+      "leave_best_base_net_pnl": -1.0610778720000162,
+      "mean_holding_days": 5.51063829787234,
+      "months_total": 30,
+      "positive_months": 15,
+      "positive_years": 2,
+      "stress_net_pnl": 10.057094134999984,
+      "time_in_market_fraction": 0.5667396061269147
+    },
+    "100.0": {
+      "base_net_pnl": -6.08722302000003,
+      "closed_positions": 95,
+      "leave_best_base_net_pnl": -24.139559164000033,
+      "mean_holding_days": 5.88421052631579,
+      "months_total": 30,
+      "positive_months": 14,
+      "positive_years": 1,
+      "stress_net_pnl": -7.931536275000031,
+      "time_in_market_fraction": 0.611597374179431
+    },
+    "1000.0": {
+      "base_net_pnl": 2.610471452000012,
+      "closed_positions": 52,
+      "leave_best_base_net_pnl": -20.549136071999985,
+      "mean_holding_days": 14.23076923076923,
+      "months_total": 30,
+      "positive_months": 13,
+      "positive_years": 2,
+      "stress_net_pnl": 1.809396815000012,
+      "time_in_market_fraction": 0.8096280087527352
+    },
+    "10000.0": {
+      "base_net_pnl": 5.542381551999995,
+      "closed_positions": 10,
+      "leave_best_base_net_pnl": -0.46749065600000517,
+      "mean_holding_days": 88.4,
+      "months_total": 30,
+      "positive_months": 16,
+      "positive_years": 2,
+      "stress_net_pnl": 5.452011939999995,
+      "time_in_market_fraction": 0.9671772428884027
+    }
+  },
+  "replay_fingerprints": [
+    "b72391430595ae3b18d3abc3ba73d087ec57796c8002871a4a143405ad11177b",
+    "b72391430595ae3b18d3abc3ba73d087ec57796c8002871a4a143405ad11177b"
+  ],
+  "reproducible": true,
+  "schema_version": "research.protocol.v49.v1.development_results",
+  "selected_alpha": 10.0,
+  "source": "freqai_panel_ridge_v1",
+  "window": [
+    "2020-07-01",
+    "2022-12-31"
+  ]
+}

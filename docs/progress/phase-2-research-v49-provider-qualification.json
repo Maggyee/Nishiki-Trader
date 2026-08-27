@@ -1,0 +1,219 @@
+{
+  "closes": {
+    "first_date": "2019-12-01",
+    "last_date": "2025-12-31",
+    "path": "data/research-v49/closes/btcusdt-1d-closes-2019-12-2025-12.csv",
+    "rows": 2223,
+    "sha256": "b2183242b3e4849519eae4ca396e2206293e8099f90e8b5e88b3dc19adea7a48"
+  },
+  "contract_sha256": "sha256:4359fd180af376a424decd0edd62dc10a92b75816dd2314182b6f5c8419cc626",
+  "errors": [],
+  "factor_files": [
+    {
+      "factor": "btc_basis",
+      "path": "data/research-v48/factors/btc_basis_below_ma10_development.csv",
+      "sha256": "aa1dc7871e9751278e35f78794fb9f61156adfde6dc100ce2950ee066b68c069",
+      "status": "ok"
+    },
+    {
+      "factor": "btc_basis",
+      "path": "data/research-v48/factors/btc_basis_below_ma10_confirmation.csv",
+      "sha256": "4b3161271f1230a7abd77212c524441c07837d09ef1c14d47fb621ada76c241d",
+      "status": "ok"
+    },
+    {
+      "factor": "btc_premium",
+      "path": "data/research-v46/factors/btc_prem_diff5_negative_development.csv",
+      "sha256": "ed1aea09fedf95d7710d5058e5383847fabc3a2747ba10f47e41ac4c274ef186",
+      "status": "ok"
+    },
+    {
+      "factor": "btc_premium",
+      "path": "data/research-v46/factors/btc_prem_diff5_negative_confirmation.csv",
+      "sha256": "1c322dc5a7076b5f360f6e2ec2d8d49d868d987de730bab37b21d9094df96bc9",
+      "status": "ok"
+    },
+    {
+      "factor": "bxn",
+      "path": "data/research-v37/factors/bxn_development.csv",
+      "sha256": "a303103c6463b8f588d95b53c5f07a81fc52ac7f8aad4fdfd11c4964291bc7e4",
+      "status": "ok"
+    },
+    {
+      "factor": "bxn",
+      "path": "data/research-v37/factors/bxn_confirmation.csv",
+      "sha256": "7ca08aab6c058b56de937ea3dc4750b519e8c904f4f70c414298a276982ef75e",
+      "status": "ok"
+    },
+    {
+      "factor": "cll",
+      "path": "data/research-v38/factors/cll_development.csv",
+      "sha256": "d16dfc6a4cc43a35495e92be6757d23aca01538b9dc03c184b4fdc9deb588519",
+      "status": "ok"
+    },
+    {
+      "factor": "cll",
+      "path": "data/research-v38/factors/cll_confirmation.csv",
+      "sha256": "d25e3bfcf8ccc0a41e73f166f5c36f0254160c8321d8c9610a2e158dd7188899",
+      "status": "ok"
+    },
+    {
+      "factor": "cor1m",
+      "path": "data/research-v22/factors/cor1m.csv",
+      "sha256": "2c37e73c2e9659d238283623047f4507e0ace1da197c747832b9938c06fec71c",
+      "status": "ok"
+    },
+    {
+      "factor": "cor1m",
+      "path": "data/research-v22/confirmation/factors/cor1m.csv",
+      "sha256": "17fc14e0ddd4616aa7e6ae60b22fb0fa4fdda78ef67d786de27d119e847f4708",
+      "status": "ok"
+    },
+    {
+      "factor": "cor1y",
+      "path": "data/research-v33/factors/cor1y-development-factors.csv",
+      "sha256": "341cb294d0de08e1bd0e38bbf9414aea961ee804564665883db531cb3923c92b",
+      "status": "ok"
+    },
+    {
+      "factor": "cor1y",
+      "path": "data/research-v33/confirmation/factors/cor1y.csv",
+      "sha256": "874e33b13a959a0e932fb566221f844e53508df938cf9e4015d1fa3b535815d0",
+      "status": "ok"
+    },
+    {
+      "factor": "fvx",
+      "path": "data/research-v34/factors/fvx-development-factors.csv",
+      "sha256": "434e73a54e103149d6e2d7f64bd17fd66e6c5c68ddf806afe599cf980025574d",
+      "status": "ok"
+    },
+    {
+      "factor": "fvx",
+      "path": "data/research-v34/factors/fvx-confirmation-factors.csv",
+      "sha256": "b715f9f9ca835619f1d303a312c21a0fd3b86bc7155c4c34b4662cd613ae925b",
+      "status": "ok"
+    },
+    {
+      "factor": "gvz",
+      "path": "data/research-v7/factors/gvz.csv",
+      "sha256": "0cbe771bf77b486035ce13374a51597ac6e20bb576f81ddb3f765a717dc9b9f1",
+      "status": "ok"
+    },
+    {
+      "factor": "gvz",
+      "path": "data/research-v8/factors/gvz.csv",
+      "sha256": "9a15a24f8ae10f0c05f4ce72249dfe50e927dd3e3d60e38e536c699c963eb055",
+      "status": "ok"
+    },
+    {
+      "factor": "lovol",
+      "path": "data/research-v39/factors/lovol_development.csv",
+      "sha256": "5bf0999059132c10fa5220b0e19b3d9ab0b4e2352d394567be3185bd40ef70f4",
+      "status": "ok"
+    },
+    {
+      "factor": "lovol",
+      "path": "data/research-v39/factors/lovol_confirmation.csv",
+      "sha256": "c0f1ec35d4788c7967e462ec802b68c835e7f1e53a48af0370ddd08c1e718b43",
+      "status": "ok"
+    },
+    {
+      "factor": "ofr_safe_asset",
+      "path": "data/research-v20/factors/fsi.csv",
+      "sha256": "f0f112171d8f442a24da106db80320a9856f4f5f285289f4009d73de62828c72",
+      "status": "ok"
+    },
+    {
+      "factor": "ofr_safe_asset",
+      "path": "data/research-v20/confirmation/factors/safe_asset.csv",
+      "sha256": "0c258762f65fa62dc579c12d8294f2b1b244e1dc4ccb935859490aedba826a2e",
+      "status": "ok"
+    },
+    {
+      "factor": "tvl_all_chains",
+      "path": "data/research-v25/factors/all_chains.csv",
+      "sha256": "33c4433621c9205f278df1537ccf602906db87e10d23ff5305a3aee64be16067",
+      "status": "ok"
+    },
+    {
+      "factor": "tvl_all_chains",
+      "path": "data/research-v25/confirmation/factors/all_chains.csv",
+      "sha256": "32aa36e6e3fce0ea5742611b68554307fa7389909f3c81ef8e4a98b7829d34e7",
+      "status": "ok"
+    },
+    {
+      "factor": "vix1y",
+      "path": "data/research-v35/factors/vix1y_development.csv",
+      "sha256": "effd501235910644a76ab350520451d676783483c5db4da40a01b5358866ad70",
+      "status": "ok"
+    },
+    {
+      "factor": "vix1y",
+      "path": "data/research-v35/factors/vix1y_confirmation.csv",
+      "sha256": "ba7d92f721abe7251e40829ffdda407097e551274c5ba7214abb4e677964edc6",
+      "status": "ok"
+    },
+    {
+      "factor": "vix6m",
+      "path": "data/research-v35/factors/vix6m_development.csv",
+      "sha256": "7287fe5949a11eed1d970a794c4a5e8d260fedaa0eaf23e38b443f604c0d5096",
+      "status": "ok"
+    },
+    {
+      "factor": "vix6m",
+      "path": "data/research-v42/factors/vix6m_confirmation.csv",
+      "sha256": "4b58a73f78cd19f09ebdb7ae457fb533eab949a0cbf243bf4c0278e0a7dd3c20",
+      "status": "ok"
+    },
+    {
+      "factor": "vpn",
+      "path": "data/research-v36/factors/vpn_development.csv",
+      "sha256": "66f5ee4f7fa748ade197aa5238b1db2009538644fb3f34a3aa091f915a29bbdc",
+      "status": "ok"
+    },
+    {
+      "factor": "vpn",
+      "path": "data/research-v36/factors/vpn_confirmation.csv",
+      "sha256": "5099f4a8fb7d4142954fa2fb31ea12011737acbb7dd3ce43499e4f844196272e",
+      "status": "ok"
+    },
+    {
+      "factor": "vxd",
+      "path": "data/research-v19/factors/vxd.csv",
+      "sha256": "cdd61441e040aba9a0dd4fdd03b9f04ba490b7fca292e6ad2a9a8af49a16296e",
+      "status": "ok"
+    },
+    {
+      "factor": "vxd",
+      "path": "data/research-v19/confirmation/factors/vxd.csv",
+      "sha256": "a8a12efafb7454c7125f7b59d2ca110695fe15179be7caf6b1de801922b414e6",
+      "status": "ok"
+    },
+    {
+      "factor": "vxgog",
+      "path": "data/research-v30/factors/vxgog.csv",
+      "sha256": "a7ffaaf312285f5bc80d230993cafbb16dedaf702939991c2381fe189b06cca7",
+      "status": "ok"
+    },
+    {
+      "factor": "vxgog",
+      "path": "data/research-v30/confirmation/factors/vxgog.csv",
+      "sha256": "ac94a8e2e38af5a5d7044ed0dd018b878418598109ecef6bb5e4abaec0f0e487",
+      "status": "ok"
+    },
+    {
+      "factor": "vxn",
+      "path": "data/research-v40/factors/vxn_development.csv",
+      "sha256": "7799ae0cf6640bcc9a74f837b9793fd6495703dfc4025af5b87d25e568b8400a",
+      "status": "ok"
+    },
+    {
+      "factor": "vxn",
+      "path": "data/research-v40/factors/vxn_confirmation.csv",
+      "sha256": "ad0926340f51f3d25116fd8ab1d626fce5bca7ed312663eaf1489651343e69f1",
+      "status": "ok"
+    }
+  ],
+  "qualified": true,
+  "schema_version": "research.protocol.v49.v1.provider_qualification"
+}
