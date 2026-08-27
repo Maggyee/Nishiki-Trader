@@ -1314,6 +1314,32 @@ PROTOCOLS: tuple[dict[str, Any], ...] = (
         ],
     },
     {
+        "protocol": 50,
+        "family": "crypto_derivatives_structure",
+        "mechanism": "BTC settled funding-rate positioning states (contrarian short-crowding, "
+        "below-baseline, overheat-flat) with structural thresholds (ADR-014 B2)",
+        "candidates": [
+            _c(
+                "fund_neg_3d",
+                "rule_crypto_funding_negative_v1",
+                "crypto-btc-funding-sum72h-negative-v1",
+                "pre_registered",
+            ),
+            _c(
+                "fund_below_baseline_3d",
+                "rule_crypto_funding_below_baseline_v1",
+                "crypto-btc-funding-mean72h-below-1bp8h-v1",
+                "pre_registered",
+            ),
+            _c(
+                "fund_overheat_flat_3d",
+                "rule_crypto_funding_overheat_flat_v1",
+                "crypto-btc-funding-mean72h-overheat5bp8h-flat-v1",
+                "pre_registered",
+            ),
+        ],
+    },
+    {
         "protocol": 49,
         "family": "multifactor_ml",
         "mechanism": "Ridge regression over the archived 17-factor point-in-time panel "

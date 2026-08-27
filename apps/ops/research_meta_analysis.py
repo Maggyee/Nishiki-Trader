@@ -361,6 +361,61 @@ def run_random_timing_null(
     }
 
 
+def evaluate_long_flat_states(
+    closes_window: pd.Series,
+    states: np.ndarray,
+    trade_size: float = TRADE_SIZE_BTC,
+) -> dict[str, Any]:
+    """Gate metrics for one long/flat daily state series (shared protocol harness)."""
+    metrics = _window_gate_metrics(closes_window, states[None, :].astype(bool), trade_size)
+    held = np.concatenate([[False], states[:-1].astype(bool)])
+    positions = int(metrics["positions"][0])
+    return {
+        "base_net_pnl": float(metrics["base"][0]),
+        "stress_net_pnl": float(metrics["stress"][0]),
+        "positive_months": int(metrics["months_positive"][0]),
+        "months_total": int(metrics["months_total"][0]),
+        "positive_years": int(metrics["years_positive"][0]),
+        "closed_positions": positions,
+        "leave_best_base_net_pnl": float(metrics["leave_best"][0]),
+        "time_in_market_fraction": float(held.mean()),
+        "mean_holding_days": float(held.sum() / positions) if positions else 0.0,
+    }
+
+
+def matched_random_timing_p_value(
+    closes_window: pd.Series,
+    *,
+    base_net_pnl: float,
+    time_in_market_fraction: float,
+    mean_holding_days: float,
+    trade_size: float = TRADE_SIZE_BTC,
+    n_trials: int = 20000,
+    seed: int = 20260827,
+) -> float:
+    """Exposure/cadence-matched random-timing p-value for a candidate's base PnL.
+
+    Null: Markov long/flat daily timing with exposure fraction ~ U(f-0.15, f+0.15)
+    clipped to (0.02, 0.98) and mean hold ~ logU(max(1.5, h/2), 2h), same window
+    and base costs. p = (1 + #{null base >= candidate base}) / (n_trials + 1).
+    """
+    rng = np.random.default_rng(seed)
+    hold_center = max(mean_holding_days, 1.5)
+    frac_low = min(max(time_in_market_fraction - 0.15, 0.02), 0.9)
+    frac_high = max(min(time_in_market_fraction + 0.15, 0.98), frac_low + 0.01)
+    hold_low = max(1.5, hold_center / 2.0)
+    hold_high = max(hold_low + 0.1, hold_center * 2.0)
+    fraction = rng.uniform(frac_low, frac_high, size=n_trials)
+    hold = np.exp(rng.uniform(math.log(hold_low), math.log(hold_high), size=n_trials))
+    p_off = np.clip(1.0 / hold, 1e-6, 1.0)
+    p_on = np.clip(fraction * p_off / np.maximum(1.0 - fraction, 1e-9), 1e-6, 1.0)
+    initial = rng.random(n_trials) < fraction
+    states = _simulate_states(rng, len(closes_window), p_on, p_off, initial)
+    metrics = _window_gate_metrics(closes_window, states, trade_size)
+    exceed = int((metrics["base"] >= base_net_pnl).sum())
+    return (1 + exceed) / (n_trials + 1)
+
+
 def _binom_sf(k: int, n: int, p: float) -> float:
     """P(X >= k) for X ~ Binomial(n, p), exact summation."""
     if p <= 0.0:
