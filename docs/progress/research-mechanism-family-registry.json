@@ -1314,7 +1314,7 @@
           "source": "freqai_panel_ridge_v1",
           "model_version": "panel17-ridge-mwf-oos2020h2-v1",
           "family": "multifactor_ml",
-          "outcome": "pre_registered"
+          "outcome": "development_rejected"
         }
       ]
     }
@@ -1454,7 +1454,7 @@
     "legacy_candidate_count": 16,
     "candidate_rows": 147,
     "unique_identities": 144,
-    "unique_identities_pnl_opened": 108,
+    "unique_identities_pnl_opened": 109,
     "unique_identities_provider_blocked": 33,
     "survivors_paper_shadow": 10,
     "confirmation_opened": 22

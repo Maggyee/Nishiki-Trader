@@ -1323,7 +1323,7 @@ PROTOCOLS: tuple[dict[str, Any], ...] = (
                 "panel_ridge",
                 "freqai_panel_ridge_v1",
                 "panel17-ridge-mwf-oos2020h2-v1",
-                "pre_registered",
+                "development_rejected",
             ),
         ],
     },
