@@ -48,8 +48,8 @@
       "status": "open"
     },
     "multifactor_ml": {
-      "rationale": "ADR-014 \u00a77 ML restart: one pre-registered regularized multi-factor model over the archived point-in-time panel (backlog B1). Supersedes linear_ml.",
-      "status": "planned"
+      "rationale": "ADR-014 \u00a77 ML restart: regularized multi-factor models over the archived point-in-time panel (backlog B1). Supersedes linear_ml. First member: protocol v49 panel ridge.",
+      "status": "open"
     },
     "portfolio_overlay": {
       "rationale": "Vol-targeted sizing and allocation overlays evaluated at shadow portfolio level (ADR-014 \u00a76, backlog B7); not a tradable alpha identity.",
@@ -1303,6 +1303,20 @@
           "outcome": "development_passed_not_advanced"
         }
       ]
+    },
+    {
+      "protocol": 49,
+      "default_family": "multifactor_ml",
+      "mechanism": "Ridge regression over the archived 17-factor point-in-time panel plus two BTC-native features; monthly-refit expanding walk-forward (ADR-014 \u00a77 / B1)",
+      "candidates": [
+        {
+          "key": "panel_ridge",
+          "source": "freqai_panel_ridge_v1",
+          "model_version": "panel17-ridge-mwf-oos2020h2-v1",
+          "family": "multifactor_ml",
+          "outcome": "pre_registered"
+        }
+      ]
     }
   ],
   "legacy_candidates": [
@@ -1436,10 +1450,10 @@
     }
   ],
   "totals": {
-    "protocol_count": 47,
+    "protocol_count": 48,
     "legacy_candidate_count": 16,
-    "candidate_rows": 146,
-    "unique_identities": 143,
+    "candidate_rows": 147,
+    "unique_identities": 144,
     "unique_identities_pnl_opened": 108,
     "unique_identities_provider_blocked": 33,
     "survivors_paper_shadow": 10,

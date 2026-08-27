@@ -29,6 +29,7 @@ Outcome vocabulary (per candidate):
 - ``confirmation_passed_paper_shadow``: confirmed and held at ``paper_shadow``.
 - ``forward_data_candidate``: no historical PnL identity; forward-only contract.
 - ``legacy_reject``: original 16-candidate registry reject (pre-protocol era).
+- ``pre_registered``: contract frozen; development/confirmation not yet run.
 
 The historical tables below describe sealed protocols and must not be edited
 except to append new protocols or to correct a documented transcription error.
@@ -63,6 +64,7 @@ OUTCOMES = frozenset(
         "confirmation_passed_paper_shadow",
         "forward_data_candidate",
         "legacy_reject",
+        "pre_registered",
     }
 )
 
@@ -138,9 +140,10 @@ FAMILIES: dict[str, dict[str, str]] = {
         "date is spot long/flat; the short half is unexplored (backlog B4).",
     },
     "multifactor_ml": {
-        "status": "planned",
-        "rationale": "ADR-014 §7 ML restart: one pre-registered regularized multi-factor "
-        "model over the archived point-in-time panel (backlog B1). Supersedes linear_ml.",
+        "status": "open",
+        "rationale": "ADR-014 §7 ML restart: regularized multi-factor models over the "
+        "archived point-in-time panel (backlog B1). Supersedes linear_ml. First member: "
+        "protocol v49 panel ridge.",
     },
     "portfolio_overlay": {
         "status": "planned",
@@ -1311,6 +1314,20 @@ PROTOCOLS: tuple[dict[str, Any], ...] = (
         ],
     },
     {
+        "protocol": 49,
+        "family": "multifactor_ml",
+        "mechanism": "Ridge regression over the archived 17-factor point-in-time panel "
+        "plus two BTC-native features; monthly-refit expanding walk-forward (ADR-014 §7 / B1)",
+        "candidates": [
+            _c(
+                "panel_ridge",
+                "freqai_panel_ridge_v1",
+                "panel17-ridge-mwf-oos2020h2-v1",
+                "pre_registered",
+            ),
+        ],
+    },
+    {
         "protocol": 48,
         "family": "crypto_derivatives_structure",
         "mechanism": "Binance perpetual basis moving-average relief",
@@ -1394,6 +1411,7 @@ def build_registry(repo_root: Path) -> dict[str, Any]:
         "provider_blocked": 0,
         "not_opened": 0,
         "forward_data_candidate": 0,
+        "pre_registered": 0,
         "legacy_reject": 1,
         "development_rejected": 1,
         "development_passed_not_advanced": 1,
