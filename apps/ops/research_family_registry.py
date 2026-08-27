@@ -1314,6 +1314,33 @@ PROTOCOLS: tuple[dict[str, Any], ...] = (
         ],
     },
     {
+        "protocol": 52,
+        "family": "cross_sectional_relative",
+        "mechanism": "Dollar-neutral weekly long/short rank portfolios over 22 long-listed "
+        "USDT pairs: 30d momentum, 7d reversal, 30d low-volatility (ADR-014 B3; first "
+        "two-sided multi-asset protocol; rank-permutation null)",
+        "candidates": [
+            _c(
+                "xs_mom_30d",
+                "rule_crypto_xs_momentum_ls_v1",
+                "crypto-xs-mom30d-top3-bottom3-weekly-v1",
+                "pre_registered",
+            ),
+            _c(
+                "xs_rev_7d",
+                "rule_crypto_xs_reversal_ls_v1",
+                "crypto-xs-rev7d-top3-bottom3-weekly-v1",
+                "pre_registered",
+            ),
+            _c(
+                "xs_lowvol_30d",
+                "rule_crypto_xs_lowvol_ls_v1",
+                "crypto-xs-lowvol30d-top3-bottom3-weekly-v1",
+                "pre_registered",
+            ),
+        ],
+    },
+    {
         "protocol": 51,
         "family": "crypto_derivatives_structure",
         "mechanism": "BTC settled funding-rate positioning states — provider-corrected "

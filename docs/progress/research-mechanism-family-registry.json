@@ -1373,6 +1373,34 @@
           "outcome": "development_rejected"
         }
       ]
+    },
+    {
+      "protocol": 52,
+      "default_family": "cross_sectional_relative",
+      "mechanism": "Dollar-neutral weekly long/short rank portfolios over 22 long-listed USDT pairs: 30d momentum, 7d reversal, 30d low-volatility (ADR-014 B3; first two-sided multi-asset protocol; rank-permutation null)",
+      "candidates": [
+        {
+          "key": "xs_lowvol_30d",
+          "source": "rule_crypto_xs_lowvol_ls_v1",
+          "model_version": "crypto-xs-lowvol30d-top3-bottom3-weekly-v1",
+          "family": "cross_sectional_relative",
+          "outcome": "pre_registered"
+        },
+        {
+          "key": "xs_mom_30d",
+          "source": "rule_crypto_xs_momentum_ls_v1",
+          "model_version": "crypto-xs-mom30d-top3-bottom3-weekly-v1",
+          "family": "cross_sectional_relative",
+          "outcome": "pre_registered"
+        },
+        {
+          "key": "xs_rev_7d",
+          "source": "rule_crypto_xs_reversal_ls_v1",
+          "model_version": "crypto-xs-rev7d-top3-bottom3-weekly-v1",
+          "family": "cross_sectional_relative",
+          "outcome": "pre_registered"
+        }
+      ]
     }
   ],
   "legacy_candidates": [
@@ -1506,10 +1534,10 @@
     }
   ],
   "totals": {
-    "protocol_count": 50,
+    "protocol_count": 51,
     "legacy_candidate_count": 16,
-    "candidate_rows": 153,
-    "unique_identities": 150,
+    "candidate_rows": 156,
+    "unique_identities": 153,
     "unique_identities_pnl_opened": 112,
     "unique_identities_provider_blocked": 36,
     "survivors_paper_shadow": 10,
