@@ -1,14 +1,16 @@
 {
-  "anomaly_blockers": [],
-  "attempt_count": 1,
-  "contract_sha256": "sha256:f003b28ff910ab2bc676cd98eae548095ddfe198b3d082fc819ad3b2343b3980",
+  "anomaly_blockers": [
+    "git_dirty"
+  ],
+  "attempt_count": 5,
+  "contract_sha256": "sha256:8e76aa612f3ee8a50e5621ce7d73dc13b70ed1eecb174fe337c552112efaeddf",
   "future_blind_status": "sealed_unopened",
   "gate": {
     "days": 7,
     "operator": "or",
     "signals": 50
   },
-  "latest_attempt_id": "20260824T015352Z-1b1dcbf92915",
+  "latest_attempt_id": "20260827T043002Z-81c75af3351c",
   "live_status": "blocked",
   "new_forward_signal_count": 0,
   "new_forward_signal_ids": [],
@@ -29,5 +31,5 @@
   "stage": "paper_shadow",
   "testnet_status": "blocked",
   "threshold_met": false,
-  "updated_at": "2026-08-24T01:53:52.871426Z"
+  "updated_at": "2026-08-27T04:30:02.546982Z"
 }
