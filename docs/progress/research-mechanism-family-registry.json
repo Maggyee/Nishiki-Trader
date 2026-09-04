@@ -1412,7 +1412,7 @@
           "source": "rule_crypto_xs_momentum_ls_v2",
           "model_version": "crypto-xs-mom30d-top3-bottom3-weekly-v2",
           "family": "cross_sectional_relative",
-          "outcome": "pre_registered"
+          "outcome": "confirmation_rejected"
         }
       ]
     }
@@ -1552,9 +1552,9 @@
     "legacy_candidate_count": 16,
     "candidate_rows": 157,
     "unique_identities": 154,
-    "unique_identities_pnl_opened": 115,
+    "unique_identities_pnl_opened": 116,
     "unique_identities_provider_blocked": 36,
     "survivors_paper_shadow": 10,
-    "confirmation_opened": 22
+    "confirmation_opened": 23
   }
 }

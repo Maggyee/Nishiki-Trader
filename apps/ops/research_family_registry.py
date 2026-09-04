@@ -1324,7 +1324,7 @@ PROTOCOLS: tuple[dict[str, Any], ...] = (
                 "xs_mom_30d",
                 "rule_crypto_xs_momentum_ls_v2",
                 "crypto-xs-mom30d-top3-bottom3-weekly-v2",
-                "pre_registered",
+                "confirmation_rejected",
             ),
         ],
     },
