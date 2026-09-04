@@ -1,0 +1,67 @@
+{
+  "best_candidate": "xs_mom_30d",
+  "boundaries": {
+    "confirmation_data_fetched": false,
+    "mutates_source_policy": false,
+    "opens_confirmation_early": false,
+    "opens_future_blind": false,
+    "touches_live_path": false,
+    "writes_signal_events": false
+  },
+  "btc_buy_and_hold_pnl_100usdt": 129.7284348375539,
+  "candidates": {
+    "xs_mom_30d": {
+      "base_net_pnl": 426.7109828134329,
+      "closed_leg_positions": 429,
+      "daily_base_pnl_sha256": "2445fc130da16fa2672465d61e55c09073a9bb36f2b05ebef1cc0a686a943290",
+      "duplicate_replays": 2,
+      "gates": {
+        "benchmark_floor": 0.0,
+        "checks": {
+          "activity_floor": true,
+          "base_net_pnl_positive": true,
+          "benchmark_relative": true,
+          "leave_best_positive": true,
+          "months_breadth": true,
+          "permutation_p": true,
+          "stress_net_pnl_positive": true,
+          "years_breadth": true
+        },
+        "fixed_floor_reference": 18,
+        "months_breadth_rule": "adaptive_null_median",
+        "months_breadth_threshold": 16.0,
+        "pass_gates": true,
+        "permutation_p_value": 0.05559722013899305
+      },
+      "gross_net_pnl": 529.6709828134328,
+      "key": "xs_mom_30d",
+      "leave_best_leg_base_net_pnl": 226.35781903840027,
+      "mean_holding_days": 15.244755244755245,
+      "model_version": "crypto-xs-mom30d-top3-bottom3-weekly-v2",
+      "months_total": 36,
+      "net_exposure_fraction": 0.0,
+      "null_months_positive_median": 16.0,
+      "pass_gates": true,
+      "positive_months": 17,
+      "positive_years": 2,
+      "rebalances": 156,
+      "replay_fingerprints": [
+        "1dc40182a846d62ff3d1818cfb0b65103a3e54380e685431a41613ad3f86fa51",
+        "1dc40182a846d62ff3d1818cfb0b65103a3e54380e685431a41613ad3f86fa51"
+      ],
+      "reproducible": true,
+      "source": "rule_crypto_xs_momentum_ls_v2",
+      "stress_net_pnl": 400.97098281343284
+    }
+  },
+  "classification": "development_pass_confirmation_open_eligible",
+  "contract_sha256": "sha256:fd6da257f0cdf9a99fc3739bec45315c8bbdb15cd420f6f7dc67f5b109c19916",
+  "development_passers": [
+    "xs_mom_30d"
+  ],
+  "schema_version": "research.protocol.v53.v1.development_results",
+  "window": [
+    "2020-01-01",
+    "2022-12-31"
+  ]
+}

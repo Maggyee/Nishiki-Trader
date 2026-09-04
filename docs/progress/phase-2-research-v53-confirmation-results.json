@@ -1,0 +1,60 @@
+{
+  "boundaries": {
+    "mutates_source_policy": false,
+    "opens_future_blind": false,
+    "touches_live_path": false,
+    "writes_signal_events": false
+  },
+  "btc_buy_and_hold_pnl_100usdt": 427.4690899243233,
+  "candidate": {
+    "base_net_pnl": 42.25458081243832,
+    "closed_leg_positions": 401,
+    "daily_base_pnl_sha256": "ff76c584834635c738c52e9da28e66fb3e74c58429775015305a5fe6620905ac",
+    "duplicate_replays": 2,
+    "gates": {
+      "benchmark_floor": 0.7800530838035098,
+      "checks": {
+        "activity_floor": true,
+        "base_net_pnl_positive": true,
+        "benchmark_relative": true,
+        "leave_best_positive": false,
+        "months_breadth": true,
+        "permutation_p": false,
+        "stress_net_pnl_positive": true,
+        "years_breadth": true
+      },
+      "fixed_floor_reference": 18,
+      "months_breadth_rule": "adaptive_null_median",
+      "months_breadth_threshold": 15.0,
+      "pass_gates": false,
+      "permutation_p_value": 0.1695415229238538
+    },
+    "gross_net_pnl": 138.49458081243833,
+    "key": "xs_mom_30d",
+    "leave_best_leg_base_net_pnl": -226.34873560936157,
+    "mean_holding_days": 16.33915211970075,
+    "model_version": "crypto-xs-mom30d-top3-bottom3-weekly-v2",
+    "months_total": 36,
+    "net_exposure_fraction": 0.0018248175182481753,
+    "null_months_positive_median": 15.0,
+    "pass_gates": false,
+    "positive_months": 18,
+    "positive_years": 2,
+    "rebalances": 157,
+    "replay_fingerprints": [
+      "d8ec2e4ef814b043f14a0ca41da7820e9c8374ee4d54f302c17f005c274f053d",
+      "d8ec2e4ef814b043f14a0ca41da7820e9c8374ee4d54f302c17f005c274f053d"
+    ],
+    "reproducible": true,
+    "source": "rule_crypto_xs_momentum_ls_v2",
+    "stress_net_pnl": 18.19458081243829
+  },
+  "classification": "confirmation_rejected",
+  "contract_sha256": "sha256:fd6da257f0cdf9a99fc3739bec45315c8bbdb15cd420f6f7dc67f5b109c19916",
+  "pass_gates": false,
+  "schema_version": "research.protocol.v53.v1.confirmation_results",
+  "window": [
+    "2023-01-01",
+    "2025-12-31"
+  ]
+}
