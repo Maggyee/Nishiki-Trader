@@ -5,14 +5,14 @@
     "touches_live_path": false
   },
   "candidate": "btc_basis_below_ma10",
-  "evaluated_at": "2026-08-27T04:15:40.778406Z",
-  "last_snapshot_sha256": "sha256:8c8002294e88ac3a9641c7e8863b90bee9fb9ae20d491d159e9c304d6c972b2a",
+  "evaluated_at": "2026-09-04T04:15:44.513076Z",
+  "last_snapshot_sha256": "sha256:0b057aa8b5ac44266763bc41f5504e303be41034a8f61a81c0f3d2102ee03a65",
   "model_version": "crypto-btc-basis-below-ma10-lag1d-v1",
-  "qualified_runs": 11,
+  "qualified_runs": 19,
   "schema_version": "research.protocol.v48.paper_shadow_status.v1",
   "signal_store_path": "data/research-v48/shadow/signals.db",
   "source": "rule_crypto_basis_relief_v1",
   "status": "HEALTHY",
   "target_runs": 7,
-  "total_signals_stored": 93
+  "total_signals_stored": 104
 }

@@ -5,14 +5,14 @@
     "touches_live_path": false
   },
   "candidate": "btc_prem_diff5_negative",
-  "evaluated_at": "2026-08-27T04:00:22.048907Z",
-  "last_snapshot_sha256": "sha256:dedbece83bdac97d8ea1edd214d5d303fd3d5d915f3d2654612074d5d486a6ce",
+  "evaluated_at": "2026-09-04T04:00:19.778702Z",
+  "last_snapshot_sha256": "sha256:442e281b985e433ce2603e126ce5f7e05ef83ab1c5ab1832b7d1a9f01d5b8e1c",
   "model_version": "crypto-btc-prem-diff5-negative-lag1d-v1",
-  "qualified_runs": 12,
+  "qualified_runs": 20,
   "schema_version": "research.protocol.v46.paper_shadow_status.v1",
   "signal_store_path": "data/research-v46/shadow/signals.db",
   "source": "rule_crypto_prem_relief_v1",
   "status": "HEALTHY",
   "target_runs": 7,
-  "total_signals_stored": 99
+  "total_signals_stored": 114
 }
