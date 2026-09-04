@@ -1314,6 +1314,21 @@ PROTOCOLS: tuple[dict[str, Any], ...] = (
         ],
     },
     {
+        "protocol": 53,
+        "family": "cross_sectional_relative",
+        "mechanism": "30d cross-sectional momentum re-test under the accepted ADR-014 §11 "
+        "class-adaptive breadth gate; unchanged v52 rule content, new identity; conditional "
+        "re-test (v52 development window already opened; 2023-2025 confirmation never fetched)",
+        "candidates": [
+            _c(
+                "xs_mom_30d",
+                "rule_crypto_xs_momentum_ls_v2",
+                "crypto-xs-mom30d-top3-bottom3-weekly-v2",
+                "pre_registered",
+            ),
+        ],
+    },
+    {
         "protocol": 52,
         "family": "cross_sectional_relative",
         "mechanism": "Dollar-neutral weekly long/short rank portfolios over 22 long-listed "

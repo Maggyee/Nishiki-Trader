@@ -230,10 +230,17 @@ update that file, not this ADR.
 - [x] First Gates-v2 protocols pre-registered and executed under §3.4/§4 (v49–v52).
 - [ ] Shared collector framework (§6.4) implemented (future work).
 
-## 11. Proposed revision: class-adaptive breadth gate (Draft — NOT in force)
+## 11. Revision: class-adaptive breadth gate (Accepted)
 
-- **Status**: Draft, 2026-08-27. Requires explicit operator acceptance before
-  any protocol may freeze against it. Until accepted, §4 applies unchanged.
+- **Status**: **Accepted 2026-08-28 by explicit operator directive** ("接受
+  §11", session record; retro
+  `docs/retros/2026-08-28-research-v53-xs-momentum-retest.md` documents the
+  first application). Protocols frozen from this date may adopt the
+  class-adaptive breadth gate; protocols frozen earlier remain governed by
+  the fixed floor they froze with. Operationalized in
+  `apps/ops/research_xs_portfolio.py` (the permutation null also returns the
+  null distribution's positive-month median); timing-null harnesses adopt
+  the same pattern when a protocol needs it.
 
 Motivation (two independent outcomes, not one candidate's appeal): the fixed
 `positive months ≥ 50% of window months` gate implicitly assumes an

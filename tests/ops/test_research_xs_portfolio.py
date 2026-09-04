@@ -7,10 +7,12 @@ import pandas as pd
 import pytest
 
 from apps.ops import research_protocol_v52 as contract
+from apps.ops import research_protocol_v53
 from apps.ops.research_xs_portfolio import (
     _rank_metric,
     _select_legs,
     apply_gates,
+    permutation_null_stats,
     permutation_p_value,
     run_portfolio,
     universe_coverage_errors,
@@ -123,6 +125,71 @@ def test_universe_coverage_errors_flag_gaps_and_minimum() -> None:
     universe, errors = universe_coverage_errors(gappy, contract, "2019-12-01", "2020-03-31")
     assert "S03USDT" not in universe
     assert any("below minimum" in e for e in errors)  # 11 < 12
+
+
+def test_v53_contract_is_valid_retest_with_new_identity_and_adaptive_gate() -> None:
+    assert research_protocol_v53.validate_contract() == []
+    assert research_protocol_v53.contract_sha256() == research_protocol_v53.contract_sha256()
+    assert list(research_protocol_v53.IDENTITIES) == ["xs_mom_30d"]
+    # rule content identical to the dead v52 identity; identity strings disjoint
+    assert (
+        research_protocol_v53.PARAMETERS["ranking"]["xs_mom_30d"]
+        == contract.PARAMETERS["ranking"]["xs_mom_30d"]
+    )
+    assert (
+        research_protocol_v53.PARAMETERS["lookbacks_days"]["xs_mom_30d"]
+        == contract.PARAMETERS["lookbacks_days"]["xs_mom_30d"]
+    )
+    v52_ids = {v for pair in contract.IDENTITIES.values() for v in pair}
+    v53_ids = {v for pair in research_protocol_v53.IDENTITIES.values() for v in pair}
+    assert v52_ids.isdisjoint(v53_ids)
+    assert research_protocol_v53.SYMBOL_POOL == contract.SYMBOL_POOL
+    for stage in ("development", "confirmation"):
+        assert (
+            research_protocol_v53.GATES_V2[stage]["months_breadth_rule"] == "adaptive_null_median"
+        )
+    assert research_protocol_v53.BOUNDARIES["conditional_retest_of_v52_development_window"]
+
+
+def test_permutation_null_stats_reports_breadth_median() -> None:
+    rng = np.random.default_rng(9)
+    dates = pd.date_range("2019-12-01", "2020-06-30", freq="D", tz="UTC")
+    data = {symbol: 100.0 * np.cumprod(1.0 + rng.normal(0, 0.02, len(dates))) for symbol in SYMBOLS}
+    closes = pd.DataFrame(data, index=dates)
+    stats_a = permutation_null_stats(
+        closes, contract, "xs_mom_30d", "2020-01-01", "2020-06-30", 1.0, n_trials=300, seed=5
+    )
+    stats_b = permutation_null_stats(
+        closes, contract, "xs_mom_30d", "2020-01-01", "2020-06-30", 1.0, n_trials=300, seed=5
+    )
+    assert stats_a == stats_b
+    assert 0.0 <= stats_a["null_months_positive_median"] <= 6.0  # six-month window
+    assert stats_a["p_value"] == permutation_p_value(
+        closes, contract, "xs_mom_30d", "2020-01-01", "2020-06-30", 1.0, n_trials=300, seed=5
+    )
+
+
+def test_apply_gates_adaptive_breadth_branch() -> None:
+    candidate = {
+        "base_net_pnl": 50.0,
+        "stress_net_pnl": 40.0,
+        "positive_years": 2,
+        "positive_months": 17,
+        "closed_leg_positions": 120,
+        "leave_best_leg_base_net_pnl": 5.0,
+        "net_exposure_fraction": 0.0,
+    }
+    gates = research_protocol_v53.GATES_V2["confirmation"]
+    passing = apply_gates(gates, candidate, 80.0, 0.02, null_months_median=15.0)
+    assert passing["checks"]["months_breadth"] is True and passing["pass_gates"] is True
+    assert passing["months_breadth_rule"] == "adaptive_null_median"
+    assert passing["months_breadth_threshold"] == 15.0
+    assert passing["fixed_floor_reference"] == 18
+    # "exceed" is strict: equal to the null median fails
+    at_median = apply_gates(gates, candidate, 80.0, 0.02, null_months_median=17.0)
+    assert at_median["checks"]["months_breadth"] is False
+    with pytest.raises(ValueError, match="null months median"):
+        apply_gates(gates, candidate, 80.0, 0.02)
 
 
 def test_apply_gates_requires_all_checks() -> None:

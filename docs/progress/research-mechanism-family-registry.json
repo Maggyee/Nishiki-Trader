@@ -1401,6 +1401,20 @@
           "outcome": "development_rejected"
         }
       ]
+    },
+    {
+      "protocol": 53,
+      "default_family": "cross_sectional_relative",
+      "mechanism": "30d cross-sectional momentum re-test under the accepted ADR-014 \u00a711 class-adaptive breadth gate; unchanged v52 rule content, new identity; conditional re-test (v52 development window already opened; 2023-2025 confirmation never fetched)",
+      "candidates": [
+        {
+          "key": "xs_mom_30d",
+          "source": "rule_crypto_xs_momentum_ls_v2",
+          "model_version": "crypto-xs-mom30d-top3-bottom3-weekly-v2",
+          "family": "cross_sectional_relative",
+          "outcome": "pre_registered"
+        }
+      ]
     }
   ],
   "legacy_candidates": [
@@ -1534,10 +1548,10 @@
     }
   ],
   "totals": {
-    "protocol_count": 51,
+    "protocol_count": 52,
     "legacy_candidate_count": 16,
-    "candidate_rows": 156,
-    "unique_identities": 153,
+    "candidate_rows": 157,
+    "unique_identities": 154,
     "unique_identities_pnl_opened": 115,
     "unique_identities_provider_blocked": 36,
     "survivors_paper_shadow": 10,

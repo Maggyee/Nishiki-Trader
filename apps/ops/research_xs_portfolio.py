@@ -378,7 +378,7 @@ def run_portfolio(
 # ---------------------------------------------------------------------------
 
 
-def permutation_p_value(
+def permutation_null_stats(
     closes: pd.DataFrame,
     contract: ModuleType,
     key: str,
@@ -388,8 +388,12 @@ def permutation_p_value(
     *,
     n_trials: int | None = None,
     seed: int | None = None,
-) -> float:
-    """Random-ranking null with identical calendar, universe, legs, and costs."""
+) -> dict[str, float]:
+    """Random-ranking null with identical calendar, universe, legs, and costs.
+
+    Returns the base-PnL p-value AND the null distribution's positive-month
+    median, which drives the ADR-014 §11 class-adaptive breadth gate.
+    """
     params = contract.PARAMETERS
     k = int(params["legs_per_side"])
     notional = float(params["leg_notional_usdt"])
@@ -412,6 +416,14 @@ def permutation_p_value(
     )
     checkpoints = rebalances + [end_pos]
 
+    month_codes = closes.index.tz_localize(None).to_period("M").asi8
+    window_mask = (closes.index >= pd.Timestamp(start, tz="UTC")) & (
+        closes.index <= pd.Timestamp(end, tz="UTC") + pd.Timedelta(hours=23)
+    )
+    window_months = np.unique(month_codes[window_mask])
+    month_col = {code: i for i, code in enumerate(window_months)}
+    month_pnl = np.zeros((trials, len(window_months)))
+
     totals = np.zeros(trials)
     weights = np.zeros((trials, n_sym))
     for idx, pos in enumerate(rebalances):
@@ -430,15 +442,45 @@ def permutation_p_value(
         # |new - old| counts a side flip (+1 -> -1) as two fills, matching the replay
         fills = np.abs(new_weights - weights).sum(axis=1)
         totals -= fills * notional * base_fee
+        month_pnl[:, month_col[month_codes[pos]]] -= fills * notional * base_fee
         weights = new_weights
         next_pos = checkpoints[idx + 1]
         segment = returns[pos + 1 : next_pos + 1]
         if segment.size:
             seg = np.nan_to_num(segment, nan=0.0)
-            totals += (weights @ seg.sum(axis=0)) * notional
-    totals -= np.abs(weights).sum(axis=1) * notional * base_fee  # final close
+            seg_codes = month_codes[pos + 1 : next_pos + 1]
+            boundaries = np.flatnonzero(np.diff(seg_codes)) + 1
+            chunk_starts = np.concatenate([[0], boundaries])
+            chunk_ends = np.concatenate([boundaries, [len(seg_codes)]])
+            for chunk_start, chunk_end in zip(chunk_starts, chunk_ends, strict=True):
+                contrib = (weights @ seg[chunk_start:chunk_end].sum(axis=0)) * notional
+                totals += contrib
+                month_pnl[:, month_col[seg_codes[chunk_start]]] += contrib
+    final_fee = np.abs(weights).sum(axis=1) * notional * base_fee
+    totals -= final_fee
+    month_pnl[:, month_col[month_codes[end_pos]]] -= final_fee
     exceed = int((totals >= candidate_base).sum())
-    return (1 + exceed) / (trials + 1)
+    return {
+        "p_value": (1 + exceed) / (trials + 1),
+        "null_months_positive_median": float(np.median((month_pnl > 0).sum(axis=1))),
+    }
+
+
+def permutation_p_value(
+    closes: pd.DataFrame,
+    contract: ModuleType,
+    key: str,
+    start: str,
+    end: str,
+    candidate_base: float,
+    *,
+    n_trials: int | None = None,
+    seed: int | None = None,
+) -> float:
+    """Backward-compatible wrapper returning only the base-PnL p-value."""
+    return permutation_null_stats(
+        closes, contract, key, start, end, candidate_base, n_trials=n_trials, seed=seed
+    )["p_value"]
 
 
 # ---------------------------------------------------------------------------
@@ -451,15 +493,26 @@ def apply_gates(
     candidate: dict[str, Any],
     btc_bh_pnl_100usdt: float,
     p_value: float,
+    *,
+    null_months_median: float | None = None,
 ) -> dict[str, Any]:
     benchmark_floor = candidate["net_exposure_fraction"] * btc_bh_pnl_100usdt
+    breadth_rule = stage_gates.get("months_breadth_rule", "fixed_floor")
+    if breadth_rule == "adaptive_null_median":
+        # ADR-014 §11: the candidate must EXCEED its own null's median breadth.
+        if null_months_median is None:
+            raise ValueError("adaptive breadth gate requires the null months median")
+        months_threshold: float = null_months_median
+        months_ok = candidate["positive_months"] > null_months_median
+    else:
+        months_threshold = stage_gates["positive_calendar_months_at_least"]
+        months_ok = candidate["positive_months"] >= months_threshold
     checks = {
         "base_net_pnl_positive": candidate["base_net_pnl"] > stage_gates["base_net_pnl_gt"],
         "stress_net_pnl_positive": candidate["stress_net_pnl"] > stage_gates["stress_net_pnl_gt"],
         "years_breadth": candidate["positive_years"]
         >= stage_gates["positive_calendar_years_at_least"],
-        "months_breadth": candidate["positive_months"]
-        >= stage_gates["positive_calendar_months_at_least"],
+        "months_breadth": months_ok,
         "activity_floor": candidate["closed_leg_positions"]
         >= stage_gates["closed_leg_positions_at_least"],
         "leave_best_positive": candidate["leave_best_leg_base_net_pnl"]
@@ -471,6 +524,9 @@ def apply_gates(
         "checks": checks,
         "benchmark_floor": benchmark_floor,
         "permutation_p_value": p_value,
+        "months_breadth_rule": breadth_rule,
+        "months_breadth_threshold": float(months_threshold),
+        "fixed_floor_reference": stage_gates["positive_calendar_months_at_least"],
         "pass_gates": all(checks.values()),
     }
 
@@ -515,14 +571,23 @@ def evaluate_stage(
         fingerprints = [_fingerprint(r) for r in replays]
         reproducible = fingerprints[0] == fingerprints[1]
         candidate = replays[0]
-        p_value = permutation_p_value(closes, contract, key, start, end, candidate["base_net_pnl"])
-        gate_result = apply_gates(contract.GATES_V2[stage], candidate, btc_bh, p_value)
+        null_stats = permutation_null_stats(
+            closes, contract, key, start, end, candidate["base_net_pnl"]
+        )
+        gate_result = apply_gates(
+            contract.GATES_V2[stage],
+            candidate,
+            btc_bh,
+            null_stats["p_value"],
+            null_months_median=null_stats["null_months_positive_median"],
+        )
         source, model_version = contract.IDENTITIES[key]
         results[key] = {
             "key": key,
             "source": source,
             "model_version": model_version,
             **candidate,
+            "null_months_positive_median": null_stats["null_months_positive_median"],
             "gates": gate_result,
             "duplicate_replays": 2,
             "reproducible": reproducible,
