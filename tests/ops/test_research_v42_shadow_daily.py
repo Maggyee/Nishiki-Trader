@@ -13,6 +13,7 @@ def test_research_v42_shadow_daily_structure(tmp_path: Path, monkeypatch) -> Non
     raw = "DATE,CLOSE\n" + "\n".join(f"{start + timedelta(days=i)},20" for i in range(601))
     envelope = {"payload_raw_base64": base64.b64encode(raw.encode()).decode(),
                 "vintage_id": "fixture", "snapshot_sha256": "sha256:" + "a" * 64}
+    (tmp_path / "snapshot.json").write_text(raw)
     monkeypatch.setattr(module, "fetch_and_snapshot_vix6m", lambda *a, **k: (tmp_path / "snapshot.json", envelope))
     raw_dir = tmp_path / "raw"
     factors_dir = tmp_path / "factors"
@@ -26,11 +27,12 @@ def test_research_v42_shadow_daily_structure(tmp_path: Path, monkeypatch) -> Non
         signal_store_path=signal_store,
         state_file=state_file,
         status_file=status_file,
+        git_state={"dirty": False, "origin_main_contains_commit": True},
     )
-    assert result["schema_version"] == "research.protocol.v42.paper_shadow_status.v1"
+    assert result["schema_version"] == "research.shadow.runtime.v2"
     assert result["strategy"] == "vix6m_relief"
     assert result["health"] == "HEALTHY"
-    assert result["total_days_collected"] == 1
+    assert result["qualified_day_count"] == 1
     assert status_file.exists()
-    assert state_file.exists()
+    assert (tmp_path / "runtime-state.json").exists()
     assert signal_store.exists()

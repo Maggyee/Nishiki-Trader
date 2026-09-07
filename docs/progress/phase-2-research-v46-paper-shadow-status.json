@@ -5,10 +5,10 @@
     "touches_live_path": false
   },
   "candidate": "btc_prem_diff5_negative",
-  "evaluated_at": "2026-09-04T04:00:19.778702Z",
-  "last_snapshot_sha256": "sha256:442e281b985e433ce2603e126ce5f7e05ef83ab1c5ab1832b7d1a9f01d5b8e1c",
+  "evaluated_at": "2026-09-07T04:00:23.158435Z",
+  "last_snapshot_sha256": "sha256:74caa7ad4c279491b2a53a02e85d36421f4ab37674e43430a8198794dae4fd22",
   "model_version": "crypto-btc-prem-diff5-negative-lag1d-v1",
-  "qualified_runs": 20,
+  "qualified_runs": 23,
   "schema_version": "research.protocol.v46.paper_shadow_status.v1",
   "signal_store_path": "data/research-v46/shadow/signals.db",
   "source": "rule_crypto_prem_relief_v1",

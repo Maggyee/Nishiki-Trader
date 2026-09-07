@@ -28,6 +28,11 @@ import pandas as pd
 
 from apps.bridge.store import SignalStore
 from apps.ops.research_protocol_v16 import IDENTITIES, PARAMETERS
+from apps.ops.research_shadow_runtime import (
+    atomic_json,
+    captured_btc_observations,
+    summarize_qualified,
+)
 from apps.ops.research_v8_shadow_daily import (
     _git_state,
     _merge_observations,
@@ -340,42 +345,9 @@ def _factor_frame(
 def summarize_attempts(
     records: list[dict[str, Any]], *, gate_days: int, gate_signals: int
 ) -> dict[str, Any]:
-    qualified_dates = sorted(
-        {row["collection_date"] for row in records if row.get("qualified_day")}
-    )
-    signal_ids = sorted(
-        {
-            signal_id
-            for row in records
-            if row.get("qualified_day")
-            for signal_id in row.get("new_forward_signal_ids", [])
-        }
-    )
-    anomalies = sorted(
-        {
-            blocker
-            for row in records
-            for blocker in row.get("blockers", [])
-            if blocker
-        }
-    )
-    threshold_met = len(qualified_dates) >= gate_days or len(signal_ids) >= gate_signals
-    return {
-        "schema_version": STATUS_SCHEMA_VERSION,
-        "attempt_count": len(records),
-        "qualified_collection_dates": qualified_dates,
-        "qualified_day_count": len(qualified_dates),
-        "new_forward_signal_ids": signal_ids,
-        "new_forward_signal_count": len(signal_ids),
-        "gate": {"days": gate_days, "signals": gate_signals, "operator": "or"},
-        "threshold_met": threshold_met,
-        "review_eligible": threshold_met and not anomalies,
-        "automatic_paper_simulated_authorization": False,
-        "anomaly_blockers": anomalies,
-        "next_action": "human_paper_simulated_review"
-        if threshold_met and not anomalies
-        else "continue_paper_shadow_collection",
-    }
+    status = summarize_qualified(records, gate_days=gate_days, gate_signals=gate_signals)
+    status.update(schema_version=STATUS_SCHEMA_VERSION, automatic_paper_simulated_authorization=False)
+    return status
 
 
 def collect_daily(
@@ -447,6 +419,7 @@ def collect_daily(
         previous_btc = (
             _strict_json(btc_state_path.read_bytes()) if btc_state_path.exists() else {}
         )
+        previous_btc = captured_btc_observations(previous_btc, journal_dir)
         current_btc = {str(row["open_time_ms"]): row for row in btc_bars}
         merged_btc, btc_revisions, new_btc_rows = _merge_observations(
             previous_btc, current_btc
@@ -608,9 +581,7 @@ def collect_daily(
                 "live_status": "blocked",
             }
         )
-        (data_root / "status.json").write_text(
-            json.dumps(status, indent=2, sort_keys=True) + "\n"
-        )
+        atomic_json(data_root / "status.json", status)
         return {"record": record, "status": status}
 
 

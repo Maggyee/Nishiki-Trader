@@ -13,6 +13,12 @@ project review. Batch 1 isolates Postgres integration tests and makes portfolio
 input failures explicit. Batch 2 corrects collector qualification and runtime
 state ownership. Batch 3 refreshes portfolio diagnostics and current guidance.
 
+Batch 2 implementation is verified: all ten collectors use runtime-only status;
+v40/v42/v46/v48 now count distinct dates with fresh observations, not invocations.
+Strict collectors can recover hash-verified retained BTC captures without granting
+qualification to failed historical attempts. Deployment pins the existing ten cron
+entries to a clean pushed revision; schedules and research identities are unchanged.
+
 ## Milestones
 
 - SignalEvent v1 bridge, Nautilus backtests, paper/testnet risk and audit paths exist.
@@ -55,9 +61,13 @@ state ownership. Batch 3 refreshes portfolio diagnostics and current guidance.
   Targeted isolation/monitor tests: 15 passed and 12 skipped without a test DSN.
 - CI template is retained in `infra/ci/`; GitHub denied workflow creation because
   the current OAuth credential lacks `workflow` scope. Online CI is not enabled.
+- Batch 2: 1,638 offline tests passed; 12 Postgres tests deselected. Historical
+  BTC capture reconstruction found no hourly gaps for the six strict collectors.
+  Live provider smoke checks and deployment are pending the clean pushed commit.
 
 ## References
 
+- [Shadow collector runtime and deployment](../infra/research-shadow/README.md).
 - [Research rules](decisions/014-research-program-v2.md) and [warnings](research-program-warnings.md).
 - [Research registry](progress/research-mechanism-family-registry.json).
 - [Historical meta-analysis v1](progress/research-program-meta-analysis-v1.md).

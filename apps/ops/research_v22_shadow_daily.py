@@ -18,6 +18,11 @@ import pandas as pd
 
 from apps.bridge.store import SignalStore
 from apps.ops.research_protocol_v22 import IDENTITIES
+from apps.ops.research_shadow_runtime import (
+    atomic_json,
+    captured_btc_observations,
+    summarize_qualified,
+)
 from apps.ops.research_v8_shadow_daily import _merge_observations, _parse_btc_bars
 from apps.ops.research_v22_snapshot import collect_snapshot, parse_and_audit_csv
 from apps.strategies_freqtrade.research.option_surface_signals import (
@@ -146,29 +151,8 @@ def _factor_frame(rows: list[dict[str, Any]], *, vintage_id: str, snapshot_sha25
 
 
 def summarize_attempts(records: list[dict[str, Any]], *, gate_days: int, gate_signals: int) -> dict[str, Any]:
-    qualified_dates = sorted({row["collection_date"] for row in records if row["qualified_day"]})
-    anomaly_blockers = sorted(
-        {blocker for row in records for blocker in row.get("blockers", []) if blocker}
-    )
-    forward_ids = {
-        signal_id for row in records for signal_id in row.get("new_forward_signal_ids", [])
-    }
-    threshold_met = len(qualified_dates) >= gate_days or len(forward_ids) >= gate_signals
-    return {
-        "schema_version": STATUS_SCHEMA_VERSION,
-        "attempt_count": len(records),
-        "qualified_collection_dates": qualified_dates,
-        "qualified_day_count": len(qualified_dates),
-        "new_forward_signal_count": len(forward_ids),
-        "new_forward_signal_ids": sorted(forward_ids),
-        "gate": {"days": gate_days, "signals": gate_signals, "operator": "or"},
-        "threshold_met": threshold_met,
-        "review_eligible": threshold_met and not anomaly_blockers,
-        "anomaly_blockers": anomaly_blockers,
-        "next_action": "human_paper_simulated_review"
-        if threshold_met and not anomaly_blockers
-        else "continue_paper_shadow_collection",
-    }
+    return {"schema_version": STATUS_SCHEMA_VERSION, **summarize_qualified(records, gate_days=gate_days, gate_signals=gate_signals)}
+
 
 
 def collect_daily(
@@ -216,7 +200,7 @@ def collect_daily(
         merged_cor1m, cor1m_revisions, new_cor1m_rows = _merge_observations(previous_cor1m, current_cor1m)
 
         btc_state_path = state_dir / "btc-hourly-observations.json"
-        previous_btc = _load_state(btc_state_path)
+        previous_btc = captured_btc_observations(_load_state(btc_state_path), journal_dir)
         current_btc = {str(row["open_time_ms"]): row for row in btc_bars}
         merged_btc, btc_revisions, new_btc_rows = _merge_observations(previous_btc, current_btc)
         btc_opens = sorted(int(value) for value in merged_btc)
@@ -250,7 +234,7 @@ def collect_daily(
             for event in events
             if event.ts_event >= forward_start_ns and event.signal_id not in existing_ids
         ]
-        written, duplicates = store.write_many(events, now_ns=int(observed_at.timestamp() * 1e9))
+        written = duplicates = 0
 
         last_cor1m_date = date.fromisoformat(cor1m_audit["last_date"])
         cor1m_age_days = (observed_at.date() - last_cor1m_date).days
@@ -270,6 +254,11 @@ def collect_daily(
             blockers.append("btc_hourly_gap")
         if len(btc_bars) < lookback:
             blockers.append(f"btc_insufficient_closed_bars:{len(btc_bars)}")
+
+        if not blockers:
+            written, duplicates = store.write_many(events, now_ns=int(observed_at.timestamp() * 1e9))
+        else:
+            new_forward = []
 
         record = {
             "schema_version": SCHEMA_VERSION,
@@ -353,12 +342,7 @@ def collect_daily(
                 "live_status": "blocked",
             }
         )
-        (data_root / "status.json").write_text(
-            json.dumps(status, indent=2, sort_keys=True) + "\n"
-        )
-        status_doc = Path("docs/progress/phase-2-research-v22-paper-shadow-status.json")
-        if status_doc.parent.exists():
-            status_doc.write_text(json.dumps(status, indent=2, sort_keys=True) + "\n")
+        atomic_json(data_root / "status.json", status)
         return {"record": record, "status": status}
 
 

@@ -1,13 +1,13 @@
 {
   "health": "HEALTHY",
-  "last_observation_date": "2026-09-03",
-  "last_run_at": "2026-09-04T03:45:03.377862Z",
-  "latest_factor_sha256": "sha256:30dc4ad07761699c03f5ee3ea651df12384593950fa912896d8a25b4a62b2ca9",
-  "latest_snapshot_sha256": "sha256:c67ffd39e3c16929d7f5e476547edcf422b0a899f415deb96c533d1b34db0f72",
+  "last_observation_date": "2026-09-04",
+  "last_run_at": "2026-09-07T03:45:03.517427Z",
+  "latest_factor_sha256": "sha256:1dcd0541b0813aa78aadcc11706c1963d88bbf8cf74f71273f34cec7f46d126a",
+  "latest_snapshot_sha256": "sha256:8d958c8ea18757bc3bc142b4332c227b4cb1c6d30f9a05bdbad1e278963d66d9",
   "model_version": "cboe-vix6m-diff5-negative-lag1d-v1",
   "schema_version": "research.protocol.v42.paper_shadow_status.v1",
   "source": "rule_cboe_vix6m_relief_v1",
   "strategy": "vix6m_relief",
-  "total_days_collected": 17,
-  "total_signals_stored": 27
+  "total_days_collected": 18,
+  "total_signals_stored": 28
 }

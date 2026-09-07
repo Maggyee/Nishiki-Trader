@@ -10,10 +10,10 @@ from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from apps.bridge.store import SignalStore
+from apps.ops.research_forward_archives import snapshot_forward
+from apps.ops.research_shadow_runtime import run_forward_series
 from apps.ops.research_v46_snapshot import (
     compute_factors,
-    fetch_premium_daily_range,
 )
 from apps.strategies_freqtrade.research.crypto_premium_standard_signals import (
     generate_premium_standard_signals,
@@ -28,7 +28,7 @@ RAW_DIR = Path("data/research-v46/shadow/raw")
 FACTORS_DIR = Path("data/research-v46/shadow/factors")
 SIGNAL_STORE_PATH = Path("data/research-v46/shadow/signals.db")
 STATE_FILE = Path("data/research-v46/shadow/state.json")
-STATUS_FILE = Path("docs/progress/phase-2-research-v46-paper-shadow-status.json")
+STATUS_FILE = Path("data/research-v46/shadow/status.json")
 
 
 def _sha256(path: Path) -> str:
@@ -36,30 +36,7 @@ def _sha256(path: Path) -> str:
 
 
 def fetch_and_snapshot_premium(output_dir: Path) -> tuple[Path, dict[str, Any], list[dict[str, Any]]]:
-    output_dir.mkdir(parents=True, exist_ok=True)
-    current_year = datetime.now(UTC).year
-    years = list(range(2020, current_year + 1))
-    rows = fetch_premium_daily_range(years=years)
-    if not rows:
-        raise ValueError("failed to fetch premium rows")
-
-    observed_at = datetime.now(UTC)
-    envelope = {
-        "schema_version": "research.v46.snapshot.v1",
-        "observed_at": observed_at.isoformat().replace("+00:00", "Z"),
-        "premium_row_count": len(rows),
-        "premium_rows": rows,
-    }
-    serialized = json.dumps(envelope, sort_keys=True, separators=(",", ":")).encode("utf-8")
-    digest = hashlib.sha256(serialized).hexdigest()
-    snapshot_sha = f"sha256:{digest}"
-    vintage_id = f"binance-vision-btc-prem:{observed_at.isoformat()}:{digest[:12]}"
-    envelope["vintage_id"] = vintage_id
-    envelope["snapshot_sha256"] = snapshot_sha
-
-    snapshot_path = output_dir / f"binance-vision-btc-prem-{observed_at.strftime('%Y%m%dT%H%M%SZ')}-{digest[:12]}.json"
-    snapshot_path.write_text(json.dumps(envelope, indent=2, sort_keys=True) + "\n")
-    return snapshot_path, envelope, rows
+    return snapshot_forward("premium", output_dir)
 
 
 def generate_shadow_factor_csv(
@@ -103,77 +80,23 @@ def generate_shadow_factor_csv(
 
 
 def run_daily_shadow_collection(
-    raw_dir: Path = RAW_DIR,
-    factors_dir: Path = FACTORS_DIR,
-    signal_store_path: Path = SIGNAL_STORE_PATH,
-    state_file: Path = STATE_FILE,
-    status_file: Path = STATUS_FILE,
+    raw_dir: Path = RAW_DIR, factors_dir: Path = FACTORS_DIR,
+    signal_store_path: Path = SIGNAL_STORE_PATH, state_file: Path = STATE_FILE,
+    status_file: Path = STATUS_FILE, *, now: datetime | None = None, git_state: dict | None = None,
 ) -> dict[str, Any]:
-    snapshot_path, envelope, rows = fetch_and_snapshot_premium(raw_dir)
-    vintage_id = envelope["vintage_id"]
-    snapshot_sha = envelope["snapshot_sha256"]
+    def fetch_rows(directory):
+        return fetch_and_snapshot_premium(directory)
 
-    factor_path = factors_dir / f"{CANDIDATE}_shadow.csv"
-    generate_shadow_factor_csv(rows, vintage_id, snapshot_sha, factor_path)
+    def build_events(rows, envelope, path):
+        generate_shadow_factor_csv(rows, envelope["vintage_id"], envelope["snapshot_sha256"], path)
+        return generate_premium_standard_signals(load_point_in_time_csv(path), candidate=CANDIDATE,
+            start_date="2026-01-01", end_date=(date.fromisoformat(rows[-1]["date"]) + timedelta(days=1)).isoformat())
 
-    factors_df = load_point_in_time_csv(factor_path)
-    events = generate_premium_standard_signals(
-        factors_df,
-        candidate=CANDIDATE,
-        start_date="2026-01-01",
-        end_date="2026-12-31",
-    )
-
-    signal_store_path.parent.mkdir(parents=True, exist_ok=True)
-    store = SignalStore(signal_store_path)
-    written, duplicates = store.write_many(events)
-
-    source = "rule_crypto_prem_relief_v1"
-    model = "crypto-btc-prem-diff5-negative-lag1d-v1"
-    total_signals = len(list(store.replay(source=source, model_version=model)))
-
-    state: dict[str, Any] = {}
-    if state_file.exists():
-        state = json.loads(state_file.read_text())
-    run_history = state.get("run_history", [])
-    run_history.append(
-        {
-            "collected_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
-            "snapshot_path": str(snapshot_path),
-            "snapshot_sha256": snapshot_sha,
-            "signals_written": written,
-            "signals_duplicates": duplicates,
-            "total_signals_stored": total_signals,
-        }
-    )
-    state["candidate"] = CANDIDATE
-    state["source"] = source
-    state["model_version"] = model
-    state["last_run_at"] = datetime.now(UTC).isoformat().replace("+00:00", "Z")
-    state["qualified_runs"] = len(run_history)
-    state["run_history"] = run_history
-    state_file.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n")
-
-    status = {
-        "schema_version": SCHEMA_VERSION,
-        "candidate": CANDIDATE,
-        "source": source,
-        "model_version": model,
-        "evaluated_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
-        "status": "HEALTHY",
-        "qualified_runs": len(run_history),
-        "target_runs": 7,
-        "total_signals_stored": total_signals,
-        "last_snapshot_sha256": snapshot_sha,
-        "signal_store_path": str(signal_store_path),
-        "boundaries": {
-            "loads_credentials": False,
-            "mutates_source_policy": False,
-            "touches_live_path": False,
-        },
-    }
-    status_file.write_text(json.dumps(status, indent=2, sort_keys=True) + "\n")
-    return status
+    return run_forward_series(protocol="v46", candidate=CANDIDATE,
+        source="rule_crypto_prem_relief_v1", model="crypto-btc-prem-diff5-negative-lag1d-v1",
+        fetch_snapshot=fetch_rows, build_events=build_events, raw_dir=raw_dir,
+        factors_dir=factors_dir, signal_store_path=signal_store_path,
+        state_file=state_file, status_file=status_file, max_age_days=2, now=now, git_state=git_state)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -193,7 +116,7 @@ def main(argv: list[str] | None = None) -> int:
         status_file=args.status_file,
     )
     print(json.dumps(status, indent=2, sort_keys=True))
-    return 0
+    return 0 if status["health"] == "HEALTHY" else 2
 
 
 if __name__ == "__main__":

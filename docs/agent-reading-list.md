@@ -22,6 +22,10 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For current shadow-collector operations, read `infra/research-shadow/README.md`
+and `apps/ops/research_shadow_runtime.py` first. Tracked paper-shadow status files
+are historical snapshots, not current runtime health or qualification evidence.
+
 | Task area | Read |
 |---|---|
 | Project status, next step, or handoff | `docs/project-status.md`, `git status --short --branch`, `git fetch origin`, `git pull --ff-only`, `git log --oneline --decorate -5` |

@@ -3,7 +3,7 @@
     "btc_hourly_gap",
     "git_dirty"
   ],
-  "attempt_count": 11,
+  "attempt_count": 12,
   "contract_sha256": "sha256:8e76aa612f3ee8a50e5621ce7d73dc13b70ed1eecb174fe337c552112efaeddf",
   "future_blind_status": "sealed_unopened",
   "gate": {
@@ -11,7 +11,7 @@
     "operator": "or",
     "signals": 50
   },
-  "latest_attempt_id": "20260904T043002Z-165c902ec1e2",
+  "latest_attempt_id": "20260907T043002Z-7a3d597cd07f",
   "live_status": "blocked",
   "new_forward_signal_count": 0,
   "new_forward_signal_ids": [],
@@ -32,5 +32,5 @@
   "stage": "paper_shadow",
   "testnet_status": "blocked",
   "threshold_met": false,
-  "updated_at": "2026-09-04T04:30:02.283010Z"
+  "updated_at": "2026-09-07T04:30:02.507147Z"
 }
