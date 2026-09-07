@@ -41,14 +41,14 @@ def test_captured_btc_recovery_preserves_failed_attempt(tmp_path):
         captured_btc_observations({}, journal)
 
 
-def run_fixture(tmp_path, *, now, rows):
+def run_fixture(tmp_path, *, now, rows, protocol="v46"):
     snapshot = tmp_path / "snapshot.json"
     snapshot.write_text(json.dumps(rows))
     def events(rows, envelope, path):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("fixture")
         return []
-    return run_forward_series(protocol="v46", candidate="fixture", source="fixture", model="v1",
+    return run_forward_series(protocol=protocol, candidate="fixture", source="fixture", model="v1",
         fetch_snapshot=lambda _: (snapshot, {}, rows), build_events=events,
         raw_dir=tmp_path / "raw", factors_dir=tmp_path / "factors", signal_store_path=tmp_path / "signals.db",
         state_file=tmp_path / "state.json", status_file=tmp_path / "status.json", max_age_days=2, now=now,
@@ -74,3 +74,11 @@ def test_revision_does_not_advance_or_replace_state(tmp_path):
     result = run_fixture(tmp_path, now=now+timedelta(days=1), rows=[{"date": "2026-09-06", "value": 2.0}])
     assert result["health"] == "DEGRADED"
     assert (tmp_path / "runtime-state.json").read_bytes() == before
+
+
+def test_old_cboe_closure_does_not_block_current_factor_window(tmp_path):
+    rows = [{"date": "2012-10-26", "value": 1.0}, {"date": "2012-10-31", "value": 1.0},
+            {"date": "2026-09-06", "value": 1.0}]
+    result = run_fixture(tmp_path, now=datetime(2026,9,7,tzinfo=UTC), rows=rows, protocol="v40")
+    assert result["qualified_day_count"] == 1
+    assert result["latest_blockers"] == []

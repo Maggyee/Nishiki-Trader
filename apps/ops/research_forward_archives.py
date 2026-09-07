@@ -52,6 +52,28 @@ def verified_archive(url: str, cache: Path, *, fetch=_fetch) -> bytes:
     return raw
 
 
+def _parse_archive(raw: bytes, first: date, end: date) -> dict:
+    parsed = {}
+    with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+        names = [n for n in archive.namelist() if n.endswith(".csv")]
+        if len(names) != 1:
+            raise ValueError("expected one CSV per official archive")
+        for row in csv.reader(io.StringIO(archive.read(names[0]).decode())):
+            if not row or row[0] == "open_time":
+                continue
+            timestamp = int(row[0])
+            seconds = timestamp / (1e6 if timestamp >= 10**15 else 1e3)
+            stamp = datetime.fromtimestamp(seconds, UTC)
+            d = stamp.date()
+            value = float(row[4])
+            if stamp.time() != datetime.min.time() or not first <= d < end:
+                raise ValueError("archive contains off-grid or out-of-window row")
+            if not math.isfinite(value) or d.isoformat() in parsed:
+                raise ValueError("invalid or duplicate archive observation")
+            parsed[d.isoformat()] = value
+    return parsed
+
+
 def series_rows(kind: str, cache: Path, *, now: datetime, fetch=_fetch) -> list[dict]:
     # Warmup for unchanged signals beginning 2026-01-01, not a new research window.
     start = date(2025, 11, 1)
@@ -77,27 +99,17 @@ def series_rows(kind: str, cache: Path, *, now: datetime, fetch=_fetch) -> list[
             if exc.code == 404 and first == now.date() - timedelta(days=1):
                 continue
             raise
-        parsed = {}
-        with zipfile.ZipFile(io.BytesIO(raw)) as archive:
-            names = [n for n in archive.namelist() if n.endswith(".csv")]
-            if len(names) != 1:
-                raise ValueError("expected one CSV per official archive")
-            for row in csv.reader(io.StringIO(archive.read(names[0]).decode())):
-                if not row or row[0] == "open_time":
-                    continue
-                timestamp = int(row[0])
-                seconds = timestamp / (1e6 if timestamp >= 10**15 else 1e3)
-                stamp = datetime.fromtimestamp(seconds, UTC)
-                d = stamp.date()
-                value = float(row[4])
-                if stamp.time() != datetime.min.time() or not first <= d < end:
-                    raise ValueError("archive contains off-grid or out-of-window row")
-                if not math.isfinite(value) or d.isoformat() in parsed:
-                    raise ValueError("invalid or duplicate archive observation")
-                parsed[d.isoformat()] = value
+        parsed = _parse_archive(raw, first, end)
         expected = {(first + timedelta(days=i)).isoformat() for i in range((end-first).days)}
+        if suffix.startswith("monthly/"):
+            for missing in sorted(expected - parsed.keys()):
+                day = date.fromisoformat(missing)
+                daily_url = ("https://data.binance.vision/data/futures/um/daily/" +
+                             f"{kind}/BTCUSDT/1d/BTCUSDT-1d-{missing}.zip")
+                body = verified_archive(daily_url, cache, fetch=fetch)
+                parsed.update(_parse_archive(body, day, day + timedelta(days=1)))
         if set(parsed) != expected:
-            raise ValueError("incomplete official archive")
+            raise ValueError(f"incomplete official archive: {suffix}; missing={sorted(expected - parsed.keys())}")
         result.update(parsed)
     return [{"date": d, "value": result[d]} for d in sorted(result)]
 

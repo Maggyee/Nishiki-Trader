@@ -169,7 +169,10 @@ def run_forward_series(*, protocol: str, candidate: str, source: str, model: str
                           new_observation_count=len(current.keys() - previous.keys()))
             if not 1 <= age <= max_age_days:
                 raise ValueError(f"stale_or_unclosed_observation:{age}_days")
-            gaps = [(b-a).days for a,b in zip(dates, dates[1:], strict=False)]
+            # Cboe factors consume only the last 90 days. Old market closures
+            # outside that window are not a current collection outage.
+            grid_dates = dates if protocol in {"v46", "v48"} else [d for d in dates if d >= dates[-1] - timedelta(days=90)]
+            gaps = [(b-a).days for a,b in zip(grid_dates, grid_dates[1:], strict=False)]
             if gaps and max(gaps) > (1 if protocol in {"v46", "v48"} else 4):
                 raise ValueError("observation_gap")
             if repo.get("dirty") is not False or repo.get("origin_main_contains_commit") is not True:

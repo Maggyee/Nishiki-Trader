@@ -25,6 +25,9 @@ Read these before any non-trivial work:
 For current shadow-collector operations, read `infra/research-shadow/README.md`
 and `apps/ops/research_shadow_runtime.py` first. Tracked paper-shadow status files
 are historical snapshots, not current runtime health or qualification evidence.
+For the current read-only portfolio surface, read `apps/ops/research_portfolio_snapshot.py`
+and `docs/progress/research-program-meta-analysis-v2.md`. The v2 meta report is a
+registry-context refresh of immutable v1 numbers, not a new numerical simulation.
 
 | Task area | Read |
 |---|---|

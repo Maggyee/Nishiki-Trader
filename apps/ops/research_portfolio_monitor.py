@@ -4,19 +4,18 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
 import sqlite3
 from contextlib import closing
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-import numpy as np
 import pandas as pd
 
 from apps.bridge.signal_event import SignalEvent
+from apps.ops.research_shadow_runtime import atomic_json
 
-SCHEMA_VERSION = "research.portfolio_shadow_monitor.v1"
+SCHEMA_VERSION = "research.portfolio_shadow_monitor.v2"
 DEFAULT_OUTPUT_JSON = Path("data/research-portfolio/status.json")
 DEFAULT_OUTPUT_MD = Path("data/research-portfolio/report.md")
 
@@ -89,7 +88,7 @@ CANDIDATE_SPECS: list[dict[str, Any]] = [
         "model_version": "cboe-vxn-diff5-negative-lag1d-v1",
         "status_path": Path("docs/progress/phase-2-research-v40-paper-shadow-status.json"),
         "db_path": Path("data/research-v40/shadow/signals.db"),
-        "crontab_schedule": "weekdays at 03:15 UTC (7d complete)",
+        "crontab_schedule": "weekdays at 03:15 UTC",
     },
     {
         "protocol": "v42",
@@ -99,7 +98,7 @@ CANDIDATE_SPECS: list[dict[str, Any]] = [
         "model_version": "cboe-vix6m-diff5-negative-lag1d-v1",
         "status_path": Path("docs/progress/phase-2-research-v42-paper-shadow-status.json"),
         "db_path": Path("data/research-v42/shadow/signals.db"),
-        "crontab_schedule": "weekdays at 03:45 UTC (7d complete)",
+        "crontab_schedule": "weekdays at 03:45 UTC",
     },
     {
         "protocol": "v46",
@@ -109,7 +108,7 @@ CANDIDATE_SPECS: list[dict[str, Any]] = [
         "model_version": "crypto-btc-prem-diff5-negative-lag1d-v1",
         "status_path": Path("docs/progress/phase-2-research-v46-paper-shadow-status.json"),
         "db_path": Path("data/research-v46/shadow/signals.db"),
-        "crontab_schedule": "daily at 04:00 UTC (8r complete)",
+        "crontab_schedule": "daily at 04:00 UTC",
     },
     {
         "protocol": "v48",
@@ -119,7 +118,7 @@ CANDIDATE_SPECS: list[dict[str, Any]] = [
         "model_version": "crypto-btc-basis-below-ma10-lag1d-v1",
         "status_path": Path("docs/progress/phase-2-research-v48-paper-shadow-status.json"),
         "db_path": Path("data/research-v48/shadow/signals.db"),
-        "crontab_schedule": "daily at 04:15 UTC (7r complete)",
+        "crontab_schedule": "daily at 04:15 UTC",
     },
 ]
 
@@ -162,6 +161,8 @@ def load_candidate_data(
             blockers.extend(reported_blockers)
         else:
             blockers.append("status_blockers_invalid")
+        if "health" in status_data and status_data["health"] != "HEALTHY":
+            blockers.append("collector_unhealthy")
         for field in ("source", "model_version"):
             if field in status_data and status_data[field] != spec[field]:
                 blockers.append(f"status_{field}_mismatch")
@@ -250,184 +251,110 @@ def load_candidate_data(
 
 
 def compute_portfolio_metrics(candidates: list[dict[str, Any]]) -> dict[str, Any]:
-    # Build a daily aligned signal panel
-    strategy_series: dict[str, pd.Series] = {}
-    for cand in candidates:
-        proto = cand["protocol"]
-        sigs = cand["signals"]
-        if not sigs:
+    """Sparse signal-arrival diagnostics, NOT holdings, returns or leverage.
+
+    A signal is not a fill. Missing events do not establish a flat position, and
+    holding state cannot be inferred across TTL/risk rejection/collector gaps.
+    """
+    series = {}
+    for candidate in candidates:
+        if not candidate["signals"]:
             continue
-        df = pd.DataFrame(sigs)
-        df["dt"] = pd.to_datetime(df["dt_utc"], utc=True)
-        df["date"] = df["dt"].dt.date
-        # Daily exposure: 1.0 for BUY, 0.0 for FLAT/SELL (last signal of the day)
-        daily = (
-            df.sort_values("dt")
-            .groupby("date")
-            .last()["side"]
-            .apply(lambda side: 1.0 if str(side).upper() == "BUY" else 0.0)
-        )
-        strategy_series[proto] = daily
-
-    if not strategy_series:
-        return {
-            "candidate_count": len(candidates),
-            "active_series_count": 0,
-            "correlation_matrix": {},
-            "overlap_matrix": {},
-            "portfolio_exposure_stats": {},
-        }
-
-    panel = pd.DataFrame(strategy_series).sort_index().fillna(0.0)
-    # Pairwise Pearson Correlation
-    corr_df = panel.corr().round(4).fillna(0.0)
-    corr_dict = {col: corr_df[col].to_dict() for col in corr_df.columns}
-
-    # Pairwise Overlap Rate (% of common days both active)
-    overlap_dict: dict[str, dict[str, float]] = {}
-    for c1 in panel.columns:
-        overlap_dict[c1] = {}
-        for c2 in panel.columns:
-            both = (panel[c1] > 0) & (panel[c2] > 0)
-            total = (panel[c1] > 0) | (panel[c2] > 0)
-            if total.sum() == 0:
-                overlap_dict[c1][c2] = 0.0
-            else:
-                overlap_dict[c1][c2] = round(float(both.sum() / total.sum()), 4)
-
-    # Portfolio simultaneous exposure (assuming 0.20 weight per active candidate)
-    concurrent_active = panel.sum(axis=1)
-    combined_exposure = concurrent_active * 0.20
-
-    active_counts_hist = {
-        int(k): int(v) for k, v in concurrent_active.value_counts().sort_index().items()
-    }
-
-    # Average off-diagonal correlation
-    n = len(corr_df)
-    off_diag = []
-    for i in range(n):
-        for j in range(i + 1, n):
-            val = corr_df.iloc[i, j]
-            if not math.isnan(val):
-                off_diag.append(val)
-    avg_off_diag_corr = float(np.mean(off_diag)) if off_diag else 0.0
-
-    return {
-        "candidate_count": len(candidates),
-        "active_series_count": len(strategy_series),
-        "total_days_observed": len(panel),
-        "first_observed_date": str(panel.index[0]) if len(panel) > 0 else None,
-        "last_observed_date": str(panel.index[-1]) if len(panel) > 0 else None,
-        "avg_cross_correlation": round(avg_off_diag_corr, 4),
-        "correlation_matrix": corr_dict,
-        "overlap_matrix": overlap_dict,
-        "portfolio_exposure_stats": {
-            "max_concurrent_active_strategies": int(concurrent_active.max())
-            if len(concurrent_active) > 0
-            else 0,
-            "mean_concurrent_active_strategies": round(float(concurrent_active.mean()), 2)
-            if len(concurrent_active) > 0
-            else 0.0,
-            "max_aggregate_leverage_multiplier": round(float(combined_exposure.max()), 2)
-            if len(combined_exposure) > 0
-            else 0.0,
-            "mean_aggregate_leverage_multiplier": round(float(combined_exposure.mean()), 2)
-            if len(combined_exposure) > 0
-            else 0.0,
-            "active_strategy_count_distribution": active_counts_hist,
+        frame = pd.DataFrame(candidate["signals"])
+        frame["day"] = pd.to_datetime(frame["dt_utc"], utc=True).dt.normalize()
+        daily = frame.sort_values("dt_utc").groupby("day").last()["side"]
+        series[candidate["protocol"]] = daily.map(
+            lambda side: 1.0 if str(side).upper() == "BUY" else 0.0)
+    metrics = {
+        "candidate_count": len(candidates), "active_series_count": len(series),
+        "metric_semantics": "last_signal_direction_on_joint_observed_days_only",
+        "missing_days_are_flat": False, "holding_state_inferred": False,
+        "correlation_matrix": {}, "overlap_matrix": {}, "pairwise_sample_days": {},
+        "portfolio_exposure_stats": {},
+        "portfolio_evaluation": {
+            "status": "unavailable", "actual_leverage": None,
+            "net_return": None, "drawdown": None, "cost_adjusted_alpha": None,
+            "blockers": ["verified_nautilus_fills_and_account_equity_not_attached"],
+            "future_blind_evaluated": False,
         },
+        "shared_mechanism_warnings": [
+            "v18 and v40 both use VXN; identities are not independent alpha sources",
+            "all ten shadow candidates target BTC long/flat; category labels do not diversify assets",
+        ],
+        "avg_cross_correlation": None,
     }
+    if not series:
+        return metrics
+    panel = pd.DataFrame(series).sort_index()
+    panel = panel.reindex(pd.date_range(panel.index.min(), panel.index.max(), freq="D"))
+    corr, overlaps, samples = {}, {}, {}
+    values = []
+    for left in panel:
+        corr[left], overlaps[left], samples[left] = {}, {}, {}
+        for right in panel:
+            valid = panel[left].notna() & panel[right].notna()
+            a, b = panel.loc[valid, left], panel.loc[valid, right]
+            count = len(a)
+            samples[left][right] = count
+            coefficient = float(a.corr(b)) if count >= 2 and a.nunique() > 1 and b.nunique() > 1 else None
+            corr[left][right] = round(coefficient, 4) if coefficient is not None else None
+            union = int(((a > 0) | (b > 0)).sum())
+            overlaps[left][right] = round(float(((a > 0) & (b > 0)).sum()) / union, 4) if union else None
+            if left < right and coefficient is not None:
+                values.append(coefficient)
+    metrics.update(
+        total_days_observed=len(panel), first_observed_date=str(panel.index[0].date()),
+        last_observed_date=str(panel.index[-1].date()),
+        observed_signal_days={key: int(panel[key].notna().sum()) for key in panel},
+        missing_signal_days={key: int(panel[key].isna().sum()) for key in panel},
+        correlation_matrix=corr, overlap_matrix=overlaps, pairwise_sample_days=samples,
+        avg_cross_correlation=round(sum(values) / len(values), 4) if values else None,
+    )
+    return metrics
 
 
 def generate_portfolio_markdown_report(
     candidates: list[dict[str, Any]], metrics: dict[str, Any]
 ) -> str:
-    now_utc = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
     lines = [
-        "# Phase 5 Multi-Candidate Forward Paper-Shadow Portfolio Report",
-        "",
-        f"- **Generated at**: {now_utc}",
-        f"- **Total Candidates Tracked**: {len(candidates)}",
-        f"- **Active Shadow Data Streams**: {metrics.get('active_series_count', 0)}",
-        f"- **Overall Average Correlation**: {metrics.get('avg_cross_correlation', 0.0):.4f}",
-        "",
-        "## 1. Candidate Roster & Progress",
-        "",
-        "| Protocol | Strategy / Model | Category | Gate Progress | Signals (Buy / Flat) | Shadow Status |",
-        "| :--- | :--- | :--- | :--- | :--- | :--- |",
+        "# Phase 5 Multi-Candidate Forward Paper-Shadow Portfolio Report", "",
+        f"- Generated at: {datetime.now(UTC).isoformat()}",
+        "- Signal arrival diagnostics only; no holdings, leverage or alpha inferred.",
+        "- Missing days and undefined correlations remain unknown, never zero.", "",
+        "## 1. Candidate Roster & Progress", "",
+        "| Protocol | Qualified days | Latest observation | Last qualified | Review eligible | Blockers |",
+        "| --- | --- | --- | --- | --- | --- |",
     ]
-
     for c in candidates:
-        gate_str = f"{c['qualified_days']} / {c['gate_days']}d"
-        if c["threshold_met"]:
-            gate_str += " (Gate Met)"
-        sig_str = f"{c['signals_count']} ({c['buy_count']}B / {c['flat_count']}F)"
+        blockers = "; ".join(c["anomaly_blockers"]).replace("|", "/").replace("\n", " ")
         lines.append(
-            f"| **{c['protocol'].upper()}** | `{c['model_version']}` | {c['category']} | {gate_str} | {sig_str} | `{c['stage']}` |"
-        )
-
-    lines.extend(
-        [
-            "",
-            "## 2. Cross-Strategy Correlation Matrix (Daily Signal Panel)",
-            "",
-        ]
-    )
-
-    corr_matrix = metrics.get("correlation_matrix", {})
-    if corr_matrix:
-        protocols = sorted(corr_matrix.keys())
-        header = "| Protocol | " + " | ".join(p.upper() for p in protocols) + " |"
-        separator = "| :--- | " + " | ".join(":---:" for _ in protocols) + " |"
-        lines.append(header)
-        lines.append(separator)
-        for p1 in protocols:
-            row_vals = [f"{corr_matrix[p1].get(p2, 0.0):+.2f}" for p2 in protocols]
-            lines.append(f"| **{p1.upper()}** | " + " | ".join(row_vals) + " |")
-
-    lines.extend(
-        [
-            "",
-            "## 3. Joint Multi-Strategy Exposure Profile",
-            "",
-            f"- **Observation Window**: {metrics.get('first_observed_date', 'N/A')} to {metrics.get('last_observed_date', 'N/A')} ({metrics.get('total_days_observed', 0)} UTC days)",
-            f"- **Max Concurrent Active Relief Signals**: {metrics.get('portfolio_exposure_stats', {}).get('max_concurrent_active_strategies', 0)} strategies",
-            f"- **Mean Active Relief Signals**: {metrics.get('portfolio_exposure_stats', {}).get('mean_concurrent_active_strategies', 0.0)} strategies",
-            f"- **Max Combined Sizing Multiplier**: {metrics.get('portfolio_exposure_stats', {}).get('max_aggregate_leverage_multiplier', 0.0)}x (assuming 0.20x per candidate)",
-            f"- **Mean Combined Sizing Multiplier**: {metrics.get('portfolio_exposure_stats', {}).get('mean_aggregate_leverage_multiplier', 0.0)}x",
-            "",
-            "### Concurrent Active Signals Distribution (Days)",
-            "",
-        ]
-    )
-
-    hist = metrics.get("portfolio_exposure_stats", {}).get(
-        "active_strategy_count_distribution", {}
-    )
-    if hist:
-        lines.append("| Active Strategies Count | Frequency (Days) | Percentage |")
-        lines.append("| :---: | :---: | :---: |")
-        total_d = metrics.get("total_days_observed", 1) or 1
-        for k, v in sorted(hist.items()):
-            pct = v / total_d * 100
-            lines.append(f"| **{k}** | {v} | {pct:.1f}% |")
-
-    lines.extend(
-        [
-            "",
-            "## 4. Phase 5 Governance Boundaries",
-            "",
-            "- All strategies remain strictly under `SourcePolicy(dry_run=True, position_pct_multiplier=0.2, min_confidence_override=None)`.",
-            "- Live trading and testnet execution remain strictly blocked by the Phase 6 gate.",
-            "- The 2026-09..2027-01 future blind dataset remains sealed and unopened.",
-            "",
-        ]
-    )
-
+            f"| {c['protocol']} | {c['qualified_days']}/{c['gate_days']} | "
+            f"{c['last_observation_date'] or 'unknown'} | {c['last_qualified_at'] or 'unknown'} | "
+            f"{c['review_eligible']} | {blockers or 'none'} |")
+    lines += ["", "## 2. Cross-Strategy Correlation Matrix", "",
+              "Last signal direction, conditioned on joint signal-arrival days; not return correlation.",
+              "Each cell is correlation / paired days. Sparse samples are not diversification evidence.", ""]
+    corr = metrics["correlation_matrix"]
+    if corr:
+        protocols = list(corr)
+        lines += ["| Protocol | " + " | ".join(protocols) + " |",
+                  "| --- | " + " | ".join("---" for _ in protocols) + " |"]
+        for left in protocols:
+            cells = []
+            for right in protocols:
+                value = corr[left][right]
+                label = f"{value:+.2f}" if value is not None else "unknown"
+                cells.append(f"{label} / {metrics['pairwise_sample_days'][left][right]}")
+            lines.append(f"| {left} | " + " | ".join(cells) + " |")
+    lines += ["", "## 3. Portfolio Evaluation Gaps", "",
+              "- Actual exposure, net return, drawdown and cost-adjusted alpha are unavailable.",
+              "- Attach verified Nautilus fills and account equity for already-opened historical windows.",
+              "- Compare against BTC buy-and-hold with matched capital/exposure and base/stress costs.",
+              "- V18/V40 share VXN; all ten candidates are BTC long/flat, not ten independent assets.",
+              "", "## 4. Governance Boundaries", "",
+              "- No promotion or source-policy change. Testnet/live remain blocked.",
+              "- Future-blind PnL remains sealed; forward collection is observation-only.", ""]
     return "\n".join(lines)
-
-
 def run_monitor(
     repo_root: Path | None = None,
     output_json_path: Path | None = DEFAULT_OUTPUT_JSON,
@@ -456,7 +383,7 @@ def run_monitor(
     if output_json_path is not None:
         target = (repo_root / output_json_path) if not output_json_path.is_absolute() else output_json_path
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+        atomic_json(target, payload)
 
     if output_md_path is not None:
         md_text = generate_portfolio_markdown_report(candidates, metrics)

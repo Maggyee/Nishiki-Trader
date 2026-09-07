@@ -40,7 +40,9 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-SCHEMA_VERSION = "research.meta_analysis.v1"
+from apps.ops.research_family_registry import PNL_OPENED_OUTCOMES
+
+SCHEMA_VERSION = "research.meta_analysis.v2"
 TRADE_SIZE_BTC = 0.001
 DEV_WINDOW = ("2020-01-01", "2022-12-31")
 CONF_WINDOW = ("2023-01-01", "2025-12-31")
@@ -57,8 +59,8 @@ COSTS_BPS = {"base": 12.0, "stress": 15.0}  # fee + slippage, per fill
 BINANCE_VISION_BASE = "https://data.binance.vision/data/spot/monthly/klines"
 DEFAULT_CLOSES_RELPATH = Path("data/meta/btcusdt-1d-closes-2020-2025.csv")
 REGISTRY_RELPATH = Path("docs/progress/research-mechanism-family-registry.json")
-REPORT_JSON_RELPATH = Path("docs/progress/research-program-meta-analysis-v1.json")
-REPORT_MD_RELPATH = Path("docs/progress/research-program-meta-analysis-v1.md")
+REPORT_JSON_RELPATH = Path("docs/progress/research-program-meta-analysis-v2.json")
+REPORT_MD_RELPATH = Path("docs/progress/research-program-meta-analysis-v2.md")
 
 SURVIVOR_RESULT_GLOBS = (
     "docs/progress/phase-2-research-v*-confirmation-results.json",
@@ -493,6 +495,48 @@ def collect_survivor_stats(repo_root: Path, survivor_models: set[str]) -> list[d
 # ---------------------------------------------------------------------------
 
 
+def legacy_null_cohort(registry: dict) -> dict:
+    """Keep Gates-v2 models out of the historical long/flat null denominator."""
+    rows = list(registry.get("legacy_candidates", []))
+    for protocol in registry["protocols"]:
+        if int(protocol["protocol"]) <= 48:
+            rows.extend(protocol["candidates"])
+    evaluated = {(r["source"], r["model_version"]) for r in rows if r["outcome"] in PNL_OPENED_OUTCOMES}
+    survivors = {(r["source"], r["model_version"]) for r in rows if r["outcome"] == "confirmation_passed_paper_shadow"}
+    return {"scope": "legacy_through_v48_historical_gate_calibration",
+            "identities_pnl_opened": len(evaluated), "survivors": len(survivors),
+            "excluded_protocols": [p["protocol"] for p in registry["protocols"] if int(p["protocol"]) > 48],
+            "identities": [list(i) for i in sorted(evaluated)]}
+
+
+def refresh_registry_context(repo_root: Path, historical_path: Path) -> dict:
+    """Append current registry context without pretending to rerun absent inputs."""
+    raw = historical_path.read_bytes()
+    report = json.loads(raw)
+    registry_raw = (repo_root / REGISTRY_RELPATH).read_bytes()
+    registry = json.loads(registry_raw)
+    cohort = legacy_null_cohort(registry)
+    previous = report["program_multiplicity"]
+    if (report.get("schema_version") != "research.meta_analysis.v1" or
+            cohort["identities_pnl_opened"] != previous["identities_pnl_opened"] or
+            cohort["survivors"] != previous["observed_two_stage_survivors"]):
+        raise ValueError("historical calibration cohort changed; full recomputation required")
+    report.update(schema_version=SCHEMA_VERSION, current_registry_totals=registry["totals"],
+                  null_cohort=cohort,
+                  refresh={"mode": "registry_context_only_no_numerical_rerun",
+                           "historical_report": str(historical_path),
+                           "historical_report_sha256": hashlib.sha256(raw).hexdigest(),
+                           "cohort_membership_in_historical_report": "not_recorded_count_match_only",
+                           "limitation": "Legacy identity count agrees; original report lacks per-identity membership."})
+    report["inputs"].update(registry_sha256=hashlib.sha256(registry_raw).hexdigest(), registry_as_of=registry["as_of"])
+    report["program_multiplicity"]["note"] = (
+        "Historical v1 numbers retained, not recomputed. Current registry totals are separate; "
+        "v49+ Gates-v2 models are excluded. Legacy membership was not recorded in v1, so "
+        "only aggregate counts can be cross-checked. This is not a class-matched program significance test. "
+        + previous["note"])
+    return report
+
+
 def build_report(
     repo_root: Path,
     closes_path: Path,
@@ -525,8 +569,9 @@ def build_report(
         )
 
     null = run_random_timing_null(dev, conf, null_params)
-    n_evaluated = int(totals["unique_identities_pnl_opened"])
-    observed_survivors = int(totals["survivors_paper_shadow"])
+    cohort = legacy_null_cohort(registry)
+    n_evaluated = cohort["identities_pnl_opened"]
+    observed_survivors = cohort["survivors"]
     expected_lucky = n_evaluated * null["p_two_stage_pass"]
     p_observed_or_more = _binom_sf(observed_survivors, n_evaluated, null["p_two_stage_pass"])
 
@@ -550,7 +595,10 @@ def build_report(
             "closes_rows": int(len(closes)),
             "registry": REGISTRY_RELPATH.as_posix(),
             "registry_as_of": registry["as_of"],
+            "registry_sha256": hashlib.sha256((repo_root / REGISTRY_RELPATH).read_bytes()).hexdigest(),
         },
+        "current_registry_totals": totals,
+        "null_cohort": cohort,
         "buy_and_hold": {
             "trade_size_btc": TRADE_SIZE_BTC,
             "development": bh_dev,
@@ -564,6 +612,8 @@ def build_report(
             "expected_lucky_two_stage_survivors": expected_lucky,
             "p_observed_or_more_by_luck": p_observed_or_more,
             "note": (
+                "This historical calibration excludes v49+ Gates-v2 models. It is "
+                "not a class-matched significance test for the whole program. "
                 "Null assumes independent random long/flat timing per identity on "
                 "BTCUSDT with survivor-like exposure and holding cadence, evaluated "
                 "under the historical two-stage gate set. Family correlation between "
@@ -636,7 +686,8 @@ def render_markdown(report: dict[str, Any]) -> str:
         "",
         "## 4. Program-level multiplicity",
         "",
-        f"- Identities with PnL opened (registry): **{multi['identities_pnl_opened']}**",
+        f"- Current registry PnL-opened identities: **{report['current_registry_totals']['unique_identities_pnl_opened']}**",
+        f"- Historical null cohort through v48: **{multi['identities_pnl_opened']}**; v49+ excluded.",
         f"- Observed two-stage survivors: **{multi['observed_two_stage_survivors']}**",
         f"- Expected lucky two-stage survivors: **{multi['expected_lucky_two_stage_survivors']:.2f}**",
         f"- P(observed ≥ {multi['observed_two_stage_survivors']} by luck alone): "
@@ -681,6 +732,8 @@ def main(argv: list[str] | None = None) -> int:
     build.add_argument("--out-md", type=Path, default=None)
     build.add_argument("--trials", type=int, default=NullParams.n_trials)
     build.add_argument("--seed", type=int, default=NullParams.seed)
+    build.add_argument("--reuse-historical-report", type=Path, default=None,
+                       help="Reuse immutable historical calibration only when its cohort count matches.")
 
     args = parser.parse_args(argv)
     repo_root = _find_repo_root()
@@ -692,15 +745,21 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     closes_path = args.closes or (repo_root / DEFAULT_CLOSES_RELPATH)
-    report = build_report(
-        repo_root,
-        closes_path,
-        null_params=NullParams(n_trials=args.trials, seed=args.seed),
-    )
     out_json = args.out_json or (repo_root / REPORT_JSON_RELPATH)
     out_md = args.out_md or (repo_root / REPORT_MD_RELPATH)
-    out_json.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
-    out_md.write_text(render_markdown(report), encoding="utf-8")
+    if out_json.exists() or out_md.exists():
+        parser.error("reports are immutable; select new versioned output paths")
+    if args.reuse_historical_report:
+        report = refresh_registry_context(repo_root, args.reuse_historical_report)
+    else:
+        report = build_report(
+            repo_root, closes_path,
+            null_params=NullParams(n_trials=args.trials, seed=args.seed),
+        )
+    with out_json.open("x", encoding="utf-8") as handle:
+        handle.write(json.dumps(report, indent=2, allow_nan=False) + "\n")
+    with out_md.open("x", encoding="utf-8") as handle:
+        handle.write(render_markdown(report))
     print(f"wrote {out_json.as_posix()} and {out_md.as_posix()}")
     return 0
 

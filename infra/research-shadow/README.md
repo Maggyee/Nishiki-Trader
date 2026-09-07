@@ -32,6 +32,11 @@ accounting begins with runtime-state.json; it does not reset research identity.
 
 V46/v48 forward-only adapters use checksum-verified completed monthly archives
 plus closed daily archives for the current month, caching verified archives.
+If an official monthly archive omits a day, that exact date must be recovered
+from a checksum-verified official daily archive. Missing values are never filled
+with prices or zero. Original monthly bytes and receipts remain unchanged.
+The Cboe gap check covers the unchanged 90-day factor window, not unrelated old
+market closures in the full provider CSV.
 The frozen historical qualification modules and strategy parameters are unchanged.
 Only yesterday's unpublished daily archive can be absent (maximum age 2 days);
 other coverage, checksum, or network failures fail closed. No future-blind PnL

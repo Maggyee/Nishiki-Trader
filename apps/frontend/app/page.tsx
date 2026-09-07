@@ -783,6 +783,7 @@ export default async function DashboardPage({
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(380px,0.55fr)]">
           <div className="grid gap-4">
             <StatusGrid snapshot={snapshot} language={language} copy={copy} />
+            <ShadowPortfolioPanel snapshot={snapshot} language={language} />
             <ResearchV5CollectorPanel
               collector={researchV5Collector}
               language={language}
@@ -1238,6 +1239,31 @@ function RuntimeStatePill({ state, copy }: { state: string | undefined; copy: Co
       {labels[normalized] ?? normalized}
     </span>
   );
+}
+
+function ShadowPortfolioPanel({ snapshot, language }: { snapshot: DashboardSnapshot; language: Language }) {
+  const portfolio = snapshot.research_portfolio;
+  const zh = language === "zh-CN";
+  return <section className="panel">
+    <div className="section-head"><h2>{zh ? "研究影子采集状态" : "Research shadow collection"}</h2>
+      <span>{portfolio?.state ?? "not_attached"}</span></div>
+    <p className="px-4 py-2 text-xs text-slate-400">{zh
+      ? "仅观察：合格天数不等于运行次数；信号不等于持仓。实盘与 testnet 仍阻断。"
+      : "Observation only: qualified days are not run counts; signals are not holdings. Live/testnet remain blocked."}</p>
+    {!portfolio?.attached && <p className="px-4 py-2">{zh ? "未附加当前组合快照" : "Current portfolio snapshot not attached"}</p>}
+    {portfolio?.errors?.map(error => <p className="px-4 py-2 text-amber-400" key={error}>{error}</p>)}
+    <div className="overflow-x-auto"><table className="w-full text-left text-xs">
+      <thead><tr>{(zh ? ["协议", "合格天数", "最新观察日", "最后合格时间", "可审阅", "阻断项"]
+        : ["Protocol", "Qualified days", "Latest observation", "Last qualified", "Review eligible", "Blockers"])
+        .map(label => <th className="p-3" key={label}>{label}</th>)}</tr></thead>
+      <tbody>{portfolio?.candidates?.map(row => <tr key={row.protocol} className="border-t border-slate-800">
+        <td className="p-3">{row.protocol}</td><td className="p-3">{row.qualified_days}/{row.gate_days}</td>
+        <td className="p-3">{row.last_observation_date ?? "unknown"}</td>
+        <td className="p-3">{row.last_qualified_at ?? "unknown"}</td>
+        <td className="p-3">{String(row.review_eligible)}</td>
+        <td className="p-3">{row.anomaly_blockers.join("; ") || "—"}</td>
+      </tr>)}</tbody></table></div>
+  </section>;
 }
 
 function ResearchV5CollectorPanel({
@@ -2086,7 +2112,8 @@ function totalBlockers(counts: Record<string, number>): number {
     (counts.paper_promotion_blockers ?? 0) +
     (counts.testnet_review_blockers ?? 0) +
     (counts.observability_issue_count ?? 0) +
-    (counts.research_v5_collector_issue_count ?? 0)
+    (counts.research_v5_collector_issue_count ?? 0) +
+    (counts.research_portfolio_issue_count ?? 0)
   );
 }
 

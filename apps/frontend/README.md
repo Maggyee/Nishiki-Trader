@@ -69,6 +69,11 @@ snapshot 路径。默认路径是仓库根目录下的
 
 ## 当前展示
 
+- Research shadow collection：10 个候选的真实合格天数、最新观察日、最后合格时间和阻断项。
+  先运行 `python -m apps.ops.research_portfolio_monitor`，然后生成 dashboard snapshot 时追加
+  `--research-portfolio-status data/research-portfolio/status.json`。
+  缺失、过期或损坏的已附加状态计入顶部阻断数量，不显示为健康；浏览器不触发采集。
+  信号方向相关性不是收益相关性，策略信号不是持仓或杠杆。
 - 顶部语言切换：English / 简体中文，不写 cookie、不调用 API
 - Operational posture：live gate、strict continuity、生成时间、快照年龄、当前目标
 - Guardrail metrics：AgentAdvice 记录数、paper/testnet bundle 输入、阻塞项、order-path 边界

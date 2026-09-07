@@ -311,6 +311,21 @@ export type DashboardSnapshot = {
   };
   observability?: ObservabilitySnapshot;
   research_v5_collector?: ResearchV5CollectorStatus;
+  research_portfolio?: {
+    attached: boolean;
+    state: string;
+    updated_at?: string;
+    errors: string[];
+    candidates: Array<{
+      protocol: string;
+      qualified_days: number;
+      gate_days: number;
+      last_observation_date?: string | null;
+      last_qualified_at?: string | null;
+      review_eligible: boolean;
+      anomaly_blockers: string[];
+    }>;
+  };
   reference_links?: ReferenceLink[];
   operator_checklist?: Array<{
     label?: string;

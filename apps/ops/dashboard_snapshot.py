@@ -14,6 +14,7 @@ from typing import Any
 from urllib.parse import quote
 
 from apps.agents.store import DEFAULT_ADVICE_DB_PATH
+from apps.ops.research_portfolio_snapshot import read_portfolio_snapshot
 from apps.ops.research_v5_collector_status import (
     ARCHIVE_REASON_PROVIDER_INSTABILITY as RESEARCH_V5_ARCHIVE_REASON,
 )
@@ -210,6 +211,7 @@ def build_dashboard_snapshot(
     phase6_live_readiness_report_path: Path | None = None,
     phase6_live_startup_guard_report_path: Path | None = None,
     research_v5_collector_status_path: Path | None = None,
+    research_portfolio_status_path: Path | None = None,
     advice_limit: int = 20,
     grafana_base_url: str | None = DEFAULT_GRAFANA_BASE_URL,
     repo_browser_base_url: str | None = None,
@@ -269,6 +271,13 @@ def build_dashboard_snapshot(
         live_startup_guard_report_path=phase6_live_startup_guard_report_path,
         generated_at_ns=generated_ns,
     )
+    research_portfolio = read_portfolio_snapshot(research_portfolio_status_path, generated_at_ns=generated_ns)
+    portfolio_issues = research_portfolio["issue_count"]
+    ops_status["counts"]["research_portfolio_issue_count"] = portfolio_issues
+    if portfolio_issues:
+        if ops_status["state"] != "breach":
+            ops_status.update(state="attention", headline="Shadow portfolio evidence needs review.")
+        ops_status["summary"].append(f"Shadow portfolio has {portfolio_issues} degraded inputs; no promotion implied.")
     snapshot_inputs = _snapshot_inputs(
         project_status_path=project_status_path,
         agent_advice_db_path=agent_advice_db_path,
@@ -279,6 +288,14 @@ def build_dashboard_snapshot(
         research_v5_collector_status_path=research_v5_collector_status_path,
         observability_textfile_dir=observability_textfile_dir,
     )
+    if research_portfolio_status_path is not None:
+        item = _input_item(label="Shadow portfolio", category="research_portfolio", kind="file",
+                           path=research_portfolio_status_path, required=False, attached=True)
+        snapshot_inputs["items"].append(item)
+        counts = snapshot_inputs["counts"]
+        counts["total"] += 1
+        counts["attached"] += 1
+        counts["existing" if item["exists"] else "missing_attached"] += 1
     return {
         "schema_version": SNAPSHOT_SCHEMA_VERSION,
         "generated_at_ns": generated_ns,
@@ -298,6 +315,7 @@ def build_dashboard_snapshot(
         "ops_status": ops_status,
         "observability": observability,
         "research_v5_collector": research_v5_collector,
+        "research_portfolio": research_portfolio,
         "reference_links": _reference_links(
             grafana_base_url=grafana_base_url,
             repo_browser_base_url=repo_browser_base_url,
@@ -3600,6 +3618,8 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument("--advice-limit", type=int, default=20)
+    parser.add_argument("--research-portfolio-status", type=Path, default=None,
+                        help="Saved research.portfolio_shadow_monitor.v2 report; read-only.")
     parser.add_argument(
         "--observability-textfile-dir",
         default=str(DEFAULT_OBSERVABILITY_TEXTFILE_DIR),
@@ -3665,6 +3685,7 @@ def main(argv: list[str] | None = None) -> int:
             else None
         ),
         advice_limit=args.advice_limit,
+        research_portfolio_status_path=args.research_portfolio_status,
         grafana_base_url=args.grafana_base_url,
         repo_browser_base_url=args.repo_browser_base_url,
         observability_textfile_dir=(

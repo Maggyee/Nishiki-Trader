@@ -16,6 +16,7 @@ from apps.ops.research_meta_analysis import (
     _closes_from_kline_zip,
     _parse_checksum_file,
     buy_and_hold_stats,
+    legacy_null_cohort,
     load_closes,
     run_random_timing_null,
     window,
@@ -87,3 +88,13 @@ def test_parse_checksum_file_accepts_standard_format() -> None:
     assert _parse_checksum_file(f"{digest}  BTCUSDT-1d-2020-01.zip\n".encode()) == digest
     with pytest.raises(ValueError):
         _parse_checksum_file(b"<html>blocked</html>")
+
+
+def test_legacy_null_excludes_new_gate_classes_and_deduplicates():
+    row = {"source": "rule", "model_version": "v1", "outcome": "confirmation_passed_paper_shadow"}
+    newer = {"source": "ridge", "model_version": "v2", "outcome": "development_rejected"}
+    cohort = legacy_null_cohort({"legacy_candidates": [row], "protocols": [
+        {"protocol": 48, "candidates": [row]}, {"protocol": 49, "candidates": [newer]}]})
+    assert cohort["identities_pnl_opened"] == 1
+    assert cohort["survivors"] == 1
+    assert cohort["excluded_protocols"] == [49]

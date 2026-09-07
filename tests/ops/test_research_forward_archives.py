@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import io
 import zipfile
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -49,3 +49,22 @@ def test_cron_replacement_preserves_other_jobs_and_cadence(tmp_path):
     assert rendered.count("15 3 * * 1-5") == 10
     with pytest.raises(ValueError, match="exactly one"):
         render_crontab(cron + f"\n15 3 * * 1-5 cd {tmp_path} && python -m apps.ops.research_v8_shadow_daily", tmp_path, tmp_path, "a"*40)
+
+
+def test_missing_monthly_day_requires_verified_daily_archive(tmp_path):
+    calls = []
+    def fetch(url):
+        calls.append(url)
+        days = [14] if "/daily/" in url else [i for i in range(30) if i != 14]
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, "w") as archive:
+            rows = []
+            for i in days:
+                ts = int((datetime(2025, 11, 1, tzinfo=UTC) + timedelta(days=i)).timestamp()*1000)
+                rows.append(f"{ts},1,2,1,2,3")
+            archive.writestr("bars.csv", "\n".join(rows))
+        raw = buffer.getvalue()
+        return hashlib.sha256(raw).hexdigest().encode() if url.endswith(".CHECKSUM") else raw
+    rows = series_rows("premiumIndexKlines", tmp_path, now=datetime(2025,12,1,tzinfo=UTC), fetch=fetch)
+    assert len(rows) == 30
+    assert any("daily/" in url and "2025-11-15.zip.CHECKSUM" in url for url in calls)

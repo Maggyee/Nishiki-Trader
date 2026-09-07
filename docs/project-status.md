@@ -13,11 +13,21 @@ project review. Batch 1 isolates Postgres integration tests and makes portfolio
 input failures explicit. Batch 2 corrects collector qualification and runtime
 state ownership. Batch 3 refreshes portfolio diagnostics and current guidance.
 
-Batch 2 implementation is verified: all ten collectors use runtime-only status;
+Batch 2 is deployed: all ten collectors use runtime-only status;
 v40/v42/v46/v48 now count distinct dates with fresh observations, not invocations.
 Strict collectors can recover hash-verified retained BTC captures without granting
 qualification to failed historical attempts. Deployment pins the existing ten cron
 entries to a clean pushed revision; schedules and research identities are unchanged.
+All six strict collectors passed a real collection after deployment. Four v2
+collectors start prospective counters without adopting legacy invocation totals.
+Provider smoke checks exposed an old Cboe closure outside the factor window and
+a missing June monthly-archive day; the follow-up limits gap checks to the
+current factor window and recovers exact missing dates via verified daily files.
+
+Batch 3 removes inferred leverage and zero-filled missing signal days, adds a
+fail-closed ten-candidate read-only dashboard panel, and appends meta-analysis v2.
+V2 separates 116 current PnL-opened identities from the legacy 108-identity null;
+it reuses immutable v1 numbers explicitly, without claiming a numerical rerun.
 
 ## Milestones
 
@@ -32,7 +42,7 @@ entries to a clean pushed revision; schedules and research identities are unchan
 
 ## Next Steps
 
-1. Complete and verify the three ordered reliability repair batches.
+1. Finish the follow-up deployment smoke check and retain its evidence summary.
 2. Use current collector status and immutable attempt journals when reviewing
    forward evidence; never count run invocations as qualified days.
 3. Review portfolio evidence against appropriate benchmarks and costs before
@@ -50,6 +60,11 @@ entries to a clean pushed revision; schedules and research identities are unchan
   relief family remains saturated. New work requires a frozen independent identity.
 - V12 remains a forward-data candidate with no recurring schedule authorized.
 - No Redis/default Postgres migration, new Agent orchestration, or live-path changes.
+- Full portfolio return/drawdown/leverage evaluation remains unavailable until
+  verified Nautilus fills and account equity are attached for already-opened
+  historical windows. Signals and policy multipliers cannot substitute for them.
+- Historical BTC benchmark CSV is absent in this checkout; meta-analysis v2 is
+  a registry-context refresh only. V1 remains unchanged.
 - LLM agents never enter the order path. NautilusTrader is the only execution
   engine; `SignalEvent v1` is the only research-to-execution bridge.
 
@@ -63,7 +78,11 @@ entries to a clean pushed revision; schedules and research identities are unchan
   the current OAuth credential lacks `workflow` scope. Online CI is not enabled.
 - Batch 2: 1,638 offline tests passed; 12 Postgres tests deselected. Historical
   BTC capture reconstruction found no hourly gaps for the six strict collectors.
-  Live provider smoke checks and deployment are pending the clean pushed commit.
+  Six strict collectors passed real collection from pinned revision `f8c997a`.
+- Batch 3: 1,649 offline tests passed, 12 Postgres tests deselected; Ruff and
+  registry checks passed. Frontend typecheck and production build passed;
+  dependency audit found three transitive vulnerabilities, fixed within existing
+  dependency ranges; audit now reports zero. Final deployment smoke is next.
 
 ## References
 
@@ -71,5 +90,6 @@ entries to a clean pushed revision; schedules and research identities are unchan
 - [Research rules](decisions/014-research-program-v2.md) and [warnings](research-program-warnings.md).
 - [Research registry](progress/research-mechanism-family-registry.json).
 - [Historical meta-analysis v1](progress/research-program-meta-analysis-v1.md).
+- [Current meta-analysis context v2](progress/research-program-meta-analysis-v2.md).
 - [Archived testnet continuity](progress/phase-3-testnet-continuity-plan.md).
 - [Full prior status archive](progress/project-status-archive-2026-09-07.md).

@@ -12,6 +12,7 @@ import json
 import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
+from uuid import uuid4
 
 from apps.ops.research_shadow_runtime import atomic_json
 
@@ -31,12 +32,23 @@ def run_one(protocol: int, data_base: Path, expected_commit: str) -> dict:
     if protocol < 40:
         result = module.collect_daily(repo_root=root, data_root=data_root)
         status = result["status"]
+        record = result["record"]
+        observation_dates = [value["last_date"] for key, value in record.items()
+                             if key != "btc" and isinstance(value, dict) and "last_date" in value]
+        status["last_observation_date"] = min(observation_dates, default=None)
+        status["health"] = "DEGRADED" if status.get("latest_blockers") else "HEALTHY"
     else:
         run = module.run_daily_shadow if protocol in (40, 42) else module.run_daily_shadow_collection
         status = run(raw_dir=data_root / "raw", factors_dir=data_root / "factors",
                      signal_store_path=data_root / "signals.db", state_file=data_root / "state.json",
                      status_file=data_root / "status.json")
     status["deployment_commit"] = actual
+    runner_errors = [json.loads(p.read_text()) for p in sorted((data_root / "runner-errors").glob("*.json"))]
+    failures = {b for entry in runner_errors for b in entry["blockers"]}
+    if failures:
+        status["anomaly_blockers"] = sorted(set(status.get("anomaly_blockers", [])) | failures)
+        status["review_eligible"] = False
+        status["historical_anomalies_require_review"] = True
     atomic_json(data_root / "status.json", status)
     return status
 
@@ -49,6 +61,10 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         status = run_one(args.protocol, args.data_base.resolve(), args.expected_commit)
+    except BlockingIOError:
+        # An overlapping invocation must not clobber the active writer's state.
+        print(json.dumps({"error": "collector_already_running"}))
+        return 2
     except Exception as exc:
         root = args.data_base / (f"research-v{args.protocol}-forward" if args.protocol < 40 else f"research-v{args.protocol}/shadow")
         path = root / "status.json"
@@ -60,6 +76,8 @@ def main(argv: list[str] | None = None) -> int:
             prior = {}
         prior.update(updated_at=datetime.now(UTC).isoformat(), health="DEGRADED",
                      review_eligible=False, latest_blockers=[f"runner_failed:{type(exc).__name__}:{exc}"])
+        atomic_json(root / "runner-errors" / f"{datetime.now(UTC):%Y%m%dT%H%M%S%fZ}-{uuid4().hex[:8]}.json",
+                    {"observed_at": prior["updated_at"], "blockers": prior["latest_blockers"]})
         prior["anomaly_blockers"] = sorted(set(prior.get("anomaly_blockers", [])) | set(prior["latest_blockers"]))
         atomic_json(path, prior)
         print(json.dumps(prior, sort_keys=True))
