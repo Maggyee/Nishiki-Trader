@@ -33,3 +33,7 @@ ignore = ["E501"]
 testpaths = ["tests"]
 pythonpath = ["."]
 addopts = ["-ra", "--strict-markers"]
+markers = [
+    "network: explicit external-data integration test",
+    "postgres: integration test requiring TRADER_TEST_POSTGRES_DSN (*_test database)",
+]

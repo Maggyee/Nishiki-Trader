@@ -21,6 +21,14 @@ uv run pytest tests/bridge/         # 只跑 bridge
 uv run pytest -k "ttl"              # 按关键字筛选
 ```
 
+默认单元测试禁止 socket 网络连接，采集器使用注入的固定样本。联网集成测试
+必须标记 `network`；CI 执行 `pytest -m 'not network and not postgres'`。
+
+Postgres 测试不再探测或清空默认业务数据库。仅在显式设置
+`TRADER_TEST_POSTGRES_DSN` 时运行；目标数据库名必须以 `_test` 结尾，
+每个测试使用独立随机 schema，结束后仅删除自己创建的 schema。
+业务库 `trader` 不可用作测试目标。未设置 DSN 时这些测试跳过。
+
 前端 Phase 5 校验在 `apps/frontend` 内运行：
 
 ```bash

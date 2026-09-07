@@ -1,11 +1,19 @@
 from __future__ import annotations
 
+import base64
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from apps.ops.research_v40_shadow_daily import run_daily_shadow
 
 
-def test_research_v40_shadow_daily_structure(tmp_path: Path) -> None:
+def test_research_v40_shadow_daily_structure(tmp_path: Path, monkeypatch) -> None:
+    from apps.ops import research_v40_shadow_daily as module
+    start = datetime.now(UTC).date() - timedelta(days=601)
+    raw = "DATE,CLOSE\n" + "\n".join(f"{start + timedelta(days=i)},20" for i in range(601))
+    envelope = {"payload_raw_base64": base64.b64encode(raw.encode()).decode(),
+                "vintage_id": "fixture", "snapshot_sha256": "sha256:" + "a" * 64}
+    monkeypatch.setattr(module, "collect_snapshot", lambda *a, **k: (tmp_path / "snapshot.json", envelope))
     raw_dir = tmp_path / "raw"
     factors_dir = tmp_path / "factors"
     signal_store = tmp_path / "signals.db"

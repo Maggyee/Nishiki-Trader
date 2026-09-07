@@ -1,9 +1,4 @@
-"""Tests for ``apps.ops.sync_signals_to_postgres``.
-
-Skipped cleanly when no ``trader-postgres`` is reachable on
-``127.0.0.1:5433``. When PG is reachable, each test TRUNCATEs the
-``signal_events`` table and re-creates the source SQLite under ``tmp_path``.
-"""
+"""Sync integration tests use an explicit test DB and a disposable schema."""
 
 from __future__ import annotations
 
@@ -12,38 +7,10 @@ from pathlib import Path
 import pytest
 
 from apps.bridge.signal_event import SignalEvent
-from apps.bridge.store import PostgresConnInfo, PostgresSignalStore, SignalStore
+from apps.bridge.store import PostgresSignalStore, SignalStore
 from apps.ops import sync_signals_to_postgres
 
-psycopg = pytest.importorskip("psycopg")
-
-
-def _pg_available() -> tuple[bool, str | None]:
-    try:
-        with (
-            psycopg.connect(
-                PostgresConnInfo().to_conninfo(), connect_timeout=2
-            ) as conn,
-            conn.cursor() as cur,
-        ):
-            cur.execute("SELECT 1")
-            cur.fetchone()
-        return True, None
-    except Exception as exc:  # noqa: BLE001
-        return False, repr(exc)
-
-
-PG_OK, PG_ERR = _pg_available()
-pytestmark = pytest.mark.skipif(
-    not PG_OK,
-    reason=f"trader-postgres not reachable on 127.0.0.1:5433 ({PG_ERR})",
-)
-
-
-@pytest.fixture
-def truncate_signal_events() -> None:
-    with psycopg.connect(PostgresConnInfo().to_conninfo(), autocommit=True) as conn:
-        conn.execute("TRUNCATE signal_events")
+pytestmark = pytest.mark.postgres
 
 
 @pytest.fixture
@@ -70,11 +37,11 @@ def sqlite_with_three(tmp_path: Path, make_payload) -> Path:
 
 
 def test_dry_run_does_not_write(
-    sqlite_with_three: Path, truncate_signal_events: None
+    sqlite_with_three: Path, pg_conn_info
 ) -> None:
     counts = sync_signals_to_postgres.sync(
         sqlite_path=sqlite_with_three,
-        pg_conn=PostgresConnInfo(),
+        pg_conn=pg_conn_info,
         dry_run=True,
         sources=None,
         since_ns=None,
@@ -86,16 +53,16 @@ def test_dry_run_does_not_write(
         "skipped_filter": 0,
         "errored": 0,
     }
-    pg = PostgresSignalStore()
+    pg = PostgresSignalStore(pg_conn_info)
     assert pg.get("freqai_v1:A") is None
 
 
 def test_full_sync_round_trips(
-    sqlite_with_three: Path, truncate_signal_events: None
+    sqlite_with_three: Path, pg_conn_info
 ) -> None:
     counts = sync_signals_to_postgres.sync(
         sqlite_path=sqlite_with_three,
-        pg_conn=PostgresConnInfo(),
+        pg_conn=pg_conn_info,
         dry_run=False,
         sources=None,
         since_ns=None,
@@ -105,7 +72,7 @@ def test_full_sync_round_trips(
     assert counts["skipped_duplicate"] == 0
     assert counts["errored"] == 0
 
-    pg = PostgresSignalStore()
+    pg = PostgresSignalStore(pg_conn_info)
     for sid in ("freqai_v1:A", "freqai_v1:B", "rule_v1:Z"):
         row = pg.get(sid)
         assert row is not None
@@ -113,18 +80,18 @@ def test_full_sync_round_trips(
 
 
 def test_rerun_is_idempotent(
-    sqlite_with_three: Path, truncate_signal_events: None
+    sqlite_with_three: Path, pg_conn_info
 ) -> None:
     sync_signals_to_postgres.sync(
         sqlite_path=sqlite_with_three,
-        pg_conn=PostgresConnInfo(),
+        pg_conn=pg_conn_info,
         dry_run=False,
         sources=None,
         since_ns=None,
     )
     counts = sync_signals_to_postgres.sync(
         sqlite_path=sqlite_with_three,
-        pg_conn=PostgresConnInfo(),
+        pg_conn=pg_conn_info,
         dry_run=False,
         sources=None,
         since_ns=None,
@@ -136,11 +103,11 @@ def test_rerun_is_idempotent(
 
 
 def test_filter_by_source(
-    sqlite_with_three: Path, truncate_signal_events: None
+    sqlite_with_three: Path, pg_conn_info
 ) -> None:
     counts = sync_signals_to_postgres.sync(
         sqlite_path=sqlite_with_three,
-        pg_conn=PostgresConnInfo(),
+        pg_conn=pg_conn_info,
         dry_run=False,
         sources=["freqai_v1"],
         since_ns=None,
@@ -149,18 +116,18 @@ def test_filter_by_source(
     assert counts["written"] == 2
     assert counts["skipped_filter"] == 1
     assert counts["errored"] == 0
-    pg = PostgresSignalStore()
+    pg = PostgresSignalStore(pg_conn_info)
     assert pg.get("rule_v1:Z") is None
     assert pg.get("freqai_v1:B") is not None
 
 
 def test_filter_by_since_ns(
-    sqlite_with_three: Path, truncate_signal_events: None
+    sqlite_with_three: Path, pg_conn_info
 ) -> None:
     cutoff = 1_700_000_000_000_000_000 + 90_000_000_000  # between B (60s) and Z (120s)
     counts = sync_signals_to_postgres.sync(
         sqlite_path=sqlite_with_three,
-        pg_conn=PostgresConnInfo(),
+        pg_conn=pg_conn_info,
         dry_run=False,
         sources=None,
         since_ns=cutoff,
@@ -168,6 +135,6 @@ def test_filter_by_since_ns(
     assert counts["read"] == 3
     assert counts["written"] == 1
     assert counts["skipped_filter"] == 2
-    pg = PostgresSignalStore()
+    pg = PostgresSignalStore(pg_conn_info)
     assert pg.get("rule_v1:Z") is not None
     assert pg.get("freqai_v1:A") is None

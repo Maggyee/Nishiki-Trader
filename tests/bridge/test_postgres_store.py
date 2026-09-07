@@ -1,13 +1,4 @@
-"""Tests for the Postgres backend of SignalStore.
-
-These tests skip cleanly when no ``trader-postgres`` instance is reachable on
-``127.0.0.1:5433`` (i.e. CI without the local stack, or contributors who haven't
-run ``docker compose up -d postgres``). When PG is reachable, every test reuses
-a fresh schema-level isolation by TRUNCATE-ing ``signal_events`` at setup.
-
-The default credentials match ``infra/docker-compose.yml`` and
-``infra/postgres/init.sql``; they are loopback-only dev creds, not secrets.
-"""
+"""Postgres integration tests, isolated by the explicit pg_conn_info fixture."""
 
 from __future__ import annotations
 
@@ -16,42 +7,16 @@ import pytest
 from apps.bridge.signal_event import SignalEvent
 from apps.bridge.store import (
     DuplicateSignalError,
-    PostgresConnInfo,
     PostgresSignalStore,
     UnknownSignalError,
 )
 
-psycopg = pytest.importorskip("psycopg")
-
-
-def _pg_available() -> tuple[bool, str | None]:
-    try:
-        with (
-            psycopg.connect(
-                PostgresConnInfo().to_conninfo(), connect_timeout=2
-            ) as conn,
-            conn.cursor() as cur,
-        ):
-            cur.execute("SELECT 1")
-            cur.fetchone()
-        return True, None
-    except Exception as exc:  # noqa: BLE001
-        return False, repr(exc)
-
-
-PG_OK, PG_ERR = _pg_available()
-pytestmark = pytest.mark.skipif(
-    not PG_OK,
-    reason=f"trader-postgres not reachable on 127.0.0.1:5433 ({PG_ERR})",
-)
+pytestmark = pytest.mark.postgres
 
 
 @pytest.fixture
-def pg_store() -> PostgresSignalStore:
-    store = PostgresSignalStore()
-    with psycopg.connect(store.conn_info.to_conninfo(), autocommit=True) as conn:
-        conn.execute("TRUNCATE signal_events")
-    return store
+def pg_store(pg_conn_info) -> PostgresSignalStore:
+    return PostgresSignalStore(pg_conn_info)
 
 
 def test_pg_write_and_read(pg_store: PostgresSignalStore, signal_event: SignalEvent) -> None:

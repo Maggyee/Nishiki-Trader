@@ -5,6 +5,8 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import sqlite3
+from contextlib import closing
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -12,11 +14,11 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from apps.bridge.store import SignalStore
+from apps.bridge.signal_event import SignalEvent
 
 SCHEMA_VERSION = "research.portfolio_shadow_monitor.v1"
-DEFAULT_OUTPUT_JSON = Path("docs/progress/phase-2-research-portfolio-shadow-status.json")
-DEFAULT_OUTPUT_MD = Path("docs/progress/phase-2-research-portfolio-shadow-report.md")
+DEFAULT_OUTPUT_JSON = Path("data/research-portfolio/status.json")
+DEFAULT_OUTPUT_MD = Path("data/research-portfolio/report.md")
 
 CANDIDATE_SPECS: list[dict[str, Any]] = [
     {
@@ -123,26 +125,59 @@ CANDIDATE_SPECS: list[dict[str, Any]] = [
 
 
 def load_candidate_data(
-    repo_root: Path, specs: list[dict[str, Any]] = CANDIDATE_SPECS
+    repo_root: Path, specs: list[dict[str, Any]] = CANDIDATE_SPECS,
+    *, now: datetime | None = None,
 ) -> list[dict[str, Any]]:
+    observed_at = now or datetime.now(UTC)
     candidates = []
     for spec in specs:
-        status_file = repo_root / spec["status_path"]
         db_file = repo_root / spec["db_path"]
+        status_file = db_file.parent / "status.json"
+        blockers: list[str] = []
         status_data: dict[str, Any] = {}
+        if not status_file.exists():
+            status_file = repo_root / spec["status_path"]
+            blockers.append("runtime_status_missing")
         if status_file.exists():
             try:
                 status_data = json.loads(status_file.read_text())
-            except Exception:
+                if not isinstance(status_data, dict):
+                    raise ValueError("status must be an object")
+            except (OSError, ValueError):
+                blockers.append("status_unreadable")
                 status_data = {}
+        else:
+            blockers.append("status_missing")
+
+        updated_at = status_data.get("updated_at") or status_data.get("last_run_at") or status_data.get("evaluated_at")
+        try:
+            timestamp = datetime.fromisoformat(updated_at.replace("Z", "+00:00"))
+            age = (observed_at - timestamp).total_seconds()
+            if age < 0 or age > 4 * 86400:
+                blockers.append("status_stale_or_future")
+        except (AttributeError, ValueError, TypeError):
+            blockers.append("status_timestamp_invalid")
+        reported_blockers = status_data.get("anomaly_blockers", [])
+        if isinstance(reported_blockers, list) and all(isinstance(b, str) for b in reported_blockers):
+            blockers.extend(reported_blockers)
+        else:
+            blockers.append("status_blockers_invalid")
+        for field in ("source", "model_version"):
+            if field in status_data and status_data[field] != spec[field]:
+                blockers.append(f"status_{field}_mismatch")
 
         signals: list[dict[str, Any]] = []
         if db_file.exists():
             try:
-                store = SignalStore(db_file)
-                for event in store.replay(
-                    source=spec["source"], model_version=spec["model_version"]
-                ):
+                with closing(sqlite3.connect(db_file.resolve().as_uri() + "?mode=ro", uri=True)) as conn:
+                    rows = conn.execute(
+                        "SELECT raw_json FROM signals WHERE source=? AND model_version=? ORDER BY ts_event, signal_id",
+                        (spec["source"], spec["model_version"]),
+                    ).fetchall()
+                for row in rows:
+                    event = SignalEvent.model_validate_json(row[0])
+                    if event.source != spec["source"] or event.model_version != spec["model_version"]:
+                        raise ValueError("stored signal identity mismatch")
                     dt = datetime.fromtimestamp(event.ts_event / 1e9, tz=UTC)
                     signals.append(
                         {
@@ -155,48 +190,35 @@ def load_candidate_data(
                             "confidence": event.confidence,
                         }
                     )
-            except Exception:
-                pass
+            except (OSError, ValueError, sqlite3.Error):
+                signals = []
+                blockers.append("signal_database_unreadable")
+        else:
+            blockers.append("signal_database_missing")
 
         buy_count = sum(1 for s in signals if s["side"].upper() == "BUY")
         flat_count = sum(1 for s in signals if s["side"].upper() in {"FLAT", "SELL"})
 
-        # Extract qualified days across all protocol formats
-        qualified_days = 0
-        journal_dir = db_file.parent / "journal"
-        if not journal_dir.exists() and (db_file.parent.parent / "journal").exists():
-            journal_dir = db_file.parent.parent / "journal"
-
-        if journal_dir.exists():
-            for jf in journal_dir.glob("*.json"):
-                try:
-                    jd = json.loads(jf.read_text())
-                    if jd.get("qualified_day"):
-                        qualified_days += 1
-                except Exception:
-                    pass
-        elif "qualified_runs" in status_data:
-            qualified_days = int(status_data["qualified_runs"])
-        elif "total_days_collected" in status_data:
-            qualified_days = int(status_data["total_days_collected"])
-        elif "total_runs_collected" in status_data:
-            qualified_days = int(status_data["total_runs_collected"])
-        elif "qualified_day_count" in status_data:
-            qualified_days = int(status_data["qualified_day_count"])
-        elif "forward_gate" in status_data and "qualified_day_count" in status_data["forward_gate"]:
-            qualified_days = int(status_data["forward_gate"]["qualified_day_count"])
-
-        gate_days = status_data.get("gate", {}).get("days", 7)
-        if "target_runs" in status_data:
-            gate_days = int(status_data["target_runs"])
-        elif "forward_gate" in status_data:
-            gate_days = status_data["forward_gate"].get("required_days", 7)
-
-        threshold_met = (qualified_days >= gate_days) or status_data.get("threshold_met", False)
-        if "forward_gate" in status_data:
-            threshold_met = threshold_met or status_data["forward_gate"].get("threshold_met", False)
-        if spec["protocol"] in {"v40", "v42", "v46", "v48"} and qualified_days >= gate_days:
-            threshold_met = True
+        gate = status_data.get("forward_gate", status_data.get("gate", {}))
+        if not isinstance(gate, dict):
+            blockers.append("gate_invalid")
+            gate = {}
+        qualified_days = status_data.get("qualified_day_count", gate.get("qualified_day_count", 0))
+        gate_days = gate.get("required_days", gate.get("days", 7))
+        if type(qualified_days) is not int or qualified_days < 0:
+            blockers.append("qualified_days_invalid")
+            qualified_days = 0
+        if type(gate_days) is not int or gate_days < 1:
+            blockers.append("gate_days_invalid")
+            gate_days = 7
+        if "qualified_day_count" not in status_data and "qualified_day_count" not in gate:
+            blockers.append("legacy_run_count_not_qualified_days")
+        threshold_met = status_data.get("threshold_met", gate.get("threshold_met")) is True
+        declared_eligible = status_data.get("review_eligible", gate.get("review_eligible")) is True
+        policy = status_data.get("policy", {})
+        if not isinstance(policy, dict) or policy.get("dry_run") is not True:
+            blockers.append("shadow_policy_unverified")
+            policy = {}
 
         candidates.append(
             {
@@ -205,23 +227,19 @@ def load_candidate_data(
                 "category": spec["category"],
                 "source": spec["source"],
                 "model_version": spec["model_version"],
-                "status_path": str(spec["status_path"]),
+                "status_path": str(status_file),
+                "updated_at": updated_at,
+                "last_observation_date": status_data.get("last_observation_date"),
+                "last_qualified_at": status_data.get("last_qualified_at"),
                 "db_path": str(spec["db_path"]),
                 "crontab_schedule": spec["crontab_schedule"],
                 "stage": status_data.get("stage", "paper_shadow"),
-                "policy": status_data.get(
-                    "policy",
-                    {
-                        "dry_run": True,
-                        "position_pct_multiplier": 0.2,
-                        "min_confidence_override": None,
-                    },
-                ),
+                "policy": policy,
                 "qualified_days": qualified_days,
                 "gate_days": gate_days,
                 "threshold_met": threshold_met,
-                "review_eligible": threshold_met and not status_data.get("anomaly_blockers", []),
-                "anomaly_blockers": status_data.get("anomaly_blockers", []),
+                "review_eligible": threshold_met and declared_eligible and not blockers,
+                "anomaly_blockers": sorted(set(blockers)),
                 "signals_count": len(signals),
                 "buy_count": buy_count,
                 "flat_count": flat_count,
