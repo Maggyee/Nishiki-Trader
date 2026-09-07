@@ -42,7 +42,8 @@ it reuses immutable v1 numbers explicitly, without claiming a numerical rerun.
 
 ## Next Steps
 
-1. Finish the follow-up deployment smoke check and retain its evidence summary.
+1. Continue the existing pinned collectors; use the acceptance record below as
+   the repair handoff. All ten final real-provider smoke checks passed.
 2. Use current collector status and immutable attempt journals when reviewing
    forward evidence; never count run invocations as qualified days.
 3. Review portfolio evidence against appropriate benchmarks and costs before
@@ -82,10 +83,14 @@ it reuses immutable v1 numbers explicitly, without claiming a numerical rerun.
 - Batch 3: 1,649 offline tests passed, 12 Postgres tests deselected; Ruff and
   registry checks passed. Frontend typecheck and production build passed;
   dependency audit found three transitive vulnerabilities, fixed within existing
-  dependency ranges; audit now reports zero. Final deployment smoke is next.
+  dependency ranges; audit now reports zero. Final deployment `fd56d7a`: ten of
+  ten collectors exited 0, current blocker lists empty; historical anomalies
+  remain and review eligibility is false. English/Chinese production HTTP
+  checks returned 200 with all candidate rows. The temporary server was stopped.
 
 ## References
 
+- [Repair acceptance and full changed-file list](progress/reliability-repair-2026-09-07.md).
 - [Shadow collector runtime and deployment](../infra/research-shadow/README.md).
 - [Research rules](decisions/014-research-program-v2.md) and [warnings](research-program-warnings.md).
 - [Research registry](progress/research-mechanism-family-registry.json).
