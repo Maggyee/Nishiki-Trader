@@ -21,7 +21,8 @@ from apps.ops.research_protocol_v22 import IDENTITIES
 from apps.ops.research_shadow_runtime import (
     atomic_json,
     captured_btc_observations,
-    summarize_qualified,
+    signal_pipeline_epoch,
+    summarize_signal_pipeline,
 )
 from apps.ops.research_v8_shadow_daily import _merge_observations, _parse_btc_bars
 from apps.ops.research_v22_snapshot import collect_snapshot, parse_and_audit_csv
@@ -151,7 +152,7 @@ def _factor_frame(rows: list[dict[str, Any]], *, vintage_id: str, snapshot_sha25
 
 
 def summarize_attempts(records: list[dict[str, Any]], *, gate_days: int, gate_signals: int) -> dict[str, Any]:
-    return {"schema_version": STATUS_SCHEMA_VERSION, **summarize_qualified(records, gate_days=gate_days, gate_signals=gate_signals)}
+    return {"schema_version": STATUS_SCHEMA_VERSION, **summarize_signal_pipeline(records, gate_days=gate_days, gate_signals=gate_signals)}
 
 
 
@@ -221,6 +222,7 @@ def collect_daily(
             symbol=contract["candidate"]["symbol"],
             venue=contract["candidate"]["venue"],
             start_date="2026-01-01",
+            end_date=observed_at.date().isoformat(),
         )
         store = SignalStore(data_root / "signals.db")
         source, model_version = IDENTITIES[candidate_key]
@@ -228,7 +230,9 @@ def collect_daily(
             event.signal_id
             for event in store.replay(source=source, model_version=model_version)
         }
-        forward_start_ns = int(pd.Timestamp(contract["forward_started_at"]).value)
+        pipeline_started_at = signal_pipeline_epoch(data_root, observed_at)
+        forward_start_ns = max(int(pd.Timestamp(contract["forward_started_at"]).value),
+                               int(pd.Timestamp(pipeline_started_at).value))
         new_forward = [
             event
             for event in events
@@ -257,10 +261,13 @@ def collect_daily(
 
         if not blockers:
             written, duplicates = store.write_many(events, now_ns=int(observed_at.timestamp() * 1e9))
+            atomic_json(data_root / "state/signal-pipeline-v2.json", {"started_at": pipeline_started_at})
         else:
             new_forward = []
 
         record = {
+            "signal_pipeline_version": 2,
+            "signal_pipeline_started_at": pipeline_started_at,
             "schema_version": SCHEMA_VERSION,
             "attempt_id": attempt_id,
             "observed_at": observed_at.isoformat().replace("+00:00", "Z"),
@@ -332,6 +339,11 @@ def collect_daily(
         status.update(
             {
                 "updated_at": record["observed_at"],
+                "source": source,
+                "model_version": model_version,
+                "signal_pipeline_started_at": pipeline_started_at,
+                "signal_generation_checked": True,
+                "generated_signal_count": len(events),
                 "latest_attempt_id": attempt_id,
                 "contract_sha256": contract_hash,
                 "stage": "paper_shadow",

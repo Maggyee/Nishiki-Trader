@@ -24,8 +24,6 @@ CANDIDATE_SPECS: list[dict[str, Any]] = [
         "protocol": "v8",
         "name": "Cboe GVZ Gold Volatility Relief",
         "category": "Commodity / Gold Vol",
-        "source": "rule_gold_vol_relief_v1",
-        "model_version": "cboe-gvz5obs-negative-1d-v1",
         "status_path": Path("docs/progress/phase-2-research-v8-paper-shadow-status.json"),
         "db_path": Path("data/research-v8-forward/signals.db"),
         "crontab_schedule": "weekdays at 02:30 UTC",
@@ -34,8 +32,6 @@ CANDIDATE_SPECS: list[dict[str, Any]] = [
         "protocol": "v16",
         "name": "U.S. Treasury 10Y Volatility Relief",
         "category": "Fixed Income / Duration",
-        "source": "rule_us_treasury_volatility_relief_v2",
-        "model_version": "treasury-nominal10-absdiff5-20-negative-lag2d-v1",
         "status_path": Path("docs/progress/phase-2-research-v16-paper-shadow-status.json"),
         "db_path": Path("data/research-v16-forward/signals.db"),
         "crontab_schedule": "weekdays at 12:30 UTC",
@@ -44,8 +40,6 @@ CANDIDATE_SPECS: list[dict[str, Any]] = [
         "protocol": "v18",
         "name": "Cboe VXN Nasdaq Volatility OHLC Relief",
         "category": "Equity Tech Volatility",
-        "source": "rule_nasdaq_vol_relief_v2",
-        "model_version": "cboe-vxn-ohlc5obs-negative-1d-v1",
         "status_path": Path("docs/progress/phase-2-research-v18-paper-shadow-status.json"),
         "db_path": Path("data/research-v18-forward/signals.db"),
         "crontab_schedule": "weekdays at 03:30 UTC",
@@ -54,8 +48,6 @@ CANDIDATE_SPECS: list[dict[str, Any]] = [
         "protocol": "v22",
         "name": "Cboe COR1M 1-Month Implied Correlation Relief",
         "category": "Option Surface / Correlation",
-        "source": "rule_cboe_implied_correlation_relief_v1",
-        "model_version": "cboe-cor1m-diff5-negative-lag1d-v1",
         "status_path": Path("docs/progress/phase-2-research-v22-paper-shadow-status.json"),
         "db_path": Path("data/research-v22-forward/signals.db"),
         "crontab_schedule": "weekdays at 04:30 UTC",
@@ -64,18 +56,14 @@ CANDIDATE_SPECS: list[dict[str, Any]] = [
         "protocol": "v34",
         "name": "Cboe FVX 5-Year Treasury Yield Relief",
         "category": "Fixed Income / Yield",
-        "source": "rule_cboe_fvx_relief_v1",
-        "model_version": "cboe-fvx-diff5-negative-lag1d-v1",
         "status_path": Path("docs/progress/phase-2-research-v34-paper-shadow-status.json"),
         "db_path": Path("data/research-v34-forward/signals.db"),
         "crontab_schedule": "weekdays at 02:45 UTC",
     },
     {
         "protocol": "v36",
-        "name": "Cboe VPN Option Strategy Relief",
+        "name": "Cboe VPN Option Strategy Expansion",
         "category": "Option Strategy / Variance",
-        "source": "rule_cboe_vpn_relief_v1",
-        "model_version": "cboe-vpn-diff5-negative-lag1d-v1",
         "status_path": Path("docs/progress/phase-2-research-v36-paper-shadow-status.json"),
         "db_path": Path("data/research-v36-forward/signals.db"),
         "crontab_schedule": "weekdays at 03:00 UTC",
@@ -84,8 +72,6 @@ CANDIDATE_SPECS: list[dict[str, Any]] = [
         "protocol": "v40",
         "name": "Cboe VXN Cross-Asset Equity Implied Vol Relief",
         "category": "Equity Tech Volatility",
-        "source": "rule_cboe_vxn_relief_v1",
-        "model_version": "cboe-vxn-diff5-negative-lag1d-v1",
         "status_path": Path("docs/progress/phase-2-research-v40-paper-shadow-status.json"),
         "db_path": Path("data/research-v40/shadow/signals.db"),
         "crontab_schedule": "weekdays at 03:15 UTC",
@@ -94,8 +80,6 @@ CANDIDATE_SPECS: list[dict[str, Any]] = [
         "protocol": "v42",
         "name": "Cboe VIX6M Term Structure Volatility Relief",
         "category": "Volatility Term Structure",
-        "source": "rule_cboe_vix6m_relief_v1",
-        "model_version": "cboe-vix6m-diff5-negative-lag1d-v1",
         "status_path": Path("docs/progress/phase-2-research-v42-paper-shadow-status.json"),
         "db_path": Path("data/research-v42/shadow/signals.db"),
         "crontab_schedule": "weekdays at 03:45 UTC",
@@ -104,8 +88,6 @@ CANDIDATE_SPECS: list[dict[str, Any]] = [
         "protocol": "v46",
         "name": "Binance BTC Perpetual Premium Index Delta Relief",
         "category": "Crypto Perpetual Derivatives",
-        "source": "rule_crypto_prem_relief_v1",
-        "model_version": "crypto-btc-prem-diff5-negative-lag1d-v1",
         "status_path": Path("docs/progress/phase-2-research-v46-paper-shadow-status.json"),
         "db_path": Path("data/research-v46/shadow/signals.db"),
         "crontab_schedule": "daily at 04:00 UTC",
@@ -114,13 +96,28 @@ CANDIDATE_SPECS: list[dict[str, Any]] = [
         "protocol": "v48",
         "name": "Binance BTC Perpetual Basis MA10 Relief",
         "category": "Crypto Spot-Perp Basis",
-        "source": "rule_crypto_basis_relief_v1",
-        "model_version": "crypto-btc-basis-below-ma10-lag1d-v1",
         "status_path": Path("docs/progress/phase-2-research-v48-paper-shadow-status.json"),
         "db_path": Path("data/research-v48/shadow/signals.db"),
         "crontab_schedule": "daily at 04:15 UTC",
     },
 ]
+
+
+def contract_identity(protocol: str) -> dict[str, str]:
+    root = Path(__file__).resolve().parents[2]
+    path = root / f"docs/progress/phase-2-research-{protocol}-paper-shadow.json"
+    contract = json.loads(path.read_text())
+    identities = [entry for entry in (contract, contract.get("candidate"), contract.get("strategy"))
+                  if isinstance(entry, dict) and "source" in entry and "model_version" in entry]
+    pairs = {(entry["source"], entry["model_version"]) for entry in identities}
+    if len(pairs) != 1:
+        raise ValueError(f"missing or conflicting frozen identity: {protocol}")
+    source, model = pairs.pop()
+    return {"source": source, "model_version": model}
+
+
+for _spec in CANDIDATE_SPECS:
+    _spec.update(contract_identity(_spec["protocol"]))
 
 
 def load_candidate_data(

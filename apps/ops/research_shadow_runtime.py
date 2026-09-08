@@ -120,6 +120,26 @@ def write_daily_factors(rows: list[dict], envelope: dict, output: Path) -> Path:
     return output
 
 
+def signal_pipeline_epoch(data_root: Path, observed: datetime) -> str:
+    """Read the repair epoch; persist only after a successful collection."""
+    path = data_root / "state/signal-pipeline-v2.json"
+    return json.loads(path.read_text())["started_at"] if path.exists() else observed.isoformat()
+
+
+def summarize_signal_pipeline(records: list[dict], *, gate_days: int, gate_signals: int) -> dict:
+    """Old empty-pipeline attempts remain history, not qualified signal evidence."""
+    current = [r for r in records if r.get("signal_pipeline_version") == 2]
+    summary = summarize_qualified(current, gate_days=gate_days, gate_signals=gate_signals)
+    anomalies = sorted({b for r in records for b in r.get("blockers", [])})
+    summary.update(anomaly_blockers=anomalies, review_eligible=summary["threshold_met"] and not anomalies,
+                   historical_anomalies_require_review=bool(anomalies),
+                   legacy_attempt_count=len(records)-len(current),
+                   legacy_empty_pipeline_days_are_evidence=False, signal_pipeline_version=2)
+    if anomalies:
+        summary["next_action"] = "continue_paper_shadow_collection"
+    return summary
+
+
 def run_forward_series(*, protocol: str, candidate: str, source: str, model: str,
                        fetch_snapshot, build_events, raw_dir: Path, factors_dir: Path,
                        signal_store_path: Path, state_file: Path, status_file: Path,

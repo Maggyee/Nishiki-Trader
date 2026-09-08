@@ -22,6 +22,11 @@ def test_v36_summarize_attempts_evaluates_gate() -> None:
         {"collection_date": "2026-08-15", "qualified_day": True, "blockers": [], "new_forward_signal_ids": []},
     ]
     status = summarize_attempts(records, gate_days=7, gate_signals=50)
+    assert status["qualified_day_count"] == 0
+    assert status["legacy_attempt_count"] == 2
+    for record in records:
+        record["signal_pipeline_version"] = 2
+    status = summarize_attempts(records, gate_days=7, gate_signals=50)
     assert status["qualified_day_count"] == 2
     assert status["new_forward_signal_count"] == 1
     assert status["threshold_met"] is False

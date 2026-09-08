@@ -1,100 +1,70 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-09-07
-- **Current phase**: Phase 5 entry — read-only monitoring; live trading still blocked.
-- **Current objective**: Repair evidence and monitoring reliability before further research.
-- **Source of truth**: Runtime status under `data/`; immutable research results and ADRs under `docs/`.
+- **Last updated**: 2026-09-08
+- **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
+- **Current objective**: Repair strategy signal correctness, then evaluate retained portfolio evidence.
+- **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
 
-The operator authorized the ordered reliability repairs from the 2026-09-07
-project review. Batch 1 isolates Postgres integration tests and makes portfolio
-input failures explicit. Batch 2 corrects collector qualification and runtime
-state ownership. Batch 3 refreshes portfolio diagnostics and current guidance.
+The operator authorized the ordered 2026-09-08 strategy-review repairs.
+V22/v34/v36 had passed collection smoke checks while their generators silently
+used a 2022 end-date with a 2026 start-date, producing no signals. Explicit
+forward date ranges and reversed-range rejection now fix this defect.
+End-to-end tests cover nonempty transitions, legitimate flat periods, future
+suffix invariance, duplicate runs, and backfill-vs-prospective counts.
 
-Batch 2 is deployed: all ten collectors use runtime-only status;
-v40/v42/v46/v48 now count distinct dates with fresh observations, not invocations.
-Strict collectors can recover hash-verified retained BTC captures without granting
-qualification to failed historical attempts. Deployment pins the existing ten cron
-entries to a clean pushed revision; schedules and research identities are unchanged.
-All six strict collectors passed a real collection after deployment. Four v2
-collectors start prospective counters without adopting legacy invocation totals.
-Provider smoke checks exposed an old Cboe closure outside the factor window and
-a missing June monthly-archive day; the follow-up limits gap checks to the
-current factor window and recovers exact missing dates via verified daily files.
+The monitor now derives all ten identities from frozen shadow contracts,
+including the corrected v36 VPN expansion identity. For the three repaired
+pipelines, prior empty-generation attempts remain immutable history; a separate
+v2 epoch counts only corrected attempts and excludes backfilled signals.
 
-Batch 3 removes inferred leverage and zero-filled missing signal days, adds a
-fail-closed ten-candidate read-only dashboard panel, and appends meta-analysis v2.
-V2 separates 116 current PnL-opened identities from the legacy 108-identity null;
-it reuses immutable v1 numbers explicitly, without claiming a numerical rerun.
+Next is a fixed-method retained-fill study over already-opened 2023–2025 data.
+No parameters, frozen research identities, source policies or trading permissions
+are changed. The study does not select allocations or grant promotions.
 
 ## Milestones
 
-- SignalEvent v1 bridge, Nautilus backtests, paper/testnet risk and audit paths exist.
-- AgentAdvice and MCP wrappers are implemented; the review agent is deterministic.
-- Phase 5 read-only frontend exists. No browser mutation or order controls.
-- Protocols through v53 are recorded. Ten legacy candidates remain held at
-  `paper_shadow`, `dry_run=True`; no policy changes are authorized by this repair.
-- Gates v2/v2.1 protocols v49–v53 have 12 identities and zero survivors.
-- The previous `freqai_linear_v1 / linear-mom-train20240105` policy remains
-  `demote @ paper_simulated`, multiplier 0.1. Its testnet campaign is archived.
+- SignalEvent v1 bridge, Nautilus backtests, risk/audit paths and read-only frontend exist.
+- Ten legacy candidates remain paper_shadow dry-run. Protocols through v53 are registered.
+- Registry: 154 identities, 116 PnL opened; v49–v53 have 12 identities and no survivors.
+- Existing ten collector cron jobs use pinned clean pushed code; no new schedules.
+- The 2026-09-07 reliability repairs and their full verification are archived below.
 
 ## Next Steps
 
-1. Continue the existing pinned collectors; use the acceptance record below as
-   the repair handoff. All ten final real-provider smoke checks passed.
-2. Use current collector status and immutable attempt journals when reviewing
-   forward evidence; never count run invocations as qualified days.
-3. Review portfolio evidence against appropriate benchmarks and costs before
-   considering a new research protocol or a separate promotion decision.
+1. Deploy and smoke-test corrected signal generation, not merely successful data collection.
+2. Evaluate hash-verified retained fills against same-window and exposure-matched
+   benchmarks; explicitly disclose missing cohort evidence and account equity.
+3. Review evidence as a portfolio before considering any separately authorized
+   new identity or promotion. Do not retune closed v49/v53 identities.
 
 ## Blocked / Deferred
 
-- No live trading. `stop_before_testnet_resume` remains in force.
-- Strict testnet continuity remains `current_qualified_streak_days=0/14`.
-- ADR-013 and the first-live-day runbook remain Draft; no live runner is wired.
-- Existing missing BTC intervals and failed collection attempts remain audit
-  evidence. This repair cannot retroactively qualify them.
-- The 2026-09..2027-01 future blind stays sealed; no future-blind PnL evaluation.
-- Closed research identities may not be reopened or retuned. The external-index
-  relief family remains saturated. New work requires a frozen independent identity.
-- V12 remains a forward-data candidate with no recurring schedule authorized.
-- No Redis/default Postgres migration, new Agent orchestration, or live-path changes.
-- Full portfolio return/drawdown/leverage evaluation remains unavailable until
-  verified Nautilus fills and account equity are attached for already-opened
-  historical windows. Signals and policy multipliers cannot substitute for them.
-- Historical BTC benchmark CSV is absent in this checkout; meta-analysis v2 is
-  a registry-context refresh only. V1 remains unchanged.
-- LLM agents never enter the order path. NautilusTrader is the only execution
-  engine; `SignalEvent v1` is the only research-to-execution bridge.
+- Testnet/live remain blocked; strict testnet continuity is 0/14.
+- ADR-013 and first-live-day runbook remain Draft. No live runner is wired.
+- The 2026-09..2027-01 future blind stays sealed for PnL; forward observations only.
+- Historical collector anomalies are not cleared or retroactively qualified.
+- External-index relief is saturated; closed identities cannot be reopened.
+- V12 has no recurring schedule authorization.
+- Online CI is not enabled: credential lacks workflow scope; template is in `infra/ci/`.
+- No verified account-equity attachment; actual leverage/account return remain unknown.
+- Nautilus is the only execution engine; LLMs never enter the order path.
 
 ## Latest Verification
 
-- Pre-repair review: 672 targeted tests passed, one local-data-dependent monitor
-  test failed. Registry check and Ruff passed.
-- Batch 1: 1,631 offline tests passed; 12 Postgres integration tests are opt-in.
-  Targeted isolation/monitor tests: 15 passed and 12 skipped without a test DSN.
-- CI template is retained in `infra/ci/`; GitHub denied workflow creation because
-  the current OAuth credential lacks `workflow` scope. Online CI is not enabled.
-- Batch 2: 1,638 offline tests passed; 12 Postgres tests deselected. Historical
-  BTC capture reconstruction found no hourly gaps for the six strict collectors.
-  Six strict collectors passed real collection from pinned revision `f8c997a`.
-- Batch 3: 1,649 offline tests passed, 12 Postgres tests deselected; Ruff and
-  registry checks passed. Frontend typecheck and production build passed;
-  dependency audit found three transitive vulnerabilities, fixed within existing
-  dependency ranges; audit now reports zero. Final deployment `fd56d7a`: ten of
-  ten collectors exited 0, current blocker lists empty; historical anomalies
-  remain and review eligibility is false. English/Chinese production HTTP
-  checks returned 200 with all candidate rows. The temporary server was stopped.
+- Signal repair: 1,659 offline tests passed; 12 Postgres integration tests deselected.
+- Ten new end-to-end/time-consistency/identity tests passed.
+- Ruff passed. Deployment and retained-fill study are pending this clean pushed commit.
+- Previous repair: frontend typecheck/build, zero-vulnerability audit and bilingual
+  HTTP checks passed; see its acceptance record for scope and limitations.
 
 ## References
 
-- [Repair acceptance and full changed-file list](progress/reliability-repair-2026-09-07.md).
-- [Shadow collector runtime and deployment](../infra/research-shadow/README.md).
-- [Research rules](decisions/014-research-program-v2.md) and [warnings](research-program-warnings.md).
-- [Research registry](progress/research-mechanism-family-registry.json).
-- [Historical meta-analysis v1](progress/research-program-meta-analysis-v1.md).
-- [Current meta-analysis context v2](progress/research-program-meta-analysis-v2.md).
-- [Archived testnet continuity](progress/phase-3-testnet-continuity-plan.md).
-- [Full prior status archive](progress/project-status-archive-2026-09-07.md).
+- [2026-09-07 reliability acceptance](progress/reliability-repair-2026-09-07.md).
+- [Fixed retained-fill study method](progress/portfolio-evidence-study-2026-09-08.md).
+- [Collector deployment](../infra/research-shadow/README.md).
+- [Research rules](decisions/014-research-program-v2.md), [warnings](research-program-warnings.md).
+- [Registry](progress/research-mechanism-family-registry.json), [meta-analysis context](progress/research-program-meta-analysis-v2.md).
+- [Historical status archive](progress/project-status-archive-2026-09-07.md).

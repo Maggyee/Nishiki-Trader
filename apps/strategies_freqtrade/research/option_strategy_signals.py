@@ -96,6 +96,8 @@ def generate_option_strategy_signals(
     )
     start = pd.Timestamp(start_date, tz="UTC")
     end = pd.Timestamp(end_date, tz="UTC") + pd.Timedelta(days=1)
+    if start >= end:
+        raise ValueError("signal date range is reversed: start_date must not exceed end_date")
     current_long = False
     events: list[SignalEvent] = []
     for timestamp, desired in states.items():

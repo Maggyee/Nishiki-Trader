@@ -28,6 +28,10 @@ are historical snapshots, not current runtime health or qualification evidence.
 For the current read-only portfolio surface, read `apps/ops/research_portfolio_snapshot.py`
 and `docs/progress/research-program-meta-analysis-v2.md`. The v2 meta report is a
 registry-context refresh of immutable v1 numbers, not a new numerical simulation.
+For retained-fill portfolio diagnostics, read
+`docs/progress/portfolio-evidence-study-2026-09-08.md` before running
+`apps.ops.research_portfolio_evidence`. Missing verified candidates must remain
+explicitly excluded; the study does not authorize portfolio trading or promotion.
 
 | Task area | Read |
 |---|---|
