@@ -1,0 +1,533 @@
+{
+  "accounting": {
+    "cost_bps_per_fill": {
+      "base": 12.0,
+      "gross": 0.0,
+      "stress": 15.0
+    },
+    "costs_replace_recorded_commissions": true,
+    "mark_frequency": "daily UTC close",
+    "original_sleeve_btc_quantity": 0.001
+  },
+  "benchmark": {
+    "path": "data/research-v49/closes/btcusdt-1d-closes-2019-12-2025-12.csv",
+    "qualification_sha256": "0d0a0ab1c7175adecc07a65abe0151907d90baa1a9eea394ba2f2e80b79a4058",
+    "rows": 1097,
+    "sha256": "b2183242b3e4849519eae4ca396e2206293e8099f90e8b5e88b3dc19adea7a48",
+    "window_start_mark": "2022-12-31"
+  },
+  "boundaries": {
+    "changes_source_policy": false,
+    "creates_fills": false,
+    "opens_future_blind": false,
+    "reads_retained_evidence_only": true,
+    "touches_live_path": false,
+    "writes_signals": false
+  },
+  "candidates": [
+    {
+      "account_return_pct": null,
+      "actual_account_leverage": null,
+      "buy_and_hold_usdt": {
+        "base": 70.980791256,
+        "gross": 71.10582000000001,
+        "stress": 70.94953407000001
+      },
+      "daily_marked_max_drawdown_usdt": {
+        "base": 24.784162635999998,
+        "gross": 24.040869999999998,
+        "stress": 24.969985794999992
+      },
+      "evidence": {
+        "confirmation_result_sha256": "66996eb539197e099aca621e212d90d3df6334471955cc678d0e5f706ac195fb",
+        "fills_sha256": "sha256:75a543c3dd73c8082bea42cd8278215950e41ac5f1b54e24d53058d719e27588",
+        "manifest_sha256": "sha256:f162d4ad4d176ff72964a9b9632725a247e3988d36c0af84a8e25d9a7e39739d",
+        "path": "data/research-v16/confirmation/backtests/20260812-092313Z-f79e3429"
+      },
+      "excess_over_exposure_matched_usdt": {
+        "base": 0.4324135038549599,
+        "gross": 13.397128761405135,
+        "stress": -2.8087653105325856
+      },
+      "execution_path_sha256": "37e8e6cefda9b41ef87dacbe60aacfb364cda4efb16db3ecf67d3fae31ca1135",
+      "exposure_matched_buy_and_hold_usdt": {
+        "base": 37.23631153214508,
+        "gross": 37.3019012385949,
+        "stress": 37.21991410553263
+      },
+      "fills": 160,
+      "model_version": "treasury-nominal10-absdiff5-20-negative-lag2d-v1",
+      "net_pnl_usdt": {
+        "base": 37.66872503600004,
+        "gross": 50.699030000000036,
+        "stress": 34.411148795000045
+      },
+      "protocol": "v16",
+      "source": "rule_us_treasury_volatility_relief_v2",
+      "terminal_close_without_signal_count": 1,
+      "time_in_market_fraction": 0.5245970194647203
+    },
+    {
+      "account_return_pct": null,
+      "actual_account_leverage": null,
+      "buy_and_hold_usdt": {
+        "base": 70.980791256,
+        "gross": 71.10582000000001,
+        "stress": 70.94953407000001
+      },
+      "daily_marked_max_drawdown_usdt": {
+        "base": 22.56232630000002,
+        "gross": 20.96908000000002,
+        "stress": 22.960637875000018
+      },
+      "evidence": {
+        "confirmation_result_sha256": "043a47029be99dbe910454715a1afdc7da792c28da71df968844be3aad8c88a8",
+        "fills_sha256": "sha256:8180a3c236afa687b738829f99753ebd0a07ee59931c0cffb674482df10124d7",
+        "manifest_sha256": "sha256:f426730ef6430e596177aea042c7f25e16f5503ecbb46c1559c63751a2921624",
+        "path": "data/research-v18/confirmation/backtests/20260813-025742Z-ee8f984a"
+      },
+      "excess_over_exposure_matched_usdt": {
+        "base": 23.55165146991242,
+        "gross": 34.0326436861314,
+        "stress": 20.93140341585768
+      },
+      "execution_path_sha256": "c58a365a4e5ce77a2e5701fa67e56eb673b27212cf5e78d5896815c976061493",
+      "exposure_matched_buy_and_hold_usdt": {
+        "base": 36.6561385500876,
+        "gross": 36.720706313868625,
+        "stress": 36.639996609142344
+      },
+      "fills": 144,
+      "model_version": "cboe-vxn-ohlc5obs-negative-1d-v1",
+      "net_pnl_usdt": {
+        "base": 60.20779002000002,
+        "gross": 70.75335000000003,
+        "stress": 57.571400025000024
+      },
+      "protocol": "v18",
+      "source": "rule_nasdaq_vol_relief_v2",
+      "terminal_close_without_signal_count": 0,
+      "time_in_market_fraction": 0.5164233576642336
+    },
+    {
+      "account_return_pct": null,
+      "actual_account_leverage": null,
+      "buy_and_hold_usdt": {
+        "base": 70.980791256,
+        "gross": 71.10582000000001,
+        "stress": 70.94953407000001
+      },
+      "daily_marked_max_drawdown_usdt": {
+        "base": 26.683524999999978,
+        "gross": 25.40145999999998,
+        "stress": 27.00404124999998
+      },
+      "evidence": {
+        "confirmation_result_sha256": "17e86615f11ec98f8ba03578f575214919f0b3fb8bd9df7329a79a62cb817f2a",
+        "fills_sha256": "sha256:b9bc07d4f790a535f472b92f0d5af9655b8157e86566fbdc2aab3912927462e2",
+        "manifest_sha256": "sha256:877cd4e047e3820fb16851bb22243da20625b707a6ed02cd14d342ab2c7d2070",
+        "path": "data/research-v22/confirmation/backtests/20260813-043019Z-e15a39f8"
+      },
+      "excess_over_exposure_matched_usdt": {
+        "base": -10.413574333364075,
+        "gross": 1.483067976733544,
+        "stress": -13.387734910888483
+      },
+      "execution_path_sha256": "1d55a4df0155209364958f4daf0a23fde17be21189b4f4cf0ede0aa20442d1d2",
+      "exposure_matched_buy_and_hold_usdt": {
+        "base": 40.15066883736406,
+        "gross": 40.22139202326644,
+        "stress": 40.13298804088847
+      },
+      "fills": 156,
+      "model_version": "cboe-cor1m-diff5-negative-lag1d-v1",
+      "net_pnl_usdt": {
+        "base": 29.737094503999984,
+        "gross": 41.70445999999998,
+        "stress": 26.745253129999988
+      },
+      "protocol": "v22",
+      "source": "rule_cboe_implied_correlation_relief_v1",
+      "terminal_close_without_signal_count": 1,
+      "time_in_market_fraction": 0.5656554136253042
+    },
+    {
+      "account_return_pct": null,
+      "actual_account_leverage": null,
+      "buy_and_hold_usdt": {
+        "base": 70.980791256,
+        "gross": 71.10582000000001,
+        "stress": 70.94953407000001
+      },
+      "daily_marked_max_drawdown_usdt": {
+        "base": 22.70961524400002,
+        "gross": 22.005900000000025,
+        "stress": 22.885544055000025
+      },
+      "evidence": {
+        "confirmation_result_sha256": "41b79397f2e34a85f6e4093c41de6f30d9e429034bdf38e2d106d676a33a7cd9",
+        "fills_sha256": "sha256:9e2d8b77c7cc497ff104194859b6080132b8efa85ee5a5102464567fa1165ebc",
+        "manifest_sha256": "sha256:9651460af9bdb2dec06a44b89f947b96cc572bb2bf525685cfac8c78477c1f17",
+        "path": "data/research-v34/backtests/fvx_confirmation_run1/20260814-014723Z-7a02c68f"
+      },
+      "excess_over_exposure_matched_usdt": {
+        "base": 36.77417073510315,
+        "gross": 49.25920498403289,
+        "stress": 33.652912172870714
+      },
+      "execution_path_sha256": "227f86a26349fdb566292ec78cdca7486148a094925039fdfaa8f7685803c6b4",
+      "exposure_matched_buy_and_hold_usdt": {
+        "base": 33.93337325289691,
+        "gross": 33.99314501596716,
+        "stress": 33.918430312129345
+      },
+      "fills": 158,
+      "model_version": "cboe-fvx-diff5-negative-lag1d-v1",
+      "net_pnl_usdt": {
+        "base": 70.70754398800005,
+        "gross": 83.25235000000005,
+        "stress": 67.57134248500006
+      },
+      "protocol": "v34",
+      "source": "rule_cboe_fvx_relief_v1",
+      "terminal_close_without_signal_count": 1,
+      "time_in_market_fraction": 0.4780641727493918
+    },
+    {
+      "account_return_pct": null,
+      "actual_account_leverage": null,
+      "buy_and_hold_usdt": {
+        "base": 70.980791256,
+        "gross": 71.10582000000001,
+        "stress": 70.94953407000001
+      },
+      "daily_marked_max_drawdown_usdt": {
+        "base": 26.82006135199994,
+        "gross": 24.41353999999994,
+        "stress": 27.42169168999994
+      },
+      "evidence": {
+        "confirmation_result_sha256": "fb59535385c95e5c791c9553f16d0638fd14cd04456a562d10a047b5f0332bc2",
+        "fills_sha256": "sha256:85749cf01bfd96c88af258c11d011160419cd4bfaf29ddb813dfe420a5de173b",
+        "manifest_sha256": "sha256:410f99eb2bcc018aebba3e31e8cc4347322fae279e592bfb688a5c067aef7f4b",
+        "path": "data/research-v36/backtests/vpn-conf-a/20260814-022321Z-caba0792"
+      },
+      "excess_over_exposure_matched_usdt": {
+        "base": 12.584037842614109,
+        "gross": 23.564525148266476,
+        "stress": 9.838916016201004
+      },
+      "execution_path_sha256": "a25008b1897315d2d8d503ac1bd740bd0af4f2f0d71cf2c06e0794a3ac2fac76",
+      "exposure_matched_buy_and_hold_usdt": {
+        "base": 44.87840402138595,
+        "gross": 44.95745485173358,
+        "stress": 44.85864131379905
+      },
+      "fills": 130,
+      "model_version": "cboe-vpn-diff5-positive-lag1d-v1",
+      "net_pnl_usdt": {
+        "base": 57.462441864000056,
+        "gross": 68.52198000000006,
+        "stress": 54.69755733000005
+      },
+      "protocol": "v36",
+      "source": "rule_cboe_vpn_expansion_v1",
+      "terminal_close_without_signal_count": 1,
+      "time_in_market_fraction": 0.6322612530413625
+    },
+    {
+      "account_return_pct": null,
+      "actual_account_leverage": null,
+      "buy_and_hold_usdt": {
+        "base": 70.980791256,
+        "gross": 71.10582000000001,
+        "stress": 70.94953407000001
+      },
+      "daily_marked_max_drawdown_usdt": {
+        "base": 22.56232630000002,
+        "gross": 20.96908000000002,
+        "stress": 22.960637875000018
+      },
+      "evidence": {
+        "confirmation_result_sha256": "f800e368ace385dfcce641eb45861ffc83b6eb0ec21996f02cd3464d48114c28",
+        "fills_sha256": "sha256:4760d48207f51d82d8991190cb6196dea652e15be0d07d01e360be1125aa475d",
+        "manifest_sha256": "sha256:a5838f52959d36bb7fe0e610b2c1a7c84a75ce07a7cda1c496e87ee3db695cbf",
+        "path": "data/research-v40/backtests/vxn-conf-a/20260814-090916Z-dd01703a"
+      },
+      "excess_over_exposure_matched_usdt": {
+        "base": 23.55165146991242,
+        "gross": 34.0326436861314,
+        "stress": 20.93140341585768
+      },
+      "execution_path_sha256": "c58a365a4e5ce77a2e5701fa67e56eb673b27212cf5e78d5896815c976061493",
+      "exposure_matched_buy_and_hold_usdt": {
+        "base": 36.6561385500876,
+        "gross": 36.720706313868625,
+        "stress": 36.639996609142344
+      },
+      "fills": 144,
+      "model_version": "cboe-vxn-diff5-negative-lag1d-v1",
+      "net_pnl_usdt": {
+        "base": 60.20779002000002,
+        "gross": 70.75335000000003,
+        "stress": 57.571400025000024
+      },
+      "protocol": "v40",
+      "source": "rule_cboe_vxn_relief_v1",
+      "terminal_close_without_signal_count": 0,
+      "time_in_market_fraction": 0.5164233576642336
+    }
+  ],
+  "cohort_status": "partial",
+  "daily_holding_jaccard_overlap": {
+    "v16": {
+      "v16": 1.0,
+      "v18": 0.41089108910891087,
+      "v22": 0.41183431952662725,
+      "v34": 0.3137724550898204,
+      "v36": 0.4419134396355353,
+      "v40": 0.41089108910891087
+    },
+    "v18": {
+      "v16": 0.41089108910891087,
+      "v18": 1.0,
+      "v22": 0.594885598923284,
+      "v34": 0.36466165413533835,
+      "v36": 0.7092391304347826,
+      "v40": 1.0
+    },
+    "v22": {
+      "v16": 0.41183431952662725,
+      "v18": 0.594885598923284,
+      "v22": 1.0,
+      "v34": 0.38256658595641646,
+      "v36": 0.6532156368221942,
+      "v40": 0.594885598923284
+    },
+    "v34": {
+      "v16": 0.3137724550898204,
+      "v18": 0.36466165413533835,
+      "v22": 0.38256658595641646,
+      "v34": 1.0,
+      "v36": 0.3822525597269625,
+      "v40": 0.36466165413533835
+    },
+    "v36": {
+      "v16": 0.4419134396355353,
+      "v18": 0.7092391304347826,
+      "v22": 0.6532156368221942,
+      "v34": 0.3822525597269625,
+      "v36": 1.0,
+      "v40": 0.7092391304347826
+    },
+    "v40": {
+      "v16": 0.41089108910891087,
+      "v18": 1.0,
+      "v22": 0.594885598923284,
+      "v34": 0.36466165413533835,
+      "v36": 0.7092391304347826,
+      "v40": 1.0
+    }
+  },
+  "daily_pnl_correlation": {
+    "v16": {
+      "v16": 1.0,
+      "v18": 0.537925657580593,
+      "v22": 0.5289637149418726,
+      "v34": 0.45837470556866433,
+      "v36": 0.5704721367411033,
+      "v40": 0.537925657580593
+    },
+    "v18": {
+      "v16": 0.537925657580593,
+      "v18": 0.9999999999999998,
+      "v22": 0.7159942420158354,
+      "v34": 0.4851236915983857,
+      "v36": 0.8021980892851074,
+      "v40": 0.9999999999999998
+    },
+    "v22": {
+      "v16": 0.5289637149418726,
+      "v18": 0.7159942420158354,
+      "v22": 1.0,
+      "v34": 0.5209612202991954,
+      "v36": 0.7991871425375138,
+      "v40": 0.7159942420158354
+    },
+    "v34": {
+      "v16": 0.4583747055686644,
+      "v18": 0.4851236915983857,
+      "v22": 0.5209612202991954,
+      "v34": 1.0,
+      "v36": 0.5098816704821306,
+      "v40": 0.4851236915983857
+    },
+    "v36": {
+      "v16": 0.5704721367411033,
+      "v18": 0.8021980892851074,
+      "v22": 0.7991871425375138,
+      "v34": 0.5098816704821307,
+      "v36": 1.0,
+      "v40": 0.8021980892851074
+    },
+    "v40": {
+      "v16": 0.537925657580593,
+      "v18": 0.9999999999999998,
+      "v22": 0.7159942420158354,
+      "v34": 0.4851236915983857,
+      "v36": 0.8021980892851074,
+      "v40": 0.9999999999999998
+    }
+  },
+  "duplicate_execution_groups": [
+    [
+      "v18",
+      "v40"
+    ]
+  ],
+  "duplicate_normalized_diagnostic": {
+    "account_return_pct": null,
+    "actual_account_leverage": null,
+    "daily_marked_max_drawdown_usdt": {
+      "base": 80.21429251999997,
+      "gross": 74.84659999999997,
+      "stress": 81.55621564999997
+    },
+    "diagnostic_weights_not_source_policy": {
+      "v16": 1.0,
+      "v18": 0.5,
+      "v22": 1.0,
+      "v34": 1.0,
+      "v36": 1.0,
+      "v40": 0.5
+    },
+    "leave_one_out": {
+      "v16": {
+        "base_drawdown_increase_usdt": 7.046286851999994,
+        "base_max_drawdown_without_usdt": 73.16800566799998,
+        "base_pnl_contribution_usdt": 37.66872503600004
+      },
+      "v18": {
+        "base_drawdown_increase_usdt": 9.281488142,
+        "base_max_drawdown_without_usdt": 70.93280437799997,
+        "base_pnl_contribution_usdt": 30.10389501000001
+      },
+      "v22": {
+        "base_drawdown_increase_usdt": 25.576365031999984,
+        "base_max_drawdown_without_usdt": 54.63792748799999,
+        "base_pnl_contribution_usdt": 29.737094503999984
+      },
+      "v34": {
+        "base_drawdown_increase_usdt": 7.837889612000012,
+        "base_max_drawdown_without_usdt": 72.37640290799996,
+        "base_pnl_contribution_usdt": 70.70754398800005
+      },
+      "v36": {
+        "base_drawdown_increase_usdt": 20.08361477199997,
+        "base_max_drawdown_without_usdt": 60.130677748000004,
+        "base_pnl_contribution_usdt": 57.462441864000056
+      },
+      "v40": {
+        "base_drawdown_increase_usdt": 9.281488142,
+        "base_max_drawdown_without_usdt": 70.93280437799997,
+        "base_pnl_contribution_usdt": 30.10389501000001
+      }
+    },
+    "max_daily_marked_btc_quantity": 0.005,
+    "net_pnl_usdt": {
+      "base": 255.78359541200015,
+      "gross": 314.9311700000001,
+      "stress": 240.99670176500018
+    }
+  },
+  "excluded": [
+    {
+      "protocol": "v8",
+      "reason": "ValueError:committed result lacks manifest-and-fills hash references"
+    },
+    {
+      "protocol": "v42",
+      "reason": "ValueError:committed result lacks manifest-and-fills hash references"
+    },
+    {
+      "protocol": "v46",
+      "reason": "ValueError:committed result lacks manifest-and-fills hash references"
+    },
+    {
+      "protocol": "v48",
+      "reason": "ValueError:committed result lacks manifest-and-fills hash references"
+    }
+  ],
+  "generated_at": "2026-09-08T01:36:16.391991+00:00",
+  "limitations": [
+    "partial cohort cannot establish ten-candidate portfolio performance",
+    "verified account equity unavailable; leverage and percentage return are not inferred",
+    "daily marks do not measure intraday drawdown",
+    "exposure matching does not establish statistical significance or match volatility",
+    "no portfolio allocation or promotion is authorized"
+  ],
+  "method": "docs/progress/portfolio-evidence-study-2026-09-08.md",
+  "raw_fixed_quantity_basket": {
+    "account_return_pct": null,
+    "actual_account_leverage": null,
+    "daily_marked_max_drawdown_usdt": {
+      "base": 98.77726880399997,
+      "gross": 92.37371999999996,
+      "stress": 100.37815600499998
+    },
+    "diagnostic_weights_not_source_policy": {
+      "v16": 1.0,
+      "v18": 1.0,
+      "v22": 1.0,
+      "v34": 1.0,
+      "v36": 1.0,
+      "v40": 1.0
+    },
+    "leave_one_out": {
+      "v16": {
+        "base_drawdown_increase_usdt": 7.046286851999994,
+        "base_max_drawdown_without_usdt": 91.73098195199998,
+        "base_pnl_contribution_usdt": 37.66872503600004
+      },
+      "v18": {
+        "base_drawdown_increase_usdt": 18.562976284,
+        "base_max_drawdown_without_usdt": 80.21429251999997,
+        "base_pnl_contribution_usdt": 60.20779002000002
+      },
+      "v22": {
+        "base_drawdown_increase_usdt": 26.683524999999975,
+        "base_max_drawdown_without_usdt": 72.093743804,
+        "base_pnl_contribution_usdt": 29.737094503999984
+      },
+      "v34": {
+        "base_drawdown_increase_usdt": 7.837889612000026,
+        "base_max_drawdown_without_usdt": 90.93937919199995,
+        "base_pnl_contribution_usdt": 70.70754398800005
+      },
+      "v36": {
+        "base_drawdown_increase_usdt": 18.997243748000002,
+        "base_max_drawdown_without_usdt": 79.78002505599997,
+        "base_pnl_contribution_usdt": 57.462441864000056
+      },
+      "v40": {
+        "base_drawdown_increase_usdt": 18.562976284,
+        "base_max_drawdown_without_usdt": 80.21429251999997,
+        "base_pnl_contribution_usdt": 60.20779002000002
+      }
+    },
+    "max_daily_marked_btc_quantity": 0.006,
+    "net_pnl_usdt": {
+      "base": 315.9913854320002,
+      "gross": 385.68452000000013,
+      "stress": 298.5681017900002
+    }
+  },
+  "requested_candidates": 10,
+  "schema_version": "research.portfolio_evidence.v1",
+  "verified_candidates": 6,
+  "window": {
+    "daily_samples": 1096,
+    "end_inclusive": "2025-12-31",
+    "start": "2023-01-01"
+  }
+}

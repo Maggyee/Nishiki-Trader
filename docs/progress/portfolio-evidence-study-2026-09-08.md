@@ -13,6 +13,10 @@ identity, parameter search, promotion, or new execution engine.
   finite positive fixed 0.001 BTC trades, and it ends flat without ever shorting.
   Missing cryptographic evidence excludes the candidate explicitly; do not select
   another convenient run or extrapolate a partial cohort to all ten.
+- Lineage compatibility: the existing `BaselineNautilusStrategy.on_stop` writes
+  an untagged terminal close. Only a final SELL at the exact 2025-12-31 23:00 UTC
+  bundle end may have an empty signal ID, and it must flatten a prior correctly
+  attributed long position. Report that exception count; reject other blank IDs.
 - Prices: retained BTC daily closes referenced and SHA256-pinned by the existing
   v49 provider qualification. Reusing market prices does not reopen the v49 model.
   Require an exact daily grid, including 2022-12-31 for the initial mark.

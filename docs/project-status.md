@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-08
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Repair strategy signal correctness, then evaluate retained portfolio evidence.
+- **Current objective**: Observe repaired collectors and resolve remaining historical portfolio evidence gaps.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -20,7 +20,14 @@ including the corrected v36 VPN expansion identity. For the three repaired
 pipelines, prior empty-generation attempts remain immutable history; a separate
 v2 epoch counts only corrected attempts and excludes backfilled signals.
 
-Next is a fixed-method retained-fill study over already-opened 2023–2025 data.
+The repair is deployed at pinned commit `1727408`: v22/v34/v36 generated
+37/36/45 signals respectively, each with one corrected qualified date and zero
+new forward signals. No schedules or historical attempt records were changed.
+
+A fixed-method retained-fill study now covers 6/10 candidates over 2023–2025.
+V18/v40 have identical execution paths. V22 is 10.41 USDT below its exposure-
+matched base-cost benchmark; v16 exceeds it by only 0.43 USDT (0.001 BTC sleeves).
+V8/v42/v46/v48 lack original manifest-and-fills hash references and are excluded.
 No parameters, frozen research identities, source policies or trading permissions
 are changed. The study does not select allocations or grant promotions.
 
@@ -34,11 +41,13 @@ are changed. The study does not select allocations or grant promotions.
 
 ## Next Steps
 
-1. Deploy and smoke-test corrected signal generation, not merely successful data collection.
-2. Evaluate hash-verified retained fills against same-window and exposure-matched
-   benchmarks; explicitly disclose missing cohort evidence and account equity.
-3. Review evidence as a portfolio before considering any separately authorized
-   new identity or promotion. Do not retune closed v49/v53 identities.
+1. Accumulate genuinely prospective observations under existing collector schedules;
+   review retained anomalies without clearing them retroactively.
+2. Recover original audit hash references for v8/v42/v46/v48, or obtain a separately
+   reviewed provenance supplement; freshly hashing local files cannot prove history.
+3. Attach verified account equity before assessing actual leverage/account returns.
+   Any allocation change, new identity or promotion needs separate review/authority.
+   Do not retune closed v49/v53 identities.
 
 ## Blocked / Deferred
 
@@ -50,13 +59,17 @@ are changed. The study does not select allocations or grant promotions.
 - V12 has no recurring schedule authorization.
 - Online CI is not enabled: credential lacks workflow scope; template is in `infra/ci/`.
 - No verified account-equity attachment; actual leverage/account return remain unknown.
+- Full ten-candidate portfolio assessment is blocked on four missing evidence chains.
 - Nautilus is the only execution engine; LLMs never enter the order path.
 
 ## Latest Verification
 
-- Signal repair: 1,659 offline tests passed; 12 Postgres integration tests deselected.
+- Full repair suite: 1,679 offline tests passed; 12 Postgres integration tests
+  deselected (no dedicated integration DSN supplied).
 - Ten new end-to-end/time-consistency/identity tests passed.
-- Ruff passed. Deployment and retained-fill study are pending this clean pushed commit.
+- Retained-fill diagnostics: 20 targeted tests passed; Ruff and registry check passed.
+- Real corrected-collector smoke and read-only monitor refresh passed. Historical
+  accounting reconciles all six included candidates to committed base/stress PnL.
 - Previous repair: frontend typecheck/build, zero-vulnerability audit and bilingual
   HTTP checks passed; see its acceptance record for scope and limitations.
 
@@ -64,6 +77,8 @@ are changed. The study does not select allocations or grant promotions.
 
 - [2026-09-07 reliability acceptance](progress/reliability-repair-2026-09-07.md).
 - [Fixed retained-fill study method](progress/portfolio-evidence-study-2026-09-08.md).
+- [Partial portfolio diagnostics](progress/portfolio-evidence-review-2026-09-08.md).
+- [2026-09-08 strategy repair acceptance](progress/strategy-repair-2026-09-08.md).
 - [Collector deployment](../infra/research-shadow/README.md).
 - [Research rules](decisions/014-research-program-v2.md), [warnings](research-program-warnings.md).
 - [Registry](progress/research-mechanism-family-registry.json), [meta-analysis context](progress/research-program-meta-analysis-v2.md).

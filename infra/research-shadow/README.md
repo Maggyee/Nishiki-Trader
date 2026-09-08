@@ -30,6 +30,17 @@ factor files, a lock and atomic status writes. The old state.json and run counts
 remain preserved but are not imported as qualified evidence. Prospective
 accounting begins with runtime-state.json; it does not reset research identity.
 
+V22/v34/v36 additionally use a signal-pipeline v2 epoch (2026-09-08 repair).
+Generators receive an explicit observation-date upper bound and reject reversed
+ranges. `state/signal-pipeline-v2.json` starts prospective accounting only after
+a successful corrected run. Earlier attempts remain retained history, not
+qualified signal-generation days; recovered historical signals are not new
+forward signals. Status exposes the epoch, generated signal count, and legacy
+attempt count. Zero signals can be legitimate in a flat factor window, so tests
+must exercise known transitions as well as successful collection.
+The monitor derives all ten source/model pairs from frozen shadow contracts;
+v36 is VPN expansion / positive diff5, not relief / negative diff5.
+
 V46/v48 forward-only adapters use checksum-verified completed monthly archives
 plus closed daily archives for the current month, caching verified archives.
 If an official monthly archive omits a day, that exact date must be recovered
