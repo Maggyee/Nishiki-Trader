@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-08
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Resolve evidence and budget conflicts; accumulate genuine repaired forward observations.
+- **Current objective**: Evaluate the confirmed operator budget and accumulate genuine forward evidence.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -25,13 +25,15 @@ Follow-up found no historical reference leads for their eight retained bundles;
 v42 additionally has two dirty-code manifests, so hashes alone cannot qualify it.
 The repaired pipelines pass read-only integrity checks but remain at one date.
 
-Operator supplied 100 USDT planned capital, 50% drawdown preference and 50 USDT
-daily loss. The daily request conflicts with the binding 5% rule (5 USDT on
-initial planned capital); no settings changed. At base costs, even the previously
+Operator confirmed 100 USDT planned capital, 50% drawdown preference and 50 USDT
+daily loss. V2 diagnostics use these exact inputs, without a 5 USDT substitution
+or another approval question; runtime execution settings remain unchanged.
+Neither fixed diagnostic basket reaches 50 USDT sampled daily loss, but funding
+and total-drawdown constraints still fail. At base costs, even the previously
 defined duplicate-normalized diagnostic needs at least 308.85 USDT cash at daily
 marks and shows 80.21 USDT drawdown. It is not cash-feasible for 100 USDT and is
 not an executable allocation. Planned capital does not verify actual equity.
-No parameters, frozen research identities, source policies or trading permissions
+No frozen strategy parameters, research identities, source policies or trading permissions
 are changed. The study does not select allocations or grant promotions.
 
 ## Milestones
@@ -48,8 +50,8 @@ are changed. The study does not select allocations or grant promotions.
    review retained anomalies without clearing them retroactively.
 2. Obtain original audit/backup references for v8/v42/v46/v48 and clean eligible
    evidence for v42; freshly hashing local files cannot prove history.
-3. Resolve the requested 50 USDT daily limit vs the binding 5% stop and attach
-   verified account equity before assessing actual leverage/account returns.
+3. Use the confirmed 100 USDT / 50% / 50 USDT research budget; attach verified
+   account equity before assessing actual leverage/account returns.
    Any allocation change, new identity or promotion needs separate review/authority.
    Do not retune closed v49/v53 identities.
 
@@ -69,12 +71,14 @@ are changed. The study does not select allocations or grant promotions.
 
 ## Latest Verification
 
-- Full follow-up suite: 1,696 offline tests passed; 12 Postgres integration tests
+- Full budget-v2 suite: 1,699 offline tests passed; 12 Postgres integration tests
   deselected (no dedicated integration DSN supplied).
 - Ten new end-to-end/time-consistency/identity tests passed.
 - Retained-fill diagnostics: 20 targeted tests passed; Ruff and registry check passed.
 - Follow-up: 17 targeted tests passed; original-evidence search, three pipeline
   hash/count checks and all ten pinned cron entries verified. No collector rerun.
+- Budget v2: 20 targeted tests passed; exact operator inputs and inclusive loss
+  thresholds verified. Versioned output preserves v1 evidence.
 - Real corrected-collector smoke and read-only monitor refresh passed. Historical
   accounting reconciles all six included candidates to committed base/stress PnL.
 - Previous repair: frontend typecheck/build, zero-vulnerability audit and bilingual
@@ -87,6 +91,7 @@ are changed. The study does not select allocations or grant promotions.
 - [Partial portfolio diagnostics](progress/portfolio-evidence-review-2026-09-08.md).
 - [2026-09-08 strategy repair acceptance](progress/strategy-repair-2026-09-08.md).
 - [Follow-up evidence and 100 USDT budget audit](progress/strategy-followup-audit-2026-09-08.md).
+- [Confirmed operator budget — current v2 audit](progress/strategy-followup-audit-2026-09-08-v2.md).
 - [Collector deployment](../infra/research-shadow/README.md).
 - [Research rules](decisions/014-research-program-v2.md), [warnings](research-program-warnings.md).
 - [Registry](progress/research-mechanism-family-registry.json), [meta-analysis context](progress/research-program-meta-analysis-v2.md).

@@ -26,17 +26,19 @@ def budget(**overrides):
     return followup.planned_budget({"fixture": curve}, prices, {"fixture": 1.0}, **settings)
 
 
-def test_planned_cash_includes_costs_and_never_accepts_daily_rule_override():
+def test_planned_cash_includes_costs_and_honors_operator_budget_without_runtime_change():
     result = budget()
     base = result["scenarios"]["base"]
-    assert result["daily_budget_conflicts_with_binding_rule"] is True
-    assert base["fixed_diagnostic_daily_loss_amount_usdt"] == 5.0
+    assert result["diagnostic_budget_source"] == "operator_input"
+    assert result["differs_from_unchanged_runtime_daily_rule"] is True
+    assert result["unchanged_runtime_daily_rule_fraction"] == 0.05
+    assert base["fixed_diagnostic_daily_loss_amount_usdt"] == 50.0
     assert base["daily_sampled_cash_funding_required_usdt"] == pytest.approx(100.12)
     assert base["minimum_daily_sampled_free_cash_at_planned_capital_usdt"] == pytest.approx(-0.12)
     assert base["cash_feasible_at_daily_marks"] is False
     assert base["daily_marked_max_drawdown_usdt"] == pytest.approx(10.12)
     assert base["worst_sampled_daily_loss_usdt"] == 10.0
-    assert base["days_at_or_above_fixed_diagnostic_loss_amount"] == 1
+    assert base["days_at_or_above_fixed_diagnostic_loss_amount"] == 0
     assert base["within_requested_drawdown_amount"] is True
     assert result["actual_account_return_pct"] is None
     assert result["actual_account_leverage"] is None
@@ -45,8 +47,19 @@ def test_planned_cash_includes_costs_and_never_accepts_daily_rule_override():
 
 def test_stricter_user_daily_preference_remains_stricter():
     result = budget(daily_loss=2.0)
-    assert result["daily_budget_conflicts_with_binding_rule"] is False
+    assert result["diagnostic_budget_source"] == "operator_input"
     assert result["scenarios"]["base"]["fixed_diagnostic_daily_loss_amount_usdt"] == 2.0
+
+
+@pytest.mark.parametrize("daily_loss, expected_days", [(5.0, 1), (10.0, 1), (50.0, 0)])
+def test_daily_comparison_uses_exact_input_and_includes_threshold(daily_loss, expected_days):
+    result = budget(daily_loss=daily_loss)
+    assert result["scenarios"]["base"]["fixed_diagnostic_daily_loss_amount_usdt"] == daily_loss
+    assert (
+        result["scenarios"]["base"]["days_at_or_above_fixed_diagnostic_loss_amount"]
+        == expected_days
+    )
+    assert result["runtime_risk_settings_changed"] is False
 
 
 @pytest.mark.parametrize(

@@ -36,7 +36,11 @@ The initial [2026-09-08 report](progress/portfolio-evidence-review-2026-09-08.md
 verifies only 6/10 candidates; missing original hash references block the rest.
 For the follow-up evidence recovery, repaired-pipeline acceptance and planned
 100 USDT budget check, read `docs/progress/strategy-followup-method-2026-09-08.md`
-and `docs/progress/strategy-followup-audit-2026-09-08.md`. Observed-now hashes do
+and `docs/progress/strategy-followup-audit-2026-09-08.md`. The operator-confirmed
+budget now uses `docs/progress/strategy-followup-method-2026-09-08-v2.md` and the
+matching v2 audit: use 100 USDT / 50% / 50 USDT exactly in diagnostics, not a
+5 USDT substitute. Runtime trading permissions/settings remain unchanged.
+Observed-now hashes do
 not repair historical provenance; v42 additionally has dirty retained manifests.
 
 | Task area | Read |

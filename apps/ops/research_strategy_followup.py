@@ -1,6 +1,6 @@
 """Read-only provenance, repaired-pipeline and planned-capital diagnostics.
 
-See docs/progress/strategy-followup-method-2026-09-08.md. No execution, new
+See docs/progress/strategy-followup-method-2026-09-08-v2.md. No execution, new
 research, risk-setting mutation or automatic evidence acceptance.
 """
 
@@ -266,7 +266,9 @@ def planned_budget(
         raise ValueError("invalid planned risk budget")
     marked = sum(curves[p][list(evidence.COSTS)] * w for p, w in weights.items())
     notional = sum(curves[p]["qty"] * w for p, w in weights.items()) * closes.iloc[1:]
-    comparison_limit = min(daily_loss, capital * 0.05)
+    # The operator-confirmed research budget is not a runtime risk setting.
+    # Do not silently replace it with the separate execution-rule reference.
+    comparison_limit = daily_loss
     scenarios = {}
     for name in evidence.COSTS:
         pnl = marked[name]
@@ -292,8 +294,9 @@ def planned_budget(
         "planned_capital_usdt": capital,
         "requested_max_drawdown_fraction": max_drawdown,
         "requested_daily_loss_usdt": daily_loss,
-        "binding_daily_rule_fraction": 0.05,
-        "daily_budget_conflicts_with_binding_rule": daily_loss > capital * 0.05,
+        "diagnostic_budget_source": "operator_input",
+        "unchanged_runtime_daily_rule_fraction": 0.05,
+        "differs_from_unchanged_runtime_daily_rule": daily_loss != capital * 0.05,
         "max_daily_marked_inventory_notional_usdt": float(notional.max()),
         "diagnostic_weights_not_source_policy": weights,
         "scenarios": scenarios,
@@ -342,9 +345,9 @@ def build_report(root: Path, *, capital: float, max_drawdown: float, daily_loss:
     }
     candidates = load_candidate_data(root, now=now)
     return {
-        "schema_version": "research.strategy_followup.v1",
+        "schema_version": "research.strategy_followup.v2",
         "generated_at": now.isoformat(),
-        "method": "docs/progress/strategy-followup-method-2026-09-08.md",
+        "method": "docs/progress/strategy-followup-method-2026-09-08-v2.md",
         "history_search_tip": HISTORY_TIP,
         "provenance_inventory": provenance,
         "deployment": audit_deployment(root),
@@ -400,7 +403,9 @@ def main(argv=None):
     )
     with args.output.open("x") as handle:
         handle.write(json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + "\n")
-    print("partial: evidence/time/budget constraints remain; no trading changes")
+    print(
+        "partial: evidence/time/funding constraints remain; operator budget used; no trading changes"
+    )
     return 2
 
 
