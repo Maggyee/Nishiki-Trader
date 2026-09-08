@@ -3,22 +3,15 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-08
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Observe repaired collectors and resolve remaining historical portfolio evidence gaps.
+- **Current objective**: Resolve evidence and budget conflicts; accumulate genuine repaired forward observations.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
 
-The operator authorized the ordered 2026-09-08 strategy-review repairs.
-V22/v34/v36 had passed collection smoke checks while their generators silently
-used a 2022 end-date with a 2026 start-date, producing no signals. Explicit
-forward date ranges and reversed-range rejection now fix this defect.
-End-to-end tests cover nonempty transitions, legitimate flat periods, future
-suffix invariance, duplicate runs, and backfill-vs-prospective counts.
-
-The monitor now derives all ten identities from frozen shadow contracts,
-including the corrected v36 VPN expansion identity. For the three repaired
-pipelines, prior empty-generation attempts remain immutable history; a separate
-v2 epoch counts only corrected attempts and excludes backfilled signals.
+The ordered signal repairs corrected v22/v34/v36 date windows and the monitor's
+v36 identity. All ten identities now come from frozen contracts. Separate v2
+epochs count corrected attempts only; backfill and legacy empty-pipeline attempts
+do not become new prospective evidence. Historical anomalies remain preserved.
 
 The repair is deployed at pinned commit `1727408`: v22/v34/v36 generated
 37/36/45 signals respectively, each with one corrected qualified date and zero
@@ -28,6 +21,16 @@ A fixed-method retained-fill study now covers 6/10 candidates over 2023–2025.
 V18/v40 have identical execution paths. V22 is 10.41 USDT below its exposure-
 matched base-cost benchmark; v16 exceeds it by only 0.43 USDT (0.001 BTC sleeves).
 V8/v42/v46/v48 lack original manifest-and-fills hash references and are excluded.
+Follow-up found no historical reference leads for their eight retained bundles;
+v42 additionally has two dirty-code manifests, so hashes alone cannot qualify it.
+The repaired pipelines pass read-only integrity checks but remain at one date.
+
+Operator supplied 100 USDT planned capital, 50% drawdown preference and 50 USDT
+daily loss. The daily request conflicts with the binding 5% rule (5 USDT on
+initial planned capital); no settings changed. At base costs, even the previously
+defined duplicate-normalized diagnostic needs at least 308.85 USDT cash at daily
+marks and shows 80.21 USDT drawdown. It is not cash-feasible for 100 USDT and is
+not an executable allocation. Planned capital does not verify actual equity.
 No parameters, frozen research identities, source policies or trading permissions
 are changed. The study does not select allocations or grant promotions.
 
@@ -43,9 +46,10 @@ are changed. The study does not select allocations or grant promotions.
 
 1. Accumulate genuinely prospective observations under existing collector schedules;
    review retained anomalies without clearing them retroactively.
-2. Recover original audit hash references for v8/v42/v46/v48, or obtain a separately
-   reviewed provenance supplement; freshly hashing local files cannot prove history.
-3. Attach verified account equity before assessing actual leverage/account returns.
+2. Obtain original audit/backup references for v8/v42/v46/v48 and clean eligible
+   evidence for v42; freshly hashing local files cannot prove history.
+3. Resolve the requested 50 USDT daily limit vs the binding 5% stop and attach
+   verified account equity before assessing actual leverage/account returns.
    Any allocation change, new identity or promotion needs separate review/authority.
    Do not retune closed v49/v53 identities.
 
@@ -60,14 +64,17 @@ are changed. The study does not select allocations or grant promotions.
 - Online CI is not enabled: credential lacks workflow scope; template is in `infra/ci/`.
 - No verified account-equity attachment; actual leverage/account return remain unknown.
 - Full ten-candidate portfolio assessment is blocked on four missing evidence chains.
+- Retained fixed-size basket cannot be funded with the planned 100 USDT budget.
 - Nautilus is the only execution engine; LLMs never enter the order path.
 
 ## Latest Verification
 
-- Full repair suite: 1,679 offline tests passed; 12 Postgres integration tests
+- Full follow-up suite: 1,696 offline tests passed; 12 Postgres integration tests
   deselected (no dedicated integration DSN supplied).
 - Ten new end-to-end/time-consistency/identity tests passed.
 - Retained-fill diagnostics: 20 targeted tests passed; Ruff and registry check passed.
+- Follow-up: 17 targeted tests passed; original-evidence search, three pipeline
+  hash/count checks and all ten pinned cron entries verified. No collector rerun.
 - Real corrected-collector smoke and read-only monitor refresh passed. Historical
   accounting reconciles all six included candidates to committed base/stress PnL.
 - Previous repair: frontend typecheck/build, zero-vulnerability audit and bilingual
@@ -79,6 +86,7 @@ are changed. The study does not select allocations or grant promotions.
 - [Fixed retained-fill study method](progress/portfolio-evidence-study-2026-09-08.md).
 - [Partial portfolio diagnostics](progress/portfolio-evidence-review-2026-09-08.md).
 - [2026-09-08 strategy repair acceptance](progress/strategy-repair-2026-09-08.md).
+- [Follow-up evidence and 100 USDT budget audit](progress/strategy-followup-audit-2026-09-08.md).
 - [Collector deployment](../infra/research-shadow/README.md).
 - [Research rules](decisions/014-research-program-v2.md), [warnings](research-program-warnings.md).
 - [Registry](progress/research-mechanism-family-registry.json), [meta-analysis context](progress/research-program-meta-analysis-v2.md).

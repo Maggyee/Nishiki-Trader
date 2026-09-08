@@ -34,6 +34,10 @@ For retained-fill portfolio diagnostics, read
 explicitly excluded; the study does not authorize portfolio trading or promotion.
 The initial [2026-09-08 report](progress/portfolio-evidence-review-2026-09-08.md)
 verifies only 6/10 candidates; missing original hash references block the rest.
+For the follow-up evidence recovery, repaired-pipeline acceptance and planned
+100 USDT budget check, read `docs/progress/strategy-followup-method-2026-09-08.md`
+and `docs/progress/strategy-followup-audit-2026-09-08.md`. Observed-now hashes do
+not repair historical provenance; v42 additionally has dirty retained manifests.
 
 | Task area | Read |
 |---|---|
