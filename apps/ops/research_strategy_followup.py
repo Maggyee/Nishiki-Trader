@@ -1,7 +1,8 @@
 """Read-only provenance, repaired-pipeline and planned-capital diagnostics.
 
-See docs/progress/strategy-followup-method-2026-09-08-v2.md. No execution, new
-research, risk-setting mutation or automatic evidence acceptance.
+See docs/progress/strategy-followup-method-2026-09-08-v2.md and the additional
+portfolio-event-cash-method-2026-09-08.md. No execution, new research,
+risk-setting mutation or automatic evidence acceptance.
 """
 
 from __future__ import annotations
@@ -9,6 +10,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import importlib
+import io
 import json
 import math
 import sqlite3
@@ -22,6 +24,7 @@ import pandas as pd
 from apps.bridge.signal_event import SignalEvent
 from apps.ops import research_portfolio_evidence as evidence
 from apps.ops.install_shadow_collectors import render_crontab
+from apps.ops.research_portfolio_cash import event_cash_bounds
 from apps.ops.research_portfolio_monitor import CANDIDATE_SPECS, load_candidate_data
 from apps.ops.research_shadow_runtime import summarize_signal_pipeline
 
@@ -343,11 +346,40 @@ def build_report(root: Path, *, capital: float, max_drawdown: float, daily_loss:
         for name in ("raw_fixed_quantity_basket", "duplicate_normalized_diagnostic")
         if portfolio[name]
     }
+    # Read precisely the already-accepted primary fills; fresh hashes never
+    # grant admission to the four excluded candidates.
+    retained_fills = {}
+    for candidate in portfolio["candidates"]:
+        ref = candidate["evidence"]
+        raw = evidence.verified_bytes(root / ref["path"] / "fills.parquet", ref["fills_sha256"])
+        retained_fills[candidate["protocol"]] = evidence.audit_fills(
+            pd.read_parquet(io.BytesIO(raw)), candidate
+        )
+    cash = {}
+    for name, risk in risks.items():
+        bounds = event_cash_bounds(
+            retained_fills, risk["diagnostic_weights_not_source_policy"], capital
+        )
+        for scenario, values in bounds["scenarios"].items():
+            if not math.isclose(
+                values["final_cash_change_usdt"],
+                portfolio[name]["net_pnl_usdt"][scenario],
+                abs_tol=1e-7,
+                rel_tol=1e-9,
+            ):
+                raise ValueError("execution cash does not reconcile to basket PnL")
+            if (
+                values["required_initial_cash_sell_before_buy_usdt"] + 1e-7
+                < risk["scenarios"][scenario]["daily_sampled_cash_funding_required_usdt"]
+            ):
+                raise ValueError("execution cash requirement below daily sampled requirement")
+        cash[name] = bounds
     candidates = load_candidate_data(root, now=now)
     return {
-        "schema_version": "research.strategy_followup.v2",
+        "schema_version": "research.strategy_followup.v3",
         "generated_at": now.isoformat(),
         "method": "docs/progress/strategy-followup-method-2026-09-08-v2.md",
+        "event_cash_method": "docs/progress/portfolio-event-cash-method-2026-09-08.md",
         "history_search_tip": HISTORY_TIP,
         "provenance_inventory": provenance,
         "deployment": audit_deployment(root),
@@ -368,11 +400,13 @@ def build_report(root: Path, *, capital: float, max_drawdown: float, daily_loss:
         "verified_cohort": sorted(included),
         "excluded": portfolio["excluded"],
         "planned_capital_diagnostics": risks,
+        "execution_event_cash_bounds": cash,
         "limitations": [
             "four original evidence chains remain unverified; no full ten-candidate claim",
             "prospective elapsed time cannot be manufactured",
             "planned capital is not verified account equity",
             "daily marks understate possible intraday cash needs and losses",
+            "event cash bounds cover retained fills only, not open-order reservations or intraday equity drawdown",
             "no kill switch, exchange constraints or executable sizing was simulated",
         ],
         "boundaries": {

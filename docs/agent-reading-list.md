@@ -44,6 +44,10 @@ operator-delegated capital decision is
 500 USDT / 50% / 50 USDT for planning, not a deposit or trading authorization.
 Runtime settings remain unchanged. Observed-now hashes do not repair historical
 provenance; v42 additionally has dirty retained manifests.
+For current progress and execution-event cash accounting, read
+`docs/progress/strategy-progress-2026-09-08-v3.md` and
+`docs/progress/portfolio-event-cash-method-2026-09-08.md`. Cash settlement bounds
+are not open-order reservation requirements or intraday market-value drawdown.
 
 | Task area | Read |
 |---|---|

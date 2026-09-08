@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-08
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Evaluate the confirmed operator budget and accumulate genuine forward evidence.
+- **Current objective**: Verify genuine forward evidence and complete portfolio cash/lineage assessment.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -13,9 +13,10 @@ v36 identity. All ten identities now come from frozen contracts. Separate v2
 epochs count corrected attempts only; backfill and legacy empty-pipeline attempts
 do not become new prospective evidence. Historical anomalies remain preserved.
 
-The repair is deployed at pinned commit `1727408`: v22/v34/v36 generated
-37/36/45 signals respectively, each with one corrected qualified date and zero
-new forward signals. No schedules or historical attempt records were changed.
+At the morning check after 07:27 UTC, nine September 8 collector jobs have run
+successfully at pinned `1727408`; v16 is not due until 12:30 UTC. V22/v34/v36
+have two corrected attempts each, still one distinct qualified date and zero
+new forward signals. Stored totals are 37/36/45. Historical anomalies persist.
 
 A fixed-method retained-fill study now covers 6/10 candidates over 2023–2025.
 V18/v40 have identical execution paths. V22 is 10.41 USDT below its exposure-
@@ -28,10 +29,11 @@ The repaired pipelines pass read-only integrity checks but remain at one date.
 The operator delegated the increased capital amount. The provisional planning
 budget is now **500 USDT / 50% drawdown / 50 USDT daily loss**, without changing
 positions or runtime execution settings. On the six verified candidates, the
-raw fixed-size basket requires 395.66 USDT cash at daily stress-cost marks,
-leaving 104.34 USDT of sampled headroom; its stress drawdown is 100.38 USDT.
-Both fixed diagnostics fit these sampled budgets, not a full ten-candidate or
-intraday guarantee. No deposit/live trading is recommended now; missing evidence
+raw fixed-size basket requires up to 398.19 USDT for retained-fill settlement
+under stress costs and buy-before-sell timestamp ties, leaving 101.81 USDT
+headroom. This refines the daily sampled 395.66 USDT figure. Both fixed
+diagnostics fit the tested cash bounds, not a full ten-candidate or open-order
+reservation guarantee. No deposit/live trading is recommended; missing evidence
 and prospective acceptance remain blockers. Planned capital is not actual equity.
 No frozen strategy parameters, research identities, source policies or trading permissions
 are changed. The study does not select allocations or grant promotions.
@@ -66,12 +68,13 @@ are changed. The study does not select allocations or grant promotions.
 - Online CI is not enabled: credential lacks workflow scope; template is in `infra/ci/`.
 - No verified account-equity attachment; actual leverage/account return remain unknown.
 - Full ten-candidate portfolio assessment is blocked on four missing evidence chains.
-- Full ten-candidate and intraday funding feasibility remain unverified.
+- Full ten-candidate funding, open-order reservations and intraday equity
+  drawdown remain unverified; recorded-fill cash settlement has been checked.
 - Nautilus is the only execution engine; LLMs never enter the order path.
 
 ## Latest Verification
 
-- Full planning-budget suite: 1,700 offline tests passed; 12 Postgres integration tests
+- Full event-cash suite: 1,711 offline tests passed; 12 Postgres integration tests
   deselected (no dedicated integration DSN supplied).
 - Ten new end-to-end/time-consistency/identity tests passed.
 - Retained-fill diagnostics: 20 targeted tests passed; Ruff and registry check passed.
@@ -79,6 +82,8 @@ are changed. The study does not select allocations or grant promotions.
   hash/count checks and all ten pinned cron entries verified. No collector rerun.
 - Budget v2: 20 targeted tests passed; exact operator inputs and inclusive loss
   thresholds verified. Versioned output preserves v1 evidence.
+- Event-cash extension: 32 focused tests passed; final cash reconciles to all
+  six candidates' basket PnL. Latest natural cron attempts and monitor verified.
 - Real corrected-collector smoke and read-only monitor refresh passed. Historical
   accounting reconciles all six included candidates to committed base/stress PnL.
 - Previous repair: frontend typecheck/build, zero-vulnerability audit and bilingual
@@ -93,6 +98,7 @@ are changed. The study does not select allocations or grant promotions.
 - [Follow-up evidence and 100 USDT budget audit](progress/strategy-followup-audit-2026-09-08.md).
 - [Historical 100 USDT v2 audit](progress/strategy-followup-audit-2026-09-08-v2.md).
 - [Current provisional 500 USDT budget](progress/strategy-budget-500usdt-2026-09-08.md).
+- [Latest forward and event-cash progress](progress/strategy-progress-2026-09-08-v3.md).
 - [Collector deployment](../infra/research-shadow/README.md).
 - [Research rules](decisions/014-research-program-v2.md), [warnings](research-program-warnings.md).
 - [Registry](progress/research-mechanism-family-registry.json), [meta-analysis context](progress/research-program-meta-analysis-v2.md).
