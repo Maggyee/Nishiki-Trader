@@ -51,6 +51,24 @@ def test_stricter_user_daily_preference_remains_stricter():
     assert result["scenarios"]["base"]["fixed_diagnostic_daily_loss_amount_usdt"] == 2.0
 
 
+def test_larger_capital_changes_budget_comparison_not_positions_or_daily_limit():
+    original = budget()
+    larger = budget(capital=500.0)
+    assert larger["planned_capital_usdt"] == 500.0
+    assert larger["requested_daily_loss_usdt"] == 50.0
+    assert larger["requested_max_drawdown_fraction"] == 0.5
+    assert (
+        larger["max_daily_marked_inventory_notional_usdt"]
+        == original["max_daily_marked_inventory_notional_usdt"]
+    )
+    assert (
+        larger["scenarios"]["base"]["daily_sampled_cash_funding_required_usdt"]
+        == original["scenarios"]["base"]["daily_sampled_cash_funding_required_usdt"]
+    )
+    assert larger["scenarios"]["base"]["cash_feasible_at_daily_marks"] is True
+    assert larger["runtime_risk_settings_changed"] is False
+
+
 @pytest.mark.parametrize("daily_loss, expected_days", [(5.0, 1), (10.0, 1), (50.0, 0)])
 def test_daily_comparison_uses_exact_input_and_includes_threshold(daily_loss, expected_days):
     result = budget(daily_loss=daily_loss)

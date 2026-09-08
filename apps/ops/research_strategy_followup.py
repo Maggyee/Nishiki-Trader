@@ -404,7 +404,7 @@ def main(argv=None):
     with args.output.open("x") as handle:
         handle.write(json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + "\n")
     print(
-        "partial: evidence/time/funding constraints remain; operator budget used; no trading changes"
+        "partial: historical evidence/forward acceptance incomplete; operator budget used; no trading changes"
     )
     return 2
 

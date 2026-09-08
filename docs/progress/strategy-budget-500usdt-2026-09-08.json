@@ -1,0 +1,492 @@
+{
+  "boundaries": {
+    "future_blind_pnl_opened": false,
+    "live_path_touched": false,
+    "research_reopened": false,
+    "schedules_changed": false,
+    "source_policy_changed": false
+  },
+  "collector_overview": [
+    {
+      "anomaly_blockers": [
+        "btc_hourly_gap",
+        "git_dirty"
+      ],
+      "protocol": "v8",
+      "qualified_days": 9,
+      "review_eligible": false,
+      "signals_count": 42
+    },
+    {
+      "anomaly_blockers": [
+        "btc_hourly_gap",
+        "git_dirty"
+      ],
+      "protocol": "v16",
+      "qualified_days": 4,
+      "review_eligible": false,
+      "signals_count": 101
+    },
+    {
+      "anomaly_blockers": [
+        "btc_hourly_gap",
+        "git_dirty"
+      ],
+      "protocol": "v18",
+      "qualified_days": 4,
+      "review_eligible": false,
+      "signals_count": 46
+    },
+    {
+      "anomaly_blockers": [
+        "btc_hourly_gap",
+        "git_dirty"
+      ],
+      "protocol": "v22",
+      "qualified_days": 1,
+      "review_eligible": false,
+      "signals_count": 37
+    },
+    {
+      "anomaly_blockers": [
+        "btc_hourly_gap",
+        "git_dirty"
+      ],
+      "protocol": "v34",
+      "qualified_days": 1,
+      "review_eligible": false,
+      "signals_count": 36
+    },
+    {
+      "anomaly_blockers": [
+        "btc_hourly_gap",
+        "git_dirty"
+      ],
+      "protocol": "v36",
+      "qualified_days": 1,
+      "review_eligible": false,
+      "signals_count": 45
+    },
+    {
+      "anomaly_blockers": [
+        "collection_failed:ValueError:observation_gap"
+      ],
+      "protocol": "v40",
+      "qualified_days": 1,
+      "review_eligible": false,
+      "signals_count": 25
+    },
+    {
+      "anomaly_blockers": [
+        "collection_failed:ValueError:observation_gap"
+      ],
+      "protocol": "v42",
+      "qualified_days": 1,
+      "review_eligible": false,
+      "signals_count": 28
+    },
+    {
+      "anomaly_blockers": [
+        "collection_failed:ValueError:incomplete official archive"
+      ],
+      "protocol": "v46",
+      "qualified_days": 1,
+      "review_eligible": false,
+      "signals_count": 117
+    },
+    {
+      "anomaly_blockers": [
+        "collection_failed:ValueError:incomplete official archive"
+      ],
+      "protocol": "v48",
+      "qualified_days": 1,
+      "review_eligible": false,
+      "signals_count": 110
+    }
+  ],
+  "deployment": {
+    "commit": "1727408c3b2e960e5b2d544117ee820fcf0375fe",
+    "cron_matches_receipt": true,
+    "existing_job_count": 10,
+    "pinned_checkout_clean": true,
+    "schedules_changed": false
+  },
+  "excluded": [
+    {
+      "protocol": "v8",
+      "reason": "ValueError:committed result lacks manifest-and-fills hash references"
+    },
+    {
+      "protocol": "v42",
+      "reason": "ValueError:committed result lacks manifest-and-fills hash references"
+    },
+    {
+      "protocol": "v46",
+      "reason": "ValueError:committed result lacks manifest-and-fills hash references"
+    },
+    {
+      "protocol": "v48",
+      "reason": "ValueError:committed result lacks manifest-and-fills hash references"
+    }
+  ],
+  "generated_at": "2026-09-08T07:24:40.244058+00:00",
+  "history_search_tip": "f5963cdef902908e00a601a1eb8fef345e545b87",
+  "limitations": [
+    "four original evidence chains remain unverified; no full ten-candidate claim",
+    "prospective elapsed time cannot be manufactured",
+    "planned capital is not verified account equity",
+    "daily marks understate possible intraday cash needs and losses",
+    "no kill switch, exchange constraints or executable sizing was simulated"
+  ],
+  "method": "docs/progress/strategy-followup-method-2026-09-08-v2.md",
+  "planned_capital_diagnostics": {
+    "duplicate_normalized_diagnostic": {
+      "actual_account_leverage": null,
+      "actual_account_return_pct": null,
+      "decision": "not_an_executable_allocation",
+      "diagnostic_budget_source": "operator_input",
+      "diagnostic_weights_not_source_policy": {
+        "v16": 1.0,
+        "v18": 0.5,
+        "v22": 1.0,
+        "v34": 1.0,
+        "v36": 1.0,
+        "v40": 0.5
+      },
+      "differs_from_unchanged_runtime_daily_rule": true,
+      "max_daily_marked_inventory_notional_usdt": 611.16,
+      "planned_capital_usdt": 500.0,
+      "requested_daily_loss_usdt": 50.0,
+      "requested_max_drawdown_fraction": 0.5,
+      "runtime_risk_settings_changed": false,
+      "scenarios": {
+        "base": {
+          "cash_feasible_at_daily_marks": true,
+          "daily_marked_max_drawdown_usdt": 80.21429251999997,
+          "daily_sampled_cash_funding_required_usdt": 308.846328152,
+          "days_at_or_above_fixed_diagnostic_loss_amount": 0,
+          "drawdown_as_fraction_of_planned_initial_capital_not_account_return": 0.16042858503999993,
+          "fixed_diagnostic_daily_loss_amount_usdt": 50.0,
+          "minimum_daily_sampled_free_cash_at_planned_capital_usdt": 191.153671848,
+          "within_requested_drawdown_amount": true,
+          "worst_sampled_daily_loss_usdt": 22.60850000000002
+        },
+        "gross": {
+          "cash_feasible_at_daily_marks": true,
+          "daily_marked_max_drawdown_usdt": 74.84659999999997,
+          "daily_sampled_cash_funding_required_usdt": 280.49462,
+          "days_at_or_above_fixed_diagnostic_loss_amount": 0,
+          "drawdown_as_fraction_of_planned_initial_capital_not_account_return": 0.14969319999999994,
+          "fixed_diagnostic_daily_loss_amount_usdt": 50.0,
+          "minimum_daily_sampled_free_cash_at_planned_capital_usdt": 219.50538,
+          "within_requested_drawdown_amount": true,
+          "worst_sampled_daily_loss_usdt": 22.60850000000002
+        },
+        "stress": {
+          "cash_feasible_at_daily_marks": true,
+          "daily_marked_max_drawdown_usdt": 81.55621564999997,
+          "daily_sampled_cash_funding_required_usdt": 320.51242665499984,
+          "days_at_or_above_fixed_diagnostic_loss_amount": 0,
+          "drawdown_as_fraction_of_planned_initial_capital_not_account_return": 0.16311243129999994,
+          "fixed_diagnostic_daily_loss_amount_usdt": 50.0,
+          "minimum_daily_sampled_free_cash_at_planned_capital_usdt": 179.48757334500016,
+          "within_requested_drawdown_amount": true,
+          "worst_sampled_daily_loss_usdt": 22.608500000000035
+        }
+      },
+      "unchanged_runtime_daily_rule_fraction": 0.05
+    },
+    "raw_fixed_quantity_basket": {
+      "actual_account_leverage": null,
+      "actual_account_return_pct": null,
+      "decision": "not_an_executable_allocation",
+      "diagnostic_budget_source": "operator_input",
+      "diagnostic_weights_not_source_policy": {
+        "v16": 1.0,
+        "v18": 1.0,
+        "v22": 1.0,
+        "v34": 1.0,
+        "v36": 1.0,
+        "v40": 1.0
+      },
+      "differs_from_unchanged_runtime_daily_rule": true,
+      "max_daily_marked_inventory_notional_usdt": 733.392,
+      "planned_capital_usdt": 500.0,
+      "requested_daily_loss_usdt": 50.0,
+      "requested_max_drawdown_fraction": 0.5,
+      "runtime_risk_settings_changed": false,
+      "scenarios": {
+        "base": {
+          "cash_feasible_at_daily_marks": true,
+          "daily_marked_max_drawdown_usdt": 98.77726880399997,
+          "daily_sampled_cash_funding_required_usdt": 387.144046116,
+          "days_at_or_above_fixed_diagnostic_loss_amount": 0,
+          "drawdown_as_fraction_of_planned_initial_capital_not_account_return": 0.19755453760799996,
+          "fixed_diagnostic_daily_loss_amount_usdt": 50.0,
+          "minimum_daily_sampled_free_cash_at_planned_capital_usdt": 112.85595388399997,
+          "within_requested_drawdown_amount": true,
+          "worst_sampled_daily_loss_usdt": 27.13020000000003
+        },
+        "gross": {
+          "cash_feasible_at_daily_marks": true,
+          "daily_marked_max_drawdown_usdt": 92.37371999999996,
+          "daily_sampled_cash_funding_required_usdt": 353.07459,
+          "days_at_or_above_fixed_diagnostic_loss_amount": 0,
+          "drawdown_as_fraction_of_planned_initial_capital_not_account_return": 0.18474743999999993,
+          "fixed_diagnostic_daily_loss_amount_usdt": 50.0,
+          "minimum_daily_sampled_free_cash_at_planned_capital_usdt": 146.92541,
+          "within_requested_drawdown_amount": true,
+          "worst_sampled_daily_loss_usdt": 27.13020000000003
+        },
+        "stress": {
+          "cash_feasible_at_daily_marks": true,
+          "daily_marked_max_drawdown_usdt": 100.37815600499998,
+          "daily_sampled_cash_funding_required_usdt": 395.661410145,
+          "days_at_or_above_fixed_diagnostic_loss_amount": 0,
+          "drawdown_as_fraction_of_planned_initial_capital_not_account_return": 0.20075631200999997,
+          "fixed_diagnostic_daily_loss_amount_usdt": 50.0,
+          "minimum_daily_sampled_free_cash_at_planned_capital_usdt": 104.33858985500001,
+          "within_requested_drawdown_amount": true,
+          "worst_sampled_daily_loss_usdt": 27.13020000000003
+        }
+      },
+      "unchanged_runtime_daily_rule_fraction": 0.05
+    }
+  },
+  "provenance_inventory": [
+    {
+      "bundles": [
+        {
+          "blockers": [
+            "original_manifest_and_fills_hash_references_missing"
+          ],
+          "git_commit": "20ec74d498d6f50bf6f58ea8f79dc5e74ce64ac0",
+          "git_dirty": false,
+          "historical_provenance_verified": false,
+          "observed_now_hashes_not_original_proof": {
+            "fills.parquet": "45b63c30e947ca0be32d773b1ba1dd2aa9e64c32f1b3cdccabb0f99ed0ee0726",
+            "run_manifest.json": "773bd1970773bf6891423fa0d1c654bf78f0e0b3bdcbe940edd1f0b78fe5314b"
+          },
+          "path": "data/research-v8/backtests/20260811-082836Z-d561743b"
+        },
+        {
+          "blockers": [
+            "original_manifest_and_fills_hash_references_missing"
+          ],
+          "git_commit": "20ec74d498d6f50bf6f58ea8f79dc5e74ce64ac0",
+          "git_dirty": false,
+          "historical_provenance_verified": false,
+          "observed_now_hashes_not_original_proof": {
+            "fills.parquet": "45b63c30e947ca0be32d773b1ba1dd2aa9e64c32f1b3cdccabb0f99ed0ee0726",
+            "run_manifest.json": "7ec5b6452c12c3c717c8397354167ae6a3a606e3a8843d0a816a4c5ecfb2d70c"
+          },
+          "path": "data/research-v8/backtests/20260811-082836Z-f8deb4c2"
+        }
+      ],
+      "decision": "remain_excluded_pending_original_proof_and_clean_code",
+      "historical_provenance_verified": false,
+      "historical_reference_leads": [],
+      "inventory_errors": [],
+      "protocol": "v8",
+      "result_revisions_searched": [
+        "19207fba693d2ee90792c3175000d5b31559514a"
+      ]
+    },
+    {
+      "bundles": [
+        {
+          "blockers": [
+            "original_manifest_and_fills_hash_references_missing",
+            "historical_git_not_clean"
+          ],
+          "git_commit": "33fb2aa7b3859afff5e07c652b630d5ee2887b1f",
+          "git_dirty": true,
+          "historical_provenance_verified": false,
+          "observed_now_hashes_not_original_proof": {
+            "fills.parquet": "c6aa841e5730db24ef2dd515cde1530403f5b9fb42ac2d086bfd83ebd4319f9d",
+            "run_manifest.json": "00d0ae61b0f9e64f56d5a28285e0a4d34cf1c2bad01c1927d72ef7a113990383"
+          },
+          "path": "data/research-v42/confirmation_runs/vix6m_relief_a/20260814-092603Z-7d47813b"
+        },
+        {
+          "blockers": [
+            "original_manifest_and_fills_hash_references_missing",
+            "historical_git_not_clean"
+          ],
+          "git_commit": "33fb2aa7b3859afff5e07c652b630d5ee2887b1f",
+          "git_dirty": true,
+          "historical_provenance_verified": false,
+          "observed_now_hashes_not_original_proof": {
+            "fills.parquet": "c6aa841e5730db24ef2dd515cde1530403f5b9fb42ac2d086bfd83ebd4319f9d",
+            "run_manifest.json": "acc3991a7d5724323c966079533dbe98717e92069155e147020841e59cf4a7d8"
+          },
+          "path": "data/research-v42/confirmation_runs/vix6m_relief_b/20260814-092607Z-26beb297"
+        }
+      ],
+      "decision": "remain_excluded_pending_original_proof_and_clean_code",
+      "historical_provenance_verified": false,
+      "historical_reference_leads": [],
+      "inventory_errors": [],
+      "protocol": "v42",
+      "result_revisions_searched": [
+        "0501aacdde026c281490e4841d12af4fd0a58a54"
+      ]
+    },
+    {
+      "bundles": [
+        {
+          "blockers": [
+            "original_manifest_and_fills_hash_references_missing"
+          ],
+          "git_commit": "7cc4ca36b990c88e5ece4d00a76409d7ddfffd63",
+          "git_dirty": false,
+          "historical_provenance_verified": false,
+          "observed_now_hashes_not_original_proof": {
+            "fills.parquet": "9e546299777ce44989a3e39f3dd4d15924675d33228cc8d77347f1660b53796a",
+            "run_manifest.json": "150cdc59a5a7005fb213231cf9e8c97b11ca9ecf3ca5cc3ed371dcbf795aade8"
+          },
+          "path": "data/research-v46/replays/btc_prem_diff5_negative_conf/replay-a/20260814-100239Z-afc7611f"
+        },
+        {
+          "blockers": [
+            "original_manifest_and_fills_hash_references_missing"
+          ],
+          "git_commit": "7cc4ca36b990c88e5ece4d00a76409d7ddfffd63",
+          "git_dirty": false,
+          "historical_provenance_verified": false,
+          "observed_now_hashes_not_original_proof": {
+            "fills.parquet": "9e546299777ce44989a3e39f3dd4d15924675d33228cc8d77347f1660b53796a",
+            "run_manifest.json": "8bafacd56c56d26b7a900d9906169ec75cffcfa85648a831a9048a8c85ba553b"
+          },
+          "path": "data/research-v46/replays/btc_prem_diff5_negative_conf/replay-b/20260814-100243Z-70c06cca"
+        }
+      ],
+      "decision": "remain_excluded_pending_original_proof_and_clean_code",
+      "historical_provenance_verified": false,
+      "historical_reference_leads": [],
+      "inventory_errors": [],
+      "protocol": "v46",
+      "result_revisions_searched": [
+        "f19d19aa73a3b3c7187e8bf549c7f3154d920700"
+      ]
+    },
+    {
+      "bundles": [
+        {
+          "blockers": [
+            "original_manifest_and_fills_hash_references_missing"
+          ],
+          "git_commit": "613b4e5cfe563a6cbc793793bfd8184f9928860e",
+          "git_dirty": false,
+          "historical_provenance_verified": false,
+          "observed_now_hashes_not_original_proof": {
+            "fills.parquet": "6348f084a528548330404151c20a6dc56b5ef87f878bc3a6271f86808492bcb0",
+            "run_manifest.json": "97b2b1825371902ae81b311ada266d96d30346a7dc241d279fe826d353495dfa"
+          },
+          "path": "data/research-v48/confirmation_replays/btc_basis_below_ma10/replay-a/20260817-081707Z-eb595695"
+        },
+        {
+          "blockers": [
+            "original_manifest_and_fills_hash_references_missing"
+          ],
+          "git_commit": "613b4e5cfe563a6cbc793793bfd8184f9928860e",
+          "git_dirty": false,
+          "historical_provenance_verified": false,
+          "observed_now_hashes_not_original_proof": {
+            "fills.parquet": "6348f084a528548330404151c20a6dc56b5ef87f878bc3a6271f86808492bcb0",
+            "run_manifest.json": "91b00aecad6af97eddaf88585a24943ae778953fc61a5439ddc801739e98b8e1"
+          },
+          "path": "data/research-v48/confirmation_replays/btc_basis_below_ma10/replay-b/20260817-081712Z-abb3c45d"
+        }
+      ],
+      "decision": "remain_excluded_pending_original_proof_and_clean_code",
+      "historical_provenance_verified": false,
+      "historical_reference_leads": [],
+      "inventory_errors": [],
+      "protocol": "v48",
+      "result_revisions_searched": [
+        "bd03715c9eddb99bf024bf9b481634e490968356"
+      ]
+    }
+  ],
+  "repaired_pipelines": [
+    {
+      "acceptance": "continue_existing_schedule",
+      "anomaly_blockers": [
+        "btc_hourly_gap",
+        "git_dirty"
+      ],
+      "corrected_attempts_verified": 2,
+      "latest_blockers": [],
+      "legacy_attempt_count": 14,
+      "new_forward_signal_count": 0,
+      "new_forward_signal_ids": [],
+      "performance_evidence": false,
+      "pipeline_integrity_check_passed": true,
+      "protocol": "v22",
+      "qualified_collection_dates": [
+        "2026-09-08"
+      ],
+      "qualified_day_count": 1,
+      "review_eligible": false,
+      "status_sha256_observed_now": "3cd4ae0fa5e7e28bf641af9581949507ab8c120ca2937dc0d23199ce120faf99",
+      "stored_signal_count": 37,
+      "threshold_met": false
+    },
+    {
+      "acceptance": "continue_existing_schedule",
+      "anomaly_blockers": [
+        "btc_hourly_gap",
+        "git_dirty"
+      ],
+      "corrected_attempts_verified": 2,
+      "latest_blockers": [],
+      "legacy_attempt_count": 20,
+      "new_forward_signal_count": 0,
+      "new_forward_signal_ids": [],
+      "performance_evidence": false,
+      "pipeline_integrity_check_passed": true,
+      "protocol": "v34",
+      "qualified_collection_dates": [
+        "2026-09-08"
+      ],
+      "qualified_day_count": 1,
+      "review_eligible": false,
+      "status_sha256_observed_now": "45c847123ee827435f0dbf36bb03547e4162490c3deb187e0eab4d9c8a4efa40",
+      "stored_signal_count": 36,
+      "threshold_met": false
+    },
+    {
+      "acceptance": "continue_existing_schedule",
+      "anomaly_blockers": [
+        "btc_hourly_gap",
+        "git_dirty"
+      ],
+      "corrected_attempts_verified": 2,
+      "latest_blockers": [],
+      "legacy_attempt_count": 20,
+      "new_forward_signal_count": 0,
+      "new_forward_signal_ids": [],
+      "performance_evidence": false,
+      "pipeline_integrity_check_passed": true,
+      "protocol": "v36",
+      "qualified_collection_dates": [
+        "2026-09-08"
+      ],
+      "qualified_day_count": 1,
+      "review_eligible": false,
+      "status_sha256_observed_now": "0f61d0ae078d38e76bb024440566ef1c26cc9b8dd4f196d303235b143ff3ac88",
+      "stored_signal_count": 45,
+      "threshold_met": false
+    }
+  ],
+  "schema_version": "research.strategy_followup.v2",
+  "verified_cohort": [
+    "v16",
+    "v18",
+    "v22",
+    "v34",
+    "v36",
+    "v40"
+  ]
+}

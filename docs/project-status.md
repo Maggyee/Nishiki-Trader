@@ -25,14 +25,14 @@ Follow-up found no historical reference leads for their eight retained bundles;
 v42 additionally has two dirty-code manifests, so hashes alone cannot qualify it.
 The repaired pipelines pass read-only integrity checks but remain at one date.
 
-Operator confirmed 100 USDT planned capital, 50% drawdown preference and 50 USDT
-daily loss. V2 diagnostics use these exact inputs, without a 5 USDT substitution
-or another approval question; runtime execution settings remain unchanged.
-Neither fixed diagnostic basket reaches 50 USDT sampled daily loss, but funding
-and total-drawdown constraints still fail. At base costs, even the previously
-defined duplicate-normalized diagnostic needs at least 308.85 USDT cash at daily
-marks and shows 80.21 USDT drawdown. It is not cash-feasible for 100 USDT and is
-not an executable allocation. Planned capital does not verify actual equity.
+The operator delegated the increased capital amount. The provisional planning
+budget is now **500 USDT / 50% drawdown / 50 USDT daily loss**, without changing
+positions or runtime execution settings. On the six verified candidates, the
+raw fixed-size basket requires 395.66 USDT cash at daily stress-cost marks,
+leaving 104.34 USDT of sampled headroom; its stress drawdown is 100.38 USDT.
+Both fixed diagnostics fit these sampled budgets, not a full ten-candidate or
+intraday guarantee. No deposit/live trading is recommended now; missing evidence
+and prospective acceptance remain blockers. Planned capital is not actual equity.
 No frozen strategy parameters, research identities, source policies or trading permissions
 are changed. The study does not select allocations or grant promotions.
 
@@ -50,7 +50,7 @@ are changed. The study does not select allocations or grant promotions.
    review retained anomalies without clearing them retroactively.
 2. Obtain original audit/backup references for v8/v42/v46/v48 and clean eligible
    evidence for v42; freshly hashing local files cannot prove history.
-3. Use the confirmed 100 USDT / 50% / 50 USDT research budget; attach verified
+3. Use the provisional 500 USDT / 50% / 50 USDT research budget; attach verified
    account equity before assessing actual leverage/account returns.
    Any allocation change, new identity or promotion needs separate review/authority.
    Do not retune closed v49/v53 identities.
@@ -66,12 +66,12 @@ are changed. The study does not select allocations or grant promotions.
 - Online CI is not enabled: credential lacks workflow scope; template is in `infra/ci/`.
 - No verified account-equity attachment; actual leverage/account return remain unknown.
 - Full ten-candidate portfolio assessment is blocked on four missing evidence chains.
-- Retained fixed-size basket cannot be funded with the planned 100 USDT budget.
+- Full ten-candidate and intraday funding feasibility remain unverified.
 - Nautilus is the only execution engine; LLMs never enter the order path.
 
 ## Latest Verification
 
-- Full budget-v2 suite: 1,699 offline tests passed; 12 Postgres integration tests
+- Full planning-budget suite: 1,700 offline tests passed; 12 Postgres integration tests
   deselected (no dedicated integration DSN supplied).
 - Ten new end-to-end/time-consistency/identity tests passed.
 - Retained-fill diagnostics: 20 targeted tests passed; Ruff and registry check passed.
@@ -91,7 +91,8 @@ are changed. The study does not select allocations or grant promotions.
 - [Partial portfolio diagnostics](progress/portfolio-evidence-review-2026-09-08.md).
 - [2026-09-08 strategy repair acceptance](progress/strategy-repair-2026-09-08.md).
 - [Follow-up evidence and 100 USDT budget audit](progress/strategy-followup-audit-2026-09-08.md).
-- [Confirmed operator budget — current v2 audit](progress/strategy-followup-audit-2026-09-08-v2.md).
+- [Historical 100 USDT v2 audit](progress/strategy-followup-audit-2026-09-08-v2.md).
+- [Current provisional 500 USDT budget](progress/strategy-budget-500usdt-2026-09-08.md).
 - [Collector deployment](../infra/research-shadow/README.md).
 - [Research rules](decisions/014-research-program-v2.md), [warnings](research-program-warnings.md).
 - [Registry](progress/research-mechanism-family-registry.json), [meta-analysis context](progress/research-program-meta-analysis-v2.md).

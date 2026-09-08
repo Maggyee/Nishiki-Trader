@@ -38,10 +38,12 @@ For the follow-up evidence recovery, repaired-pipeline acceptance and planned
 100 USDT budget check, read `docs/progress/strategy-followup-method-2026-09-08.md`
 and `docs/progress/strategy-followup-audit-2026-09-08.md`. The operator-confirmed
 budget now uses `docs/progress/strategy-followup-method-2026-09-08-v2.md` and the
-matching v2 audit: use 100 USDT / 50% / 50 USDT exactly in diagnostics, not a
-5 USDT substitute. Runtime trading permissions/settings remain unchanged.
-Observed-now hashes do
-not repair historical provenance; v42 additionally has dirty retained manifests.
+matching v2 audit for exact-input semantics (no 5 USDT substitution). The latest
+operator-delegated capital decision is
+`docs/progress/strategy-budget-500usdt-2026-09-08.md`: use provisional
+500 USDT / 50% / 50 USDT for planning, not a deposit or trading authorization.
+Runtime settings remain unchanged. Observed-now hashes do not repair historical
+provenance; v42 additionally has dirty retained manifests.
 
 | Task area | Read |
 |---|---|
