@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-09
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Resolve residual-inventory exit policy, then authoritative account/venue integration and process recovery.
+- **Current objective**: Authoritative account/venue integration and native process recovery after offline residual-exit acceptance.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -20,7 +20,7 @@ reconciled snapshots, exposure caps and inclusive daily/peak loss limits.
 Operator-approved offline v2 admission now selects an affordable subset: reductions
 first, then signal event time and frozen sleeve order. Each addition and the final
 selected set pass the same complete risk check; skipped orders get reasons and
-are not queued. No quantity resizing or unfilled sell credit is allowed.
+are not queued. The selector never resizes proposals or credits unfilled sales.
 It now feeds a synthetic-only Nautilus acceptance strategy: native sleeve positions,
 serialized durable preparation before submit, native partial/late fills and cancel
 acknowledgements, warm strategy restart, persistent deduplication and loss latches.
@@ -33,10 +33,13 @@ freshness/account/request checks and effective price/order/asset constraints.
 A new explicit synthetic mode now reconciles native BTC BUY fees at eight-place
 accounting precision while preserving the 0.000001 BTC order step. Four buys
 settle to 100 USDT / 0.003994 BTC. Each full fill leaves 0.00000050 BTC off-grid;
-full exits are refused without rounding, and residual inventory remains attributed.
-Grid-aligned net positions can exit exactly. Default quote-only mode and BNB
-rejection remain unchanged. Private responses are still synthetic; authoritative
-account attachment and full process recovery remain unimplemented.
+default full exits are refused without rounding. Explicit offline `whole_steps_v1`
+now sells whole-step reductions through full preflight, retaining exact native
+residual ownership and equity across partial/late fills, cancellation and warm
+restart. Four exits leave 498.60120 USDT / 0.00000200 BTC, explicitly not flat.
+Residuals still block fixed-size re-entry; no sweep or retry is enabled. Default
+quote-only/exact-exit modes and BNB rejection remain. Private responses are still
+synthetic; authoritative account attachment and full process recovery remain open.
 
 The prior signal repairs corrected v22/v34/v36 date windows and monitor v36
 identity. Separate v2 epochs count corrected attempts only. The last inspected
@@ -74,14 +77,13 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Next Steps
 
-1. Resolve residual-inventory exit policy before promotion: native base-fee
-   accounting now passes, but no-resizing full exits intentionally refuse off-grid
-   quantities. Any partial reduction policy must preserve and report residual BTC;
-   fixed BUY size, SignalEvent identities and SourcePolicy remain unchanged.
-2. Attach authoritative private/public inputs to the completed offline rule adapter
+1. Attach authoritative private/public inputs to the completed offline rule adapter
    and reconcile complete account/native state, permissions and effective price
    references. Complete durable native process recovery and uncertain-submit
    handling. Reconcile 50 USDT planning loss with runtime ADRs before deployment.
+2. Review the explicit offline residual-exit policy before promotion and resolve
+   re-entry with retained dust. Whole-step reductions now pass native acceptance;
+   fixed BUY size, SignalEvent identities and SourcePolicy remain unchanged.
 3. Accumulate genuinely prospective observations under existing collector schedules;
    review retained anomalies without clearing them retroactively.
 4. Obtain original audit/backup references for v8/v42/v46/v48 and clean eligible
@@ -110,8 +112,12 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Latest Verification
 
-- Full offline suite: **1,907 tests passed**; 12 Postgres integration tests
+- Full offline suite: **1,929 tests passed**; 12 Postgres integration tests
   deselected (no dedicated integration DSN supplied).
+- **22 residual-exit tests** passed: durable sizing audit, exact native ownership,
+  min/max filters, sub-notional retention, partial/late fills, pending cancellation,
+  fixed-size re-entry refusal, loss latches, replay and restart boundaries. Both
+  fee modes produce reproducible whole-step exit reports; Ruff and registry pass.
 - **19 received-asset inventory tests** passed: native BTC commission adjustments,
   eight-place precision, partial/late fills, exact aligned exits, retained dust,
   conservative per-fill rounding, mode fingerprints and warm restart. Both CLI
@@ -143,6 +149,7 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## References
 
+- [Explicit offline residual-exit policy and acceptance](progress/portfolio-residual-exit-2026-09-09.md).
 - [Native base-fee accounting, precision and no-rounding exit acceptance](progress/portfolio-base-fee-acceptance-2026-09-09.md).
 - [Binance rule adapter, fee-currency blocker and remaining work](progress/portfolio-venue-adapter-2026-09-09.md).
 - [Synthetic Nautilus lifecycle acceptance and remaining integration](progress/portfolio-simulation-acceptance-2026-09-09.md).

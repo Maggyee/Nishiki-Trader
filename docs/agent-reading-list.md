@@ -81,6 +81,11 @@ precision is eight places while the numerical order step stays unchanged.
 Base-fee opt-in requires native net inventory and fee-quantum reconciliation;
 BNB remains rejected. Off-grid full exits are refused and residuals retained.
 The existing quote-only default, runtime policies and cold-restart block remain.
+For the subsequent explicit offline `whole_steps_v1` exit policy, read
+`docs/progress/portfolio-residual-exit-2026-09-09.md`. It proposes whole-step SELL
+reductions before full batch preflight and retains exact native residual ownership.
+Default `exact_v1` exits and fixed BUY sizes remain unchanged. Residuals block
+fixed-size re-entry; no sweep, netting, retry or deployment is enabled.
 
 | Task area | Read |
 |---|---|

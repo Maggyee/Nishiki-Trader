@@ -28,6 +28,7 @@ from nautilus_trader.trading.strategy import Strategy
 from apps.bridge.signal_event import SignalEvent
 from apps.bridge.validators import Authorization
 from apps.ops.portfolio_execution_plan import SLEEVES, preflight_limits
+from apps.strategies_nautilus.portfolio_inventory import EXIT_POLICIES, size_exit
 from apps.strategies_nautilus.portfolio_preflight import (
     AccountSnapshot,
     AdmissionCandidate,
@@ -64,10 +65,13 @@ class PortfolioSimulationStrategy(Strategy):
     orders, account and positions, not reconstruction from this journal.
     """
 
-    def __init__(self, checkpoint: Path, *, fee_mode: str = "quote"):
+    def __init__(self, checkpoint: Path, *, fee_mode: str = "quote", exit_policy: str = "exact_v1"):
         if fee_mode not in {"quote", "received_asset"}:
             raise ValueError("unknown synthetic fee mode")
+        if exit_policy not in EXIT_POLICIES:
+            raise ValueError("unknown offline exit policy")
         self.fee_mode = fee_mode
+        self.exit_policy = exit_policy
         super().__init__(
             StrategyConfig(
                 strategy_id="PORTFOLIO-FIXTURE", order_id_tag="PF", oms_type=OmsType.HEDGING
@@ -109,6 +113,7 @@ class PortfolioSimulationStrategy(Strategy):
                     "limit_price": "100000",
                     "fee_bound": "0.0015",
                     "fee_mode": self.fee_mode,
+                    "exit_policy": self.exit_policy,
                 }
             )
         ).hexdigest()
@@ -418,6 +423,7 @@ class PortfolioSimulationStrategy(Strategy):
             if self.state_data["halt_reason"]:
                 raise SimulationBlocked(self.state_data["halt_reason"])
             snapshot = self.snapshot()
+            rules = self.rules()
             now = self.clock.timestamp_ns()
             holdings = dict(snapshot.holdings)
             candidates = []
@@ -467,8 +473,13 @@ class PortfolioSimulationStrategy(Strategy):
                 signal = latest[0]
                 row = self.state_data["signals"][signal.signal_id]
                 quantity = self.limits.sleeve_quantity if signal.side == "buy" else holdings[sleeve]
+                if signal.side == "flat":
+                    sizing = size_exit(quantity, rules.quantity_step, policy=self.exit_policy)
+                    row["exit_sizing"] = {k: str(v) for k, v in asdict(sizing).items()}
+                    row["exit_sizing"]["prepared_quantity"] = "0"
+                    quantity = sizing.proposed_quantity
                 if quantity == 0:
-                    row["reasons"] = ["already_flat"]
+                    row["reasons"] = ["residual_below_step" if holdings[sleeve] else "already_flat"]
                     continue
                 oid = "PF-" + hashlib.sha256(signal.signal_id.encode()).hexdigest()[:24]
                 candidates.append(
@@ -487,7 +498,7 @@ class PortfolioSimulationStrategy(Strategy):
                 )
             result = select_funded_batch(
                 snapshot,
-                self.rules(),
+                rules,
                 self.limits,
                 tuple(candidates),
                 now_ns=now,
@@ -526,6 +537,8 @@ class PortfolioSimulationStrategy(Strategy):
                 }
                 row = self.state_data["signals"][candidate.signal_id]
                 row.update(decision="prepared", order_ids=[p.order_id])
+                if p.side == "SELL":
+                    row["exit_sizing"]["prepared_quantity"] = str(order.quantity)
                 native.append((order, position_id))
             self._audit(
                 "admission",

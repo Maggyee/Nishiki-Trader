@@ -1,4 +1,4 @@
-"""Read-only net-inventory/grid diagnostics; never rounds or creates an order."""
+"""Read-only inventory diagnostics and explicit offline exit sizing; no execution."""
 
 from __future__ import annotations
 
@@ -6,6 +6,33 @@ from dataclasses import dataclass
 from decimal import Decimal
 
 from apps.strategies_nautilus.portfolio_preflight import AccountSnapshot, InstrumentRules
+
+EXIT_POLICIES = ("exact_v1", "whole_steps_v1")
+
+
+@dataclass(frozen=True)
+class ExitSizing:
+    policy: str
+    requested_net_quantity: Decimal
+    proposed_quantity: Decimal
+    retained_if_filled: Decimal
+
+
+def size_exit(quantity: Decimal, step: Decimal, *, policy: str = "exact_v1") -> ExitSizing:
+    """Size one owned reduction, subject to complete subsequent batch preflight.
+
+    Only whole_steps_v1 floors to the trading step. Never cap to max quantity or
+    notional, round up to a minimum, split orders or authorize a residual sweep.
+    retained_if_filled is a projection, not a settled holding or flatness claim.
+    """
+    if policy not in EXIT_POLICIES:
+        raise ValueError("unknown offline exit policy")
+    if not quantity.is_finite() or quantity < 0:
+        raise ValueError("invalid net inventory")
+    if not step.is_finite() or step <= 0:
+        raise ValueError("positive finite quantity step required")
+    proposed = quantity if policy == "exact_v1" else quantity - quantity % step
+    return ExitSizing(policy, quantity, proposed, quantity - proposed)
 
 
 @dataclass(frozen=True)

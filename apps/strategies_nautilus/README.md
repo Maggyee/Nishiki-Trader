@@ -187,15 +187,19 @@ strategies_nautilus/
 响应转换为预检查规则，覆盖价格区间、订单名额和资产上限。现有只收 USDT 手续费
 假设不支持 BTC 买入扣费或 BNB 扣费，适配层会明确拒绝，不自动缩量。
 独立验收模式 `--fee-mode received_asset` 已通过 Nautilus 原生 BTC 买入手续费、
-净持仓和 8 位账务精度验证，交易数量步长仍不变。`portfolio_inventory.py` 只读报告
-步长余数；完整平仓数量不合规时拒绝，不丢弃余额或自动缩量。BNB 仍不支持。
+净持仓和 8 位账务精度验证，交易数量步长仍不变。`portfolio_inventory.py` 报告
+步长余数；默认 `exact_v1` 完整平仓数量不合规时仍拒绝。显式 `whole_steps_v1`
+离线退出策略只提出整步长卖出数量，再执行完整预检查；余量留在原策略原生持仓，
+计入权益并阻止超额再买入。不会归集、核销或自动重试。BNB 仍不支持。
 
 ```bash
 .venv/bin/python -m apps.strategies_nautilus.runners.portfolio_simulation_acceptance --fee-mode received_asset
+.venv/bin/python -m apps.strategies_nautilus.runners.portfolio_simulation_acceptance --fee-mode received_asset --exit-policy whole_steps_v1
 ```
 
-下一入口为残余库存退出政策、权威账户对账和完整进程恢复，详见
-[原生手续费验收](../../docs/progress/portfolio-base-fee-acceptance-2026-09-09.md)。
+下一入口为权威账户对账和完整进程恢复；部署前还需明确余量存在时的重新入场政策。
+详见[原生手续费验收](../../docs/progress/portfolio-base-fee-acceptance-2026-09-09.md)及
+[残余库存退出验收](../../docs/progress/portfolio-residual-exit-2026-09-09.md)。
 
 - 不直接接交易所 API（用 nautilus 的 binance adapter）
 - 不绕过 `RiskEngine`
