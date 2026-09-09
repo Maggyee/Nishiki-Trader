@@ -381,6 +381,8 @@ uv run python -m apps.ops.emergency_flatten --confirm I_REALLY_MEAN_IT
 组合方案。缺少留存数据或证据变化时退出 2，不自动替换策略；退出 0 仅表示
 证据锁通过，不是模拟交易、测试网或实盘授权。见
 [组合执行契约](../../docs/progress/portfolio-execution-contract-2026-09-09.md)。
+默认输出当前资金约束接纳方案 v2；`--revision 1` 可复现原始整批方案。
+版本差异见 [v2 接纳规则](../../docs/progress/portfolio-funded-admission-2026-09-09.md)。
 
 - 应急脚本必须有**二次确认**参数，避免误触发
 - 任何写真实账户的脚本（Phase 6+）走 `EMERGENCY_*` 前缀，醒目

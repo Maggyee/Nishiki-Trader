@@ -13,10 +13,11 @@ def anchor():
     return json.loads(Path(plan.ANCHOR_PATH).read_text())
 
 
-def test_frozen_cohort_and_proposal(monkeypatch):
+@pytest.mark.parametrize("revision", [1, 2])
+def test_frozen_cohort_and_proposal(monkeypatch, revision):
     current = anchor()
     monkeypatch.setattr(plan.evidence, "build_report", lambda root: current)
-    result = plan.build_plan(Path("."))
+    result = plan.build_plan(Path("."), revision=revision)
     assert [r["protocol"] for r in result["sleeves"]] == list(plan.SLEEVES)
     assert result["verified_evidence_cohort"] == list(plan.VERIFIED)
     assert result["capital_usdt"] == "500"
@@ -25,8 +26,18 @@ def test_frozen_cohort_and_proposal(monkeypatch):
     assert result["promotion_allowed"] is False
     assert result["runtime_risk_change_authorized"] is False
     assert result["status"] == "offline_engineering_only"
-    committed = Path("docs/progress/portfolio-execution-plan-2026-09-09.json")
+    suffix = "-v2" if revision == 2 else ""
+    committed = Path(f"docs/progress/portfolio-execution-plan-2026-09-09{suffix}.json")
     assert result == json.loads(committed.read_text())
+
+
+def test_v2_changes_admission_only_not_cohort_or_budget(monkeypatch):
+    monkeypatch.setattr(plan.evidence, "build_report", lambda root: anchor())
+    v1 = plan.build_plan(Path("."), revision=1)
+    v2 = plan.build_plan(Path("."))
+    changed = {key for key in v1 if v1[key] != v2[key]}
+    assert changed == {"schema_version", "plan_id", "admission"}
+    assert v2["admission_sleeve_order"] == list(plan.SLEEVES)
 
 
 @pytest.mark.parametrize(

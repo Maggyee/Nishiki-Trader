@@ -172,6 +172,9 @@ strategies_nautilus/
 `portfolio_preflight.py` 是离线组合订单资金/风控预检查，不维护订单账本、
 不撮合、不下单，目前未接入任何 runner。它要求已对账的账户快照，覆盖挂单预留、
 部分成交/待撤单、组合敞口及损失阈值；快照检查不等于原子资金预留。
+`select_funded_batch` 在此基础上按减仓优先、事件时间、固定策略顺序选择可负担
+订单，并保留跳过原因；不缩量、不预支卖单收入、不排队重试。详见
+[v2 接纳规则](../../docs/progress/portfolio-funded-admission-2026-09-09.md)。
 下一入口是 Nautilus 模拟执行的账户适配与生命周期测试，见
 [固定组合契约](../../docs/progress/portfolio-execution-contract-2026-09-09.md)。
 

@@ -17,6 +17,10 @@ fails rather than silently changing the cohort. This is not an alpha verdict.
 A pure batch preflight now checks pending-order cash/base reservations, partial
 fills, cancel acknowledgements, duplicate IDs, effective LIMIT filters, fresh
 reconciled snapshots, exposure caps and inclusive daily/peak loss limits.
+Operator-approved offline v2 admission now selects an affordable subset: reductions
+first, then signal event time and frozen sleeve order. Each addition and the final
+selected set pass the same complete risk check; skipped orders get reasons and
+are not queued. No quantity resizing or unfilled sell credit is allowed.
 It is NOT wired into runners: atomic reservation, Nautilus sleeve attribution,
 persistent risk/restart reconciliation and complete venue constraints remain next.
 
@@ -56,7 +60,7 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Next Steps
 
-1. Integrate the fixed offline contract into Nautilus simulated acceptance using
+1. Integrate the v2 funded-admission contract into Nautilus simulated acceptance using
    synthetic SignalEvent v1 inputs: sleeve attribution, atomic check/reservation,
    partial/late fills, cancel acknowledgements, restart and latched risk recovery.
    Do not change current SourcePolicy or runtime loss settings as part of wiring.
@@ -90,11 +94,12 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Latest Verification
 
-- Portfolio-contract suite: 1,774 offline tests passed; 12 Postgres integration tests
+- Portfolio-contract v2 suite: 1,798 offline tests passed; 12 Postgres integration tests
   deselected (no dedicated integration DSN supplied).
-- 63 new cohort/preflight tests; six-candidate original evidence revalidation
-  succeeded. Five synthetic simultaneous buys need 500.75 USDT at 100,000
-  USDT/BTC and a 15 bps quote fee bound: correctly blocked against 500 USDT.
+- 87 focused cohort/preflight tests (24 added this revision); six-candidate
+  evidence revalidation succeeded. At synthetic 100,000 USDT/BTC and 15 bps,
+  whole-batch checks still reject 500.75 USDT; v2 selects four buys requiring
+  400.60 USDT, leaving 99.40 USDT. All 120 input permutations agree.
 - Ten new end-to-end/time-consistency/identity tests passed.
 - Retained-fill diagnostics: 20 targeted tests passed; Ruff and registry check passed.
 - Follow-up: 17 targeted tests passed; original-evidence search, three pipeline
@@ -110,8 +115,9 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## References
 
-- [Fixed offline portfolio contract and integration obligations](progress/portfolio-execution-contract-2026-09-09.md).
-- [Revalidated machine-readable plan](progress/portfolio-execution-plan-2026-09-09.json).
+- [Current v2 funded admission and integration obligations](progress/portfolio-funded-admission-2026-09-09.md).
+- [Current revalidated machine-readable plan](progress/portfolio-execution-plan-2026-09-09-v2.json).
+- [Original v1 offline portfolio contract](progress/portfolio-execution-contract-2026-09-09.md).
 - [2026-09-07 reliability acceptance](progress/reliability-repair-2026-09-07.md).
 - [Fixed retained-fill study method](progress/portfolio-evidence-study-2026-09-08.md).
 - [Partial portfolio diagnostics](progress/portfolio-evidence-review-2026-09-08.md).

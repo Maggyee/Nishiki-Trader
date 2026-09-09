@@ -55,6 +55,12 @@ approved allocation or promotion. `apps.ops.portfolio_execution_plan` revalidate
 the six original evidence chains; `portfolio_preflight.py` checks synthetic
 snapshots only and is not wired into Nautilus runners. Atomic reservation and
 complete account/venue integration remain required.
+The current operator-approved admission revision is documented in
+`docs/progress/portfolio-funded-admission-2026-09-09.md` with
+`portfolio-execution-plan-2026-09-09-v2.json`: deterministic affordable subset,
+no resizing or unfilled sell credit, final whole-batch preflight. CLI defaults
+to v2; `--revision 1` reproduces v1. Both are offline only; v1 artifacts stay
+immutable and their basket returns are not v2 performance evidence.
 
 | Task area | Read |
 |---|---|

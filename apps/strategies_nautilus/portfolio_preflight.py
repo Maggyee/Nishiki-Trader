@@ -91,6 +91,121 @@ class PreflightResult:
     available_base: Decimal = ZERO
 
 
+@dataclass(frozen=True)
+class AdmissionCandidate:
+    """Consumer-owned proposal plus lineage from an already validated SignalEvent.
+
+    This is not a new bridge protocol. Authorization, side mapping and monotonic
+    signal consumption remain the Nautilus consumer's responsibility.
+    """
+
+    order: ProposedOrder
+    signal_id: str
+    ts_event_ns: int
+    expires_at_ns: int
+
+
+@dataclass(frozen=True)
+class SkippedOrder:
+    order_id: str
+    signal_id: str
+    reasons: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class AdmissionResult:
+    selected: tuple[AdmissionCandidate, ...]
+    skipped: tuple[SkippedOrder, ...]
+    preflight: PreflightResult
+    snapshot_ts_ns: int
+    evaluated_at_ns: int
+
+
+def select_funded_batch(
+    account: AccountSnapshot,
+    rules: InstrumentRules,
+    limits: Limits,
+    candidates: tuple[AdmissionCandidate, ...],
+    *,
+    now_ns: int,
+) -> AdmissionResult:
+    """Greedy deterministic admission, with unchanged whole-batch risk checks.
+
+    Priority: SELL reductions, then event time, frozen sleeve order, order ID.
+    Input order, returns and price rankings cannot affect priority. Each trial
+    checks the whole selected set, so cash and risk headroom cannot be reused.
+    Skips are not queued. This function reserves NOTHING: the eventual Nautilus
+    caller must revalidate signals and atomically check/reserve the selected set.
+    """
+
+    def blocked(reason: PreflightResult) -> AdmissionResult:
+        return AdmissionResult(
+            (),
+            tuple(SkippedOrder(c.order.order_id, c.signal_id, reason.reasons) for c in candidates),
+            reason,
+            account.ts_ns,
+            now_ns,
+        )
+
+    base = check_batch(account, rules, limits, (), now_ns=now_ns)
+    if not base.checks_passed:
+        return blocked(base)
+
+    # Ambiguous duplicate input must not let caller ordering choose a winner.
+    # Malformed priority/lineage also rejects the batch before sorting.
+    order_ids, signal_ids, sleeves = set(), set(), set()
+    for c in candidates:
+        if (
+            not isinstance(c.order.order_id, str)
+            or not c.order.order_id
+            or not isinstance(c.signal_id, str)
+            or not c.signal_id
+            or not isinstance(c.order.sleeve, str)
+            or type(c.ts_event_ns) is not int
+            or type(c.expires_at_ns) is not int
+            or c.ts_event_ns <= 0
+            or c.expires_at_ns <= c.ts_event_ns
+        ):
+            return blocked(PreflightResult(False, ("invalid_admission_metadata",)))
+        if c.order.order_id in order_ids or c.signal_id in signal_ids or c.order.sleeve in sleeves:
+            return blocked(PreflightResult(False, ("ambiguous_duplicate_candidate",)))
+        order_ids.add(c.order.order_id)
+        signal_ids.add(c.signal_id)
+        sleeves.add(c.order.sleeve)
+
+    priority = {s: i for i, s in enumerate(limits.sleeves)}
+    ordered = sorted(
+        candidates,
+        key=lambda c: (
+            c.order.side != "SELL",
+            c.ts_event_ns,
+            priority.get(c.order.sleeve, len(priority)),
+            c.order.order_id,
+        ),
+    )
+    selected, skipped = [], []
+    for c in ordered:
+        if c.ts_event_ns > now_ns:
+            reasons = ("future_signal",)
+        elif now_ns >= c.expires_at_ns:
+            reasons = ("expired_signal",)
+        else:
+            trial = check_batch(
+                account, rules, limits, tuple(s.order for s in selected) + (c.order,), now_ns=now_ns
+            )
+            reasons = trial.reasons
+            if trial.checks_passed:
+                selected.append(c)
+                continue
+        skipped.append(SkippedOrder(c.order.order_id, c.signal_id, reasons))
+
+    # Keep the complete-set safety gate even if selection is changed later.
+    final = check_batch(account, rules, limits, tuple(c.order for c in selected), now_ns=now_ns)
+    if not final.checks_passed:
+        return blocked(final)
+    return AdmissionResult(tuple(selected), tuple(skipped), final, account.ts_ns, now_ns)
+
+
 def _number(value: Decimal, *, positive: bool = False) -> None:
     if not isinstance(value, Decimal) or not value.is_finite():
         raise ValueError("finite Decimal required")

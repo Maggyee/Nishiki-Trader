@@ -2,16 +2,19 @@ from __future__ import annotations
 
 from dataclasses import replace
 from decimal import Decimal as D
+from itertools import permutations
 
 import pytest
 
 from apps.ops.portfolio_execution_plan import SLEEVES, preflight_limits
 from apps.strategies_nautilus.portfolio_preflight import (
     AccountSnapshot,
+    AdmissionCandidate,
     InstrumentRules,
     PendingOrder,
     ProposedOrder,
     check_batch,
+    select_funded_batch,
 )
 
 NOW = 1_789_000_000_000_000_000
@@ -94,6 +97,182 @@ def held_account(quantity="0.001", **kwargs):
 def pending_account(status="accepted", remaining="0.001", **kwargs):
     p = PendingOrder("old", "v16", "BUY", D(remaining), D("100000"), status)
     return account(pending=(p,), used_order_ids=frozenset({"old"}), **kwargs)
+
+
+def candidate(sleeve="v16", *, proposal=None, **kwargs):
+    return replace(
+        AdmissionCandidate(
+            proposal or order(sleeve), f"signal-{sleeve}", NOW - 1_000_000_000, NOW + 30_000_000_000
+        ),
+        **kwargs,
+    )
+
+
+def select(candidates=None, a=None, **kwargs):
+    return select_funded_batch(
+        a or account(),
+        kwargs.pop("r", rules()),
+        kwargs.pop("l", limits()),
+        candidates if candidates is not None else tuple(candidate(s) for s in SLEEVES),
+        now_ns=kwargs.pop("now_ns", NOW),
+        **kwargs,
+    )
+
+
+def test_funded_subset_preserves_sizes_and_has_exact_headroom():
+    result = select()
+    assert [c.order.sleeve for c in result.selected] == list(SLEEVES[:4])
+    assert all(c.order.quantity == D("0.001") for c in result.selected)
+    assert result.preflight.checks_passed
+    assert result.preflight.required_quote == D("400.60")
+    assert result.preflight.available_quote - result.preflight.required_quote == D("99.40")
+    assert result.skipped[0].order_id == "new-v36"
+    assert result.skipped[0].signal_id == "signal-v36"
+    assert result.skipped[0].reasons == ("insufficient_unreserved_quote",)
+    assert result.snapshot_ts_ns == result.evaluated_at_ns == NOW
+
+
+def test_all_input_permutations_produce_same_admission_and_audit():
+    expected = select()
+    for items in permutations(tuple(candidate(s) for s in SLEEVES)):
+        assert select(items) == expected
+
+
+def test_earlier_event_time_precedes_sleeve_tie_break():
+    items = tuple(
+        candidate(s, ts_event_ns=NOW - (2_000_000_000 if s == "v36" else 1_000_000_000))
+        for s in SLEEVES
+    )
+    result = select(items)
+    assert result.selected[0].order.sleeve == "v36"
+    assert result.skipped[0].order_id == "new-v34"
+
+
+def test_skipping_expensive_first_order_does_not_stop_later_affordable_orders():
+    items = (candidate(proposal=order(price="1000000")), candidate("v18"))
+    result = select(items)
+    assert [c.order.sleeve for c in result.selected] == ["v18"]
+    assert "insufficient_unreserved_quote" in result.skipped[0].reasons
+
+
+def test_selector_accounts_for_pending_cancel_and_never_replaces_it():
+    result = select(a=pending_account("pending_cancel"))
+    assert [c.order.sleeve for c in result.selected] == ["v18", "v22", "v34"]
+    assert result.preflight.available_quote == D("399.85")
+    assert result.preflight.required_quote == D("300.45")
+    assert result.skipped[0].reasons == ("sleeve_has_pending_order", "sleeve_exposure_limit")
+    assert result.skipped[-1].reasons == ("insufficient_unreserved_quote",)
+
+
+def test_reductions_first_without_crediting_unsettled_proceeds():
+    a = held_account()
+    a = replace(a, total_quote=D("0"), venue_free_quote=D("0"), day_open_equity=D("100"))
+    items = (
+        candidate("v18", ts_event_ns=NOW - 2_000_000_000),
+        candidate(proposal=order(side="SELL")),
+    )
+    result = select(items, a)
+    assert [c.order.side for c in result.selected] == ["SELL"]
+    assert "insufficient_unreserved_quote" in result.skipped[0].reasons
+
+
+@pytest.mark.parametrize(
+    "changes,reason",
+    [
+        ({"risk_latched": True}, "risk_latched"),
+        ({"day_open_equity": D("550"), "peak_equity": D("550")}, "daily_loss_limit"),
+        ({"peak_equity": D("750")}, "drawdown_limit"),
+    ],
+)
+def test_selector_preserves_entry_risk_blocks_and_owned_reductions(changes, reason):
+    result = select(
+        (candidate("v18"), candidate(proposal=order(side="SELL"))), held_account(**changes)
+    )
+    assert [c.order.side for c in result.selected] == ["SELL"]
+    assert reason in result.skipped[0].reasons
+
+
+def test_selector_accumulates_fees_and_exposure_for_whole_selected_set():
+    result = select(a=account(day_open_equity=D("549.60"), peak_equity=D("549.60")))
+    assert len(result.selected) == 2  # 0.30 fees fit; 0.45 would cross 50 loss
+    assert all("projected_daily_loss_limit" in s.reasons for s in result.skipped)
+    capped = select(l=replace(limits(), total_quantity=D("0.002")))
+    assert len(capped.selected) == 2
+    assert all("portfolio_exposure_limit" in s.reasons for s in capped.skipped)
+
+
+@pytest.mark.parametrize(
+    "changes,reason",
+    [
+        ({"expires_at_ns": NOW}, "expired_signal"),
+        ({"ts_event_ns": NOW + 1}, "future_signal"),
+    ],
+)
+def test_selector_skips_invalid_time_without_blocking_other_candidates(changes, reason):
+    result = select((candidate(**changes), candidate("v18")))
+    assert [c.order.sleeve for c in result.selected] == ["v18"]
+    assert result.skipped[0].reasons == (reason,)
+
+
+def test_no_queued_retry_and_fresh_reconsideration_checks_expiry():
+    original = select()
+    later = NOW + 30_000_000_000
+    a = account(
+        ts_ns=later,
+        total_quote=D("1000"),
+        venue_free_quote=D("1000"),
+        day_open_equity=D("1000"),
+        peak_equity=D("1000"),
+    )
+    result = select((candidate("v36"),), a, r=rules(ts_ns=later), now_ns=later)
+    assert not result.selected
+    assert result.skipped[0].reasons == ("expired_signal",)
+    assert len(original.selected) == 4
+
+
+@pytest.mark.parametrize(
+    "changes", [{"reconciled": False}, {"ts_ns": NOW + 1}, {"ts_ns": NOW - 60_000_000_001}]
+)
+def test_invalid_snapshot_rejects_all_before_selection(changes):
+    result = select(a=account(**changes))
+    assert not result.selected and not result.preflight.checks_passed
+    assert len(result.skipped) == 5
+
+
+@pytest.mark.parametrize("fault", ["signal", "sleeve", "order", "timestamp"])
+def test_ambiguous_or_malformed_candidate_batch_fails_closed(fault):
+    left, right = candidate(), candidate("v18")
+    if fault == "signal":
+        right = replace(right, signal_id=left.signal_id)
+    elif fault == "sleeve":
+        right = replace(right, order=replace(right.order, sleeve="v16"))
+    elif fault == "order":
+        right = replace(right, order=replace(right.order, order_id=left.order.order_id))
+    else:
+        right = replace(right, ts_event_ns=float(NOW))
+    result = select((left, right))
+    assert not result.selected and not result.preflight.checks_passed
+    assert len(result.skipped) == 2
+
+
+def test_empty_input_never_selects_an_order():
+    result = select(())
+    assert not result.selected and not result.skipped
+    assert result.preflight.checks_passed
+
+
+def test_selector_keeps_filters_id_replay_and_unknown_sleeve_checks():
+    items = (
+        candidate(proposal=order(quantity="0.000011")),
+        candidate("v18"),
+        candidate("v22"),
+        candidate("v40"),
+    )
+    result = select(items, account(used_order_ids=frozenset({"new-v22"})))
+    assert [c.order.sleeve for c in result.selected] == ["v18"]
+    assert "quantity_step" in result.skipped[0].reasons
+    assert "reused" in result.skipped[1].reasons[0]
+    assert "unknown/repeated proposed sleeve" in result.skipped[2].reasons[0]
 
 
 def test_batch_includes_fee_and_cannot_spend_same_cash_five_times():

@@ -14,7 +14,7 @@ from pathlib import Path
 from apps.ops import research_portfolio_evidence as evidence
 from apps.strategies_nautilus.portfolio_preflight import Limits
 
-PLAN_ID = "portfolio-engineering-v1-20260909"
+PLAN_ID = "portfolio-engineering-v2-20260909"
 ANCHOR_PATH = "docs/progress/portfolio-evidence-review-2026-09-08.json"
 ANCHOR_SHA256 = "0a0a6b034298919a292ba7b388d1fb686a41137ccf3dcf01f836f34c8deb336f"
 VERIFIED = ("v16", "v18", "v22", "v34", "v36", "v40")
@@ -48,13 +48,15 @@ def validate_cohort(anchor: dict, current: dict) -> None:
         raise ValueError("duplicate-path assumption changed")
 
 
-def build_plan(root: Path) -> dict:
+def build_plan(root: Path, *, revision: int = 2) -> dict:
+    if revision not in (1, 2):
+        raise ValueError("unsupported plan revision")
     anchor = json.loads(evidence.verified_bytes(root / ANCHOR_PATH, ANCHOR_SHA256))
     current = evidence.build_report(root)  # reopens only authorized 2023–2025 evidence
     validate_cohort(anchor, current)
-    return {
+    plan = {
         "schema_version": "portfolio.execution_plan.v1",
-        "plan_id": PLAN_ID,
+        "plan_id": "portfolio-engineering-v1-20260909",
         "status": "offline_engineering_only",
         "evidence_anchor": {"path": ANCHOR_PATH, "sha256": ANCHOR_SHA256},
         "verified_evidence_cohort": list(VERIFIED),
@@ -93,14 +95,32 @@ def build_plan(root: Path) -> dict:
             "intraday risk and emergency actions not validated by historical daily marks",
         ],
     }
+    if revision == 2:
+        plan.update(
+            schema_version="portfolio.execution_plan.v2",
+            plan_id=PLAN_ID,
+            supersedes="portfolio-engineering-v1-20260909",
+            admission="deterministic funded subset; final whole-batch check; atomic reservation pending",
+            admission_priority=[
+                "SELL reductions first",
+                "signal ts_event ascending",
+                "frozen sleeve order",
+                "order_id ascending",
+            ],
+            admission_sleeve_order=list(SLEEVES),
+            skipped_policy="record reasons; no queued retries; revalidate signals before reconsideration",
+            performance_status="changed admission changes fills; prior basket PnL is not v2 evidence",
+        )
+    return plan
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo-root", type=Path, default=Path("."))
+    parser.add_argument("--revision", type=int, choices=(1, 2), default=2)
     args = parser.parse_args(argv)
     try:
-        plan = build_plan(args.repo_root)
+        plan = build_plan(args.repo_root, revision=args.revision)
     except (OSError, ValueError, KeyError, TypeError) as exc:
         print(json.dumps({"status": "blocked", "reason": str(exc)}))
         return 2
