@@ -183,8 +183,11 @@ strategies_nautilus/
 .venv/bin/python -m apps.strategies_nautilus.runners.portfolio_simulation_acceptance
 ```
 
-下一入口为权威账户/交易所规则适配及完整进程恢复，详见
-[模拟生命周期验收](../../docs/progress/portfolio-simulation-acceptance-2026-09-09.md)。
+`portfolio_venue.py` 将本地保存的 Binance exchangeInfo、commission、myFilters
+响应转换为预检查规则，覆盖价格区间、订单名额和资产上限。现有只收 USDT 手续费
+假设不支持 BTC 买入扣费或 BNB 扣费，适配层会明确拒绝，不自动缩量。
+下一入口为扣费后库存/零碎余额契约、权威账户对账和完整进程恢复，详见
+[交易所规则适配记录](../../docs/progress/portfolio-venue-adapter-2026-09-09.md)。
 
 - 不直接接交易所 API（用 nautilus 的 binance adapter）
 - 不绕过 `RiskEngine`

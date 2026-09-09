@@ -27,6 +27,13 @@ class Limits:
 
 
 @dataclass(frozen=True)
+class PriceBand:
+    side: str
+    minimum: Decimal
+    maximum: Decimal
+
+
+@dataclass(frozen=True)
 class InstrumentRules:
     instrument_id: str
     ts_ns: int
@@ -37,9 +44,14 @@ class InstrumentRules:
     price_max: Decimal
     price_tick: Decimal
     notional_min: Decimal
-    notional_max: Decimal
+    notional_max: Decimal | None
     fee_rate: Decimal
     fee_currency: str = "USDT"
+    buy_fee_currency: str = "USDT"
+    sell_fee_currency: str = "USDT"
+    price_bands: tuple[PriceBand, ...] = ()
+    max_open_orders: int | None = None  # dedicated BTC/USDT account, all orders counted
+    max_position: Decimal | None = None
 
 
 @dataclass(frozen=True)
@@ -265,11 +277,6 @@ def _check(a, r, limits, orders, now):
         r.quantity_min,
         r.quantity_max,
         r.quantity_step,
-        r.price_min,
-        r.price_max,
-        r.price_tick,
-        r.notional_min,
-        r.notional_max,
         a.mark_price,
         a.day_open_equity,
         a.peak_equity,
@@ -277,9 +284,34 @@ def _check(a, r, limits, orders, now):
         _number(value, positive=True)
     for value in (a.total_quote, a.venue_free_quote, a.total_base, a.venue_free_base, r.fee_rate):
         _number(value)
-    if r.fee_rate >= ONE or r.quantity_min > r.quantity_max or r.price_min > r.price_max:
+    for value in (r.price_min, r.price_max, r.price_tick, r.notional_min):
+        _number(value)  # zero disables PRICE_FILTER components
+    if r.notional_max is not None:
+        _number(r.notional_max, positive=True)
+    if r.max_position is not None:
+        _number(r.max_position, positive=True)
+    if r.max_open_orders is not None and (
+        type(r.max_open_orders) is not int or r.max_open_orders < 0
+    ):
+        raise ValueError("invalid order-count bound")
+    if not isinstance(r.buy_fee_currency, str) or not isinstance(r.sell_fee_currency, str):
+        raise ValueError("invalid side fee currency")
+    for band in r.price_bands:
+        if not isinstance(band, PriceBand):
+            raise ValueError("invalid price-band value")
+        if band.side not in {"BUY", "SELL"}:
+            raise ValueError("invalid price-band side")
+        _number(band.minimum, positive=True)
+        _number(band.maximum, positive=True)
+        if band.minimum > band.maximum:
+            raise ValueError("invalid price-band bounds")
+    if (
+        r.fee_rate >= ONE
+        or r.quantity_min > r.quantity_max
+        or (r.price_max and r.price_min > r.price_max)
+    ):
         raise ValueError("invalid rule bounds")
-    if r.notional_min > r.notional_max:
+    if r.notional_max is not None and r.notional_min > r.notional_max:
         raise ValueError("invalid notional bounds")
     if a.venue_free_quote > a.total_quote or a.venue_free_base > a.total_base:
         raise ValueError("free exceeds total balance")
@@ -314,6 +346,9 @@ def _check(a, r, limits, orders, now):
             continue
         if order.status not in ACTIVE or order.remaining == ZERO:
             raise ValueError("unknown/inconsistent active order status")
+        currency = r.buy_fee_currency if order.side == "BUY" else r.sell_fee_currency
+        if currency != "USDT":
+            raise ValueError("pending order has unsupported fee currency")
         if order.side == "BUY":
             reserved_quote += order.remaining * order.limit_price * (ONE + r.fee_rate)
             pending_entry_loss_bound += order.remaining * (
@@ -348,12 +383,20 @@ def _check(a, r, limits, orders, now):
             reasons.append("quantity_bounds")
         if order.quantity % r.quantity_step:
             reasons.append("quantity_step")
-        if not r.price_min <= order.limit_price <= r.price_max:
+        if order.limit_price < r.price_min or (r.price_max and order.limit_price > r.price_max):
             reasons.append("price_bounds")
-        if order.limit_price % r.price_tick:
+        if r.price_tick and order.limit_price % r.price_tick:
             reasons.append("price_tick")
+        if any(
+            band.side == order.side and not band.minimum <= order.limit_price <= band.maximum
+            for band in r.price_bands
+        ):
+            reasons.append("venue_price_band")
+        currency = r.buy_fee_currency if order.side == "BUY" else r.sell_fee_currency
+        if currency != "USDT":
+            reasons.append("unsupported_order_fee_currency")
         notional = order.quantity * order.limit_price
-        if not r.notional_min <= notional <= r.notional_max:
+        if notional < r.notional_min or (r.notional_max is not None and notional > r.notional_max):
             reasons.append("notional_bounds")
         if order.side == "BUY":
             has_buy = True
@@ -366,6 +409,9 @@ def _check(a, r, limits, orders, now):
         else:
             required_base += order.quantity
             sell_qty[order.sleeve] += order.quantity
+    active_count = sum(p.status in ACTIVE for p in a.pending)
+    if orders and r.max_open_orders is not None and active_count + len(orders) > r.max_open_orders:
+        reasons.append("venue_open_order_limit")
     if required_quote > available_quote:
         reasons.append("insufficient_unreserved_quote")
     if required_base > available_base or any(sell_qty[s] > held[s] for s in held):
@@ -383,6 +429,11 @@ def _check(a, r, limits, orders, now):
             reasons.append("projected_drawdown_limit")
         if any(held[s] + buy_qty[s] > limits.sleeve_quantity for s in held):
             reasons.append("sleeve_exposure_limit")
+        if (
+            r.max_position is not None
+            and a.total_base + sum(buy_qty.values(), ZERO) > r.max_position
+        ):
+            reasons.append("venue_position_limit")
         if a.total_base + sum(buy_qty.values(), ZERO) > limits.total_quantity:
             reasons.append("portfolio_exposure_limit")
     return PreflightResult(

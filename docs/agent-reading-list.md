@@ -68,6 +68,13 @@ Only fixture SignalEvent identities are accepted. Native fills, reservations,
 warm strategy restart and persistent risk latches are exercised offline; cold
 restart without native state fails closed. Actual account/venue integration and
 runtime policy reconciliation remain required. Existing runners are unchanged.
+For the current offline Binance response adapter and fee-currency blocker, read
+`docs/progress/portfolio-venue-adapter-2026-09-09.md`,
+`apps/strategies_nautilus/portfolio_venue.py` and
+`apps/ops/portfolio_venue_check.py`. Private response tests use synthetic inputs;
+receipt metadata does not prove authoritative account reconciliation. Nonzero
+BUY fees in BTC or potentially BNB fail the current quote-only contract. Do not
+reinterpret them as USDT fees or silently resize to hide base-asset dust.
 
 | Task area | Read |
 |---|---|

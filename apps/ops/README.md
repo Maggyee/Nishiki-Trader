@@ -384,6 +384,11 @@ uv run python -m apps.ops.emergency_flatten --confirm I_REALLY_MEAN_IT
 默认输出当前资金约束接纳方案 v2；`--revision 1` 可复现原始整批方案。
 版本差异见 [v2 接纳规则](../../docs/progress/portfolio-funded-admission-2026-09-09.md)。
 
+`python -m apps.ops.portfolio_venue_check <captured-bundle.json>` 只读解析本地
+Binance 规则/手续费响应，输出哈希、约束和不兼容方向；不请求网络、不读取凭证。
+退出 0 仅代表解析及手续费兼容性通过，账户对账和运行就绪状态始终为 false。
+详见 [交易所适配与输入格式](../../docs/progress/portfolio-venue-adapter-2026-09-09.md)。
+
 - 应急脚本必须有**二次确认**参数，避免误触发
 - 任何写真实账户的脚本（Phase 6+）走 `EMERGENCY_*` 前缀，醒目
 - Phase 2 ops 脚本只能写本地 `data/`，不能接真实账户或下单 API
