@@ -86,6 +86,14 @@ For the subsequent explicit offline `whole_steps_v1` exit policy, read
 reductions before full batch preflight and retains exact native residual ownership.
 Default `exact_v1` exits and fixed BUY sizes remain unchanged. Residuals block
 fixed-size re-entry; no sweep, netting, retry or deployment is enabled.
+For signed read-only account collection, exact native reconciliation and the new
+cross-process recovery fixture, read `docs/progress/portfolio-account-recovery-2026-09-09.md`,
+`portfolio_account.py`, `portfolio_account_collector.py` and `portfolio_recovery.py`
+under `apps/strategies_nautilus/`. Native account/order/position events are persisted
+atomically with strategy state and restored in a fresh simulation process.
+Signed REST agreement is not an atomic stream barrier; actual accounts, downtime
+history and live adapter recovery remain unqualified. Uncertain submits/cancels
+and drifting snapshots fail closed; no automatic resubmission or live readiness.
 
 | Task area | Read |
 |---|---|

@@ -68,8 +68,18 @@ class ReceivedAssetFeeModel(FeeModel):
 
 
 class ScriptedSimulation(PortfolioSimulationStrategy):
-    def __init__(self, checkpoint, actions=None, *, fee_mode="quote", exit_policy="exact_v1"):
-        super().__init__(checkpoint, fee_mode=fee_mode, exit_policy=exit_policy)
+    def __init__(
+        self,
+        checkpoint,
+        actions=None,
+        *,
+        fee_mode="quote",
+        exit_policy="exact_v1",
+        persist_native=False,
+    ):
+        super().__init__(
+            checkpoint, fee_mode=fee_mode, exit_policy=exit_policy, persist_native=persist_native
+        )
         self.actions = actions or {}
 
     def on_quote_tick(self, quote):
@@ -80,7 +90,14 @@ class ScriptedSimulation(PortfolioSimulationStrategy):
 
 
 def build_simulation(
-    checkpoint: Path, actions=None, *, cancel_latency_ns=0, fee_mode="quote", exit_policy="exact_v1"
+    checkpoint: Path,
+    actions=None,
+    *,
+    cancel_latency_ns=0,
+    fee_mode="quote",
+    exit_policy="exact_v1",
+    persist_native=False,
+    recovery_bundle=None,
 ):
     instrument = TestInstrumentProvider.btcusdt_binance()
     fields = CurrencyPair.to_dict(instrument)
@@ -91,19 +108,36 @@ def build_simulation(
         fields.update(size_precision=8, size_increment="0.00000100", maker_fee="0", taker_fee="0")
     instrument = CurrencyPair.from_dict(fields)
     engine = BacktestEngine(BacktestEngineConfig(logging=LoggingConfig(bypass_logging=True)))
+    starting_balances = [Money(500, USDT), Money(0, BTC)]
+    if recovery_bundle is not None:
+        from apps.strategies_nautilus.portfolio_recovery import reconstruct_native
+
+        _, account, _, _ = reconstruct_native(recovery_bundle)
+        starting_balances = list(account.balances_total().values())
     engine.add_venue(
         INSTRUMENT.venue,
         OmsType.HEDGING,
         AccountType.CASH,
-        [Money(500, USDT), Money(0, BTC)],
+        starting_balances,
         latency_model=LatencyModel(base_latency_nanos=0, cancel_latency_nanos=cancel_latency_ns),
         liquidity_consumption=True,
+        use_random_ids=persist_native,  # native venue IDs cannot reuse a reset process counter
         allow_cash_borrowing=False,
         fee_model=ReceivedAssetFeeModel() if fee_mode == "received_asset" else None,
     )
     engine.add_instrument(instrument)
-    strategy = ScriptedSimulation(checkpoint, actions, fee_mode=fee_mode, exit_policy=exit_policy)
+    strategy = ScriptedSimulation(
+        checkpoint,
+        actions,
+        fee_mode=fee_mode,
+        exit_policy=exit_policy,
+        persist_native=persist_native,
+    )
     engine.add_strategy(strategy)
+    if recovery_bundle is not None:
+        from apps.strategies_nautilus.portfolio_recovery import restore_cache
+
+        restore_cache(engine, recovery_bundle)
     return engine, strategy, instrument
 
 
@@ -134,7 +168,11 @@ def restart_strategy(engine, strategy, actions=None):
     engine.trader.stop()
     engine.trader.remove_strategy(strategy.id)
     replacement = ScriptedSimulation(
-        strategy.checkpoint, actions, fee_mode=strategy.fee_mode, exit_policy=strategy.exit_policy
+        strategy.checkpoint,
+        actions,
+        fee_mode=strategy.fee_mode,
+        exit_policy=strategy.exit_policy,
+        persist_native=strategy.persist_native,
     )
     engine.add_strategy(replacement)
     replacement.clock.set_time(strategy.clock.timestamp_ns())

@@ -197,7 +197,21 @@ strategies_nautilus/
 .venv/bin/python -m apps.strategies_nautilus.runners.portfolio_simulation_acceptance --fee-mode received_asset --exit-policy whole_steps_v1
 ```
 
-下一入口为权威账户对账和完整进程恢复；部署前还需明确余量存在时的重新入场政策。
+`portfolio_account_collector.py` 提供显式签名 GET 只读采集接口，支持只读 key，
+不自动加载凭证。`portfolio_account.py` 精确比较总额/可用/锁定余额、全订单历史、
+逐笔成交和手续费；REST 相符仍不代表实时账户版本原子一致。
+`portfolio_recovery.py` 在显式原生持久化模式下，用 Nautilus 事件重建新进程的
+账户、订单和持仓，保留余量、去重与风控锁存；未知提交、待撤单及对账差异均阻断。
+
+```bash
+.venv/bin/python -m apps.strategies_nautilus.runners.portfolio_recovery_acceptance
+```
+
+该验收会终止首个进程并在第二个进程继续原生挂单，仅使用合成账户观察；不恢复
+模拟交易所的完整市场队列，不构成真实账户或实盘恢复验收。详见
+[账户对账与进程恢复](../../docs/progress/portfolio-account-recovery-2026-09-09.md)。
+下一入口为专用只读账户数据源及用户流/历史归档边界验收，再验证真实适配器恢复；
+部署前还需明确余量存在时的重新入场政策。
 详见[原生手续费验收](../../docs/progress/portfolio-base-fee-acceptance-2026-09-09.md)及
 [残余库存退出验收](../../docs/progress/portfolio-residual-exit-2026-09-09.md)。
 

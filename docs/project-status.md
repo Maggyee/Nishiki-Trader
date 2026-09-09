@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-09
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Authoritative account/venue integration and native process recovery after offline residual-exit acceptance.
+- **Current objective**: Qualify a dedicated read-only account source, stream/archive boundary and native adapter recovery after synthetic cross-process acceptance.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -24,8 +24,10 @@ are not queued. The selector never resizes proposals or credits unfilled sales.
 It now feeds a synthetic-only Nautilus acceptance strategy: native sleeve positions,
 serialized durable preparation before submit, native partial/late fills and cancel
 acknowledgements, warm strategy restart, persistent deduplication and loss latches.
-Cold restart without native state fails closed. Actual account/venue integration,
-full process recovery and runtime policy reconciliation remain next. Existing
+The explicit recovery mode now persists native events with the strategy journal
+and passes abrupt-exit/fresh-process acceptance, including partial orders, dust,
+deduplication and loss latches. Missing/drifting/uncertain state fails closed.
+Real account/adapter recovery and runtime policy reconciliation remain next. Existing
 paper/testnet/live runners and SourcePolicy are unchanged.
 
 The offline Binance adapter parses exchangeInfo, commission and myFilters with
@@ -39,7 +41,9 @@ residual ownership and equity across partial/late fills, cancellation and warm
 restart. Four exits leave 498.60120 USDT / 0.00000200 BTC, explicitly not flat.
 Residuals still block fixed-size re-entry; no sweep or retry is enabled. Default
 quote-only/exact-exit modes and BNB rejection remain. Private responses are still
-synthetic; authoritative account attachment and full process recovery remain open.
+synthetic. A signed GET-only collector and exact balance/lock/order/trade/fee
+comparison now exist; real-account attachment remains unqualified. REST agreement
+does not establish an atomic stream boundary or authorize live admission.
 
 The prior signal repairs corrected v22/v34/v36 date windows and monitor v36
 identity. Separate v2 epochs count corrected attempts only. The last inspected
@@ -77,10 +81,11 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Next Steps
 
-1. Attach authoritative private/public inputs to the completed offline rule adapter
-   and reconcile complete account/native state, permissions and effective price
-   references. Complete durable native process recovery and uncertain-submit
-   handling. Reconcile 50 USDT planning loss with runtime ADRs before deployment.
+1. Qualify a dedicated read-only account source, complete archive/user-stream
+   boundary and effective venue references. Signed collection and exact comparison
+   now exist; fresh-process native restoration passes synthetic acceptance.
+   Exercise real adapter execution-report recovery for drift and uncertain commands.
+   Reconcile downtime risk history and the 50 USDT planning loss with runtime ADRs.
 2. Review the explicit offline residual-exit policy before promotion and resolve
    re-entry with retained dust. Whole-step reductions now pass native acceptance;
    fixed BUY size, SignalEvent identities and SourcePolicy remain unchanged.
@@ -105,14 +110,18 @@ the September 9 five-sleeve proposal is offline engineering only.
 - No verified account-equity attachment; actual leverage/account return remain unknown.
 - Full ten-candidate portfolio assessment is blocked on four missing evidence chains.
 - Full ten-candidate funding and intraday equity drawdown remain unverified.
-  Synthetic Nautilus reservation lifecycle and warm strategy restart now pass;
-  full process recovery and authoritative account/venue integration remain unverified.
+  Synthetic Nautilus reservation lifecycle and abrupt fresh-process recovery pass;
+  real account/venue integration, stream continuity and live recovery remain unverified.
   No real account was accessed.
 - Nautilus is the only execution engine; LLMs never enter the order path.
 
 ## Latest Verification
 
-- Full offline suite: **1,929 tests passed**; 12 Postgres integration tests
+- **61 new account/recovery tests** passed: 48 native/account tests and 13 signed
+  read-only collector tests. Combined portfolio regression: 137 passed. Two actual
+  worker processes preserve partial orders, exact dust and risk latches without
+  resubmission. No real HTTP/account was used; REST-only readiness stays false.
+- Full offline suite: **1,990 tests passed**; 12 Postgres integration tests
   deselected (no dedicated integration DSN supplied).
 - **22 residual-exit tests** passed: durable sizing audit, exact native ownership,
   min/max filters, sub-notional retention, partial/late fills, pending cancellation,
@@ -149,6 +158,7 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## References
 
+- [Read-only account reconciliation and native process recovery](progress/portfolio-account-recovery-2026-09-09.md).
 - [Explicit offline residual-exit policy and acceptance](progress/portfolio-residual-exit-2026-09-09.md).
 - [Native base-fee accounting, precision and no-rounding exit acceptance](progress/portfolio-base-fee-acceptance-2026-09-09.md).
 - [Binance rule adapter, fee-currency blocker and remaining work](progress/portfolio-venue-adapter-2026-09-09.md).

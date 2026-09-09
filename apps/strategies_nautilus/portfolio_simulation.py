@@ -1,7 +1,8 @@
 """Synthetic-only Nautilus portfolio acceptance strategy.
 
-Nautilus owns orders, fills, positions and balances. The checkpoint is only a
-write-ahead intent/audit journal and risk latch, never a second execution ledger.
+Nautilus owns orders, fills, positions and balances. The checkpoint holds intent,
+audit and risk state, plus optional native events for detached native restoration.
+It never derives or applies replacement fills or maintains a second ledger.
 Not imported by paper/testnet/live runners; only fixture identities are accepted.
 """
 
@@ -60,18 +61,28 @@ class PortfolioSimulationStrategy(Strategy):
 
     Every selected native order is durably PREPARED before the first submit.
     Until native cache acknowledges its state it consumes the full reservation.
-    Exceptions halt admission and preserve all uncertain reservations. Cold cache
-    restore fails closed; successful strategy restart requires retained native
-    orders, account and positions, not reconstruction from this journal.
+    Exceptions halt admission and preserve all uncertain reservations. A missing
+    native cache fails closed. The separate recovery gate may restore native
+    events into a fresh cache after account verification; intents alone cannot.
     """
 
-    def __init__(self, checkpoint: Path, *, fee_mode: str = "quote", exit_policy: str = "exact_v1"):
+    def __init__(
+        self,
+        checkpoint: Path,
+        *,
+        fee_mode: str = "quote",
+        exit_policy: str = "exact_v1",
+        persist_native: bool = False,
+    ):
         if fee_mode not in {"quote", "received_asset"}:
             raise ValueError("unknown synthetic fee mode")
         if exit_policy not in EXIT_POLICIES:
             raise ValueError("unknown offline exit policy")
         self.fee_mode = fee_mode
         self.exit_policy = exit_policy
+        self.persist_native = persist_native
+        self.restored_checkpoint_bytes = None
+        self.recovery_validator = None
         super().__init__(
             StrategyConfig(
                 strategy_id="PORTFOLIO-FIXTURE", order_id_tag="PF", oms_type=OmsType.HEDGING
@@ -114,6 +125,7 @@ class PortfolioSimulationStrategy(Strategy):
                     "fee_bound": "0.0015",
                     "fee_mode": self.fee_mode,
                     "exit_policy": self.exit_policy,
+                    **({"native_recovery": "native_uuid_v1"} if self.persist_native else {}),
                 }
             )
         ).hexdigest()
@@ -127,7 +139,13 @@ class PortfolioSimulationStrategy(Strategy):
         try:
             fcntl.flock(self._lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
             if self.checkpoint.exists():
-                self.on_load({"checkpoint": self.checkpoint.read_bytes()})
+                raw = self.checkpoint.read_bytes()
+                if (
+                    self.restored_checkpoint_bytes is not None
+                    and raw != self.restored_checkpoint_bytes
+                ):
+                    raise SimulationBlocked("checkpoint changed during native restore")
+                self.on_load({"checkpoint": raw})
             self._reconcile_orders()
             instrument = self.cache.instrument(INSTRUMENT)
             expected_native_fee = D("0") if self.fee_mode == "received_asset" else D("0.0015")
@@ -150,6 +168,8 @@ class PortfolioSimulationStrategy(Strategy):
                 or (account.balance_total(BTC) and account.balance_total(BTC).as_decimal() != 0)
             ):
                 raise SimulationBlocked("new acceptance session must start flat with 500 USDT")
+            if self.recovery_validator is not None:
+                self.recovery_validator(self)
             self.subscribe_quote_ticks(INSTRUMENT)
             self._persist()
         except Exception:
@@ -168,14 +188,23 @@ class PortfolioSimulationStrategy(Strategy):
 
     def on_save(self):
         raw = canonical(self.state_data)
-        return {
-            "checkpoint": canonical(
-                {"state": self.state_data, "sha256": hashlib.sha256(raw).hexdigest()}
-            )
-        }
+        wrapped = {"state": self.state_data, "sha256": hashlib.sha256(raw).hexdigest()}
+        if self.persist_native:
+            from apps.strategies_nautilus.portfolio_recovery import capture_native
+
+            wrapped["native"] = capture_native(self)
+            wrapped["native_sha256"] = hashlib.sha256(canonical(wrapped["native"])).hexdigest()
+            wrapped["generation_sha256"] = hashlib.sha256(
+                canonical({"state": wrapped["state"], "native": wrapped["native"]})
+            ).hexdigest()
+        return {"checkpoint": canonical(wrapped)}
 
     def on_load(self, state):
         wrapped = json.loads(state["checkpoint"])
+        if self.persist_native:
+            from apps.strategies_nautilus.portfolio_recovery import verify_checkpoint
+
+            verify_checkpoint(state["checkpoint"])
         saved = wrapped["state"]
         if (
             hashlib.sha256(canonical(saved)).hexdigest() != wrapped["sha256"]
