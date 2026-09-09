@@ -48,6 +48,13 @@ For current progress and execution-event cash accounting, read
 `docs/progress/strategy-progress-2026-09-08-v3.md` and
 `docs/progress/portfolio-event-cash-method-2026-09-08.md`. Cash settlement bounds
 are not open-order reservation requirements or intraday market-value drawdown.
+For the fixed offline execution cohort and order-level preflight, read
+`docs/progress/portfolio-execution-contract-2026-09-09.md` and its machine-readable
+`portfolio-execution-plan-2026-09-09.json`. The five-sleeve proposal is not an
+approved allocation or promotion. `apps.ops.portfolio_execution_plan` revalidates
+the six original evidence chains; `portfolio_preflight.py` checks synthetic
+snapshots only and is not wired into Nautilus runners. Atomic reservation and
+complete account/venue integration remain required.
 
 | Task area | Read |
 |---|---|

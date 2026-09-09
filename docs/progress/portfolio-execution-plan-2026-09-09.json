@@ -1,0 +1,126 @@
+{
+  "admission": "one atomic batch; reserve buys before crediting any unfilled sells",
+  "blockers": [
+    "forward integrity and portfolio-level alpha review remain incomplete",
+    "Nautilus multi-sleeve integration and restart/reservation acceptance pending",
+    "account equity, effective venue filters and fee currency not verified",
+    "50 USDT planning daily loss differs from existing 5% runtime ADR; reconcile before wiring",
+    "intraday risk and emergency actions not validated by historical daily marks"
+  ],
+  "capital_usdt": "500",
+  "daily_definition": "UTC day-open marked equity minus current equity; no transfers",
+  "daily_loss_usdt": "50",
+  "direction": "spot_long_flat",
+  "drawdown_definition": "peak equity minus current equity; fixed 50% of initial 500",
+  "evidence_anchor": {
+    "path": "docs/progress/portfolio-evidence-review-2026-09-08.json",
+    "sha256": "0a0a6b034298919a292ba7b388d1fb686a41137ccf3dcf01f836f34c8deb336f"
+  },
+  "excluded": [
+    {
+      "protocol": "v8",
+      "reason": "ValueError:committed result lacks manifest-and-fills hash references"
+    },
+    {
+      "protocol": "v42",
+      "reason": "ValueError:committed result lacks manifest-and-fills hash references"
+    },
+    {
+      "protocol": "v46",
+      "reason": "ValueError:committed result lacks manifest-and-fills hash references"
+    },
+    {
+      "protocol": "v48",
+      "reason": "ValueError:committed result lacks manifest-and-fills hash references"
+    }
+  ],
+  "instrument_id": "BTCUSDT.BINANCE",
+  "max_quantity_btc": "0.005",
+  "netting": "separate sleeve attribution; flat reduces own sleeve only; no cross-netting",
+  "observation_only": {
+    "v40": "same retained execution path as v18; no fallback"
+  },
+  "peak_drawdown_limit_usdt": "250",
+  "plan_id": "portfolio-engineering-v1-20260909",
+  "preflight_order_scope": "bounded LIMIT only; effective filters, quote fees required",
+  "promotion_allowed": false,
+  "risk_action": "latch entry block; no automatic reset; allow reconciled owned reductions",
+  "runtime_risk_change_authorized": false,
+  "schema_version": "portfolio.execution_plan.v1",
+  "selection_rule": "verified lineage only; earliest protocol represents exact duplicate",
+  "signal_boundary": "SignalEvent v1 -> Nautilus Strategy -> risk -> execution",
+  "sizing": "fixed 0.001 BTC per sleeve; no compounding, leverage or auto-resizing",
+  "sleeves": [
+    {
+      "evidence": {
+        "confirmation_result_sha256": "66996eb539197e099aca621e212d90d3df6334471955cc678d0e5f706ac195fb",
+        "fills_sha256": "sha256:75a543c3dd73c8082bea42cd8278215950e41ac5f1b54e24d53058d719e27588",
+        "manifest_sha256": "sha256:f162d4ad4d176ff72964a9b9632725a247e3988d36c0af84a8e25d9a7e39739d",
+        "path": "data/research-v16/confirmation/backtests/20260812-092313Z-f79e3429"
+      },
+      "max_quantity_btc": "0.001",
+      "model_version": "treasury-nominal10-absdiff5-20-negative-lag2d-v1",
+      "protocol": "v16",
+      "source": "rule_us_treasury_volatility_relief_v2"
+    },
+    {
+      "evidence": {
+        "confirmation_result_sha256": "043a47029be99dbe910454715a1afdc7da792c28da71df968844be3aad8c88a8",
+        "fills_sha256": "sha256:8180a3c236afa687b738829f99753ebd0a07ee59931c0cffb674482df10124d7",
+        "manifest_sha256": "sha256:f426730ef6430e596177aea042c7f25e16f5503ecbb46c1559c63751a2921624",
+        "path": "data/research-v18/confirmation/backtests/20260813-025742Z-ee8f984a"
+      },
+      "max_quantity_btc": "0.001",
+      "model_version": "cboe-vxn-ohlc5obs-negative-1d-v1",
+      "protocol": "v18",
+      "source": "rule_nasdaq_vol_relief_v2"
+    },
+    {
+      "evidence": {
+        "confirmation_result_sha256": "17e86615f11ec98f8ba03578f575214919f0b3fb8bd9df7329a79a62cb817f2a",
+        "fills_sha256": "sha256:b9bc07d4f790a535f472b92f0d5af9655b8157e86566fbdc2aab3912927462e2",
+        "manifest_sha256": "sha256:877cd4e047e3820fb16851bb22243da20625b707a6ed02cd14d342ab2c7d2070",
+        "path": "data/research-v22/confirmation/backtests/20260813-043019Z-e15a39f8"
+      },
+      "max_quantity_btc": "0.001",
+      "model_version": "cboe-cor1m-diff5-negative-lag1d-v1",
+      "protocol": "v22",
+      "source": "rule_cboe_implied_correlation_relief_v1"
+    },
+    {
+      "evidence": {
+        "confirmation_result_sha256": "41b79397f2e34a85f6e4093c41de6f30d9e429034bdf38e2d106d676a33a7cd9",
+        "fills_sha256": "sha256:9e2d8b77c7cc497ff104194859b6080132b8efa85ee5a5102464567fa1165ebc",
+        "manifest_sha256": "sha256:9651460af9bdb2dec06a44b89f947b96cc572bb2bf525685cfac8c78477c1f17",
+        "path": "data/research-v34/backtests/fvx_confirmation_run1/20260814-014723Z-7a02c68f"
+      },
+      "max_quantity_btc": "0.001",
+      "model_version": "cboe-fvx-diff5-negative-lag1d-v1",
+      "protocol": "v34",
+      "source": "rule_cboe_fvx_relief_v1"
+    },
+    {
+      "evidence": {
+        "confirmation_result_sha256": "fb59535385c95e5c791c9553f16d0638fd14cd04456a562d10a047b5f0332bc2",
+        "fills_sha256": "sha256:85749cf01bfd96c88af258c11d011160419cd4bfaf29ddb813dfe420a5de173b",
+        "manifest_sha256": "sha256:410f99eb2bcc018aebba3e31e8cc4347322fae279e592bfb688a5c067aef7f4b",
+        "path": "data/research-v36/backtests/vpn-conf-a/20260814-022321Z-caba0792"
+      },
+      "max_quantity_btc": "0.001",
+      "model_version": "cboe-vpn-diff5-positive-lag1d-v1",
+      "protocol": "v36",
+      "source": "rule_cboe_vpn_expansion_v1"
+    }
+  ],
+  "snapshot_max_age_seconds": 60,
+  "status": "offline_engineering_only",
+  "unfilled_policy": "no replacement until terminal acknowledgement and reconciliation",
+  "verified_evidence_cohort": [
+    "v16",
+    "v18",
+    "v22",
+    "v34",
+    "v36",
+    "v40"
+  ]
+}

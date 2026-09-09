@@ -169,6 +169,12 @@ strategies_nautilus/
 
 ## 边界
 
+`portfolio_preflight.py` 是离线组合订单资金/风控预检查，不维护订单账本、
+不撮合、不下单，目前未接入任何 runner。它要求已对账的账户快照，覆盖挂单预留、
+部分成交/待撤单、组合敞口及损失阈值；快照检查不等于原子资金预留。
+下一入口是 Nautilus 模拟执行的账户适配与生命周期测试，见
+[固定组合契约](../../docs/progress/portfolio-execution-contract-2026-09-09.md)。
+
 - 不直接接交易所 API（用 nautilus 的 binance adapter）
 - 不绕过 `RiskEngine`
 - 不修改 `nautilus_trader/` 上游源码

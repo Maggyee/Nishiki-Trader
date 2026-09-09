@@ -1,22 +1,30 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-09-08
+- **Last updated**: 2026-09-09
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Verify genuine forward evidence and complete portfolio cash/lineage assessment.
+- **Current objective**: Validate the fixed offline portfolio contract, then integrate atomic Nautilus reservations without promoting strategies.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
 
-The ordered signal repairs corrected v22/v34/v36 date windows and the monitor's
-v36 identity. All ten identities now come from frozen contracts. Separate v2
-epochs count corrected attempts only; backfill and legacy empty-pipeline attempts
-do not become new prospective evidence. Historical anomalies remain preserved.
+An offline engineering plan locks six evidence-verified candidates and five
+proposed 0.001 BTC sleeves: v16/v18/v22/v34/v36. V40 is observation-only within
+this proposal because its retained execution path duplicates v18. All ten legacy
+collector policies remain unchanged. The CLI revalidates original hashes and
+fails rather than silently changing the cohort. This is not an alpha verdict.
 
-At the morning check after 07:27 UTC, nine September 8 collector jobs have run
-successfully at pinned `1727408`; v16 is not due until 12:30 UTC. V22/v34/v36
-have two corrected attempts each, still one distinct qualified date and zero
-new forward signals. Stored totals are 37/36/45. Historical anomalies persist.
+A pure batch preflight now checks pending-order cash/base reservations, partial
+fills, cancel acknowledgements, duplicate IDs, effective LIMIT filters, fresh
+reconciled snapshots, exposure caps and inclusive daily/peak loss limits.
+It is NOT wired into runners: atomic reservation, Nautilus sleeve attribution,
+persistent risk/restart reconciliation and complete venue constraints remain next.
+
+The prior signal repairs corrected v22/v34/v36 date windows and monitor v36
+identity. Separate v2 epochs count corrected attempts only. The last inspected
+September 8 morning snapshot had one qualified date and zero new forward signals
+for these three pipelines; it is not a September 9 runtime health observation.
+Historical anomalies and all existing collector schedules remain unchanged.
 
 A fixed-method retained-fill study now covers 6/10 candidates over 2023–2025.
 V18/v40 have identical execution paths. V22 is 10.41 USDT below its exposure-
@@ -24,7 +32,6 @@ matched base-cost benchmark; v16 exceeds it by only 0.43 USDT (0.001 BTC sleeves
 V8/v42/v46/v48 lack original manifest-and-fills hash references and are excluded.
 Follow-up found no historical reference leads for their eight retained bundles;
 v42 additionally has two dirty-code manifests, so hashes alone cannot qualify it.
-The repaired pipelines pass read-only integrity checks but remain at one date.
 
 The operator delegated the increased capital amount. The provisional planning
 budget is now **500 USDT / 50% drawdown / 50 USDT daily loss**, without changing
@@ -36,7 +43,8 @@ diagnostics fit the tested cash bounds, not a full ten-candidate or open-order
 reservation guarantee. No deposit/live trading is recommended; missing evidence
 and prospective acceptance remain blockers. Planned capital is not actual equity.
 No frozen strategy parameters, research identities, source policies or trading permissions
-are changed. The study does not select allocations or grant promotions.
+are changed. The September 8 study does not select allocations or grant promotions;
+the September 9 five-sleeve proposal is offline engineering only.
 
 ## Milestones
 
@@ -48,13 +56,20 @@ are changed. The study does not select allocations or grant promotions.
 
 ## Next Steps
 
-1. Accumulate genuinely prospective observations under existing collector schedules;
+1. Integrate the fixed offline contract into Nautilus simulated acceptance using
+   synthetic SignalEvent v1 inputs: sleeve attribution, atomic check/reservation,
+   partial/late fills, cancel acknowledgements, restart and latched risk recovery.
+   Do not change current SourcePolicy or runtime loss settings as part of wiring.
+2. Attach authoritative effective venue filters/fees and reconciled account inputs;
+   current tests use synthetic LIMIT rules. Reconcile the requested 50 USDT daily
+   planning budget with existing runtime ADRs before any runtime policy change.
+3. Accumulate genuinely prospective observations under existing collector schedules;
    review retained anomalies without clearing them retroactively.
-2. Obtain original audit/backup references for v8/v42/v46/v48 and clean eligible
+4. Obtain original audit/backup references for v8/v42/v46/v48 and clean eligible
    evidence for v42; freshly hashing local files cannot prove history.
-3. Use the provisional 500 USDT / 50% / 50 USDT research budget; attach verified
-   account equity before assessing actual leverage/account returns.
-   Any allocation change, new identity or promotion needs separate review/authority.
+   Their absence need not block the separately scoped five-sleeve engineering work.
+5. Complete portfolio-level alpha/forward review before simulated-order promotion.
+   Deployed allocation changes, new identities or promotions need separate review/authority.
    Do not retune closed v49/v53 identities.
 
 ## Blocked / Deferred
@@ -68,14 +83,18 @@ are changed. The study does not select allocations or grant promotions.
 - Online CI is not enabled: credential lacks workflow scope; template is in `infra/ci/`.
 - No verified account-equity attachment; actual leverage/account return remain unknown.
 - Full ten-candidate portfolio assessment is blocked on four missing evidence chains.
-- Full ten-candidate funding, open-order reservations and intraday equity
-  drawdown remain unverified; recorded-fill cash settlement has been checked.
+- Full ten-candidate funding and intraday equity drawdown remain unverified.
+  Offline reservation checks exist; actual Nautilus reservation lifecycle and
+  account/venue integration remain unverified. No real account was accessed.
 - Nautilus is the only execution engine; LLMs never enter the order path.
 
 ## Latest Verification
 
-- Full event-cash suite: 1,711 offline tests passed; 12 Postgres integration tests
+- Portfolio-contract suite: 1,774 offline tests passed; 12 Postgres integration tests
   deselected (no dedicated integration DSN supplied).
+- 63 new cohort/preflight tests; six-candidate original evidence revalidation
+  succeeded. Five synthetic simultaneous buys need 500.75 USDT at 100,000
+  USDT/BTC and a 15 bps quote fee bound: correctly blocked against 500 USDT.
 - Ten new end-to-end/time-consistency/identity tests passed.
 - Retained-fill diagnostics: 20 targeted tests passed; Ruff and registry check passed.
 - Follow-up: 17 targeted tests passed; original-evidence search, three pipeline
@@ -91,6 +110,8 @@ are changed. The study does not select allocations or grant promotions.
 
 ## References
 
+- [Fixed offline portfolio contract and integration obligations](progress/portfolio-execution-contract-2026-09-09.md).
+- [Revalidated machine-readable plan](progress/portfolio-execution-plan-2026-09-09.json).
 - [2026-09-07 reliability acceptance](progress/reliability-repair-2026-09-07.md).
 - [Fixed retained-fill study method](progress/portfolio-evidence-study-2026-09-08.md).
 - [Partial portfolio diagnostics](progress/portfolio-evidence-review-2026-09-08.md).
