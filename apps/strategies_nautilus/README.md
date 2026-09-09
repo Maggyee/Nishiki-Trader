@@ -170,13 +170,21 @@ strategies_nautilus/
 ## 边界
 
 `portfolio_preflight.py` 是离线组合订单资金/风控预检查，不维护订单账本、
-不撮合、不下单，目前未接入任何 runner。它要求已对账的账户快照，覆盖挂单预留、
+不撮合、不下单；现由独立的合成输入验收 runner 调用。它要求已对账的账户快照，覆盖挂单预留、
 部分成交/待撤单、组合敞口及损失阈值；快照检查不等于原子资金预留。
 `select_funded_batch` 在此基础上按减仓优先、事件时间、固定策略顺序选择可负担
 订单，并保留跳过原因；不缩量、不预支卖单收入、不排队重试。详见
 [v2 接纳规则](../../docs/progress/portfolio-funded-admission-2026-09-09.md)。
-下一入口是 Nautilus 模拟执行的账户适配与生命周期测试，见
-[固定组合契约](../../docs/progress/portfolio-execution-contract-2026-09-09.md)。
+`portfolio_simulation.py` 已接入 Nautilus 原生模拟订单、持仓及账户，完成预留、
+部分/延迟成交、撤单确认、策略热重启和风控锁存验收。只接受测试 SignalEvent 身份；
+冷启动缺少原生状态时拒绝恢复。现有 paper/testnet/live runner 未接入。
+
+```bash
+.venv/bin/python -m apps.strategies_nautilus.runners.portfolio_simulation_acceptance
+```
+
+下一入口为权威账户/交易所规则适配及完整进程恢复，详见
+[模拟生命周期验收](../../docs/progress/portfolio-simulation-acceptance-2026-09-09.md)。
 
 - 不直接接交易所 API（用 nautilus 的 binance adapter）
 - 不绕过 `RiskEngine`

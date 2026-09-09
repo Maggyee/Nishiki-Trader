@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-09
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Validate the fixed offline portfolio contract, then integrate atomic Nautilus reservations without promoting strategies.
+- **Current objective**: Build on completed synthetic lifecycle acceptance with authoritative account/venue integration and process recovery.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -21,8 +21,12 @@ Operator-approved offline v2 admission now selects an affordable subset: reducti
 first, then signal event time and frozen sleeve order. Each addition and the final
 selected set pass the same complete risk check; skipped orders get reasons and
 are not queued. No quantity resizing or unfilled sell credit is allowed.
-It is NOT wired into runners: atomic reservation, Nautilus sleeve attribution,
-persistent risk/restart reconciliation and complete venue constraints remain next.
+It now feeds a synthetic-only Nautilus acceptance strategy: native sleeve positions,
+serialized durable preparation before submit, native partial/late fills and cancel
+acknowledgements, warm strategy restart, persistent deduplication and loss latches.
+Cold restart without native state fails closed. Actual account/venue integration,
+full process recovery and runtime policy reconciliation remain next. Existing
+paper/testnet/live runners and SourcePolicy are unchanged.
 
 The prior signal repairs corrected v22/v34/v36 date windows and monitor v36
 identity. Separate v2 epochs count corrected attempts only. The last inspected
@@ -60,10 +64,10 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Next Steps
 
-1. Integrate the v2 funded-admission contract into Nautilus simulated acceptance using
-   synthetic SignalEvent v1 inputs: sleeve attribution, atomic check/reservation,
-   partial/late fills, cancel acknowledgements, restart and latched risk recovery.
-   Do not change current SourcePolicy or runtime loss settings as part of wiring.
+1. Extend the completed synthetic lifecycle acceptance toward authoritative native
+   account/cache reconciliation and full process recovery. Missing native state
+   currently blocks cold restart; uncertain submissions must never be replayed
+   blindly. Preserve SourcePolicy and runtime loss settings.
 2. Attach authoritative effective venue filters/fees and reconciled account inputs;
    current tests use synthetic LIMIT rules. Reconcile the requested 50 USDT daily
    planning budget with existing runtime ADRs before any runtime policy change.
@@ -88,14 +92,19 @@ the September 9 five-sleeve proposal is offline engineering only.
 - No verified account-equity attachment; actual leverage/account return remain unknown.
 - Full ten-candidate portfolio assessment is blocked on four missing evidence chains.
 - Full ten-candidate funding and intraday equity drawdown remain unverified.
-  Offline reservation checks exist; actual Nautilus reservation lifecycle and
-  account/venue integration remain unverified. No real account was accessed.
+  Synthetic Nautilus reservation lifecycle and warm strategy restart now pass;
+  full process recovery and authoritative account/venue integration remain unverified.
+  No real account was accessed.
 - Nautilus is the only execution engine; LLMs never enter the order path.
 
 ## Latest Verification
 
-- Portfolio-contract v2 suite: 1,798 offline tests passed; 12 Postgres integration tests
+- Full offline suite: **1,833 tests passed**; 12 Postgres integration tests
   deselected (no dedicated integration DSN supplied).
+- **35 synthetic Nautilus lifecycle tests** passed: durable batch reservations,
+  partial/late fills, cancel acknowledgements, native risk denial, sleeve attribution,
+  interrupted submits, checkpoint failure, warm restart/cold refusal and latched
+  daily/peak risk. CLI smoke is reproducible; Ruff and registry check passed.
 - 87 focused cohort/preflight tests (24 added this revision); six-candidate
   evidence revalidation succeeded. At synthetic 100,000 USDT/BTC and 15 bps,
   whole-batch checks still reject 500.75 USDT; v2 selects four buys requiring
@@ -115,6 +124,7 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## References
 
+- [Synthetic Nautilus lifecycle acceptance and remaining integration](progress/portfolio-simulation-acceptance-2026-09-09.md).
 - [Current v2 funded admission and integration obligations](progress/portfolio-funded-admission-2026-09-09.md).
 - [Current revalidated machine-readable plan](progress/portfolio-execution-plan-2026-09-09-v2.json).
 - [Original v1 offline portfolio contract](progress/portfolio-execution-contract-2026-09-09.md).

@@ -1,4 +1,4 @@
-"""Offline batch cash/risk contract; NOT wired to any runner or order endpoint.
+"""Offline batch cash/risk contract; wired only to synthetic Nautilus acceptance.
 
 Snapshots must come from one reconciled Nautilus account revision. This pure
 checker owns no order book, simulates no fills and grants no trading authority.
