@@ -521,3 +521,17 @@ def test_native_order_cap_reserves_slots_and_cash_for_the_selected_set(tmp_path,
 def test_malformed_extended_preflight_rules_fail_closed(field, value):
     rules = replace(parse(fees=zero_fees()).rules, **{field: value})
     assert not check_batch(snapshot(), rules, preflight_limits(), (), now_ns=NOW).checks_passed
+
+
+def test_explicit_base_commission_precision_is_retained_without_enabling_base_fees():
+    info, _, _ = bodies()
+    info["symbols"][0]["baseCommissionPrecision"] = 8
+    evidence = parse(info=info)
+    assert evidence.rules.base_fee_quantum == D("0.00000001")
+    result = check_batch(
+        snapshot(), evidence.rules, preflight_limits(), (candidates()[0].order,), now_ns=NOW
+    )
+    assert "unsupported_order_fee_currency" in result.reasons
+    info["symbols"][0]["baseCommissionPrecision"] = 9
+    with pytest.raises(VenueInputError, match="commission precision"):
+        parse(info=info)

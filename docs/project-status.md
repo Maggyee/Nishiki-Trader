@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-09
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Resolve Binance fee-currency accounting before authoritative account/venue integration and process recovery.
+- **Current objective**: Resolve residual-inventory exit policy, then authoritative account/venue integration and process recovery.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -28,14 +28,15 @@ Cold restart without native state fails closed. Actual account/venue integration
 full process recovery and runtime policy reconciliation remain next. Existing
 paper/testnet/live runners and SourcePolicy are unchanged.
 
-The offline Binance response adapter now parses exchangeInfo, account commission
-and myFilters, validates freshness/account/request identity, and feeds effective
-price bands, order counts, position and asset caps into the same funded selector.
-Official fee semantics expose a blocker: nonzero BUY fees are received-asset BTC
-or potentially BNB, incompatible with the current quote-only accounting assumption.
-The adapter rejects these entries explicitly; it does not resize or pretend USDT
-fees. Private inputs remain synthetic in tests. Actual collector/reconciliation,
-net-of-fee inventory/dust handling and full process recovery remain unimplemented.
+The offline Binance adapter parses exchangeInfo, commission and myFilters with
+freshness/account/request checks and effective price/order/asset constraints.
+A new explicit synthetic mode now reconciles native BTC BUY fees at eight-place
+accounting precision while preserving the 0.000001 BTC order step. Four buys
+settle to 100 USDT / 0.003994 BTC. Each full fill leaves 0.00000050 BTC off-grid;
+full exits are refused without rounding, and residual inventory remains attributed.
+Grid-aligned net positions can exit exactly. Default quote-only mode and BNB
+rejection remain unchanged. Private responses are still synthetic; authoritative
+account attachment and full process recovery remain unimplemented.
 
 The prior signal repairs corrected v22/v34/v36 date windows and monitor v36
 identity. Separate v2 epochs count corrected attempts only. The last inspected
@@ -73,9 +74,10 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Next Steps
 
-1. Resolve received-asset BUY commission accounting and quantity-step dust with
-   native net-inventory reconciliation; current quote-only preflight rejects it.
-   Preserve fixed order size, SignalEvent identities and SourcePolicy.
+1. Resolve residual-inventory exit policy before promotion: native base-fee
+   accounting now passes, but no-resizing full exits intentionally refuse off-grid
+   quantities. Any partial reduction policy must preserve and report residual BTC;
+   fixed BUY size, SignalEvent identities and SourcePolicy remain unchanged.
 2. Attach authoritative private/public inputs to the completed offline rule adapter
    and reconcile complete account/native state, permissions and effective price
    references. Complete durable native process recovery and uncertain-submit
@@ -108,9 +110,13 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Latest Verification
 
-- Full offline suite: **1,887 tests passed**; 12 Postgres integration tests
+- Full offline suite: **1,907 tests passed**; 12 Postgres integration tests
   deselected (no dedicated integration DSN supplied).
-- **54 venue-adapter tests** passed: official response shapes, account/request
+- **19 received-asset inventory tests** passed: native BTC commission adjustments,
+  eight-place precision, partial/late fills, exact aligned exits, retained dust,
+  conservative per-fill rounding, mode fingerprints and warm restart. Both CLI
+  accounting modes, Ruff and registry check passed.
+- **55 venue-adapter tests** passed: official response shapes, account/request
   identity, independent freshness, fee-currency rejection, inclusive price bands,
   order/position/asset caps and native pre-submit injection. Read-only CLI, Ruff
   and registry check passed. No actual account reconciliation is claimed.
@@ -137,6 +143,7 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## References
 
+- [Native base-fee accounting, precision and no-rounding exit acceptance](progress/portfolio-base-fee-acceptance-2026-09-09.md).
 - [Binance rule adapter, fee-currency blocker and remaining work](progress/portfolio-venue-adapter-2026-09-09.md).
 - [Synthetic Nautilus lifecycle acceptance and remaining integration](progress/portfolio-simulation-acceptance-2026-09-09.md).
 - [Current v2 funded admission and integration obligations](progress/portfolio-funded-admission-2026-09-09.md).

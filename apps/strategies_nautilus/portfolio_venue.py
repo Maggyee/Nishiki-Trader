@@ -306,6 +306,12 @@ def _parse(exchange_info, commission, my_filters, account_id, now, age, referenc
     for side, received in (("buyer", "BTC"), ("seller", "USDT")):
         nonzero = max(rates[liquidity, side] for liquidity in ("maker", "taker")) > 0
         currencies.append(("BNB_OR_" + received if bnb else received) if nonzero else "USDT")
+    base_fee_quantum = None
+    if "baseCommissionPrecision" in symbol:
+        precision = _integer(symbol["baseCommissionPrecision"])
+        if precision > 8:
+            raise VenueInputError("unsupported BTC commission precision")
+        base_fee_quantum = D("10") ** -precision
     rules = InstrumentRules(
         "BTCUSDT.BINANCE",
         min(timestamps),
@@ -323,6 +329,7 @@ def _parse(exchange_info, commission, my_filters, account_id, now, age, referenc
         price_bands=tuple(bands),
         max_open_orders=min(counts) if counts else None,
         max_position=max_position,
+        base_fee_quantum=base_fee_quantum,
     )
     return VenueRulesEvidence(
         rules,

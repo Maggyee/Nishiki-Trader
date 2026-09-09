@@ -186,8 +186,16 @@ strategies_nautilus/
 `portfolio_venue.py` 将本地保存的 Binance exchangeInfo、commission、myFilters
 响应转换为预检查规则，覆盖价格区间、订单名额和资产上限。现有只收 USDT 手续费
 假设不支持 BTC 买入扣费或 BNB 扣费，适配层会明确拒绝，不自动缩量。
-下一入口为扣费后库存/零碎余额契约、权威账户对账和完整进程恢复，详见
-[交易所规则适配记录](../../docs/progress/portfolio-venue-adapter-2026-09-09.md)。
+独立验收模式 `--fee-mode received_asset` 已通过 Nautilus 原生 BTC 买入手续费、
+净持仓和 8 位账务精度验证，交易数量步长仍不变。`portfolio_inventory.py` 只读报告
+步长余数；完整平仓数量不合规时拒绝，不丢弃余额或自动缩量。BNB 仍不支持。
+
+```bash
+.venv/bin/python -m apps.strategies_nautilus.runners.portfolio_simulation_acceptance --fee-mode received_asset
+```
+
+下一入口为残余库存退出政策、权威账户对账和完整进程恢复，详见
+[原生手续费验收](../../docs/progress/portfolio-base-fee-acceptance-2026-09-09.md)。
 
 - 不直接接交易所 API（用 nautilus 的 binance adapter）
 - 不绕过 `RiskEngine`

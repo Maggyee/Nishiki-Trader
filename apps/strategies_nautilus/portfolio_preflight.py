@@ -8,7 +8,7 @@ All money/quantity inputs are finite Decimals. Fees are quote-currency only.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from decimal import Decimal
+from decimal import ROUND_CEILING, Decimal
 
 ZERO = Decimal("0")
 ONE = Decimal("1")
@@ -52,6 +52,7 @@ class InstrumentRules:
     price_bands: tuple[PriceBand, ...] = ()
     max_open_orders: int | None = None  # dedicated BTC/USDT account, all orders counted
     max_position: Decimal | None = None
+    base_fee_quantum: Decimal | None = None
 
 
 @dataclass(frozen=True)
@@ -140,6 +141,7 @@ def select_funded_batch(
     candidates: tuple[AdmissionCandidate, ...],
     *,
     now_ns: int,
+    allow_base_buy_fees: bool = False,
 ) -> AdmissionResult:
     """Greedy deterministic admission, with unchanged whole-batch risk checks.
 
@@ -159,7 +161,9 @@ def select_funded_batch(
             now_ns,
         )
 
-    base = check_batch(account, rules, limits, (), now_ns=now_ns)
+    base = check_batch(
+        account, rules, limits, (), now_ns=now_ns, allow_base_buy_fees=allow_base_buy_fees
+    )
     if not base.checks_passed:
         return blocked(base)
 
@@ -203,7 +207,12 @@ def select_funded_batch(
             reasons = ("expired_signal",)
         else:
             trial = check_batch(
-                account, rules, limits, tuple(s.order for s in selected) + (c.order,), now_ns=now_ns
+                account,
+                rules,
+                limits,
+                tuple(s.order for s in selected) + (c.order,),
+                now_ns=now_ns,
+                allow_base_buy_fees=allow_base_buy_fees,
             )
             reasons = trial.reasons
             if trial.checks_passed:
@@ -212,7 +221,14 @@ def select_funded_batch(
         skipped.append(SkippedOrder(c.order.order_id, c.signal_id, reasons))
 
     # Keep the complete-set safety gate even if selection is changed later.
-    final = check_batch(account, rules, limits, tuple(c.order for c in selected), now_ns=now_ns)
+    final = check_batch(
+        account,
+        rules,
+        limits,
+        tuple(c.order for c in selected),
+        now_ns=now_ns,
+        allow_base_buy_fees=allow_base_buy_fees,
+    )
     if not final.checks_passed:
         return blocked(final)
     return AdmissionResult(tuple(selected), tuple(skipped), final, account.ts_ns, now_ns)
@@ -236,22 +252,46 @@ def check_batch(
     orders: tuple[ProposedOrder, ...],
     *,
     now_ns: int,
+    allow_base_buy_fees: bool = False,
 ) -> PreflightResult:
     """All-or-nothing snapshot check. Caller must serialize check + reservation.
 
     Pending cancels still reserve; partial fills reserve ONLY their remainder
     (settled totals already include fills). Terminal rows must have zero remainder.
     A sell reserves owned base, never finances a buy before actual settlement.
+    Base BUY fees require an explicit offline opt-in, a fee quantum and native
+    net inventory reconciliation. Quote cash still includes the conservative fee
+    buffer; base-fee rounding is bounded per minimum-step fill for projected loss.
     Malformed/unreconciled snapshots reject even sells; use a separately reviewed
     emergency reconciliation path, not guessed balances.
     """
     try:
-        return _check(account, rules, limits, orders, now_ns)
+        return _check(account, rules, limits, orders, now_ns, allow_base_buy_fees)
     except (ValueError, TypeError, ArithmeticError) as exc:
         return PreflightResult(False, (f"invalid_input:{exc}",))
 
 
-def _check(a, r, limits, orders, now):
+def _base_fee_supported(side, currency, rules, enabled):
+    return currency == "USDT" or (
+        enabled and side == "BUY" and currency == "BTC" and rules.base_fee_quantum is not None
+    )
+
+
+def _entry_fee_rate(r, allow_base_buy_fees):
+    if allow_base_buy_fees and r.buy_fee_currency == "BTC" and r.base_fee_quantum is not None:
+        # Bound rounding on every possible minimum-step fill. No minimum-fill
+        # assumption may be weaker than this grid in the native reconciler.
+        per_step = r.quantity_step * r.fee_rate
+        rounded = (per_step / r.base_fee_quantum).to_integral_value(
+            rounding=ROUND_CEILING
+        ) * r.base_fee_quantum
+        return rounded / r.quantity_step
+    return r.fee_rate
+
+
+def _check(a, r, limits, orders, now, allow_base_buy_fees):
+    if type(allow_base_buy_fees) is not bool:
+        raise ValueError("explicit base-fee accounting mode required")
     if type(now) is not int or now <= 0 or type(limits.max_age_ns) is not int:
         raise ValueError("integer timestamp/age required")
     if limits.max_age_ns <= 0 or not _fresh(a.ts_ns, now, limits.max_age_ns):
@@ -290,6 +330,8 @@ def _check(a, r, limits, orders, now):
         _number(r.notional_max, positive=True)
     if r.max_position is not None:
         _number(r.max_position, positive=True)
+    if r.base_fee_quantum is not None:
+        _number(r.base_fee_quantum, positive=True)
     if r.max_open_orders is not None and (
         type(r.max_open_orders) is not int or r.max_open_orders < 0
     ):
@@ -325,6 +367,7 @@ def _check(a, r, limits, orders, now):
     equity = a.total_quote + a.total_base * a.mark_price
     if a.peak_equity < max(equity, a.day_open_equity):
         raise ValueError("peak equity inconsistent")
+    entry_fee_rate = _entry_fee_rate(r, allow_base_buy_fees)
     buy_qty = dict.fromkeys(held, ZERO)
     sell_qty = dict.fromkeys(held, ZERO)
     reserved_quote = ZERO
@@ -347,12 +390,14 @@ def _check(a, r, limits, orders, now):
         if order.status not in ACTIVE or order.remaining == ZERO:
             raise ValueError("unknown/inconsistent active order status")
         currency = r.buy_fee_currency if order.side == "BUY" else r.sell_fee_currency
-        if currency != "USDT":
+        if not _base_fee_supported(order.side, currency, r, allow_base_buy_fees):
             raise ValueError("pending order has unsupported fee currency")
         if order.side == "BUY":
+            if currency == "BTC" and order.remaining % r.quantity_step:
+                raise ValueError("base-fee pending remainder violates supported fill grid")
             reserved_quote += order.remaining * order.limit_price * (ONE + r.fee_rate)
             pending_entry_loss_bound += order.remaining * (
-                max(order.limit_price - a.mark_price, ZERO) + order.limit_price * r.fee_rate
+                max(order.limit_price - a.mark_price, ZERO) + order.limit_price * entry_fee_rate
             )
             buy_qty[order.sleeve] += order.remaining
         else:
@@ -393,7 +438,7 @@ def _check(a, r, limits, orders, now):
         ):
             reasons.append("venue_price_band")
         currency = r.buy_fee_currency if order.side == "BUY" else r.sell_fee_currency
-        if currency != "USDT":
+        if not _base_fee_supported(order.side, currency, r, allow_base_buy_fees):
             reasons.append("unsupported_order_fee_currency")
         notional = order.quantity * order.limit_price
         if notional < r.notional_min or (r.notional_max is not None and notional > r.notional_max):
@@ -404,7 +449,7 @@ def _check(a, r, limits, orders, now):
             # A favorable limit-vs-mark difference cannot finance another
             # entry's fee. This bound is not a guarantee against market gaps.
             entry_loss_bound += order.quantity * max(order.limit_price - a.mark_price, ZERO)
-            entry_loss_bound += notional * r.fee_rate
+            entry_loss_bound += notional * entry_fee_rate
             buy_qty[order.sleeve] += order.quantity
         else:
             required_base += order.quantity

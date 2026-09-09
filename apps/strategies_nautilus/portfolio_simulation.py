@@ -14,12 +14,13 @@ import os
 import tempfile
 import threading
 from dataclasses import asdict
-from decimal import Decimal
+from decimal import ROUND_CEILING, Decimal
 from pathlib import Path
 
 from nautilus_trader.common.component import TestClock
 from nautilus_trader.model.currencies import BTC, USDT
 from nautilus_trader.model.enums import AccountType, OmsType, OrderSide
+from nautilus_trader.model.events import OrderFilled
 from nautilus_trader.model.identifiers import ClientOrderId, InstrumentId, PositionId
 from nautilus_trader.trading.config import StrategyConfig
 from nautilus_trader.trading.strategy import Strategy
@@ -63,7 +64,10 @@ class PortfolioSimulationStrategy(Strategy):
     orders, account and positions, not reconstruction from this journal.
     """
 
-    def __init__(self, checkpoint: Path):
+    def __init__(self, checkpoint: Path, *, fee_mode: str = "quote"):
+        if fee_mode not in {"quote", "received_asset"}:
+            raise ValueError("unknown synthetic fee mode")
+        self.fee_mode = fee_mode
         super().__init__(
             StrategyConfig(
                 strategy_id="PORTFOLIO-FIXTURE", order_id_tag="PF", oms_type=OmsType.HEDGING
@@ -104,6 +108,7 @@ class PortfolioSimulationStrategy(Strategy):
                     "limits": {k: str(v) for k, v in asdict(self.limits).items()},
                     "limit_price": "100000",
                     "fee_bound": "0.0015",
+                    "fee_mode": self.fee_mode,
                 }
             )
         ).hexdigest()
@@ -120,10 +125,14 @@ class PortfolioSimulationStrategy(Strategy):
                 self.on_load({"checkpoint": self.checkpoint.read_bytes()})
             self._reconcile_orders()
             instrument = self.cache.instrument(INSTRUMENT)
+            expected_native_fee = D("0") if self.fee_mode == "received_asset" else D("0.0015")
             if (
                 instrument is None
-                or instrument.maker_fee != D("0.0015")
-                or instrument.taker_fee != D("0.0015")
+                or instrument.maker_fee != expected_native_fee
+                or instrument.taker_fee != expected_native_fee
+                or (
+                    self.fee_mode == "received_asset" and instrument.size_precision != BTC.precision
+                )
             ):
                 raise SimulationBlocked("synthetic instrument fee configuration mismatch")
             account = self.portfolio.account(INSTRUMENT.venue)
@@ -262,6 +271,8 @@ class PortfolioSimulationStrategy(Strategy):
             if str(pos.id) not in pos_sleeves or pos.instrument_id != INSTRUMENT or not pos.is_long:
                 raise SimulationBlocked("unattributed or short native position")
             holdings[pos_sleeves[str(pos.id)]] += pos.quantity.as_decimal()
+        if self.fee_mode == "received_asset":
+            self._check_native_net_inventory(holdings)
         if sum(holdings.values(), D("0")) != total_base:
             raise SimulationBlocked("native positions and settled BTC disagree")
         pending = []
@@ -324,6 +335,52 @@ class PortfolioSimulationStrategy(Strategy):
             self.state_data["risk_latched"],
         )
 
+    def _check_native_net_inventory(self, holdings):
+        # Independent reconciliation of native fill evidence, not another ledger:
+        # never apply balances/positions or persist a derived inventory here.
+        expected = dict.fromkeys(SLEEVES, D("0"))
+        instrument = self.cache.instrument(INSTRUMENT)
+        quantum = D("0.00000001")
+        for oid, intent in self.state_data["orders"].items():
+            order = self.cache.order(ClientOrderId(oid))
+            if order is None:
+                continue  # full prepared reservation still applies
+            seen, filled = set(), D("0")
+            for event in order.events:
+                if not isinstance(event, OrderFilled):
+                    continue
+                key = str(event.trade_id)
+                if key in seen:
+                    raise SimulationBlocked("duplicate native trade evidence")
+                seen.add(key)
+                quantity = event.last_qty.as_decimal()
+                if quantity <= 0 or quantity % instrument.size_increment.as_decimal():
+                    raise SimulationBlocked("native fill outside supported quantity grid")
+                filled += quantity
+                fee = event.commission.as_decimal()
+                currency = event.commission.currency
+                is_buy = event.order_side == OrderSide.BUY
+                if fee < 0 or currency != (BTC if is_buy else USDT):
+                    raise SimulationBlocked("unexpected native commission currency/value")
+                amount = quantity if is_buy else quantity * event.last_px.as_decimal()
+                ceiling = (amount * D("0.0015") / quantum).to_integral_value(
+                    rounding=ROUND_CEILING
+                ) * quantum
+                if fee > ceiling or (is_buy and (fee > quantity or fee % quantum)):
+                    raise SimulationBlocked("native commission exceeds supported fee bound")
+                expected[intent["sleeve"]] += quantity if is_buy else -quantity
+                if is_buy:
+                    expected[intent["sleeve"]] -= fee
+            if filled != order.filled_qty.as_decimal():
+                raise SimulationBlocked("native filled quantity lacks complete event evidence")
+        if expected != holdings:
+            raise SimulationBlocked("native net inventory and fill commissions disagree")
+
+    def inventory_diagnostics(self):
+        from apps.strategies_nautilus.portfolio_inventory import inventory_diagnostics
+
+        return inventory_diagnostics(self.snapshot(), self.rules(), limit_price=D("100000"))
+
     def rules(self):
         instrument = self.cache.instrument(INSTRUMENT)
         return InstrumentRules(
@@ -338,6 +395,8 @@ class PortfolioSimulationStrategy(Strategy):
             instrument.min_notional.as_decimal(),
             D("100000"),
             D("0.0015"),
+            buy_fee_currency="BTC" if self.fee_mode == "received_asset" else "USDT",
+            base_fee_quantum=D("0.00000001") if self.fee_mode == "received_asset" else None,
         )
 
     def on_quote_tick(self, quote):
@@ -427,7 +486,12 @@ class PortfolioSimulationStrategy(Strategy):
                     )
                 )
             result = select_funded_batch(
-                snapshot, self.rules(), self.limits, tuple(candidates), now_ns=now
+                snapshot,
+                self.rules(),
+                self.limits,
+                tuple(candidates),
+                now_ns=now,
+                allow_base_buy_fees=self.fee_mode == "received_asset",
             )
             for skipped in result.skipped:
                 self.state_data["signals"][skipped.signal_id]["reasons"] = list(skipped.reasons)

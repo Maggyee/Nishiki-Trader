@@ -9,11 +9,11 @@ from __future__ import annotations
 from pathlib import Path
 
 from nautilus_trader.backtest.engine import BacktestEngine
-from nautilus_trader.backtest.models import LatencyModel
+from nautilus_trader.backtest.models import FeeModel, LatencyModel
 from nautilus_trader.config import BacktestEngineConfig, LoggingConfig
 from nautilus_trader.model.currencies import BTC, USDT
 from nautilus_trader.model.data import QuoteTick
-from nautilus_trader.model.enums import AccountType, OmsType
+from nautilus_trader.model.enums import AccountType, OmsType, OrderSide
 from nautilus_trader.model.instruments import CurrencyPair
 from nautilus_trader.model.objects import Money
 from nautilus_trader.test_kit.providers import TestInstrumentProvider
@@ -48,9 +48,27 @@ def fixture_signal(sleeve, suffix, ts_ns, side="buy"):
     )
 
 
+class ReceivedAssetFeeModel(FeeModel):
+    """Synthetic 15 bps received-asset commission through Nautilus's fee hook.
+
+    Price matching, fills, cash and position adjustments remain native. This
+    extension is a fixture, not a Binance account fee provider.
+    """
+
+    def get_commission(self, order, fill_qty, fill_px, instrument):
+        quantity = fill_qty.as_decimal()
+        if quantity % instrument.size_increment.as_decimal():
+            raise ValueError("synthetic fill must respect the venue quantity grid")
+        if order.side == OrderSide.BUY:
+            return Money(quantity * D("0.0015"), BTC)
+        if order.side == OrderSide.SELL:
+            return Money(quantity * fill_px.as_decimal() * D("0.0015"), USDT)
+        raise ValueError("unsupported synthetic order side")
+
+
 class ScriptedSimulation(PortfolioSimulationStrategy):
-    def __init__(self, checkpoint, actions=None):
-        super().__init__(checkpoint)
+    def __init__(self, checkpoint, actions=None, *, fee_mode="quote"):
+        super().__init__(checkpoint, fee_mode=fee_mode)
         self.actions = actions or {}
 
     def on_quote_tick(self, quote):
@@ -60,10 +78,14 @@ class ScriptedSimulation(PortfolioSimulationStrategy):
             action(self)
 
 
-def build_simulation(checkpoint: Path, actions=None, *, cancel_latency_ns=0):
+def build_simulation(checkpoint: Path, actions=None, *, cancel_latency_ns=0, fee_mode="quote"):
     instrument = TestInstrumentProvider.btcusdt_binance()
     fields = CurrencyPair.to_dict(instrument)
     fields.update(maker_fee="0.0015", taker_fee="0.0015")
+    if fee_mode == "received_asset":
+        # Native position adjustments round to size_precision. Retain BTC's
+        # 8-place ledger precision WITHOUT changing the 0.000001 order step.
+        fields.update(size_precision=8, size_increment="0.00000100", maker_fee="0", taker_fee="0")
     instrument = CurrencyPair.from_dict(fields)
     engine = BacktestEngine(BacktestEngineConfig(logging=LoggingConfig(bypass_logging=True)))
     engine.add_venue(
@@ -74,9 +96,10 @@ def build_simulation(checkpoint: Path, actions=None, *, cancel_latency_ns=0):
         latency_model=LatencyModel(base_latency_nanos=0, cancel_latency_nanos=cancel_latency_ns),
         liquidity_consumption=True,
         allow_cash_borrowing=False,
+        fee_model=ReceivedAssetFeeModel() if fee_mode == "received_asset" else None,
     )
     engine.add_instrument(instrument)
-    strategy = ScriptedSimulation(checkpoint, actions)
+    strategy = ScriptedSimulation(checkpoint, actions, fee_mode=fee_mode)
     engine.add_strategy(strategy)
     return engine, strategy, instrument
 
@@ -107,7 +130,7 @@ def advance(engine, instrument, start_ns, *, bid="100000", ask="100010", size="1
 def restart_strategy(engine, strategy, actions=None):
     engine.trader.stop()
     engine.trader.remove_strategy(strategy.id)
-    replacement = ScriptedSimulation(strategy.checkpoint, actions)
+    replacement = ScriptedSimulation(strategy.checkpoint, actions, fee_mode=strategy.fee_mode)
     engine.add_strategy(replacement)
     replacement.clock.set_time(strategy.clock.timestamp_ns())
     engine.trader.start_strategy(replacement.id)
@@ -177,14 +200,68 @@ def run_acceptance(checkpoint: Path) -> dict:
         engine.dispose()
 
 
+def run_received_asset_acceptance(checkpoint: Path) -> dict:
+    """Verify native net inventory and the unchanged no-rounding exit contract."""
+    from dataclasses import asdict
+
+    from apps.ops.portfolio_execution_plan import SLEEVES
+    from apps.strategies_nautilus.portfolio_simulation import SimulationBlocked
+
+    def submit(strategy):
+        strategy.process_signals(tuple(fixture_signal(s, "received-fee", BASE_NS) for s in SLEEVES))
+
+    engine, strategy, instrument = build_simulation(
+        checkpoint, {BASE_NS: submit}, fee_mode="received_asset"
+    )
+    try:
+        advance(engine, instrument, BASE_NS)
+        advance(engine, instrument, BASE_NS + 2 * SECOND, bid="99999", ask="100000")
+        strategy = restart_strategy(engine, strategy)
+        advance(engine, instrument, BASE_NS + 4 * SECOND)
+        snapshot = strategy.snapshot()
+        diagnostics = strategy.inventory_diagnostics()
+        reduction = strategy.process_signals(
+            (fixture_signal("v16", "full-exit", BASE_NS + 4 * SECOND, "flat"),)
+        )
+        if (
+            snapshot.total_base != D("0.003994")
+            or snapshot.total_quote != D("100")
+            or len(engine.cache.orders()) != 4
+            or reduction.selected
+            or reduction.skipped[0].reasons != ("quantity_step",)
+            or diagnostics[0].step_remainder != D("0.00000050")
+        ):
+            raise SimulationBlocked("received-asset native accounting acceptance failed")
+        return {
+            "status": "passed",
+            "scope": "synthetic_received_asset_fee_accounting",
+            "performance_evidence": False,
+            "runtime_ready": False,
+            "native_order_count": len(engine.cache.orders()),
+            "total_quote_usdt": str(snapshot.total_quote),
+            "net_base_btc": str(snapshot.total_base),
+            "full_exit": "blocked_quantity_step_without_rounding",
+            "inventory": [asdict(row) for row in diagnostics],
+            "warm_restart": "passed",
+        }
+    finally:
+        engine.end()
+        engine.dispose()
+
+
 def main() -> int:
+    import argparse
     import json
     import tempfile
 
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--fee-mode", choices=("quote", "received_asset"), default="quote")
+    args = parser.parse_args()
     # No paths, credentials or research inputs accepted: this is a bounded fixture.
     with tempfile.TemporaryDirectory(prefix="trader-portfolio-acceptance-") as directory:
-        report = run_acceptance(Path(directory) / "checkpoint.json")
-    print(json.dumps(report, indent=2, sort_keys=True))
+        run = run_received_asset_acceptance if args.fee_mode == "received_asset" else run_acceptance
+        report = run(Path(directory) / "checkpoint.json")
+    print(json.dumps(report, indent=2, sort_keys=True, default=str))
     return 0
 
 

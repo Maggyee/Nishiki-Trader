@@ -75,6 +75,12 @@ For the current offline Binance response adapter and fee-currency blocker, read
 receipt metadata does not prove authoritative account reconciliation. Nonzero
 BUY fees in BTC or potentially BNB fail the current quote-only contract. Do not
 reinterpret them as USDT fees or silently resize to hide base-asset dust.
+For the subsequent explicit synthetic received-asset accounting mode, read
+`docs/progress/portfolio-base-fee-acceptance-2026-09-09.md`. Native position
+precision is eight places while the numerical order step stays unchanged.
+Base-fee opt-in requires native net inventory and fee-quantum reconciliation;
+BNB remains rejected. Off-grid full exits are refused and residuals retained.
+The existing quote-only default, runtime policies and cold-restart block remain.
 
 | Task area | Read |
 |---|---|
