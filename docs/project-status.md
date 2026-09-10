@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-10
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Qualify actual read-only credentials and WebSocket transport after offline native signing, stream journal and adapter-recovery acceptance.
+- **Current objective**: Qualify the actual account source and join downtime evidence to process recovery after native read-only transport acceptance on loopback.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -30,9 +30,13 @@ deduplication and loss latches. Missing/drifting/uncertain state fails closed.
 Native Binance signing and report converters now pass offline acceptance, including
 submitted orders and pending cancels with late actual-fee fills. A durable stream
 journal binds source, subscription epoch and REST fences; disconnects and new events
-invalidate prior observations. No actual account or WebSocket was connected, and
-local receipts cannot prove global gap-free continuity. The adapter fixture is not
-wired into process recovery or existing runners. SourcePolicy remains unchanged.
+invalidate prior observations. A dedicated read-only native WS transport now binds
+confirmed signed subscriptions, preserves envelopes and checks actual socket state
+at every fence. Real Rust WebSocket I/O passes loopback acceptance; no Binance
+account or external WS was connected. Account HTTP requests have a GET whitelist
+and avoid signed-URL debug logging. Local receipts cannot prove global gap-free
+continuity. Adapter reconciliation is not yet wired into process recovery or
+existing execution runners. SourcePolicy remains unchanged.
 
 The offline Binance adapter parses exchangeInfo, commission and myFilters with
 freshness/account/request checks and effective price/order/asset constraints.
@@ -85,11 +89,12 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Next Steps
 
-1. Obtain the explicit environment, credential variable names/config path and expected
-   UID for real read-only acceptance; no secret values in chat. Qualify endpoint
-   permissions, native WebSocket transport, archive/downtime coverage and effective
-   venue references. Offline signing, stream fences and native adapter reconciliation
-   now pass; actual transport and integration into process recovery remain unverified.
+1. Obtain the explicit environment, credential variable names/config path, expected
+   UID and independent account baseline for real read-only acceptance; no secret
+   values in chat. Native signing, stream fences, loopback transport and adapter
+   reconciliation now pass. Qualify actual endpoint permissions and stream receipts,
+   archive/downtime coverage and effective venue references, then integrate native
+   adapter reconciliation into process recovery.
    Reconcile downtime risk history and the 50 USDT planning loss with runtime ADRs.
 2. Review the explicit offline residual-exit policy before promotion and resolve
    re-entry with retained dust. Whole-step reductions now pass native acceptance;
@@ -122,19 +127,20 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Latest Verification
 
-- **54 new tests** passed: 32 source/stream/native-signing and 22 native adapter
-  recovery cases. Exact fees, original position linkage, replay, late fills,
-  malformed inputs, persistence failure and stale REST fences are exercised.
-- Full offline suite: **2,044 passed**, 12 Postgres integration tests deselected
+- **42 new transport tests** passed; combined source/collector regression: 87.
+  Actual native Rust WebSocket I/O passes two loopback cases; other cases cover
+  signed subscription, REST races, disconnects, safe HTTP paths/logging and cleanup.
+- Full offline suite: **2,086 passed**, 12 Postgres integration tests deselected
   (no dedicated integration DSN). Ruff, registry and whitespace checks pass.
 - Prior abrupt-exit/fresh-process recovery and exact account comparison remain
-  green. Private account responses are synthetic; no actual HTTP/WS account
-  connection, real transport recovery, atomic stream boundary or live readiness.
+  green. Private account responses are synthetic; no Binance HTTP/WS account
+  connection, real adapter process recovery, atomic stream boundary or live readiness.
 - Earlier portfolio, collector and reliability verification is archived in the
   linked progress records; it is not a current runtime-health observation.
 
 ## References
 
+- [Native read-only transport, loopback acceptance and integration entrypoint](progress/portfolio-readonly-transport-2026-09-10.md).
 - [Source binding, user stream and native adapter qualification](progress/portfolio-source-stream-adapter-2026-09-10.md).
 - [Read-only account reconciliation and native process recovery](progress/portfolio-account-recovery-2026-09-09.md).
 - [Explicit offline residual-exit policy and acceptance](progress/portfolio-residual-exit-2026-09-09.md).

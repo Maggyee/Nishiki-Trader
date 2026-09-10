@@ -60,6 +60,7 @@ class UserStreamJournal:
         self.epoch, self.revision, self.subscription_id = None, 0, None
         self.last_transport_ns = 0
         self.connected = False
+        self._transport_check = None
         self._failed = False
         self._seen = {}
         self._previous = "0" * 64
@@ -196,11 +197,22 @@ class UserStreamJournal:
 
     def fence(self):
         now = self.clock_ns()
-        if not self.connected or not 0 <= now - self.last_transport_ns <= self.max_age_ns:
+        transport_ok = self._transport_check is None or self._transport_check()
+        if (
+            not self.connected
+            or not transport_ok
+            or not 0 <= now - self.last_transport_ns <= self.max_age_ns
+        ):
             if self.connected:
                 self.disconnect("transport continuity expired")
             raise StreamError("fresh connected subscription required")
         return StreamFence(self.epoch, self.revision, self.binding)
+
+    def attach_transport(self, check):
+        """Bind one owning transport before subscribing; never replace it in place."""
+        if self.connected or self._transport_check is not None:
+            raise StreamError("stream transport already attached or subscribed")
+        self._transport_check = check
 
     def assert_fence(self, fence):
         if self.fence() != fence:

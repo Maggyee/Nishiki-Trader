@@ -6,10 +6,13 @@ reconciliation evidence, but do not establish an atomic user-stream revision.
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 from dataclasses import dataclass
+from urllib.parse import urlencode
 
+from nautilus_trader.adapters.binance.http.client import BinanceHttpClient
 from nautilus_trader.core.nautilus_pyo3 import HttpMethod
 
 from apps.strategies_nautilus.portfolio_account import AccountAnchor, AccountEvidence
@@ -21,6 +24,46 @@ from apps.strategies_nautilus.portfolio_venue import (
 )
 
 DAY_NS = 86_400_000_000_000
+
+
+class BinanceAccountReadOnlyHttpClient(BinanceHttpClient):
+    """Native signer/HTTP I/O with bounded GET paths and no signed-URL logging.
+
+    The upstream send_request logs its signed query at DEBUG. This account-only
+    extension avoids that logging path and never includes private errors in exceptions.
+    """
+
+    async def send_request(self, http_method, url_path, payload=None, ratelimiter_keys=None):
+        if (
+            self.base_url.rstrip("/")
+            not in {"https://api.binance.com", "https://testnet.binance.vision"}
+            or http_method != HttpMethod.GET
+            or url_path
+            not in {
+                "/sapi/v1/account/apiRestrictions",
+                "/api/v3/account",
+                "/api/v3/openOrders",
+                "/api/v3/allOrders",
+                "/api/v3/myTrades",
+            }
+        ):
+            raise VenueInputError("only qualified read-only account requests are allowed")
+        try:
+            async with asyncio.timeout(10):
+                response = await self._client.request(
+                    http_method,
+                    url=self.base_url.rstrip("/")
+                    + url_path
+                    + ("?" + urlencode(payload) if payload else ""),
+                    headers=self.headers,
+                    body=None,
+                    keys=ratelimiter_keys,
+                )
+            if response.status != 200:
+                raise VenueInputError("signed account read rejected")
+            return response.body
+        except Exception:
+            raise VenueInputError("signed account read failed") from None
 
 
 @dataclass(frozen=True)

@@ -101,6 +101,13 @@ and `portfolio_adapter_recovery.py` under `apps/strategies_nautilus/`. Local epo
 receipt counters and matching REST reads do not prove global gap-free delivery.
 Actual credentials, WebSocket transport and integration into process recovery are
 still unqualified; the adapter fixture cannot enable live admission.
+For the subsequent native read-only transport, read
+`docs/progress/portfolio-readonly-transport-2026-09-10.md` and
+`apps/strategies_nautilus/portfolio_user_stream.py`. Signed subscriptions retain raw
+account envelopes and bind the journal to actual socket state. Use the explicit
+account-only HTTP extension to avoid native signed-query DEBUG logging. Loopback
+network I/O is verified; real Binance credentials, endpoints and adapter process
+recovery remain unqualified. No execution runner is wired by this transport.
 
 | Task area | Read |
 |---|---|

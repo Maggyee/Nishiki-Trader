@@ -213,11 +213,17 @@ strategies_nautilus/
 `portfolio_stream.py` 现提供来源绑定、订阅代次、持久化事件链与 REST 核对凭据；
 新事件、断线或过期会使旧凭据失效。`portfolio_adapter_recovery.py` 用真实 Nautilus
 Binance 转换器及原生对账引擎验证合成订单恢复，拒绝推断成交、执行客户端与交易命令。
-这些离线验证没有连接真实账户或 WebSocket，也未接入进程恢复或现有 runner。
+这些恢复验证只使用合成账户，也未接入进程恢复或现有 runner。
 本地回执无法证明交易所用户流全局无丢包。详见
 [来源、用户流及适配器验收](../../docs/progress/portfolio-source-stream-adapter-2026-09-10.md)。
-下一入口为明确账户环境、凭证变量名/配置路径和预期 UID，再验收原生只读传输及
-断线历史恢复；部署前还需明确余量存在时的重新入场政策。
+`portfolio_user_stream.py` 现通过 Nautilus 原生签名与 Rust WebSocket I/O 实现
+只读签名订阅，保留完整事件信封，按真实连接状态验证核对凭据，断线后要求重新订阅。
+配套 `BinanceAccountReadOnlyHttpClient` 限定账户 GET 路径并避开签名 URL 调试日志。
+真实网络收发已在本机 WebSocket 服务验收，尚未连接 Binance 私有账户。
+调用示例和清理约定见
+[原生只读传输验收](../../docs/progress/portfolio-readonly-transport-2026-09-10.md)。
+下一入口为明确账户环境、凭证变量名/配置路径、预期 UID 和独立账户基线，验证真实
+只读来源并接入断线历史及进程恢复；部署前还需明确余量存在时的重新入场政策。
 详见[原生手续费验收](../../docs/progress/portfolio-base-fee-acceptance-2026-09-09.md)及
 [残余库存退出验收](../../docs/progress/portfolio-residual-exit-2026-09-09.md)。
 
