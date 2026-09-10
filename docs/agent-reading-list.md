@@ -115,6 +115,13 @@ reports and exact account comparison now pass three-process acceptance. Original
 bytes and opaque strategy state remain unchanged; policy qualification, downtime
 risk coverage and real-account execution bootstrap are still required. Numeric
 snapshots cannot enter default UUID simulation restoration.
+For subsequent read-only downtime risk observations, read
+`docs/progress/portfolio-downtime-risk-2026-09-10.md`,
+`apps/strategies_nautilus/portfolio_downtime_risk.py` and
+`apps/ops/portfolio_downtime_risk_check.py`. The reviewer preserves observed breaches
+through recovery rebounds and reports the planning-versus-5% mismatch. Sampled
+native balances/quotes do not qualify complete coverage, cash flows, real source or
+runtime policy. CLI exit 0 is not a restart permit; no checkpoint/latch is changed.
 
 | Task area | Read |
 |---|---|

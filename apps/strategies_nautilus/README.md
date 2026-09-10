@@ -232,8 +232,13 @@ Binance 转换器及原生对账引擎验证合成订单恢复，拒绝推断成
 ```
 
 见[适配器检查点恢复验收](../../docs/progress/portfolio-adapter-checkpoint-2026-09-10.md)。
+`portfolio_downtime_risk.py` 将停机期原生账户快照和买一报价绑定到恢复前后检查点，
+只读识别日内 5% 越线及规划风险阈值，不会因恢复时回升而清除记录或已有锁存。
+它报告 500 USDT 日初权益下 25 USDT 与规划 50 USDT 的差异，不改变任何配置。
+采样无法证明完整覆盖，跨 UTC 日缺少新基线时拒绝审核；结果永远不放行交易。
+见[停机风险审核](../../docs/progress/portfolio-downtime-risk-2026-09-10.md)。
 下一入口为明确账户环境、凭证变量名/配置路径、预期 UID 和独立账户基线，验证真实
-只读来源、停机历史及策略状态/风险政策；部署前还需明确余量存在时的重新入场政策。
+来源、账户/行情归档、资金流和 UTC 日初基线及策略风险政策；部署前还需明确余量入场政策。
 详见[原生手续费验收](../../docs/progress/portfolio-base-fee-acceptance-2026-09-09.md)及
 [残余库存退出验收](../../docs/progress/portfolio-residual-exit-2026-09-09.md)。
 

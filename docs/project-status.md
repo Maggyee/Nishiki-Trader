@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-10
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Qualify actual account/downtime evidence and strategy risk state after isolated native adapter checkpoint reconstruction and three-process replay acceptance.
+- **Current objective**: Qualify actual account/price archives, cash flows and strategy policy after checkpoint recovery and read-only downtime breach review.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -38,8 +38,12 @@ and avoid signed-URL debug logging. Local receipts cannot prove global gap-free
 continuity. An isolated numeric-venue checkpoint path now combines native event
 reconstruction, Binance report reconciliation and exact account comparison; three
 processes verify abrupt exit and replay with original state/latches preserved.
-Opaque strategy state is not activated, and downtime risk history remains required.
-Existing execution runners and SourcePolicy remain unchanged.
+A read-only downtime reviewer now binds native account/bid observations to both
+checkpoints and retains observed 5% breaches through a rebound. It reports the
+25 USDT versus 50 USDT daily-rule mismatch at a 500 USDT day-open baseline. Sparse
+or dense samples cannot prove complete coverage; UTC rollover needs a qualified
+new baseline. Opaque strategy state is not activated. Existing execution runners,
+5% runtime rule and SourcePolicy remain unchanged.
 
 The offline Binance adapter parses exchangeInfo, commission and myFilters with
 freshness/account/request checks and effective price/order/asset constraints.
@@ -97,8 +101,10 @@ the September 9 five-sleeve proposal is offline engineering only.
    values in chat. Isolated native adapter checkpoint reconstruction/reconciliation
    and three-process replay now pass. Qualify actual endpoint permissions, stream
    receipts, archive coverage and venue references, then validate real strategy
-   state/policy fingerprints before any execution bootstrap.
-   Reconcile downtime risk history and the 50 USDT planning loss with runtime ADRs.
+   state/policy fingerprints before any execution bootstrap. The downtime reviewer
+   detects observed breaches but cannot clear missing account/price coverage, cash
+   flows or UTC day-open history. Resolve actual runtime telemetry semantics and
+   the 50 USDT planning loss versus the binding 5% rule without weakening it.
 2. Review the explicit offline residual-exit policy before promotion and resolve
    re-entry with retained dust. Whole-step reductions now pass native acceptance;
    fixed BUY size, SignalEvent identities and SourcePolicy remain unchanged.
@@ -130,11 +136,11 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Latest Verification
 
-- **32 new checkpoint tests** passed; combined adapter/recovery regression: 102.
-  Three distinct processes preserve original bytes and risk state while reconciling
-  uncertain submit/cancel plus late fills to 333.4 USDT / 0.00166350 BTC. Replay
-  changes no economic state. Source receipts and the preset latch are synthetic.
-- Full offline suite: **2,118 passed**, 12 Postgres integration tests deselected
+- **33 downtime-risk tests** passed. A synthetic 499.95 → 473.35 → 499.75 USDT
+  path retains its 26.65 USDT daily-loss observation despite the rebound. Inclusive
+  5% boundaries agree with the existing baseline strategy; the planning rule stays
+  separate. Coverage, source, UTC baseline and immutable-input checks pass.
+- Full offline suite: **2,151 passed**, 12 Postgres integration tests deselected
   (no dedicated integration DSN). Ruff, registry and whitespace checks pass.
 - Prior abrupt-exit/fresh-process recovery and exact account comparison remain
   green. Private account responses are synthetic; no Binance HTTP/WS account
@@ -144,6 +150,7 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## References
 
+- [Read-only downtime risk review and remaining evidence boundaries](progress/portfolio-downtime-risk-2026-09-10.md).
 - [Native adapter checkpoints and three-process acceptance](progress/portfolio-adapter-checkpoint-2026-09-10.md).
 - [Native read-only transport, loopback acceptance and integration entrypoint](progress/portfolio-readonly-transport-2026-09-10.md).
 - [Source binding, user stream and native adapter qualification](progress/portfolio-source-stream-adapter-2026-09-10.md).

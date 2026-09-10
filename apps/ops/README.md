@@ -389,6 +389,12 @@ Binance 规则/手续费响应，输出哈希、约束和不兼容方向；不�
 退出 0 仅代表解析及手续费兼容性通过，账户对账和运行就绪状态始终为 false。
 详见 [交易所适配与输入格式](../../docs/progress/portfolio-venue-adapter-2026-09-09.md)。
 
+`python -m apps.ops.portfolio_downtime_risk_check --help` 提供只读本地停机风险
+审核入口，核对原生账户/报价观察与恢复前后检查点，保留期中越线和已有锁存。
+退出 0 仅表示所供记录未发现越线，不代表覆盖完整或可以恢复交易；不修改输入、
+不加载凭证、不连接网络。输入格式见
+[停机风险审核](../../docs/progress/portfolio-downtime-risk-2026-09-10.md)。
+
 - 应急脚本必须有**二次确认**参数，避免误触发
 - 任何写真实账户的脚本（Phase 6+）走 `EMERGENCY_*` 前缀，醒目
 - Phase 2 ops 脚本只能写本地 `data/`，不能接真实账户或下单 API
