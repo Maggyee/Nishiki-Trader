@@ -12,6 +12,7 @@ from dataclasses import asdict
 
 import msgspec
 import nautilus_trader
+from nautilus_trader.accounting.accounts.cash import CashAccount
 from nautilus_trader.accounting.factory import AccountFactory
 from nautilus_trader.model.enums import OmsType
 from nautilus_trader.model.events import AccountState, OrderFilled, OrderInitialized
@@ -33,7 +34,7 @@ def encode(event):
     return SERIALIZER.serialize(event).decode()
 
 
-def capture_native(strategy):
+def capture_native(strategy, *, venue_id_mode="native_uuid", anchor=None):
     from apps.strategies_nautilus.portfolio_simulation import INSTRUMENT
 
     cache = strategy.cache
@@ -42,6 +43,24 @@ def capture_native(strategy):
     initial_balances = {
         balance.currency.code: balance.total.as_decimal() for balance in initial.balances
     }
+    if venue_id_mode not in {"native_uuid", "binance_numeric_offline_v1"}:
+        raise RecoveryError("unsupported native venue ID mode")
+    account_anchor = {
+        "venue_uid": "synthetic-authority",
+        "native_account_id": str(account.id),
+        "start_ns": initial.ts_event,
+        "quote": str(initial_balances["USDT"]),
+        "base": str(initial_balances["BTC"]),
+    }
+    if venue_id_mode == "binance_numeric_offline_v1":
+        if anchor is None:
+            raise RecoveryError("explicit numeric-venue account anchor required")
+        supplied = {**asdict(anchor), "quote": str(anchor.quote), "base": str(anchor.base)}
+        if {**supplied, "venue_uid": "synthetic-authority"} != account_anchor:
+            raise RecoveryError("numeric-venue native baseline mismatch")
+        account_anchor = supplied
+    elif anchor is not None:
+        raise RecoveryError("simulation anchor is fixed")
     if any(
         adjustment.adjustment_type.name != "COMMISSION"
         for position in cache.positions()
@@ -51,15 +70,9 @@ def capture_native(strategy):
     return {
         "version": VERSION,
         "nautilus_version": nautilus_trader.__version__,
-        "venue_id_mode": "native_uuid",
+        "venue_id_mode": venue_id_mode,
         "ts_ns": strategy.clock.timestamp_ns(),
-        "anchor": {
-            "venue_uid": "synthetic-authority",
-            "native_account_id": str(account.id),
-            "start_ns": initial.ts_event,
-            "quote": str(initial_balances["USDT"]),
-            "base": str(initial_balances["BTC"]),
-        },
+        "anchor": account_anchor,
         "instrument": CurrencyPair.to_dict(cache.instrument(INSTRUMENT)),
         "accounts": [[encode(e) for e in a.events] for a in cache.accounts()],
         "orders": [
@@ -76,39 +89,53 @@ def capture_native(strategy):
     }
 
 
-def decode_events(rows, first_type):
+def decode_events(rows, first_type, *, max_ts_ns=None):
     events = [SERIALIZER.deserialize(row.encode()) for row in rows]
     if not events or not isinstance(events[0], first_type):
         raise RecoveryError("missing native initial event")
     if len({str(e.id) for e in events}) != len(events):
         raise RecoveryError("duplicate native event")
+    if max_ts_ns is not None and any(
+        not 0 <= e.ts_event <= max_ts_ns or not 0 <= e.ts_init <= max_ts_ns for e in events
+    ):
+        raise RecoveryError("native event exceeds checkpoint cursor")
     return events
 
 
-def reconstruct_native(bundle):
+def reconstruct_native(bundle, *, venue_id_mode="native_uuid", calculate_account_state=False):
     """Reconstruct detached native objects; do not mutate a running cache."""
     if (
-        bundle["version"] != VERSION
+        venue_id_mode not in {"native_uuid", "binance_numeric_offline_v1"}
+        or bundle["version"] != VERSION
         or bundle["nautilus_version"] != nautilus_trader.__version__
-        or bundle["venue_id_mode"] != "native_uuid"
+        or bundle["venue_id_mode"] != venue_id_mode
     ):
         raise RecoveryError("native serialization version mismatch")
     instrument = CurrencyPair.from_dict(bundle["instrument"])
+    max_ts_ns = bundle["ts_ns"] if venue_id_mode == "binance_numeric_offline_v1" else None
     accounts, orders, positions = [], [], []
     for rows in bundle["accounts"]:
-        events = decode_events(rows, AccountState)
-        account = AccountFactory.create(events[0])
+        events = decode_events(rows, AccountState, max_ts_ns=max_ts_ns)
+        if calculate_account_state:
+            if (
+                venue_id_mode != "binance_numeric_offline_v1"
+                or events[0].account_type.name != "CASH"
+            ):
+                raise RecoveryError("calculated account recovery is isolated numeric CASH only")
+            account = CashAccount(events[0], calculate_account_state=True)
+        else:
+            account = AccountFactory.create(events[0])
         for event in events[1:]:
             account.apply(event)
         accounts.append(account)
     for row in bundle["orders"]:
-        events = decode_events(row["events"], OrderInitialized)
+        events = decode_events(row["events"], OrderInitialized, max_ts_ns=max_ts_ns)
         order = OrderUnpacker.from_init(events[0])
         for event in events[1:]:
             order.apply(event)
         orders.append((order, PositionId(row["position_id"])))
     for rows in bundle["positions"]:
-        events = decode_events(rows, OrderFilled)
+        events = decode_events(rows, OrderFilled, max_ts_ns=max_ts_ns)
         if any(not isinstance(e, OrderFilled) for e in events):
             raise RecoveryError("unsupported position event")
         position = Position(instrument, events[0])

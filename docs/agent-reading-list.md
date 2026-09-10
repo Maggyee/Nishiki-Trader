@@ -108,6 +108,13 @@ account envelopes and bind the journal to actual socket state. Use the explicit
 account-only HTTP extension to avoid native signed-query DEBUG logging. Loopback
 network I/O is verified; real Binance credentials, endpoints and adapter process
 recovery remain unqualified. No execution runner is wired by this transport.
+For subsequent isolated numeric-venue checkpoint reconciliation, read
+`docs/progress/portfolio-adapter-checkpoint-2026-09-10.md` and
+`apps/strategies_nautilus/portfolio_adapter_checkpoint.py`. Native events, Binance
+reports and exact account comparison now pass three-process acceptance. Original
+bytes and opaque strategy state remain unchanged; policy qualification, downtime
+risk coverage and real-account execution bootstrap are still required. Numeric
+snapshots cannot enter default UUID simulation restoration.
 
 | Task area | Read |
 |---|---|

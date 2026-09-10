@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-10
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Qualify the actual account source and join downtime evidence to process recovery after native read-only transport acceptance on loopback.
+- **Current objective**: Qualify actual account/downtime evidence and strategy risk state after isolated native adapter checkpoint reconstruction and three-process replay acceptance.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -35,8 +35,11 @@ confirmed signed subscriptions, preserves envelopes and checks actual socket sta
 at every fence. Real Rust WebSocket I/O passes loopback acceptance; no Binance
 account or external WS was connected. Account HTTP requests have a GET whitelist
 and avoid signed-URL debug logging. Local receipts cannot prove global gap-free
-continuity. Adapter reconciliation is not yet wired into process recovery or
-existing execution runners. SourcePolicy remains unchanged.
+continuity. An isolated numeric-venue checkpoint path now combines native event
+reconstruction, Binance report reconciliation and exact account comparison; three
+processes verify abrupt exit and replay with original state/latches preserved.
+Opaque strategy state is not activated, and downtime risk history remains required.
+Existing execution runners and SourcePolicy remain unchanged.
 
 The offline Binance adapter parses exchangeInfo, commission and myFilters with
 freshness/account/request checks and effective price/order/asset constraints.
@@ -91,10 +94,10 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 1. Obtain the explicit environment, credential variable names/config path, expected
    UID and independent account baseline for real read-only acceptance; no secret
-   values in chat. Native signing, stream fences, loopback transport and adapter
-   reconciliation now pass. Qualify actual endpoint permissions and stream receipts,
-   archive/downtime coverage and effective venue references, then integrate native
-   adapter reconciliation into process recovery.
+   values in chat. Isolated native adapter checkpoint reconstruction/reconciliation
+   and three-process replay now pass. Qualify actual endpoint permissions, stream
+   receipts, archive coverage and venue references, then validate real strategy
+   state/policy fingerprints before any execution bootstrap.
    Reconcile downtime risk history and the 50 USDT planning loss with runtime ADRs.
 2. Review the explicit offline residual-exit policy before promotion and resolve
    re-entry with retained dust. Whole-step reductions now pass native acceptance;
@@ -127,10 +130,11 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Latest Verification
 
-- **42 new transport tests** passed; combined source/collector regression: 87.
-  Actual native Rust WebSocket I/O passes two loopback cases; other cases cover
-  signed subscription, REST races, disconnects, safe HTTP paths/logging and cleanup.
-- Full offline suite: **2,086 passed**, 12 Postgres integration tests deselected
+- **32 new checkpoint tests** passed; combined adapter/recovery regression: 102.
+  Three distinct processes preserve original bytes and risk state while reconciling
+  uncertain submit/cancel plus late fills to 333.4 USDT / 0.00166350 BTC. Replay
+  changes no economic state. Source receipts and the preset latch are synthetic.
+- Full offline suite: **2,118 passed**, 12 Postgres integration tests deselected
   (no dedicated integration DSN). Ruff, registry and whitespace checks pass.
 - Prior abrupt-exit/fresh-process recovery and exact account comparison remain
   green. Private account responses are synthetic; no Binance HTTP/WS account
@@ -140,6 +144,7 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## References
 
+- [Native adapter checkpoints and three-process acceptance](progress/portfolio-adapter-checkpoint-2026-09-10.md).
 - [Native read-only transport, loopback acceptance and integration entrypoint](progress/portfolio-readonly-transport-2026-09-10.md).
 - [Source binding, user stream and native adapter qualification](progress/portfolio-source-stream-adapter-2026-09-10.md).
 - [Read-only account reconciliation and native process recovery](progress/portfolio-account-recovery-2026-09-09.md).

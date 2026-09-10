@@ -222,8 +222,18 @@ Binance 转换器及原生对账引擎验证合成订单恢复，拒绝推断成
 真实网络收发已在本机 WebSocket 服务验收，尚未连接 Binance 私有账户。
 调用示例和清理约定见
 [原生只读传输验收](../../docs/progress/portfolio-readonly-transport-2026-09-10.md)。
+`portfolio_adapter_checkpoint.py` 现提供隔离的数字订单号检查点恢复：原生事件重建后，
+应用 Binance 原始成交报告，再精确检查账户余额、锁定金额、手续费和持仓归属。
+三进程验收验证突然退出、恢复和幂等重放；原检查点、策略状态及风险锁存保持不变。
+它不启动策略，不认定停机风险历史完整，也不允许数字检查点进入默认 UUID 模拟恢复。
+
+```bash
+.venv/bin/python -m apps.strategies_nautilus.runners.portfolio_adapter_checkpoint_acceptance
+```
+
+见[适配器检查点恢复验收](../../docs/progress/portfolio-adapter-checkpoint-2026-09-10.md)。
 下一入口为明确账户环境、凭证变量名/配置路径、预期 UID 和独立账户基线，验证真实
-只读来源并接入断线历史及进程恢复；部署前还需明确余量存在时的重新入场政策。
+只读来源、停机历史及策略状态/风险政策；部署前还需明确余量存在时的重新入场政策。
 详见[原生手续费验收](../../docs/progress/portfolio-base-fee-acceptance-2026-09-09.md)及
 [残余库存退出验收](../../docs/progress/portfolio-residual-exit-2026-09-09.md)。
 
