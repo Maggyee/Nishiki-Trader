@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-09-09
+- **Last updated**: 2026-09-10
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Qualify a dedicated read-only account source, stream/archive boundary and native adapter recovery after synthetic cross-process acceptance.
+- **Current objective**: Qualify actual read-only credentials and WebSocket transport after offline native signing, stream journal and adapter-recovery acceptance.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -27,8 +27,12 @@ acknowledgements, warm strategy restart, persistent deduplication and loss latch
 The explicit recovery mode now persists native events with the strategy journal
 and passes abrupt-exit/fresh-process acceptance, including partial orders, dust,
 deduplication and loss latches. Missing/drifting/uncertain state fails closed.
-Real account/adapter recovery and runtime policy reconciliation remain next. Existing
-paper/testnet/live runners and SourcePolicy are unchanged.
+Native Binance signing and report converters now pass offline acceptance, including
+submitted orders and pending cancels with late actual-fee fills. A durable stream
+journal binds source, subscription epoch and REST fences; disconnects and new events
+invalidate prior observations. No actual account or WebSocket was connected, and
+local receipts cannot prove global gap-free continuity. The adapter fixture is not
+wired into process recovery or existing runners. SourcePolicy remains unchanged.
 
 The offline Binance adapter parses exchangeInfo, commission and myFilters with
 freshness/account/request checks and effective price/order/asset constraints.
@@ -81,10 +85,11 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Next Steps
 
-1. Qualify a dedicated read-only account source, complete archive/user-stream
-   boundary and effective venue references. Signed collection and exact comparison
-   now exist; fresh-process native restoration passes synthetic acceptance.
-   Exercise real adapter execution-report recovery for drift and uncertain commands.
+1. Obtain the explicit environment, credential variable names/config path and expected
+   UID for real read-only acceptance; no secret values in chat. Qualify endpoint
+   permissions, native WebSocket transport, archive/downtime coverage and effective
+   venue references. Offline signing, stream fences and native adapter reconciliation
+   now pass; actual transport and integration into process recovery remain unverified.
    Reconcile downtime risk history and the 50 USDT planning loss with runtime ADRs.
 2. Review the explicit offline residual-exit policy before promotion and resolve
    re-entry with retained dust. Whole-step reductions now pass native acceptance;
@@ -117,47 +122,20 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Latest Verification
 
-- **61 new account/recovery tests** passed: 48 native/account tests and 13 signed
-  read-only collector tests. Combined portfolio regression: 137 passed. Two actual
-  worker processes preserve partial orders, exact dust and risk latches without
-  resubmission. No real HTTP/account was used; REST-only readiness stays false.
-- Full offline suite: **1,990 tests passed**; 12 Postgres integration tests
-  deselected (no dedicated integration DSN supplied).
-- **22 residual-exit tests** passed: durable sizing audit, exact native ownership,
-  min/max filters, sub-notional retention, partial/late fills, pending cancellation,
-  fixed-size re-entry refusal, loss latches, replay and restart boundaries. Both
-  fee modes produce reproducible whole-step exit reports; Ruff and registry pass.
-- **19 received-asset inventory tests** passed: native BTC commission adjustments,
-  eight-place precision, partial/late fills, exact aligned exits, retained dust,
-  conservative per-fill rounding, mode fingerprints and warm restart. Both CLI
-  accounting modes, Ruff and registry check passed.
-- **55 venue-adapter tests** passed: official response shapes, account/request
-  identity, independent freshness, fee-currency rejection, inclusive price bands,
-  order/position/asset caps and native pre-submit injection. Read-only CLI, Ruff
-  and registry check passed. No actual account reconciliation is claimed.
-- **35 synthetic Nautilus lifecycle tests** passed: durable batch reservations,
-  partial/late fills, cancel acknowledgements, native risk denial, sleeve attribution,
-  interrupted submits, checkpoint failure, warm restart/cold refusal and latched
-  daily/peak risk. CLI smoke is reproducible; Ruff and registry check passed.
-- 87 focused cohort/preflight tests (24 added this revision); six-candidate
-  evidence revalidation succeeded. At synthetic 100,000 USDT/BTC and 15 bps,
-  whole-batch checks still reject 500.75 USDT; v2 selects four buys requiring
-  400.60 USDT, leaving 99.40 USDT. All 120 input permutations agree.
-- Ten new end-to-end/time-consistency/identity tests passed.
-- Retained-fill diagnostics: 20 targeted tests passed; Ruff and registry check passed.
-- Follow-up: 17 targeted tests passed; original-evidence search, three pipeline
-  hash/count checks and all ten pinned cron entries verified. No collector rerun.
-- Budget v2: 20 targeted tests passed; exact operator inputs and inclusive loss
-  thresholds verified. Versioned output preserves v1 evidence.
-- Event-cash extension: 32 focused tests passed; final cash reconciles to all
-  six candidates' basket PnL. Latest natural cron attempts and monitor verified.
-- Real corrected-collector smoke and read-only monitor refresh passed. Historical
-  accounting reconciles all six included candidates to committed base/stress PnL.
-- Previous repair: frontend typecheck/build, zero-vulnerability audit and bilingual
-  HTTP checks passed; see its acceptance record for scope and limitations.
+- **54 new tests** passed: 32 source/stream/native-signing and 22 native adapter
+  recovery cases. Exact fees, original position linkage, replay, late fills,
+  malformed inputs, persistence failure and stale REST fences are exercised.
+- Full offline suite: **2,044 passed**, 12 Postgres integration tests deselected
+  (no dedicated integration DSN). Ruff, registry and whitespace checks pass.
+- Prior abrupt-exit/fresh-process recovery and exact account comparison remain
+  green. Private account responses are synthetic; no actual HTTP/WS account
+  connection, real transport recovery, atomic stream boundary or live readiness.
+- Earlier portfolio, collector and reliability verification is archived in the
+  linked progress records; it is not a current runtime-health observation.
 
 ## References
 
+- [Source binding, user stream and native adapter qualification](progress/portfolio-source-stream-adapter-2026-09-10.md).
 - [Read-only account reconciliation and native process recovery](progress/portfolio-account-recovery-2026-09-09.md).
 - [Explicit offline residual-exit policy and acceptance](progress/portfolio-residual-exit-2026-09-09.md).
 - [Native base-fee accounting, precision and no-rounding exit acceptance](progress/portfolio-base-fee-acceptance-2026-09-09.md).

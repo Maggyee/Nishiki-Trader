@@ -94,6 +94,13 @@ atomically with strategy state and restored in a fresh simulation process.
 Signed REST agreement is not an atomic stream barrier; actual accounts, downtime
 history and live adapter recovery remain unqualified. Uncertain submits/cancels
 and drifting snapshots fail closed; no automatic resubmission or live readiness.
+For subsequent offline native signing, source-bound stream receipts and native
+Binance report reconciliation, read
+`docs/progress/portfolio-source-stream-adapter-2026-09-10.md`, `portfolio_stream.py`
+and `portfolio_adapter_recovery.py` under `apps/strategies_nautilus/`. Local epochs,
+receipt counters and matching REST reads do not prove global gap-free delivery.
+Actual credentials, WebSocket transport and integration into process recovery are
+still unqualified; the adapter fixture cannot enable live admission.
 
 | Task area | Read |
 |---|---|

@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from nautilus_trader.core.nautilus_pyo3 import HttpMethod
 
 from apps.strategies_nautilus.portfolio_account import AccountAnchor, AccountEvidence
+from apps.strategies_nautilus.portfolio_stream import StreamFence, bind_source
 from apps.strategies_nautilus.portfolio_venue import (
     CapturedResponse,
     VenueInputError,
@@ -28,6 +29,7 @@ class CollectedAccount:
     wire_sha256: tuple[tuple[str, str], ...]
     api_trading_enabled: bool
     atomic_revision_verified: bool = False
+    stream_fence: StreamFence | None = None
 
 
 class BinanceReadOnlyAccountCollector:
@@ -37,7 +39,7 @@ class BinanceReadOnlyAccountCollector:
     a separately qualified continuous archive; exchange retention isn't assumed.
     """
 
-    def __init__(self, client, *, clock_ns, max_pages=32):
+    def __init__(self, client, *, clock_ns, max_pages=32, stream=None):
         if client.base_url.rstrip("/") not in {
             "https://api.binance.com",
             "https://testnet.binance.vision",
@@ -48,9 +50,15 @@ class BinanceReadOnlyAccountCollector:
         self.client = client
         self.clock_ns = clock_ns
         self.max_pages = max_pages
+        self.stream = stream
 
     async def collect(self, anchor: AccountAnchor) -> CollectedAccount:
         hashes = []
+        fence = None
+        if self.stream is not None:
+            if bind_source(self.client, anchor.venue_uid) != self.stream.binding:
+                raise VenueInputError("REST/user-stream source mismatch")
+            fence = self.stream.fence()
 
         async def get(path, params=None):
             payload = {
@@ -116,6 +124,10 @@ class BinanceReadOnlyAccountCollector:
             )
         if account_ns - started > 60_000_000_000:
             raise VenueInputError("account collection exceeded freshness window")
+        if self.stream is not None:
+            if bind_source(self.client, anchor.venue_uid) != fence.binding:
+                raise VenueInputError("REST source changed during collection")
+            self.stream.record_collection(fence, tuple(hashes))
         return CollectedAccount(
             AccountEvidence(
                 CapturedResponse(account_body, account_ns, anchor.venue_uid),
@@ -127,4 +139,5 @@ class BinanceReadOnlyAccountCollector:
             ),
             tuple(hashes),
             permissions["enableSpotAndMarginTrading"],
+            stream_fence=fence,
         )
