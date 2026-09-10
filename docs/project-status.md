@@ -44,11 +44,12 @@ checkpoints and retains observed 5% breaches through a rebound. It reports the
 or dense samples cannot prove complete coverage; UTC rollover needs a qualified
 new baseline. Opaque strategy state is not activated. Existing execution runners,
 5% runtime rule and SourcePolicy remain unchanged.
-Stream-bound REST collection now retains every raw response before parsing and
-seals completed collections. Explicit local archive replay reuses collector checks
-and reproduces evidence for detached native comparison. Abrupt exit, missing pages
-and altered receipts are tested; historical results have no reusable stream fence.
-Old hash-only journals cannot supply the missing original response bodies.
+Stream-bound REST collection retains raw responses and seals successful records.
+One collection owns each journal; a 60-second async deadline and per-read clock,
+source and fence checks bound collection. Failure records an abort before explicit
+reuse; failed disk writes keep it blocked. Local replay reproduces evidence for
+detached native comparison but cannot restore a stream fence or fill old hash-only
+archives. Abrupt exit, pagination, receipt integrity and interrupted retries pass.
 
 The offline Binance adapter parses exchangeInfo, commission and myFilters with
 freshness/account/request checks and effective price/order/asset constraints.
@@ -143,13 +144,11 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Latest Verification
 
-- **31 account-archive tests** passed: native signed-response retention, abrupt
-  process exit, exact evidence replay, pagination, tamper/truncation rejection,
-  privacy and detached native comparison. Historical replay cannot satisfy a live
-  stream fence. Downtime breach retention and the binding 5% rule remain unchanged.
-- Full offline suite: **2,182 passed**, 12 Postgres integration tests deselected
-  (no dedicated integration DSN).
-  Ruff, CLI, registry and whitespace checks pass.
+- **130 collector/stream/archive tests** passed, including 12 new concurrency,
+  cancellation, timeout, source/clock and abort-persistence regressions. Explicit
+  retries produce independently replayable evidence; failed collections stay rejected.
+- Full offline regression: **2,194 passed**, 12 Postgres integration tests deselected
+  (no dedicated integration DSN). Ruff, registry and whitespace checks pass.
 - Prior abrupt-exit/fresh-process recovery and exact account comparison remain
   green. Private account responses are synthetic; no Binance HTTP/WS account
   connection, real adapter process recovery, atomic stream boundary or live readiness.
@@ -158,6 +157,7 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## References
 
+- [Collection concurrency, time limits and interruption recovery](progress/portfolio-collection-lifecycle-2026-09-10.md).
 - [Raw account response archive and offline collection replay](progress/portfolio-account-archive-2026-09-10.md).
 - [Read-only downtime risk review and remaining evidence boundaries](progress/portfolio-downtime-risk-2026-09-10.md).
 - [Native adapter checkpoints and three-process acceptance](progress/portfolio-adapter-checkpoint-2026-09-10.md).

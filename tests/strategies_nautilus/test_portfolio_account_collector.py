@@ -2,20 +2,28 @@ from __future__ import annotations
 
 import asyncio
 import copy
+import hashlib
 import json
+import os
 from decimal import Decimal as D
 
 import pytest
 from nautilus_trader.core.nautilus_pyo3 import HttpMethod
 
 from apps.strategies_nautilus.portfolio_account import AccountAnchor
+from apps.strategies_nautilus.portfolio_account_archive import (
+    AccountArchiveError,
+    replay_account_collection,
+)
 from apps.strategies_nautilus.portfolio_account_collector import BinanceReadOnlyAccountCollector
+from apps.strategies_nautilus.portfolio_stream import StreamError, UserStreamJournal, bind_source
 from apps.strategies_nautilus.portfolio_venue import VenueInputError
 from apps.strategies_nautilus.runners.portfolio_simulation_acceptance import BASE_NS, SECOND
 
 
 class SignedClientFixture:
     base_url = "https://api.binance.com"
+    api_key = "fixture-read-key"
 
     def __init__(self):
         self.calls = []
@@ -148,3 +156,187 @@ def test_transport_errors_do_not_echo_private_payloads():
     client.sign_request = failure
     with pytest.raises(VenueInputError, match="^signed account read failed$"):
         collect(client)
+
+
+@pytest.fixture
+def collection_journal(tmp_path):
+    path = tmp_path / "collection.jsonl"
+    binding = bind_source(SignedClientFixture(), "123")
+    journal = UserStreamJournal(path, binding, clock_ns=lambda: BASE_NS + 2 * SECOND)
+    journal.subscribed(7, binding)
+    yield path, journal, AccountAnchor("123", "BINANCE-001", BASE_NS, D("500"))
+    journal.close()
+
+
+def stream_collector(client, journal):
+    return BinanceReadOnlyAccountCollector(client, clock_ns=journal.clock_ns, stream=journal)
+
+
+def test_shared_journal_rejects_overlapping_collectors_before_network(collection_journal):
+    path, journal, anchor = collection_journal
+
+    async def scenario():
+        first, second = SignedClientFixture(), SignedClientFixture()
+        entered, release = asyncio.Event(), asyncio.Event()
+        original = first.sign_request
+
+        async def paused(*args, **kwargs):
+            entered.set()
+            await release.wait()
+            return await original(*args, **kwargs)
+
+        first.sign_request = paused
+        task = asyncio.create_task(stream_collector(first, journal).collect(anchor))
+        try:
+            await asyncio.wait_for(entered.wait(), 1)
+            with pytest.raises(StreamError, match="collection already active"):
+                await stream_collector(second, journal).collect(anchor)
+            assert not second.calls
+            release.set()
+            result = await task
+            raw = path.read_bytes()
+            archived = await replay_account_collection(
+                raw,
+                source=journal.binding,
+                expected_sha256=hashlib.sha256(raw).hexdigest(),
+                collection_id=result.collection_id,
+                anchor=anchor,
+            )
+            assert archived.collected.evidence == result.evidence
+        finally:
+            release.set()
+            if not task.done():
+                task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("failure", ["cancel", "timeout", "response", "disconnect"])
+def test_interrupted_collection_is_aborted_and_next_collection_replays(
+    collection_journal,
+    monkeypatch,
+    failure,
+):
+    path, journal, anchor = collection_journal
+    import apps.strategies_nautilus.portfolio_account_collector as module
+
+    async def scenario():
+        client = SignedClientFixture()
+        entered = asyncio.Event()
+        original = client.sign_request
+
+        async def failing(method, endpoint, *, payload):
+            if endpoint.endswith("allOrders"):
+                entered.set()
+                if failure in {"cancel", "timeout"}:
+                    await asyncio.Event().wait()
+                if failure == "disconnect":
+                    journal.disconnect()
+                else:
+                    raise ValueError("private server details")
+            return await original(method, endpoint, payload=payload)
+
+        client.sign_request = failing
+        if failure == "timeout":
+            monkeypatch.setattr(module, "COLLECTION_TIMEOUT_SECONDS", 0.05)
+        task = asyncio.create_task(stream_collector(client, journal).collect(anchor))
+        await asyncio.wait_for(entered.wait(), 1)
+        if failure == "cancel":
+            task.cancel()
+        with pytest.raises(asyncio.CancelledError if failure == "cancel" else ValueError):
+            await task
+        failed_rows = list(map(json.loads, path.read_bytes().splitlines()))
+        failed_id = next(
+            row["collection_id"] for row in failed_rows if row["kind"] == "rest_started"
+        )
+        assert failed_rows[-1]["kind"] == "rest_aborted"
+        assert failed_rows[-1]["collection_id"] == failed_id
+        assert not any(row["kind"] == "rest_collection" for row in failed_rows)
+        assert "private server details" not in path.read_text()
+        if failure == "disconnect":
+            journal.subscribed(8, journal.binding)
+        result = await stream_collector(SignedClientFixture(), journal).collect(anchor)
+        raw = path.read_bytes()
+        arguments = dict(
+            source=journal.binding, expected_sha256=hashlib.sha256(raw).hexdigest(), anchor=anchor
+        )
+        with pytest.raises(AccountArchiveError):
+            await replay_account_collection(raw, collection_id=failed_id, **arguments)
+        replayed = await replay_account_collection(
+            raw, collection_id=result.collection_id, **arguments
+        )
+        assert replayed.collected.evidence == result.evidence
+        assert result.collection_id != failed_id
+
+    asyncio.run(scenario())
+
+
+def test_total_timeout_also_bounds_collector_without_a_journal(monkeypatch):
+    import apps.strategies_nautilus.portfolio_account_collector as module
+
+    client = SignedClientFixture()
+
+    async def stalled(*args, **kwargs):
+        await asyncio.Event().wait()
+
+    client.sign_request = stalled
+    monkeypatch.setattr(module, "COLLECTION_TIMEOUT_SECONDS", 0.01)
+    with pytest.raises(VenueInputError, match="total time limit"):
+        collect(client)
+
+
+@pytest.mark.parametrize("received", [BASE_NS + SECOND, BASE_NS + 63 * SECOND, 1.5, True])
+def test_clock_regression_expiry_and_invalid_time_stop_after_first_response(received):
+    now = [BASE_NS + 2 * SECOND]
+    client = SignedClientFixture()
+    original = client.sign_request
+
+    async def changed_clock(*args, **kwargs):
+        raw = await original(*args, **kwargs)
+        now[0] = received
+        return raw
+
+    client.sign_request = changed_clock
+    collector = BinanceReadOnlyAccountCollector(client, clock_ns=lambda: now[0])
+    with pytest.raises(VenueInputError):
+        asyncio.run(collector.collect(AccountAnchor("123", "BINANCE-001", BASE_NS, D("500"))))
+    assert len(client.calls) == 1
+
+
+def test_source_rotation_stops_before_another_signed_request(collection_journal):
+    path, journal, anchor = collection_journal
+    client = SignedClientFixture()
+    original = client.sign_request
+
+    async def rotate(*args, **kwargs):
+        raw = await original(*args, **kwargs)
+        client.api_key = "rotated-fixture-key"
+        return raw
+
+    client.sign_request = rotate
+    with pytest.raises(VenueInputError, match="source changed"):
+        asyncio.run(stream_collector(client, journal).collect(anchor))
+    assert len(client.calls) == 1
+    assert json.loads(path.read_bytes().splitlines()[-1])["kind"] == "rest_aborted"
+
+
+def test_abort_persistence_failure_blocks_the_journal(collection_journal, monkeypatch):
+    path, journal, anchor = collection_journal
+    client = SignedClientFixture()
+
+    async def failed_request(*args, **kwargs):
+        monkeypatch.setattr(os, "fsync", lambda fd: (_ for _ in ()).throw(OSError("disk")))
+        raise ValueError("private transport failure")
+
+    client.sign_request = failed_request
+    with pytest.raises(StreamError, match="persistence failed"):
+        asyncio.run(stream_collector(client, journal).collect(anchor))
+    second = SignedClientFixture()
+    with pytest.raises(StreamError):
+        asyncio.run(stream_collector(second, journal).collect(anchor))
+    assert not second.calls
+    assert not journal.connected
+    assert not any(
+        row["kind"] == "rest_collection" for row in map(json.loads, path.read_bytes().splitlines())
+    )

@@ -24,6 +24,7 @@ from apps.strategies_nautilus.portfolio_venue import (
 )
 
 DAY_NS = 86_400_000_000_000
+COLLECTION_TIMEOUT_SECONDS = 60
 
 
 class BinanceAccountReadOnlyHttpClient(BinanceHttpClient):
@@ -97,25 +98,61 @@ class BinanceReadOnlyAccountCollector:
         self.stream = stream
 
     async def collect(self, anchor: AccountAnchor) -> CollectedAccount:
-        hashes = []
+        started = self.clock_ns()
+        if (
+            type(started) is not int
+            or type(anchor.start_ns) is not int
+            or not 0 < anchor.start_ns <= started
+            or started - anchor.start_ns > DAY_NS
+        ):
+            raise VenueInputError("account anchor requires a complete recent history archive")
         fence = None
         collection_id = None
         if self.stream is not None:
             if bind_source(self.client, anchor.venue_uid) != self.stream.binding:
                 raise VenueInputError("REST/user-stream source mismatch")
             fence = self.stream.fence()
+            collection_id = self.stream.begin_collection(
+                fence,
+                {**asdict(anchor), "quote": str(anchor.quote), "base": str(anchor.base)},
+                started,
+            )
+        try:
+            async with asyncio.timeout(COLLECTION_TIMEOUT_SECONDS):
+                return await self._collect(anchor, started, fence, collection_id)
+        except TimeoutError:
+            raise VenueInputError("account collection exceeded total time limit") from None
+        finally:
+            if self.stream is not None:
+                self.stream.abort_collection(collection_id)
+
+    async def _collect(self, anchor, started, fence, collection_id):
+        hashes = []
+        previous_ns = started
+
+        def sample_time():
+            nonlocal previous_ns
+            now = self.clock_ns()
+            if type(now) is not int or now < previous_ns or now - started > 60_000_000_000:
+                raise VenueInputError("account collection clock regressed or expired")
+            previous_ns = now
+            return now
 
         async def get(path, params=None):
+            if self.stream is not None:
+                if bind_source(self.client, anchor.venue_uid) != fence.binding:
+                    raise VenueInputError("REST source changed during collection")
+                self.stream.assert_fence(fence)
             # The native signer may mutate payload. Keep a separate unsigned copy.
             selectors = dict(params or {})
             payload = {
                 **selectors,
-                "timestamp": str(self.clock_ns() // 1_000_000),
+                "timestamp": str(sample_time() // 1_000_000),
                 "recvWindow": "5000",
             }
             try:
                 raw = await self.client.sign_request(HttpMethod.GET, path, payload=payload)
-                received_ns = self.clock_ns()
+                received_ns = sample_time()
                 if self.stream is not None:
                     self.stream.record_response(
                         fence, collection_id, path, selectors, raw, received_ns
@@ -127,15 +164,6 @@ class BinanceReadOnlyAccountCollector:
             hashes.append((path, hashlib.sha256(raw).hexdigest()))
             return parsed, body, received_ns
 
-        started = self.clock_ns()
-        if not 0 < anchor.start_ns <= started or started - anchor.start_ns > DAY_NS:
-            raise VenueInputError("account anchor requires a complete recent history archive")
-        if self.stream is not None:
-            collection_id = self.stream.begin_collection(
-                fence,
-                {**asdict(anchor), "quote": str(anchor.quote), "base": str(anchor.base)},
-                started,
-            )
         permissions, _, _ = await get("/sapi/v1/account/apiRestrictions")
         if (
             permissions.get("enableReading") is not True
@@ -180,8 +208,7 @@ class BinanceReadOnlyAccountCollector:
             raise VenueInputError(
                 "account changed during collection; recollect before reconciliation"
             )
-        if account_ns - started > 60_000_000_000:
-            raise VenueInputError("account collection exceeded freshness window")
+        sample_time()
         if self.stream is not None:
             if bind_source(self.client, anchor.venue_uid) != fence.binding:
                 raise VenueInputError("REST source changed during collection")

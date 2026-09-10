@@ -129,6 +129,12 @@ now retain unsigned selectors and raw REST bodies before parsing, then seal the
 successful collection. Historical replay has no reusable stream fence; selected
 hashes do not authenticate source or prove global coverage. Old hash-only journals
 cannot be retroactively qualified as complete response archives.
+For subsequent collection concurrency, timeout and cancellation behavior, read
+`docs/progress/portfolio-collection-lifecycle-2026-09-10.md`. One journal owns at
+most one in-flight REST collection, including across collector instances. Failure
+records an abort before releasing ownership; failed persistence blocks reuse.
+The 60-second async deadline does not preempt synchronous disk I/O. Historical
+replay and actual source/coverage qualification retain their existing boundaries.
 
 | Task area | Read |
 |---|---|

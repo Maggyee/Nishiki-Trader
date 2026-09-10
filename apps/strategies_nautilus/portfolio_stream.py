@@ -65,6 +65,7 @@ class UserStreamJournal:
         self._seen = {}
         self._previous = "0" * 64
         self._sequence = 0
+        self._active_collection = None
         self._file = os.fdopen(os.open(path, os.O_CREAT | os.O_RDWR, 0o600), "r+b")
         try:
             fcntl.flock(self._file, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -226,14 +227,19 @@ class UserStreamJournal:
 
     def begin_collection(self, fence, anchor, started_ns):
         self.assert_fence(fence)
+        if self._active_collection is not None:
+            raise StreamError("account collection already active")
         collection_id = str(uuid4())
         self._append(
             "rest_started", collection_id=collection_id, anchor=anchor, started_ns=started_ns
         )
+        self._active_collection = collection_id
         return collection_id
 
     def record_response(self, fence, collection_id, path, params, raw, response_ns):
         self.assert_fence(fence)
+        if collection_id is None or collection_id != self._active_collection:
+            raise StreamError("active account collection required")
         # Only unsigned query selectors belong in the private evidence archive.
         if set(params) - {"symbol", "startTime", "orderId", "fromId", "limit", "omitZeroBalances"}:
             raise StreamError("unsupported archived account query")
@@ -251,7 +257,16 @@ class UserStreamJournal:
 
     def record_collection(self, fence, hashes, *, collection_id=None):
         self.assert_fence(fence)
+        if collection_id is None or collection_id != self._active_collection:
+            raise StreamError("active account collection required")
         self._append("rest_collection", response_sha256=hashes, collection_id=collection_id)
+        self._active_collection = None
+
+    def abort_collection(self, collection_id):
+        """Release only this collection; failed persistence leaves the journal blocked."""
+        if collection_id is not None and collection_id == self._active_collection:
+            self._append("rest_aborted", collection_id=collection_id)
+            self._active_collection = None
 
     def close(self):
         self.connected = False
