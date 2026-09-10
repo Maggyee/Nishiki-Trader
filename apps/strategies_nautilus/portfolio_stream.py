@@ -83,6 +83,12 @@ class UserStreamJournal:
                 self._sequence += 1
                 self._previous = digest
             self._append("process_started")
+            # Persist the directory entry too when this is a newly created archive.
+            directory_fd = os.open(path.parent, os.O_RDONLY)
+            try:
+                os.fsync(directory_fd)
+            finally:
+                os.close(directory_fd)
         except Exception:
             self._file.close()
             raise
@@ -218,9 +224,34 @@ class UserStreamJournal:
         if self.fence() != fence:
             raise StreamError("stream changed during or after account collection")
 
-    def record_collection(self, fence, hashes):
+    def begin_collection(self, fence, anchor, started_ns):
         self.assert_fence(fence)
-        self._append("rest_collection", response_sha256=hashes)
+        collection_id = str(uuid4())
+        self._append(
+            "rest_started", collection_id=collection_id, anchor=anchor, started_ns=started_ns
+        )
+        return collection_id
+
+    def record_response(self, fence, collection_id, path, params, raw, response_ns):
+        self.assert_fence(fence)
+        # Only unsigned query selectors belong in the private evidence archive.
+        if set(params) - {"symbol", "startTime", "orderId", "fromId", "limit", "omitZeroBalances"}:
+            raise StreamError("unsupported archived account query")
+        if len(raw) > 8 * 1024 * 1024:
+            raise StreamError("oversized account response")
+        self._append(
+            "rest_response",
+            collection_id=collection_id,
+            path=path,
+            params=params,
+            raw=raw.decode(),
+            response_ns=response_ns,
+            response_sha256=hashlib.sha256(raw).hexdigest(),
+        )
+
+    def record_collection(self, fence, hashes, *, collection_id=None):
+        self.assert_fence(fence)
+        self._append("rest_collection", response_sha256=hashes, collection_id=collection_id)
 
     def close(self):
         self.connected = False

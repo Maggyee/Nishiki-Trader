@@ -122,6 +122,13 @@ For subsequent read-only downtime risk observations, read
 through recovery rebounds and reports the planning-versus-5% mismatch. Sampled
 native balances/quotes do not qualify complete coverage, cash flows, real source or
 runtime policy. CLI exit 0 is not a restart permit; no checkpoint/latch is changed.
+For subsequent raw account response persistence and offline replay, read
+`docs/progress/portfolio-account-archive-2026-09-10.md` and
+`apps/strategies_nautilus/portfolio_account_archive.py`. Stream-bound collections
+now retain unsigned selectors and raw REST bodies before parsing, then seal the
+successful collection. Historical replay has no reusable stream fence; selected
+hashes do not authenticate source or prove global coverage. Old hash-only journals
+cannot be retroactively qualified as complete response archives.
 
 | Task area | Read |
 |---|---|

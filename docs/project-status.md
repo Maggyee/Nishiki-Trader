@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-10
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Qualify actual account/price archives, cash flows and strategy policy after checkpoint recovery and read-only downtime breach review.
+- **Current objective**: Qualify actual account/price archives, cash flows and strategy policy using persisted REST evidence and recovered native checkpoints.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -44,6 +44,11 @@ checkpoints and retains observed 5% breaches through a rebound. It reports the
 or dense samples cannot prove complete coverage; UTC rollover needs a qualified
 new baseline. Opaque strategy state is not activated. Existing execution runners,
 5% runtime rule and SourcePolicy remain unchanged.
+Stream-bound REST collection now retains every raw response before parsing and
+seals completed collections. Explicit local archive replay reuses collector checks
+and reproduces evidence for detached native comparison. Abrupt exit, missing pages
+and altered receipts are tested; historical results have no reusable stream fence.
+Old hash-only journals cannot supply the missing original response bodies.
 
 The offline Binance adapter parses exchangeInfo, commission and myFilters with
 freshness/account/request checks and effective price/order/asset constraints.
@@ -100,7 +105,9 @@ the September 9 five-sleeve proposal is offline engineering only.
    UID and independent account baseline for real read-only acceptance; no secret
    values in chat. Isolated native adapter checkpoint reconstruction/reconciliation
    and three-process replay now pass. Qualify actual endpoint permissions, stream
-   receipts, archive coverage and venue references, then validate real strategy
+   receipts, archive coverage and venue references. Raw REST persistence and local
+   replay now exist; select a closed archive hash and collection ID for audit, never
+   reuse archived receipts as a current stream fence. Then validate real strategy
    state/policy fingerprints before any execution bootstrap. The downtime reviewer
    detects observed breaches but cannot clear missing account/price coverage, cash
    flows or UTC day-open history. Resolve actual runtime telemetry semantics and
@@ -136,12 +143,13 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Latest Verification
 
-- **33 downtime-risk tests** passed. A synthetic 499.95 → 473.35 → 499.75 USDT
-  path retains its 26.65 USDT daily-loss observation despite the rebound. Inclusive
-  5% boundaries agree with the existing baseline strategy; the planning rule stays
-  separate. Coverage, source, UTC baseline and immutable-input checks pass.
-- Full offline suite: **2,151 passed**, 12 Postgres integration tests deselected
-  (no dedicated integration DSN). Ruff, registry and whitespace checks pass.
+- **31 account-archive tests** passed: native signed-response retention, abrupt
+  process exit, exact evidence replay, pagination, tamper/truncation rejection,
+  privacy and detached native comparison. Historical replay cannot satisfy a live
+  stream fence. Downtime breach retention and the binding 5% rule remain unchanged.
+- Full offline suite: **2,182 passed**, 12 Postgres integration tests deselected
+  (no dedicated integration DSN).
+  Ruff, CLI, registry and whitespace checks pass.
 - Prior abrupt-exit/fresh-process recovery and exact account comparison remain
   green. Private account responses are synthetic; no Binance HTTP/WS account
   connection, real adapter process recovery, atomic stream boundary or live readiness.
@@ -150,6 +158,7 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## References
 
+- [Raw account response archive and offline collection replay](progress/portfolio-account-archive-2026-09-10.md).
 - [Read-only downtime risk review and remaining evidence boundaries](progress/portfolio-downtime-risk-2026-09-10.md).
 - [Native adapter checkpoints and three-process acceptance](progress/portfolio-adapter-checkpoint-2026-09-10.md).
 - [Native read-only transport, loopback acceptance and integration entrypoint](progress/portfolio-readonly-transport-2026-09-10.md).

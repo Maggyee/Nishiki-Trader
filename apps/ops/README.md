@@ -395,6 +395,12 @@ Binance 规则/手续费响应，输出哈希、约束和不兼容方向；不�
 不加载凭证、不连接网络。输入格式见
 [停机风险审核](../../docs/progress/portfolio-downtime-risk-2026-09-10.md)。
 
+`python -m apps.ops.portfolio_account_archive_check --help` 提供本地只读账户归档
+复核。显式选择归档 SHA256、采集 ID、来源绑定及独立基线后，复用采集器验证
+原始分页响应。退出 0 仅表示历史采集可复现，不表示真实来源验收或可以重启；
+输出不含账户响应原文。详见
+[账户归档与重放](../../docs/progress/portfolio-account-archive-2026-09-10.md)。
+
 - 应急脚本必须有**二次确认**参数，避免误触发
 - 任何写真实账户的脚本（Phase 6+）走 `EMERGENCY_*` 前缀，醒目
 - Phase 2 ops 脚本只能写本地 `data/`，不能接真实账户或下单 API

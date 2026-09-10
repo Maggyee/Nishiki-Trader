@@ -9,7 +9,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from urllib.parse import urlencode
 
 from nautilus_trader.adapters.binance.http.client import BinanceHttpClient
@@ -73,6 +73,7 @@ class CollectedAccount:
     api_trading_enabled: bool
     atomic_revision_verified: bool = False
     stream_fence: StreamFence | None = None
+    collection_id: str | None = None
 
 
 class BinanceReadOnlyAccountCollector:
@@ -98,29 +99,43 @@ class BinanceReadOnlyAccountCollector:
     async def collect(self, anchor: AccountAnchor) -> CollectedAccount:
         hashes = []
         fence = None
+        collection_id = None
         if self.stream is not None:
             if bind_source(self.client, anchor.venue_uid) != self.stream.binding:
                 raise VenueInputError("REST/user-stream source mismatch")
             fence = self.stream.fence()
 
         async def get(path, params=None):
+            # The native signer may mutate payload. Keep a separate unsigned copy.
+            selectors = dict(params or {})
             payload = {
-                **(params or {}),
+                **selectors,
                 "timestamp": str(self.clock_ns() // 1_000_000),
                 "recvWindow": "5000",
             }
             try:
                 raw = await self.client.sign_request(HttpMethod.GET, path, payload=payload)
+                received_ns = self.clock_ns()
+                if self.stream is not None:
+                    self.stream.record_response(
+                        fence, collection_id, path, selectors, raw, received_ns
+                    )
                 body = raw.decode()
                 parsed = json.loads(body, object_pairs_hook=_unique_object)
             except Exception:
                 raise VenueInputError("signed account read failed") from None
             hashes.append((path, hashlib.sha256(raw).hexdigest()))
-            return parsed, body, self.clock_ns()
+            return parsed, body, received_ns
 
         started = self.clock_ns()
         if not 0 < anchor.start_ns <= started or started - anchor.start_ns > DAY_NS:
             raise VenueInputError("account anchor requires a complete recent history archive")
+        if self.stream is not None:
+            collection_id = self.stream.begin_collection(
+                fence,
+                {**asdict(anchor), "quote": str(anchor.quote), "base": str(anchor.base)},
+                started,
+            )
         permissions, _, _ = await get("/sapi/v1/account/apiRestrictions")
         if (
             permissions.get("enableReading") is not True
@@ -170,7 +185,7 @@ class BinanceReadOnlyAccountCollector:
         if self.stream is not None:
             if bind_source(self.client, anchor.venue_uid) != fence.binding:
                 raise VenueInputError("REST source changed during collection")
-            self.stream.record_collection(fence, tuple(hashes))
+            self.stream.record_collection(fence, tuple(hashes), collection_id=collection_id)
         return CollectedAccount(
             AccountEvidence(
                 CapturedResponse(account_body, account_ns, anchor.venue_uid),
@@ -183,4 +198,5 @@ class BinanceReadOnlyAccountCollector:
             tuple(hashes),
             permissions["enableSpotAndMarginTrading"],
             stream_fence=fence,
+            collection_id=collection_id,
         )
