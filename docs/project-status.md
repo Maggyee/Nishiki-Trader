@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-11
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Build on full-account Spot testnet observations and isolated native balance mapping; qualify identity/baseline, permissions, business-event continuity and actual adapter recovery.
+- **Current objective**: Resolve full-account valuation and UTC/cash-flow baseline qualification under ADR-016; a bounded order-lifecycle proposal exists but is not executable.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -15,19 +15,23 @@ share the calculation. Rebound/midnight/restart cannot clear the latch; old-poli
 checkpoints fail configuration matching. Legacy runner equivalence and actual
 account qualification remain required; no execution deployment is authorized.
 
-The operator selected **Binance Spot testnet**, supplied an Ed25519 key pair and
-confirms no other program/manual trading. Additional account records are unavailable;
-faucet/reset history remains unknown. A second bounded session passed four
-**502-asset** collections and signed WS reconnect over 24.157 seconds, with zero
-open orders or business events. Detached replay passes. The selected prior/current
-observations have identical full balances, orders and account metadata.
-Testnet exchangeInfo (1,363 symbols) supplies consistent precision for all 502
-assets; an isolated native CashAccount matches every free/locked/total amount
-without modifying the parent currency registry. This numeric mapping does not
-qualify identity, baseline, valuation, continuity or adapter process recovery.
-Testnet excludes `/sapi`: key restrictions remain unknown, the strict recovery
-collector is unchanged and observations cannot seal recovery evidence. No production
-account, order/cancel request or execution runner was accessed.
+The operator-selected **Binance Spot testnet** remains read-only. ADR-016 now
+binds the actual initial account artifact, observed UID/key fingerprint, selected
+signed collection and public market captures. A prospective observation anchor
+preserves every balance but is not a qualified UTC day-open/recovery baseline.
+A new four-collection session retained **502 assets** with zero business events.
+All 502 map exactly into isolated native balances. Indicative valuation covers
+**500/502 assets**; two test assets have no bid/ask and 65 asset balances exceed
+at least one top-book leg's depth. Full equity and daily-risk fields remain null.
+No missing asset is zeroed, omitted, pegged or replaced with planned capital.
+The prepared lifecycle proposal is fixed **0.0001 BTC**, at most **10 test USDT**
+total buy debit, one BUY plus at most one cleanup SELL, no automatic retry.
+Captured basic filters pass at an illustrative 7.716599 USDT notional; fees,
+effective filters, identity/permissions, baseline and native recovery still block
+execution. No runner is wired and no order/cancel request was made.
+The operator confirms no other trading; independent records are unavailable and
+reset history is unknown. Missing /sapi permissions remain unknown. Strict gates,
+SourcePolicy, execution runners and production accounts are unchanged.
 
 An offline engineering plan locks six evidence-verified candidates and five
 proposed 0.001 BTC sleeves: v16/v18/v22/v34/v36. V40 is observation-only within
@@ -126,22 +130,18 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Next Steps
 
-1. Continue with **Binance Spot testnet** and the supplied Ed25519 configuration.
-   Full-account `/api` observations, external signed WS reconnect and pinned archive
-   replay now pass. Establish an independently corroborated UID and full-account
-   baseline, supported permission evidence and explicit faucet/reset boundaries.
-   Missing `/sapi` restrictions remain unknown; do not bypass the strict gate.
-   Qualify real business events and downtime history, then native adapter use of
-   the mapped assets and fresh-process recovery; quiet pings cannot prove these. The selected
-   archive/collection IDs are recorded in the latest progress report; historical
-   receipts cannot become current fences. Validate strategy/policy fingerprints,
-   account/price coverage, cash flows and UTC day-open history before any execution
-   bootstrap. Apply ADR-015 and qualify actual runtime policy equivalence; the
-   budget decision is settled, but actual account baselines are not. Independent
-   account records are unavailable; no other trading is operator-confirmed, while
-   faucet/reset history remains unknown. Use the new full-account comparison and
-   isolated numeric mapping as diagnostics, not independent baseline proof.
-   No secret values in chat.
+1. Apply ADR-016 to the selected full-account testnet observations. Admission
+   review and indicative valuation tools exist, but the actual UTC/day-open
+   baseline remains unqualified. Resolve the two unpriced test assets and full
+   valuation scope without omitting balances or inventing zero prices. Obtain
+   qualified price-event timing, cash-flow/UTC history and supported identity/key
+   permission evidence; records are currently unavailable and resets unknown.
+   Any alternative test-only risk contract must be explicit and preserve strict
+   production/portfolio gates. Do not request another copy of the existing Key.
+   Use the prepared 0.0001 BTC / 10 test-USDT lifecycle proposal only after full
+   fee/filter/risk, consumer identity and adapter recovery qualification plus
+   scoped order-session review. A historical price example is not an order permit.
+   Quiet reads cannot prove business-event delivery or begin the 14-day clock.
 2. Review the explicit offline residual-exit policy before promotion and resolve
    re-entry with retained dust. Whole-step reductions now pass native acceptance;
    fixed BUY size, SignalEvent identities and SourcePolicy remain unchanged.
@@ -173,6 +173,11 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Latest Verification
 
+- September 11 ADR-016 admission/valuation: 28 focused tests passed; real selected
+  captures retain 502 assets, price 500, and refuse total equity/day-open risk
+  qualification. A fixed bounded lifecycle draft passes captured basic filters
+  only; no testnet order or production request.
+
 - September 11 full-account mapping: 78 focused tests passed. New four-collection
   archive replays in a fresh process; all 502 assets map exactly using selected
   testnet metadata in an isolated native process. Cross-session endpoint balances
@@ -192,7 +197,7 @@ the September 9 five-sleeve proposal is offline engineering only.
 - **130 collector/stream/archive tests** passed, including 12 new concurrency,
   cancellation, timeout, source/clock and abort-persistence regressions. Explicit
   retries produce independently replayable evidence; failed collections stay rejected.
-- Full offline regression after account mapping: **2,313 passed**, 12 Postgres integration tests deselected
+- Full offline regression after admission/valuation: **2,341 passed**, 12 Postgres integration tests deselected
   (no dedicated integration DSN).
   Ruff, registry and whitespace checks pass.
 - Prior abrupt-exit/fresh-process recovery and exact account comparison remain
@@ -202,6 +207,8 @@ the September 9 five-sleeve proposal is offline engineering only.
   linked progress records; it is not a current runtime-health observation.
 
 ## References
+
+- [Testnet admission/baseline rules](decisions/016-testnet-observation-admission.md), [implementation and actual blockers](progress/portfolio-testnet-admission-2026-09-11.md), [bounded lifecycle proposal](progress/portfolio-testnet-lifecycle-plan-2026-09-11.json).
 
 - [Operator account context, fresh observations and isolated full-account mapping](progress/portfolio-testnet-account-mapping-2026-09-11.md).
 

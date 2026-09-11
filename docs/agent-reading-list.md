@@ -171,6 +171,18 @@ now maps all 502 observed assets exactly in a separate process; equal observatio
 and numeric mapping do not qualify history, identity, permissions or live recovery.
 Additional independent account records are unavailable; reset history stays unknown.
 
+For the sequential testnet admission, full-account valuation and lifecycle-test
+preparation, read `docs/decisions/016-testnet-observation-admission.md`,
+`docs/progress/portfolio-testnet-admission-2026-09-11.md`,
+`apps/ops/portfolio_testnet_admission.py`, `portfolio_testnet_valuation.py` and
+`portfolio_testnet_order_plan.py` under `apps/strategies_nautilus/`. The selected
+initial artifact must bind observed UID/key; a new archive cannot choose its source.
+A prospective observation anchor is not UTC day-open evidence. Actual marks cover
+500/502 assets; two have no quote, 65 exceed top-book depth. No partial subtotal
+can become total equity. The 0.0001 BTC / 10 test-USDT lifecycle plan is a draft;
+fees, effective filters, baseline, permission and adapter recovery remain blocked.
+No trading runner, production rule, source policy or 14-day gate is changed.
+
 | Task area | Read |
 |---|---|
 | Project status, next step, or handoff | `docs/project-status.md`, `git status --short --branch`, `git fetch origin`, `git pull --ff-only`, `git log --oneline --decorate -5` |

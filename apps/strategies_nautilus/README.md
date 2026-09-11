@@ -273,3 +273,12 @@ Binance 转换器及原生对账引擎验证合成订单恢复，拒绝推断成
 详细输出以 0600 权限独占创建；相等结果和 CLI exit 0 均不代表恢复或交易许可。
 实现与私有证据引用见
 [全账户映射验收](../../docs/progress/portfolio-testnet-account-mapping-2026-09-11.md)。
+
+
+测试网观察准入与估值入口：`apps.ops.portfolio_testnet_admission`。
+它验证初始账户原始记录、归档和行情快照的关联，记录完整观察起点，计算直接或两跳
+USDT 参考估值，并生成固定 0.0001 BTC / 10 测试 USDT 的订单验收草案。
+缺价资产保持未知，参考小计不会变成完整权益；日初权益、日亏损和风险上限在未合格
+时保持空值。此入口没有执行引擎或下单能力。见
+[准入及基线规则](../../docs/decisions/016-testnet-observation-admission.md)和
+[本次验收](../../docs/progress/portfolio-testnet-admission-2026-09-11.md)。
