@@ -185,3 +185,9 @@ read-only no-ops, and late fills remain owned without a cleanup SELL. This expli
 operation is not an automatic retry/reconnect or an acceptance of active testnet
 recovery without actual evidence. The prior completed BUY/cancel still consumes
 the one fixed scope; no second BUY or production admission follows.
+
+The real `--recover-cancel` invocation on clean `9d797f6` subsequently confirmed
+the existing CANCELED order through six signed GETs, with 502 assets reconciled.
+It returned a terminal no-action result, sent no POST/DELETE and preserved the
+fixed checkpoint hash. Active recovered cancellation remains synthetic-only;
+this result neither recreates a test order nor grants a new trading scope.

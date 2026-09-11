@@ -112,3 +112,36 @@ No upstream source, dependency, service, schedule or production path changed.
 (131.44 seconds). The 12 Postgres integration tests require a dedicated DSN, which
 is unavailable. Ruff, registry and whitespace checks pass. The actual terminal
 no-action check will use the clean committed implementation.
+
+## Actual terminal-session acceptance — 2026-09-11 12:55 UTC
+
+Clean pushed code **`9d797f6b3f2b1715bf0f9b50c2468f00e78293c6`** ran
+`apps.ops.portfolio_session_run --recover-cancel` against the existing selected
+account and fixed session. A new signed subscription and **six signed GETs**
+reconciled all **502 assets**, the original **CANCELED** order and **zero trades**.
+There were **zero account-wide open orders** and **zero owned BTC**.
+
+The command returned **`terminal_session_no_action`**. The journal contains no
+matching attempt, POST, DELETE, cancellation-runtime publication or business event.
+The two dispatch receipts are the prior trial's original BUY/cancel receipts;
+this invocation added none. The BUY allowance remains consumed. No new execution
+client or ledger writer was constructed on the terminal branch.
+
+The fixed `native.json` stayed byte-for-byte unchanged at SHA256
+`08995a8289a99b88e02f87c9c07387302c8f74ed006e5a2a33ddf1932d0b1a5f`.
+Separate private immutable artifacts under the same fixed state directory:
+
+| File | SHA256 |
+|---|---|
+| `cancel-recovery-9c1359b2b5f4-report.json` | `d6fdd413c8d8d052885362b39443467bc430410b31a1eadf4a7c6091c1e825d9` |
+| `cancel-recovery-9c1359b2b5f4-stream.jsonl` | `63eab354a2b2130eba3af4743cda2b62eaf47a5a4f2ec7ad255a279b372e9ca2` |
+| `cancel-recovery-9c1359b2b5f4-evidence.json` | `5ca0213543cb9110eb353bf3f02c048649be97e205b246ab665fb1299e842b65` |
+| `cancel-recovery-9c1359b2b5f4-recovered.json` | `d097a49e24edb32729846241c89f491e20c4e0fce99c21cd05b71d56da362b07` |
+
+This verifies the real terminal branch and its non-mutation guarantee. Active-order
+recovered cancellation, late fills and crash recovery remain synthetic acceptance;
+no new active order was created to test them. Actual fills, fee settlement and
+owned cleanup remain outstanding. Any future recovered cleanup must retain the
+original SELL allowance, zero-fee/fresh-rule checks and 180-second new-order bound;
+the current cancellation-only marker grants no such order permission. Strict
+continuity, full-account portfolio qualification and production gates are unchanged.

@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-11
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: ADR-017 testnet BUY/cancel and independent terminal recovery succeeded; cancellation-only interrupted-order recovery is implemented; preserve the consumed scope and verify the new terminal no-action operation. Full-account portfolio qualification remains blocked.
+- **Current objective**: ADR-017 testnet BUY/cancel and independent terminal recovery succeeded; cancellation-only interrupted-order recovery is implemented and its real terminal no-action branch verified; preserve the consumed scope and qualify remaining fill/cleanup paths. Full-account portfolio qualification remains blocked.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -37,7 +37,10 @@ now restores a qualified active original order into a cancellation-only native
 runtime after fresh signed reconciliation. Historical halts and all allowances
 remain intact; an old cancellation intent/attempt blocks another send. Terminal
 orders leave the fixed checkpoint unchanged. `--recover` remains GET-only; new
-BUY/SELL and cleanup after recovery stay disabled.
+BUY/SELL and cleanup after recovery stay disabled. On clean `9d797f6`, the real
+`--recover-cancel` invocation made six signed GETs, reconciled all 502 assets and
+returned `terminal_session_no_action`; no order/cancel was sent and the fixed
+checkpoint hash remained unchanged.
 
 The fixed session activation and **one-BUY allowance are consumed**, including
 for this unfilled canceled order. Preserve all state and original IDs; do not rerun
@@ -149,12 +152,13 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Next Steps
 
-1. Complete verification of the cancellation-only recovery increment and run
-   `--recover-cancel` on the existing terminal session from clean pushed code.
-   Expect a signed no-action result and unchanged fixed checkpoint; never reset
-   activation or renew BUY permission. Actual fill/fee/cleanup and active-order
-   recovery execution remain unverified. Continue ADR-016 full-account valuation,
-   UTC/cash-flow qualification separately; strict continuity stays 0/14.
+1. Preserve the completed fixed ADR-017 scope and verified terminal no-action
+   behavior. Qualify the remaining fill/fee/owned-cleanup paths, including any
+   prospective recovered SELL's original allowance, fresh rules and 180-second
+   bound; the current cancellation-only runtime cannot submit it. Actual active
+   recovery execution remains unverified. Never reset activation or renew BUY
+   permission. Continue ADR-016 full-account/UTC/cash-flow qualification separately;
+   strict continuity stays 0/14.
 2. Review the explicit offline residual-exit policy before promotion and resolve
    re-entry with retained dust. Whole-step reductions now pass native acceptance;
    fixed BUY size, SignalEvent identities and SourcePolicy remain unchanged.
@@ -188,8 +192,9 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 - Cancellation-only recovery: **21 new tests** pass, covering LiveClock/native
   restoration, late/duplicate fills, missed acknowledgement, durability failure,
-  timeout/no-retry, whole CLI and three-process abrupt-exit acceptance. The actual
-  terminal-session no-action check is pending the clean committed launch.
+  timeout/no-retry, whole CLI and three-process abrupt-exit acceptance. Actual
+  clean-code terminal recovery used six signed GETs, reconciled 502 assets and
+  preserved the original checkpoint hash, with no POST/DELETE or new dispatch.
 
 - Bounded LiveClock matching runtime: **31 new tests** pass, including native
   queue/Ed25519 signature, failure, timed cancellation and whole-CLI matching/recovery.
