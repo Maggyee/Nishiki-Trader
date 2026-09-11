@@ -191,9 +191,23 @@ and `portfolio_testnet_session.py` under `apps/strategies_nautilus/`.
 The existing key succeeded on GET fee/filter reads and non-matching TRADE
 `POST /api/v3/order/test`; fees were zero and all 502 balances unchanged.
 A null discount asset is accepted only by the explicit zero-fee testnet parser
-profile; default rules stay strict. No matching order, durable session ledger,
-fixture consumer or execution runner is wired. Do not request the Key again or
+profile; default rules stay strict. The diagnostic increment did not wire a matching
+order or execution runner; subsequent offline ledger/recovery is described below. Do not request the Key again or
 mistake validation acceptance for all key restrictions or portfolio qualification.
+
+For the subsequent offline native session ledger and recovery acceptance, read
+`docs/progress/portfolio-testnet-session-recovery-2026-09-11.md`,
+`portfolio_session_ledger.py`, `portfolio_session_account.py` and
+`portfolio_session_recovery.py` under `apps/strategies_nautilus/`, plus
+`runners/portfolio_session_acceptance.py`. Every prepared BUY consumes its allowance
+before submission; only exact native fills create owned inventory. The full account,
+original IDs/initialization and fee halt survive atomic private checkpoints. The
+project CASH extension uses native leaves quantity for partial locks. The narrow
+report opt-in recovers terminal initialization-only orders without invented events;
+active orders lacking a native Submitted receipt stay blocked. Six offline processes
+prove two 502-asset fixture scenarios, not actual account/source or live recovery.
+Actual Submitted/PendingCancel persistence before adapter I/O and stream/strategy
+wiring remain required. No upstream change or matching execution runner is added.
 
 | Task area | Read |
 |---|---|

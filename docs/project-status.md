@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-11
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Implement the ADR-017 native session ledger/recovery after successful testnet TRADE validation; full-account portfolio qualification remains separate and blocked.
+- **Current objective**: Wire the ADR-017 native submit/cancel persistence bridge after offline full-account session recovery acceptance; full-account portfolio qualification remains separate and blocked.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -28,9 +28,17 @@ request, not all API restrictions, matching fills or native adapter recovery.
 ADR-017 defines a separate **10 test-USDT / 0.0001 BTC** engineering session:
 one BUY plus at most one owned cleanup SELL, zero fees in the first scope,
 no retry or proceeds recycling. Full balances stay intact; unrelated faucet
-assets are never sold or treated as zero equity. Its native durable session
-ledger, fixture consumer and actual adapter recovery are **not implemented/wired**.
-No matching order, cancellation or production request has been made.
+assets are never sold or treated as zero equity. The **offline durable session
+ledger and native recovery** now preserve exact initialization, IDs, one-BUY
+allowance, cancellation intent, net owned BTC and persistent fee halts. Two
+three-process crash/replay fixtures retain all 502 synthetic assets. Native partial
+CASH locks use remaining quantity through a project-only account extension;
+full cleanup and exact dust retention pass. The narrow engineering consumer
+accepts only its own fixture SignalEvent identity; no SourcePolicy is changed.
+An active order without a persisted native Submitted event stays blocked;
+terminal initialization-only recovery never invents a Submitted or Fill event.
+The actual Strategy/RiskEngine/adapter send bridge and stream callbacks remain
+**unwired**. No matching order, cancellation or production request has been made.
 
 ADR-016's full-account indicative valuation still covers **500/502 assets**;
 two lack quotes and 65 exceed a conversion leg's top-book depth. Full equity,
@@ -136,15 +144,16 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Next Steps
 
-1. Implement the ADR-017 durable native session ledger and recovery harness:
-   persist the one-BUY allowance, owned net inventory, IDs and uncertain intents
-   before submission; verify partial/full/late fills, cancel races and fresh-process
-   recovery against the actual adapter. Bind a distinct engineering fixture via
-   SignalEvent v1; only then wire the 0.0001 BTC / 10 test-USDT matching lifecycle.
+1. Wire the ADR-017 ledger into a dedicated Nautilus strategy/risk/execution
+   testnet session. Persist native Submitted/PendingCancel before adapter I/O;
+   bind one fixed session/checkpoint across restarts, signed account/order/trade
+   collection and native stream callbacks. Exercise transport failures through
+   that bridge before the 0.0001 BTC / 10 test-USDT matching trial. The offline
+   ledger/recovery alone is not an execution runner; do not launch a legacy runner.
    Existing-key TRADE validation succeeded; do not request the Key or repeat a
    permissions questionnaire. Recheck fresh zero fees/filters at session start.
    Continue ADR-016 full-account valuation/UTC/cash-flow qualification separately;
-   neither the engineering allocation nor validation starts the 14-day clock.
+   neither engineering validation nor offline recovery starts the 14-day clock.
 2. Review the explicit offline residual-exit policy before promotion and resolve
    re-entry with retained dust. Whole-step reductions now pass native acceptance;
    fixed BUY size, SignalEvent identities and SourcePolicy remain unchanged.
@@ -176,6 +185,11 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Latest Verification
 
+- September 11 native session ledger/recovery: **47 new tests**; two independent
+  three-process crash/replay scenarios each preserve 502 synthetic assets, exact
+  native fills and consumed BUY/cancel intents. Active partial locks, owned cleanup,
+  dust, unexpected fee halts and failed fsync pass. No exchange I/O in this increment.
+
 - September 11 ADR-017 engineering diagnostics: **45 new tests**; existing-key
   TRADE `/api/v3/order/test` accepted with zero fees, 502 balances unchanged and
   no account-wide open orders. Final replay reproduces price/effective filters;
@@ -205,7 +219,7 @@ the September 9 five-sleeve proposal is offline engineering only.
 - **130 collector/stream/archive tests** passed, including 12 new concurrency,
   cancellation, timeout, source/clock and abort-persistence regressions. Explicit
   retries produce independently replayable evidence; failed collections stay rejected.
-- Full offline regression after engineering capability/validation: **2,386 passed**, 12 Postgres integration tests deselected
+- Full offline regression after native session recovery: **2,433 passed**, 12 Postgres integration tests deselected
   (no dedicated integration DSN).
   Ruff, registry and whitespace checks pass.
 - Prior abrupt-exit/fresh-process recovery and exact account comparison remain
@@ -215,6 +229,8 @@ the September 9 five-sleeve proposal is offline engineering only.
   linked progress records; it is not a current runtime-health observation.
 
 ## References
+
+- [Native session ledger, partial CASH locks and crash/replay acceptance](progress/portfolio-testnet-session-recovery-2026-09-11.md).
 
 - [Independent engineering scope](decisions/017-testnet-engineering-session.md), [actual TRADE validation and remaining native integration](progress/portfolio-testnet-engineering-session-2026-09-11.md).
 

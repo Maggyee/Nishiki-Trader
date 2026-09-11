@@ -97,3 +97,20 @@ runner, long-running service, schedule, dependency or credential mutation is add
 No production account is accessed. Strict continuity remains 0/14; neither this
 engineering validation nor a later single lifecycle trial proves the 14-day gate,
 promotes research identities, accepts ADR-013 or authorizes real-money trading.
+
+## 5. Offline implementation addendum — 2026-09-11
+
+The [native session ledger/recovery increment](../progress/portfolio-testnet-session-recovery-2026-09-11.md)
+now implements durable preparation, full-account conservation, owned-only cleanup,
+partial-fill CASH locks and crash/replay acceptance with the native report engine.
+This is TestClock/offline-only and is not an execution deployment. Checkpoint hashes
+bind selected bytes and policy; they do not authenticate exchange observations.
+The submission/cancellation bridge and actual stream callbacks are still unwired.
+
+An active order with no persisted native Submitted receipt remains blocked without
+resubmission. Exact persisted initialization may be reconciled only to terminal
+reports in the explicit engineering profile, with original native event lineage.
+The future bridge must persist Submitted before an outbound request. No second BUY,
+new-ID restart, budget recycling or native account balance repair is allowed.
+The 180-second bound stops new orders; recording cancellation of an already-owned
+outstanding order may continue to reduce risk, without assuming acknowledgement.

@@ -291,3 +291,13 @@ USDT 参考估值，并生成固定 0.0001 BTC / 10 测试 USDT 的订单验收�
 `portfolio_testnet_session.py` 保存独立会话规则和校验边界；尚无原生会话账本
 或撮合订单 runner，CLI 成功不能放开实盘/组合准入。说明见
 [ADR-017](../../docs/decisions/017-testnet-engineering-session.md)。
+
+ADR-017 原生会话账本与恢复：`portfolio_session_ledger.py` 在提交前独占、原子
+持久化订单初始化、一次买入额度和撤单意图；持仓归属只从原生成交推导。
+`portfolio_session_recovery.py` 用 Binance 原生报告核对完整账户；
+`portfolio_session_account.py` 在离线会话中按未成交数量计算原生 CASH 冻结。
+`python -m apps.strategies_nautilus.runners.portfolio_session_acceptance` 运行
+两组三进程崩溃/重放测试，使用 502 资产合成账户，无凭证或网络请求。
+活跃订单缺少 Submitted 记录时继续阻断；实际适配器发送前落盘和事件回调
+尚未接入，不能启动撮合或实盘。见
+[会话账本与恢复验收](../../docs/progress/portfolio-testnet-session-recovery-2026-09-11.md)。

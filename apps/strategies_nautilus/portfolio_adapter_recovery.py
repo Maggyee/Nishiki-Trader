@@ -26,12 +26,16 @@ class AdapterRecoveryError(ValueError):
     pass
 
 
-def prepare_binance_reports(cache, *, account_id, orders, trades, now_ns):
+def prepare_binance_reports(cache, *, account_id, orders, trades, now_ns, allow_initialized=False):
     """Validate complete original fills before allowing native state mutation.
 
     Account/source/stream qualification is separate. These are captured fixture
     bodies, not authenticated wire responses or an authorization artifact.
+    The explicit ADR-017 opt-in only adopts terminal engineering orders from
+    persisted initialization. Active orders still need a native Submitted receipt.
     """
+    if type(allow_initialized) is not bool:
+        raise AdapterRecoveryError("explicit initialized-order recovery profile required")
     instrument_id = InstrumentId.from_str("BTCUSDT.BINANCE")
     instrument = cache.instrument(instrument_id)
     if instrument is None or instrument.size_precision != 8:
@@ -89,8 +93,20 @@ def prepare_binance_reports(cache, *, account_id, orders, trades, now_ns):
     order_reports, fills = [], []
     for row in orders:
         native = cache.order(ClientOrderId(row["clientOrderId"]))
+        # Nautilus sets Order.account_id on Submitted, not on an authoritative
+        # Accepted/Fill reconciled from a persisted initialization. Preserve those
+        # original events instead of inventing a Submitted event on recovery.
+        event_accounts = [e.account_id for e in native.events if getattr(e, "account_id", None) is not None]
+        initialized = (
+            allow_initialized is True and native.account_id is None
+            and str(native.strategy_id) == "TESTNET-SESSION-TS"
+            and cache.account(account_id) is not None
+            and row["status"] in {"FILLED", "CANCELED", "EXPIRED"}
+            and (native.status.name == "INITIALIZED" or bool(event_accounts))
+            and all(str(a) == str(account_id) for a in event_accounts)
+        )
         if (
-            str(native.account_id) != str(account_id)
+            (str(native.account_id) != str(account_id) and not initialized)
             or native.instrument_id != instrument_id
             or cache.position_id(native.client_order_id) is None
         ):
@@ -181,7 +197,7 @@ def prepare_binance_reports(cache, *, account_id, orders, trades, now_ns):
     return mass
 
 
-def reconcile_binance_reports(engine, cache, *, account_id, orders, trades, now_ns):
+def reconcile_binance_reports(engine, cache, *, account_id, orders, trades, now_ns, allow_initialized=False):
     """Offline native mutation with exact order/fill postconditions.
 
     On any failure discard the isolated cache; reconciliation is not transactional.
@@ -195,6 +211,7 @@ def reconcile_binance_reports(engine, cache, *, account_id, orders, trades, now_
         orders=orders,
         trades=trades,
         now_ns=now_ns,
+        allow_initialized=allow_initialized,
     )
     if not engine._reconcile_execution_mass_status(reports):
         raise AdapterRecoveryError("native reconciliation failed; discard isolated cache")
