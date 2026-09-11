@@ -161,3 +161,9 @@ The bounded CLI has no automatic reconnect or executable recovery. Its separate
 it cannot renew allowances, replace the matching checkpoint or resume a halted
 session. Unknown active outcomes require recovery before a later reduction path.
 This is still the same one engineering scope, not a portfolio or production gate.
+
+The fixed scope subsequently completed one actual BUY/cancel on clean `6d7c43b`,
+with no fills and exact 502-asset reconciliation in both the matching process and
+an independent GET-only recovery process. The activation/BUY allowance is consumed;
+this result does not authorize a second attempt to obtain a fill. See the runtime
+report for original evidence hashes and the still-unverified active/fill paths.

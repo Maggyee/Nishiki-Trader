@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-11
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Verify and execute the ADR-017 bounded LiveClock matching runtime through the fixed testnet scope; full-account portfolio qualification remains separate and blocked.
+- **Current objective**: ADR-017 testnet BUY/cancel and independent terminal recovery succeeded; preserve the consumed scope and develop qualified interrupted-order recovery. Full-account portfolio qualification remains blocked.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -15,45 +15,31 @@ share the calculation. Rebound/midnight/restart cannot clear the latch; old-poli
 checkpoints fail configuration matching. Legacy runner equivalence and actual
 account qualification remain required; no execution deployment is authorized.
 
-The operator-selected **Binance Spot testnet** now has successful GET diagnostics
-and a non-matching **POST /api/v3/order/test** TRADE validation under **ADR-017**.
-The same selected Ed25519 key/UID was used. Account, commission, myFilters and
-market/reference endpoints returned HTTP 200; the validation also returned 200
-with every order fee rate zero. All **502 asset balances** agree before/after,
-account-wide open orders remain empty, and the account reports `canTrade=true`.
-A testnet-only parser opt-in handles zero fees with a null discount asset; the
-strict default remains unchanged. This proves acceptance of this validation
-request, not all API restrictions, matching fills or native adapter recovery.
+The operator-selected **Binance Spot testnet** now has a successful **matching
+BUY/cancel trial under ADR-017**, beyond the prior GET and non-matching validation.
+Clean pushed code `6d7c43b` used the existing selected Ed25519 key/UID, fresh zero
+commissions and effective filters. One **0.0001 BTC LIMIT at 76,908.15 USDT**
+(7.690815 test-USDT notional) was accepted. The deterministic native lifecycle
+requested cancellation **2.036 seconds after acknowledgement**; cancellation succeeded.
+**No fills, cleanup SELL or residual inventory** resulted. All **502 assets**
+reconcile exactly; account-wide open orders, spent funds and reservations are zero.
+A separate process opened a new signed subscription, queried the original order
+and reproduced the identical native terminal view. There were no retries or halts.
 
-ADR-017 defines a separate **10 test-USDT / 0.0001 BTC** engineering session:
-one BUY plus at most one owned cleanup SELL, zero fees in the first scope,
-no retry or proceeds recycling. Full balances stay intact; unrelated faucet
-assets are never sold or treated as zero equity. The **offline durable session
-ledger and native recovery** now preserve exact initialization, IDs, one-BUY
-allowance, cancellation intent, net owned BTC and persistent fee halts. Two
-three-process crash/replay fixtures retain all 502 synthetic assets. Native partial
-CASH locks use remaining quantity through a project-only account extension;
-full cleanup and exact dust retention pass. The narrow engineering consumer
-accepts only its own fixture SignalEvent identity; no SourcePolicy is changed.
-An active order without a persisted native Submitted event stays blocked;
-terminal initialization-only recovery never invents a Submitted or Fill event.
-A dedicated **offline Strategy -> RiskEngine -> queued native Binance adapter**
-now waits for durable Submitted/PendingCancel receipts before each single attempt.
-Known execution-report callbacks settle through native accounting; timeout stays
-uncertain, duplicate fills are deduplicated, and failed persistence prevents sends.
-Two additional three-process adapter crash/replays preserve original dispatches.
-The execution bridge still accepts only TestClock and an in-memory HTTP sink.
-A separate **GET-only LiveClock probe** now bootstraps all **502 actual assets**
-and reconciles them against fresh signed reads. A second process repeated the
-native comparison through a new subscription. A fixed account/scope lease and
-source-bound callbacks are implemented; actual orders/trades/business events were
-all zero, so active matching recovery is still unverified. A separate bounded
-matching LiveClock runtime now wires the fixed lease, native
-risk/strategy path, exact signed one-attempt POST/DELETE and two-second cancellation.
-It requires fresh zero fees/filters and complete signed native reconciliation.
-Its GET-only recovery preserves original IDs and never resumes orders or resets
-allowances. The matching trial remains pending verification and a clean-code launch;
-no matching order, exchange cancellation or production request has yet been made.
+The separate **LiveClock matching runtime** now joins the fixed account lease,
+full native CASH baseline, fixture SignalEvent v1, Strategy, RiskEngine, queued
+execution adapter and exact Ed25519 POST/DELETE. Durable native events and single
+attempt receipts precede network I/O. Two execution reports and two account
+reservation/release updates were received and correlated without balance patching.
+Actual partial/final fills, fee settlement and owned cleanup remain unverified;
+those paths currently have synthetic acceptance only. Interrupted-active-order
+executable recovery/reduction remains unimplemented; `--recover` is GET-only.
+
+The fixed session activation and **one-BUY allowance are consumed**, including
+for this unfilled canceled order. Preserve all state and original IDs; do not rerun
+`--execute`, reset the scope or create a second BUY to force a fill. Native ownership,
+partial CASH locks, uncertain outcomes and persistent fee halts are covered offline.
+No SourcePolicy, service, schedule, credential permission or production path changed.
 
 ADR-016's full-account indicative valuation still covers **500/502 assets**;
 two lack quotes and 65 exceed a conversion leg's top-book depth. Full equity,
@@ -159,12 +145,12 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Next Steps
 
-1. Complete verification and run `apps.ops.portfolio_session_run --execute` from
-   clean pushed code within the one fixed ADR-017 scope. Retain raw evidence and
-   reconcile complete balances/orders/trades afterwards; use `--recover` for a
-   separate signed GET-only process. Never reset activation or repeat a BUY.
-   Any uncertain active order requires signed recovery before a later reduction
-   implementation; this runtime has no automatic reconnect/resume.
+1. Preserve the completed fixed ADR-017 scope (one accepted/canceled BUY, zero
+   fills/residual/open orders). Develop and verify source-bound recovery/reduction
+   for interrupted active orders before any further execution capability. Existing
+   `--recover` is read-only; never reset activation or renew BUY permission. Actual
+   fill/fee/cleanup acceptance remains outstanding. Continue ADR-016 full-account
+   valuation, UTC/cash-flow qualification separately; strict continuity stays 0/14.
 2. Review the explicit offline residual-exit policy before promotion and resolve
    re-entry with retained dust. Whole-step reductions now pass native acceptance;
    fixed BUY size, SignalEvent identities and SourcePolicy remain unchanged.
@@ -198,7 +184,9 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 - Bounded LiveClock matching runtime: **31 new tests** pass, including native
   queue/Ed25519 signature, failure, timed cancellation and whole-CLI matching/recovery.
-  Matching network trial is pending the clean committed launch.
+  Actual clean-code matching POST and DELETE returned 200; four business events
+  and full 502-asset reconciliation passed. A fresh process independently recovered
+  the one CANCELED order, zero trades and zero account-wide open orders.
 
 - September 11 actual session transport: **34 new tests**; 12 signed GETs plus one
   public metadata GET in two actual process invocations, each with a new signed
