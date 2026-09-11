@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-11
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Resolve full-account valuation and UTC/cash-flow baseline qualification under ADR-016; a bounded order-lifecycle proposal exists but is not executable.
+- **Current objective**: Implement the ADR-017 native session ledger/recovery after successful testnet TRADE validation; full-account portfolio qualification remains separate and blocked.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -15,23 +15,29 @@ share the calculation. Rebound/midnight/restart cannot clear the latch; old-poli
 checkpoints fail configuration matching. Legacy runner equivalence and actual
 account qualification remain required; no execution deployment is authorized.
 
-The operator-selected **Binance Spot testnet** remains read-only. ADR-016 now
-binds the actual initial account artifact, observed UID/key fingerprint, selected
-signed collection and public market captures. A prospective observation anchor
-preserves every balance but is not a qualified UTC day-open/recovery baseline.
-A new four-collection session retained **502 assets** with zero business events.
-All 502 map exactly into isolated native balances. Indicative valuation covers
-**500/502 assets**; two test assets have no bid/ask and 65 asset balances exceed
-at least one top-book leg's depth. Full equity and daily-risk fields remain null.
-No missing asset is zeroed, omitted, pegged or replaced with planned capital.
-The prepared lifecycle proposal is fixed **0.0001 BTC**, at most **10 test USDT**
-total buy debit, one BUY plus at most one cleanup SELL, no automatic retry.
-Captured basic filters pass at an illustrative 7.716599 USDT notional; fees,
-effective filters, identity/permissions, baseline and native recovery still block
-execution. No runner is wired and no order/cancel request was made.
-The operator confirms no other trading; independent records are unavailable and
-reset history is unknown. Missing /sapi permissions remain unknown. Strict gates,
-SourcePolicy, execution runners and production accounts are unchanged.
+The operator-selected **Binance Spot testnet** now has successful GET diagnostics
+and a non-matching **POST /api/v3/order/test** TRADE validation under **ADR-017**.
+The same selected Ed25519 key/UID was used. Account, commission, myFilters and
+market/reference endpoints returned HTTP 200; the validation also returned 200
+with every order fee rate zero. All **502 asset balances** agree before/after,
+account-wide open orders remain empty, and the account reports `canTrade=true`.
+A testnet-only parser opt-in handles zero fees with a null discount asset; the
+strict default remains unchanged. This proves acceptance of this validation
+request, not all API restrictions, matching fills or native adapter recovery.
+
+ADR-017 defines a separate **10 test-USDT / 0.0001 BTC** engineering session:
+one BUY plus at most one owned cleanup SELL, zero fees in the first scope,
+no retry or proceeds recycling. Full balances stay intact; unrelated faucet
+assets are never sold or treated as zero equity. Its native durable session
+ledger, fixture consumer and actual adapter recovery are **not implemented/wired**.
+No matching order, cancellation or production request has been made.
+
+ADR-016's full-account indicative valuation still covers **500/502 assets**;
+two lack quotes and 65 exceed a conversion leg's top-book depth. Full equity,
+UTC day-open and daily-risk fields remain null. The operator confirms no other
+trading; independent records are unavailable and reset history remains unknown.
+ADR-017 does not qualify this baseline or relax ADR-015 portfolio risk.
+Strict gates, SourcePolicy, execution runners and production accounts are unchanged.
 
 An offline engineering plan locks six evidence-verified candidates and five
 proposed 0.001 BTC sleeves: v16/v18/v22/v34/v36. V40 is observation-only within
@@ -130,18 +136,15 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Next Steps
 
-1. Apply ADR-016 to the selected full-account testnet observations. Admission
-   review and indicative valuation tools exist, but the actual UTC/day-open
-   baseline remains unqualified. Resolve the two unpriced test assets and full
-   valuation scope without omitting balances or inventing zero prices. Obtain
-   qualified price-event timing, cash-flow/UTC history and supported identity/key
-   permission evidence; records are currently unavailable and resets unknown.
-   Any alternative test-only risk contract must be explicit and preserve strict
-   production/portfolio gates. Do not request another copy of the existing Key.
-   Use the prepared 0.0001 BTC / 10 test-USDT lifecycle proposal only after full
-   fee/filter/risk, consumer identity and adapter recovery qualification plus
-   scoped order-session review. A historical price example is not an order permit.
-   Quiet reads cannot prove business-event delivery or begin the 14-day clock.
+1. Implement the ADR-017 durable native session ledger and recovery harness:
+   persist the one-BUY allowance, owned net inventory, IDs and uncertain intents
+   before submission; verify partial/full/late fills, cancel races and fresh-process
+   recovery against the actual adapter. Bind a distinct engineering fixture via
+   SignalEvent v1; only then wire the 0.0001 BTC / 10 test-USDT matching lifecycle.
+   Existing-key TRADE validation succeeded; do not request the Key or repeat a
+   permissions questionnaire. Recheck fresh zero fees/filters at session start.
+   Continue ADR-016 full-account valuation/UTC/cash-flow qualification separately;
+   neither the engineering allocation nor validation starts the 14-day clock.
 2. Review the explicit offline residual-exit policy before promotion and resolve
    re-entry with retained dust. Whole-step reductions now pass native acceptance;
    fixed BUY size, SignalEvent identities and SourcePolicy remain unchanged.
@@ -173,6 +176,11 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Latest Verification
 
+- September 11 ADR-017 engineering diagnostics: **45 new tests**; existing-key
+  TRADE `/api/v3/order/test` accepted with zero fees, 502 balances unchanged and
+  no account-wide open orders. Final replay reproduces price/effective filters;
+  matching/native recovery remains unwired. Detailed evidence is archived below.
+
 - September 11 ADR-016 admission/valuation: 28 focused tests passed; real selected
   captures retain 502 assets, price 500, and refuse total equity/day-open risk
   qualification. A fixed bounded lifecycle draft passes captured basic filters
@@ -197,7 +205,7 @@ the September 9 five-sleeve proposal is offline engineering only.
 - **130 collector/stream/archive tests** passed, including 12 new concurrency,
   cancellation, timeout, source/clock and abort-persistence regressions. Explicit
   retries produce independently replayable evidence; failed collections stay rejected.
-- Full offline regression after admission/valuation: **2,341 passed**, 12 Postgres integration tests deselected
+- Full offline regression after engineering capability/validation: **2,386 passed**, 12 Postgres integration tests deselected
   (no dedicated integration DSN).
   Ruff, registry and whitespace checks pass.
 - Prior abrupt-exit/fresh-process recovery and exact account comparison remain
@@ -207,6 +215,8 @@ the September 9 five-sleeve proposal is offline engineering only.
   linked progress records; it is not a current runtime-health observation.
 
 ## References
+
+- [Independent engineering scope](decisions/017-testnet-engineering-session.md), [actual TRADE validation and remaining native integration](progress/portfolio-testnet-engineering-session-2026-09-11.md).
 
 - [Testnet admission/baseline rules](decisions/016-testnet-observation-admission.md), [implementation and actual blockers](progress/portfolio-testnet-admission-2026-09-11.md), [bounded lifecycle proposal](progress/portfolio-testnet-lifecycle-plan-2026-09-11.json).
 

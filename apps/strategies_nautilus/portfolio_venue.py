@@ -132,6 +132,7 @@ def parse_binance_rules(
     now_ns: int,
     max_age_ns: int,
     references: tuple[PriceReference, ...] = (),
+    allow_testnet_zero_fee_null_discount: bool = False,
 ) -> VenueRulesEvidence:
     """Translate explicit captured inputs, retaining their oldest freshness time.
 
@@ -141,8 +142,11 @@ def parse_binance_rules(
     missing fee, empty myFilters, or weighted average from a ticker/bid price.
     """
     try:
+        if type(allow_testnet_zero_fee_null_discount) is not bool:
+            raise VenueInputError("explicit testnet zero-fee profile required")
         return _parse(
-            exchange_info, commission, my_filters, account_id, now_ns, max_age_ns, references
+            exchange_info, commission, my_filters, account_id, now_ns, max_age_ns, references,
+            allow_testnet_zero_fee_null_discount,
         )
     except (KeyError, TypeError, ArithmeticError, ValueError, AttributeError) as exc:
         if isinstance(exc, VenueInputError):
@@ -151,7 +155,8 @@ def parse_binance_rules(
         raise VenueInputError("malformed or incomplete venue inputs") from exc
 
 
-def _parse(exchange_info, commission, my_filters, account_id, now, age, references):
+def _parse(exchange_info, commission, my_filters, account_id, now, age, references,
+           allow_testnet_zero_fee_null_discount):
     if type(now) is not int or type(age) is not int or now <= 0 or age <= 0:
         raise VenueInputError("invalid evaluation time/age")
     if not isinstance(account_id, str) or not account_id:
@@ -300,7 +305,13 @@ def _parse(exchange_info, commission, my_filters, account_id, now, age, referenc
     if any(type(discount[k]) is not bool for k in ("enabledForAccount", "enabledForSymbol")):
         raise VenueInputError("invalid commission discount flags")
     bnb = discount["enabledForAccount"] and discount["enabledForSymbol"]
-    if bnb and discount["discountAsset"] != "BNB":
+    zero_fee_testnet = (
+        allow_testnet_zero_fee_null_discount
+        and fee_bound == 0
+        and discount["discountAsset"] is None
+        and _decimal(discount["discount"]) == 0
+    )
+    if bnb and discount["discountAsset"] != "BNB" and not zero_fee_testnet:
         raise VenueInputError("unsupported commission discount asset")
     currencies = []
     for side, received in (("buyer", "BTC"), ("seller", "USDT")):

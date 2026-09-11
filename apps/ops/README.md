@@ -428,3 +428,12 @@ USDT 参考估值，并生成固定 0.0001 BTC / 10 测试 USDT 的订单验收�
 时保持空值。此入口没有执行引擎或下单能力。见
 [准入及基线规则](../../docs/decisions/016-testnet-observation-admission.md)和
 [本次验收](../../docs/progress/portfolio-testnet-admission-2026-09-11.md)。
+
+独立测试网工程检查：`apps.ops.portfolio_testnet_capabilities` 使用现有 Ed25519
+配置，读取完整账户、手续费、myFilters 和有效价格参考。可显式添加
+`--validate-order` 调用不进入撮合引擎的 `/api/v3/order/test`；固定
+0.0001 BTC、最多 10 测试 USDT，要求本次费率全部为零。
+原始账户与校验响应独占写入 0600 本地文件，stdout 只输出脱敏诊断。
+`portfolio_testnet_session.py` 保存独立会话规则和校验边界；尚无原生会话账本
+或撮合订单 runner，CLI 成功不能放开实盘/组合准入。说明见
+[ADR-017](../../docs/decisions/017-testnet-engineering-session.md)。

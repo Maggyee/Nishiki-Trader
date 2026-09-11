@@ -183,6 +183,18 @@ can become total equity. The 0.0001 BTC / 10 test-USDT lifecycle plan is a draft
 fees, effective filters, baseline, permission and adapter recovery remain blocked.
 No trading runner, production rule, source policy or 14-day gate is changed.
 
+For the operator-delegated independent 10 test-USDT engineering scope, read
+`docs/decisions/017-testnet-engineering-session.md`,
+`docs/progress/portfolio-testnet-engineering-session-2026-09-11.md`,
+`apps/ops/portfolio_testnet_capabilities.py`, `portfolio_testnet_capabilities.py`
+and `portfolio_testnet_session.py` under `apps/strategies_nautilus/`.
+The existing key succeeded on GET fee/filter reads and non-matching TRADE
+`POST /api/v3/order/test`; fees were zero and all 502 balances unchanged.
+A null discount asset is accepted only by the explicit zero-fee testnet parser
+profile; default rules stay strict. No matching order, durable session ledger,
+fixture consumer or execution runner is wired. Do not request the Key again or
+mistake validation acceptance for all key restrictions or portfolio qualification.
+
 | Task area | Read |
 |---|---|
 | Project status, next step, or handoff | `docs/project-status.md`, `git status --short --branch`, `git fetch origin`, `git pull --ff-only`, `git log --oneline --decorate -5` |
