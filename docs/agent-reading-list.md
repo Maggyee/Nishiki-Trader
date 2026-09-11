@@ -135,6 +135,11 @@ most one in-flight REST collection, including across collector instances. Failur
 records an abort before releasing ownership; failed persistence blocks reuse.
 The 60-second async deadline does not preempt synchronous disk I/O. Historical
 replay and actual source/coverage qualification retain their existing boundaries.
+The operator selected Spot testnet on 2026-09-11. Before private account acceptance,
+read `docs/progress/portfolio-spot-testnet-selection-2026-09-11.md`: official testnet
+docs exclude `/sapi`, so the strict collector's API-restrictions requirement is
+incompatible. Testnet observation must preserve unknown permissions, all faucet
+assets and reset boundaries; environment selection does not start a trading runner.
 
 | Task area | Read |
 |---|---|

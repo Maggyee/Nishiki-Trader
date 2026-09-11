@@ -1,12 +1,20 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-09-10
+- **Last updated**: 2026-09-11
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Qualify actual account/price archives, cash flows and strategy policy using persisted REST evidence and recovered native checkpoints.
+- **Current objective**: Prepare Binance Spot testnet read-only acceptance; resolve unsupported SAPI permissions and supply explicit credentials, UID and baseline evidence.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
+
+The operator selected **Binance Spot testnet** on September 11. Public REST time
+is reachable (HTTP 200), but the documented credential file and named environment
+variables are absent in this workspace. UID and current independent baseline are
+still required. Official testnet docs exclude `/sapi`, so the strict collector's
+mandatory API-restrictions read is incompatible. An explicit observation profile
+must retain unknown permissions and full faucet balances; it cannot bypass the
+strict account gate. No private account connection or order run has occurred.
 
 An offline engineering plan locks six evidence-verified candidates and five
 proposed 0.001 BTC sleeves: v16/v18/v22/v34/v36. V40 is observation-only within
@@ -102,9 +110,12 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Next Steps
 
-1. Obtain the explicit environment, credential variable names/config path, expected
-   UID and independent account baseline for real read-only acceptance; no secret
-   values in chat. Isolated native adapter checkpoint reconstruction/reconciliation
+1. Use the selected **Binance Spot testnet** environment. Implement a supported
+   `/api` observation profile with unknown key restrictions kept explicit; testnet
+   has no `/sapi`. Supply the documented testnet credentials (or an explicit alternate
+   reference), expected UID and current independent full-account baseline; no secret
+   values in chat. Qualify faucet assets and reset boundaries before mapping to the
+   dedicated native account contract. Isolated checkpoint reconstruction/reconciliation
    and three-process replay now pass. Qualify actual endpoint permissions, stream
    receipts, archive coverage and venue references. Raw REST persistence and local
    replay now exist; select a closed archive hash and collection ID for audit, never
@@ -144,6 +155,9 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Latest Verification
 
+- September 11: official docs confirm no testnet SAPI; public `/api/v3/time`
+  returned HTTP 200. Documented credential references were checked for presence
+  only and are absent. Documentation-only change; no test-suite rerun or private read.
 - **130 collector/stream/archive tests** passed, including 12 new concurrency,
   cancellation, timeout, source/clock and abort-persistence regressions. Explicit
   retries produce independently replayable evidence; failed collections stay rejected.
@@ -157,6 +171,7 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## References
 
+- [Selected Spot testnet environment, verified incompatibility and required inputs](progress/portfolio-spot-testnet-selection-2026-09-11.md).
 - [Collection concurrency, time limits and interruption recovery](progress/portfolio-collection-lifecycle-2026-09-10.md).
 - [Raw account response archive and offline collection replay](progress/portfolio-account-archive-2026-09-10.md).
 - [Read-only downtime risk review and remaining evidence boundaries](progress/portfolio-downtime-risk-2026-09-10.md).
