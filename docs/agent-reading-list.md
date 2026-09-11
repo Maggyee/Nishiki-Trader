@@ -146,6 +146,14 @@ read `docs/progress/portfolio-testnet-ed25519-2026-09-11.md` and
 an Ed25519 private-key path, not an HMAC secret. Native HTTP needs the project
 Ed25519 override; WS signatures are independently tested. The 502-asset initial
 snapshot is unqualified for the existing dedicated-account recovery gate.
+For the subsequent full-account observation profile and real signed WS reconnect,
+read `docs/progress/portfolio-testnet-observation-2026-09-11.md`,
+`apps/strategies_nautilus/portfolio_testnet_observation.py` and
+`apps/ops/portfolio_testnet_observe.py`. Four real collections retained all 502
+assets and account-wide open orders; explicit reconnect and detached replay pass.
+Zero business events were observed. Permissions, independent UID/baseline,
+global continuity and actual adapter process recovery remain unqualified.
+Observation journals cannot seal strict recovery evidence or grant runtime readiness.
 
 | Task area | Read |
 |---|---|

@@ -7,6 +7,13 @@ dashboard snapshot support + Phase 6 passive readiness gate support。
 
 ## 当前入口
 
+`portfolio_testnet_observe` 是有时限的 Binance Spot 测试网全账户只读观察入口：
+显式选择 Ed25519 配置、初始账户观察及哈希、新建私有归档；执行两次签名订阅、
+四轮全资产/账户级挂单读取及心跳检查，断线后拒绝旧连接凭据，最后回放归档。
+不启动执行引擎，权限未知、基线未认证及 `runtime_ready=false` 始终保留。
+命令和真实测试网证据见
+[测试网全账户观察与重连](../../docs/progress/portfolio-testnet-observation-2026-09-11.md)。
+
 准备一份本地 BTCUSDT Binance 1m catalog fixture，并写入只用于冒烟测试的
 `SignalEvent v1` demo signals：
 

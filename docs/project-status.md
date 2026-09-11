@@ -3,19 +3,22 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-11
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Extend the successful Ed25519 Spot testnet account read into full-asset observations and user-stream qualification; establish identity/baseline and keep missing SAPI permissions explicit.
+- **Current objective**: Build on successful full-account Spot testnet observations and signed WS reconnect; qualify independent identity/baseline, permission evidence, business-event continuity and actual adapter process recovery.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
 
 The operator selected **Binance Spot testnet** and supplied an Ed25519 key pair.
-The env now references the private-key file, and native HTTP/WS signatures pass
-independent OpenSSL tests. One actual signed `/api/v3/account` read succeeded and
-retained a UID plus all **502 asset records** in a private local observation.
-Expected-UID matching and the baseline remain unqualified. Testnet excludes `/sapi`,
-so the strict collector's API-restrictions requirement remains incompatible. The
-full-account observation profile and external WS still need qualification; no
-production account or order run was accessed.
+Native HTTP/WS signatures pass independent OpenSSL tests. A separate full-account
+observation profile now passes real signed WS subscriptions, explicit reconnect
+and four collections retaining all **502 assets** plus account-wide open orders
+(zero observed). Six pings passed over 23.806 seconds; zero business events arrived.
+The closed private archive replays in a fresh process without credentials. Observed
+UID consistency is checked against the selected initial artifact; independent UID,
+baseline, global continuity and actual adapter process recovery remain unqualified.
+Testnet excludes `/sapi`: key restrictions remain unknown, the strict recovery
+collector is unchanged and observations cannot seal recovery evidence. No production
+account, order/cancel request or execution runner was accessed.
 
 An offline engineering plan locks six evidence-verified candidates and five
 proposed 0.001 BTC sleeves: v16/v18/v22/v34/v36. V40 is observation-only within
@@ -41,8 +44,8 @@ submitted orders and pending cancels with late actual-fee fills. A durable strea
 journal binds source, subscription epoch and REST fences; disconnects and new events
 invalidate prior observations. A dedicated read-only native WS transport now binds
 confirmed signed subscriptions, preserves envelopes and checks actual socket state
-at every fence. Real Rust WebSocket I/O passes loopback acceptance; no Binance
-account or external WS was connected. Account HTTP requests have a GET whitelist
+at every fence. Real Rust WebSocket I/O passes loopback acceptance and the separate
+testnet observation above. Account HTTP requests have a GET whitelist
 and avoid signed-URL debug logging. Local receipts cannot prove global gap-free
 continuity. An isolated numeric-venue checkpoint path now combines native event
 reconstruction, Binance report reconciliation and exact account comparison; three
@@ -111,21 +114,18 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Next Steps
 
-1. Use the selected **Binance Spot testnet** environment. Implement a supported
-   `/api` observation profile with unknown key restrictions kept explicit; testnet
-   has no `/sapi`. Use the supplied Ed25519 credentials and explicit private-key
-   path; the first signed account read succeeded. Qualify external WS, match the
-   observed UID and establish an independent full-account baseline. No secret values
-   in chat. Qualify faucet assets and reset boundaries before mapping to the
-   dedicated native account contract. Isolated checkpoint reconstruction/reconciliation
-   and three-process replay now pass. Qualify actual endpoint permissions, stream
-   receipts, archive coverage and venue references. Raw REST persistence and local
-   replay now exist; select a closed archive hash and collection ID for audit, never
-   reuse archived receipts as a current stream fence. Then validate real strategy
-   state/policy fingerprints before any execution bootstrap. The downtime reviewer
-   detects observed breaches but cannot clear missing account/price coverage, cash
-   flows or UTC day-open history. Resolve actual runtime telemetry semantics and
-   the 50 USDT planning loss versus the binding 5% rule without weakening it.
+1. Continue with **Binance Spot testnet** and the supplied Ed25519 configuration.
+   Full-account `/api` observations, external signed WS reconnect and pinned archive
+   replay now pass. Establish an independently corroborated UID and full-account
+   baseline, supported permission evidence and explicit faucet/reset boundaries.
+   Missing `/sapi` restrictions remain unknown; do not bypass the strict gate.
+   Qualify real business events and downtime history, then full-asset native mapping
+   and fresh-process adapter recovery; quiet pings cannot prove these. The selected
+   archive/collection IDs are recorded in the latest progress report; historical
+   receipts cannot become current fences. Validate strategy/policy fingerprints,
+   account/price coverage, cash flows and UTC day-open history before any execution
+   bootstrap. Reconcile the planning 50 USDT daily loss with the binding 5% rule
+   without weakening it. No secret values in chat.
 2. Review the explicit offline residual-exit policy before promotion and resolve
    re-entry with retained dust. Whole-step reductions now pass native acceptance;
    fixed BUY size, SignalEvent identities and SourcePolicy remain unchanged.
@@ -152,30 +152,32 @@ the September 9 five-sleeve proposal is offline engineering only.
 - Full ten-candidate funding and intraday equity drawdown remain unverified.
   Synthetic Nautilus reservation lifecycle and abrupt fresh-process recovery pass;
   real account/venue integration, stream continuity and live recovery remain unverified.
-  One initial testnet account read succeeded; no production account was accessed.
+  Real full-account testnet observations/reconnect pass; no production account was accessed.
 - Nautilus is the only execution engine; LLMs never enter the order path.
 
 ## Latest Verification
 
-- September 11: local Ed25519 key pair/configuration validated; one actual signed
-  testnet account read returned a UID and 502 asset records, retained unmodified.
-  **19 new tests** verify native HTTP/WS signatures through OpenSSL and safe config
-  loading. Expected UID, full-account baseline, API restrictions and external WS
-  remain unqualified; the observation does not satisfy the strict recovery gate.
+- September 11: two actual signed testnet WS subscriptions, four 502-asset
+  collections, six ping confirmations, explicit reconnect/old-fence rejection and
+  detached replay pass. Zero business events were observed. **49 new tests** cover
+  full-account validation, interrupted collection/retry, raw events, archive
+  integrity, strict-gate separation and bounded ops cleanup. Independent UID,
+  baseline, API restrictions and actual adapter process recovery remain unqualified.
 - **130 collector/stream/archive tests** passed, including 12 new concurrency,
   cancellation, timeout, source/clock and abort-persistence regressions. Explicit
   retries produce independently replayable evidence; failed collections stay rejected.
-- Full offline regression: **2,213 passed**, 12 Postgres integration tests deselected
+- Full offline regression: **2,262 passed**, 12 Postgres integration tests deselected
   (no dedicated integration DSN).
   Ruff, registry and whitespace checks pass.
 - Prior abrupt-exit/fresh-process recovery and exact account comparison remain
-  green. Recovery fixtures remain synthetic; the separate initial testnet HTTP read
-  does not qualify adapter process recovery, an atomic stream boundary or live readiness.
+  green. Recovery fixtures remain synthetic; the separate testnet observations
+  do not qualify adapter process recovery, an atomic stream boundary or live readiness.
 - Earlier portfolio, collector and reliability verification is archived in the
   linked progress records; it is not a current runtime-health observation.
 
 ## References
 
+- [Full-account testnet observations, real signed WS reconnect and detached replay](progress/portfolio-testnet-observation-2026-09-11.md).
 - [Ed25519 credentials, native signatures and first signed testnet account read](progress/portfolio-testnet-ed25519-2026-09-11.md).
 - [Selected Spot testnet environment, verified incompatibility and required inputs](progress/portfolio-spot-testnet-selection-2026-09-11.md).
 - [Collection concurrency, time limits and interruption recovery](progress/portfolio-collection-lifecycle-2026-09-10.md).

@@ -249,7 +249,12 @@ Binance 转换器及原生对账引擎验证合成订单恢复，拒绝推断成
 私钥文件路径，校验权限和 PKCS#8 格式；HTTP 使用独立 Ed25519 签名入口，WS
 使用原生 PEM 识别。配置格式与首次签名读取见
 [Ed25519 测试网接入](../../docs/progress/portfolio-testnet-ed25519-2026-09-11.md)。
-下一入口为明确账户环境、凭证变量名/配置路径、预期 UID 和独立账户基线，验证真实
+`portfolio_testnet_observation.py` 提供单独的全账户观察模式，保留全部资产和账户级
+挂单，不调用测试网不支持的 `/sapi`，权限证明继续为未知，不能生成严格恢复凭据。
+真实签名 WS 订阅、显式重连和四轮 502 资产观察的归档重放已通过；期间没有业务事件，
+不能证明全局连续性或真实适配器进程恢复。见
+[测试网全账户观察](../../docs/progress/portfolio-testnet-observation-2026-09-11.md)。
+下一入口为独立核验预期 UID 和完整账户基线、权限证据及测试网重置语义，验证真实
 来源、账户/行情归档、资金流和 UTC 日初基线及策略风险政策；部署前还需明确余量入场政策。
 详见[原生手续费验收](../../docs/progress/portfolio-base-fee-acceptance-2026-09-09.md)及
 [残余库存退出验收](../../docs/progress/portfolio-residual-exit-2026-09-09.md)。
