@@ -16,6 +16,7 @@ from nautilus_trader.common.component import LiveClock
 
 from apps.ops.portfolio_session_transport import PROJECT, SELECTION_SHA256, metadata_capture
 from apps.strategies_nautilus.portfolio_session_bootstrap import reconcile_collected
+from apps.strategies_nautilus.portfolio_session_cancel_recovery import restore_cancel_runtime
 from apps.strategies_nautilus.portfolio_session_ledger import read_session
 from apps.strategies_nautilus.portfolio_session_runtime import (
     RUNTIME_PROFILE,
@@ -84,7 +85,8 @@ def check_account(capture, account, binding):
 
 
 async def run(args):
-    revision = clean_revision() if args.execute else subprocess.check_output(
+    cancel_recovery = getattr(args, "recover_cancel", False)
+    revision = clean_revision() if args.execute or cancel_recovery else subprocess.check_output(
         ["git", "rev-parse", "HEAD"], cwd=PROJECT, text=True).strip()
     clock = LiveClock()
     credentials = load_testnet_ed25519_credentials(args.credentials)
@@ -94,7 +96,7 @@ async def run(args):
     binding = select_initial_observation(initial, SELECTION_SHA256, http)
     lease = SessionLease(binding, SELECTION_SHA256)
     journal = stream = owner = None
-    prefix = ("matching-" if args.execute else "recovery-") + uuid4().hex[:12]
+    prefix = ("matching-" if args.execute else "cancel-recovery-" if cancel_recovery else "recovery-") + uuid4().hex[:12]
     def artifact(name):
         return lease.root / f"{prefix}-{name}"
     stage = "fixed_scope_check"
@@ -180,18 +182,36 @@ async def run(args):
                     cleanup = "one_owned_cleanup_attempt"
             await stream.ping()
             raw = private_read(lease.checkpoint_path)
-        stage = "final_signed_reconciliation"
-        receipt, result = await review_native(http, journal, raw)
+        if cancel_recovery:
+            stage = "signed_cancellation_recovery"
+            receipt = await collect_session(http, journal, state, hashlib.sha256(raw).hexdigest())
+            owner, result = await restore_cancel_runtime(raw=raw, receipt=receipt, journal=journal,
+                lease=lease, clock=clock, http=http, credentials=credentials)
+            cleanup = "terminal_session_no_action"
+            if owner is not None:
+                stage = "recovered_original_order_cancellation"
+                order = next(o for o in owner.cache.orders() if not o.is_closed)
+                await await_terminal(owner, order)
+                await stream.ping()
+                raw = private_read(lease.checkpoint_path)
+                cleanup = (
+                    "one_recovered_original_order_cancellation"
+                    if f"cancel:{order.client_order_id}" in owner.ledger.state.get("dispatches", {})
+                    else "original_order_completed_before_cancellation"
+                )
+        if not cancel_recovery or owner is not None:
+            stage = "final_signed_reconciliation"
+            receipt, result = await review_native(http, journal, raw)
         checkpoint = result.pop("checkpoint")
         write_private_new(artifact("recovered.json"), checkpoint)
         write_private_new(artifact("evidence.json"), canonical(receipt.evidence))
         receipt.assert_current(journal, hashlib.sha256(raw).hexdigest())
         result.update(schema_version="portfolio.testnet_bounded_matching_result.v1",
-            code_commit=revision, code_dirty=False if args.execute else None,
+            code_commit=revision, code_dirty=False if args.execute or cancel_recovery else None,
             scope_activated=True, cleanup=cleanup, known_orders=len(receipt.evidence["orders"]),
             known_trades=len(receipt.evidence["trades"]),
             account_wide_open_orders=len(receipt.evidence["open_orders"]),
-            production_requests=0, run_kind="matching" if args.execute else "GET_only_recovery",
+            production_requests=0, run_kind="matching" if args.execute else "cancel_only_recovery" if cancel_recovery else "GET_only_recovery",
             native_checkpoint_sha256=hashlib.sha256(raw).hexdigest(),
             archive=str(archive), session_id=lease.state["session_id"])
         # The numerical reconciler's matching_requests_made describes its GET-only scope.
@@ -202,7 +222,7 @@ async def run(args):
             "cleanup", "view")} | {"report": str(artifact("report.json"))}
     except BaseException as exc:
         if owner is not None and hasattr(owner, "bridge"):
-            owner.bridge.fail("matching_runner_aborted_requires_reconciliation")
+            owner.bridge.fail("cancel_recovery_interrupted" if cancel_recovery else "matching_runner_aborted_requires_reconciliation")
         # Exception text is deliberately not archived: HTTP errors can contain signed URLs.
         write_private_new(artifact("failure.json"), canonical({"exception_type": type(exc).__name__,
             "stage": stage, "scope_activated": (lease.root / "activated.json").exists(),
@@ -226,6 +246,7 @@ def main():
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--execute", action="store_true", help="Consume the one fixed testnet matching session")
     mode.add_argument("--recover", action="store_true", help="GET-only original-ID reconciliation; never send orders")
+    mode.add_argument("--recover-cancel", action="store_true", help="Reconcile fixed scope; cancel an active original order only if never attempted")
     parser.add_argument("--credentials", type=Path, default=Path.home() / ".config/trader/binance_testnet.env")
     try:
         result = asyncio.run(run(parser.parse_args()))

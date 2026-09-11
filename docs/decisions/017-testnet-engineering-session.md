@@ -167,3 +167,21 @@ with no fills and exact 502-asset reconciliation in both the matching process an
 an independent GET-only recovery process. The activation/BUY allowance is consumed;
 this result does not authorize a second attempt to obtain a fill. See the runtime
 report for original evidence hashes and the still-unverified active/fill paths.
+
+## 9. Cancellation-only recovery addendum — 2026-09-11
+
+The [cancellation recovery increment](../progress/portfolio-testnet-cancel-recovery-2026-09-11.md)
+adds an explicit `--recover-cancel` operation. Fresh complete signed numerical
+reconciliation may restore a sole original active order for its never-attempted
+cancellation, with original Submitted/dispatch evidence. Native restoration and
+recovery provenance are durable before PendingCancel and its one dispatch. Every
+new BUY/SELL path is disabled, including the original runtime's admission after
+the permanent cancellation-only marker. Session baseline, deadline, allowances
+and historical halts are preserved. Only documented transport halt histories may
+coexist with this narrow qualification; unknown/economic incidents stay blocked.
+
+An existing cancellation intent/dispatch cannot be renewed. Terminal orders are
+read-only no-ops, and late fills remain owned without a cleanup SELL. This explicit
+operation is not an automatic retry/reconnect or an acceptance of active testnet
+recovery without actual evidence. The prior completed BUY/cancel still consumes
+the one fixed scope; no second BUY or production admission follows.

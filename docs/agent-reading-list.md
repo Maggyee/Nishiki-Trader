@@ -195,6 +195,14 @@ profile; default rules stay strict. The diagnostic increment did not wire a matc
 order or execution runner; subsequent offline ledger/recovery is described below. Do not request the Key again or
 mistake validation acceptance for all key restrictions or portfolio qualification.
 
+For interruption recovery with a narrowly permitted cancellation, read
+`docs/progress/portfolio-testnet-cancel-recovery-2026-09-11.md`,
+`apps/strategies_nautilus/portfolio_session_cancel_recovery.py` and
+`apps/ops/portfolio_session_run.py`. `--recover-cancel` reconciles the fixed scope
+and permits only an original active order's never-attempted cancellation. An old
+cancel intent/dispatch blocks retry; terminal sessions do not mutate native state.
+New BUY/SELL, halt reset, scope reset and production trading remain forbidden.
+
 For the bounded matching LiveClock runner, read
 `docs/progress/portfolio-testnet-session-runtime-2026-09-11.md`,
 `apps/ops/portfolio_session_run.py` and `portfolio_session_runtime.py` under

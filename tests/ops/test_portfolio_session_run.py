@@ -132,3 +132,53 @@ def test_full_cli_native_matching_and_separate_get_recovery(tmp_path, monkeypatc
     with pytest.raises(ValueError):
         asyncio.run(module.run(SimpleNamespace(execute=True, credentials=tmp_path / "unused")))
     assert len(context.sends) == 2
+
+
+def test_recover_cancel_cli_handles_interrupted_native_order(tmp_path, monkeypatch):
+    from tests.strategies_nautilus.test_portfolio_session_cancel_recovery import (
+        interrupted,
+        terminal_sink,
+    )
+    ctx = asyncio.run(interrupted(tmp_path / "private"))
+    ctx.journal.close()
+    ctx.lease.close()
+    initial = tmp_path / "data/spot-testnet-initial-account-20260911T014024Z.json"
+    initial.parent.mkdir()
+    write_private_new(initial, b"{}")
+    monkeypatch.setattr(module, "PROJECT", tmp_path)
+    monkeypatch.setattr(module, "clean_revision", lambda: "a" * 40)
+    monkeypatch.setattr(module, "select_initial_observation", lambda *args: BINDING)
+    monkeypatch.setattr(module, "SessionLease", lambda binding, selection:
+                        SessionLease(binding, "a" * 64, root=ctx.lease.root))
+    monkeypatch.setattr(module, "load_testnet_ed25519_credentials", lambda *args: ctx.credentials)
+    original = module.restore_cancel_runtime
+    async def restore(**kwargs):
+        owner, result = await original(**kwargs)
+        if owner is not None:
+            ctx.owner, ctx.journal = owner, kwargs["journal"]
+            terminal_sink(ctx, late=True, duplicate=True)
+        return owner, result
+    monkeypatch.setattr(module, "restore_cancel_runtime", restore)
+    class Stream:
+        def __init__(self, http, *, journal, clock, **kwargs):
+            self.journal, self.clock = journal, clock
+            http._client = ctx.http._client
+        async def start(self):
+            self.journal.subscribed(8, BINDING)
+        async def ping(self):
+            self.journal.last_transport_ns = self.clock.timestamp_ns()
+        async def disconnect(self):
+            self.journal.disconnect("fixture finished")
+    monkeypatch.setattr(portfolio_user_stream, "ReadOnlyBinanceUserStream", Stream)
+    args = SimpleNamespace(execute=False, recover_cancel=True, credentials=tmp_path / "unused")
+    result = asyncio.run(module.run(args))
+    assert result["run_kind"] == "cancel_only_recovery"
+    assert result["cleanup"] == "one_recovered_original_order_cancellation"
+    assert result["full_account_reconciled"] and result["account_wide_open_orders"] == 0
+    assert D(result["view"]["owned_btc"]) == D("0.00008")
+    assert ctx.calls == [HttpMethod.DELETE]
+    before = ctx.lease.checkpoint_path.read_bytes()
+    again = asyncio.run(module.run(args))
+    assert again["cleanup"] == "terminal_session_no_action"
+    assert ctx.lease.checkpoint_path.read_bytes() == before
+    assert ctx.calls == [HttpMethod.DELETE]

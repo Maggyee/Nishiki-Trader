@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-11
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: ADR-017 testnet BUY/cancel and independent terminal recovery succeeded; preserve the consumed scope and develop qualified interrupted-order recovery. Full-account portfolio qualification remains blocked.
+- **Current objective**: ADR-017 testnet BUY/cancel and independent terminal recovery succeeded; cancellation-only interrupted-order recovery is implemented; preserve the consumed scope and verify the new terminal no-action operation. Full-account portfolio qualification remains blocked.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -32,8 +32,12 @@ execution adapter and exact Ed25519 POST/DELETE. Durable native events and singl
 attempt receipts precede network I/O. Two execution reports and two account
 reservation/release updates were received and correlated without balance patching.
 Actual partial/final fills, fee settlement and owned cleanup remain unverified;
-those paths currently have synthetic acceptance only. Interrupted-active-order
-executable recovery/reduction remains unimplemented; `--recover` is GET-only.
+those paths currently have synthetic acceptance only. Explicit `--recover-cancel`
+now restores a qualified active original order into a cancellation-only native
+runtime after fresh signed reconciliation. Historical halts and all allowances
+remain intact; an old cancellation intent/attempt blocks another send. Terminal
+orders leave the fixed checkpoint unchanged. `--recover` remains GET-only; new
+BUY/SELL and cleanup after recovery stay disabled.
 
 The fixed session activation and **one-BUY allowance are consumed**, including
 for this unfilled canceled order. Preserve all state and original IDs; do not rerun
@@ -145,12 +149,12 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Next Steps
 
-1. Preserve the completed fixed ADR-017 scope (one accepted/canceled BUY, zero
-   fills/residual/open orders). Develop and verify source-bound recovery/reduction
-   for interrupted active orders before any further execution capability. Existing
-   `--recover` is read-only; never reset activation or renew BUY permission. Actual
-   fill/fee/cleanup acceptance remains outstanding. Continue ADR-016 full-account
-   valuation, UTC/cash-flow qualification separately; strict continuity stays 0/14.
+1. Complete verification of the cancellation-only recovery increment and run
+   `--recover-cancel` on the existing terminal session from clean pushed code.
+   Expect a signed no-action result and unchanged fixed checkpoint; never reset
+   activation or renew BUY permission. Actual fill/fee/cleanup and active-order
+   recovery execution remain unverified. Continue ADR-016 full-account valuation,
+   UTC/cash-flow qualification separately; strict continuity stays 0/14.
 2. Review the explicit offline residual-exit policy before promotion and resolve
    re-entry with retained dust. Whole-step reductions now pass native acceptance;
    fixed BUY size, SignalEvent identities and SourcePolicy remain unchanged.
@@ -181,6 +185,11 @@ the September 9 five-sleeve proposal is offline engineering only.
 - Nautilus is the only execution engine; LLMs never enter the order path.
 
 ## Latest Verification
+
+- Cancellation-only recovery: **21 new tests** pass, covering LiveClock/native
+  restoration, late/duplicate fills, missed acknowledgement, durability failure,
+  timeout/no-retry, whole CLI and three-process abrupt-exit acceptance. The actual
+  terminal-session no-action check is pending the clean committed launch.
 
 - Bounded LiveClock matching runtime: **31 new tests** pass, including native
   queue/Ed25519 signature, failure, timed cancellation and whole-CLI matching/recovery.
@@ -232,7 +241,7 @@ the September 9 five-sleeve proposal is offline engineering only.
 - **130 collector/stream/archive tests** passed, including 12 new concurrency,
   cancellation, timeout, source/clock and abort-persistence regressions. Explicit
   retries produce independently replayable evidence; failed collections stay rejected.
-- Full offline regression after bounded matching runtime: **2,542 passed**, 12 Postgres integration tests deselected
+- Full offline regression after cancellation-only recovery: **2,563 passed**, 12 Postgres integration tests deselected
   (no dedicated integration DSN).
   Ruff, registry and whitespace checks pass.
 - Prior abrupt-exit/fresh-process recovery and exact account comparison remain
@@ -242,6 +251,8 @@ the September 9 five-sleeve proposal is offline engineering only.
   linked progress records; it is not a current runtime-health observation.
 
 ## References
+
+- [Source-bound cancellation-only recovery](progress/portfolio-testnet-cancel-recovery-2026-09-11.md).
 
 - [Bounded LiveClock matching runtime and original-ID recovery](progress/portfolio-testnet-session-runtime-2026-09-11.md).
 

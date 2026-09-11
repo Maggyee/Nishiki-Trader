@@ -450,3 +450,10 @@ fixed testnet scope, native risk/strategy/execution, durable single-attempt requ
 and timed cancellation. `--recover` is signed GET-only original-ID reconciliation.
 See `docs/progress/portfolio-testnet-session-runtime-2026-09-11.md` for limitations;
 never delete activation or state to repeat a BUY. Production remains blocked.
+
+`apps.ops.portfolio_session_run --recover-cancel` adds explicit signed recovery
+followed only by an original active order's unused cancellation. A terminal order
+returns without modifying the fixed checkpoint. Old cancellation intents/attempts
+and all BUY allowances stay consumed; new orders remain forbidden. Implementation:
+`portfolio_session_cancel_recovery.py`; acceptance/boundaries are documented in
+`docs/progress/portfolio-testnet-cancel-recovery-2026-09-11.md`.

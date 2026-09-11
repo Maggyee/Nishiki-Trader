@@ -69,6 +69,8 @@ class MatchingRuntimeLedger(SessionLedger):
         super()._persist(owner)
 
     def prepare(self, owner, *, signal, order, rules):
+        if self.state.get("recovery_cancel_only"):
+            raise SessionLedgerError("recovered cancellation scope cannot admit new orders")
         owner.bridge.assert_admission(rules)
         return super().prepare(owner, signal=signal, order=order, rules=rules)
 
