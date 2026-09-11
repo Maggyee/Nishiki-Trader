@@ -38,6 +38,7 @@ from apps.strategies_nautilus.portfolio_preflight import (
     ProposedOrder,
     select_funded_batch,
 )
+from apps.strategies_nautilus.portfolio_risk_policy import POLICY_ID
 from apps.strategies_nautilus.signal_consumer import ConsumerConfig, evaluate
 
 D = Decimal
@@ -119,6 +120,7 @@ class PortfolioSimulationStrategy(Strategy):
                 {
                     "identities": IDENTITIES,
                     "model": MODEL,
+                    "risk_policy_id": POLICY_ID,
                     "instrument": str(INSTRUMENT),
                     "limits": {k: str(v) for k, v in asdict(self.limits).items()},
                     "limit_price": "100000",
@@ -346,7 +348,8 @@ class PortfolioSimulationStrategy(Strategy):
         peak = max(D(self.state_data["peak"] or equity), equity)
         self.state_data["peak"] = str(peak)
         if (
-            D(self.state_data["day_open"]) - equity >= self.limits.daily_loss
+            D(self.state_data["day_open"]) - equity
+            >= self.limits.effective_daily_loss(D(self.state_data["day_open"]))
             or peak - equity >= self.limits.drawdown_loss
         ):
             self.state_data["risk_latched"] = True

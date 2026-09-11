@@ -25,6 +25,37 @@ def limits():
     return preflight_limits()
 
 
+@pytest.mark.parametrize(
+    "day_open,threshold", [("100", "5"), ("400", "20"), ("500", "25"), ("1000", "25")]
+)
+@pytest.mark.parametrize("offset", ["-0.01", "0", "0.01"])
+def test_current_daily_rule_tracks_equity_and_keeps_fixed_cap(day_open, threshold, offset):
+    opening, loss = D(day_open), D(threshold) + D(offset)
+    equity = opening - loss
+    a = account(
+        total_quote=equity, venue_free_quote=equity, day_open_equity=opening, peak_equity=opening
+    )
+    # Zero fee isolates the inclusive observed-loss boundary; fee accumulation
+    # is independently exercised by the funded-subset and pending-order tests.
+    result = check(a, (order(quantity="0.0001"),), r=rules(fee_rate=D("0")))
+    assert limits().effective_daily_loss(opening) == D(threshold)
+    assert result.checks_passed == (D(offset) < 0)
+    assert ("daily_loss_limit" in result.reasons) == (D(offset) >= 0)
+
+
+@pytest.mark.parametrize("fraction", [D("0"), D("0.0501"), D("NaN"), D("Infinity"), 0.05])
+def test_invalid_or_weakened_percentage_fails_closed(fraction):
+    result = check(l=replace(limits(), daily_fraction=fraction))
+    assert not result.checks_passed
+    assert result.reasons[0].startswith("invalid_input:")
+
+
+def test_legacy_50_usdt_replay_is_explicit():
+    a = account(total_quote=D("474"), venue_free_quote=D("474"))
+    assert check(a, l=preflight_limits(revision=2)).checks_passed
+    assert "daily_loss_limit" in check(a).reasons
+
+
 def rules(**kwargs):
     # SYNTHETIC effective LIMIT filters, never represented as current exchangeInfo.
     return replace(
@@ -193,8 +224,8 @@ def test_selector_preserves_entry_risk_blocks_and_owned_reductions(changes, reas
 
 
 def test_selector_accumulates_fees_and_exposure_for_whole_selected_set():
-    result = select(a=account(day_open_equity=D("549.60"), peak_equity=D("549.60")))
-    assert len(result.selected) == 2  # 0.30 fees fit; 0.45 would cross 50 loss
+    result = select(a=account(day_open_equity=D("524.60"), peak_equity=D("524.60")))
+    assert len(result.selected) == 2  # 0.30 fees fit; 0.45 would cross 25 loss
     assert all("projected_daily_loss_limit" in s.reasons for s in result.skipped)
     capped = select(l=replace(limits(), total_quantity=D("0.002")))
     assert len(capped.selected) == 2
@@ -368,14 +399,14 @@ def test_sleeve_cap_includes_existing_inventory():
 
 
 def test_known_entry_fees_cannot_cross_daily_or_peak_limit():
-    a = account(day_open_equity=D("549.90"), peak_equity=D("749.90"))
+    a = account(day_open_equity=D("524.90"), peak_equity=D("749.90"))
     result = check(a)
     assert "projected_daily_loss_limit" in result.reasons
     assert "projected_drawdown_limit" in result.reasons
 
 
 def test_pending_buy_fees_also_count_toward_projected_daily_limit():
-    a = pending_account(day_open_equity=D("549.75"), peak_equity=D("549.75"))
+    a = pending_account(day_open_equity=D("524.75"), peak_equity=D("524.75"))
     result = check(a, (order("v18"),))
     assert "projected_daily_loss_limit" in result.reasons
 

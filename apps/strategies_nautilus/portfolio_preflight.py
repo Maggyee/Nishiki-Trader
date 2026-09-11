@@ -10,6 +10,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from decimal import ROUND_CEILING, Decimal
 
+from apps.strategies_nautilus.portfolio_risk_policy import daily_loss_limit
+
 ZERO = Decimal("0")
 ONE = Decimal("1")
 ACTIVE = {"submitted", "accepted", "partially_filled", "pending_cancel"}
@@ -24,6 +26,10 @@ class Limits:
     daily_loss: Decimal
     drawdown_loss: Decimal
     max_age_ns: int
+    daily_fraction: Decimal | None = None  # None preserves explicit v1/v2 replay
+
+    def effective_daily_loss(self, day_open: Decimal) -> Decimal:
+        return daily_loss_limit(day_open, self.daily_loss, self.daily_fraction)
 
 
 @dataclass(frozen=True)
@@ -365,6 +371,7 @@ def _check(a, r, limits, orders, now, allow_base_buy_fees):
     if sum(held.values(), ZERO) != a.total_base:
         raise ValueError("sleeve holdings do not reconcile to account")
     equity = a.total_quote + a.total_base * a.mark_price
+    daily_limit = limits.effective_daily_loss(a.day_open_equity)
     if a.peak_equity < max(equity, a.day_open_equity):
         raise ValueError("peak equity inconsistent")
     entry_fee_rate = _entry_fee_rate(r, allow_base_buy_fees)
@@ -464,11 +471,11 @@ def _check(a, r, limits, orders, now, allow_base_buy_fees):
     if has_buy:
         if a.risk_latched:
             reasons.append("risk_latched")
-        if a.day_open_equity - equity >= limits.daily_loss:
+        if a.day_open_equity - equity >= daily_limit:
             reasons.append("daily_loss_limit")
         if a.peak_equity - equity >= limits.drawdown_loss:
             reasons.append("drawdown_limit")
-        if a.day_open_equity - equity + entry_loss_bound >= limits.daily_loss:
+        if a.day_open_equity - equity + entry_loss_bound >= daily_limit:
             reasons.append("projected_daily_loss_limit")
         if a.peak_equity - equity + entry_loss_bound >= limits.drawdown_loss:
             reasons.append("projected_drawdown_limit")

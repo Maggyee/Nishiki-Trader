@@ -13,7 +13,7 @@ def anchor():
     return json.loads(Path(plan.ANCHOR_PATH).read_text())
 
 
-@pytest.mark.parametrize("revision", [1, 2])
+@pytest.mark.parametrize("revision", [1, 2, 3])
 def test_frozen_cohort_and_proposal(monkeypatch, revision):
     current = anchor()
     monkeypatch.setattr(plan.evidence, "build_report", lambda root: current)
@@ -21,23 +21,47 @@ def test_frozen_cohort_and_proposal(monkeypatch, revision):
     assert [r["protocol"] for r in result["sleeves"]] == list(plan.SLEEVES)
     assert result["verified_evidence_cohort"] == list(plan.VERIFIED)
     assert result["capital_usdt"] == "500"
-    assert result["daily_loss_usdt"] == "50"
+    assert result["daily_loss_usdt"] == ("25" if revision == 3 else "50")
     assert result["peak_drawdown_limit_usdt"] == "250"
     assert result["promotion_allowed"] is False
     assert result["runtime_risk_change_authorized"] is False
     assert result["status"] == "offline_engineering_only"
     suffix = "-v2" if revision == 2 else ""
-    committed = Path(f"docs/progress/portfolio-execution-plan-2026-09-09{suffix}.json")
+    committed = Path(
+        "docs/progress/portfolio-execution-plan-2026-09-11-v3.json"
+        if revision == 3
+        else f"docs/progress/portfolio-execution-plan-2026-09-09{suffix}.json"
+    )
     assert result == json.loads(committed.read_text())
 
 
 def test_v2_changes_admission_only_not_cohort_or_budget(monkeypatch):
     monkeypatch.setattr(plan.evidence, "build_report", lambda root: anchor())
     v1 = plan.build_plan(Path("."), revision=1)
-    v2 = plan.build_plan(Path("."))
+    v2 = plan.build_plan(Path("."), revision=2)
     changed = {key for key in v1 if v1[key] != v2[key]}
     assert changed == {"schema_version", "plan_id", "admission"}
     assert v2["admission_sleeve_order"] == list(plan.SLEEVES)
+
+
+def test_current_plan_tightens_risk_without_changing_cohort_or_admission(monkeypatch):
+    monkeypatch.setattr(plan.evidence, "build_report", lambda root: anchor())
+    v2 = plan.build_plan(Path("."), revision=2)
+    v3 = plan.build_plan(Path("."))
+    for field in (
+        "sleeves",
+        "verified_evidence_cohort",
+        "capital_usdt",
+        "admission",
+        "admission_priority",
+        "max_quantity_btc",
+        "peak_drawdown_limit_usdt",
+    ):
+        assert v2[field] == v3[field]
+    assert v3["supersedes"] == v2["plan_id"]
+    assert v3["daily_loss_fraction"] == "0.05"
+    assert plan.preflight_limits().daily_loss == plan.Decimal("25")
+    assert plan.preflight_limits(revision=2).daily_loss == plan.Decimal("50")
 
 
 @pytest.mark.parametrize(

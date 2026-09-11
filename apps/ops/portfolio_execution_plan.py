@@ -13,8 +13,14 @@ from pathlib import Path
 
 from apps.ops import research_portfolio_evidence as evidence
 from apps.strategies_nautilus.portfolio_preflight import Limits
+from apps.strategies_nautilus.portfolio_risk_policy import (
+    DAILY_CAP_USDT,
+    DAILY_FRACTION,
+    PEAK_LOSS_USDT,
+    POLICY_ID,
+)
 
-PLAN_ID = "portfolio-engineering-v2-20260909"
+PLAN_ID = "portfolio-engineering-v3-20260911"
 ANCHOR_PATH = "docs/progress/portfolio-evidence-review-2026-09-08.json"
 ANCHOR_SHA256 = "0a0a6b034298919a292ba7b388d1fb686a41137ccf3dcf01f836f34c8deb336f"
 VERIFIED = ("v16", "v18", "v22", "v34", "v36", "v40")
@@ -22,10 +28,18 @@ SLEEVES = ("v16", "v18", "v22", "v34", "v36")
 EXCLUDED = ("v8", "v42", "v46", "v48")
 
 
-def preflight_limits() -> Limits:
+def preflight_limits(*, revision: int = 3) -> Limits:
     """Offline acceptance parameters only; not a SourcePolicy conversion."""
+    if revision not in (1, 2, 3):
+        raise ValueError("unsupported plan revision")
     return Limits(
-        SLEEVES, Decimal("0.001"), Decimal("0.005"), Decimal("50"), Decimal("250"), 60_000_000_000
+        SLEEVES,
+        Decimal("0.001"),
+        Decimal("0.005"),
+        DAILY_CAP_USDT if revision == 3 else Decimal("50"),
+        PEAK_LOSS_USDT,
+        60_000_000_000,
+        DAILY_FRACTION if revision == 3 else None,
     )
 
 
@@ -48,8 +62,8 @@ def validate_cohort(anchor: dict, current: dict) -> None:
         raise ValueError("duplicate-path assumption changed")
 
 
-def build_plan(root: Path, *, revision: int = 2) -> dict:
-    if revision not in (1, 2):
+def build_plan(root: Path, *, revision: int = 3) -> dict:
+    if revision not in (1, 2, 3):
         raise ValueError("unsupported plan revision")
     anchor = json.loads(evidence.verified_bytes(root / ANCHOR_PATH, ANCHOR_SHA256))
     current = evidence.build_report(root)  # reopens only authorized 2023–2025 evidence
@@ -95,10 +109,10 @@ def build_plan(root: Path, *, revision: int = 2) -> dict:
             "intraday risk and emergency actions not validated by historical daily marks",
         ],
     }
-    if revision == 2:
+    if revision >= 2:
         plan.update(
             schema_version="portfolio.execution_plan.v2",
-            plan_id=PLAN_ID,
+            plan_id="portfolio-engineering-v2-20260909",
             supersedes="portfolio-engineering-v1-20260909",
             admission="deterministic funded subset; final whole-batch check; atomic reservation pending",
             admission_priority=[
@@ -111,13 +125,32 @@ def build_plan(root: Path, *, revision: int = 2) -> dict:
             skipped_policy="record reasons; no queued retries; revalidate signals before reconsideration",
             performance_status="changed admission changes fills; prior basket PnL is not v2 evidence",
         )
+    if revision == 3:
+        plan.update(
+            schema_version="portfolio.execution_plan.v3",
+            plan_id=PLAN_ID,
+            supersedes="portfolio-engineering-v2-20260909",
+            risk_policy_id=POLICY_ID,
+            daily_loss_usdt=str(DAILY_CAP_USDT),
+            daily_loss_fraction=str(DAILY_FRACTION),
+            daily_definition="min(25 USDT, 5% of qualified UTC day-open marked equity); inclusive; no unqualified cash flows",
+            risk_action="latch entry block at inclusive daily/peak breach; rebound, midnight and restart never clear it; reconciled owned reductions only",
+            performance_status="changed risk limits change fills; prior basket PnL is not v3 evidence",
+            blockers=[
+                "forward integrity and portfolio-level alpha review remain incomplete",
+                "independent full-account baseline, permissions and testnet reset boundaries unqualified",
+                "business-event continuity, cash flows and UTC day-open history unqualified",
+                "actual native adapter recovery and runtime policy equivalence unqualified",
+                "residual ownership and fixed-size re-entry require review before promotion",
+            ],
+        )
     return plan
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo-root", type=Path, default=Path("."))
-    parser.add_argument("--revision", type=int, choices=(1, 2), default=2)
+    parser.add_argument("--revision", type=int, choices=(1, 2, 3), default=3)
     args = parser.parse_args(argv)
     try:
         plan = build_plan(args.repo_root, revision=args.revision)

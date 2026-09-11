@@ -87,11 +87,12 @@ def test_rebound_cannot_hide_an_observed_daily_stop(case):
     assert not result["prior_risk_latched"]
     assert D(result["minimum_observed_equity_usdt"]) == D("473.35")
     assert D(result["ending_equity_usdt"]) == D("499.75")
-    assert set(result["first_breaches"]) == {"daily_5pct"}
+    assert set(result["first_breaches"]) == {"daily_5pct", "planning_daily"}
     assert result["first_breaches"]["daily_5pct"]["ts_ns"] == BASE_NS + 3 * SECOND + SECOND // 2
     assert D(result["daily_5pct_limit_usdt"]) == 25
-    assert D(result["planning_daily_limit_usdt"]) == 50
-    assert result["planning_daily_exceeds_5pct"]
+    assert D(result["planning_daily_limit_usdt"]) == 25
+    assert not result["planning_daily_exceeds_5pct"]
+    assert not result["checkpoint_policy_qualified"]
     assert not result["runtime_ready"] and not result["downtime_history_complete"]
     assert case[:2] == (before, after)
     assert not verify_checkpoint(before)["state"]["risk_latched"]
@@ -150,7 +151,7 @@ def test_five_percent_threshold_is_inclusive(case, equity, breached):
     middle["account_event"] = encode(observed)
     result = review(case)
     assert ("daily_5pct" in result["first_breaches"]) == breached
-    assert "planning_daily" not in result["first_breaches"]
+    assert ("planning_daily" in result["first_breaches"]) == breached
     from apps.bridge.validators import Authorization
     from apps.strategies_nautilus.baseline_strategy import (
         BaselineSignalStrategy,

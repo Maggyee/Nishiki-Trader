@@ -38,10 +38,15 @@ For the follow-up evidence recovery, repaired-pipeline acceptance and planned
 100 USDT budget check, read `docs/progress/strategy-followup-method-2026-09-08.md`
 and `docs/progress/strategy-followup-audit-2026-09-08.md`. The operator-confirmed
 budget now uses `docs/progress/strategy-followup-method-2026-09-08-v2.md` and the
-matching v2 audit for exact-input semantics (no 5 USDT substitution). The latest
-operator-delegated capital decision is
-`docs/progress/strategy-budget-500usdt-2026-09-08.md`: use provisional
-500 USDT / 50% / 50 USDT for planning, not a deposit or trading authorization.
+matching v2 audit for exact-input semantics (no 5 USDT substitution).
+The historical capital decision is
+`docs/progress/strategy-budget-500usdt-2026-09-08.md`. The current operator-delegated
+risk policy is `docs/decisions/015-portfolio-risk-policy.md`: provisional 500 USDT,
+daily loss min(25 USDT, 5% of qualified UTC day-open equity), and a separate fixed
+250 USDT peak-loss ceiling. Read `docs/progress/portfolio-risk-unification-2026-09-11.md`
+and `docs/progress/portfolio-execution-plan-2026-09-11-v3.json` for implementation
+and acceptance.
+No deposit or trading authorization follows.
 Runtime settings remain unchanged. Observed-now hashes do not repair historical
 provenance; v42 additionally has dirty retained manifests.
 For current progress and execution-event cash accounting, read
@@ -58,8 +63,9 @@ Production atomicity and complete account/venue integration remain required.
 The current operator-approved admission revision is documented in
 `docs/progress/portfolio-funded-admission-2026-09-09.md` with
 `portfolio-execution-plan-2026-09-09-v2.json`: deterministic affordable subset,
-no resizing or unfilled sell credit, final whole-batch preflight. CLI defaults
-to v2; `--revision 1` reproduces v1. Both are offline only; v1 artifacts stay
+no resizing or unfilled sell credit, final whole-batch preflight. CLI now defaults
+to v3 (ADR-015); `--revision 1/2` reproduces the historical contracts.
+All are offline only; v1 artifacts stay
 immutable and their basket returns are not v2 performance evidence.
 For the new synthetic Nautilus lifecycle acceptance, read
 `docs/progress/portfolio-simulation-acceptance-2026-09-09.md`,
@@ -119,7 +125,8 @@ For subsequent read-only downtime risk observations, read
 `docs/progress/portfolio-downtime-risk-2026-09-10.md`,
 `apps/strategies_nautilus/portfolio_downtime_risk.py` and
 `apps/ops/portfolio_downtime_risk_check.py`. The reviewer preserves observed breaches
-through recovery rebounds and reports the planning-versus-5% mismatch. Sampled
+through recovery rebounds. The current reviewer uses ADR-015; the historical
+report records the former planning-versus-5% mismatch. Sampled
 native balances/quotes do not qualify complete coverage, cash flows, real source or
 runtime policy. CLI exit 0 is not a restart permit; no checkpoint/latch is changed.
 For subsequent raw account response persistence and offline replay, read

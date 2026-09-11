@@ -189,8 +189,8 @@ def risk_fixture():
         (),
         frozenset(),
         D("100000"),
-        D("549"),
-        D("549"),
+        D("524"),
+        D("524"),
     )
     rules = InstrumentRules(
         "BTCUSDT.BINANCE",
@@ -219,7 +219,7 @@ def test_per_fill_base_fee_rounding_is_included_at_inclusive_projected_loss_limi
     # 1,000 minimum-step fills, conservatively <= 1 satoshi each: 1 USDT.
     assert "projected_daily_loss_limit" in result.reasons
     assert result.required_quote == D("100.15")  # quote buffer retained despite base fees
-    account = replace(account, day_open_equity=D("548.99"), peak_equity=D("548.99"))
+    account = replace(account, day_open_equity=D("523.99"), peak_equity=D("523.99"))
     assert check_batch(
         account, rules, preflight_limits(), (order,), now_ns=BASE_NS, allow_base_buy_fees=True
     ).checks_passed
@@ -323,8 +323,8 @@ def test_pending_base_fees_use_rounding_bound_and_reject_off_grid_remainders():
         account,
         pending=(pending,),
         used_order_ids=frozenset({"pending"}),
-        day_open_equity=D("548.5"),
-        peak_equity=D("548.5"),
+        day_open_equity=D("523.5"),
+        peak_equity=D("523.5"),
     )
     result = check_batch(
         account, rules, preflight_limits(), (order,), now_ns=BASE_NS, allow_base_buy_fees=True

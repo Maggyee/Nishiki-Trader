@@ -8,6 +8,13 @@
 
 ## Current Focus
 
+Operator-delegated risk policy is now **ADR-015 / offline plan v3**: daily loss
+**min(25 USDT, 5% of qualified UTC day-open equity)**, with the separate fixed
+250 USDT peak-loss ceiling. Preflight, synthetic risk latching and downtime review
+share the calculation. Rebound/midnight/restart cannot clear the latch; old-policy
+checkpoints fail configuration matching. Legacy runner equivalence and actual
+account qualification remain required; no execution deployment is authorized.
+
 The operator selected **Binance Spot testnet** and supplied an Ed25519 key pair.
 Native HTTP/WS signatures pass independent OpenSSL tests. A separate full-account
 observation profile now passes real signed WS subscriptions, explicit reconnect
@@ -51,8 +58,8 @@ continuity. An isolated numeric-venue checkpoint path now combines native event
 reconstruction, Binance report reconciliation and exact account comparison; three
 processes verify abrupt exit and replay with original state/latches preserved.
 A read-only downtime reviewer now binds native account/bid observations to both
-checkpoints and retains observed 5% breaches through a rebound. It reports the
-25 USDT versus 50 USDT daily-rule mismatch at a 500 USDT day-open baseline. Sparse
+checkpoints and retains observed 5% breaches through a rebound. It now applies ADR-015
+while retaining the independent 5% diagnostic and explicit unqualified policy status. Sparse
 or dense samples cannot prove complete coverage; UTC rollover needs a qualified
 new baseline. Opaque strategy state is not activated. Existing execution runners,
 5% runtime rule and SourcePolicy remain unchanged.
@@ -92,8 +99,11 @@ Follow-up found no historical reference leads for their eight retained bundles;
 v42 additionally has two dirty-code manifests, so hashes alone cannot qualify it.
 
 The operator delegated the increased capital amount. The provisional planning
-budget is now **500 USDT / 50% drawdown / 50 USDT daily loss**, without changing
-positions or runtime execution settings. On the six verified candidates, the
+capital remains **500 USDT**. ADR-015 supersedes the daily planning amount
+with min(25 USDT, 5% of qualified day-open equity); the peak-loss ceiling remains
+250 USDT. Existing positions and execution runners are unchanged. The following
+September 8 cash figures are historical, not a v3 risk/performance evaluation.
+On the six verified candidates, the
 raw fixed-size basket requires up to 398.19 USDT for retained-fill settlement
 under stress costs and buy-before-sell timestamp ties, leaving 101.81 USDT
 headroom. This refines the daily sampled 395.66 USDT figure. Both fixed
@@ -124,8 +134,10 @@ the September 9 five-sleeve proposal is offline engineering only.
    archive/collection IDs are recorded in the latest progress report; historical
    receipts cannot become current fences. Validate strategy/policy fingerprints,
    account/price coverage, cash flows and UTC day-open history before any execution
-   bootstrap. Reconcile the planning 50 USDT daily loss with the binding 5% rule
-   without weakening it. No secret values in chat.
+   bootstrap. Apply ADR-015 and qualify actual runtime policy equivalence; the
+   budget decision is settled, but actual account baselines are not. Independent
+   UID/full-account baseline paths and faucet/reset history were requested.
+   No secret values in chat.
 2. Review the explicit offline residual-exit policy before promotion and resolve
    re-entry with retained dust. Whole-step reductions now pass native acceptance;
    fixed BUY size, SignalEvent identities and SourcePolicy remain unchanged.
@@ -157,6 +169,11 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Latest Verification
 
+- September 11 risk unification: 177 focused tests passed; v3 generation
+  revalidated all six original evidence chains. Four selected testnet archive
+  collections replayed with 502 assets each; independent identity/baseline remain
+  unqualified. No new network observation or trading runner was started.
+
 - September 11: two actual signed testnet WS subscriptions, four 502-asset
   collections, six ping confirmations, explicit reconnect/old-fence rejection and
   detached replay pass. Zero business events were observed. **49 new tests** cover
@@ -166,7 +183,7 @@ the September 9 five-sleeve proposal is offline engineering only.
 - **130 collector/stream/archive tests** passed, including 12 new concurrency,
   cancellation, timeout, source/clock and abort-persistence regressions. Explicit
   retries produce independently replayable evidence; failed collections stay rejected.
-- Full offline regression: **2,262 passed**, 12 Postgres integration tests deselected
+- Full offline regression after risk unification: **2,284 passed**, 12 Postgres integration tests deselected
   (no dedicated integration DSN).
   Ruff, registry and whitespace checks pass.
 - Prior abrupt-exit/fresh-process recovery and exact account comparison remain
@@ -176,6 +193,8 @@ the September 9 five-sleeve proposal is offline engineering only.
   linked progress records; it is not a current runtime-health observation.
 
 ## References
+
+- [Unified risk decision](decisions/015-portfolio-risk-policy.md), [implementation and next account inputs](progress/portfolio-risk-unification-2026-09-11.md), [current v3 plan](progress/portfolio-execution-plan-2026-09-11-v3.json).
 
 - [Full-account testnet observations, real signed WS reconnect and detached replay](progress/portfolio-testnet-observation-2026-09-11.md).
 - [Ed25519 credentials, native signatures and first signed testnet account read](progress/portfolio-testnet-ed25519-2026-09-11.md).
@@ -192,7 +211,7 @@ the September 9 five-sleeve proposal is offline engineering only.
 - [Binance rule adapter, fee-currency blocker and remaining work](progress/portfolio-venue-adapter-2026-09-09.md).
 - [Synthetic Nautilus lifecycle acceptance and remaining integration](progress/portfolio-simulation-acceptance-2026-09-09.md).
 - [Current v2 funded admission and integration obligations](progress/portfolio-funded-admission-2026-09-09.md).
-- [Current revalidated machine-readable plan](progress/portfolio-execution-plan-2026-09-09-v2.json).
+- [Historical v2 machine-readable plan](progress/portfolio-execution-plan-2026-09-09-v2.json).
 - [Original v1 offline portfolio contract](progress/portfolio-execution-contract-2026-09-09.md).
 - [2026-09-07 reliability acceptance](progress/reliability-repair-2026-09-07.md).
 - [Fixed retained-fill study method](progress/portfolio-evidence-study-2026-09-08.md).

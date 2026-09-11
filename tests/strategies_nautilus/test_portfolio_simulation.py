@@ -6,7 +6,7 @@ from contextlib import contextmanager
 
 import pytest
 
-from apps.ops.portfolio_execution_plan import SLEEVES
+from apps.ops.portfolio_execution_plan import SLEEVES, preflight_limits
 from apps.strategies_nautilus.portfolio_simulation import DAY_NS, D, SimulationBlocked
 from apps.strategies_nautilus.runners.portfolio_simulation_acceptance import (
     BASE_NS,
@@ -60,6 +60,34 @@ def buy_all(strategy):
     return strategy.process_signals(
         tuple(fixture_signal(s, "initial", BASE_NS - 1) for s in SLEEVES)
     )
+
+
+def test_current_daily_stop_persists_through_rebound_restart_and_midnight(tmp_path):
+    with simulation(tmp_path, {BASE_NS: buy_all}) as (engine, s, inst):
+        advance(engine, inst, BASE_NS + 2 * SECOND, bid="99999", ask="100000")
+        assert s.snapshot().total_base == D("0.004")
+        advance(engine, inst, BASE_NS + 3 * SECOND, bid="93902.5", ask="93903")
+        assert not s.snapshot().risk_latched  # equity 475.01
+        advance(engine, inst, BASE_NS + 4 * SECOND, bid="93900", ask="93901")
+        assert s.snapshot().risk_latched  # equity 475.00, exact 25 USDT loss
+        advance(engine, inst, BASE_NS + 5 * SECOND)
+        s = restart_strategy(engine, s)
+        advance(engine, inst, BASE_NS + DAY_NS)
+        assert s.snapshot().risk_latched
+        result = s.process_signals((fixture_signal("v36", "after-stop", BASE_NS + DAY_NS),))
+        assert not result.selected
+        assert "risk_latched" in result.skipped[0].reasons
+
+
+def test_legacy_risk_checkpoint_cannot_resume_as_current_policy(tmp_path):
+    from apps.strategies_nautilus.portfolio_simulation import PortfolioSimulationStrategy
+
+    legacy = PortfolioSimulationStrategy(tmp_path / "legacy.json")
+    legacy.limits = preflight_limits(revision=2)
+    legacy.state_data["fingerprint"] = legacy._fingerprint()
+    current = PortfolioSimulationStrategy(tmp_path / "current.json")
+    with pytest.raises(SimulationBlocked, match="config mismatch"):
+        current.on_load(legacy.on_save())
 
 
 def test_partial_fill_cancel_latency_and_late_fill_use_native_remainder(tmp_path):

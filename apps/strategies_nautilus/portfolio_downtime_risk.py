@@ -9,7 +9,6 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import asdict
-from decimal import Decimal as D
 
 from nautilus_trader.model.data import QuoteTick
 from nautilus_trader.model.events import AccountState
@@ -21,11 +20,11 @@ from apps.strategies_nautilus.portfolio_recovery import (
     reconstruct_native,
     verify_checkpoint,
 )
+from apps.strategies_nautilus.portfolio_risk_policy import DAILY_FRACTION, POLICY_ID
 from apps.strategies_nautilus.portfolio_stream import SourceBinding
 from apps.strategies_nautilus.portfolio_venue import _decimal, _unique_object
 
 DAY_NS = 86_400_000_000_000
-DAILY_FRACTION = D("0.05")  # ADR-001 / baseline strategy day-open equity rule
 
 
 class DowntimeRiskError(ValueError):
@@ -129,6 +128,7 @@ def review_downtime_risk(
         raise DowntimeRiskError("history must include exact checkpoint endpoints")
     limits = preflight_limits()
     daily_limit = day_open * DAILY_FRACTION
+    effective_limit = limits.effective_daily_loss(day_open)
     previous_ts, previous_account_ts, previous_quote_ts = None, None, None
     gaps, samples, first_breaches = [], [], {}
     seen_accounts = {}
@@ -192,7 +192,7 @@ def review_downtime_risk(
         daily_loss, drawdown = day_open - equity, peak - equity
         for name, loss, threshold in (
             ("daily_5pct", daily_loss, daily_limit),
-            ("planning_daily", daily_loss, limits.daily_loss),
+            ("planning_daily", daily_loss, effective_limit),
             ("planning_drawdown", drawdown, limits.drawdown_loss),
         ):
             if loss >= threshold and name not in first_breaches:
@@ -226,8 +226,11 @@ def review_downtime_risk(
         "ending_equity_usdt": str(samples[-1]),
         "observed_peak_usdt": str(peak),
         "daily_5pct_limit_usdt": str(daily_limit),
-        "planning_daily_limit_usdt": str(limits.daily_loss),
-        "planning_daily_exceeds_5pct": limits.daily_loss > daily_limit,
+        "risk_policy_id": POLICY_ID,
+        "checkpoint_policy_qualified": False,
+        "planning_daily_cap_usdt": str(limits.daily_loss),
+        "planning_daily_limit_usdt": str(effective_limit),
+        "planning_daily_exceeds_5pct": effective_limit > daily_limit,
         "blocking_reasons": [
             "sampled_history_cannot_prove_complete_downtime",
             "runtime_policy_and_source_require_qualification",
