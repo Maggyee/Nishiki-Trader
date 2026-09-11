@@ -145,3 +145,19 @@ cancel and execution-client registration. This advances account-source and numer
 recovery evidence, not matching permission or active-order recovery. The bounded
 matching client, LiveClock strategy/risk integration and timed cancellation remain
 the next implementation. Portfolio qualification and the 14-day gate are unchanged.
+
+## 8. Bounded matching runtime addendum — 2026-09-11
+
+The [separate matching LiveClock runtime](../progress/portfolio-testnet-session-runtime-2026-09-11.md)
+now implements the fixed engineering fixture with native risk/execution, exact
+single-attempt Ed25519 POST/DELETE, durable receipts and acknowledgement timers.
+BUY price remains observed best bid minus one tick; one owned cleanup SELL uses a
+fresh best bid. Fills are not guaranteed. Every new order still requires zero fees,
+fresh effective rules and signed complete native reconciliation. Original offline
+and read-only profiles remain guarded.
+
+The bounded CLI has no automatic reconnect or executable recovery. Its separate
+`--recover` command performs signed original-ID/account/trade reconciliation only;
+it cannot renew allowances, replace the matching checkpoint or resume a halted
+session. Unknown active outcomes require recovery before a later reduction path.
+This is still the same one engineering scope, not a portfolio or production gate.

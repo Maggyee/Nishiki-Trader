@@ -440,6 +440,9 @@ class SessionLedger:
         self._persist(owner)
         return copy.deepcopy(self.state["view"])
 
+    def _order_time_valid(self, order, now):
+        return order.ts_init == now
+
     def prepare(self, owner, *, signal, order, rules):
         self._owner(owner)
         state = self.state
@@ -478,7 +481,7 @@ class SessionLedger:
             or order.order_type.name != "LIMIT"
             or order.time_in_force.name != "GTC"
             or order.status.name != "INITIALIZED"
-            or order.ts_init != now
+            or not self._order_time_valid(order, now)
             or oid != f"ts-{state['session_id']}-{'b' if side == 'BUY' else 's'}"
             or order.tags != [f"signal_id:{signal.signal_id}", f"session_id:{state['session_id']}"]
             or rules.fee_rate != 0

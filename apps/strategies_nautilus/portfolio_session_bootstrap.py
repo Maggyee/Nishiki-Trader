@@ -214,9 +214,7 @@ class SessionEventReceiver(SessionBinanceFixtureClient):
             raise StreamError("native session execution callback rejected")
 
 
-def bootstrap_probe(
-    *, account, metadata_raw, binding, path, clock, http, credentials, loop, session_id
-):
+def build_observed_account(*, account, metadata_raw, binding, clock, http, profile=RUNTIME_PROFILE):
     """Construct a complete native account from selected fresh metadata and funds."""
     if not isinstance(clock, LiveClock):
         raise StreamError("LiveClock required for source-bound probe")
@@ -268,7 +266,7 @@ def bootstrap_probe(
             balances=native_balances,
             margins=[],
             reported=False,
-            info={"profile": RUNTIME_PROFILE, "observed_source": True, "trading_enabled": False},
+            info={"profile": profile, "observed_source": True, "trading_enabled": False},
             event_id=UUID4(),
             ts_event=observed_ns,
             ts_init=observed_ns,
@@ -279,6 +277,15 @@ def bootstrap_probe(
     bus = MessageBus(trader_id=TraderId("BACKTESTER-001"), clock=clock)
     portfolio = Portfolio(msgbus=bus, cache=cache, clock=clock)
     owner = SimpleNamespace(cache=cache, clock=clock, msgbus=bus, portfolio=portfolio)
+    return owner, provider
+
+
+def bootstrap_probe(
+    *, account, metadata_raw, binding, path, clock, http, credentials, loop, session_id
+):
+    owner, provider = build_observed_account(
+        account=account, metadata_raw=metadata_raw, binding=binding, clock=clock, http=http
+    )
     ledger = ReadOnlyRuntimeLedger(path).create(owner, session_id=session_id, source=binding)
     owner.ledger = ledger
     owner.bridge = ReadOnlyRuntimeBridge(owner, ledger)
@@ -289,8 +296,8 @@ def bootstrap_probe(
         )
     )
     owner.receiver = SessionEventReceiver(owner, owner.bridge, http, credentials, provider, loop)
-    portfolio.initialize_orders()
-    portfolio.initialize_positions()
+    owner.portfolio.initialize_orders()
+    owner.portfolio.initialize_positions()
     owner.engine.start()
     return owner
 

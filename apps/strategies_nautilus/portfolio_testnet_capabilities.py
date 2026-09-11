@@ -198,57 +198,11 @@ def review_capabilities(capture):
     }
     try:
 
-        def response(path, private=False):
-            row, _ = by_path[path]
-            if row["status"] != 200:
-                raise VenueInputError("required capability endpoint rejected")
-            return CapturedResponse(
-                row["body"],
-                row["received_ns"],
-                uid if private else None,
-                "BTCUSDT" if private else None,
-            )
-
         info_row, info = by_path["/api/v3/exchangeInfo"]
         book_row, book = by_path["/api/v3/ticker/bookTicker"]
         if info_row["status"] == book_row["status"] == 200:
             review["lifecycle_proposal"] = lifecycle_test_plan(info, [book])
-        references = []
-        filters = _filters(info["symbols"][0]["filters"])
-        ref_row, ref = by_path["/api/v3/referencePrice"]
-        avg_row, avg = by_path["/api/v3/avgPrice"]
-        for name in ("PERCENT_PRICE", "PERCENT_PRICE_BY_SIDE"):
-            if name not in filters:
-                continue
-            minutes = filters[name]["avgPriceMins"]
-            absent = (ref_row["status"] == 400 and ref.get("code") == -2043) or (
-                ref_row["status"] == 200
-                and ref.get("symbol") == "BTCUSDT"
-                and "referencePrice" in ref
-                and ref["referencePrice"] is None
-            )
-            if not absent:
-                if ref_row["status"] != 200 or ref.get("symbol") != "BTCUSDT":
-                    raise VenueInputError("reference-price precedence unknown")
-                price, ts = _decimal(ref["referencePrice"]), ref["timestamp"] * 1_000_000
-                kind = "reference_price"
-            else:
-                if avg_row["status"] != 200 or minutes == 0 or avg.get("mins") != minutes:
-                    raise VenueInputError("effective average-price window unavailable")
-                price, ts = _decimal(avg["price"]), avg["closeTime"] * 1_000_000
-                kind = "weighted_average"
-            references.append(PriceReference(name, price, ts, minutes, kind, absent))
-        evidence = parse_binance_rules(
-            exchange_info=response("/api/v3/exchangeInfo"),
-            commission=response("/api/v3/account/commission", True),
-            my_filters=response("/api/v3/myFilters", True),
-            account_id=uid,
-            now_ns=rows[-1]["received_ns"],
-            max_age_ns=60_000_000_000,
-            references=tuple(references),
-            allow_testnet_zero_fee_null_discount=True,
-        )
-        rules = evidence.rules
+        rules = capability_rules(capture, now_ns=rows[-1]["received_ns"])
         review.update(
             native_rules_parsed=True,
             buy_fee_currency=rules.buy_fee_currency,
@@ -284,3 +238,58 @@ def review_capabilities(capture):
     except (KeyError, TypeError, ValueError, ArithmeticError, IndexError):
         review["native_rules_error"] = "capability response schema unsupported"
     return review
+
+
+def capability_rules(capture, *, now_ns, max_age_ns=60_000_000_000):
+    """Parse effective rules from the original fee/filter/reference responses."""
+    uid = capture["source"]["account_uid"]
+    by_path = {r["path"]: (r, json.loads(r["body"], object_pairs_hook=_unique_object))
+               for r in capture["captures"]}
+    def response(path, private=False):
+        row, _ = by_path[path]
+        if row["status"] != 200:
+            raise VenueInputError("required capability endpoint rejected")
+        return CapturedResponse(
+            row["body"],
+            row["received_ns"],
+            uid if private else None,
+            "BTCUSDT" if private else None,
+        )
+
+    _, info = by_path["/api/v3/exchangeInfo"]
+    references = []
+    filters = _filters(info["symbols"][0]["filters"])
+    ref_row, ref = by_path["/api/v3/referencePrice"]
+    avg_row, avg = by_path["/api/v3/avgPrice"]
+    for name in ("PERCENT_PRICE", "PERCENT_PRICE_BY_SIDE"):
+        if name not in filters:
+            continue
+        minutes = filters[name]["avgPriceMins"]
+        absent = (ref_row["status"] == 400 and ref.get("code") == -2043) or (
+            ref_row["status"] == 200
+            and ref.get("symbol") == "BTCUSDT"
+            and "referencePrice" in ref
+            and ref["referencePrice"] is None
+        )
+        if not absent:
+            if ref_row["status"] != 200 or ref.get("symbol") != "BTCUSDT":
+                raise VenueInputError("reference-price precedence unknown")
+            price, ts = _decimal(ref["referencePrice"]), ref["timestamp"] * 1_000_000
+            kind = "reference_price"
+        else:
+            if avg_row["status"] != 200 or minutes == 0 or avg.get("mins") != minutes:
+                raise VenueInputError("effective average-price window unavailable")
+            price, ts = _decimal(avg["price"]), avg["closeTime"] * 1_000_000
+            kind = "weighted_average"
+        references.append(PriceReference(name, price, ts, minutes, kind, absent))
+    evidence = parse_binance_rules(
+        exchange_info=response("/api/v3/exchangeInfo"),
+        commission=response("/api/v3/account/commission", True),
+        my_filters=response("/api/v3/myFilters", True),
+        account_id=uid,
+        now_ns=now_ns,
+        max_age_ns=max_age_ns,
+        references=tuple(references),
+        allow_testnet_zero_fee_null_discount=True,
+    )
+    return evidence.rules

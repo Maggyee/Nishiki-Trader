@@ -195,6 +195,14 @@ profile; default rules stay strict. The diagnostic increment did not wire a matc
 order or execution runner; subsequent offline ledger/recovery is described below. Do not request the Key again or
 mistake validation acceptance for all key restrictions or portfolio qualification.
 
+For the bounded matching LiveClock runner, read
+`docs/progress/portfolio-testnet-session-runtime-2026-09-11.md`,
+`apps/ops/portfolio_session_run.py` and `portfolio_session_runtime.py` under
+`apps/strategies_nautilus/`. `--execute` consumes the fixed ADR-017 scope; `--recover`
+is GET-only and never resets activation or resumes orders. Preserve original IDs,
+zero-fee/five-second filter gates and full native reconciliation. No production,
+portfolio qualification or SourcePolicy change follows.
+
 For the subsequent offline native session ledger and recovery acceptance, read
 `docs/progress/portfolio-testnet-session-recovery-2026-09-11.md`,
 `portfolio_session_ledger.py`, `portfolio_session_account.py` and

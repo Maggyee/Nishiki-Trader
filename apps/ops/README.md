@@ -443,3 +443,10 @@ USDT 参考估值，并生成固定 0.0001 BTC / 10 测试 USDT 的订单验收�
 `--checkpoint` 只接受该目录内已有的只读探针快照，不恢复交易或消耗撮合额度。
 入口：`.venv/bin/python -m apps.ops.portfolio_session_transport`；后续接入边界见
 [验收报告](../../docs/progress/portfolio-testnet-session-transport-2026-09-11.md)。
+
+The bounded ADR-017 matching profile is `portfolio_session_runtime.py`, operated
+by `apps.ops.portfolio_session_run --execute` from clean pushed code. It uses one
+fixed testnet scope, native risk/strategy/execution, durable single-attempt requests
+and timed cancellation. `--recover` is signed GET-only original-ID reconciliation.
+See `docs/progress/portfolio-testnet-session-runtime-2026-09-11.md` for limitations;
+never delete activation or state to repeat a BUY. Production remains blocked.

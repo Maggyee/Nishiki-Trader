@@ -316,3 +316,10 @@ RiskEngine、原生执行队列和 Binance 报文处理接通。Submitted/Pendin
 当前 profile 禁止订单；探针文件不激活或消耗限定撮合额度。下一入口是单独的
 限额写入客户端、真实时钟策略/风控联动和定时撤单，不能直接移除探针限制。
 详见[真实账户启动报告](../../docs/progress/portfolio-testnet-session-transport-2026-09-11.md)。
+
+The bounded ADR-017 matching profile is `portfolio_session_runtime.py`, operated
+by `apps.ops.portfolio_session_run --execute` from clean pushed code. It uses one
+fixed testnet scope, native risk/strategy/execution, durable single-attempt requests
+and timed cancellation. `--recover` is signed GET-only original-ID reconciliation.
+See `docs/progress/portfolio-testnet-session-runtime-2026-09-11.md` for limitations;
+never delete activation or state to repeat a BUY. Production remains blocked.

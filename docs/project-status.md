@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-11
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Build the ADR-017 bounded matching runtime after actual 502-asset LiveClock bootstrap and signed fresh-process reconciliation; full-account portfolio qualification remains separate and blocked.
+- **Current objective**: Verify and execute the ADR-017 bounded LiveClock matching runtime through the fixed testnet scope; full-account portfolio qualification remains separate and blocked.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -47,9 +47,13 @@ A separate **GET-only LiveClock probe** now bootstraps all **502 actual assets**
 and reconciles them against fresh signed reads. A second process repeated the
 native comparison through a new subscription. A fixed account/scope lease and
 source-bound callbacks are implemented; actual orders/trades/business events were
-all zero, so active matching recovery is still unverified. The matching activation
-marker is absent and its allowance remains unused. No matching order, exchange
-cancellation or production request has been made.
+all zero, so active matching recovery is still unverified. A separate bounded
+matching LiveClock runtime now wires the fixed lease, native
+risk/strategy path, exact signed one-attempt POST/DELETE and two-second cancellation.
+It requires fresh zero fees/filters and complete signed native reconciliation.
+Its GET-only recovery preserves original IDs and never resumes orders or resets
+allowances. The matching trial remains pending verification and a clean-code launch;
+no matching order, exchange cancellation or production request has yet been made.
 
 ADR-016's full-account indicative valuation still covers **500/502 assets**;
 two lack quotes and 65 exceed a conversion leg's top-book depth. Full equity,
@@ -155,16 +159,12 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Next Steps
 
-1. Build the ADR-017 bounded matching runtime: bind the fixed activation/native
-   ledger path, fresh complete account and zero-fee/effective-filter evidence,
-   a narrow matching client, native strategy/risk/queued receipt barrier, and
-   acknowledgement/cancel timers. Verify the LiveClock write path and account/fill
-   correlation under transport failure before executing the 0.0001 BTC / 10-test-USDT
-   trial. The real read-only probe already retains and recovers all 502 assets;
-   zero observed orders/events do not qualify active matching recovery. Do not
-   remove probe guards or launch a legacy runner. Existing Key remains configured;
-   no repeat permissions questionnaire. Continue full-account ADR-016 valuation,
-   UTC and cash-flow qualification separately; strict continuity stays 0/14.
+1. Complete verification and run `apps.ops.portfolio_session_run --execute` from
+   clean pushed code within the one fixed ADR-017 scope. Retain raw evidence and
+   reconcile complete balances/orders/trades afterwards; use `--recover` for a
+   separate signed GET-only process. Never reset activation or repeat a BUY.
+   Any uncertain active order requires signed recovery before a later reduction
+   implementation; this runtime has no automatic reconnect/resume.
 2. Review the explicit offline residual-exit policy before promotion and resolve
    re-entry with retained dust. Whole-step reductions now pass native acceptance;
    fixed BUY size, SignalEvent identities and SourcePolicy remain unchanged.
@@ -195,6 +195,10 @@ the September 9 five-sleeve proposal is offline engineering only.
 - Nautilus is the only execution engine; LLMs never enter the order path.
 
 ## Latest Verification
+
+- Bounded LiveClock matching runtime: **31 new tests** pass, including native
+  queue/Ed25519 signature, failure, timed cancellation and whole-CLI matching/recovery.
+  Matching network trial is pending the clean committed launch.
 
 - September 11 actual session transport: **34 new tests**; 12 signed GETs plus one
   public metadata GET in two actual process invocations, each with a new signed
@@ -240,7 +244,7 @@ the September 9 five-sleeve proposal is offline engineering only.
 - **130 collector/stream/archive tests** passed, including 12 new concurrency,
   cancellation, timeout, source/clock and abort-persistence regressions. Explicit
   retries produce independently replayable evidence; failed collections stay rejected.
-- Full offline regression after source-bound session transport: **2,511 passed**, 12 Postgres integration tests deselected
+- Full offline regression after bounded matching runtime: **2,542 passed**, 12 Postgres integration tests deselected
   (no dedicated integration DSN).
   Ruff, registry and whitespace checks pass.
 - Prior abrupt-exit/fresh-process recovery and exact account comparison remain
@@ -250,6 +254,8 @@ the September 9 five-sleeve proposal is offline engineering only.
   linked progress records; it is not a current runtime-health observation.
 
 ## References
+
+- [Bounded LiveClock matching runtime and original-ID recovery](progress/portfolio-testnet-session-runtime-2026-09-11.md).
 
 - [Actual LiveClock account bootstrap, fixed scope and signed recovery](progress/portfolio-testnet-session-transport-2026-09-11.md).
 
