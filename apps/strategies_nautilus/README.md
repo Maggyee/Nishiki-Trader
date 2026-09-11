@@ -245,6 +245,10 @@ Binance 转换器及原生对账引擎验证合成订单恢复，拒绝推断成
 同一用户流日志现只允许一轮在途账户采集；并发调用在请求前拒绝，取消/超时/失败
 写入中止记录后释放，写盘失败则保持阻断。整轮异步采集有 60 秒总时限，逐次检查
 时钟和来源，详见[采集中断恢复](../../docs/progress/portfolio-collection-lifecycle-2026-09-10.md)。
+`portfolio_testnet_credentials.py` 支持显式 env 中的测试网 API Key 与 Ed25519
+私钥文件路径，校验权限和 PKCS#8 格式；HTTP 使用独立 Ed25519 签名入口，WS
+使用原生 PEM 识别。配置格式与首次签名读取见
+[Ed25519 测试网接入](../../docs/progress/portfolio-testnet-ed25519-2026-09-11.md)。
 下一入口为明确账户环境、凭证变量名/配置路径、预期 UID 和独立账户基线，验证真实
 来源、账户/行情归档、资金流和 UTC 日初基线及策略风险政策；部署前还需明确余量入场政策。
 详见[原生手续费验收](../../docs/progress/portfolio-base-fee-acceptance-2026-09-09.md)及

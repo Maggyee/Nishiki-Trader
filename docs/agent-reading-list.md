@@ -140,6 +140,12 @@ read `docs/progress/portfolio-spot-testnet-selection-2026-09-11.md`: official te
 docs exclude `/sapi`, so the strict collector's API-restrictions requirement is
 incompatible. Testnet observation must preserve unknown permissions, all faucet
 assets and reset boundaries; environment selection does not start a trading runner.
+For the operator's Ed25519 configuration and first successful signed testnet read,
+read `docs/progress/portfolio-testnet-ed25519-2026-09-11.md` and
+`apps/strategies_nautilus/portfolio_testnet_credentials.py`. The env now references
+an Ed25519 private-key path, not an HMAC secret. Native HTTP needs the project
+Ed25519 override; WS signatures are independently tested. The 502-asset initial
+snapshot is unqualified for the existing dedicated-account recovery gate.
 
 | Task area | Read |
 |---|---|

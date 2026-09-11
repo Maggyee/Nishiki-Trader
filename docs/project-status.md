@@ -3,18 +3,19 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-11
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Prepare Binance Spot testnet read-only acceptance; resolve unsupported SAPI permissions and supply explicit credentials, UID and baseline evidence.
+- **Current objective**: Extend the successful Ed25519 Spot testnet account read into full-asset observations and user-stream qualification; establish identity/baseline and keep missing SAPI permissions explicit.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
 
-The operator selected **Binance Spot testnet** on September 11. Public REST time
-is reachable (HTTP 200), but the documented credential file and named environment
-variables are absent in this workspace. UID and current independent baseline are
-still required. Official testnet docs exclude `/sapi`, so the strict collector's
-mandatory API-restrictions read is incompatible. An explicit observation profile
-must retain unknown permissions and full faucet balances; it cannot bypass the
-strict account gate. No private account connection or order run has occurred.
+The operator selected **Binance Spot testnet** and supplied an Ed25519 key pair.
+The env now references the private-key file, and native HTTP/WS signatures pass
+independent OpenSSL tests. One actual signed `/api/v3/account` read succeeded and
+retained a UID plus all **502 asset records** in a private local observation.
+Expected-UID matching and the baseline remain unqualified. Testnet excludes `/sapi`,
+so the strict collector's API-restrictions requirement remains incompatible. The
+full-account observation profile and external WS still need qualification; no
+production account or order run was accessed.
 
 An offline engineering plan locks six evidence-verified candidates and five
 proposed 0.001 BTC sleeves: v16/v18/v22/v34/v36. V40 is observation-only within
@@ -112,9 +113,10 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 1. Use the selected **Binance Spot testnet** environment. Implement a supported
    `/api` observation profile with unknown key restrictions kept explicit; testnet
-   has no `/sapi`. Supply the documented testnet credentials (or an explicit alternate
-   reference), expected UID and current independent full-account baseline; no secret
-   values in chat. Qualify faucet assets and reset boundaries before mapping to the
+   has no `/sapi`. Use the supplied Ed25519 credentials and explicit private-key
+   path; the first signed account read succeeded. Qualify external WS, match the
+   observed UID and establish an independent full-account baseline. No secret values
+   in chat. Qualify faucet assets and reset boundaries before mapping to the
    dedicated native account contract. Isolated checkpoint reconstruction/reconciliation
    and three-process replay now pass. Qualify actual endpoint permissions, stream
    receipts, archive coverage and venue references. Raw REST persistence and local
@@ -150,27 +152,31 @@ the September 9 five-sleeve proposal is offline engineering only.
 - Full ten-candidate funding and intraday equity drawdown remain unverified.
   Synthetic Nautilus reservation lifecycle and abrupt fresh-process recovery pass;
   real account/venue integration, stream continuity and live recovery remain unverified.
-  No real account was accessed.
+  One initial testnet account read succeeded; no production account was accessed.
 - Nautilus is the only execution engine; LLMs never enter the order path.
 
 ## Latest Verification
 
-- September 11: official docs confirm no testnet SAPI; public `/api/v3/time`
-  returned HTTP 200. Documented credential references were checked for presence
-  only and are absent. Documentation-only change; no test-suite rerun or private read.
+- September 11: local Ed25519 key pair/configuration validated; one actual signed
+  testnet account read returned a UID and 502 asset records, retained unmodified.
+  **19 new tests** verify native HTTP/WS signatures through OpenSSL and safe config
+  loading. Expected UID, full-account baseline, API restrictions and external WS
+  remain unqualified; the observation does not satisfy the strict recovery gate.
 - **130 collector/stream/archive tests** passed, including 12 new concurrency,
   cancellation, timeout, source/clock and abort-persistence regressions. Explicit
   retries produce independently replayable evidence; failed collections stay rejected.
-- Full offline regression: **2,194 passed**, 12 Postgres integration tests deselected
-  (no dedicated integration DSN). Ruff, registry and whitespace checks pass.
+- Full offline regression: **2,213 passed**, 12 Postgres integration tests deselected
+  (no dedicated integration DSN).
+  Ruff, registry and whitespace checks pass.
 - Prior abrupt-exit/fresh-process recovery and exact account comparison remain
-  green. Private account responses are synthetic; no Binance HTTP/WS account
-  connection, real adapter process recovery, atomic stream boundary or live readiness.
+  green. Recovery fixtures remain synthetic; the separate initial testnet HTTP read
+  does not qualify adapter process recovery, an atomic stream boundary or live readiness.
 - Earlier portfolio, collector and reliability verification is archived in the
   linked progress records; it is not a current runtime-health observation.
 
 ## References
 
+- [Ed25519 credentials, native signatures and first signed testnet account read](progress/portfolio-testnet-ed25519-2026-09-11.md).
 - [Selected Spot testnet environment, verified incompatibility and required inputs](progress/portfolio-spot-testnet-selection-2026-09-11.md).
 - [Collection concurrency, time limits and interruption recovery](progress/portfolio-collection-lifecycle-2026-09-10.md).
 - [Raw account response archive and offline collection replay](progress/portfolio-account-archive-2026-09-10.md).

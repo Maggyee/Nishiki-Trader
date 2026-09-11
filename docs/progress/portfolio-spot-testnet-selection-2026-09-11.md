@@ -8,8 +8,8 @@ canary identity. Production is not the selected environment.
 ## Verified inputs and compatibility
 
 - REST: `https://testnet.binance.vision`.
-- WebSocket API: `wss://ws-api.testnet.binance.vision/ws-api/v3` (the existing
-  transport explicitly uses the equivalent port 443).
+- WebSocket API: `wss://ws-api.testnet.binance.vision/ws-api/v3`, as used by the
+  existing transport.
 - A bounded unauthenticated `GET /api/v3/time` returned HTTP 200 with a
   `serverTime` field from this workspace. This verifies public REST reachability
   only; it does not verify signed requests, clock skew, UID, permissions or WS.
