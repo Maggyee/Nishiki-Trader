@@ -301,3 +301,11 @@ ADR-017 原生会话账本与恢复：`portfolio_session_ledger.py` 在提交前
 活跃订单缺少 Submitted 记录时继续阻断；实际适配器发送前落盘和事件回调
 尚未接入，不能启动撮合或实盘。见
 [会话账本与恢复验收](../../docs/progress/portfolio-testnet-session-recovery-2026-09-11.md)。
+
+ADR-017 异步原生桥接：`portfolio_session_bridge.py` 已把专用 fixture Strategy、
+RiskEngine、原生执行队列和 Binance 报文处理接通。Submitted/PendingCancel
+及单次发送记录先写盘；超时保留未知状态，部分/迟到/重复成交由原生引擎记账。
+`runners/portfolio_session_bridge_acceptance.py` 验证 502 资产和两组跨进程崩溃恢复。
+当前仅 TestClock + 内存 HTTP 接收端，不加载 Key、不联网。下一入口是专用真实
+测试网运行配置、固定会话路径、签名账户对账与来源绑定的回调；详见
+[桥接验收报告](../../docs/progress/portfolio-testnet-session-bridge-2026-09-11.md)。

@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-11
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Wire the ADR-017 native submit/cancel persistence bridge after offline full-account session recovery acceptance; full-account portfolio qualification remains separate and blocked.
+- **Current objective**: Integrate the ADR-017 real-testnet transport/profile after queued native submit/cancel persistence acceptance; full-account portfolio qualification remains separate and blocked.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -37,8 +37,14 @@ full cleanup and exact dust retention pass. The narrow engineering consumer
 accepts only its own fixture SignalEvent identity; no SourcePolicy is changed.
 An active order without a persisted native Submitted event stays blocked;
 terminal initialization-only recovery never invents a Submitted or Fill event.
-The actual Strategy/RiskEngine/adapter send bridge and stream callbacks remain
-**unwired**. No matching order, cancellation or production request has been made.
+A dedicated **offline Strategy -> RiskEngine -> queued native Binance adapter**
+now waits for durable Submitted/PendingCancel receipts before each single attempt.
+Known execution-report callbacks settle through native accounting; timeout stays
+uncertain, duplicate fills are deduplicated, and failed persistence prevents sends.
+Two additional three-process adapter crash/replays preserve original dispatches.
+The bridge accepts only TestClock and an in-memory HTTP sink. Real transport,
+source-bound account callbacks and a fixed global session lease remain **unwired**.
+No matching order, exchange cancellation or production request has been made.
 
 ADR-016's full-account indicative valuation still covers **500/502 assets**;
 two lack quotes and 65 exceed a conversion leg's top-book depth. Full equity,
@@ -144,16 +150,16 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Next Steps
 
-1. Wire the ADR-017 ledger into a dedicated Nautilus strategy/risk/execution
-   testnet session. Persist native Submitted/PendingCancel before adapter I/O;
-   bind one fixed session/checkpoint across restarts, signed account/order/trade
-   collection and native stream callbacks. Exercise transport failures through
-   that bridge before the 0.0001 BTC / 10 test-USDT matching trial. The offline
-   ledger/recovery alone is not an execution runner; do not launch a legacy runner.
-   Existing-key TRADE validation succeeded; do not request the Key or repeat a
-   permissions questionnaire. Recheck fresh zero fees/filters at session start.
-   Continue ADR-016 full-account valuation/UTC/cash-flow qualification separately;
-   neither engineering validation nor offline recovery starts the 14-day clock.
+1. Integrate the ADR-017 real-testnet runtime around the verified queued native
+   receipt barrier: fixed account/session path across restarts, selected Ed25519
+   source, fresh zero fees/filters, native bootstrap, signed original order/trade
+   collection and source-bound account/execution callbacks. Verify full-account
+   agreement and disconnect/unknown-response recovery before the bounded matching
+   trial. The current bridge is TestClock/in-memory only; do not remove its guard
+   or launch a legacy runner as a substitute. Existing-key TRADE validation passed;
+   no repeat Key or permissions questionnaire is needed. Continue ADR-016 valuation,
+   UTC and cash-flow qualification separately; engineering fixtures do not start
+   the 14-day clock.
 2. Review the explicit offline residual-exit policy before promotion and resolve
    re-entry with retained dust. Whole-step reductions now pass native acceptance;
    fixed BUY size, SignalEvent identities and SourcePolicy remain unchanged.
@@ -184,6 +190,11 @@ the September 9 five-sleeve proposal is offline engineering only.
 - Nautilus is the only execution engine; LLMs never enter the order path.
 
 ## Latest Verification
+
+- September 11 queued session bridge: **44 new tests**, **91 combined bridge/ledger
+  tests**. Native risk denial, durable pre-send events/attempts, partial/late/duplicate
+  fills, uncertain timeouts, disk failures and two three-process adapter crash/replays
+  pass. All 502 synthetic assets retained; no credentials or exchange I/O.
 
 - September 11 native session ledger/recovery: **47 new tests**; two independent
   three-process crash/replay scenarios each preserve 502 synthetic assets, exact
@@ -219,7 +230,7 @@ the September 9 five-sleeve proposal is offline engineering only.
 - **130 collector/stream/archive tests** passed, including 12 new concurrency,
   cancellation, timeout, source/clock and abort-persistence regressions. Explicit
   retries produce independently replayable evidence; failed collections stay rejected.
-- Full offline regression after native session recovery: **2,433 passed**, 12 Postgres integration tests deselected
+- Full offline regression after queued native session bridge: **2,477 passed**, 12 Postgres integration tests deselected
   (no dedicated integration DSN).
   Ruff, registry and whitespace checks pass.
 - Prior abrupt-exit/fresh-process recovery and exact account comparison remain
@@ -229,6 +240,8 @@ the September 9 five-sleeve proposal is offline engineering only.
   linked progress records; it is not a current runtime-health observation.
 
 ## References
+
+- [Queued native session strategy/adapter bridge and remaining real transport](progress/portfolio-testnet-session-bridge-2026-09-11.md).
 
 - [Native session ledger, partial CASH locks and crash/replay acceptance](progress/portfolio-testnet-session-recovery-2026-09-11.md).
 

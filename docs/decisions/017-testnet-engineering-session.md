@@ -114,3 +114,18 @@ The future bridge must persist Submitted before an outbound request. No second B
 new-ID restart, budget recycling or native account balance repair is allowed.
 The 180-second bound stops new orders; recording cancellation of an already-owned
 outstanding order may continue to reduce risk, without assuming acknowledgement.
+
+## 6. Queued adapter implementation addendum — 2026-09-11
+
+The [offline queued bridge acceptance](../progress/portfolio-testnet-session-bridge-2026-09-11.md)
+now wires the dedicated fixture Strategy, native RiskEngine, queued execution engine
+and native Binance serializers/callbacks. A native Submitted/PendingCancel event
+must be captured durably before its one dispatch receipt and adapter attempt.
+Timeout remains uncertain; a failed disk write forbids sending. Dispatch records
+survive abrupt-exit native recovery without restoring either order allowance.
+
+This remains TestClock/in-memory only. It does not qualify a real source, signed
+stream/account fence, fixed global account lease or LiveClock bootstrap. The next
+real-testnet profile must supply those integrations and fresh fees/filters before
+the already bounded matching lifecycle; existing source policies and portfolio
+qualification are unchanged. No matching or production request was made here.

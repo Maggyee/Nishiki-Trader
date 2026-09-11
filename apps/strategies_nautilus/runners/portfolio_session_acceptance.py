@@ -62,13 +62,16 @@ SID = "fixture001"
 BINDING = SourceBinding(TESTNET_REST, "123", hashlib.sha256(b"offline-session-key").hexdigest())
 
 
-def fixture_context(loop, *, asset_count=3):
+def fixture_context(loop, *, asset_count=3, with_engine=True):
     clock = TestClock()
     clock.set_time(BASE)
     cache = Cache()
     fields = CurrencyPair.to_dict(TestInstrumentProvider.btcusdt_binance())
     # Accounting precision supports exact partial fills; effective order step is 0.00001.
-    fields.update(size_precision=8, size_increment="0.00000001", maker_fee="0", taker_fee="0")
+    fields.update(
+        size_precision=8, size_increment="0.00000001", maker_fee="0", taker_fee="0",
+        min_notional="5.00000000 USDT",
+    )
     instrument = CurrencyPair.from_dict(fields)
     cache.add_instrument(instrument)
     amounts = [(USDT, D("100")), (BTC, D("2")), (ETH, D("5"))]
@@ -94,13 +97,15 @@ def fixture_context(loop, *, asset_count=3):
     cache.add_account(account)
     bus = MessageBus(trader_id=TraderId("BACKTESTER-001"), clock=clock)
     portfolio = Portfolio(msgbus=bus, cache=cache, clock=clock)
-    engine = EvidenceOnlyExecutionEngine(loop=loop, msgbus=bus, cache=cache, clock=clock)
-    engine.register_oms_type(
-        Strategy(
-            StrategyConfig(strategy_id="TESTNET-SESSION", order_id_tag="TS", oms_type="HEDGING")
+    engine = None
+    if with_engine:
+        engine = EvidenceOnlyExecutionEngine(loop=loop, msgbus=bus, cache=cache, clock=clock)
+        engine.register_oms_type(
+            Strategy(
+                StrategyConfig(strategy_id="TESTNET-SESSION", order_id_tag="TS", oms_type="HEDGING")
+            )
         )
-    )
-    return SimpleNamespace(cache=cache, clock=clock, portfolio=portfolio, engine=engine)
+    return SimpleNamespace(cache=cache, clock=clock, portfolio=portfolio, engine=engine, msgbus=bus)
 
 
 def rules(now):

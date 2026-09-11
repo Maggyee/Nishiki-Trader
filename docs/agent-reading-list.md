@@ -209,6 +209,15 @@ prove two 502-asset fixture scenarios, not actual account/source or live recover
 Actual Submitted/PendingCancel persistence before adapter I/O and stream/strategy
 wiring remain required. No upstream change or matching execution runner is added.
 
+For the queued native session strategy/adapter bridge, read
+`docs/progress/portfolio-testnet-session-bridge-2026-09-11.md`,
+`apps/strategies_nautilus/portfolio_session_bridge.py` and its acceptance runner.
+Submitted/PendingCancel events and single-attempt receipts are durable before the
+native adapter enters the in-memory HTTP sink. Native queued callbacks and two
+three-process adapter crash/replays pass. This requires TestClock, loads no keys,
+forbids actual connections and does not qualify live bootstrap. Signed account/
+execution stream integration and one fixed global session path remain required.
+
 | Task area | Read |
 |---|---|
 | Project status, next step, or handoff | `docs/project-status.md`, `git status --short --branch`, `git fetch origin`, `git pull --ff-only`, `git log --oneline --decorate -5` |

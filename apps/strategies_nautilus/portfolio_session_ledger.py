@@ -536,6 +536,51 @@ class SessionLedger:
         self.state["cancel_intents"][oid] = owner.clock.timestamp_ns()
         self._persist(owner)
 
+    def record_dispatch(self, owner, order, *, kind):
+        """Consume one adapter attempt after its native event has been persisted.
+
+        A receipt records permission to attempt I/O, never exchange acceptance.
+        No retry is permitted even when the process dies before the actual send.
+        """
+        self._owner(owner)
+        oid = str(order.client_order_id)
+        expected = {"submit": "SUBMITTED", "cancel": "PENDING_CANCEL"}.get(kind)
+        event_type = {"submit": "OrderSubmitted", "cancel": "OrderPendingCancel"}.get(kind)
+        key = f"{kind}:{oid}"
+        dispatches = self.state.get("dispatches", {})
+        if (
+            expected is None
+            or oid not in self.state["intents"]
+            or owner.cache.order(order.client_order_id) is not order
+            or order.status.name != expected
+            or self.state["view"]["statuses"].get(oid) != expected
+            or type(order.events[-1]).__name__ != event_type
+            or key in dispatches
+            or (kind == "cancel" and oid not in self.state["cancel_intents"])
+            or (kind == "submit" and (
+                self.state["halt_reasons"]
+                or owner.clock.timestamp_ns() >= self.state["deadline_ns"]
+                or owner.clock.timestamp_ns() > self.state["intents"][oid]["prepared_ns"] + 5_000_000_000
+            ))
+        ):
+            raise SessionLedgerError("durable native event and unused adapter attempt required")
+        # The previous successful snapshot must contain this exact native event.
+        saved = read_session(self._raw)["native"]
+        if encode(order.events[-1]) not in [
+            e for item in saved["orders"] for e in item["events"]
+        ]:
+            raise SessionLedgerError("native dispatch event not durably captured")
+        self.state.setdefault("dispatches", {})[key] = {
+            "event_id": str(order.events[-1].id), "ts_ns": owner.clock.timestamp_ns(),
+        }
+        self._persist(owner)
+
+    def halt(self, owner, reason):
+        self._owner(owner)
+        if reason not in self.state["halt_reasons"]:
+            self.state["halt_reasons"].append(reason)
+        self._persist(owner)
+
     def close(self):
         if self._fd is not None:
             os.close(self._fd)
