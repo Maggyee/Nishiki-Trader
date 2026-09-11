@@ -411,3 +411,11 @@ Binance 规则/手续费响应，输出哈希、约束和不兼容方向；不�
 - 应急脚本必须有**二次确认**参数，避免误触发
 - 任何写真实账户的脚本（Phase 6+）走 `EMERGENCY_*` 前缀，醒目
 - Phase 2 ops 脚本只能写本地 `data/`，不能接真实账户或下单 API
+
+
+只读测试网全账户复核入口：`apps.ops.portfolio_testnet_account_review`。
+它重放指定归档、比较全部资产/挂单/账户字段，并可使用指定的 testnet exchangeInfo
+在独立进程中验证完整 Nautilus 余额映射。不会默认猜测未知币种精度或省略资产。
+详细输出以 0600 权限独占创建；相等结果和 CLI exit 0 均不代表恢复或交易许可。
+实现与私有证据引用见
+[全账户映射验收](../../docs/progress/portfolio-testnet-account-mapping-2026-09-11.md)。

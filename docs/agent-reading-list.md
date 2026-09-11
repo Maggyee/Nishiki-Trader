@@ -162,6 +162,15 @@ Zero business events were observed. Permissions, independent UID/baseline,
 global continuity and actual adapter process recovery remain unqualified.
 Observation journals cannot seal strict recovery evidence or grant runtime readiness.
 
+For the operator-confirmed absence of other trading, fresh account comparison
+and isolated full-account native mapping, read
+`docs/progress/portfolio-testnet-account-mapping-2026-09-11.md`,
+`apps/ops/portfolio_testnet_account_review.py` and
+`apps/strategies_nautilus/portfolio_testnet_mapping.py`. Selected testnet metadata
+now maps all 502 observed assets exactly in a separate process; equal observations
+and numeric mapping do not qualify history, identity, permissions or live recovery.
+Additional independent account records are unavailable; reset history stays unknown.
+
 | Task area | Read |
 |---|---|
 | Project status, next step, or handoff | `docs/project-status.md`, `git status --short --branch`, `git fetch origin`, `git pull --ff-only`, `git log --oneline --decorate -5` |

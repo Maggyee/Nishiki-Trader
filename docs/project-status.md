@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-11
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Build on successful full-account Spot testnet observations and signed WS reconnect; qualify independent identity/baseline, permission evidence, business-event continuity and actual adapter process recovery.
+- **Current objective**: Build on full-account Spot testnet observations and isolated native balance mapping; qualify identity/baseline, permissions, business-event continuity and actual adapter recovery.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -15,14 +15,16 @@ share the calculation. Rebound/midnight/restart cannot clear the latch; old-poli
 checkpoints fail configuration matching. Legacy runner equivalence and actual
 account qualification remain required; no execution deployment is authorized.
 
-The operator selected **Binance Spot testnet** and supplied an Ed25519 key pair.
-Native HTTP/WS signatures pass independent OpenSSL tests. A separate full-account
-observation profile now passes real signed WS subscriptions, explicit reconnect
-and four collections retaining all **502 assets** plus account-wide open orders
-(zero observed). Six pings passed over 23.806 seconds; zero business events arrived.
-The closed private archive replays in a fresh process without credentials. Observed
-UID consistency is checked against the selected initial artifact; independent UID,
-baseline, global continuity and actual adapter process recovery remain unqualified.
+The operator selected **Binance Spot testnet**, supplied an Ed25519 key pair and
+confirms no other program/manual trading. Additional account records are unavailable;
+faucet/reset history remains unknown. A second bounded session passed four
+**502-asset** collections and signed WS reconnect over 24.157 seconds, with zero
+open orders or business events. Detached replay passes. The selected prior/current
+observations have identical full balances, orders and account metadata.
+Testnet exchangeInfo (1,363 symbols) supplies consistent precision for all 502
+assets; an isolated native CashAccount matches every free/locked/total amount
+without modifying the parent currency registry. This numeric mapping does not
+qualify identity, baseline, valuation, continuity or adapter process recovery.
 Testnet excludes `/sapi`: key restrictions remain unknown, the strict recovery
 collector is unchanged and observations cannot seal recovery evidence. No production
 account, order/cancel request or execution runner was accessed.
@@ -129,14 +131,16 @@ the September 9 five-sleeve proposal is offline engineering only.
    replay now pass. Establish an independently corroborated UID and full-account
    baseline, supported permission evidence and explicit faucet/reset boundaries.
    Missing `/sapi` restrictions remain unknown; do not bypass the strict gate.
-   Qualify real business events and downtime history, then full-asset native mapping
-   and fresh-process adapter recovery; quiet pings cannot prove these. The selected
+   Qualify real business events and downtime history, then native adapter use of
+   the mapped assets and fresh-process recovery; quiet pings cannot prove these. The selected
    archive/collection IDs are recorded in the latest progress report; historical
    receipts cannot become current fences. Validate strategy/policy fingerprints,
    account/price coverage, cash flows and UTC day-open history before any execution
    bootstrap. Apply ADR-015 and qualify actual runtime policy equivalence; the
    budget decision is settled, but actual account baselines are not. Independent
-   UID/full-account baseline paths and faucet/reset history were requested.
+   account records are unavailable; no other trading is operator-confirmed, while
+   faucet/reset history remains unknown. Use the new full-account comparison and
+   isolated numeric mapping as diagnostics, not independent baseline proof.
    No secret values in chat.
 2. Review the explicit offline residual-exit policy before promotion and resolve
    re-entry with retained dust. Whole-step reductions now pass native acceptance;
@@ -169,6 +173,11 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Latest Verification
 
+- September 11 full-account mapping: 78 focused tests passed. New four-collection
+  archive replays in a fresh process; all 502 assets map exactly using selected
+  testnet metadata in an isolated native process. Cross-session endpoint balances
+  and orders agree; zero business events, no trading readiness.
+
 - September 11 risk unification: 177 focused tests passed; v3 generation
   revalidated all six original evidence chains. Four selected testnet archive
   collections replayed with 502 assets each; independent identity/baseline remain
@@ -183,7 +192,7 @@ the September 9 five-sleeve proposal is offline engineering only.
 - **130 collector/stream/archive tests** passed, including 12 new concurrency,
   cancellation, timeout, source/clock and abort-persistence regressions. Explicit
   retries produce independently replayable evidence; failed collections stay rejected.
-- Full offline regression after risk unification: **2,284 passed**, 12 Postgres integration tests deselected
+- Full offline regression after account mapping: **2,313 passed**, 12 Postgres integration tests deselected
   (no dedicated integration DSN).
   Ruff, registry and whitespace checks pass.
 - Prior abrupt-exit/fresh-process recovery and exact account comparison remain
@@ -193,6 +202,8 @@ the September 9 five-sleeve proposal is offline engineering only.
   linked progress records; it is not a current runtime-health observation.
 
 ## References
+
+- [Operator account context, fresh observations and isolated full-account mapping](progress/portfolio-testnet-account-mapping-2026-09-11.md).
 
 - [Unified risk decision](decisions/015-portfolio-risk-policy.md), [implementation and next account inputs](progress/portfolio-risk-unification-2026-09-11.md), [current v3 plan](progress/portfolio-execution-plan-2026-09-11-v3.json).
 
