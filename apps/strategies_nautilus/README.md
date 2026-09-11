@@ -309,3 +309,10 @@ RiskEngine、原生执行队列和 Binance 报文处理接通。Submitted/Pendin
 当前仅 TestClock + 内存 HTTP 接收端，不加载 Key、不联网。下一入口是专用真实
 测试网运行配置、固定会话路径、签名账户对账与来源绑定的回调；详见
 [桥接验收报告](../../docs/progress/portfolio-testnet-session-bridge-2026-09-11.md)。
+
+真实测试网只读启动：`portfolio_session_transport.py` 提供固定账户会话锁及
+来源绑定的原订单 GET 对账；`portfolio_session_bootstrap.py` 用 LiveClock 建立
+完整原生账户，保留全部资产。真实 502 资产的首次启动和另一进程签名恢复已通过。
+当前 profile 禁止订单；探针文件不激活或消耗限定撮合额度。下一入口是单独的
+限额写入客户端、真实时钟策略/风控联动和定时撤单，不能直接移除探针限制。
+详见[真实账户启动报告](../../docs/progress/portfolio-testnet-session-transport-2026-09-11.md)。

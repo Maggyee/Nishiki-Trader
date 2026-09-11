@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-11
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Integrate the ADR-017 real-testnet transport/profile after queued native submit/cancel persistence acceptance; full-account portfolio qualification remains separate and blocked.
+- **Current objective**: Build the ADR-017 bounded matching runtime after actual 502-asset LiveClock bootstrap and signed fresh-process reconciliation; full-account portfolio qualification remains separate and blocked.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -42,9 +42,14 @@ now waits for durable Submitted/PendingCancel receipts before each single attemp
 Known execution-report callbacks settle through native accounting; timeout stays
 uncertain, duplicate fills are deduplicated, and failed persistence prevents sends.
 Two additional three-process adapter crash/replays preserve original dispatches.
-The bridge accepts only TestClock and an in-memory HTTP sink. Real transport,
-source-bound account callbacks and a fixed global session lease remain **unwired**.
-No matching order, exchange cancellation or production request has been made.
+The execution bridge still accepts only TestClock and an in-memory HTTP sink.
+A separate **GET-only LiveClock probe** now bootstraps all **502 actual assets**
+and reconciles them against fresh signed reads. A second process repeated the
+native comparison through a new subscription. A fixed account/scope lease and
+source-bound callbacks are implemented; actual orders/trades/business events were
+all zero, so active matching recovery is still unverified. The matching activation
+marker is absent and its allowance remains unused. No matching order, exchange
+cancellation or production request has been made.
 
 ADR-016's full-account indicative valuation still covers **500/502 assets**;
 two lack quotes and 65 exceed a conversion leg's top-book depth. Full equity,
@@ -150,16 +155,16 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Next Steps
 
-1. Integrate the ADR-017 real-testnet runtime around the verified queued native
-   receipt barrier: fixed account/session path across restarts, selected Ed25519
-   source, fresh zero fees/filters, native bootstrap, signed original order/trade
-   collection and source-bound account/execution callbacks. Verify full-account
-   agreement and disconnect/unknown-response recovery before the bounded matching
-   trial. The current bridge is TestClock/in-memory only; do not remove its guard
-   or launch a legacy runner as a substitute. Existing-key TRADE validation passed;
-   no repeat Key or permissions questionnaire is needed. Continue ADR-016 valuation,
-   UTC and cash-flow qualification separately; engineering fixtures do not start
-   the 14-day clock.
+1. Build the ADR-017 bounded matching runtime: bind the fixed activation/native
+   ledger path, fresh complete account and zero-fee/effective-filter evidence,
+   a narrow matching client, native strategy/risk/queued receipt barrier, and
+   acknowledgement/cancel timers. Verify the LiveClock write path and account/fill
+   correlation under transport failure before executing the 0.0001 BTC / 10-test-USDT
+   trial. The real read-only probe already retains and recovers all 502 assets;
+   zero observed orders/events do not qualify active matching recovery. Do not
+   remove probe guards or launch a legacy runner. Existing Key remains configured;
+   no repeat permissions questionnaire. Continue full-account ADR-016 valuation,
+   UTC and cash-flow qualification separately; strict continuity stays 0/14.
 2. Review the explicit offline residual-exit policy before promotion and resolve
    re-entry with retained dust. Whole-step reductions now pass native acceptance;
    fixed BUY size, SignalEvent identities and SourcePolicy remain unchanged.
@@ -190,6 +195,11 @@ the September 9 five-sleeve proposal is offline engineering only.
 - Nautilus is the only execution engine; LLMs never enter the order path.
 
 ## Latest Verification
+
+- September 11 actual session transport: **34 new tests**; 12 signed GETs plus one
+  public metadata GET in two actual process invocations, each with a new signed
+  subscription. Both native comparisons preserve all 502 assets; zero orders/trades/
+  business events. Fixed matching scope remains unactivated. See the report below.
 
 - September 11 queued session bridge: **44 new tests**, **91 combined bridge/ledger
   tests**. Native risk denial, durable pre-send events/attempts, partial/late/duplicate
@@ -230,7 +240,7 @@ the September 9 five-sleeve proposal is offline engineering only.
 - **130 collector/stream/archive tests** passed, including 12 new concurrency,
   cancellation, timeout, source/clock and abort-persistence regressions. Explicit
   retries produce independently replayable evidence; failed collections stay rejected.
-- Full offline regression after queued native session bridge: **2,477 passed**, 12 Postgres integration tests deselected
+- Full offline regression after source-bound session transport: **2,511 passed**, 12 Postgres integration tests deselected
   (no dedicated integration DSN).
   Ruff, registry and whitespace checks pass.
 - Prior abrupt-exit/fresh-process recovery and exact account comparison remain
@@ -240,6 +250,8 @@ the September 9 five-sleeve proposal is offline engineering only.
   linked progress records; it is not a current runtime-health observation.
 
 ## References
+
+- [Actual LiveClock account bootstrap, fixed scope and signed recovery](progress/portfolio-testnet-session-transport-2026-09-11.md).
 
 - [Queued native session strategy/adapter bridge and remaining real transport](progress/portfolio-testnet-session-bridge-2026-09-11.md).
 

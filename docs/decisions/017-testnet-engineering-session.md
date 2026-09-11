@@ -129,3 +129,19 @@ stream/account fence, fixed global account lease or LiveClock bootstrap. The nex
 real-testnet profile must supply those integrations and fresh fees/filters before
 the already bounded matching lifecycle; existing source policies and portfolio
 qualification are unchanged. No matching or production request was made here.
+
+## 7. Real-clock read-only bootstrap addendum — 2026-09-11
+
+The [source-bound session transport](../progress/portfolio-testnet-session-transport-2026-09-11.md)
+now supports complete account/original-order/trade GET collection and actual native
+LiveClock bootstrap. The fixed private account/scope manifest owns a single session
+ID across invocations; matching activation must be exclusive and precede its native
+checkpoint. A missing checkpoint after activation cannot renew the allowance.
+
+Read-only probes have separate files and never activate or consume the matching
+scope. Two actual processes reconciled all 502 assets through new subscriptions,
+with zero orders, trades or business events. The probe forbids prepare/dispatch/
+cancel and execution-client registration. This advances account-source and numerical
+recovery evidence, not matching permission or active-order recovery. The bounded
+matching client, LiveClock strategy/risk integration and timed cancellation remain
+the next implementation. Portfolio qualification and the 14-day gate are unchanged.

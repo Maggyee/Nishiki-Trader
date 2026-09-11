@@ -218,6 +218,16 @@ three-process adapter crash/replays pass. This requires TestClock, loads no keys
 forbids actual connections and does not qualify live bootstrap. Signed account/
 execution stream integration and one fixed global session path remain required.
 
+For the actual GET-only LiveClock bootstrap and signed session recovery, read
+`docs/progress/portfolio-testnet-session-transport-2026-09-11.md`,
+`portfolio_session_transport.py` and `portfolio_session_bootstrap.py` under
+`apps/strategies_nautilus/`, plus `apps/ops/portfolio_session_transport.py`.
+Two real process invocations preserve all 502 assets, with zero orders/business
+events. The fixed private account/scope lease is separate from probe files; matching
+activation remains unused. The real-clock probe forbids orders and client registration.
+Original-order GET recovery has synthetic tests but no actual order evidence yet.
+The next bounded matching runtime must retain these boundaries and fresh source checks.
+
 | Task area | Read |
 |---|---|
 | Project status, next step, or handoff | `docs/project-status.md`, `git status --short --branch`, `git fetch origin`, `git pull --ff-only`, `git log --oneline --decorate -5` |

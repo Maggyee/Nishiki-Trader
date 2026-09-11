@@ -437,3 +437,9 @@ USDT 参考估值，并生成固定 0.0001 BTC / 10 测试 USDT 的订单验收�
 `portfolio_testnet_session.py` 保存独立会话规则和校验边界；尚无原生会话账本
 或撮合订单 runner，CLI 成功不能放开实盘/组合准入。说明见
 [ADR-017](../../docs/decisions/017-testnet-engineering-session.md)。
+
+`portfolio_session_transport`：现有 Ed25519 Key 的限定测试网只读启动/恢复探针。
+默认使用固定私有账户会话目录，完整映射原生账户并用新订阅下的签名 GET 对账。
+`--checkpoint` 只接受该目录内已有的只读探针快照，不恢复交易或消耗撮合额度。
+入口：`.venv/bin/python -m apps.ops.portfolio_session_transport`；后续接入边界见
+[验收报告](../../docs/progress/portfolio-testnet-session-transport-2026-09-11.md)。

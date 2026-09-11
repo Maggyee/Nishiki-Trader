@@ -17,6 +17,7 @@ from dataclasses import asdict
 from decimal import ROUND_FLOOR
 from decimal import Decimal as D
 from pathlib import Path
+from types import SimpleNamespace
 
 from nautilus_trader.common.component import TestClock
 from nautilus_trader.model.events import OrderAccepted, OrderFilled
@@ -225,6 +226,11 @@ def native_view(state, owner):
 
 
 def snapshot(state, owner):
+    # Freeze the serialization cursor once. A wall clock advances between reads;
+    # the native snapshot and state must describe the same completed transaction.
+    clock = TestClock()
+    clock.set_time(owner.clock.timestamp_ns())
+    owner = SimpleNamespace(cache=owner.cache, clock=clock)
     state = copy.deepcopy(state)
     state["view"] = native_view(state, owner)
     if state["view"]["incidents"]:
@@ -311,6 +317,9 @@ class SessionLedger:
         if self.state is not None and owner.clock.timestamp_ns() < self.state["updated_ns"]:
             raise SessionLedgerError("session clock regressed")
 
+    def _started_ns(self, owner):
+        return owner.clock.timestamp_ns()
+
     def create(self, owner, *, session_id, source):
         self._lock()
         try:
@@ -346,7 +355,7 @@ class SessionLedger:
                 raise SessionLedgerError(
                     "empty native orders/positions and unreserved funds required"
                 )
-            now = owner.clock.timestamp_ns()
+            now = self._started_ns(owner)
             self.state = {
                 "version": VERSION,
                 "contract_sha256": _hash(canonical(session_contract())),
