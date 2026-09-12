@@ -158,9 +158,14 @@ def test_full_cli_native_matching_and_separate_get_recovery(tmp_path, monkeypatc
         failures = list(root.glob("matching-*-failure.json"))
         assert len(failures) == 1
         assert json.loads(failures[0].read_bytes())["status"] == "halted_no_retry"
+        operator = json.loads(failures[0].read_bytes())["operator_status"]
+        assert operator["evidence_basis"] == "local_checkpoint_record"
+        assert "unexpected_nonzero_commission" in operator["halt_reasons"]
     else:
         result = asyncio.run(module.run(SimpleNamespace(execute=True, credentials=tmp_path / "unused")))
         view = result["view"]
+        assert result["operator_status"]["evidence_basis"] == "signed_reconciliation_at_observation"
+        assert D(result["operator_status"]["recorded_owned_btc"]) == D(view["owned_btc"])
         assert result["full_account_reconciled"] and result["account_wide_open_orders"] == 0
         assert result["known_trades"] == int(D(buy_qty) > 0) + int(D(sell_qty) > 0)
         assert result["known_orders"] == 1 + int(D(sell_qty) > 0)
@@ -186,6 +191,8 @@ def test_full_cli_native_matching_and_separate_get_recovery(tmp_path, monkeypatc
     monkeypatch.setattr(module.subprocess, "check_output", lambda *args, **kw: "a" * 40)
     recovered = asyncio.run(module.run(SimpleNamespace(execute=False, credentials=tmp_path / "unused")))
     assert recovered["view"] == view
+    assert recovered["operator_status"]["evidence_basis"] == "signed_reconciliation_at_observation"
+    assert not recovered["operator_status"]["new_orders_authorized"]
     if fee_side:
         report_path = Path(recovered["report"])
         recovered_path = report_path.with_name(report_path.name.replace("report.json", "recovered.json"))

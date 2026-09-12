@@ -40,6 +40,7 @@ from apps.strategies_nautilus.portfolio_venue import _unique_object
 
 PROFILE = "portfolio.testnet_session_collection.v1"
 SCOPE = "testnet-engineering-session-v1-20260911"
+HISTORY_NS = 86_400_000_000_000
 STATE_ROOT = Path.home() / ".local/state/trader/spot-testnet-engineering-v1"
 ORDER_FIELDS = (
     "symbol",
@@ -343,7 +344,7 @@ async def collect_session(http, journal, state, checkpoint_sha256):
     started = journal.clock_ns()
     if (
         not state["started_ns"] <= state["updated_ns"] < started
-        or started - state["started_ns"] > 86_400_000_000_000
+        or started - state["started_ns"] > HISTORY_NS
     ):
         raise StreamError("session history must be later than checkpoint and within 24 hours")
     fence = journal.fence()

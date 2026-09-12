@@ -330,3 +330,9 @@ returns without modifying the fixed checkpoint. Old cancellation intents/attempt
 and all BUY allowances stay consumed; new orders remain forbidden. Implementation:
 `portfolio_session_cancel_recovery.py`; acceptance/boundaries are documented in
 `docs/progress/portfolio-testnet-cancel-recovery-2026-09-11.md`.
+
+`apps.ops.portfolio_session_run --status` inspects the fixed local checkpoint with
+no credentials, network or writes. It reports original order IDs, consumed attempts,
+recorded ownership and the shared 24-hour history bound. It grants no action and
+never equates an old terminal record with current venue confirmation. See the
+[fixed-session recovery runbook](../../docs/runbook-testnet-session-recovery.md).

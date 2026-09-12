@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-12
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Preserve the consumed ADR-017 scope; cleanup admission now handles spent quote cash correctly and passes synthetic fill/fee/residual recovery. Interrupted cleanup SELL recovery now passes native/CLI/crash acceptance. Next clarify unresolved-order operator handling. Actual fills/cleanup and full-account portfolio qualification remain unverified.
+- **Current objective**: Preserve the consumed ADR-017 scope; cleanup admission now handles spent quote cash correctly and passes synthetic fill/fee/residual recovery. Interrupted cleanup SELL recovery now passes native/CLI/crash acceptance. Local operator status and unresolved-order runbook are implemented; next qualify historical replay of retained session evidence. Actual fills/cleanup and full-account portfolio qualification remain unverified.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -39,6 +39,11 @@ terminal read-only recovery. Interrupted cleanup SELL recovery now also passes
 native and whole-CLI acceptance, including late/duplicate fills, exact base locks,
 fee halts, no-retry refusals and two independent recoveries after abrupt exit.
 These are synthetic tests; original deadline/allowances remain intact.
+`--status` now reads fixed local records without credentials, network or writes,
+showing original IDs, consumed intents/dispatches, recorded ownership and history
+expiry. Success and failure reports distinguish signed observation from local
+records. The actual local check confirms the same terminal checkpoint and an
+expired 24-hour history window; it is not a fresh exchange observation.
 Explicit `--recover-cancel`
 now restores a qualified active original order into a cancellation-only native
 runtime after fresh signed reconciliation. Historical halts and all allowances
@@ -160,9 +165,10 @@ the September 9 five-sleeve proposal is offline engineering only.
 ## Next Steps
 
 1. Preserve the completed fixed ADR-017 scope. Interrupted cleanup SELL recovery
-   now passes synthetic native/CLI/crash acceptance. Clarify operator handling for
-   uncertain/blocked cancellations: consumed attempts, exact retained ownership,
-   terminal-vs-unknown evidence and no retry/reset. Recovered new SELL remains
+   now passes synthetic native/CLI/crash acceptance. Local status and the unknown-
+   order runbook are implemented. Next qualify offline replay of retained private
+   session evidence after the collector window expires, without representing it
+   as current source/venue confirmation. Recovered new SELL remains
    disabled; actual active recovery/fills/cleanup remain unverified. Continue
    ADR-016 full-account/UTC/cash-flow qualification separately; strict continuity
    stays 0/14.
@@ -196,6 +202,11 @@ the September 9 five-sleeve proposal is offline engineering only.
 - Nautilus is the only execution engine; LLMs never enter the order path.
 
 ## Latest Verification
+
+- Operator status: **18 new tests**, **31 focused tests** pass. Local inspection
+  and report summaries preserve unknown outcomes,
+  consumed preparation/dispatch and recorded inventory. No credential/network/write
+  occurs in `--status`; actual inspection preserves the original checkpoint hash.
 
 - September 12 interrupted SELL recovery: **17 additional tests**, **29 focused
   tests** pass. Native/CLI acceptance covers two original
@@ -266,8 +277,8 @@ the September 9 five-sleeve proposal is offline engineering only.
 - **130 collector/stream/archive tests** passed, including 12 new concurrency,
   cancellation, timeout, source/clock and abort-persistence regressions. Explicit
   retries produce independently replayable evidence; failed collections stay rejected.
-- Full offline regression after interrupted SELL recovery acceptance: **2,603 passed**,
-  12 Postgres integration tests deselected (no dedicated integration DSN; 171.65 seconds).
+- Full offline regression after operator status/runbook integration: **2,621 passed**,
+  12 Postgres integration tests deselected (no dedicated integration DSN; 179.54 seconds).
   Ruff, registry and whitespace checks pass.
 - Prior abrupt-exit/fresh-process recovery and exact account comparison remain
   green. Recovery fixtures remain synthetic; the separate testnet observations
@@ -276,6 +287,9 @@ the September 9 five-sleeve proposal is offline engineering only.
   linked progress records; it is not a current runtime-health observation.
 
 ## References
+
+- [Fixed-session unknown-order and recovery runbook](runbook-testnet-session-recovery.md),
+  [operator-status implementation and actual local inspection](progress/portfolio-testnet-operator-status-2026-09-12.md).
 
 - [Interrupted cleanup SELL recovery acceptance](progress/portfolio-testnet-sell-recovery-2026-09-12.md).
 

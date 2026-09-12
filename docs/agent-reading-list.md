@@ -202,6 +202,13 @@ the original BUY. Zero fees, full signed native reconciliation, original deadlin
 owned whole steps and unused SELL allowance still apply. Cancellation-only recovery
 does not gain SELL permission; the completed real scope remains consumed.
 
+For fixed-session unknown-order handling or local inspection, read
+`docs/runbook-testnet-session-recovery.md` and `apps/ops/portfolio_session_status.py`.
+`portfolio_session_run --status` reads fixed private records without credentials,
+network, locks or writes. Recorded terminal state is not current venue confirmation;
+consumed cancel preparation forbids retry even without a dispatch. Missing state
+stays unknown. The 24-hour history bound is shared with the collector.
+
 For interrupted cleanup SELL recovery acceptance, read
 `docs/progress/portfolio-testnet-sell-recovery-2026-09-12.md`. Both original BUY and
 SELL histories must reconcile; exact owned residuals, base locks and consumed

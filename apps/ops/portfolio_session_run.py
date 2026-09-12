@@ -14,6 +14,7 @@ from uuid import uuid4
 
 from nautilus_trader.common.component import LiveClock
 
+from apps.ops.portfolio_session_status import checkpoint_status, local_status
 from apps.ops.portfolio_session_transport import PROJECT, SELECTION_SHA256, metadata_capture
 from apps.strategies_nautilus.portfolio_session_bootstrap import reconcile_collected
 from apps.strategies_nautilus.portfolio_session_cancel_recovery import restore_cancel_runtime
@@ -85,6 +86,8 @@ def check_account(capture, account, binding):
 
 
 async def run(args):
+    if getattr(args, "status", False):
+        return local_status(now_ns=LiveClock().timestamp_ns())
     cancel_recovery = getattr(args, "recover_cancel", False)
     revision = clean_revision() if args.execute or cancel_recovery else subprocess.check_output(
         ["git", "rev-parse", "HEAD"], cwd=PROJECT, text=True).strip()
@@ -213,17 +216,24 @@ async def run(args):
             archive=str(archive), session_id=lease.state["session_id"])
         # The numerical reconciler's matching_requests_made describes its GET-only scope.
         result["matching_dispatches_recorded"] = len(read_session(raw)["state"].get("dispatches", {}))
+        result["operator_status"] = checkpoint_status(checkpoint, now_ns=clock.timestamp_ns())
+        if result["operator_status"]["orders"] is not None:
+            result["operator_status"].update(evidence_basis="signed_reconciliation_at_observation",
+                                            observation_received_ns=receipt.evidence["received_ns"])
+            if result["operator_status"]["outcome"].startswith("recorded_terminal_"):
+                result["operator_status"]["next_step"] = "preserve_terminal_evidence_and_residual"
         write_private_new(artifact("report.json"), canonical(result))
         return {key: result[key] for key in ("run_kind", "full_account_assets",
             "full_account_reconciled", "known_orders", "known_trades", "account_wide_open_orders",
-            "cleanup", "view")} | {"report": str(artifact("report.json"))}
+            "cleanup", "view", "operator_status")} | {"report": str(artifact("report.json"))}
     except BaseException as exc:
         if owner is not None and hasattr(owner, "bridge"):
             owner.bridge.fail("cancel_recovery_interrupted" if cancel_recovery else "matching_runner_aborted_requires_reconciliation")
         # Exception text is deliberately not archived: HTTP errors can contain signed URLs.
         write_private_new(artifact("failure.json"), canonical({"exception_type": type(exc).__name__,
             "stage": stage, "scope_activated": (lease.root / "activated.json").exists(),
-            "code_commit": revision, "status": "halted_no_retry", "production_requests": 0}))
+            "code_commit": revision, "status": "halted_no_retry", "production_requests": 0,
+            "operator_status": local_status(now_ns=clock.timestamp_ns(), root=lease.root)}))
         raise
     finally:
         try:
@@ -241,6 +251,7 @@ async def run(args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--status", action="store_true", help="Inspect fixed local records only; no credentials, network or state writes")
     mode.add_argument("--execute", action="store_true", help="Consume the one fixed testnet matching session")
     mode.add_argument("--recover", action="store_true", help="GET-only original-ID reconciliation; never send orders")
     mode.add_argument("--recover-cancel", action="store_true", help="Reconcile fixed scope; cancel an active original order only if never attempted")
@@ -248,12 +259,14 @@ def main():
     try:
         result = asyncio.run(run(parser.parse_args()))
     except (Exception, KeyboardInterrupt):
-        print(json.dumps({"status": "halted_no_retry", "detail": "Inspect fixed private evidence; never delete activation or repeat BUY."}))
+        print(json.dumps({"status": "halted_no_retry", "detail": "Inspect fixed private evidence; never delete activation or repeat BUY.",
+            "next_command": ".venv/bin/python -m apps.ops.portfolio_session_run --status",
+            "runbook": "docs/runbook-testnet-session-recovery.md"}))
         return 1
     # Full balances and fill details remain in private artifacts.
     result.pop("view", None)
     print(json.dumps(result, sort_keys=True))
-    return 0
+    return 1 if result.get("outcome") == "unknown_preserve_scope" else 0
 
 
 if __name__ == "__main__":
