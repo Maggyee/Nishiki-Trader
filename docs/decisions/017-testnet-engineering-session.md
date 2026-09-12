@@ -207,3 +207,8 @@ scope or enabling a recovered SELL. Cancellation-only restoration still forbids
 all new orders. CLI/native fixtures now cover low quote cash, partial fills, dust,
 partial exits and exact fee halts through terminal read-only recovery. Actual fill
 and cleanup evidence remains absent; the completed real scope stays consumed.
+
+The subsequent [interrupted SELL recovery acceptance](../progress/portfolio-testnet-sell-recovery-2026-09-12.md)
+verifies the existing cancellation-only implementation with both original orders,
+late fills, base locks, fee halts and abrupt-exit recovery in separate processes.
+It changes no runtime policy or scope; all new evidence remains synthetic.

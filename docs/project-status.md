@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-12
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Preserve the consumed ADR-017 scope; cleanup admission now handles spent quote cash correctly and passes synthetic fill/fee/residual recovery. Next qualify interrupted cleanup SELL recovery. Actual fills/cleanup and full-account portfolio qualification remain unverified.
+- **Current objective**: Preserve the consumed ADR-017 scope; cleanup admission now handles spent quote cash correctly and passes synthetic fill/fee/residual recovery. Interrupted cleanup SELL recovery now passes native/CLI/crash acceptance. Next clarify unresolved-order operator handling. Actual fills/cleanup and full-account portfolio qualification remain unverified.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -35,7 +35,10 @@ Actual partial/final fills, fee settlement and owned cleanup remain unverified;
 those paths currently have synthetic acceptance only. The original-process cleanup
 now uses SELL capability checks, without requiring another 10 free USDT after BUY.
 Whole-CLI acceptance covers low cash, partial exits, dust and fee halts through
-terminal read-only recovery. Original deadline/allowances remain intact.
+terminal read-only recovery. Interrupted cleanup SELL recovery now also passes
+native and whole-CLI acceptance, including late/duplicate fills, exact base locks,
+fee halts, no-retry refusals and two independent recoveries after abrupt exit.
+These are synthetic tests; original deadline/allowances remain intact.
 Explicit `--recover-cancel`
 now restores a qualified active original order into a cancellation-only native
 runtime after fresh signed reconciliation. Historical halts and all allowances
@@ -156,14 +159,13 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Next Steps
 
-1. Preserve the completed fixed ADR-017 scope. Qualify interrupted cleanup SELL
-   recovery: original durable intent/dispatch, partial/late fills, uncertain cancel,
-   retained ownership and no retry. Original-process cleanup/fee/residual CLI
-   acceptance now passes. Any prospective recovered new SELL must retain the
-   original allowance, fresh rules and 180-second bound; cancellation-only recovery
-   cannot submit it. Actual active recovery execution remains unverified. Never
-   reset activation or renew BUY permission. Continue ADR-016 full-account/UTC/cash-flow qualification separately;
-   strict continuity stays 0/14.
+1. Preserve the completed fixed ADR-017 scope. Interrupted cleanup SELL recovery
+   now passes synthetic native/CLI/crash acceptance. Clarify operator handling for
+   uncertain/blocked cancellations: consumed attempts, exact retained ownership,
+   terminal-vs-unknown evidence and no retry/reset. Recovered new SELL remains
+   disabled; actual active recovery/fills/cleanup remain unverified. Continue
+   ADR-016 full-account/UTC/cash-flow qualification separately; strict continuity
+   stays 0/14.
 2. Review the explicit offline residual-exit policy before promotion and resolve
    re-entry with retained dust. Whole-step reductions now pass native acceptance;
    fixed BUY size, SignalEvent identities and SourcePolicy remain unchanged.
@@ -194,6 +196,13 @@ the September 9 five-sleeve proposal is offline engineering only.
 - Nautilus is the only execution engine; LLMs never enter the order path.
 
 ## Latest Verification
+
+- September 12 interrupted SELL recovery: **17 additional tests**, **29 focused
+  tests** pass. Native/CLI acceptance covers two original
+  orders, missed/late/duplicate fills, exact owned residuals, fee halts, invalid
+  evidence, disk failures and uncertain-cancel refusal. Abrupt-exit producer plus
+  two fresh processes preserve the same terminal state and all three dispatches.
+  Application code and the actual fixed session are unchanged.
 
 - September 12 cleanup gate: **23 additional tests**, **71 focused tests** pass.
   Whole CLI now exercises actual capability validation,
@@ -257,8 +266,8 @@ the September 9 five-sleeve proposal is offline engineering only.
 - **130 collector/stream/archive tests** passed, including 12 new concurrency,
   cancellation, timeout, source/clock and abort-persistence regressions. Explicit
   retries produce independently replayable evidence; failed collections stay rejected.
-- Full offline regression after cleanup gate/fee recovery acceptance: **2,586 passed**,
-  12 Postgres integration tests deselected (no dedicated integration DSN; 145.95 seconds).
+- Full offline regression after interrupted SELL recovery acceptance: **2,603 passed**,
+  12 Postgres integration tests deselected (no dedicated integration DSN; 171.65 seconds).
   Ruff, registry and whitespace checks pass.
 - Prior abrupt-exit/fresh-process recovery and exact account comparison remain
   green. Recovery fixtures remain synthetic; the separate testnet observations
@@ -267,6 +276,8 @@ the September 9 five-sleeve proposal is offline engineering only.
   linked progress records; it is not a current runtime-health observation.
 
 ## References
+
+- [Interrupted cleanup SELL recovery acceptance](progress/portfolio-testnet-sell-recovery-2026-09-12.md).
 
 - [Owned cleanup gate correction and fee/residual recovery acceptance](progress/portfolio-testnet-cleanup-gate-2026-09-12.md).
 

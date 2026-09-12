@@ -203,11 +203,19 @@ def test_full_cli_native_matching_and_separate_get_recovery(tmp_path, monkeypatc
     assert context.sends == sends
 
 
-def test_recover_cancel_cli_handles_interrupted_native_order(tmp_path, monkeypatch):
+@pytest.mark.parametrize("side", ["BUY", "SELL"])
+def test_recover_cancel_cli_handles_interrupted_native_order(tmp_path, monkeypatch, side):
     from tests.strategies_nautilus.test_portfolio_session_cancel_recovery import (
         interrupted,
         terminal_sink,
     )
+    if side == "SELL":
+        from tests.strategies_nautilus.test_portfolio_session_sell_recovery import (
+            interrupted_sell as interrupted,
+        )
+        from tests.strategies_nautilus.test_portfolio_session_sell_recovery import (
+            terminal_sink,
+        )
     ctx = asyncio.run(interrupted(tmp_path / "private"))
     ctx.journal.close()
     ctx.lease.close()
@@ -225,7 +233,10 @@ def test_recover_cancel_cli_handles_interrupted_native_order(tmp_path, monkeypat
         owner, result = await original(**kwargs)
         if owner is not None:
             ctx.owner, ctx.journal = owner, kwargs["journal"]
-            terminal_sink(ctx, late=True, duplicate=True)
+            if side == "SELL":
+                terminal_sink(ctx, late=True)
+            else:
+                terminal_sink(ctx, late=True, duplicate=True)
         return owner, result
     monkeypatch.setattr(module, "restore_cancel_runtime", restore)
     class Stream:
@@ -244,7 +255,7 @@ def test_recover_cancel_cli_handles_interrupted_native_order(tmp_path, monkeypat
     assert result["run_kind"] == "cancel_only_recovery"
     assert result["cleanup"] == "one_recovered_original_order_cancellation"
     assert result["full_account_reconciled"] and result["account_wide_open_orders"] == 0
-    assert D(result["view"]["owned_btc"]) == D("0.00008")
+    assert D(result["view"]["owned_btc"]) == D("0.00004" if side == "SELL" else "0.00008")
     assert ctx.calls == [HttpMethod.DELETE]
     before = ctx.lease.checkpoint_path.read_bytes()
     again = asyncio.run(module.run(args))

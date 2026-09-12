@@ -202,6 +202,12 @@ the original BUY. Zero fees, full signed native reconciliation, original deadlin
 owned whole steps and unused SELL allowance still apply. Cancellation-only recovery
 does not gain SELL permission; the completed real scope remains consumed.
 
+For interrupted cleanup SELL recovery acceptance, read
+`docs/progress/portfolio-testnet-sell-recovery-2026-09-12.md`. Both original BUY and
+SELL histories must reconcile; exact owned residuals, base locks and consumed
+attempts survive recovery. Synthetic native/CLI/crash acceptance adds no recovered
+SELL permission and does not qualify actual fills or active exchange recovery.
+
 For interruption recovery with a narrowly permitted cancellation, read
 `docs/progress/portfolio-testnet-cancel-recovery-2026-09-11.md`,
 `apps/strategies_nautilus/portfolio_session_cancel_recovery.py` and
