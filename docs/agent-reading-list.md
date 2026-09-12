@@ -195,6 +195,13 @@ profile; default rules stay strict. The diagnostic increment did not wire a matc
 order or execution runner; subsequent offline ledger/recovery is described below. Do not request the Key again or
 mistake validation acceptance for all key restrictions or portfolio qualification.
 
+For original-process owned cleanup admission and fee/residual recovery acceptance,
+read `docs/progress/portfolio-testnet-cleanup-gate-2026-09-12.md`. SELL capability
+checks must not require another 10 free USDT or BUY price-band eligibility after
+the original BUY. Zero fees, full signed native reconciliation, original deadline,
+owned whole steps and unused SELL allowance still apply. Cancellation-only recovery
+does not gain SELL permission; the completed real scope remains consumed.
+
 For interruption recovery with a narrowly permitted cancellation, read
 `docs/progress/portfolio-testnet-cancel-recovery-2026-09-11.md`,
 `apps/strategies_nautilus/portfolio_session_cancel_recovery.py` and

@@ -48,7 +48,7 @@ from apps.strategies_nautilus.portfolio_testnet_observation import (
     account_balances,
     select_initial_observation,
 )
-from apps.strategies_nautilus.portfolio_testnet_session import validation_price
+from apps.strategies_nautilus.portfolio_testnet_session import cleanup_price, validation_price
 
 
 def clean_revision():
@@ -68,12 +68,12 @@ async def review_native(http, journal, raw):
     return receipt, result
 
 
-async def fresh_terms(http, initial, selection, clock, journal, path):
+async def fresh_terms(http, initial, selection, clock, journal, path, *, cleanup=False):
     fence = journal.fence()
     capture = await collect_capabilities(http, initial, selection, clock.timestamp_ns)
     write_private_new(path, canonical(capture))
     journal.assert_fence(fence)
-    price = D(validation_price(capture, clock.timestamp_ns()))
+    price = D((cleanup_price if cleanup else validation_price)(capture, clock.timestamp_ns()))
     rules = capability_rules(capture, now_ns=clock.timestamp_ns(), max_age_ns=5_000_000_000)
     return capture, rules, price
 
@@ -162,13 +162,10 @@ async def run(args):
             owned = D(result["view"]["owned_btc"])
             if owned:
                 stage = "owned_cleanup_gate"
-                capture, rules, _ = await fresh_terms(capability_http, initial, SELECTION_SHA256,
-                    clock, journal, artifact("sell-capabilities.json"))
+                capture, rules, price = await fresh_terms(capability_http, initial, SELECTION_SHA256,
+                    clock, journal, artifact("sell-capabilities.json"), cleanup=True)
                 check_account(capture, receipt.evidence["account"], binding)
                 # Prospective cleanup LIMIT at current best bid; never sweep old BTC.
-                book = json.loads(next(r["body"] for r in capture["captures"]
-                                       if r["path"] == "/api/v3/ticker/bookTicker"))
-                price = D(book["bidPrice"])
                 quantity = (owned / rules.quantity_step).to_integral_value(rounding=ROUND_FLOOR) * rules.quantity_step
                 if quantity < rules.quantity_min or quantity * price < rules.notional_min:
                     cleanup = "owned_residual_below_minimum_retained"

@@ -191,3 +191,19 @@ the existing CANCELED order through six signed GETs, with 502 assets reconciled.
 It returned a terminal no-action result, sent no POST/DELETE and preserved the
 fixed checkpoint hash. Active recovered cancellation remains synthetic-only;
 this result neither recreates a test order nor grants a new trading scope.
+
+## 10. Owned cleanup gate correction — 2026-09-12
+
+The [cleanup acceptance increment](../progress/portfolio-testnet-cleanup-gate-2026-09-12.md)
+separates original-process SELL capability checks from new-BUY budget/price checks.
+The initial 10 free test-USDT requirement cannot be reapplied after that budget is
+spent acquiring owned BTC. A cleanup instead requires a fresh valid SELL quote,
+zero commissions, unchanged complete account/empty orders and the existing native
+owned-quantity, deadline, allowance, halt and effective-filter gates. Positive net
+inventory below the minimum remains owned; it cannot be topped up or rounded away.
+
+This corrects the existing bounded matching implementation, without changing its
+scope or enabling a recovered SELL. Cancellation-only restoration still forbids
+all new orders. CLI/native fixtures now cover low quote cash, partial fills, dust,
+partial exits and exact fee halts through terminal read-only recovery. Actual fill
+and cleanup evidence remains absent; the completed real scope stays consumed.

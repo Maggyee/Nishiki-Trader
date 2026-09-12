@@ -15,6 +15,7 @@ from nautilus_trader.core.nautilus_pyo3 import HttpMethod
 
 from apps.strategies_nautilus.portfolio_testnet_capabilities import (
     TestnetCapabilityHttpClient,
+    capability_rules,
     review_capabilities,
 )
 from apps.strategies_nautilus.portfolio_testnet_credentials import TESTNET_REST
@@ -60,8 +61,8 @@ def session_contract():
     }
 
 
-def validation_price(capture, now_ns):
-    """Review exact fresh captures; only this zero-fee engineering probe is allowed."""
+def _fresh_zero_fee_review(capture, now_ns):
+    """Shared source/account/fee prerequisites, without a new-BUY budget gate."""
     review = review_capabilities(capture)
     if (
         type(now_ns) is not int
@@ -74,15 +75,24 @@ def validation_price(capture, now_ns):
         "full_balances_unchanged",
         "account_metadata_unchanged",
         "account_wide_open_orders_empty",
-        "at_least_10_free_test_usdt",
         "native_rules_parsed",
-        "buy_within_effective_price_bands",
-        "buy_within_effective_order_filters",
     )
     if not all(review.get(key) is True for key in required):
         raise VenueInputError("testnet validation prerequisites incomplete")
     if _decimal(review["fee_rate_bound"]) != 0:
         raise VenueInputError("first engineering session requires exact zero fees")
+    return review
+
+
+def validation_price(capture, now_ns):
+    """Review exact fresh captures; only this zero-fee engineering probe is allowed."""
+    review = _fresh_zero_fee_review(capture, now_ns)
+    if not all(review.get(key) is True for key in (
+        "at_least_10_free_test_usdt",
+        "buy_within_effective_price_bands",
+        "buy_within_effective_order_filters",
+    )):
+        raise VenueInputError("testnet validation prerequisites incomplete")
     plan = review["lifecycle_proposal"]
     if not plan["captured_basic_filter_checks_passed"]:
         raise VenueInputError("testnet basic filters rejected")
@@ -90,6 +100,32 @@ def validation_price(capture, now_ns):
     if not 0 < _decimal(price) * _decimal(FIXED["quantity"]) <= 10:
         raise VenueInputError("testnet validation debit cap exceeded")
     return price
+
+
+def cleanup_price(capture, now_ns):
+    """Fresh SELL quote only; native admission still owns sizing and permission."""
+    _fresh_zero_fee_review(capture, now_ns)
+    rules = capability_rules(capture, now_ns=now_ns, max_age_ns=5_000_000_000)
+    row = next(r for r in capture["captures"] if r["path"] == "/api/v3/ticker/bookTicker")
+    book = json.loads(row["body"], object_pairs_hook=_unique_object)
+    if (
+        row["status"] != 200
+        or not 0 <= now_ns - row["received_ns"] <= 5_000_000_000
+        or book.get("symbol") != "BTCUSDT"
+    ):
+        raise VenueInputError("fresh BTCUSDT cleanup quote required")
+    price = _decimal(book["bidPrice"])
+    if (
+        price <= 0
+        or _decimal(book["bidQty"]) <= 0
+        or price < rules.price_min
+        or (rules.price_max and price > rules.price_max)
+        or (rules.price_tick and price % rules.price_tick)
+        or any(not band.minimum <= price <= band.maximum
+               for band in rules.price_bands if band.side == "SELL")
+    ):
+        raise VenueInputError("cleanup quote outside effective SELL price filters")
+    return str(price)
 
 
 class TestnetOrderValidationHttpClient(TestnetCapabilityHttpClient):

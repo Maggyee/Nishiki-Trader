@@ -22,6 +22,7 @@ from apps.strategies_nautilus.portfolio_testnet_session import (
     FIXED,
     VALIDATE_PATH,
     TestnetOrderValidationHttpClient,
+    cleanup_price,
     validate_order,
     validation_price,
 )
@@ -278,6 +279,55 @@ def zero_fee_capture():
     change_body(capture, 2, lambda x: x["standardCommission"].update(maker="0", taker="0"))
     capture["source"]["key_sha256"] = hashlib.sha256(b"synthetic-key").hexdigest()
     return capture
+
+
+def test_cleanup_does_not_require_another_buy_budget_or_buy_price_band():
+    capture = zero_fee_capture()
+    for index in (0, -1):
+        change_body(capture, index, lambda x: x["balances"][0].update(free="3"))
+    change_body(capture, 4, lambda x: x["symbols"][0]["filters"].append({
+        "filterType": "PERCENT_PRICE_BY_SIDE", "avgPriceMins": 5,
+        "bidMultiplierDown": "0.2", "bidMultiplierUp": "0.9",
+        "askMultiplierDown": "0.9", "askMultiplierUp": "1.1",
+    }))
+    with pytest.raises(VenueInputError):
+        validation_price(capture, NOW + 20_000_000)
+    assert cleanup_price(capture, NOW + 20_000_000) == "70000"
+
+
+@pytest.mark.parametrize("index,change", [
+    (-1, lambda x: x["balances"][-1].update(free="1001")),
+    (-1, lambda x: x.update(canTrade=False)),
+    (-2, lambda x: x.append({"symbol": "ETHUSDT", "orderId": 1})),
+    (2, lambda x: x["standardCommission"].update(seller="0.001")),
+    (2, lambda x: x["specialCommission"].update(seller="0.001")),
+    (2, lambda x: x["taxCommission"].update(seller="0.001")),
+    (7, lambda x: x.update(symbol="ETHUSDT")),
+    (7, lambda x: x.update(bidPrice="0")),
+    (7, lambda x: x.update(bidQty="0")),
+    (7, lambda x: x.update(bidPrice="70000.001")),
+    (7, lambda x: x.update(bidPrice="400000")),
+    (4, lambda x: x["symbols"][0]["filters"].append({
+        "filterType": "PERCENT_PRICE_BY_SIDE", "avgPriceMins": 5,
+        "bidMultiplierDown": "0.2", "bidMultiplierUp": "1.1",
+        "askMultiplierDown": "0.2", "askMultiplierUp": "0.9",
+    })),
+])
+def test_cleanup_keeps_account_fee_and_sell_price_guards(index, change):
+    capture = zero_fee_capture()
+    change_body(capture, index, change)
+    with pytest.raises(VenueInputError):
+        cleanup_price(capture, NOW + 20_000_000)
+
+
+def test_cleanup_rejects_stale_inputs_even_when_final_account_is_fresh():
+    capture = zero_fee_capture()
+    # A valid 6-second collection: only later account reads remain fresh.
+    for row in capture["captures"][8:]:
+        row["started_ns"] += 6_000_000_000
+        row["received_ns"] += 6_000_000_000
+    with pytest.raises(VenueInputError):
+        cleanup_price(capture, NOW + 6_020_000_000)
 
 
 @pytest.mark.parametrize(
