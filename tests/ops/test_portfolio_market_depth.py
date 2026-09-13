@@ -44,7 +44,8 @@ class Socket:
     "failure",
     [None, "boundary", "disconnect", "shutdown", "clock", "weight", "bad_json", "ping_limit"],
 )
-def test_probe_exact_public_budget_and_failure_cleanup(tmp_path, monkeypatch, failure):
+@pytest.mark.parametrize("revision", [1, 2])
+def test_probe_exact_public_budget_and_failure_cleanup(tmp_path, monkeypatch, failure, revision):
     calls, sockets = [], []
 
     def get(path, params):
@@ -94,12 +95,14 @@ def test_probe_exact_public_budget_and_failure_cleanup(tmp_path, monkeypatch, fa
     monkeypatch.setattr(cli, "public_get", get)
     monkeypatch.setattr(cli, "connect_depth", connect)
     path = tmp_path / "wire.jsonl"
-    result = asyncio.run(cli.probe(path, seconds=2))
+    result = asyncio.run(cli.probe(path, seconds=2, revision=revision))
     raw = path.read_bytes()
-    if failure is None:
+    if failure is None or (failure == "boundary" and revision == 2):
         assert len(calls) == 5 and len(sockets) == 1 and sockets[0].closes == 1
         assert result["status"] == "public_depth_probe_completed"
-        replay = replay_depth(raw, expected_sha256=hashlib.sha256(raw).hexdigest())
+        replay = replay_depth(
+            raw, expected_sha256=hashlib.sha256(raw).hexdigest(), revision=revision
+        )
         assert (
             replay["summary"] == result["summary"] and replay["summary"]["native_quote_count"] == 1
         )
@@ -111,7 +114,7 @@ def test_probe_exact_public_budget_and_failure_cleanup(tmp_path, monkeypatch, fa
         assert all(s.closes <= 1 for s in sockets)
         assert b'"kind":"completed"' not in raw
         with pytest.raises(DepthError):
-            replay_depth(raw, expected_sha256=hashlib.sha256(raw).hexdigest())
+            replay_depth(raw, expected_sha256=hashlib.sha256(raw).hexdigest(), revision=revision)
 
 
 def test_public_http_whitelist_method_host_no_credentials(monkeypatch):

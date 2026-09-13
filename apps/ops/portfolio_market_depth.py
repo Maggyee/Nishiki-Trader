@@ -70,10 +70,10 @@ async def connect_depth(*, handler, ping_handler, post_reconnection):
     )
 
 
-async def probe(archive, *, seconds=20):
+async def probe(archive, *, seconds=20, revision=1):
     if type(seconds) is not int or not 1 <= seconds <= 120:
         raise DepthError("bounded_probe_duration_required")
-    journal = DepthJournal(archive, epoch=uuid4().hex, clock=clock)
+    journal = DepthJournal(archive, epoch=uuid4().hex, clock=clock, revision=revision)
     state, client, pending_pongs = journal.state, None, set()
     reason, accepting, disconnect_attempted = None, True, False
     pings = deque()
@@ -235,6 +235,13 @@ def main(argv=None):
     parser.add_argument("--archive-sha256")
     parser.add_argument("--report", type=Path, required=True)
     parser.add_argument("--seconds", type=int, default=20)
+    parser.add_argument(
+        "--revision",
+        type=int,
+        choices=(1, 2),
+        default=1,
+        help="Explicit contract selection; v1 remains the default for old archives",
+    )
     args = parser.parse_args(argv)
     try:
         if (
@@ -248,18 +255,20 @@ def main(argv=None):
         if args.probe:
             if args.archive_sha256 is not None:
                 raise DepthError("probe_cannot_select_existing_archive")
-            report = asyncio.run(probe(args.archive, seconds=args.seconds))
+            report = asyncio.run(probe(args.archive, seconds=args.seconds, revision=args.revision))
             raw = private_read(args.archive, limit=MAX_ARCHIVE)
             digest = hashlib.sha256(raw).hexdigest()
             report["archive_sha256"] = digest
             if report["status"] == "public_depth_probe_completed":
-                replayed = replay_depth(raw, expected_sha256=digest)
+                replayed = replay_depth(raw, expected_sha256=digest, revision=args.revision)
                 if replayed["summary"] != report["summary"]:
                     raise DepthError("immediate_depth_replay_differs")
                 report["detached_replay_equal"] = True
         else:
             report = replay_depth(
-                private_read(args.archive, limit=MAX_ARCHIVE), expected_sha256=args.archive_sha256
+                private_read(args.archive, limit=MAX_ARCHIVE),
+                expected_sha256=args.archive_sha256,
+                revision=args.revision,
             )
         output = canonical(report) + b"\n"
         write_private_new(args.report, output)

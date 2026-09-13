@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-13
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Preserve the consumed ADR-017 scope and historical 502-asset evidence. Detached BTCUSDT depth reconstruction and native QuoteTick replay now pass offline acceptance. The single bounded public attempt stopped at the frozen `U=L+1` bootstrap boundary after four GETs, with zero quotes. Next review that first-link rule offline before any prospective contract revision or further attempt. Full-account/UTC/flow/reset qualification and actual fills/cleanup remain unverified.
+- **Current objective**: Preserve the consumed ADR-017 scope and historical 502-asset evidence. Detached BTCUSDT depth reconstruction and native QuoteTick replay now pass offline acceptance. The single bounded public attempt stopped at the frozen `U=L+1` bootstrap boundary after four GETs, with zero quotes. The explicit v2 interpretation and native reference-book acceptance are now implemented; next freeze the contract/implementation and perform its one prospective public attempt. Full-account/UTC/flow/reset qualification and actual fills/cleanup remain unverified.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -84,8 +84,11 @@ QuoteTick archive replay now pass 63 focused tests, including actual Rust loopba
 I/O and zero reconnects. The one public probe made four GETs and received two frames,
 then refused first-link `U=L+1` as the frozen contract requires. Zero quotes and no
 success seal resulted; independent replay refused the failed archive. The clock
-samples passed. Next review bootstrap wording offline against the retained sequence;
-no retry or qualification/trading permission follows.
+samples passed. Offline review now resolves the contradictory bootstrap prose by
+applying the pinned document's update algorithm to the first remaining event:
+explicit v2 requires `U<=L+1<=u`. V1 and its failed evidence remain unchanged.
+The v2 contract keeps all prior limits and requires committed/pushed acceptance
+before its one new public attempt; no qualification/trading permission follows.
 ADR-017 does not qualify this baseline or relax ADR-015 portfolio risk.
 Strict gates, SourcePolicy, execution runners and production accounts are unchanged.
 
@@ -185,16 +188,19 @@ the September 9 five-sleeve proposal is offline engineering only.
 - The 2026-09-07 reliability repairs and their full verification are archived below.
 
 Detailed depth implementation, retained hashes and next review:
-[public depth acceptance](progress/portfolio-testnet-public-depth-2026-09-13.md).
+[public depth acceptance](progress/portfolio-testnet-public-depth-2026-09-13.md),
+[prospective v2 bootstrap decision](progress/portfolio-testnet-public-depth-v2-contract-2026-09-13.md).
 
 ## Next Steps
 
 1. Preserve the completed fixed ADR-017 scope and pinned private evidence. Local
    status, unknown-order handling and expired-window historical replay are implemented.
    Depth reconstruction/native replay acceptance and one public attempt are complete.
-   Review the retained `U=L+1` bootstrap refusal against pinned provider wording
-   offline. Any justified rule change needs a new prospective contract and tests
-   before another bounded attempt; retain the original failed evidence unchanged.
+   Explicit v2 now applies the pinned next-unseen-ID algorithm to bootstrap and
+   passes reference-book/revision compatibility checks. Commit/push its contract
+   and acceptance, then run the one new 20-second public attempt in a new epoch.
+   Preserve the failed v1 archive; do not resume/relabel it. Record the v2 outcome,
+   and require two independent matching replays if the new archive completes.
    Full-account/UTC/flow/reset qualification remains separate and blocked.
    Do not reset the completed session to obtain fills; actual active recovery,
    fills/fees/cleanup remain unverified. Strict continuity stays 0/14.
@@ -229,14 +235,19 @@ Detailed depth implementation, retained hashes and next review:
 
 ## Latest Verification
 
+- V2 bootstrap: **107 focused tests pass** (44 additional cases), including
+  15 snapshot alignments versus an unbatched reference book, v1 byte-compatible
+  fixture replay, explicit revision binding and two independent v2 replays.
+  The actual failed v1 archive remains unchanged and is rejected under both revisions.
+  Full regression and static checks pass before the prospective contract freeze.
+
 - Public depth acceptance: **63 focused tests pass**, including native loopback,
   two independent successful fixture replays, time/budget/persistence refusals and
   zero retries. Actual one-shot public probe stopped at `bootstrap_boundary_unqualified`:
   four GETs, two frames, zero native quotes, all qualification flags false. Independent
   replay correctly refused the failed archive; fixed session checkpoint hash unchanged.
-- Full offline regression: **2,760 passed, 12 deselected** in 215.58 seconds.
-  Final receipt-count/quote-age reporting refinements passed the 63 focused tests
-  again (5.25 seconds). The 12 Postgres integration tests lack a dedicated DSN.
+- Full offline regression: **2,804 passed, 12 deselected** in 218.11 seconds.
+  The 12 Postgres integration tests lack a dedicated DSN.
   Ruff for apps/tests and the research registry check pass.
 - Combined baseline review: **20 new tests** cover pinned-input replay, native
   fills/fees versus endpoint deltas, missing zero assets, locks, source/time/hash

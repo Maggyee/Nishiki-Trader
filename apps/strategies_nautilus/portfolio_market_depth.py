@@ -33,6 +33,12 @@ def integer(value, *, positive=False):
     return value
 
 
+def depth_revision(value):
+    if integer(value, positive=True) not in (1, 2):
+        raise DepthError("unsupported_depth_revision")
+    return value
+
+
 def amount(value, *, positive=False):
     if not isinstance(value, str) or len(value) > 80:
         raise DepthError("invalid_decimal")
@@ -46,7 +52,8 @@ def amount(value, *, positive=False):
 
 
 class DepthBook:
-    def __init__(self, metadata):
+    def __init__(self, metadata, *, revision=1):
+        self.revision = depth_revision(revision)
         rows = metadata["symbols"]
         if not isinstance(rows, list) or len(rows) != 1:
             raise DepthError("single_symbol_metadata_required")
@@ -170,7 +177,7 @@ class DepthBook:
             self.last_event_ns is not None and stamp < self.last_event_ns
         ):
             self.fail("stale_or_regressing_depth_event")
-        if not self.linked:
+        if not self.linked and self.revision == 1:
             if first == self.last_id + 1:
                 self.fail("bootstrap_boundary_unqualified")
             if not first <= self.last_id < last:

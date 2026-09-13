@@ -15,12 +15,18 @@ from apps.strategies_nautilus.portfolio_market_depth import (
     SOURCE,
     DepthBook,
     DepthError,
+    depth_revision,
     integer,
 )
 from apps.strategies_nautilus.portfolio_stream import canonical
 from apps.strategies_nautilus.portfolio_venue import _unique_object
 
 CONTRACT_SHA256 = "376eebff8fd2309027df2334f39d3ec73fd017f6a8afff1b3f0e3ea3023d879e"
+CONTRACT_SHA256_V2 = "885a636f4fd2daf8dbd1282e47639bcc12e10db60d685f8d452e0eb664789a04"
+CONTRACTS = {
+    1: (PROFILE, CONTRACT_SHA256),
+    2: ("testnet_public_depth_evidence_v2", CONTRACT_SHA256_V2),
+}
 REQUESTS = [
     ("/api/v3/time", {}, 1),
     ("/api/v3/exchangeInfo", {"symbol": "BTCUSDT"}, 20),
@@ -52,7 +58,9 @@ def flags():
 
 
 class DepthEvidence:
-    def __init__(self):
+    def __init__(self, *, revision=1):
+        self.revision = depth_revision(revision)
+        self.profile, self.contract_sha256 = CONTRACTS[self.revision]
         self.started = self.last = None
         self.book = None
         self.connected = self.closed = self.completed = False
@@ -80,7 +88,7 @@ class DepthEvidence:
         )
         kind = row["kind"]
         if self.started is None:
-            if kind != "process_started" or row["contract_sha256"] != CONTRACT_SHA256:
+            if kind != "process_started" or row["contract_sha256"] != self.contract_sha256:
                 raise DepthError("depth_contract_start_required")
             self.started = self.last = (now, mono)
             return
@@ -132,7 +140,7 @@ class DepthEvidence:
                 ):
                     raise DepthError("public_clock_sample_unqualified")
             elif path.endswith("/exchangeInfo"):
-                self.book = DepthBook(body)
+                self.book = DepthBook(body, revision=self.revision)
                 limits = [
                     r
                     for r in body["rateLimits"]
@@ -194,9 +202,9 @@ class DepthEvidence:
 
     def summary(self):
         return {
-            "profile": PROFILE,
+            "profile": self.profile,
             "source": SOURCE,
-            "contract_sha256": CONTRACT_SHA256,
+            "contract_sha256": self.contract_sha256,
             "public_get_responses": self.responses_seen,
             "validated_get_responses": self.requests,
             "depth_frames": self.frames_seen,
@@ -217,9 +225,9 @@ class DepthEvidence:
 
 
 class DepthJournal:
-    def __init__(self, path, *, epoch, clock):
+    def __init__(self, path, *, epoch, clock, revision=1):
         self.clock, self.epoch = clock, epoch
-        self.state = DepthEvidence()
+        self.state = DepthEvidence(revision=revision)
         self.sequence, self.previous, self.size = 0, "0" * 64, 0
         self.failed = False
         self.file = os.fdopen(
@@ -231,7 +239,7 @@ class DepthJournal:
                 os.fsync(directory)
             finally:
                 os.close(directory)
-            self.append("process_started", contract_sha256=CONTRACT_SHA256)
+            self.append("process_started", contract_sha256=self.state.contract_sha256)
         except BaseException:
             self.close()
             raise
@@ -241,7 +249,7 @@ class DepthJournal:
             raise DepthError("depth_archive_requires_review")
         now, mono = self.clock()
         row = {
-            "profile": PROFILE,
+            "profile": self.state.profile,
             "source": SOURCE,
             "epoch": self.epoch,
             "seq": self.sequence,
@@ -274,7 +282,7 @@ class DepthJournal:
         self.file.close()
 
 
-def replay_depth(raw, *, expected_sha256):
+def replay_depth(raw, *, expected_sha256, revision=1):
     try:
         if (
             not isinstance(raw, bytes)
@@ -282,7 +290,7 @@ def replay_depth(raw, *, expected_sha256):
             or hashlib.sha256(raw).hexdigest() != expected_sha256
         ):
             raise DepthError("selected_depth_archive_changed")
-        state, previous, epoch = DepthEvidence(), "0" * 64, None
+        state, previous, epoch = DepthEvidence(revision=revision), "0" * 64, None
         for seq, line in enumerate(raw.splitlines(keepends=True)):
             if not line.endswith(b"\n"):
                 raise DepthError("truncated_depth_archive")
@@ -292,7 +300,7 @@ def replay_depth(raw, *, expected_sha256):
                 type(row["seq"]) is not int
                 or row["seq"] != seq
                 or row["previous"] != previous
-                or row["profile"] != PROFILE
+                or row["profile"] != state.profile
                 or row["source"] != SOURCE
                 or hashlib.sha256(canonical(row)).hexdigest() != digest
             ):

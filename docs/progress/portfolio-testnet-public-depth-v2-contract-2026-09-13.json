@@ -1,0 +1,120 @@
+{
+  "schema_version": "portfolio.testnet_public_depth_contract.v2",
+  "status": "prospective_bounded_public_diagnostic_contract",
+  "revision": 2,
+  "base_contract_sha256": "376eebff8fd2309027df2334f39d3ec73fd017f6a8afff1b3f0e3ea3023d879e",
+  "source": {
+    "path": "testnet/web-socket-streams.md",
+    "url": "https://raw.githubusercontent.com/binance/binance-spot-api-docs/b8a0f61e088c65d18a157f2e11a8e273826b6c08/testnet/web-socket-streams.md",
+    "bytes": 22998,
+    "sha256": "13428b2e5f4d9dc7654331d4c65e6befea776d2b7408fe5980343708f72d96e6",
+    "retrieved_at": "2026-09-13T04:43:49.740832+00:00"
+  },
+  "source_revision": "b8a0f61e088c65d18a157f2e11a8e273826b6c08",
+  "decision_basis": {
+    "bootstrap_prose_line": 634,
+    "buffered_and_subsequent_same_update_procedure_line": 636,
+    "missing_event_rule_lines": [
+      642,
+      643
+    ],
+    "normal_successor_rule_line": 644,
+    "interpretation": "apply_documented_update_algorithm_to_first_remaining_event_require_next_unseen_id_L_plus_1",
+    "upstream_erratum_or_confirmation_received": false,
+    "historical_trigger_archive_sha256": "f2af2aba60ab0bbde04f37948b7f4d03b0222ec1cd07b36acadd18685eabbfed",
+    "historical_trigger_remains_failed": true
+  },
+  "diagnostic": {
+    "profile": "testnet_public_depth_evidence_v2",
+    "symbol": "BTCUSDT",
+    "stream": "wss://stream.testnet.binance.vision/ws/btcusdt@depth@100ms",
+    "timestamp_unit": "millisecond",
+    "native_timestamp_multiplier": 1000000,
+    "rest_base": "https://testnet.binance.vision",
+    "requests": [
+      {
+        "method": "GET",
+        "path": "/api/v3/time",
+        "params": {},
+        "max_calls": 3,
+        "documented_weight_each": 1
+      },
+      {
+        "method": "GET",
+        "path": "/api/v3/exchangeInfo",
+        "params": {
+          "symbol": "BTCUSDT"
+        },
+        "max_calls": 1,
+        "documented_weight_each": 20
+      },
+      {
+        "method": "GET",
+        "path": "/api/v3/depth",
+        "params": {
+          "symbol": "BTCUSDT",
+          "limit": "100"
+        },
+        "max_calls": 1,
+        "documented_weight_each": 5
+      }
+    ],
+    "documented_total_get_weight": 28,
+    "max_get_requests": 5,
+    "max_connections": 1,
+    "max_duration_seconds": 120,
+    "bootstrap_deadline_seconds": 15,
+    "request_timeout_seconds": 10,
+    "shutdown_timeout_seconds": 5,
+    "automatic_http_retries": 0,
+    "automatic_reconnects": 0,
+    "automatic_snapshot_retries": 0,
+    "max_frame_bytes": 1048576,
+    "max_buffer_bytes": 16777216,
+    "max_buffer_events": 4096,
+    "max_archive_bytes": 67108864,
+    "max_local_event_age_ns": 5000000000,
+    "reject_future_event_time": true,
+    "max_time_sample_rtt_ns": 500000000,
+    "max_wall_monotonic_elapsed_difference_ns": 50000000,
+    "max_absolute_sample_offset_ns": 250000000,
+    "server_offset_interval_ns": "[serverTime_ms*1000000-receive_utc_ns, (serverTime_ms+1)*1000000-send_utc_ns]",
+    "offset_acceptance": "entire_interval_within_plus_or_minus_max_absolute_sample_offset_ns",
+    "bootstrap_overlap": "discard_u_le_L_then_require_U_le_L_plus_1_le_u",
+    "bootstrap_boundary_U_eq_L_plus_1": "accepted_if_u_ge_L_plus_1_and_all_other_gates_pass",
+    "subsequent_overlap": "ignore_u_le_L_else_require_U_le_L_plus_1_le_u",
+    "depth_frontier_exhaustion": "no_quote_when_best_depends_on_unseen_snapshot_levels",
+    "native_output": "detached_QuoteTick_only_original_E_ts_event_receipt_ts_init",
+    "execution_engine_created": false,
+    "credentials_loaded": false,
+    "private_queries": false,
+    "fixed_session_writes": false,
+    "production_fallback": false
+  },
+  "qualification": {
+    "current_account_verified": false,
+    "account_market_atomic_revision_verified": false,
+    "valuation_qualified": false,
+    "baseline_qualified": false,
+    "runtime_ready": false,
+    "new_orders_authorized": false,
+    "strict_continuity_days": 0
+  },
+  "acceptance_additions": [
+    "v1_default_and_failed_archive_unchanged",
+    "explicit_revision_bound_to_every_archive_row_and_completion",
+    "reject_unknown_bool_or_cross_revision_selection",
+    "first_remaining_range_contains_L_plus_1_overlap_or_exact_successor",
+    "first_buffer_snapshot_behind_guard_unchanged",
+    "reference_book_agreement_across_snapshot_event_alignments",
+    "first_or_subsequent_missing_next_id_blocks",
+    "two_fresh_process_v2_replays_identical_native_quotes",
+    "new_epoch_new_artifacts_no_old_archive_relabel_or_resume"
+  ],
+  "prospective_attempt": {
+    "max_attempts": 1,
+    "collection_seconds": 20,
+    "requires_offline_acceptance_and_pushed_contract_before_attempt": true,
+    "reuse_failed_v1_segment": false
+  }
+}

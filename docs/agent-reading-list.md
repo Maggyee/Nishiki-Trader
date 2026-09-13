@@ -183,6 +183,14 @@ can become total equity. The 0.0001 BTC / 10 test-USDT lifecycle plan is a draft
 fees, effective filters, baseline, permission and adapter recovery remain blocked.
 No trading runner, production rule, source policy or 14-day gate is changed.
 
+For the prospective public-depth v2 bootstrap interpretation, read
+`docs/progress/portfolio-testnet-public-depth-v2-contract-2026-09-13.md` and its
+hash-pinned JSON before selecting `--revision 2`. It applies the documented
+next-unseen-ID algorithm to the first remaining event. V1 remains the default and
+its failed archive remains failed; no migration or retry of that segment exists.
+The new contract fixes one prospective public attempt after offline acceptance
+and committed/pushed implementation, with all prior limits/qualification flags.
+
 For detached public BTCUSDT depth reconstruction, bounded probes and historical
 native QuoteTick replay, read `docs/progress/portfolio-testnet-public-depth-2026-09-13.md`
 and `apps/ops/portfolio_market_depth.py`. The original provider contract remains
@@ -202,9 +210,9 @@ For prospective account/quote evidence and Spot testnet provider coverage, read
 source/contract manifest. Official sources are revision-pinned. JSON bookTicker
 has no event time; diff depth has E/U/u but no common account revision. Resets
 preserve keys; user balance-event examples do not prove reset-history coverage.
-Next implement the bounded public BTCUSDT depth profile offline, preserving its
-explicit bootstrap-boundary refusal, budgets and permanently false readiness.
-The contract is not runtime configuration or a full-account collector deployment.
+The v1 bounded public implementation preserves that original bootstrap-boundary
+refusal; the separately identified v2 decision above defines the prospective
+successor-ID interpretation. Neither is a full-account collector deployment.
 
 For the operator-delegated independent 10 test-USDT engineering scope, read
 `docs/decisions/017-testnet-engineering-session.md`,
