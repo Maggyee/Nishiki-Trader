@@ -183,12 +183,23 @@ can become total equity. The 0.0001 BTC / 10 test-USDT lifecycle plan is a draft
 fees, effective filters, baseline, permission and adapter recovery remain blocked.
 No trading runner, production rule, source policy or 14-day gate is changed.
 
+For fixed-route coverage, aggregate budgets and the proposed joint account/market
+intervals, read `docs/progress/portfolio-testnet-joint-observation-design-2026-09-13.md`
+and its JSON, plus `apps/ops/portfolio_testnet_observation_plan.py`. The offline
+planner replays original initial/account/market/depth inputs, preserves all assets
+and fixes BTC/ETH/BNB's deterministic routes at at most three streams. Two full
+four-GET account collections and WS overhead must be counted (448 weight in the
+historical pilot). This is not an implemented joint collector or new run permit.
+Next implement shared-buffer/interleaving/independent replay acceptance offline;
+future actual routing requires fresh selected evidence. Never invent a common
+account/depth revision or reuse either consumed single-symbol attempt.
+
 For the actual completed v2 public depth attempt, read
 `docs/progress/portfolio-testnet-public-depth-v2-2026-09-13.md`: clean pushed
 `cf4612c` collected 20 native quotes, and two fresh replays match byte-for-byte.
 The single-attempt v2 scope is consumed. Do not repeat it or reinterpret the failed
-v1 archive. Next scope fixed-route coverage/budgets and independent observation
-intervals; no full-account/UTC/flow/reset qualification or deployment follows.
+v1 archive. Fixed-route coverage/budget and interval planning now lives in the
+joint design above; no full-account/UTC/flow/reset qualification or deployment follows.
 
 For the prospective public-depth v2 bootstrap interpretation, read
 `docs/progress/portfolio-testnet-public-depth-v2-contract-2026-09-13.md` and its

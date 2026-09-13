@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-13
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Preserve the consumed ADR-017 scope and historical 502-asset evidence. The explicitly versioned BTCUSDT depth v2 probe now passes: five public GETs, 20 native quotes and two identical independent replays. Its one-shot scope is consumed; v1 remains failed and immutable. Next design bounded fixed-route coverage, shared-IP budget and account/market observation intervals. Full-account/UTC/flow/reset qualification and actual fills/cleanup remain unverified.
+- **Current objective**: Preserve the consumed ADR-017 scope and historical 502-asset evidence. The explicitly versioned BTCUSDT depth v2 probe now passes: five public GETs, 20 native quotes and two identical independent replays. Its one-shot scope is consumed; v1 remains failed and immutable. The offline joint-observation planner now replays all original inputs, preserves 502-asset exclusions and budgets the three-pivot design at 448 weight. Next implement offline multi-symbol journals and account/market interval acceptance before any new collection. Full-account/UTC/flow/reset qualification and actual fills/cleanup remain unverified.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -88,6 +88,13 @@ Three clock samples passed; the closed archive and two fresh-process replay repo
 match exactly. This proves a bounded locally linked BTCUSDT segment only. Both
 one-shot scopes are consumed; no repeat, service, account/valuation/baseline or
 trading qualification follows. The v1 default and its original bytes stay intact.
+The new offline planner replays the initial/account/market/depth originals and
+preserves all 502 assets. BTC/ETH/BNB's historical routes select three streams;
+496 assets remain outside the pilot and two unpriced. Two complete four-GET
+account collections plus routing/time/depth/WS operations cost 448 weight (16 GETs).
+All 499 routes cost 2,928 weight even at 100 levels; deeper snapshots, side/depth
+availability and unverified throughput remain blockers. The independent interval
+and aggregate-memory design grants no new collection or baseline qualification.
 ADR-017 does not qualify this baseline or relax ADR-015 portfolio risk.
 Strict gates, SourcePolicy, execution runners and production accounts are unchanged.
 
@@ -189,18 +196,21 @@ the September 9 five-sleeve proposal is offline engineering only.
 Detailed depth implementation, retained hashes and next review:
 [public depth acceptance](progress/portfolio-testnet-public-depth-2026-09-13.md),
 [v2 bootstrap decision](progress/portfolio-testnet-public-depth-v2-contract-2026-09-13.md),
-[actual v2 capture and replay](progress/portfolio-testnet-public-depth-v2-2026-09-13.md).
+[actual v2 capture and replay](progress/portfolio-testnet-public-depth-v2-2026-09-13.md),
+[joint-observation coverage/budget design](progress/portfolio-testnet-joint-observation-design-2026-09-13.md).
 
 ## Next Steps
 
 1. Preserve the completed fixed ADR-017 scope and pinned private evidence. Local
    status, unknown-order handling and expired-window historical replay are implemented.
    V2 public depth acceptance and both actual independent replays are complete;
-   its single-attempt scope is consumed. Design bounded fixed-route coverage,
-   shared-IP budgets and independent account/market observation intervals before
-   any fan-out. A later actual experiment needs a fresh selected account/metadata
-   route set; keep unpriced and insufficient-depth assets explicit. Preserve both
-   v1 failure and v2 historical success; neither qualifies equity or a UTC baseline.
+   its single-attempt scope is consumed. The fixed three-pivot coverage/budget and
+   independent-interval design is now complete. Implement offline multi-symbol
+   dispatch/journals with shared byte/event limits, account/market interleaving,
+   one-symbol gap/age failures and independent native replay. Only after acceptance
+   should a new bounded actual contract select fresh account/metadata/book routes.
+   Keep unpriced/insufficient-depth assets explicit; neither prior depth outcome
+   qualifies equity or a UTC baseline.
    Full-account/UTC/flow/reset qualification remains separate and blocked.
    Do not reset the completed session to obtain fills; actual active recovery,
    fills/fees/cleanup remain unverified. Strict continuity stays 0/14.
@@ -235,13 +245,19 @@ Detailed depth implementation, retained hashes and next review:
 
 ## Latest Verification
 
+- Joint-observation planner: **16 focused tests pass**, including original native
+  evidence replay, per-asset exclusions, direct/two-hop routes, full REST/WS costs
+  and a private no-network CLI. Actual offline plan: 502 assets / 499 route symbols;
+  pilot 3 symbols, 448 weight, 496 outside-scope and 2 unpriced assets. No venue call.
+  Full regression and static checks pass.
+
 - V2 depth: **107 focused tests pass** (44 additional cases), including 15 snapshot
   alignments versus an unbatched reference book and v1 byte-compatible archives.
   Actual clean `cf4612c` probe: five public GETs, 21 frames, **20 native quotes**;
   three clock samples pass and two independent replay reports are byte-identical.
   All six qualification flags remain false. V1 failure and fixed session hashes
   are unchanged; the new actual evidence is recorded in the linked progress report.
-- Full offline regression: **2,804 passed, 12 deselected** in 218.11 seconds.
+- Full offline regression: **2,820 passed, 12 deselected** in 222.07 seconds.
   The 12 Postgres integration tests lack a dedicated DSN.
   Ruff for apps/tests and the research registry check pass.
 - Combined baseline review: **20 new tests** cover pinned-input replay, native

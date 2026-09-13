@@ -1,0 +1,294 @@
+{
+  "schema_version": "portfolio.testnet_joint_observation_design.v1",
+  "status": "offline_design_not_network_run_authorization",
+  "scope": "fixed_three_pivot_route_coverage_and_independent_account_market_intervals",
+  "provider_contract_sha256": "376eebff8fd2309027df2334f39d3ec73fd017f6a8afff1b3f0e3ea3023d879e",
+  "public_depth_v2_contract_sha256": "885a636f4fd2daf8dbd1282e47639bcc12e10db60d685f8d452e0eb664789a04",
+  "official_sources": [
+    {
+      "path": "testnet/general-info.md",
+      "url": "https://raw.githubusercontent.com/binance/binance-spot-api-docs/b8a0f61e088c65d18a157f2e11a8e273826b6c08/testnet/general-info.md",
+      "bytes": 11464,
+      "sha256": "b6d0ee76abc180ed904a493d4b2272d3af2fbcffc051cb61753f744bc461f50f",
+      "retrieved_at": "2026-09-13T04:43:49.673966+00:00"
+    },
+    {
+      "path": "testnet/rest-api.md",
+      "url": "https://raw.githubusercontent.com/binance/binance-spot-api-docs/b8a0f61e088c65d18a157f2e11a8e273826b6c08/testnet/rest-api.md",
+      "bytes": 177083,
+      "sha256": "a73a3d2103387e4442b91b28b12f7e59bbf2479a1ee117fdd261d2521c5625a2",
+      "retrieved_at": "2026-09-13T04:43:49.865015+00:00"
+    },
+    {
+      "path": "testnet/web-socket-streams.md",
+      "url": "https://raw.githubusercontent.com/binance/binance-spot-api-docs/b8a0f61e088c65d18a157f2e11a8e273826b6c08/testnet/web-socket-streams.md",
+      "bytes": 22998,
+      "sha256": "13428b2e5f4d9dc7654331d4c65e6befea776d2b7408fe5980343708f72d96e6",
+      "retrieved_at": "2026-09-13T04:43:49.740832+00:00"
+    },
+    {
+      "path": "testnet/user-data-stream.md",
+      "url": "https://raw.githubusercontent.com/binance/binance-spot-api-docs/b8a0f61e088c65d18a157f2e11a8e273826b6c08/testnet/user-data-stream.md",
+      "bytes": 13211,
+      "sha256": "9996743b209cd192d9bb1556a0a0d140928627ed51408f1e9053b2c43a7cbce1",
+      "retrieved_at": "2026-09-13T04:43:49.757392+00:00"
+    },
+    {
+      "path": "testnet/web-socket-api.md",
+      "url": "https://raw.githubusercontent.com/binance/binance-spot-api-docs/b8a0f61e088c65d18a157f2e11a8e273826b6c08/testnet/web-socket-api.md",
+      "bytes": 269725,
+      "sha256": "758bbf8c134bc6fe7d0e93df1904784024fc8bd8c37961373e27fb6b51ff29a3",
+      "retrieved_at": "2026-09-13T04:43:49.857004+00:00"
+    }
+  ],
+  "route_selection": {
+    "target_assets": [
+      "BTC",
+      "ETH",
+      "BNB"
+    ],
+    "policy": "ADR016_direct_then_two_hops_v1",
+    "max_union_symbols": 3,
+    "substitute_missing_targets": false,
+    "truncate_routes_to_fit": false,
+    "fresh_account_metadata_and_books_required": true,
+    "freeze_symbols_before_market_subscribe": true,
+    "historical_example_symbols": [
+      "BNBUSDT",
+      "BTCUSDT",
+      "ETHUSDT"
+    ],
+    "historical_example_not_fresh_selection": true
+  },
+  "historical_example_budget": {
+    "account_ws_api_connections": 1,
+    "current_shared_ip_budget_verified": false,
+    "http_retries": 0,
+    "market_connections": 1,
+    "market_streams": 3,
+    "private_get_count": 8,
+    "reconnects": 0,
+    "rest_get_count": 16,
+    "rest_requests": [
+      {
+        "method": "GET",
+        "params": {},
+        "path": "/api/v3/time",
+        "phase": "clock_initial",
+        "weight": 1
+      },
+      {
+        "method": "GET",
+        "params": {
+          "omitZeroBalances": "false"
+        },
+        "path": "/api/v3/account",
+        "phase": "account_before",
+        "weight": 20
+      },
+      {
+        "method": "GET",
+        "params": {},
+        "path": "/api/v3/openOrders",
+        "phase": "account_before",
+        "weight": 80
+      },
+      {
+        "method": "GET",
+        "params": {},
+        "path": "/api/v3/openOrders",
+        "phase": "account_before",
+        "weight": 80
+      },
+      {
+        "method": "GET",
+        "params": {
+          "omitZeroBalances": "false"
+        },
+        "path": "/api/v3/account",
+        "phase": "account_before",
+        "weight": 20
+      },
+      {
+        "method": "GET",
+        "params": {},
+        "path": "/api/v3/exchangeInfo",
+        "phase": "route_discovery",
+        "weight": 20
+      },
+      {
+        "method": "GET",
+        "params": {},
+        "path": "/api/v3/ticker/bookTicker",
+        "phase": "route_discovery",
+        "weight": 4
+      },
+      {
+        "method": "GET",
+        "params": {
+          "limit": "100",
+          "symbol": "BNBUSDT"
+        },
+        "path": "/api/v3/depth",
+        "phase": "market_bootstrap",
+        "weight": 5
+      },
+      {
+        "method": "GET",
+        "params": {
+          "limit": "100",
+          "symbol": "BTCUSDT"
+        },
+        "path": "/api/v3/depth",
+        "phase": "market_bootstrap",
+        "weight": 5
+      },
+      {
+        "method": "GET",
+        "params": {
+          "limit": "100",
+          "symbol": "ETHUSDT"
+        },
+        "path": "/api/v3/depth",
+        "phase": "market_bootstrap",
+        "weight": 5
+      },
+      {
+        "method": "GET",
+        "params": {},
+        "path": "/api/v3/time",
+        "phase": "clock_linked",
+        "weight": 1
+      },
+      {
+        "method": "GET",
+        "params": {
+          "omitZeroBalances": "false"
+        },
+        "path": "/api/v3/account",
+        "phase": "account_after",
+        "weight": 20
+      },
+      {
+        "method": "GET",
+        "params": {},
+        "path": "/api/v3/openOrders",
+        "phase": "account_after",
+        "weight": 80
+      },
+      {
+        "method": "GET",
+        "params": {},
+        "path": "/api/v3/openOrders",
+        "phase": "account_after",
+        "weight": 80
+      },
+      {
+        "method": "GET",
+        "params": {
+          "omitZeroBalances": "false"
+        },
+        "path": "/api/v3/account",
+        "phase": "account_after",
+        "weight": 20
+      },
+      {
+        "method": "GET",
+        "params": {},
+        "path": "/api/v3/time",
+        "phase": "clock_final",
+        "weight": 1
+      }
+    ],
+    "rest_weight": 442,
+    "snapshot_retries": 0,
+    "total_documented_weight": 448,
+    "ws_api_operations": [
+      {
+        "operation": "ws_api_connection",
+        "weight": 2
+      },
+      {
+        "operation": "userDataStream.subscribe.signature",
+        "weight": 2
+      },
+      {
+        "operation": "userDataStream.unsubscribe",
+        "weight": 2
+      }
+    ],
+    "ws_api_weight": 6
+  },
+  "resource_envelope": {
+    "aggregate_pending_bytes": 16777216,
+    "aggregate_pending_events": 4096,
+    "bounds_measure": "serialized_bytes_not_process_RSS",
+    "combined_archive_bytes": 67108864,
+    "market_bootstrap_seconds": 15,
+    "max_duration_seconds": 120,
+    "max_event_age_ns": 5000000000,
+    "max_frame_bytes": 1048576,
+    "max_streams": 3,
+    "multi_symbol_throughput_verified": false,
+    "observe_after_link_seconds": 20,
+    "overflow_action": "abort_without_dropping_or_rebasing",
+    "per_request_seconds": 10,
+    "shutdown_seconds": 5
+  },
+  "bootstrap_and_clock_rules": "inherit_public_depth_v2_without_relaxation",
+  "account_capture": [
+    "account(omitZeroBalances=false)",
+    "openOrders(all)",
+    "openOrders(all)",
+    "account(omitZeroBalances=false)"
+  ],
+  "account_collection_count": 2,
+  "phases": [
+    "server_time",
+    "signed_WS_connect_and_subscribe",
+    "account_before",
+    "exchangeInfo_all_then_bookTicker_all",
+    "freeze_route_manifest",
+    "one_combined_market_connection",
+    "durable_buffers_then_one_100_level_snapshot_per_symbol",
+    "server_time",
+    "observe_up_to_20_seconds",
+    "account_after",
+    "server_time",
+    "unsubscribe_acknowledgement_and_both_closes",
+    "seal_or_abort"
+  ],
+  "raw_persistence": "all_data_responses_and_frames_before_parse_classification_or_native_conversion",
+  "identity": "initial_observation_UID_key_endpoint_binding_not_inferred_from_new_journal",
+  "intervals": {
+    "account_epoch_and_selected_collections": "separate_before_after_start_end_and_journal_refs",
+    "market_vector": "symbol_epoch_snapshot_L_current_U_u_E_receive_time_raw_hash",
+    "common_revision": null,
+    "timestamp_equality_or_endpoint_equality_proves_atomicity": false,
+    "account_u_is_market_sequence": false,
+    "balanceUpdate_added_on_top_of_snapshot": false
+  },
+  "incident_handling": "retain_incident_and_abort_no_reconnect_retry_rebase_or_second_settlement",
+  "required_offline_acceptance": [
+    "combined_frame_symbol_source_epoch_dispatch",
+    "per_symbol_depth_v2_linkage_native_quotes_and_one_symbol_gap_failure",
+    "shared_buffer_archive_and_control_budget_pressure_without_frame_drop",
+    "interleaved_account_and_market_callbacks_and_failed_fsync",
+    "unpriced_and_one_sided_paths_and_missing_or_changed_assets",
+    "crossed_UTC_boundary_and_no_midnight_or_flow_reconstruction",
+    "unknown_balance_funding_lock_termination_events_persist_before_refusal",
+    "two_fresh_process_replays_same_native_quotes_and_full_account_snapshots",
+    "exact_aggregate_GET_WS_counts_and_no_trade_or_fixed_session_writer"
+  ],
+  "network_entrypoint_implemented": false,
+  "new_probe_authorized": false,
+  "qualification": {
+    "current_account_verified": false,
+    "account_market_atomic_revision_verified": false,
+    "valuation_qualified": false,
+    "baseline_qualified": false,
+    "runtime_ready": false,
+    "new_orders_authorized": false,
+    "strict_continuity_days": 0
+  }
+}

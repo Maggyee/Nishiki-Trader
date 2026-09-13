@@ -7,6 +7,11 @@ dashboard snapshot support + Phase 6 passive readiness gate support。
 
 ## 当前入口
 
+`portfolio_testnet_observation_plan` 重放原始账户、市场和 v2 深度归档，生成
+三枢纽路由覆盖、完整请求预算及独立观察区间的私有规划报告。零网络请求，
+不授权联合采集；原始输入和下一步入口见
+[联合观察设计](../../docs/progress/portfolio-testnet-joint-observation-design-2026-09-13.md)。
+
 `portfolio_market_depth` 提供独立 BTCUSDT 公开深度诊断和显式哈希历史重放。
 一次探针最多五个 GET、一个原生 WebSocket，零重试/重连；不读取 Key 或账户。
 默认使用 v1；新版首段衔接和归档均须显式选择 `--revision 2`，依据见
