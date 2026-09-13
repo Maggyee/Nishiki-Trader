@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-13
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Preserve the consumed ADR-017 scope. Cleanup/recovery and local operator status pass synthetic acceptance; retained session archives now reproduce historical evidence and native state after expiry. Actual archive replay preserves the original terminal state and all 502 assets. Combined ADR-016/017 review now finds no unexplained endpoint net delta across 502 assets, while UTC/valuation/flow qualification remains blocked. Next specify prospective account/quote evidence and provider coverage. Actual fills/cleanup remain unverified.
+- **Current objective**: Preserve the consumed ADR-017 scope. Cleanup/recovery and local operator status pass synthetic acceptance; retained session archives now reproduce historical evidence and native state after expiry. Actual archive replay preserves the original terminal state and all 502 assets. Combined ADR-016/017 review now finds no unexplained endpoint net delta across 502 assets, while UTC/valuation/flow qualification remains blocked. Provider coverage and a bounded public BTCUSDT depth contract are now specified from pinned official docs. Next implement offline depth reconstruction and native quote acceptance. Actual fills/cleanup remain unverified.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -74,6 +74,14 @@ missing assets, unexplained endpoint net deltas or reference-to-session lock cha
 across 502 assets after native fills/fees. The reference is September 11 05:42 UTC,
 not midnight; equal endpoints do not prove complete external-flow/reset history.
 Qualified current/day-open/peak equity and losses remain null.
+Official provider review confirms periodic unannounced resets preserve API keys,
+JSON bookTicker lacks event time, and diff depth provides E/U/u without a common
+account revision. No documented reset-history or missed-user-event replay interface
+closes those gaps. The 499 historical valuation routes would require 124,750 weight
+for 5,000-level snapshots; full-account bootstrap cannot fit the existing capture
+window at the recorded limit. A separate public BTCUSDT depth diagnostic contract
+now fixes source, bounded requests, replay semantics and offline acceptance; it is
+not implemented or deployed and creates no qualification/trading permission.
 ADR-017 does not qualify this baseline or relax ADR-015 portfolio risk.
 Strict gates, SourcePolicy, execution runners and production accounts are unchanged.
 
@@ -176,13 +184,13 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 1. Preserve the completed fixed ADR-017 scope and pinned private evidence. Local
    status, unknown-order handling and expired-window historical replay are implemented.
-   The combined offline baseline gap review is complete. Next specify prospective
-   native account/quote evidence and review what the selected testnet providers can
-   prove about synchronization, UTC baseline, cash flows and resets before collection.
-   Do not infer equity from partial valuation or reset
-   the completed session to obtain fills. Recovered new SELL remains disabled;
-   actual active recovery/fills/fees/cleanup remain unverified. Strict continuity
-   stays 0/14.
+   Baseline gap and provider coverage reviews are complete. Next implement pure
+   offline BTCUSDT depth snapshot/delta reconstruction and native QuoteTick replay
+   under the new bounded public evidence contract. Test its explicit bootstrap
+   boundary, gaps, clocks, finite depth and persistence before a bounded public
+   probe. Full-account/UTC/flow/reset qualification remains separate and blocked.
+   Do not reset the completed session to obtain fills; actual active recovery,
+   fills/fees/cleanup remain unverified. Strict continuity stays 0/14.
 2. Review the explicit offline residual-exit policy before promotion and resolve
    re-entry with retained dust. Whole-step reductions now pass native acceptance;
    fixed BUY size, SignalEvent identities and SourcePolicy remain unchanged.
@@ -214,94 +222,33 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Latest Verification
 
-- Combined baseline gap review: **20 new tests** cover original-input replay,
-  native fills/fees versus endpoint deltas, missing/zero assets, locks, hash/source/
-  time refusals, UTC rollover and midnight nonqualification. Private CLI output
-  forbids credential/network access and preserves inputs. Actual historical review
-  compares 502 assets with zero unexplained net differences, while two unpriced
-  assets and missing UTC/flow/reset evidence keep the baseline blocked.
-- Historical session replay, operator status and unknown-order handling remain
-  covered by regression; their actual original checkpoint/evidence remain unchanged.
-
-- September 12 interrupted SELL recovery: **17 additional tests**, **29 focused
-  tests** pass. Native/CLI acceptance covers two original
-  orders, missed/late/duplicate fills, exact owned residuals, fee halts, invalid
-  evidence, disk failures and uncertain-cancel refusal. Abrupt-exit producer plus
-  two fresh processes preserve the same terminal state and all three dispatches.
-  Application code and the actual fixed session are unchanged.
-
-- September 12 cleanup gate: **23 additional tests**, **71 focused tests** pass.
-  Whole CLI now exercises actual capability validation,
-  native settlement and separate terminal recovery for low quote cash, partial
-  fills/SELLs, below-minimum residuals and BTC/USDT fee halts. No actual exchange
-  requests or fixed private checkpoint changes in this increment.
-
-- Cancellation-only recovery: **21 new tests** pass, covering LiveClock/native
-  restoration, late/duplicate fills, missed acknowledgement, durability failure,
-  timeout/no-retry, whole CLI and three-process abrupt-exit acceptance. Actual
-  clean-code terminal recovery used six signed GETs, reconciled 502 assets and
-  preserved the original checkpoint hash, with no POST/DELETE or new dispatch.
-
-- Bounded LiveClock matching runtime: **31 new tests** pass, including native
-  queue/Ed25519 signature, failure, timed cancellation and whole-CLI matching/recovery.
-  Actual clean-code matching POST and DELETE returned 200; four business events
-  and full 502-asset reconciliation passed. A fresh process independently recovered
-  the one CANCELED order, zero trades and zero account-wide open orders.
-
-- September 11 actual session transport: **34 new tests**; 12 signed GETs plus one
-  public metadata GET in two actual process invocations, each with a new signed
-  subscription. Both native comparisons preserve all 502 assets; zero orders/trades/
-  business events. Fixed matching scope remains unactivated. See the report below.
-
-- September 11 queued session bridge: **44 new tests**, **91 combined bridge/ledger
-  tests**. Native risk denial, durable pre-send events/attempts, partial/late/duplicate
-  fills, uncertain timeouts, disk failures and two three-process adapter crash/replays
-  pass. All 502 synthetic assets retained; no credentials or exchange I/O.
-
-- September 11 native session ledger/recovery: **47 new tests**; two independent
-  three-process crash/replay scenarios each preserve 502 synthetic assets, exact
-  native fills and consumed BUY/cancel intents. Active partial locks, owned cleanup,
-  dust, unexpected fee halts and failed fsync pass. No exchange I/O in this increment.
-
-- September 11 ADR-017 engineering diagnostics: **45 new tests**; existing-key
-  TRADE `/api/v3/order/test` accepted with zero fees, 502 balances unchanged and
-  no account-wide open orders. Final replay reproduces price/effective filters;
-  matching/native recovery remains unwired. Detailed evidence is archived below.
-
-- September 11 ADR-016 admission/valuation: 28 focused tests passed; real selected
-  captures retain 502 assets, price 500, and refuse total equity/day-open risk
-  qualification. A fixed bounded lifecycle draft passes captured basic filters
-  only; no testnet order or production request.
-
-- September 11 full-account mapping: 78 focused tests passed. New four-collection
-  archive replays in a fresh process; all 502 assets map exactly using selected
-  testnet metadata in an isolated native process. Cross-session endpoint balances
-  and orders agree; zero business events, no trading readiness.
-
-- September 11 risk unification: 177 focused tests passed; v3 generation
-  revalidated all six original evidence chains. Four selected testnet archive
-  collections replayed with 502 assets each; independent identity/baseline remain
-  unqualified. No new network observation or trading runner was started.
-
-- September 11: two actual signed testnet WS subscriptions, four 502-asset
-  collections, six ping confirmations, explicit reconnect/old-fence rejection and
-  detached replay pass. Zero business events were observed. **49 new tests** cover
-  full-account validation, interrupted collection/retry, raw events, archive
-  integrity, strict-gate separation and bounded ops cleanup. Independent UID,
-  baseline, API restrictions and actual adapter process recovery remain unqualified.
-- **130 collector/stream/archive tests** passed, including 12 new concurrency,
-  cancellation, timeout, source/clock and abort-persistence regressions. Explicit
-  retries produce independently replayable evidence; failed collections stay rejected.
-- Full offline regression after combined baseline gap review: **2,697 passed**,
-  12 Postgres integration tests deselected (no dedicated integration DSN; 211.00 seconds).
-  Ruff, registry and whitespace checks pass.
-- Prior abrupt-exit/fresh-process recovery and exact account comparison remain
-  green. Recovery fixtures remain synthetic; the separate testnet observations
-  do not qualify adapter process recovery, an atomic stream boundary or live readiness.
-- Earlier portfolio, collector and reliability verification is archived in the
-  linked progress records; it is not a current runtime-health observation.
+- Provider coverage contract: five official documents retrieved at pinned revision
+  `b8a0f61e088c65d18a157f2e11a8e273826b6c08`; original private route/limit artifact
+  hashes and the 499-route weight calculations verified. JSON, local links and
+  whitespace checks pass. Documentation only; no new account or market observation,
+  application change or test rerun.
+- Latest full offline regression: **2,697 passed, 12 deselected** in 211.00 seconds
+  after combined baseline gap review. The 12 Postgres integration tests lack a
+  dedicated integration DSN. Ruff and the research registry passed at that revision.
+- Combined baseline review: **20 new tests** cover pinned-input replay, native
+  fills/fees versus endpoint deltas, missing zero assets, locks, source/time/hash
+  refusals and UTC nonqualification. Actual historical comparison preserves 502
+  assets with zero unexplained endpoint net delta; full baseline remains blocked.
+- Historical session replay: **56 tests** cover archive integrity and detached
+  native BUY/SELL/fee/residual reconstruction. Actual selected replay reproduces
+  the original evidence hash and 502-asset terminal view with no venue requests.
+- Operator status and interrupted cleanup/cancel/native crash recovery remain
+  covered by regression. Actual testnet evidence remains one accepted/canceled
+  BUY with zero fills and subsequent terminal GET reconciliation; synthetic
+  fills/fees/cleanup and active recovery are not actual venue acceptance.
+- Original private checkpoints and pinned artifacts remain unchanged. Earlier
+  verification details live in the linked immutable progress reports below;
+  historical test results are not current runtime health or readiness.
 
 ## References
+
+- [Provider coverage and prospective evidence contract](progress/portfolio-testnet-provider-coverage-2026-09-13.md),
+  [pinned sources and machine-readable contract](progress/portfolio-testnet-provider-coverage-2026-09-13.json).
 
 - [Full-account, UTC and cash-flow gap review](progress/portfolio-testnet-baseline-gap-2026-09-13.md).
 

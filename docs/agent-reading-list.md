@@ -190,6 +190,15 @@ Exact endpoint deltas after native fills/fees do not prove complete external-flo
 or reset history. Missing assets stay unknown; historical market marks cannot
 be carried to later observations. Qualified equity/loss inputs remain null.
 
+For prospective account/quote evidence and Spot testnet provider coverage, read
+`docs/progress/portfolio-testnet-provider-coverage-2026-09-13.md` and its JSON
+source/contract manifest. Official sources are revision-pinned. JSON bookTicker
+has no event time; diff depth has E/U/u but no common account revision. Resets
+preserve keys; user balance-event examples do not prove reset-history coverage.
+Next implement the bounded public BTCUSDT depth profile offline, preserving its
+explicit bootstrap-boundary refusal, budgets and permanently false readiness.
+The contract is not runtime configuration or a full-account collector deployment.
+
 For the operator-delegated independent 10 test-USDT engineering scope, read
 `docs/decisions/017-testnet-engineering-session.md`,
 `docs/progress/portfolio-testnet-engineering-session-2026-09-11.md`,

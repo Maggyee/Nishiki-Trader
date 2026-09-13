@@ -1,0 +1,162 @@
+{
+  "repository": "https://github.com/binance/binance-spot-api-docs",
+  "revision": "b8a0f61e088c65d18a157f2e11a8e273826b6c08",
+  "sources": [
+    {
+      "path": "testnet/general-info.md",
+      "url": "https://raw.githubusercontent.com/binance/binance-spot-api-docs/b8a0f61e088c65d18a157f2e11a8e273826b6c08/testnet/general-info.md",
+      "bytes": 11464,
+      "sha256": "b6d0ee76abc180ed904a493d4b2272d3af2fbcffc051cb61753f744bc461f50f",
+      "retrieved_at": "2026-09-13T04:43:49.673966+00:00"
+    },
+    {
+      "path": "testnet/rest-api.md",
+      "url": "https://raw.githubusercontent.com/binance/binance-spot-api-docs/b8a0f61e088c65d18a157f2e11a8e273826b6c08/testnet/rest-api.md",
+      "bytes": 177083,
+      "sha256": "a73a3d2103387e4442b91b28b12f7e59bbf2479a1ee117fdd261d2521c5625a2",
+      "retrieved_at": "2026-09-13T04:43:49.865015+00:00"
+    },
+    {
+      "path": "testnet/web-socket-streams.md",
+      "url": "https://raw.githubusercontent.com/binance/binance-spot-api-docs/b8a0f61e088c65d18a157f2e11a8e273826b6c08/testnet/web-socket-streams.md",
+      "bytes": 22998,
+      "sha256": "13428b2e5f4d9dc7654331d4c65e6befea776d2b7408fe5980343708f72d96e6",
+      "retrieved_at": "2026-09-13T04:43:49.740832+00:00"
+    },
+    {
+      "path": "testnet/user-data-stream.md",
+      "url": "https://raw.githubusercontent.com/binance/binance-spot-api-docs/b8a0f61e088c65d18a157f2e11a8e273826b6c08/testnet/user-data-stream.md",
+      "bytes": 13211,
+      "sha256": "9996743b209cd192d9bb1556a0a0d140928627ed51408f1e9053b2c43a7cbce1",
+      "retrieved_at": "2026-09-13T04:43:49.757392+00:00"
+    },
+    {
+      "path": "testnet/web-socket-api.md",
+      "url": "https://raw.githubusercontent.com/binance/binance-spot-api-docs/b8a0f61e088c65d18a157f2e11a8e273826b6c08/testnet/web-socket-api.md",
+      "bytes": 269725,
+      "sha256": "758bbf8c134bc6fe7d0e93df1904784024fc8bd8c37961373e27fb6b51ff29a3",
+      "retrieved_at": "2026-09-13T04:43:49.857004+00:00"
+    }
+  ],
+  "schema_version": "portfolio.testnet_provider_coverage_contract.v1",
+  "status": "offline_implementation_contract_not_runtime_configuration",
+  "review_date": "2026-09-13",
+  "source_revision_committed_at": "2026-09-09T01:06:42Z",
+  "evidence_basis": "official_revision_pinned_documentation_and_selected_historical_artifacts",
+  "provider_findings": {
+    "sapi_on_spot_testnet": "explicitly_unsupported",
+    "funds_transfer_in_or_out_of_spot_testnet": "documented_unavailable",
+    "periodic_reset": "documented_approximately_monthly_without_prior_notice_keys_preserved",
+    "reset_id_or_complete_reset_history_endpoint": "not_documented_in_reviewed_sources",
+    "account_history_as_of_midnight": "not_provided_by_account_endpoint",
+    "common_account_market_revision": "not_documented_in_reviewed_sources",
+    "missed_user_event_replay_cursor": "not_documented_in_reviewed_sources",
+    "json_book_ticker_event_timestamp": "absent_from_documented_payload",
+    "json_diff_depth_event_timestamp": "E_milliseconds_by_default",
+    "json_diff_depth_update_range": "U_first_u_last",
+    "user_account_update_u": "timestamp_not_market_sequence",
+    "rest_history_24_hours": "maximum_startTime_endTime_span_not_retention_guarantee"
+  },
+  "historical_route_budget": {
+    "admission_review_sha256": "14852d00fcc7599cf976c032377c7bfce009efe50173a45b5fc12f2732c0b564",
+    "market_capture_sha256": "0b8606a2165c84b7cefb05bd7e460ab510765a3d9ef7c4a37a5b030413a4380d",
+    "distinct_route_symbols": 499,
+    "priced_assets": 500,
+    "unpriced_assets": 2,
+    "observed_request_weight_per_minute": 6000,
+    "depth_100_weight_total": 2495,
+    "depth_5000_weight_total": 124750,
+    "current_limit_verified": false
+  },
+  "first_diagnostic": {
+    "profile": "testnet_public_depth_evidence_v1",
+    "implemented": false,
+    "symbol": "BTCUSDT",
+    "stream": "wss://stream.testnet.binance.vision/ws/btcusdt@depth@100ms",
+    "timestamp_unit": "millisecond",
+    "native_timestamp_multiplier": 1000000,
+    "rest_base": "https://testnet.binance.vision",
+    "requests": [
+      {
+        "method": "GET",
+        "path": "/api/v3/time",
+        "params": {},
+        "max_calls": 3,
+        "documented_weight_each": 1
+      },
+      {
+        "method": "GET",
+        "path": "/api/v3/exchangeInfo",
+        "params": {
+          "symbol": "BTCUSDT"
+        },
+        "max_calls": 1,
+        "documented_weight_each": 20
+      },
+      {
+        "method": "GET",
+        "path": "/api/v3/depth",
+        "params": {
+          "symbol": "BTCUSDT",
+          "limit": "100"
+        },
+        "max_calls": 1,
+        "documented_weight_each": 5
+      }
+    ],
+    "documented_total_get_weight": 28,
+    "max_get_requests": 5,
+    "max_connections": 1,
+    "max_duration_seconds": 120,
+    "bootstrap_deadline_seconds": 15,
+    "request_timeout_seconds": 10,
+    "shutdown_timeout_seconds": 5,
+    "automatic_http_retries": 0,
+    "automatic_reconnects": 0,
+    "automatic_snapshot_retries": 0,
+    "max_frame_bytes": 1048576,
+    "max_buffer_bytes": 16777216,
+    "max_buffer_events": 4096,
+    "max_archive_bytes": 67108864,
+    "max_local_event_age_ns": 5000000000,
+    "reject_future_event_time": true,
+    "max_time_sample_rtt_ns": 500000000,
+    "max_wall_monotonic_elapsed_difference_ns": 50000000,
+    "max_absolute_sample_offset_ns": 250000000,
+    "server_offset_interval_ns": "[serverTime_ms*1000000-receive_utc_ns, (serverTime_ms+1)*1000000-send_utc_ns]",
+    "offset_acceptance": "entire_interval_within_plus_or_minus_max_absolute_sample_offset_ns",
+    "bootstrap_overlap": "discard_u_le_L_then_require_U_le_L_lt_u",
+    "bootstrap_boundary_U_eq_L_plus_1": "unqualified_pending_pinned_documentation_boundary_review",
+    "subsequent_overlap": "ignore_u_le_L_else_require_U_le_L_plus_1_le_u",
+    "depth_frontier_exhaustion": "no_quote_when_best_depends_on_unseen_snapshot_levels",
+    "native_output": "detached_QuoteTick_only_original_E_ts_event_receipt_ts_init",
+    "execution_engine_created": false,
+    "credentials_loaded": false,
+    "private_queries": false,
+    "fixed_session_writes": false,
+    "production_fallback": false
+  },
+  "required_acceptance": [
+    "original_hash_source_unit_and_epoch_binding",
+    "raw_persistence_before_conversion",
+    "snapshot_buffer_overlap_and_bootstrap_boundary",
+    "obsolete_duplicate_conflicting_and_missing_ranges",
+    "level_replacement_zero_deletion_and_unseen_frontier",
+    "empty_crossed_and_invalid_decimal_books",
+    "future_stale_quiet_and_regressing_clocks",
+    "buffer_archive_disk_and_deadline_failures",
+    "disconnect_shutdown_no_automatic_reconnect_or_retry",
+    "two_fresh_process_identical_numeric_native_quotes",
+    "public_request_allowlist_and_no_credentials_or_execution_client"
+  ],
+  "qualification": {
+    "current_account_verified": false,
+    "account_market_atomic_revision_verified": false,
+    "valuation_qualified": false,
+    "baseline_qualified": false,
+    "runtime_ready": false,
+    "new_orders_authorized": false,
+    "strict_continuity_days": 0
+  },
+  "next_entrypoint": "apps/strategies_nautilus/portfolio_market_depth.py (not yet implemented)"
+}
