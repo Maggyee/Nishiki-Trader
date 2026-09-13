@@ -14,6 +14,12 @@ NautilusTrader 上的自定义 Strategy / Actor / 风控扩展。
 
 ## 当前入口
 
+`portfolio_market_depth.py` 是独立的 BTCUSDT 快照/增量重建核心；
+`portfolio_market_depth_archive.py` 保存原始字节、验证归档并重放原生 QuoteTick。
+不连接策略或执行引擎，不赋予估值/基线/下单资格。有限深度、时钟、缺口与
+严格首段衔接的验收及后续入口见
+[公开深度验收](../../docs/progress/portfolio-testnet-public-depth-2026-09-13.md)。
+
 Phase 2 baseline backtest runner:
 
 ```bash

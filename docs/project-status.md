@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-13
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Preserve the consumed ADR-017 scope. Cleanup/recovery and local operator status pass synthetic acceptance; retained session archives now reproduce historical evidence and native state after expiry. Actual archive replay preserves the original terminal state and all 502 assets. Combined ADR-016/017 review now finds no unexplained endpoint net delta across 502 assets, while UTC/valuation/flow qualification remains blocked. Provider coverage and a bounded public BTCUSDT depth contract are now specified from pinned official docs. Next implement offline depth reconstruction and native quote acceptance. Actual fills/cleanup remain unverified.
+- **Current objective**: Preserve the consumed ADR-017 scope and historical 502-asset evidence. Detached BTCUSDT depth reconstruction and native QuoteTick replay now pass offline acceptance. The single bounded public attempt stopped at the frozen `U=L+1` bootstrap boundary after four GETs, with zero quotes. Next review that first-link rule offline before any prospective contract revision or further attempt. Full-account/UTC/flow/reset qualification and actual fills/cleanup remain unverified.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -79,9 +79,13 @@ JSON bookTicker lacks event time, and diff depth provides E/U/u without a common
 account revision. No documented reset-history or missed-user-event replay interface
 closes those gaps. The 499 historical valuation routes would require 124,750 weight
 for 5,000-level snapshots; full-account bootstrap cannot fit the existing capture
-window at the recorded limit. A separate public BTCUSDT depth diagnostic contract
-now fixes source, bounded requests, replay semantics and offline acceptance; it is
-not implemented or deployed and creates no qualification/trading permission.
+window at the recorded limit. Detached BTCUSDT depth reconstruction and native
+QuoteTick archive replay now pass 63 focused tests, including actual Rust loopback
+I/O and zero reconnects. The one public probe made four GETs and received two frames,
+then refused first-link `U=L+1` as the frozen contract requires. Zero quotes and no
+success seal resulted; independent replay refused the failed archive. The clock
+samples passed. Next review bootstrap wording offline against the retained sequence;
+no retry or qualification/trading permission follows.
 ADR-017 does not qualify this baseline or relax ADR-015 portfolio risk.
 Strict gates, SourcePolicy, execution runners and production accounts are unchanged.
 
@@ -180,15 +184,18 @@ the September 9 five-sleeve proposal is offline engineering only.
 - Existing ten collector cron jobs use pinned clean pushed code; no new schedules.
 - The 2026-09-07 reliability repairs and their full verification are archived below.
 
+Detailed depth implementation, retained hashes and next review:
+[public depth acceptance](progress/portfolio-testnet-public-depth-2026-09-13.md).
+
 ## Next Steps
 
 1. Preserve the completed fixed ADR-017 scope and pinned private evidence. Local
    status, unknown-order handling and expired-window historical replay are implemented.
-   Baseline gap and provider coverage reviews are complete. Next implement pure
-   offline BTCUSDT depth snapshot/delta reconstruction and native QuoteTick replay
-   under the new bounded public evidence contract. Test its explicit bootstrap
-   boundary, gaps, clocks, finite depth and persistence before a bounded public
-   probe. Full-account/UTC/flow/reset qualification remains separate and blocked.
+   Depth reconstruction/native replay acceptance and one public attempt are complete.
+   Review the retained `U=L+1` bootstrap refusal against pinned provider wording
+   offline. Any justified rule change needs a new prospective contract and tests
+   before another bounded attempt; retain the original failed evidence unchanged.
+   Full-account/UTC/flow/reset qualification remains separate and blocked.
    Do not reset the completed session to obtain fills; actual active recovery,
    fills/fees/cleanup remain unverified. Strict continuity stays 0/14.
 2. Review the explicit offline residual-exit policy before promotion and resolve
@@ -222,14 +229,15 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Latest Verification
 
-- Provider coverage contract: five official documents retrieved at pinned revision
-  `b8a0f61e088c65d18a157f2e11a8e273826b6c08`; original private route/limit artifact
-  hashes and the 499-route weight calculations verified. JSON, local links and
-  whitespace checks pass. Documentation only; no new account or market observation,
-  application change or test rerun.
-- Latest full offline regression: **2,697 passed, 12 deselected** in 211.00 seconds
-  after combined baseline gap review. The 12 Postgres integration tests lack a
-  dedicated integration DSN. Ruff and the research registry passed at that revision.
+- Public depth acceptance: **63 focused tests pass**, including native loopback,
+  two independent successful fixture replays, time/budget/persistence refusals and
+  zero retries. Actual one-shot public probe stopped at `bootstrap_boundary_unqualified`:
+  four GETs, two frames, zero native quotes, all qualification flags false. Independent
+  replay correctly refused the failed archive; fixed session checkpoint hash unchanged.
+- Full offline regression: **2,760 passed, 12 deselected** in 215.58 seconds.
+  Final receipt-count/quote-age reporting refinements passed the 63 focused tests
+  again (5.25 seconds). The 12 Postgres integration tests lack a dedicated DSN.
+  Ruff for apps/tests and the research registry check pass.
 - Combined baseline review: **20 new tests** cover pinned-input replay, native
   fills/fees versus endpoint deltas, missing zero assets, locks, source/time/hash
   refusals and UTC nonqualification. Actual historical comparison preserves 502

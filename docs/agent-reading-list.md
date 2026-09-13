@@ -183,6 +183,13 @@ can become total equity. The 0.0001 BTC / 10 test-USDT lifecycle plan is a draft
 fees, effective filters, baseline, permission and adapter recovery remain blocked.
 No trading runner, production rule, source policy or 14-day gate is changed.
 
+For detached public BTCUSDT depth reconstruction, bounded probes and historical
+native QuoteTick replay, read `docs/progress/portfolio-testnet-public-depth-2026-09-13.md`
+and `apps/ops/portfolio_market_depth.py`. The original provider contract remains
+immutable, including refusal of bootstrap `U=L+1`. One failed attempt cannot be
+retried or made successful by relaxing the contract. All account/valuation/baseline/
+runtime/order qualification stays false; the fixed ADR-017 session is not reused.
+
 For full-account/UTC/cash-flow gap review across the account reference and fixed
 session, read `docs/progress/portfolio-testnet-baseline-gap-2026-09-13.md` and
 `apps/ops/portfolio_testnet_baseline_review.py`. Revalidate all five pinned originals.

@@ -7,6 +7,12 @@ dashboard snapshot support + Phase 6 passive readiness gate support。
 
 ## 当前入口
 
+`portfolio_market_depth` 提供独立 BTCUSDT 公开深度诊断和显式哈希历史重放。
+一次探针最多五个 GET、一个原生 WebSocket，零重试/重连；不读取 Key 或账户。
+原始响应先落盘，闭合归档通过快照/增量/时钟检查后才能重放原生 QuoteTick。
+实现、单次探针结果与边界见
+[公开深度验收](../../docs/progress/portfolio-testnet-public-depth-2026-09-13.md)。
+
 `portfolio_testnet_observe` 是有时限的 Binance Spot 测试网全账户只读观察入口：
 显式选择 Ed25519 配置、初始账户观察及哈希、新建私有归档；执行两次签名订阅、
 四轮全资产/账户级挂单读取及心跳检查，断线后拒绝旧连接凭据，最后回放归档。
