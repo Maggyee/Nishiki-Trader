@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-13
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Preserve the consumed ADR-017 scope. Cleanup/recovery and local operator status pass synthetic acceptance; retained session archives now reproduce historical evidence and native state after expiry. Actual archive replay preserves the original terminal state and all 502 assets. Next review ADR-016 full-account/UTC/cash-flow qualification gaps offline. Actual fills/cleanup remain unverified.
+- **Current objective**: Preserve the consumed ADR-017 scope. Cleanup/recovery and local operator status pass synthetic acceptance; retained session archives now reproduce historical evidence and native state after expiry. Actual archive replay preserves the original terminal state and all 502 assets. Combined ADR-016/017 review now finds no unexplained endpoint net delta across 502 assets, while UTC/valuation/flow qualification remains blocked. Next specify prospective account/quote evidence and provider coverage. Actual fills/cleanup remain unverified.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -69,6 +69,11 @@ ADR-016's full-account indicative valuation still covers **500/502 assets**;
 two lack quotes and 65 exceed a conversion leg's top-book depth. Full equity,
 UTC day-open and daily-risk fields remain null. The operator confirms no other
 trading; independent records are unavailable and reset history remains unknown.
+The combined historical review now replays all five pinned inputs and finds zero
+missing assets, unexplained endpoint net deltas or reference-to-session lock changes
+across 502 assets after native fills/fees. The reference is September 11 05:42 UTC,
+not midnight; equal endpoints do not prove complete external-flow/reset history.
+Qualified current/day-open/peak equity and losses remain null.
 ADR-017 does not qualify this baseline or relax ADR-015 portfolio risk.
 Strict gates, SourcePolicy, execution runners and production accounts are unchanged.
 
@@ -171,8 +176,10 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 1. Preserve the completed fixed ADR-017 scope and pinned private evidence. Local
    status, unknown-order handling and expired-window historical replay are implemented.
-   Next perform an offline ADR-016 full-account valuation/UTC day-open/cash-flow
-   acceptance and gap review. Do not infer equity from partial valuation or reset
+   The combined offline baseline gap review is complete. Next specify prospective
+   native account/quote evidence and review what the selected testnet providers can
+   prove about synchronization, UTC baseline, cash flows and resets before collection.
+   Do not infer equity from partial valuation or reset
    the completed session to obtain fills. Recovered new SELL remains disabled;
    actual active recovery/fills/fees/cleanup remain unverified. Strict continuity
    stays 0/14.
@@ -207,13 +214,14 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Latest Verification
 
-- Historical session replay: **56 new tests** pass, covering full archive integrity,
-  historical source/time/selector gates, native economic refusal, private input and
-  output safety, two fresh BUY review processes, and synthetic partial/terminal SELL
-  residuals and fee halts. A guarded CLI process forbids credential/network/live
-  transport access. Actual retained evidence reproduces its original SHA256 and
-  historical native view for 502 assets; all pinned original files remain unchanged.
-  Operator status and unknown-order handling remain covered by regression.
+- Combined baseline gap review: **20 new tests** cover original-input replay,
+  native fills/fees versus endpoint deltas, missing/zero assets, locks, hash/source/
+  time refusals, UTC rollover and midnight nonqualification. Private CLI output
+  forbids credential/network access and preserves inputs. Actual historical review
+  compares 502 assets with zero unexplained net differences, while two unpriced
+  assets and missing UTC/flow/reset evidence keep the baseline blocked.
+- Historical session replay, operator status and unknown-order handling remain
+  covered by regression; their actual original checkpoint/evidence remain unchanged.
 
 - September 12 interrupted SELL recovery: **17 additional tests**, **29 focused
   tests** pass. Native/CLI acceptance covers two original
@@ -284,8 +292,8 @@ the September 9 five-sleeve proposal is offline engineering only.
 - **130 collector/stream/archive tests** passed, including 12 new concurrency,
   cancellation, timeout, source/clock and abort-persistence regressions. Explicit
   retries produce independently replayable evidence; failed collections stay rejected.
-- Full offline regression after historical session archive integration: **2,677 passed**,
-  12 Postgres integration tests deselected (no dedicated integration DSN; 199.46 seconds).
+- Full offline regression after combined baseline gap review: **2,697 passed**,
+  12 Postgres integration tests deselected (no dedicated integration DSN; 211.00 seconds).
   Ruff, registry and whitespace checks pass.
 - Prior abrupt-exit/fresh-process recovery and exact account comparison remain
   green. Recovery fixtures remain synthetic; the separate testnet observations
@@ -294,6 +302,8 @@ the September 9 five-sleeve proposal is offline engineering only.
   linked progress records; it is not a current runtime-health observation.
 
 ## References
+
+- [Full-account, UTC and cash-flow gap review](progress/portfolio-testnet-baseline-gap-2026-09-13.md).
 
 - [Historical fixed-session archive replay and actual retained evidence](progress/portfolio-testnet-session-archive-2026-09-13.md).
 

@@ -472,3 +472,11 @@ native historical reconciliation. Only a new private diagnostic report is writte
 no credentials, network, live fence, session writer or execution permission. See
 [historical session replay](../../docs/progress/portfolio-testnet-session-archive-2026-09-13.md)
 and the [fixed-session recovery runbook](../../docs/runbook-testnet-session-recovery.md).
+
+`apps.ops.portfolio_testnet_baseline_review` replays the five explicitly selected
+original account/market/session inputs, compares complete asset-unit deltas after
+native fills/fees, and reports UTC/valuation/cash-flow evidence gaps. Run `--help`
+for required paths, historical hashes and collection IDs; run the review in a
+fresh process. It writes only a new private diagnostic and keeps qualified equity,
+losses, baseline and runtime readiness unavailable. See the
+[full-account baseline gap review](../../docs/progress/portfolio-testnet-baseline-gap-2026-09-13.md).

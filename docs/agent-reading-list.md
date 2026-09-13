@@ -183,6 +183,13 @@ can become total equity. The 0.0001 BTC / 10 test-USDT lifecycle plan is a draft
 fees, effective filters, baseline, permission and adapter recovery remain blocked.
 No trading runner, production rule, source policy or 14-day gate is changed.
 
+For full-account/UTC/cash-flow gap review across the account reference and fixed
+session, read `docs/progress/portfolio-testnet-baseline-gap-2026-09-13.md` and
+`apps/ops/portfolio_testnet_baseline_review.py`. Revalidate all five pinned originals.
+Exact endpoint deltas after native fills/fees do not prove complete external-flow
+or reset history. Missing assets stay unknown; historical market marks cannot
+be carried to later observations. Qualified equity/loss inputs remain null.
+
 For the operator-delegated independent 10 test-USDT engineering scope, read
 `docs/decisions/017-testnet-engineering-session.md`,
 `docs/progress/portfolio-testnet-engineering-session-2026-09-11.md`,
