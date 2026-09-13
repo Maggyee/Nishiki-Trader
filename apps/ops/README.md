@@ -463,3 +463,12 @@ no credentials, network or writes. It reports original order IDs, consumed attem
 recorded ownership and the shared 24-hour history bound. It grants no action and
 never equates an old terminal record with current venue confirmation. See the
 [fixed-session recovery runbook](../../docs/runbook-testnet-session-recovery.md).
+
+`apps.ops.portfolio_session_archive` reviews explicitly pinned historical session
+archives in a fresh standalone process, including after the collection window
+expires. `portfolio_session_archive.py` validates the full archive chain, original
+checkpoint/collection binding, exact GET receipts and original evidence seal before
+native historical reconciliation. Only a new private diagnostic report is written;
+no credentials, network, live fence, session writer or execution permission. See
+[historical session replay](../../docs/progress/portfolio-testnet-session-archive-2026-09-13.md)
+and the [fixed-session recovery runbook](../../docs/runbook-testnet-session-recovery.md).

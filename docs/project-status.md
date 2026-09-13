@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-09-12
+- **Last updated**: 2026-09-13
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Preserve the consumed ADR-017 scope; cleanup admission now handles spent quote cash correctly and passes synthetic fill/fee/residual recovery. Interrupted cleanup SELL recovery now passes native/CLI/crash acceptance. Local operator status and unresolved-order runbook are implemented; next qualify historical replay of retained session evidence. Actual fills/cleanup and full-account portfolio qualification remain unverified.
+- **Current objective**: Preserve the consumed ADR-017 scope. Cleanup/recovery and local operator status pass synthetic acceptance; retained session archives now reproduce historical evidence and native state after expiry. Actual archive replay preserves the original terminal state and all 502 assets. Next review ADR-016 full-account/UTC/cash-flow qualification gaps offline. Actual fills/cleanup remain unverified.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -44,6 +44,11 @@ showing original IDs, consumed intents/dispatches, recorded ownership and histor
 expiry. Success and failure reports distinguish signed observation from local
 records. The actual local check confirms the same terminal checkpoint and an
 expired 24-hour history window; it is not a fresh exchange observation.
+The standalone archive reviewer now verifies pinned original bytes, collection
+identity, complete raw response chain and evidence seal before historical native
+reconciliation. September 13 replay reproduces the original September 11 evidence
+hash and terminal view across all 502 assets with zero venue requests. Historical
+review never refreshes source confirmation or creates an execution checkpoint.
 Explicit `--recover-cancel`
 now restores a qualified active original order into a cancellation-only native
 runtime after fresh signed reconciliation. Historical halts and all allowances
@@ -164,13 +169,12 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Next Steps
 
-1. Preserve the completed fixed ADR-017 scope. Interrupted cleanup SELL recovery
-   now passes synthetic native/CLI/crash acceptance. Local status and the unknown-
-   order runbook are implemented. Next qualify offline replay of retained private
-   session evidence after the collector window expires, without representing it
-   as current source/venue confirmation. Recovered new SELL remains
-   disabled; actual active recovery/fills/cleanup remain unverified. Continue
-   ADR-016 full-account/UTC/cash-flow qualification separately; strict continuity
+1. Preserve the completed fixed ADR-017 scope and pinned private evidence. Local
+   status, unknown-order handling and expired-window historical replay are implemented.
+   Next perform an offline ADR-016 full-account valuation/UTC day-open/cash-flow
+   acceptance and gap review. Do not infer equity from partial valuation or reset
+   the completed session to obtain fills. Recovered new SELL remains disabled;
+   actual active recovery/fills/fees/cleanup remain unverified. Strict continuity
    stays 0/14.
 2. Review the explicit offline residual-exit policy before promotion and resolve
    re-entry with retained dust. Whole-step reductions now pass native acceptance;
@@ -203,10 +207,13 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 ## Latest Verification
 
-- Operator status: **18 new tests**, **31 focused tests** pass. Local inspection
-  and report summaries preserve unknown outcomes,
-  consumed preparation/dispatch and recorded inventory. No credential/network/write
-  occurs in `--status`; actual inspection preserves the original checkpoint hash.
+- Historical session replay: **56 new tests** pass, covering full archive integrity,
+  historical source/time/selector gates, native economic refusal, private input and
+  output safety, two fresh BUY review processes, and synthetic partial/terminal SELL
+  residuals and fee halts. A guarded CLI process forbids credential/network/live
+  transport access. Actual retained evidence reproduces its original SHA256 and
+  historical native view for 502 assets; all pinned original files remain unchanged.
+  Operator status and unknown-order handling remain covered by regression.
 
 - September 12 interrupted SELL recovery: **17 additional tests**, **29 focused
   tests** pass. Native/CLI acceptance covers two original
@@ -277,8 +284,8 @@ the September 9 five-sleeve proposal is offline engineering only.
 - **130 collector/stream/archive tests** passed, including 12 new concurrency,
   cancellation, timeout, source/clock and abort-persistence regressions. Explicit
   retries produce independently replayable evidence; failed collections stay rejected.
-- Full offline regression after operator status/runbook integration: **2,621 passed**,
-  12 Postgres integration tests deselected (no dedicated integration DSN; 179.54 seconds).
+- Full offline regression after historical session archive integration: **2,677 passed**,
+  12 Postgres integration tests deselected (no dedicated integration DSN; 199.46 seconds).
   Ruff, registry and whitespace checks pass.
 - Prior abrupt-exit/fresh-process recovery and exact account comparison remain
   green. Recovery fixtures remain synthetic; the separate testnet observations
@@ -287,6 +294,8 @@ the September 9 five-sleeve proposal is offline engineering only.
   linked progress records; it is not a current runtime-health observation.
 
 ## References
+
+- [Historical fixed-session archive replay and actual retained evidence](progress/portfolio-testnet-session-archive-2026-09-13.md).
 
 - [Fixed-session unknown-order and recovery runbook](runbook-testnet-session-recovery.md),
   [operator-status implementation and actual local inspection](progress/portfolio-testnet-operator-status-2026-09-12.md).

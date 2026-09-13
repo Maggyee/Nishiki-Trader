@@ -209,6 +209,15 @@ network, locks or writes. Recorded terminal state is not current venue confirmat
 consumed cancel preparation forbids retry even without a dispatch. Missing state
 stays unknown. The 24-hour history bound is shared with the collector.
 
+For expired fixed-session evidence review, read
+`docs/progress/portfolio-testnet-session-archive-2026-09-13.md`,
+`apps/strategies_nautilus/portfolio_session_archive.py` and
+`apps/ops/portfolio_session_archive.py`. Select retained archive/checkpoint hashes
+and collection ID explicitly; run native review in a fresh standalone process.
+Historical evidence must reproduce the original seal, exact account and consumed
+attempts. No current source/fence, checkpoint replacement or execution permission
+is created. Missing original bytes cannot be repaired by hashing files now.
+
 For interrupted cleanup SELL recovery acceptance, read
 `docs/progress/portfolio-testnet-sell-recovery-2026-09-12.md`. Both original BUY and
 SELL histories must reconcile; exact owned residuals, base locks and consumed

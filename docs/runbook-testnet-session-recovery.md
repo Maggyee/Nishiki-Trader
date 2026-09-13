@@ -80,6 +80,33 @@
 文件名、哈希或内容自述本身不能证明交易所身份、历史连续性或当前余额。
 不公开 Key、签名 URL、完整账户余额或原始私有归档。
 
+离线复核入口如下；每次在新的 Python 进程中运行，替换参数为**历史报告中已经记录的**
+归档/原输入检查点哈希和所选 collection ID，不自动挑选最新文件：
+
+```bash
+.venv/bin/python -m apps.ops.portfolio_session_archive \
+  --archive /path/to/retained-stream.jsonl \
+  --archive-sha256 ORIGINAL_ARCHIVE_SHA256 \
+  --checkpoint /path/to/original-native.json \
+  --checkpoint-sha256 ORIGINAL_INPUT_CHECKPOINT_SHA256 \
+  --collection-id ORIGINAL_COLLECTION_ID \
+  --output /path/to/new-private-review.json
+```
+
+文件必须是当前用户所有、权限 0600 的普通文件；输入不接受符号链接，输出必须尚不存在。
+入口不读 Key、不联网、不创建会话租约，只新建一份私有诊断报告，不写恢复检查点。
+原输入检查点缺失时不能用后来的 recovered 文件替代，也不能重新计算现有文件的哈希来
+冒充历史引用。归档截断、缺原始响应、缺完成封印、错误来源/订单/时间或原生资金不符，
+都返回退出码 1；成功返回 0 只代表历史复核完成。
+
+报告的 `evidence_basis=archived_session_reconciliation_at_observation` 表示归档历史复核。
+`observation_received_ns` 保留原观察时间，`reviewed_ns` / `observation_age_ns` 表示复核时间
+和历史年龄；`historical_view` / `historical_halt_reasons` 是当时原生状态及停机记录。
+`current_venue_state_verified`、`source_authenticated`、`new_orders_authorized`、
+`cancel_retry_allowed`、`runtime_ready` 均为 false。过期后重放成功不会延长恢复窗口。
+实际所选文件、哈希与验收结果见
+[9 月 13 日历史归档复核](progress/portfolio-testnet-session-archive-2026-09-13.md)。
+
 磁盘失败时，失败报告也可能无法落盘。终端会给出 `--status` 命令和本手册路径；
 状态入口返回 unknown 时保留现有文件，不能自动修复或覆盖最后一个成功检查点。
 
@@ -87,5 +114,6 @@
 
 2026-09-11 的真实测试 BUY 已成功撤销，无成交或本会话持仓，BUY 和撤单机会已消耗。
 后续签名恢复确认过该终态。2026-09-12 的本地状态检查显示历史窗口已过期；这不是
-新的交易所观察。当前没有本会话 BTC 可以用来验证真实清理 SELL。
+新的交易所观察。9 月 13 日离线归档重放还原相同终态和全部 502 项资产，
+未产生新交易所观察。当前没有本会话 BTC 可以用来验证真实清理 SELL。
 真实成交/费用/活动订单恢复仍未验收；模拟通过不能替代这些证据或 14 天准入门槛。
