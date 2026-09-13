@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-13
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Preserve the consumed ADR-017 scope and historical 502-asset evidence. Detached BTCUSDT depth reconstruction and native QuoteTick replay now pass offline acceptance. The single bounded public attempt stopped at the frozen `U=L+1` bootstrap boundary after four GETs, with zero quotes. The explicit v2 interpretation and native reference-book acceptance are now implemented; next freeze the contract/implementation and perform its one prospective public attempt. Full-account/UTC/flow/reset qualification and actual fills/cleanup remain unverified.
+- **Current objective**: Preserve the consumed ADR-017 scope and historical 502-asset evidence. The explicitly versioned BTCUSDT depth v2 probe now passes: five public GETs, 20 native quotes and two identical independent replays. Its one-shot scope is consumed; v1 remains failed and immutable. Next design bounded fixed-route coverage, shared-IP budget and account/market observation intervals. Full-account/UTC/flow/reset qualification and actual fills/cleanup remain unverified.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -79,16 +79,15 @@ JSON bookTicker lacks event time, and diff depth provides E/U/u without a common
 account revision. No documented reset-history or missed-user-event replay interface
 closes those gaps. The 499 historical valuation routes would require 124,750 weight
 for 5,000-level snapshots; full-account bootstrap cannot fit the existing capture
-window at the recorded limit. Detached BTCUSDT depth reconstruction and native
-QuoteTick archive replay now pass 63 focused tests, including actual Rust loopback
-I/O and zero reconnects. The one public probe made four GETs and received two frames,
-then refused first-link `U=L+1` as the frozen contract requires. Zero quotes and no
-success seal resulted; independent replay refused the failed archive. The clock
-samples passed. Offline review now resolves the contradictory bootstrap prose by
-applying the pinned document's update algorithm to the first remaining event:
-explicit v2 requires `U<=L+1<=u`. V1 and its failed evidence remain unchanged.
-The v2 contract keeps all prior limits and requires committed/pushed acceptance
-before its one new public attempt; no qualification/trading permission follows.
+window at the recorded limit. The first public v1 attempt stopped at its explicit
+`U=L+1` bootstrap refusal and remains failed. The separately frozen v2 interpretation
+applies the pinned update algorithm to the first remaining event (`U<=L+1<=u`).
+On clean pushed `cf4612c`, its single 20-second-budget attempt completed in 18.265
+seconds: five GETs/weight 28, one stream, 21 frames and 20 native QuoteTicks.
+Three clock samples passed; the closed archive and two fresh-process replay reports
+match exactly. This proves a bounded locally linked BTCUSDT segment only. Both
+one-shot scopes are consumed; no repeat, service, account/valuation/baseline or
+trading qualification follows. The v1 default and its original bytes stay intact.
 ADR-017 does not qualify this baseline or relax ADR-015 portfolio risk.
 Strict gates, SourcePolicy, execution runners and production accounts are unchanged.
 
@@ -189,18 +188,19 @@ the September 9 five-sleeve proposal is offline engineering only.
 
 Detailed depth implementation, retained hashes and next review:
 [public depth acceptance](progress/portfolio-testnet-public-depth-2026-09-13.md),
-[prospective v2 bootstrap decision](progress/portfolio-testnet-public-depth-v2-contract-2026-09-13.md).
+[v2 bootstrap decision](progress/portfolio-testnet-public-depth-v2-contract-2026-09-13.md),
+[actual v2 capture and replay](progress/portfolio-testnet-public-depth-v2-2026-09-13.md).
 
 ## Next Steps
 
 1. Preserve the completed fixed ADR-017 scope and pinned private evidence. Local
    status, unknown-order handling and expired-window historical replay are implemented.
-   Depth reconstruction/native replay acceptance and one public attempt are complete.
-   Explicit v2 now applies the pinned next-unseen-ID algorithm to bootstrap and
-   passes reference-book/revision compatibility checks. Commit/push its contract
-   and acceptance, then run the one new 20-second public attempt in a new epoch.
-   Preserve the failed v1 archive; do not resume/relabel it. Record the v2 outcome,
-   and require two independent matching replays if the new archive completes.
+   V2 public depth acceptance and both actual independent replays are complete;
+   its single-attempt scope is consumed. Design bounded fixed-route coverage,
+   shared-IP budgets and independent account/market observation intervals before
+   any fan-out. A later actual experiment needs a fresh selected account/metadata
+   route set; keep unpriced and insufficient-depth assets explicit. Preserve both
+   v1 failure and v2 historical success; neither qualifies equity or a UTC baseline.
    Full-account/UTC/flow/reset qualification remains separate and blocked.
    Do not reset the completed session to obtain fills; actual active recovery,
    fills/fees/cleanup remain unverified. Strict continuity stays 0/14.
@@ -235,17 +235,12 @@ Detailed depth implementation, retained hashes and next review:
 
 ## Latest Verification
 
-- V2 bootstrap: **107 focused tests pass** (44 additional cases), including
-  15 snapshot alignments versus an unbatched reference book, v1 byte-compatible
-  fixture replay, explicit revision binding and two independent v2 replays.
-  The actual failed v1 archive remains unchanged and is rejected under both revisions.
-  Full regression and static checks pass before the prospective contract freeze.
-
-- Public depth acceptance: **63 focused tests pass**, including native loopback,
-  two independent successful fixture replays, time/budget/persistence refusals and
-  zero retries. Actual one-shot public probe stopped at `bootstrap_boundary_unqualified`:
-  four GETs, two frames, zero native quotes, all qualification flags false. Independent
-  replay correctly refused the failed archive; fixed session checkpoint hash unchanged.
+- V2 depth: **107 focused tests pass** (44 additional cases), including 15 snapshot
+  alignments versus an unbatched reference book and v1 byte-compatible archives.
+  Actual clean `cf4612c` probe: five public GETs, 21 frames, **20 native quotes**;
+  three clock samples pass and two independent replay reports are byte-identical.
+  All six qualification flags remain false. V1 failure and fixed session hashes
+  are unchanged; the new actual evidence is recorded in the linked progress report.
 - Full offline regression: **2,804 passed, 12 deselected** in 218.11 seconds.
   The 12 Postgres integration tests lack a dedicated DSN.
   Ruff for apps/tests and the research registry check pass.

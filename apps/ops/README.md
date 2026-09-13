@@ -11,6 +11,8 @@ dashboard snapshot support + Phase 6 passive readiness gate support。
 一次探针最多五个 GET、一个原生 WebSocket，零重试/重连；不读取 Key 或账户。
 默认使用 v1；新版首段衔接和归档均须显式选择 `--revision 2`，依据见
 [v2 合同](../../docs/progress/portfolio-testnet-public-depth-v2-contract-2026-09-13.md)。
+[v2 单次实测](../../docs/progress/portfolio-testnet-public-depth-v2-2026-09-13.md)
+已完成 20 条原生报价与两个独立重放；该单次范围已消耗。
 原始响应先落盘，闭合归档通过快照/增量/时钟检查后才能重放原生 QuoteTick。
 实现、单次探针结果与边界见
 [公开深度验收](../../docs/progress/portfolio-testnet-public-depth-2026-09-13.md)。

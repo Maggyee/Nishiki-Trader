@@ -183,6 +183,13 @@ can become total equity. The 0.0001 BTC / 10 test-USDT lifecycle plan is a draft
 fees, effective filters, baseline, permission and adapter recovery remain blocked.
 No trading runner, production rule, source policy or 14-day gate is changed.
 
+For the actual completed v2 public depth attempt, read
+`docs/progress/portfolio-testnet-public-depth-v2-2026-09-13.md`: clean pushed
+`cf4612c` collected 20 native quotes, and two fresh replays match byte-for-byte.
+The single-attempt v2 scope is consumed. Do not repeat it or reinterpret the failed
+v1 archive. Next scope fixed-route coverage/budgets and independent observation
+intervals; no full-account/UTC/flow/reset qualification or deployment follows.
+
 For the prospective public-depth v2 bootstrap interpretation, read
 `docs/progress/portfolio-testnet-public-depth-v2-contract-2026-09-13.md` and its
 hash-pinned JSON before selecting `--revision 2`. It applies the documented
