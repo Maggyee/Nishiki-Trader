@@ -6,7 +6,8 @@ import argparse
 import json
 from pathlib import Path
 
-from apps.strategies_nautilus.portfolio_joint_observation import digest, replay_joint
+from apps.strategies_nautilus.portfolio_joint_observation import JointEvidence, digest, replay_joint
+from apps.strategies_nautilus.portfolio_joint_routes import RoutedJointEvidence
 from apps.strategies_nautilus.portfolio_market_depth import MAX_ARCHIVE
 from apps.strategies_nautilus.portfolio_market_depth_archive import flags
 from apps.strategies_nautilus.portfolio_session_transport import private_read, write_private_new
@@ -15,6 +16,11 @@ from apps.strategies_nautilus.portfolio_stream import canonical
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--loopback-profile",
+        action="store_true",
+        help="Explicitly select the separate native loopback archive profile",
+    )
     parser.add_argument("--archive", type=Path, required=True)
     parser.add_argument("--archive-sha256", required=True)
     parser.add_argument("--report", type=Path, required=True)
@@ -27,7 +33,9 @@ def main(argv=None):
         ):
             raise ValueError("new distinct output required")
         report = replay_joint(
-            private_read(args.archive, limit=MAX_ARCHIVE), expected_sha256=args.archive_sha256
+            private_read(args.archive, limit=MAX_ARCHIVE),
+            expected_sha256=args.archive_sha256,
+            evidence_type=RoutedJointEvidence if args.loopback_profile else JointEvidence,
         )
         output = canonical(report) + b"\n"
         write_private_new(args.report, output)

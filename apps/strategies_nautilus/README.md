@@ -14,9 +14,14 @@ NautilusTrader 上的自定义 Strategy / Actor / 风控扩展。
 
 ## 当前入口
 
+`portfolio_joint_routes.py` 将所选初始原始字节、本次账户/元数据/盘口绑定为
+固定路由；`portfolio_joint_transport.py` 在显式本机回环对端上验收原生 WS、
+Ed25519 签名、发送前预算和失败关闭，不支持交易所采集。见
+[联合传输验收](../../docs/progress/portfolio-testnet-joint-transport-2026-09-14.md)。
+
 `portfolio_joint_observation.py` 实现合成数据专用的联合日志：共享账户/行情
 缓冲、持久化处理时间、各币种独立深度与全账户区间。原生回放不产生准入资格；
-真实路由绑定和传输接入仍需离线验收。见
+首轮实现见
 [联合日志验收](../../docs/progress/portfolio-testnet-joint-observation-acceptance-2026-09-14.md)。
 
 `portfolio_observation_plan.py` 从已重放的证据计算完整资产/路由排除项、

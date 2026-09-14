@@ -8,7 +8,9 @@ dashboard snapshot support + Phase 6 passive readiness gate support。
 ## 当前入口
 
 `portfolio_joint_observation` 只重放显式哈希选择的合成联合归档，输出私有
-原生行情/全账户报告；没有采集模式，不加载凭证或启动交易。见
+原生行情/全账户报告。显式 `--loopback-profile` 重放独立的原生本机传输
+归档并重算原始路由；默认仍为旧合成 profile。没有采集模式，不加载凭证或
+启动交易。见 [联合传输验收](../../docs/progress/portfolio-testnet-joint-transport-2026-09-14.md) 与
 [联合日志验收](../../docs/progress/portfolio-testnet-joint-observation-acceptance-2026-09-14.md)。
 
 `portfolio_testnet_observation_plan` 重放原始账户、市场和 v2 深度归档，生成

@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-14
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Preserve the consumed ADR-017 and public-depth scopes. The offline joint-observation journal now accepts interleaved three-symbol/account receipts with shared limits, durable processing times and independent native replay. Next bind fresh route evidence and native transports in an offline integration before any new actual collection contract. Full-account/UTC/flow/reset qualification and actual fills/cleanup remain unverified.
+- **Current objective**: Preserve the consumed ADR-017 and public-depth scopes. Original-input route fixation and native signed account/combined-market loopback integration now pass, with durable dispatch budgets and independent replay. Next define real shared-IP/connection evidence and a separate bounded testnet capture profile/contract before any actual collection. Full-account/UTC/flow/reset qualification and actual fills/cleanup remain unverified.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -96,9 +96,11 @@ All 499 routes cost 2,928 weight even at 100 levels; deeper snapshots, side/dept
 availability and unverified throughput remain blockers. The synthetic joint journal
 now implements shared pending/archive limits, durable receipt/dispatch times,
 independent symbol gaps/ages and full-account intervals.
-Two fresh native replays agree; missing assets, ambiguous account events and
-persistence failures refuse completion. Fresh route binding and native transport
-integration remain required; no new collection or baseline qualification follows.
+The separate loopback profile now binds selected source bytes, derives routes from
+same-run account/metadata/books and checks durable dispatch budgets. Native signed
+WS/HTTP fixture reads, combined-stream callbacks, burst/closure failures and two
+fresh native replays pass. Actual shared-IP/connection evidence and a separate
+testnet capture contract remain required; no baseline qualification follows.
 ADR-017 does not qualify this baseline or relax ADR-015 portfolio risk.
 Strict gates, SourcePolicy, execution runners and production accounts are unchanged.
 
@@ -202,7 +204,8 @@ Detailed depth implementation, retained hashes and next review:
 [v2 bootstrap decision](progress/portfolio-testnet-public-depth-v2-contract-2026-09-13.md),
 [actual v2 capture and replay](progress/portfolio-testnet-public-depth-v2-2026-09-13.md),
 [joint-observation coverage/budget design](progress/portfolio-testnet-joint-observation-design-2026-09-13.md),
-[synthetic joint journal acceptance](progress/portfolio-testnet-joint-observation-acceptance-2026-09-14.md).
+[synthetic joint journal acceptance](progress/portfolio-testnet-joint-observation-acceptance-2026-09-14.md),
+[original-route/native loopback integration](progress/portfolio-testnet-joint-transport-2026-09-14.md).
 
 ## Next Steps
 
@@ -211,10 +214,10 @@ Detailed depth implementation, retained hashes and next review:
    V2 public depth acceptance and both actual independent replays are complete;
    its single-attempt scope is consumed. The fixed three-pivot coverage/budget and
    independent-interval journal now passes synthetic native replay, shared-buffer,
-   delayed-dispatch, interleaving and one-symbol failure acceptance. Next integrate
-   fresh selected account/metadata/book routes and native transports offline,
-   including shared-IP/connection usage and loopback load/shutdown failures.
-   Only then review a new bounded actual collection contract.
+   delayed-dispatch, interleaving and one-symbol failure acceptance. Original-input
+   route fixation and native loopback transport integration now also pass.
+   Next define real shared-IP/per-endpoint connection evidence and a distinct
+   testnet capture profile/contract before any new bounded actual collection.
    Keep unpriced/insufficient-depth assets explicit; neither prior depth outcome
    qualifies equity or a UTC baseline.
    Full-account/UTC/flow/reset qualification remains separate and blocked.
@@ -251,6 +254,14 @@ Detailed depth implementation, retained hashes and next review:
 
 ## Latest Verification
 
+- Original-route/native loopback integration: **40 new tests**, **91 focused
+  tests pass**; the final nine native scenarios also pass after independent CLI
+  replay checks. Selected raw inputs/dispatch budgets, nine Ed25519 signatures,
+  16 GETs / 448 weight / two connections, 7 normal and 304 burst/interleaved native
+  quotes pass. Socket loss, unknown events, exhausted buffers/weight, disk failure
+  and cancellation stay failed without retries. The original synthetic archive
+  is byte-identical to `a9b4104`. Actual Binance credentials/endpoints were unused.
+
 - Synthetic joint journal: **51 new tests pass**. Three independent native quote
   streams and both full CASH snapshots reproduce across two fresh CLI processes;
   shared memory/disk limits, delayed processing, epoch/sequence/age failures,
@@ -268,7 +279,7 @@ Detailed depth implementation, retained hashes and next review:
   three clock samples pass and two independent replay reports are byte-identical.
   All six qualification flags remain false. V1 failure and fixed session hashes
   are unchanged; the new actual evidence is recorded in the linked progress report.
-- Full offline regression: **2,871 passed, 12 deselected** in 250.73 seconds.
+- Full offline regression: **2,911 passed, 12 deselected** in 276.00 seconds.
   The 12 Postgres integration tests lack a dedicated DSN.
   Ruff for apps/tests and the research registry check pass.
 - Combined baseline review: **20 new tests** cover pinned-input replay, native

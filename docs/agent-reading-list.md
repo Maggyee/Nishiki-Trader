@@ -183,13 +183,22 @@ can become total equity. The 0.0001 BTC / 10 test-USDT lifecycle plan is a draft
 fees, effective filters, baseline, permission and adapter recovery remain blocked.
 No trading runner, production rule, source policy or 14-day gate is changed.
 
+For original-input route fixation and native signed/combined loopback integration,
+read `docs/progress/portfolio-testnet-joint-transport-2026-09-14.md`,
+`portfolio_joint_routes.py` and `portfolio_joint_transport.py` under
+`apps/strategies_nautilus/`. The explicit loopback profile derives routes from
+same-run raw account/metadata/books and gates each durable preparation against
+fixture shared-weight/connection evidence. Native socket/signature acceptance is
+local only. Actual shared-IP/per-endpoint connection provenance and a separate
+bounded testnet profile/contract remain required; no new probe is authorized.
+
 For the implemented synthetic multi-symbol queue and joint interval replay, read
 `docs/progress/portfolio-testnet-joint-observation-acceptance-2026-09-14.md` and
 `apps/strategies_nautilus/portfolio_joint_observation.py`. Shared pending/archive
 limits include account receipts and pre-snapshot buffers; durable dispatch times
 also gate processing age. This profile only accepts synthetic source bindings.
-Fresh route binding, shared-IP/connection admission and native transport integration
-remain required offline before a separately bounded actual contract. No consumed
+The subsequent loopback integration above covers raw route binding and native I/O;
+actual shared-IP/connection admission still needs a separately bounded contract. No consumed
 single-symbol attempt or fixed ADR-017 scope is reopened.
 
 For fixed-route coverage, aggregate budgets and the proposed joint account/market

@@ -65,6 +65,8 @@ class Limits:
 
 
 class JointEvidence:
+    profile = PROFILE
+
     def __init__(self):
         self.started = self.last = self.manifest = None
         self.failure = None
@@ -120,30 +122,10 @@ class JointEvidence:
         kind = row["kind"]
         if self.started is None:
             manifest = row["manifest"]
-            # This profile deliberately cannot be relabelled as actual source evidence.
-            if (
-                kind != "started"
-                or manifest["synthetic"] is not True
-                or manifest["design_sha256"] != DESIGN_SHA256
-                or manifest["source"]
-                != {"endpoint": REST, "account_uid": "1", "key_sha256": "0" * 64}
-                or manifest["account_epoch"] != "synthetic-account"
-                or manifest["market_epoch"] != "synthetic-market"
-                or type(manifest["subscription_id"]) is not int
-                or manifest["subscription_id"] < 0
-            ):
-                raise DepthError("synthetic_joint_manifest_required")
+            if kind != "started":
+                raise DepthError("joint_start_required")
+            self.validate_manifest(manifest)
             symbols = manifest["symbols"]
-            if (
-                not isinstance(symbols, list)
-                or not 0 < len(symbols) <= 3
-                or symbols != sorted(set(symbols))
-                or any(
-                    not isinstance(s, str) or not s.isascii() or not s.isalnum() for s in symbols
-                )
-            ):
-                raise DepthError("invalid_joint_symbols")
-            account_balances(manifest["initial_account"], "1")
             self.manifest = manifest
             self.budget = request_budget(symbols)
             self.started = self.last = (now, mono)
@@ -259,7 +241,9 @@ class JointEvidence:
             if event["e"] != "outboundAccountPosition":
                 raise DepthError("joint_account_event_requires_review")
             integer(event["u"], positive=True)
-            baseline = account_balances(self.manifest["initial_account"], "1")
+            baseline = account_balances(
+                self.manifest["initial_account"], self.manifest["source"]["account_uid"]
+            )
             seen = set()
             for balance in event["B"]:
                 asset = balance["a"]
@@ -268,14 +252,14 @@ class JointEvidence:
                 seen.add(asset)
                 check = account_balances(
                     {
-                        "uid": 1,
+                        "uid": int(self.manifest["source"]["account_uid"]),
                         "accountType": "SPOT",
                         "canTrade": True,
                         "balances": [
                             {"asset": asset, "free": balance["f"], "locked": balance["l"]}
                         ],
                     },
-                    "1",
+                    self.manifest["source"]["account_uid"],
                 )
                 if check[asset] != baseline[asset]:
                     raise DepthError("joint_account_event_delta_requires_review")
@@ -319,13 +303,41 @@ class JointEvidence:
                 raise DepthError("joint_seal_mismatch")
             self.completed = True
         else:
-            raise DepthError("joint_unknown_or_interrupted_receipt")
+            self.extra_receipt(row)
         if (
             self.books
             and all(book.linked for book in self.books.values())
             and self.linked_at is None
         ):
             self.linked_at = mono
+
+    def validate_manifest(self, manifest):
+        # This profile deliberately cannot be relabelled as actual source evidence.
+        if (
+            manifest["synthetic"] is not True
+            or manifest["design_sha256"] != DESIGN_SHA256
+            or manifest["source"] != {"endpoint": REST, "account_uid": "1", "key_sha256": "0" * 64}
+            or manifest["account_epoch"] != "synthetic-account"
+            or manifest["market_epoch"] != "synthetic-market"
+            or type(manifest["subscription_id"]) is not int
+            or manifest["subscription_id"] < 0
+        ):
+            raise DepthError("synthetic_joint_manifest_required")
+        symbols = manifest["symbols"]
+        if (
+            not isinstance(symbols, list)
+            or not 0 < len(symbols) <= 3
+            or symbols != sorted(set(symbols))
+            or any(not isinstance(s, str) or not s.isascii() or not s.isalnum() for s in symbols)
+        ):
+            raise DepthError("invalid_joint_symbols")
+        account_balances(manifest["initial_account"], "1")
+
+    def route_snapshot(self, row, body, processed_ns):
+        """V1 retains bookTicker only; derived profiles may freeze original routes."""
+
+    def extra_receipt(self, row):
+        raise DepthError("joint_unknown_or_interrupted_receipt")
 
     def _body(self, row, limit):
         raw = base64.b64decode(row["raw_b64"], validate=True)
@@ -381,11 +393,13 @@ class JointEvidence:
             if len(self.collecting) == 4:
                 bodies = [self._body(r, 16 * MAX_FRAME)[0] for r in self.collecting]
                 before, orders, orders_after, after = bodies
-                balances = account_balances(before, "1")
-                account_balances(after, "1")
+                balances = account_balances(before, self.manifest["source"]["account_uid"])
+                account_balances(after, self.manifest["source"]["account_uid"])
                 _open_orders(orders)
                 _open_orders(orders_after)
-                baseline = account_balances(self.manifest["initial_account"], "1")
+                baseline = account_balances(
+                    self.manifest["initial_account"], self.manifest["source"]["account_uid"]
+                )
                 if before != after or orders != orders_after or balances != baseline or orders:
                     raise DepthError("joint_account_changed_or_open_orders")
                 self.collections.append(
@@ -442,7 +456,9 @@ class JointEvidence:
                 "sent_ns": sent,
                 "received_ns": now,
             }
-        # bookTicker is retained for routing evidence only, never a native quote.
+        elif path.endswith("/ticker/bookTicker"):
+            self.route_snapshot(row, body, processed_ns)
+        # bookTicker is routing evidence only, never a native quote.
         self.request_index += 1
         remaining = sum(r["weight"] for r in self.budget["rest_requests"][self.request_index :])
         remaining += sum(r["weight"] for r in self.budget["ws_api_operations"][self.ws_index :])
@@ -451,7 +467,7 @@ class JointEvidence:
 
     def summary(self):
         return {
-            "profile": PROFILE,
+            "profile": self.profile,
             "synthetic_only": True,
             "design_sha256": DESIGN_SHA256,
             "rest_get_responses": self.request_index,
@@ -486,9 +502,9 @@ class JointEvidence:
 class JointJournal:
     """Durable-before-parse queue shared by both callbacks and bootstrap buffers."""
 
-    def __init__(self, path, *, manifest, clock, limits=None):
+    def __init__(self, path, *, manifest, clock, limits=None, evidence_type=JointEvidence):
         self.clock, self.limits = clock, limits or Limits()
-        self.state = JointEvidence()
+        self.state = evidence_type()
         self.queue = deque()
         self.pending_bytes = 0
         self.sequence, self.previous, self.size = 0, "0" * 64, 0
@@ -529,7 +545,7 @@ class JointJournal:
             "received_ns": now,
             "monotonic_ns": mono,
             **fields,
-            "profile": PROFILE,
+            "profile": self.state.profile,
             "seq": self.sequence,
             "previous": self.previous,
             "kind": kind,
@@ -572,7 +588,7 @@ class JointJournal:
         while self.queue:
             row, size = self.queue[0]
             try:
-                if row["kind"] in {"market_frame", "account_frame"} and (
+                if row["kind"] in {"market_frame", "account_frame", "account_wire"} and (
                     len(base64.b64decode(row["raw_b64"], validate=True)) > self.limits.frame_bytes
                 ):
                     raise DepthError("joint_frame_limit_exceeded")
@@ -602,7 +618,7 @@ class JointJournal:
         self.file.close()
 
 
-def replay_joint(raw, *, expected_sha256):
+def replay_joint(raw, *, expected_sha256, evidence_type=JointEvidence):
     """Rebuild native quotes and isolated CASH snapshots from selected closed bytes."""
     if (
         not isinstance(raw, bytes)
@@ -610,7 +626,7 @@ def replay_joint(raw, *, expected_sha256):
         or digest(raw) != expected_sha256
     ):
         raise DepthError("selected_joint_archive_changed")
-    state, previous = JointEvidence(), "0" * 64
+    state, previous = evidence_type(), "0" * 64
     pending, pending_bytes = deque(), 0
     last_clock = (0, 0)
     for seq, line in enumerate(raw.splitlines(keepends=True)):
@@ -622,7 +638,7 @@ def replay_joint(raw, *, expected_sha256):
             type(row["seq"]) is not int
             or row["seq"] != seq
             or row["previous"] != previous
-            or row["profile"] != PROFILE
+            or row["profile"] != state.profile
             or digest(canonical(row)) != claimed
         ):
             raise DepthError("joint_archive_integrity_mismatch")
@@ -675,14 +691,18 @@ def replay_joint(raw, *, expected_sha256):
                 a: tuple(Decimal(v) for v in amounts)
                 for a, amounts in collection["balances"].items()
             },
-            account_uid="1",
+            account_uid=state.manifest["source"]["account_uid"],
             observed_ns=collection["ended_ns"],
         )
         if not result["detached_native_account_balances_equal"]:
             raise DepthError("joint_native_account_mapping_failed")
         native.append(result)
     return {
-        "status": "synthetic_joint_archive_replayed",
+        "status": (
+            "synthetic_joint_archive_replayed"
+            if state.profile == PROFILE
+            else "loopback_joint_archive_replayed"
+        ),
         "archive_sha256": expected_sha256,
         "completion_sha256": previous,
         "summary": state.summary(),
