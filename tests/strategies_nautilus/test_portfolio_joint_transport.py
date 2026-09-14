@@ -18,6 +18,9 @@ from nautilus_trader.common.component import TestClock
 
 from apps.strategies_nautilus import portfolio_joint_observation as joint
 from apps.strategies_nautilus.portfolio_joint_routes import RoutedJointEvidence
+from apps.strategies_nautilus.portfolio_joint_tls_evidence import PROFILE as TLS_PROFILE
+from apps.strategies_nautilus.portfolio_joint_tls_evidence import TLSJointEvidence
+from apps.strategies_nautilus.portfolio_joint_tls_transport import run_tls_loopback
 from apps.strategies_nautilus.portfolio_joint_transport import run_loopback
 from apps.strategies_nautilus.portfolio_market_depth import DepthError
 from apps.strategies_nautilus.portfolio_stream import canonical
@@ -40,6 +43,7 @@ from tests.strategies_nautilus.test_portfolio_testnet_credentials import (
 from tests.strategies_nautilus.test_portfolio_testnet_credentials import (
     verify_signature,
 )
+from tests.strategies_nautilus.test_portfolio_tls_provenance import certificates as certificates
 from tests.strategies_nautilus.test_portfolio_user_stream import frame, read_frame
 
 
@@ -52,21 +56,37 @@ class LocalClock:
         return BASE + mono - self.start, mono
 
 
+CASES = [
+    None,
+    "burst",
+    "market_drop",
+    "account_drop",
+    "unknown_event",
+    "weight",
+    "buffer",
+    "disk",
+    "cancel",
+    "fragmented",
+]
+
+
 @pytest.mark.parametrize(
-    "failure",
-    [
-        None,
-        "burst",
-        "market_drop",
-        "account_drop",
-        "unknown_event",
-        "weight",
-        "buffer",
-        "disk",
-        "cancel",
+    "tls_mode,failure",
+    [(mode, failure) for mode in (False, True) for failure in CASES]
+    + [
+        (True, failure)
+        for failure in (
+            "tls_untrusted",
+            "duplicate_weight",
+            "masked_frame",
+            "fragment_gap",
+            "unexpected_close",
+        )
     ],
 )
-def test_native_signed_joint_loopback(tmp_path, configured, monkeypatch, failure):
+def test_native_signed_joint_loopback(
+    tmp_path, configured, monkeypatch, failure, tls_mode, certificates
+):
     def only_local_connect(sock, address):
         assert address[0] == "127.0.0.1"
         return _socket.socket.connect(sock, address)
@@ -88,6 +108,18 @@ def test_native_signed_joint_loopback(tmp_path, configured, monkeypatch, failure
         disconnect_now = asyncio.Event()
         market_live = asyncio.Event()
         original_fsync = os.fsync
+
+        def message(raw):
+            if failure != "fragmented":
+                return frame(raw)
+            cut = len(raw) // 2
+            first = frame(raw[:cut])
+            return (
+                bytes([first[0] & 0x7F])
+                + first[1:]
+                + frame(b"fragment-ping", 9)
+                + frame(raw[cut:], 0)
+            )
 
         if failure == "disk":
 
@@ -115,6 +147,8 @@ def test_native_signed_joint_loopback(tmp_path, configured, monkeypatch, failure
                 + accept
                 + b"\r\n\r\n"
             )
+            if failure == "fragmented":
+                writer.write(frame(b"upgrade-ping", 9))
             await writer.drain()
             return request_path
 
@@ -142,7 +176,7 @@ def test_native_signed_joint_loopback(tmp_path, configured, monkeypatch, failure
                     signed.append(path)
                     body = manifest()["initial_account"] if path.endswith("/account") else []
                     usage += 20 if path.endswith("/account") else 80
-                    if counts["http"] > 10 and failure in {None, "burst"}:
+                    if counts["http"] > 10 and failure in {None, "burst", "fragmented"}:
                         symbol = SYMBOLS[counts["http"] % 3]
                         first = next_ids[symbol]
                         next_ids[symbol] += 2
@@ -181,10 +215,10 @@ def test_native_signed_joint_loopback(tmp_path, configured, monkeypatch, failure
                     disconnect_now.set()
                     await asyncio.sleep(0.06)
                 raw = canonical(body)
-                writer.write(
-                    f"HTTP/1.1 200 OK\r\nContent-Length: {len(raw)}\r\nX-MBX-USED-WEIGHT-1M: {usage}\r\nConnection: close\r\n\r\n".encode()
-                    + raw
-                )
+                header = f"HTTP/1.1 200 OK\r\nContent-Length: {len(raw)}\r\nX-MBX-USED-WEIGHT-1M: {usage}\r\nConnection: close\r\n".encode()
+                if failure == "duplicate_weight":
+                    header += f"x-mbx-used-weight-1m: {usage}\r\n".encode()
+                writer.write(header + b"\r\n" + raw)
                 await writer.drain()
             except (ConnectionError, asyncio.IncompleteReadError):
                 pass
@@ -249,7 +283,11 @@ def test_native_signed_joint_loopback(tmp_path, configured, monkeypatch, failure
                             }
                         ],
                     }
-                    writer.write(frame(canonical(response)))
+                    writer.write(
+                        message(canonical(response))
+                        if operation.endswith("signature")
+                        else frame(canonical(response))
+                    )
                     if operation.endswith("signature"):
                         # Immediate account envelope follows the acknowledgement in one write.
                         event = {
@@ -280,13 +318,25 @@ def test_native_signed_joint_loopback(tmp_path, configured, monkeypatch, failure
                     s.lower() + "@depth@100ms" for s in SYMBOLS
                 )
                 assert await handshake(reader, writer) == expected
+                if failure == "masked_frame":
+                    from apps.strategies_nautilus.portfolio_ws_frames import client_frame
+
+                    writer.write(client_frame(b"{}"))
+                    await writer.drain()
+                    return
+                if failure in {"fragment_gap", "unexpected_close"}:
+                    writer.write(
+                        b"\x01\x02{}" if failure == "fragment_gap" else frame(b"\x03\xe8", 8)
+                    )
+                    await writer.drain()
+                    return
                 for number in range(100 if failure == "burst" else 1):
                     for symbol in SYMBOLS:
                         update = delta(
                             99 + number * 4, 102 + number * 4, s=symbol, E=clock()[0] // 1_000_000
                         )
                         writer.write(
-                            frame(
+                            message(
                                 canonical(
                                     {"stream": symbol.lower() + "@depth@100ms", "data": update}
                                 )
@@ -317,7 +367,14 @@ def test_native_signed_joint_loopback(tmp_path, configured, monkeypatch, failure
                 await close(writer)
 
         servers = [
-            await asyncio.start_server(peer, "127.0.0.1", 0)
+            await asyncio.start_server(
+                peer,
+                "127.0.0.1",
+                0,
+                ssl=certificates["foreign" if failure == "tls_untrusted" else "selected"][0]
+                if tls_mode
+                else None,
+            )
             for peer in (http_peer, account_peer, market_peer)
         ]
         endpoints = {
@@ -327,16 +384,32 @@ def test_native_signed_joint_loopback(tmp_path, configured, monkeypatch, failure
             )
         }
         path = tmp_path / "native-loopback.jsonl"
+        selection = route_manifest(clock, endpoints)
+        if tls_mode:
+            selection.update(
+                tls_profile=TLS_PROFILE,
+                tls_trust_sha256=joint.digest(certificates["selected"][1]),
+                tls_endpoints={
+                    name: f"{'https' if name == 'http' else 'wss'}://{name}.fixture.invalid:{urlsplit(url).port}"
+                    for name, url in endpoints.items()
+                },
+            )
         j = joint.JointJournal(
             path,
-            manifest=route_manifest(clock, endpoints),
+            manifest=selection,
             clock=clock,
-            evidence_type=RoutedJointEvidence,
+            evidence_type=TLSJointEvidence if tls_mode else RoutedJointEvidence,
             limits=joint.Limits(pending_events=3) if failure == "buffer" else None,
         )
         try:
             async with asyncio.timeout(15):
-                task = asyncio.create_task(run_loopback(j, signer, observe_seconds=0.1))
+                task = asyncio.create_task(
+                    run_tls_loopback(
+                        j, signer, trust_pem=certificates["selected"][1], observe_seconds=0.1
+                    )
+                    if tls_mode
+                    else run_loopback(j, signer, observe_seconds=0.1)
+                )
                 if failure == "cancel":
                     await market_live.wait()
                     task.cancel()
@@ -352,9 +425,15 @@ def test_native_signed_joint_loopback(tmp_path, configured, monkeypatch, failure
                 KEY.encode() not in raw and b"PRIVATE KEY" not in raw and b'"signature"' not in raw
             )
             assert counts["account"] <= 1 and counts["market"] <= 1
-            if failure in {None, "burst"}:
+            if failure in {None, "burst", "fragmented"}:
                 assert result["status"] == "loopback_joint_completed", (result, j.state.failure)
-                report = replay(raw)
+                report = (
+                    joint.replay_joint(
+                        raw, expected_sha256=joint.digest(raw), evidence_type=TLSJointEvidence
+                    )
+                    if tls_mode
+                    else replay(raw)
+                )
                 assert report["summary"] == result["summary"]
                 assert counts == {"http": 16, "account": 1, "market": 1}
                 if failure is None:
@@ -366,7 +445,7 @@ def test_native_signed_joint_loopback(tmp_path, configured, monkeypatch, failure
                                 sys.executable,
                                 "-m",
                                 "apps.ops.portfolio_joint_observation",
-                                "--loopback-profile",
+                                "--tls-loopback-profile" if tls_mode else "--loopback-profile",
                                 "--archive",
                                 str(path),
                                 "--archive-sha256",
@@ -381,12 +460,59 @@ def test_native_signed_joint_loopback(tmp_path, configured, monkeypatch, failure
                         outputs.append(output.read_bytes())
                     assert outputs[0] == outputs[1] and json.loads(outputs[0]) == report
                     assert path.read_bytes() == raw
+                    if tls_mode:
+                        # Rehash every row: rejection must come from source semantics,
+                        # not the outer selected-file digest or journal chain.
+                        for change, expected in (
+                            ("account_wire", "joint_tls_frame_binding_or_age"),
+                            ("market_frame", "joint_tls_frame_binding_or_age"),
+                            ("rest_response", "joint_tls_http_original_response_required"),
+                            ("endpoint", "joint_tls_source_binding_changed"),
+                            ("trust_sha256", "joint_tls_source_binding_changed"),
+                            ("close", "joint_tls_unsolicited_close"),
+                        ):
+                            altered = [json.loads(line) for line in raw.splitlines()]
+                            kind = (
+                                "tls_opened"
+                                if change in {"endpoint", "trust_sha256"}
+                                else "tls_close_prepared"
+                                if change == "close"
+                                else change
+                            )
+                            row = next(r for r in altered if r["kind"] == kind)
+                            if change in {"account_wire", "market_frame", "rest_response"}:
+                                payload = base64.b64decode(row["raw_b64"]) + b" "
+                                row.update(joint.raw_fields(payload))
+                            elif change == "close":
+                                row["kind"] = "tick"
+                            else:
+                                row[change] = "0" * 64 if change == "trust_sha256" else "foreign"
+                            previous = "0" * 64
+                            for row in altered:
+                                row.pop("sha256")
+                                row["previous"] = previous
+                                previous = joint.digest(canonical(row))
+                                row["sha256"] = previous
+                            changed_raw = b"".join(canonical(row) + b"\n" for row in altered)
+                            with pytest.raises(DepthError, match=expected):
+                                joint.replay_joint(
+                                    changed_raw,
+                                    expected_sha256=joint.digest(changed_raw),
+                                    evidence_type=TLSJointEvidence,
+                                )
                 assert len(signed) == 9
+                if tls_mode:
+                    assert len(report["summary"]["tls_connections"]) == 18
+                    assert all(c["closed"] for c in report["summary"]["tls_connections"])
                 assert methods == [
                     "userDataStream.subscribe.signature",
                     "userDataStream.unsubscribe",
                 ]
-                assert set(pongs) == {("account", b"account-ping"), ("market", b"market-ping")}
+                expected_pongs = {("account", b"account-ping"), ("market", b"market-ping")}
+                if failure == "fragmented":
+                    expected_pongs |= {("account", b"fragment-ping"), ("market", b"fragment-ping")}
+                    expected_pongs |= {("account", b"upgrade-ping"), ("market", b"upgrade-ping")}
+                assert set(pongs) == expected_pongs
                 assert (
                     sum(len(quotes) for quotes in report["native_quotes"].values())
                     == (300 if failure == "burst" else 3) + 4
@@ -401,7 +527,11 @@ def test_native_signed_joint_loopback(tmp_path, configured, monkeypatch, failure
                 assert result["status"] == "loopback_joint_failed"
                 assert not j.state.completed
                 with pytest.raises((DepthError, ValueError)):
-                    replay(raw)
+                    joint.replay_joint(
+                        raw,
+                        expected_sha256=joint.digest(raw),
+                        evidence_type=TLSJointEvidence if tls_mode else RoutedJointEvidence,
+                    )
             # Both local peers saw close/EOF; native clients never reconnect.
             await asyncio.sleep(0.03)
             assert counts["account"] <= 1 and counts["market"] <= 1

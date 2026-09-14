@@ -23,7 +23,7 @@ def certificates(tmp_path_factory):
     root = tmp_path_factory.mktemp("provenance-certificates")
     output = {}
     for name, hosts in (
-        ("selected", [f"{r}.fixture.invalid" for r in source.PATHS]),
+        ("selected", [f"{r}.fixture.invalid" for r in [*source.PATHS, "http"]]),
         ("foreign", ["foreign.fixture.invalid"]),
     ):
         key, cert = root / f"{name}.key", root / f"{name}.pem"

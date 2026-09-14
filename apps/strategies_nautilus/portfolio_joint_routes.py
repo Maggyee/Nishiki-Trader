@@ -135,7 +135,7 @@ class RoutedJointEvidence(JointEvidence):
 
             raw = base64.b64decode(row["payload_b64"], validate=True)
             if (
-                not self.account_connected
+                self.ws_index < 1  # Transport pings can precede subscription acknowledgement.
                 or self.account_closed
                 or row["epoch"] != self.manifest["account_epoch"]
                 or len(raw) > 125

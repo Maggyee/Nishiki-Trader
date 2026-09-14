@@ -391,3 +391,22 @@ def test_original_synthetic_archive_bytes_stay_compatible(tmp_path):
     )
     with pytest.raises(DepthError):
         replay(raw)
+
+
+@pytest.mark.parametrize("socket_connected", [False, True])
+def test_account_ping_is_bound_to_transport_not_subscription(tmp_path, socket_connected):
+    f = RouteFixture(tmp_path)
+    f.read()
+    if socket_connected:
+        f.ws()
+    try:
+        fields = dict(epoch="synthetic-account", payload_b64="cGluZw==", echo_b64="cGluZw==")
+        if socket_connected:
+            f.append("account_pong", **fields)
+            assert not f.journal.state.account_connected
+            assert f.journal.state.account_pongs == 1
+        else:
+            with pytest.raises(DepthError, match="account_control_invalid"):
+                f.append("account_pong", **fields)
+    finally:
+        f.journal.close()

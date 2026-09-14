@@ -41,9 +41,21 @@ async def run_loopback(journal, signer, *, observe_seconds=0.1):
     Single event-loop ownership serializes callbacks. There is no executable
     exchange capture path. An interrupted request consumes preparation permanently.
     """
-    state = journal.state
-    if type(state) is not RoutedJointEvidence or not 0 < observe_seconds <= 10:
+    if type(journal.state) is not RoutedJointEvidence:
         raise DepthError("explicit_bounded_loopback_profile_required")
+    return await _run_loopback(journal, signer, observe_seconds=observe_seconds)
+
+
+async def _run_loopback(journal, signer, *, observe_seconds, transport=None):
+    state = journal.state
+    if not 0 < observe_seconds <= 10:
+        raise DepthError("explicit_bounded_loopback_profile_required")
+    if transport is not None:
+        from apps.strategies_nautilus.portfolio_joint_tls_evidence import TLSJointEvidence
+        from apps.strategies_nautilus.portfolio_joint_tls_transport import TLSBackend
+
+        if type(state) is not TLSJointEvidence or type(transport) is not TLSBackend:
+            raise DepthError("explicit_tls_loopback_backend_required")
     manifest = state.manifest
     endpoints = manifest["wire_endpoints"]
     for name, scheme in (("http", "http"), ("account", "ws"), ("market", "ws")):
@@ -52,6 +64,7 @@ async def run_loopback(journal, signer, *, observe_seconds=0.1):
         raise DepthError("loopback_signer_does_not_match_selection")
     loop = asyncio.get_running_loop()
     clients, closing, pong_tasks = {}, set(), set()
+    connected = {name: asyncio.Event() for name in ("account", "market")}
     ended = False
     failure = None
     pending_reply = None
@@ -65,6 +78,9 @@ async def run_loopback(journal, signer, *, observe_seconds=0.1):
         first_frames.set()
         if pending_reply is not None and not pending_reply.done():
             pending_reply.set_exception(DepthError(code))
+
+    if transport is not None:
+        transport.on_failure = fail
 
     def append(kind, **fields):
         if failure:
@@ -103,6 +119,9 @@ async def run_loopback(journal, signer, *, observe_seconds=0.1):
 
     async def pong(name, payload):
         try:
+            # Native callbacks can run before connect() returns its handle.
+            # The enclosing capture timeout and cleanup also bound this wait.
+            await connected[name].wait()
             client = clients.get(name)
             if client is None or not client.is_active():
                 raise DepthError("loopback_ping_without_transport")
@@ -114,6 +133,10 @@ async def run_loopback(journal, signer, *, observe_seconds=0.1):
         if ended or failure:
             return
         try:
+            if name == "market" and not state.market_connected:
+                mark_market_connected()
+            elif name == "account" and state.ws_index == 0:
+                mark_account_connected()
             # Each connection retains its own payload-echo control-rate gate.
             append(
                 name + "_pong",
@@ -160,9 +183,12 @@ async def run_loopback(journal, signer, *, observe_seconds=0.1):
             params["signature"] = signer._get_sign(urlencode(params))
             headers["X-MBX-APIKEY"] = signer.api_key
         async with asyncio.timeout(10):
-            status, usage, raw = await asyncio.to_thread(
-                local_get, endpoints["http"], op["path"], params, headers
-            )
+            if transport is None:
+                status, usage, raw = await asyncio.to_thread(
+                    local_get, endpoints["http"], op["path"], params, headers
+                )
+            else:
+                status, usage, raw = await transport.get(op, params, headers)
         # Always preserve returned bytes/status before any body or usage validation.
         fields = {k: op[k] for k in ("phase", "method", "path", "params")}
         append(
@@ -181,6 +207,12 @@ async def run_loopback(journal, signer, *, observe_seconds=0.1):
         healthy()
 
     async def connect(name, handler):
+        if transport is not None:
+            async with asyncio.timeout(10):
+                clients[name] = await transport.connect(name, handler, lambda raw: ping(name, raw))
+            connected[name].set()
+            healthy()
+            return
         url = endpoints[name] + (
             "/stream?streams="
             + "/".join(s.lower() + "@depth@100ms" for s in state.manifest["symbols"])
@@ -197,7 +229,19 @@ async def run_loopback(journal, signer, *, observe_seconds=0.1):
                 post_reconnection=lambda: fail("loopback_unexpected_reconnect"),
             )
         clients[name] = client
+        connected[name].set()
         healthy()
+
+    def mark_account_connected():
+        if state.ws_index:
+            return
+        append(
+            "ws_operation",
+            operation_id=state.prepared["operation_id"],
+            operation="ws_api_connection",
+            status=200,
+            epoch=manifest["account_epoch"],
+        )
 
     def mark_market_connected():
         if state.market_connected:
@@ -256,15 +300,9 @@ async def run_loopback(journal, signer, *, observe_seconds=0.1):
     try:
         async with asyncio.timeout(120):
             await read()
-            _, op_id = prepare()
+            prepare()
             await connect("account", account_frame)
-            append(
-                "ws_operation",
-                operation_id=op_id,
-                operation="ws_api_connection",
-                status=200,
-                epoch=manifest["account_epoch"],
-            )
+            mark_account_connected()
             await account_request()
             for _ in range(6):
                 await read()  # full account, metadata, then original book routes

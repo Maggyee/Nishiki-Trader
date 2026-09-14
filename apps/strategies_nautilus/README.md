@@ -14,6 +14,12 @@ NautilusTrader 上的自定义 Strategy / Actor / 风控扩展。
 
 ## 当前入口
 
+`portfolio_joint_tls_transport.py` 将本机 TLS/Upgrade 来源记录接入联合采集，
+`portfolio_joint_tls_evidence.py` 从原始接收块重建并绑定账户/行情消息；
+`portfolio_ws_frames.py` 支持有界文本分片、ping/pong 和关闭握手。
+该独立 profile 仍只连接回环测试对端；签名、账户及报价映射复用 Nautilus。
+见 [联合 TLS 传输验收](../../docs/progress/portfolio-testnet-joint-tls-transport-2026-09-14.md)。
+
 `portfolio_tls_provenance.py` 在固定本机 TLS 对端上保存实际证书校验信息、
 原始 HTTP/WS Upgrade 响应及失败记录；独立 CLI 可按原始哈希离线回放。
 它只验收握手，不处理 WS 数据帧或连接交易所。见
