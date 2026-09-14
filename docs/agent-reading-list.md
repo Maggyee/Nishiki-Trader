@@ -183,6 +183,16 @@ can become total equity. The 0.0001 BTC / 10 test-USDT lifecycle plan is a draft
 fees, effective filters, baseline, permission and adapter recovery remain blocked.
 No trading runner, production rule, source policy or 14-day gate is changed.
 
+For the offline first-request capacity and missing-evidence review, read
+`docs/progress/portfolio-testnet-joint-admission-review-2026-09-14.md` and
+`apps/strategies_nautilus/portfolio_joint_admission.py`. The CLI reparses original
+rate bytes and computes the full 17-GET / 468-weight scope, interval coverage,
+other-caller bounds and conservative connection union. All ledger fields are
+untrusted candidates; no authenticated source/gateway adapter or permit is
+implemented. Return code 2 means a report was written with admission blocked.
+Actual source/egress evidence and per-dispatch durable activation remain required.
+Do not treat positive arithmetic or caller-supplied authentication flags as admission.
+
 For integrated local TLS joint collection and original-frame replay, read
 `docs/progress/portfolio-testnet-joint-tls-transport-2026-09-14.md`,
 `portfolio_joint_tls_transport.py`, `portfolio_joint_tls_evidence.py` and

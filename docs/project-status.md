@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-14
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Preserve the consumed ADR-017 and public-depth scopes. Local TLS joint account/market collection now binds original received bytes through text/control processing and independent native replay. Next implement authenticated initial usage/egress admission and the separate durable real one-shot profile; complete shared-egress evidence remains unavailable. The real draft stays at 17 GETs / 468 documented weight with no actual joint capture enabled. Full-account/UTC/flow/reset qualification and actual fills/cleanup remain unverified.
+- **Current objective**: Preserve the consumed ADR-017 and public-depth scopes. Local TLS joint account/market collection now binds original received bytes through text/control processing and independent native replay. Offline first-request capacity and missing-evidence review now passes; next establish authenticated source/gateway inputs and wire per-dispatch reservations and the separate durable real one-shot profile. Complete shared-egress evidence remains unavailable. The real draft stays at 17 GETs / 468 documented weight with no actual joint capture enabled. Full-account/UTC/flow/reset qualification and actual fills/cleanup remain unverified.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -108,7 +108,11 @@ interpretation, binds reconstructed messages to semantic callbacks, handles text
 fragments and control frames, and reproduces native reports in fresh processes.
 It uses project-owned stdlib TLS/framing with native signing/account/quote mapping;
 18 local TLS connections retain the fixture's 16 GET / 448-weight budget.
-First-request admission and complete shared-egress records remain missing.
+The offline first-request reviewer now reparses original rates, checks clock/bucket
+and history consistency, reserves the full scope plus other-client bounds, and
+retains separate/union connection calculations. Missing or self-reported evidence
+returns a blocked report with no network I/O. Actual source/gateway authentication,
+complete shared-egress records and per-dispatch durable admission remain missing.
 The real profile is not enabled and no baseline qualification follows.
 ADR-017 does not qualify this baseline or relax ADR-015 portfolio risk.
 Strict gates, SourcePolicy, execution runners and production accounts are unchanged.
@@ -217,7 +221,8 @@ Detailed depth implementation, retained hashes and next review:
 [original-route/native loopback integration](progress/portfolio-testnet-joint-transport-2026-09-14.md),
 [rate evidence and draft capture contract](progress/portfolio-testnet-joint-capture-contract-2026-09-14.md),
 [local TLS/Upgrade provenance](progress/portfolio-testnet-tls-provenance-2026-09-14.md),
-[joint TLS transport acceptance](progress/portfolio-testnet-joint-tls-transport-2026-09-14.md).
+[joint TLS transport acceptance](progress/portfolio-testnet-joint-tls-transport-2026-09-14.md),
+[offline first-request admission review](progress/portfolio-testnet-joint-admission-review-2026-09-14.md).
 
 ## Next Steps
 
@@ -230,9 +235,11 @@ Detailed depth implementation, retained hashes and next review:
    route fixation and native loopback transport integration now also pass.
    The distinct testnet draft and original rate-field parser are now implemented.
    Local TLS joint frame/control/lifecycle capture and detached replay now pass,
-   with real endpoints refused before networking. Next establish authenticated
-   initial usage/limits and complete egress records before real first-request admission,
-   then finish durable one-shot activation and separate real profile replay.
+   with real endpoints refused before networking. Offline first-request capacity
+   and missing-evidence review now also pass; untrusted candidate bounds never admit.
+   Next establish the source/gateway trust and evidence mechanism, fresh initial
+   usage/limits and complete egress records; then wire authenticated per-dispatch
+   reservations, durable one-shot activation and separate real profile replay.
    No new capture, seed probe or default-zero connection count is permitted by the draft.
    Keep unpriced/insufficient-depth assets explicit; neither prior depth outcome
    qualifies equity or a UTC baseline.
@@ -270,6 +277,13 @@ Detailed depth implementation, retained hashes and next review:
 
 ## Latest Verification
 
+- First-request review: **55 new tests / 106 focused tests pass**. Full-scope and
+  other-client bounds, all advertised intervals, clock/bucket/history checks,
+  uncertain/failed attempts, original hashes and self-authentication refusals pass.
+  Two fresh CLI reports match and remain blocked. Socket/DNS guards prove zero
+  network calls for missing and complete-looking candidate inputs. The actual
+  no-input review returns six blockers, exit 2 and zero venue requests.
+
 - Joint TLS transport: **118 focused tests pass**, with **78 added cases** across
   framing, source/age binding, early control frames and end-to-end collection.
   The 25 transport scenarios cover both native/plain and TLS profiles; TLS retains
@@ -278,38 +292,10 @@ Detailed depth implementation, retained hashes and next review:
   checks reject changed message/source/close evidence. Old synthetic archive and
   real draft hashes stay unchanged; all network peers are local fixtures.
 
-- Local TLS provenance: **53 new tests pass**, including actual ephemeral certificate
-  verification, all three fixture roles, raw/duplicate headers, invalid Upgrade,
-  partial/oversized replies, all ten fsync positions, closure and cancellation.
-  Source refusals make zero connections; consumed archives cannot be reused.
-  Two fresh offline CLI processes reproduce identical private reports. No new
-  dependency, upstream change, real endpoint or credential access.
-
-- Rate evidence: **48 parser cases and three draft-contract checks pass**;
-  definition/count separation, multiple intervals, malformed/duplicate fields,
-  exhausted usage, unknown connection counts and distinct endpoint scopes covered.
-  All five revision-pinned official source hashes rechecked via GitHub; no venue
-  request or credential use. New draft's 468-weight budget matches the planner
-  plus the early 20-weight metadata request; original 448-weight budget is intact.
-
-- Original-route/native loopback integration: **40 new tests**, **91 focused
-  tests pass**; the final nine native scenarios also pass after independent CLI
-  replay checks. Selected raw inputs/dispatch budgets, nine Ed25519 signatures,
-  16 GETs / 448 weight / two connections, 7 normal and 304 burst/interleaved native
-  quotes pass. Socket loss, unknown events, exhausted buffers/weight, disk failure
-  and cancellation stay failed without retries. The original synthetic archive
-  is byte-identical to `a9b4104`. Actual Binance credentials/endpoints were unused.
-
-- Synthetic joint journal: **51 new tests pass**. Three independent native quote
-  streams and both full CASH snapshots reproduce across two fresh CLI processes;
-  shared memory/disk limits, delayed processing, epoch/sequence/age failures,
-  account changes, UTC crossing and no-network CLI refusal paths pass.
-
-- Joint-observation planner: **16 focused tests pass**, including original native
-  evidence replay, per-asset exclusions, direct/two-hop routes, full REST/WS costs
-  and a private no-network CLI. Actual offline plan: 502 assets / 499 route symbols;
-  pilot 3 symbols, 448 weight, 496 outside-scope and 2 unpriced assets. No venue call.
-  Full regression and static checks pass.
+- Earlier TLS primitive, rate parser, original-route transport, synthetic journal
+  and observation-planner acceptance remain covered by the full regression.
+  Detailed historical counts and evidence live in their linked progress reports.
+  The original 448-weight fixture and separate 468-weight draft stay unchanged.
 
 - V2 depth: **107 focused tests pass** (44 additional cases), including 15 snapshot
   alignments versus an unbatched reference book and v1 byte-compatible archives.
@@ -317,7 +303,7 @@ Detailed depth implementation, retained hashes and next review:
   three clock samples pass and two independent replay reports are byte-identical.
   All six qualification flags remain false. V1 failure and fixed session hashes
   are unchanged; the new actual evidence is recorded in the linked progress report.
-- Full offline regression: **3,093 passed, 12 deselected** in 308.86 seconds.
+- Full offline regression: **3,148 passed, 12 deselected** in 311.52 seconds.
   The 12 Postgres integration tests lack a dedicated DSN.
   Ruff for apps/tests/notebooks, changed-file formatting, research registry,
   new progress links and diff checks pass.

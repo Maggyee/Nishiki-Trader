@@ -14,6 +14,11 @@ NautilusTrader 上的自定义 Strategy / Actor / 风控扩展。
 
 ## 当前入口
 
+`portfolio_joint_admission.py` 实现离线首请求容量检查：原始限额重解析、
+时钟/窗口与计数回退拒绝、完整区间用量上界和保守连接合计。候选出口记录
+尚无可信认证器，计算余量不授予网络准入。下一步接口与边界见
+[联合准入检查](../../docs/progress/portfolio-testnet-joint-admission-review-2026-09-14.md)。
+
 `portfolio_joint_tls_transport.py` 将本机 TLS/Upgrade 来源记录接入联合采集，
 `portfolio_joint_tls_evidence.py` 从原始接收块重建并绑定账户/行情消息；
 `portfolio_ws_frames.py` 支持有界文本分片、ping/pong 和关闭握手。
