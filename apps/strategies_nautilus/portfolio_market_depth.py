@@ -52,16 +52,27 @@ def amount(value, *, positive=False):
 
 
 class DepthBook:
-    def __init__(self, metadata, *, revision=1):
+    def __init__(
+        self, metadata, *, revision=1, symbol="BTCUSDT", base_asset="BTC", quote_asset="USDT"
+    ):
         self.revision = depth_revision(revision)
+        if (
+            any(
+                not isinstance(value, str) or not value.isascii() or not value.isalnum()
+                for value in (symbol, base_asset, quote_asset)
+            )
+            or symbol != base_asset + quote_asset
+        ):
+            raise DepthError("invalid_depth_symbol_selection")
+        self.symbol = symbol
         rows = metadata["symbols"]
         if not isinstance(rows, list) or len(rows) != 1:
             raise DepthError("single_symbol_metadata_required")
         row = rows[0]
         if (
-            row["symbol"] != "BTCUSDT"
-            or row["baseAsset"] != "BTC"
-            or row["quoteAsset"] != "USDT"
+            row["symbol"] != symbol
+            or row["baseAsset"] != base_asset
+            or row["quoteAsset"] != quote_asset
             or row["status"] != "TRADING"
             or row["isSpotTradingAllowed"] is not True
         ):
@@ -112,7 +123,7 @@ class DepthBook:
                 self.fail(self.failed)
             if (
                 event.get("e") != "depthUpdate"
-                or event.get("s") != "BTCUSDT"
+                or event.get("s") != self.symbol
                 or raw_size > MAX_FRAME
             ):
                 self.fail("unexpected_depth_frame")
@@ -201,7 +212,7 @@ class DepthBook:
         if bid >= ask:
             self.fail("crossed_depth_book")
         quote = QuoteTick(
-            InstrumentId.from_str("BTCUSDT.BINANCE"),
+            InstrumentId.from_str(f"{self.symbol}.BINANCE"),
             Price(bid, self.price_precision),
             Price(ask, self.price_precision),
             Quantity(self.bids[bid], self.size_precision),

@@ -7,6 +7,10 @@ dashboard snapshot support + Phase 6 passive readiness gate support。
 
 ## 当前入口
 
+`portfolio_joint_observation` 只重放显式哈希选择的合成联合归档，输出私有
+原生行情/全账户报告；没有采集模式，不加载凭证或启动交易。见
+[联合日志验收](../../docs/progress/portfolio-testnet-joint-observation-acceptance-2026-09-14.md)。
+
 `portfolio_testnet_observation_plan` 重放原始账户、市场和 v2 深度归档，生成
 三枢纽路由覆盖、完整请求预算及独立观察区间的私有规划报告。零网络请求，
 不授权联合采集；原始输入和下一步入口见

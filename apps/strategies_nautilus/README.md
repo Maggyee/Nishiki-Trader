@@ -14,12 +14,17 @@ NautilusTrader 上的自定义 Strategy / Actor / 风控扩展。
 
 ## 当前入口
 
+`portfolio_joint_observation.py` 实现合成数据专用的联合日志：共享账户/行情
+缓冲、持久化处理时间、各币种独立深度与全账户区间。原生回放不产生准入资格；
+真实路由绑定和传输接入仍需离线验收。见
+[联合日志验收](../../docs/progress/portfolio-testnet-joint-observation-acceptance-2026-09-14.md)。
+
 `portfolio_observation_plan.py` 从已重放的证据计算完整资产/路由排除项、
 BTC/ETH/BNB 三枢纽试验范围和账户前后观察的 REST/WS 预算。它是离线规划器，
-不是估值准入或网络执行器；后续多标的归档入口见
+不是估值准入或网络执行器；历史设计及后续入口见
 [联合观察设计](../../docs/progress/portfolio-testnet-joint-observation-design-2026-09-13.md)。
 
-`portfolio_market_depth.py` 是独立的 BTCUSDT 快照/增量重建核心；
+`portfolio_market_depth.py` 默认是独立的 BTCUSDT 快照/增量重建核心，另支持显式币种参数；
 `portfolio_market_depth_archive.py` 保存原始字节、验证归档并重放原生 QuoteTick。
 核心和归档默认保持 v1；显式 `revision=2` 将首条有效更新按 `L+1` 衔接，
 对应独立 profile 和合同哈希，不迁移旧归档。

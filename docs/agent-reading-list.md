@@ -183,6 +183,15 @@ can become total equity. The 0.0001 BTC / 10 test-USDT lifecycle plan is a draft
 fees, effective filters, baseline, permission and adapter recovery remain blocked.
 No trading runner, production rule, source policy or 14-day gate is changed.
 
+For the implemented synthetic multi-symbol queue and joint interval replay, read
+`docs/progress/portfolio-testnet-joint-observation-acceptance-2026-09-14.md` and
+`apps/strategies_nautilus/portfolio_joint_observation.py`. Shared pending/archive
+limits include account receipts and pre-snapshot buffers; durable dispatch times
+also gate processing age. This profile only accepts synthetic source bindings.
+Fresh route binding, shared-IP/connection admission and native transport integration
+remain required offline before a separately bounded actual contract. No consumed
+single-symbol attempt or fixed ADR-017 scope is reopened.
+
 For fixed-route coverage, aggregate budgets and the proposed joint account/market
 intervals, read `docs/progress/portfolio-testnet-joint-observation-design-2026-09-13.md`
 and its JSON, plus `apps/ops/portfolio_testnet_observation_plan.py`. The offline
@@ -190,8 +199,8 @@ planner replays original initial/account/market/depth inputs, preserves all asse
 and fixes BTC/ETH/BNB's deterministic routes at at most three streams. Two full
 four-GET account collections and WS overhead must be counted (448 weight in the
 historical pilot). This is not an implemented joint collector or new run permit.
-Next implement shared-buffer/interleaving/independent replay acceptance offline;
-future actual routing requires fresh selected evidence. Never invent a common
+The subsequent synthetic acceptance is described above; native transport integration
+and future actual routing still require fresh selected evidence. Never invent a common
 account/depth revision or reuse either consumed single-symbol attempt.
 
 For the actual completed v2 public depth attempt, read
