@@ -183,6 +183,15 @@ can become total equity. The 0.0001 BTC / 10 test-USDT lifecycle plan is a draft
 fees, effective filters, baseline, permission and adapter recovery remain blocked.
 No trading runner, production rule, source policy or 14-day gate is changed.
 
+For actual local TLS/Upgrade provenance and detached replay, read
+`docs/progress/portfolio-testnet-tls-provenance-2026-09-14.md` and
+`apps/strategies_nautilus/portfolio_tls_provenance.py`. Fixed fixture authorities
+connect only to literal loopback; raw chunks precede HTTP interpretation and
+certificate verification cannot be disabled. The primitive ends after Upgrade,
+without WS frame/subscription processing. Real endpoints fail before networking.
+Joint transport integration and actual pre-existing usage/egress admission remain
+outstanding; local TLS evidence cannot qualify a real source or open a new scope.
+
 For real rate-field interpretation and the separate draft joint capture contract,
 read `docs/progress/portfolio-testnet-joint-capture-contract-2026-09-14.md` and its
 JSON, plus `apps/strategies_nautilus/portfolio_rate_evidence.py`. CONNECTIONS limit

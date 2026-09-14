@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-14
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Preserve the consumed ADR-017 and public-depth scopes. Real rate-field interpretation and a separate draft joint capture contract now distinguish limits from usage and budget 17 GETs / 468 documented weight. Next implement source/handshake provenance and pre-network admission; complete shared-egress evidence remains unavailable. No actual joint capture is enabled. Full-account/UTC/flow/reset qualification and actual fills/cleanup remain unverified.
+- **Current objective**: Preserve the consumed ADR-017 and public-depth scopes. Local TLS/Upgrade provenance now passes original-byte capture, failure and independent replay acceptance. Next integrate provenance-capable transport with the joint journal and implement authenticated initial usage/egress admission; complete shared-egress evidence remains unavailable. The real draft stays at 17 GETs / 468 documented weight with no actual joint capture enabled. Full-account/UTC/flow/reset qualification and actual fills/cleanup remain unverified.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -102,10 +102,12 @@ WS/HTTP fixture reads, combined-stream callbacks, burst/closure failures and two
 fresh native replays pass. The separate draft testnet contract now budgets an
 early metadata GET (17 GETs / 468 documented weight) and a two-second linked
 observation. Original REST/WS rate fields parse offline, preserving unknown
-connection/RAW_REQUESTS usage and separate endpoint scopes. First-request admission,
-complete shared-egress records and raw handshake/TLS evidence remain missing;
-the installed native WS interface does not expose the required provenance.
-The new profile is not enabled and no baseline qualification follows.
+connection/RAW_REQUESTS usage and separate endpoint scopes. A new local-only TLS
+primitive now records actual certificate verification and raw HTTP/Upgrade chunks
+before interpretation, with private original-hash replay. It stops after Upgrade;
+the installed native WS interface still lacks provenance accessors. Joint frame
+transport integration, first-request admission and complete shared-egress records
+remain missing. The real profile is not enabled and no baseline qualification follows.
 ADR-017 does not qualify this baseline or relax ADR-015 portfolio risk.
 Strict gates, SourcePolicy, execution runners and production accounts are unchanged.
 
@@ -211,7 +213,8 @@ Detailed depth implementation, retained hashes and next review:
 [joint-observation coverage/budget design](progress/portfolio-testnet-joint-observation-design-2026-09-13.md),
 [synthetic joint journal acceptance](progress/portfolio-testnet-joint-observation-acceptance-2026-09-14.md),
 [original-route/native loopback integration](progress/portfolio-testnet-joint-transport-2026-09-14.md),
-[rate evidence and draft capture contract](progress/portfolio-testnet-joint-capture-contract-2026-09-14.md).
+[rate evidence and draft capture contract](progress/portfolio-testnet-joint-capture-contract-2026-09-14.md),
+[local TLS/Upgrade provenance](progress/portfolio-testnet-tls-provenance-2026-09-14.md).
 
 ## Next Steps
 
@@ -223,9 +226,11 @@ Detailed depth implementation, retained hashes and next review:
    delayed-dispatch, interleaving and one-symbol failure acceptance. Original-input
    route fixation and native loopback transport integration now also pass.
    The distinct testnet draft and original rate-field parser are now implemented.
-   Next implement project-owned transport provenance and refusal before any network
-   when initial usage/limits or complete egress evidence are absent. Establish actual
-   egress records, then finish durable one-shot admission and separate profile replay.
+   Local TLS/Upgrade source capture and detached replay now pass, with real endpoints
+   refused before networking. Next integrate provenance-capable transport with the
+   joint journal's full WS frame/control/lifecycle behavior. Establish authenticated
+   initial usage/limits and complete egress records before real first-request admission,
+   then finish durable one-shot activation and separate profile replay.
    No new capture, seed probe or default-zero connection count is permitted by the draft.
    Keep unpriced/insufficient-depth assets explicit; neither prior depth outcome
    qualifies equity or a UTC baseline.
@@ -263,6 +268,13 @@ Detailed depth implementation, retained hashes and next review:
 
 ## Latest Verification
 
+- Local TLS provenance: **53 new tests pass**, including actual ephemeral certificate
+  verification, all three fixture roles, raw/duplicate headers, invalid Upgrade,
+  partial/oversized replies, all ten fsync positions, closure and cancellation.
+  Source refusals make zero connections; consumed archives cannot be reused.
+  Two fresh offline CLI processes reproduce identical private reports. No new
+  dependency, upstream change, real endpoint or credential access.
+
 - Rate evidence: **48 parser cases and three draft-contract checks pass**;
   definition/count separation, multiple intervals, malformed/duplicate fields,
   exhausted usage, unknown connection counts and distinct endpoint scopes covered.
@@ -295,7 +307,7 @@ Detailed depth implementation, retained hashes and next review:
   three clock samples pass and two independent replay reports are byte-identical.
   All six qualification flags remain false. V1 failure and fixed session hashes
   are unchanged; the new actual evidence is recorded in the linked progress report.
-- Full offline regression: **2,962 passed, 12 deselected** in 324.15 seconds.
+- Full offline regression: **3,015 passed, 12 deselected** in 280.71 seconds.
   The 12 Postgres integration tests lack a dedicated DSN.
   Ruff for apps/tests and the research registry check pass.
 - Combined baseline review: **20 new tests** cover pinned-input replay, native

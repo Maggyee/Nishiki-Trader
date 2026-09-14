@@ -7,6 +7,11 @@ dashboard snapshot support + Phase 6 passive readiness gate support。
 
 ## 当前入口
 
+`portfolio_tls_provenance` 按原始哈希离线回放本机 TLS/Upgrade 来源归档，
+验证原始字节、证书记录、准备/关闭顺序，写入新的私有报告；没有采集或凭证选项。
+本机信任不等于交易所或共享出口认证。见
+[TLS 来源证据验收](../../docs/progress/portfolio-testnet-tls-provenance-2026-09-14.md)。
+
 `portfolio_joint_observation` 只重放显式哈希选择的合成联合归档，输出私有
 原生行情/全账户报告。显式 `--loopback-profile` 重放独立的原生本机传输
 归档并重算原始路由；默认仍为旧合成 profile。没有采集模式，不加载凭证或

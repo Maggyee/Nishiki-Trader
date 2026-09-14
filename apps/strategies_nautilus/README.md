@@ -14,6 +14,11 @@ NautilusTrader 上的自定义 Strategy / Actor / 风控扩展。
 
 ## 当前入口
 
+`portfolio_tls_provenance.py` 在固定本机 TLS 对端上保存实际证书校验信息、
+原始 HTTP/WS Upgrade 响应及失败记录；独立 CLI 可按原始哈希离线回放。
+它只验收握手，不处理 WS 数据帧或连接交易所。见
+[TLS 来源证据验收](../../docs/progress/portfolio-testnet-tls-provenance-2026-09-14.md)。
+
 `portfolio_rate_evidence.py` 离线解析原始 REST 响应头及 WS API 额度字段，
 区分额度定义、已用计数、账户/IP 范围和缺失的连接使用量；解析成功不授予网络准入。
 独立测试网采集草案、468 权重预算及出口/握手证据缺口见
