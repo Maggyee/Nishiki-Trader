@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-14
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Preserve the consumed ADR-017 and public-depth scopes. Original-input route fixation and native signed account/combined-market loopback integration now pass, with durable dispatch budgets and independent replay. Next define real shared-IP/connection evidence and a separate bounded testnet capture profile/contract before any actual collection. Full-account/UTC/flow/reset qualification and actual fills/cleanup remain unverified.
+- **Current objective**: Preserve the consumed ADR-017 and public-depth scopes. Real rate-field interpretation and a separate draft joint capture contract now distinguish limits from usage and budget 17 GETs / 468 documented weight. Next implement source/handshake provenance and pre-network admission; complete shared-egress evidence remains unavailable. No actual joint capture is enabled. Full-account/UTC/flow/reset qualification and actual fills/cleanup remain unverified.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -99,8 +99,13 @@ independent symbol gaps/ages and full-account intervals.
 The separate loopback profile now binds selected source bytes, derives routes from
 same-run account/metadata/books and checks durable dispatch budgets. Native signed
 WS/HTTP fixture reads, combined-stream callbacks, burst/closure failures and two
-fresh native replays pass. Actual shared-IP/connection evidence and a separate
-testnet capture contract remain required; no baseline qualification follows.
+fresh native replays pass. The separate draft testnet contract now budgets an
+early metadata GET (17 GETs / 468 documented weight) and a two-second linked
+observation. Original REST/WS rate fields parse offline, preserving unknown
+connection/RAW_REQUESTS usage and separate endpoint scopes. First-request admission,
+complete shared-egress records and raw handshake/TLS evidence remain missing;
+the installed native WS interface does not expose the required provenance.
+The new profile is not enabled and no baseline qualification follows.
 ADR-017 does not qualify this baseline or relax ADR-015 portfolio risk.
 Strict gates, SourcePolicy, execution runners and production accounts are unchanged.
 
@@ -205,7 +210,8 @@ Detailed depth implementation, retained hashes and next review:
 [actual v2 capture and replay](progress/portfolio-testnet-public-depth-v2-2026-09-13.md),
 [joint-observation coverage/budget design](progress/portfolio-testnet-joint-observation-design-2026-09-13.md),
 [synthetic joint journal acceptance](progress/portfolio-testnet-joint-observation-acceptance-2026-09-14.md),
-[original-route/native loopback integration](progress/portfolio-testnet-joint-transport-2026-09-14.md).
+[original-route/native loopback integration](progress/portfolio-testnet-joint-transport-2026-09-14.md),
+[rate evidence and draft capture contract](progress/portfolio-testnet-joint-capture-contract-2026-09-14.md).
 
 ## Next Steps
 
@@ -216,8 +222,11 @@ Detailed depth implementation, retained hashes and next review:
    independent-interval journal now passes synthetic native replay, shared-buffer,
    delayed-dispatch, interleaving and one-symbol failure acceptance. Original-input
    route fixation and native loopback transport integration now also pass.
-   Next define real shared-IP/per-endpoint connection evidence and a distinct
-   testnet capture profile/contract before any new bounded actual collection.
+   The distinct testnet draft and original rate-field parser are now implemented.
+   Next implement project-owned transport provenance and refusal before any network
+   when initial usage/limits or complete egress evidence are absent. Establish actual
+   egress records, then finish durable one-shot admission and separate profile replay.
+   No new capture, seed probe or default-zero connection count is permitted by the draft.
    Keep unpriced/insufficient-depth assets explicit; neither prior depth outcome
    qualifies equity or a UTC baseline.
    Full-account/UTC/flow/reset qualification remains separate and blocked.
@@ -254,6 +263,13 @@ Detailed depth implementation, retained hashes and next review:
 
 ## Latest Verification
 
+- Rate evidence: **48 parser cases and three draft-contract checks pass**;
+  definition/count separation, multiple intervals, malformed/duplicate fields,
+  exhausted usage, unknown connection counts and distinct endpoint scopes covered.
+  All five revision-pinned official source hashes rechecked via GitHub; no venue
+  request or credential use. New draft's 468-weight budget matches the planner
+  plus the early 20-weight metadata request; original 448-weight budget is intact.
+
 - Original-route/native loopback integration: **40 new tests**, **91 focused
   tests pass**; the final nine native scenarios also pass after independent CLI
   replay checks. Selected raw inputs/dispatch budgets, nine Ed25519 signatures,
@@ -279,7 +295,7 @@ Detailed depth implementation, retained hashes and next review:
   three clock samples pass and two independent replay reports are byte-identical.
   All six qualification flags remain false. V1 failure and fixed session hashes
   are unchanged; the new actual evidence is recorded in the linked progress report.
-- Full offline regression: **2,911 passed, 12 deselected** in 276.00 seconds.
+- Full offline regression: **2,962 passed, 12 deselected** in 324.15 seconds.
   The 12 Postgres integration tests lack a dedicated DSN.
   Ruff for apps/tests and the research registry check pass.
 - Combined baseline review: **20 new tests** cover pinned-input replay, native

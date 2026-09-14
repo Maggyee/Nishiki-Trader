@@ -14,6 +14,11 @@ NautilusTrader 上的自定义 Strategy / Actor / 风控扩展。
 
 ## 当前入口
 
+`portfolio_rate_evidence.py` 离线解析原始 REST 响应头及 WS API 额度字段，
+区分额度定义、已用计数、账户/IP 范围和缺失的连接使用量；解析成功不授予网络准入。
+独立测试网采集草案、468 权重预算及出口/握手证据缺口见
+[额度证据与采集合同](../../docs/progress/portfolio-testnet-joint-capture-contract-2026-09-14.md)。
+
 `portfolio_joint_routes.py` 将所选初始原始字节、本次账户/元数据/盘口绑定为
 固定路由；`portfolio_joint_transport.py` 在显式本机回环对端上验收原生 WS、
 Ed25519 签名、发送前预算和失败关闭，不支持交易所采集。见

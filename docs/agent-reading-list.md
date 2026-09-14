@@ -183,6 +183,15 @@ can become total equity. The 0.0001 BTC / 10 test-USDT lifecycle plan is a draft
 fees, effective filters, baseline, permission and adapter recovery remain blocked.
 No trading runner, production rule, source policy or 14-day gate is changed.
 
+For real rate-field interpretation and the separate draft joint capture contract,
+read `docs/progress/portfolio-testnet-joint-capture-contract-2026-09-14.md` and its
+JSON, plus `apps/strategies_nautilus/portfolio_rate_evidence.py`. CONNECTIONS limit
+definitions are not current usage; REST and WS scopes cannot be silently merged.
+The draft adds an early metadata GET (17 GETs / 468 documented weight), but first
+request admission, complete egress evidence and raw TLS/WS handshake provenance
+remain blocked. The parser never authenticates source or grants network admission;
+no actual profile or new probe is enabled. Preserve all consumed scopes.
+
 For original-input route fixation and native signed/combined loopback integration,
 read `docs/progress/portfolio-testnet-joint-transport-2026-09-14.md`,
 `portfolio_joint_routes.py` and `portfolio_joint_transport.py` under

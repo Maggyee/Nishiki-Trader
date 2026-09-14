@@ -1,0 +1,327 @@
+{
+  "schema_version": "portfolio.testnet_joint_capture_contract.v1",
+  "status": "draft_offline_contract_not_network_run_authorization",
+  "profile": "portfolio.testnet_joint_observation.v1",
+  "review_date": "2026-09-14",
+  "provider_contract_sha256": "376eebff8fd2309027df2334f39d3ec73fd017f6a8afff1b3f0e3ea3023d879e",
+  "provider_revision": "b8a0f61e088c65d18a157f2e11a8e273826b6c08",
+  "sources": [
+    {
+      "path": "testnet/general-info.md",
+      "url": "https://raw.githubusercontent.com/binance/binance-spot-api-docs/b8a0f61e088c65d18a157f2e11a8e273826b6c08/testnet/general-info.md",
+      "bytes": 11464,
+      "sha256": "b6d0ee76abc180ed904a493d4b2272d3af2fbcffc051cb61753f744bc461f50f",
+      "retrieved_at": "2026-09-13T04:43:49.673966+00:00"
+    },
+    {
+      "path": "testnet/rest-api.md",
+      "url": "https://raw.githubusercontent.com/binance/binance-spot-api-docs/b8a0f61e088c65d18a157f2e11a8e273826b6c08/testnet/rest-api.md",
+      "bytes": 177083,
+      "sha256": "a73a3d2103387e4442b91b28b12f7e59bbf2479a1ee117fdd261d2521c5625a2",
+      "retrieved_at": "2026-09-13T04:43:49.865015+00:00"
+    },
+    {
+      "path": "testnet/web-socket-streams.md",
+      "url": "https://raw.githubusercontent.com/binance/binance-spot-api-docs/b8a0f61e088c65d18a157f2e11a8e273826b6c08/testnet/web-socket-streams.md",
+      "bytes": 22998,
+      "sha256": "13428b2e5f4d9dc7654331d4c65e6befea776d2b7408fe5980343708f72d96e6",
+      "retrieved_at": "2026-09-13T04:43:49.740832+00:00"
+    },
+    {
+      "path": "testnet/user-data-stream.md",
+      "url": "https://raw.githubusercontent.com/binance/binance-spot-api-docs/b8a0f61e088c65d18a157f2e11a8e273826b6c08/testnet/user-data-stream.md",
+      "bytes": 13211,
+      "sha256": "9996743b209cd192d9bb1556a0a0d140928627ed51408f1e9053b2c43a7cbce1",
+      "retrieved_at": "2026-09-13T04:43:49.757392+00:00"
+    },
+    {
+      "path": "testnet/web-socket-api.md",
+      "url": "https://raw.githubusercontent.com/binance/binance-spot-api-docs/b8a0f61e088c65d18a157f2e11a8e273826b6c08/testnet/web-socket-api.md",
+      "bytes": 269725,
+      "sha256": "758bbf8c134bc6fe7d0e93df1904784024fc8bd8c37961373e27fb6b51ff29a3",
+      "retrieved_at": "2026-09-13T04:43:49.857004+00:00"
+    }
+  ],
+  "sources_retrieved_again_and_hash_verified_on": "2026-09-14",
+  "provider_claims": {
+    "rest_weight_usage": "response_X-MBX-USED-WEIGHT_interval_headers_per_IP",
+    "ws_api_weight_usage": "top_level_response_rateLimits_count_per_IP",
+    "ws_api_result_exchangeInfo_connections": "limit_definition_not_current_count",
+    "preconnect_global_connection_usage_interface": "not_documented_in_reviewed_sources",
+    "market_ws_and_ws_api_shared_connection_ledger": "not_established_by_reviewed_sources",
+    "market_ws_connection_request_weight": "not_specified_in_reviewed_market_stream_document",
+    "observed_socket_peer_identifies_public_egress_IP": false,
+    "matching_UID_or_key_identifies_public_egress_IP": false
+  },
+  "endpoints": {
+    "rest": "https://testnet.binance.vision",
+    "account": "wss://ws-api.testnet.binance.vision/ws-api/v3",
+    "market": "wss://stream.testnet.binance.vision/stream",
+    "ports": [
+      443
+    ],
+    "redirects": 0,
+    "endpoint_fallbacks": 0,
+    "proxy_policy": "no_unbound_proxy_or_egress_change"
+  },
+  "route_selection": {
+    "target_assets": [
+      "BTC",
+      "ETH",
+      "BNB"
+    ],
+    "policy": "ADR016_direct_then_two_hops_v1",
+    "max_union_symbols": 3,
+    "substitution": false,
+    "snapshot_levels": 100,
+    "inputs": "same_run_full_account_then_route_exchangeInfo_then_all_bookTicker",
+    "early_rate_metadata_is_not_route_metadata": true
+  },
+  "maximum_three_symbol_budget": {
+    "rest_requests": [
+      {
+        "phase": "clock_initial",
+        "method": "GET",
+        "path": "/api/v3/time",
+        "params": {},
+        "weight": 1
+      },
+      {
+        "phase": "rate_limit_discovery",
+        "method": "GET",
+        "path": "/api/v3/exchangeInfo",
+        "params": {},
+        "weight": 20
+      },
+      {
+        "phase": "account_before",
+        "method": "GET",
+        "path": "/api/v3/account",
+        "params": {
+          "omitZeroBalances": "false"
+        },
+        "weight": 20
+      },
+      {
+        "phase": "account_before",
+        "method": "GET",
+        "path": "/api/v3/openOrders",
+        "params": {},
+        "weight": 80
+      },
+      {
+        "phase": "account_before",
+        "method": "GET",
+        "path": "/api/v3/openOrders",
+        "params": {},
+        "weight": 80
+      },
+      {
+        "phase": "account_before",
+        "method": "GET",
+        "path": "/api/v3/account",
+        "params": {
+          "omitZeroBalances": "false"
+        },
+        "weight": 20
+      },
+      {
+        "phase": "route_discovery",
+        "method": "GET",
+        "path": "/api/v3/exchangeInfo",
+        "params": {},
+        "weight": 20
+      },
+      {
+        "phase": "route_discovery",
+        "method": "GET",
+        "path": "/api/v3/ticker/bookTicker",
+        "params": {},
+        "weight": 4
+      },
+      {
+        "phase": "market_bootstrap",
+        "method": "GET",
+        "path": "/api/v3/depth",
+        "params": {
+          "symbol": "BNBUSDT",
+          "limit": "100"
+        },
+        "weight": 5
+      },
+      {
+        "phase": "market_bootstrap",
+        "method": "GET",
+        "path": "/api/v3/depth",
+        "params": {
+          "symbol": "BTCUSDT",
+          "limit": "100"
+        },
+        "weight": 5
+      },
+      {
+        "phase": "market_bootstrap",
+        "method": "GET",
+        "path": "/api/v3/depth",
+        "params": {
+          "symbol": "ETHUSDT",
+          "limit": "100"
+        },
+        "weight": 5
+      },
+      {
+        "phase": "clock_linked",
+        "method": "GET",
+        "path": "/api/v3/time",
+        "params": {},
+        "weight": 1
+      },
+      {
+        "phase": "account_after",
+        "method": "GET",
+        "path": "/api/v3/account",
+        "params": {
+          "omitZeroBalances": "false"
+        },
+        "weight": 20
+      },
+      {
+        "phase": "account_after",
+        "method": "GET",
+        "path": "/api/v3/openOrders",
+        "params": {},
+        "weight": 80
+      },
+      {
+        "phase": "account_after",
+        "method": "GET",
+        "path": "/api/v3/openOrders",
+        "params": {},
+        "weight": 80
+      },
+      {
+        "phase": "account_after",
+        "method": "GET",
+        "path": "/api/v3/account",
+        "params": {
+          "omitZeroBalances": "false"
+        },
+        "weight": 20
+      },
+      {
+        "phase": "clock_final",
+        "method": "GET",
+        "path": "/api/v3/time",
+        "params": {},
+        "weight": 1
+      }
+    ],
+    "rest_get_count": 17,
+    "private_get_count": 8,
+    "rest_weight": 462,
+    "ws_api_operations": [
+      {
+        "operation": "ws_api_connection",
+        "weight": 2
+      },
+      {
+        "operation": "userDataStream.subscribe.signature",
+        "weight": 2
+      },
+      {
+        "operation": "userDataStream.unsubscribe",
+        "weight": 2
+      }
+    ],
+    "ws_api_weight": 6,
+    "total_documented_weight": 468,
+    "market_connections": 1,
+    "market_streams": 3,
+    "account_ws_api_connections": 1,
+    "http_retries": 0,
+    "snapshot_retries": 0,
+    "reconnects": 0,
+    "current_shared_ip_budget_verified": false
+  },
+  "budget_interpretation": {
+    "468_is_documented_operation_weight_not_a_measurement_of_all_provider_charges": true,
+    "all_current_advertised_applicable_intervals_required": true,
+    "missing_RAW_REQUESTS_usage": "blocked_unless_complete_bound_egress_ledger_provides_upper_bound",
+    "before_first_request": "fresh_preexisting_authenticated_usage_limits_and_egress_evidence_or_remain_blocked",
+    "first_request_is_not_exempt": true,
+    "unbudgeted_seed_probe_permitted": false,
+    "rest_and_ws_counter_scope": "retain_separate_until_explicit_scope_binding_no_blind_overwrite",
+    "connection_ledger": "separate_endpoint_attempt_records_plus_conservative_union_reservation",
+    "connection_coverage": "complete_rolling_300_seconds_and_entire_capture_for_all_clients_on_bound_egress",
+    "locally_consumed_attempt": "fsynced_before_dispatch_including_failure_or_ambiguous_outcome",
+    "sample_max_age_ns": 5000000000,
+    "window_rule": "entire_server_time_uncertainty_interval_in_same_bucket_no_reset_inference",
+    "every_dispatch": "reserve_complete_remaining_scope_and_other_client_upper_bound_in_all_applicable_intervals",
+    "rate_limit_response": "retain_418_429_and_retry_metadata_then_abort_without_retry"
+  },
+  "source_evidence": {
+    "selected_initial": "original_bytes_hash_UID_key_fingerprint_rest_endpoint",
+    "each_transport": "exact_authority_path_port_TLS_hostname_verification_peer_certificate_digest_peer_address_and_original_handshake_response",
+    "egress": "independent_gateway_or_network_control_records_bound_to_destination_address_family_and_capture_interval",
+    "no_secret_archival": "never_archive_API_key_private_key_or_outbound_signatures",
+    "rest_response": "original_body_and_ordered_response_header_pairs_before_normalization",
+    "ws_response": "original_frame_before_ack_event_or_rate_classification",
+    "timestamps": "request_preparation_send_receipt_dispatch_UTC_and_monotonic_plus_server_offset_interval",
+    "identity_checks": "fresh_full_account_UID_and_key_selection_on_each_collection_same_subscription_epoch",
+    "socket_active_or_hash_alone_authenticates_source": false
+  },
+  "resource_envelope": {
+    "max_capture_seconds": 120,
+    "shared_shutdown_seconds": 5,
+    "per_request_seconds": 10,
+    "market_bootstrap_seconds": 15,
+    "observe_after_link_seconds": 2,
+    "aggregate_pending_bytes": 16777216,
+    "aggregate_pending_receipts": 4096,
+    "frame_bytes": 1048576,
+    "archive_bytes": 67108864,
+    "incident_reserve_bytes": 4096,
+    "sample_and_event_age_ns": 5000000000,
+    "http_retries": 0,
+    "reconnects": 0,
+    "snapshot_retries": 0,
+    "max_attempt_scopes": 1,
+    "scope_consumed_before_first_external_dispatch": true,
+    "failure_does_not_create_new_scope": true
+  },
+  "required_offline_acceptance": [
+    "limit_definitions_not_usage_counts_and_no_zero_default",
+    "duplicate_case_variant_headers_and_duplicate_JSON_fields_refused",
+    "all_advertised_weight_intervals_bound_and_unknown_usage_preserved",
+    "endpoint_family_and_account_vs_IP_scope_separation",
+    "missing_initial_evidence_blocks_before_any_network",
+    "complete_egress_attempt_ledger_and_other_client_usage_reservations",
+    "TLS_handshake_provenance_no_redirect_proxy_or_address_family_drift",
+    "clock_uncertainty_window_edge_stale_or_regressing_counter_refusal",
+    "extra_early_exchangeInfo_counted_without_changing_route_input_order",
+    "durable_once_only_scope_faults_and_two_fresh_native_replays"
+  ],
+  "current_blockers": [
+    "fresh_preexisting_authenticated_usage_and_all_applicable_interval_limits_not_supplied",
+    "complete_shared_egress_request_and_connection_attempt_evidence_not_supplied",
+    "native_1_226_0_WebSocketClient_public_Python_interface_does_not_expose_handshake_or_peer_TLS_evidence",
+    "new_profile_transport_admission_and_durable_activation_not_implemented"
+  ],
+  "network_entrypoint_implemented": false,
+  "new_probe_authorized": false,
+  "qualification": {
+    "current_account_verified": false,
+    "account_market_atomic_revision_verified": false,
+    "valuation_qualified": false,
+    "baseline_qualified": false,
+    "runtime_ready": false,
+    "new_orders_authorized": false,
+    "strict_continuity_days": 0
+  },
+  "common_account_market_revision": null,
+  "qualified_equity_usdt": null,
+  "qualified_day_open_usdt": null,
+  "qualified_peak_equity_usdt": null,
+  "qualified_daily_loss_usdt": null,
+  "qualified_peak_loss_usdt": null
+}
