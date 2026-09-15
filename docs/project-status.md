@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-15
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Preserve the consumed ADR-017 and public-depth scopes. Local TLS joint collection/replay and offline first-request checks pass. Selected source/gateway signature authorship now verifies against original inputs, independent policy/scope selection and signed time bounds. Next qualify actual signer authorities and complete enforcing-gateway evidence, then wire per-dispatch reservations and the separate durable real one-shot profile. Signatures alone do not qualify coverage. The real draft stays at 17 GETs / 468 documented weight with no actual joint capture enabled. Full-account/UTC/flow/reset qualification and actual fills/cleanup remain unverified.
+- **Current objective**: Preserve the consumed ADR-017 and public-depth scopes. The separately authorized offline 21-step rehearsal now joins signed evidence, remaining-budget checks and durable preparation accounting, including abrupt-exit replay. The operator confirms actual gateway records are unavailable. Next qualify source/gateway authorities and complete enforced coverage, then integrate real dispatch-time freshness and the separate durable one-shot capture profile. Signatures and rehearsal records do not qualify coverage or reserve gateway capacity. The real draft stays at 17 GETs / 468 documented weight; actual joint capture, full-account/UTC/flow/reset qualification and fills/cleanup remain unverified.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -113,12 +113,14 @@ and history consistency, calculates full-scope plus other-client reservations, a
 retains separate/union connection calculations. Missing or self-reported evidence
 returns a blocked report with no network I/O. Actual source/gateway authentication,
 complete shared-egress records and per-dispatch durable admission remain missing.
-The new offline authorship interface verifies separate selected Ed25519 signatures
-over the exact candidate, policy, scope and component hashes. Signed time bounds
-reject future/expired claims and signatures predating observed inputs. Private
-reports preserve all capacity blockers and replay identically in fresh processes.
-Selected keys do not qualify signer authorities or gateway coverage/enforcement;
-no capacity is reserved and no one-shot scope is activated.
+Selected source/gateway signatures bind original candidates, policy, scope and time.
+The operator confirms gateway records are unavailable and authorized an offline
+21-step rehearsal joining those signatures to remaining-budget checks and durable
+local consumption. Failure/uncertainty retains attempts; abrupt exit preserves a
+replayable pending step and the original archive cannot be reopened. Independent
+replays match. This is local accounting only: signer authority, coverage and
+unknown-charge blockers remain, no gateway capacity is reserved, and no transport
+consumes the records or activates a real one-shot scope.
 The real profile is not enabled and no baseline qualification follows.
 ADR-017 does not qualify this baseline or relax ADR-015 portfolio risk.
 Strict gates, SourcePolicy, execution runners and production accounts are unchanged.
@@ -229,7 +231,8 @@ Detailed depth implementation, retained hashes and next review:
 [local TLS/Upgrade provenance](progress/portfolio-testnet-tls-provenance-2026-09-14.md),
 [joint TLS transport acceptance](progress/portfolio-testnet-joint-tls-transport-2026-09-14.md),
 [offline first-request admission review](progress/portfolio-testnet-joint-admission-review-2026-09-14.md),
-[selected source/gateway authorship](progress/portfolio-testnet-joint-attestation-2026-09-15.md).
+[selected source/gateway authorship](progress/portfolio-testnet-joint-attestation-2026-09-15.md),
+[offline per-step reservation rehearsal](progress/portfolio-testnet-joint-reservation-2026-09-15.md).
 
 ## Next Steps
 
@@ -246,6 +249,9 @@ Detailed depth implementation, retained hashes and next review:
    and missing-evidence review now also pass; untrusted candidate bounds never admit.
    Selected source/gateway authorship and durable blocked reports now pass;
    actual authority qualification and gateway enforcement remain unverified.
+   The operator confirms no gateway records are available; the authorized offline
+   21-step remaining-budget/durable-preparation rehearsal now passes, including
+   incomplete crash replay and refusal to reopen the original archive.
    Next obtain independently qualified signer/source records, fresh initial
    usage/limits and complete enforced egress records; then wire authenticated per-dispatch
    reservations, durable one-shot activation and separate real profile replay.
@@ -286,18 +292,14 @@ Detailed depth implementation, retained hashes and next review:
 
 ## Latest Verification
 
-- Source/gateway authorship: **58 new / 164 focused tests pass**. Native signatures
-  and RFC 8032 verification, original-byte/policy/scope/time binding, wrong keys,
-  future observation claims, malformed proofs and preserved capacity blockers pass.
-  Two fresh CLI reviews match; concurrent/private report publication and failed
-  fsync are covered. All inputs are synthetic; no venue request or activation.
+- Offline reservation rehearsal: **36 new / 200 focused tests pass**. All 21
+  preparations consume exactly 17 GETs / 468 documented weight / two connections.
+  Exact-limit remaining budgets, signed-bound omissions, failures, uncertain
+  outcomes, clocks, disk errors, rehashed tampering and fresh-process crash replay
+  pass. Two fresh CLI reports match and remain blocked; all evidence is synthetic.
 
-- First-request review: **55 new tests / 106 focused tests pass**. Full-scope and
-  other-client bounds, all advertised intervals, clock/bucket/history checks,
-  uncertain/failed attempts, original hashes and self-authentication refusals pass.
-  Two fresh CLI reports match and remain blocked. Socket/DNS guards prove zero
-  network calls for missing and complete-looking candidate inputs. The actual
-  no-input review returns six blockers, exit 2 and zero venue requests.
+- Source/gateway authorship and first-request capacity reviews remain covered by
+  regression. Their detailed acceptance results are in the linked progress reports.
 
 - Joint TLS transport: **118 focused tests pass**, with **78 added cases** across
   framing, source/age binding, early control frames and end-to-end collection.
@@ -318,7 +320,7 @@ Detailed depth implementation, retained hashes and next review:
   three clock samples pass and two independent replay reports are byte-identical.
   All six qualification flags remain false. V1 failure and fixed session hashes
   are unchanged; the new actual evidence is recorded in the linked progress report.
-- Full offline regression: **3,206 passed, 12 deselected** in 311.78 seconds.
+- Full offline regression: **3,242 passed, 12 deselected** in 318.76 seconds.
   The 12 Postgres integration tests lack a dedicated DSN.
   Ruff for apps/tests/notebooks, changed-file formatting, research registry,
   new progress links and diff checks pass.

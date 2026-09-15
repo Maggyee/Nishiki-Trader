@@ -7,6 +7,11 @@ dashboard snapshot support + Phase 6 passive readiness gate support。
 
 ## 当前入口
 
+`portfolio_joint_reservation` 仅重放显式选择的离线逐步预留验收日志，
+重新验证每一步签名、剩余预算和已准备消耗，保留中断后的待决步骤。
+返回 2 表示报告已写入；不预留真实网关额度、不激活采集。见
+[离线逐步预留验收](../../docs/progress/portfolio-testnet-joint-reservation-2026-09-15.md)。
+
 `portfolio_joint_attestation` 离线验证显式选定的来源/网关签名及证据哈希，
 持久化新的私有报告。返回 2 表示签发者验证完成但网络准入仍被拒绝；
 报告不会预留额度或激活一次性采集。输入与信任边界见

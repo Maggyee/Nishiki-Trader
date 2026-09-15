@@ -14,6 +14,11 @@ NautilusTrader 上的自定义 Strategy / Actor / 风控扩展。
 
 ## 当前入口
 
+`portfolio_joint_reservation.py` 对固定最大预算执行独立离线验收：
+21 步准备、17 GET / 468 已知权重，逐步验证签名并持久化已准备消耗。
+失败、不确定结果或中断后不允许在原日志重启；不连接传输层或预留真实额度。
+见 [离线逐步预留验收](../../docs/progress/portfolio-testnet-joint-reservation-2026-09-15.md)。
+
 `portfolio_joint_attestation.py` 按独立选定的来源/网关公钥验证证据签名，
 绑定原始候选、策略、采集范围、出口地址和有效期，再重算现有额度检查。
 仅验证签发者；实际来源权威、网关覆盖和额度预留仍未获验证。

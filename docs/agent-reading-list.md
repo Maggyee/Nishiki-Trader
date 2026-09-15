@@ -201,6 +201,14 @@ Signatures do not qualify signer authorities, traffic completeness or future
 enforcement. Reports remain blocked and never reserve capacity or consume a scope.
 Actual records and authority qualification precede per-dispatch durable admission.
 
+For the separately authorized offline per-step reservation rehearsal, read
+`docs/progress/portfolio-testnet-joint-reservation-2026-09-15.md` and
+`apps/strategies_nautilus/portfolio_joint_reservation.py`. The operator confirms
+actual gateway records are unavailable. The fixed 21-step maximum checks signed
+bounds and durable local consumption; failed/uncertain steps never refund or retry.
+Original-file reopen is refused; detached incomplete replay cannot resume.
+All real admission blockers remain, and no transport consumes these records.
+
 For integrated local TLS joint collection and original-frame replay, read
 `docs/progress/portfolio-testnet-joint-tls-transport-2026-09-14.md`,
 `portfolio_joint_tls_transport.py`, `portfolio_joint_tls_evidence.py` and
