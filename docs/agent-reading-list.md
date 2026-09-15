@@ -209,6 +209,15 @@ bounds and durable local consumption; failed/uncertain steps never refund or ret
 Original-file reopen is refused; detached incomplete replay cannot resume.
 All real admission blockers remain, and no transport consumes these records.
 
+For VPS egress topology and the proposed host guard, read
+`docs/progress/portfolio-vps-egress-assessment-2026-09-15.md`. The operator confirms
+VNIC-bound public IPv4 through Oracle Internet Gateway. Host OUTPUT, Docker,
+Tailscale and IPv6 need coverage; pasted rules are not a complete gateway audit.
+Independent OUTPUT/FORWARD guards and a possible separate public source are
+proposals, not deployed controls. No existing gateway records are available;
+the first-request bootstrap policy remains unresolved. Do not infer a seed-probe
+permit or modify the frozen capture contract from this assessment.
+
 For integrated local TLS joint collection and original-frame replay, read
 `docs/progress/portfolio-testnet-joint-tls-transport-2026-09-14.md`,
 `portfolio_joint_tls_transport.py`, `portfolio_joint_tls_evidence.py` and

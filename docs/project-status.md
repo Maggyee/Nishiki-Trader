@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-15
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Preserve the consumed ADR-017 and public-depth scopes. The separately authorized offline 21-step rehearsal now joins signed evidence, remaining-budget checks and durable preparation accounting, including abrupt-exit replay. The operator confirms actual gateway records are unavailable. Next qualify source/gateway authorities and complete enforced coverage, then integrate real dispatch-time freshness and the separate durable one-shot capture profile. Signatures and rehearsal records do not qualify coverage or reserve gateway capacity. The real draft stays at 17 GETs / 468 documented weight; actual joint capture, full-account/UTC/flow/reset qualification and fills/cleanup remain unverified.
+- **Current objective**: Preserve the consumed ADR-017 and public-depth scopes. Offline 21-step reservation acceptance is complete. The VPS assessment now records operator-confirmed VNIC public IPv4 through Oracle Internet Gateway and proposes host/container/IPv6 coverage; no guard is deployed and gateway records remain unavailable. Next evaluate egress isolation locally and resolve first-request evidence or a separate prospective bootstrap contract, then qualify authorities and enforced coverage before real dispatch integration. The frozen draft stays at 17 GETs / 468 documented weight; actual joint capture, full-account/UTC/flow/reset qualification and fills/cleanup remain unverified.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -232,7 +232,8 @@ Detailed depth implementation, retained hashes and next review:
 [joint TLS transport acceptance](progress/portfolio-testnet-joint-tls-transport-2026-09-14.md),
 [offline first-request admission review](progress/portfolio-testnet-joint-admission-review-2026-09-14.md),
 [selected source/gateway authorship](progress/portfolio-testnet-joint-attestation-2026-09-15.md),
-[offline per-step reservation rehearsal](progress/portfolio-testnet-joint-reservation-2026-09-15.md).
+[offline per-step reservation rehearsal](progress/portfolio-testnet-joint-reservation-2026-09-15.md),
+[VPS egress assessment and isolation proposal](progress/portfolio-vps-egress-assessment-2026-09-15.md).
 
 ## Next Steps
 
@@ -252,8 +253,13 @@ Detailed depth implementation, retained hashes and next review:
    The operator confirms no gateway records are available; the authorized offline
    21-step remaining-budget/durable-preparation rehearsal now passes, including
    incomplete crash replay and refusal to reopen the original archive.
-   Next obtain independently qualified signer/source records, fresh initial
-   usage/limits and complete enforced egress records; then wire authenticated per-dispatch
+   Next test the proposed OUTPUT/FORWARD isolation in disposable local namespaces;
+   the operator confirms VNIC public IPv4 through Internet Gateway, but no guard
+   or complete audit is deployed. Evaluate a separate public source if preserving
+   personal proxy access. Resolve pre-existing first-request evidence or a separate
+   prospective bootstrap contract; waiting alone cannot satisfy the frozen draft.
+   Obtain qualified signer/source records, fresh initial usage/limits and complete
+   enforced egress records; then wire authenticated per-dispatch
    reservations, durable one-shot activation and separate real profile replay.
    No new capture, seed probe or default-zero connection count is permitted by the draft.
    Keep unpriced/insufficient-depth assets explicit; neither prior depth outcome
@@ -291,6 +297,11 @@ Detailed depth implementation, retained hashes and next review:
 - Nautilus is the only execution engine; LLMs never enter the order path.
 
 ## Latest Verification
+
+- VPS egress assessment: documentation links, diff and frozen capture JSON hash
+  checked. Active rules/inventory and cloud topology include operator-supplied
+  evidence; no enforcement test, firewall change or venue request was performed.
+  The implementation regression results below predate this documentation change.
 
 - Offline reservation rehearsal: **36 new / 200 focused tests pass**. All 21
   preparations consume exactly 17 GETs / 468 documented weight / two connections.
