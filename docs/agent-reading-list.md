@@ -218,6 +218,14 @@ proposals, not deployed controls. No existing gateway records are available;
 the first-request bootstrap policy remains unresolved. Do not infer a seed-probe
 permit or modify the frozen capture contract from this assessment.
 
+For actual disposable Linux egress-hook acceptance, read
+`docs/progress/portfolio-vps-egress-namespace-acceptance-2026-09-15.md` and
+`infra/egress-guard/README.md`. The standalone non-root fixture passes 23 checks
+for dual-stack OUTPUT/FORWARD, earlier accepts, reused sockets, source checks and
+rollback. A direct sudo-read host rules snapshot remains local and is not a
+historical all-caller ledger. No host guard or collector is deployed; source
+identity, continuous enforcement and first-request bootstrap remain unqualified.
+
 For integrated local TLS joint collection and original-frame replay, read
 `docs/progress/portfolio-testnet-joint-tls-transport-2026-09-14.md`,
 `portfolio_joint_tls_transport.py`, `portfolio_joint_tls_evidence.py` and

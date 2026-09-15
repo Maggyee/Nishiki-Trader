@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-15
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Preserve the consumed ADR-017 and public-depth scopes. Offline 21-step reservation acceptance is complete. The VPS assessment now records operator-confirmed VNIC public IPv4 through Oracle Internet Gateway and proposes host/container/IPv6 coverage; no guard is deployed and gateway records remain unavailable. Next evaluate egress isolation locally and resolve first-request evidence or a separate prospective bootstrap contract, then qualify authorities and enforced coverage before real dispatch integration. The frozen draft stays at 17 GETs / 468 documented weight; actual joint capture, full-account/UTC/flow/reset qualification and fills/cleanup remain unverified.
+- **Current objective**: Preserve consumed ADR-017 and public-depth scopes. Offline 21-step reservation acceptance and 23 disposable Linux egress-hook checks pass. A direct sudo-read host rules snapshot confirms the earlier VPS assessment; no host guard is deployed and historical gateway records remain unavailable. Next model the actual source/identity boundary and continuous enforcement, and resolve first-request evidence or a separate prospective bootstrap contract before real dispatch integration. The frozen draft stays at 17 GETs / 468 documented weight; actual joint capture, full-account/UTC/flow/reset qualification and fills/cleanup remain unverified.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -233,7 +233,8 @@ Detailed depth implementation, retained hashes and next review:
 [offline first-request admission review](progress/portfolio-testnet-joint-admission-review-2026-09-14.md),
 [selected source/gateway authorship](progress/portfolio-testnet-joint-attestation-2026-09-15.md),
 [offline per-step reservation rehearsal](progress/portfolio-testnet-joint-reservation-2026-09-15.md),
-[VPS egress assessment and isolation proposal](progress/portfolio-vps-egress-assessment-2026-09-15.md).
+[VPS egress assessment and isolation proposal](progress/portfolio-vps-egress-assessment-2026-09-15.md),
+[actual isolated Linux hook acceptance](progress/portfolio-vps-egress-namespace-acceptance-2026-09-15.md).
 
 ## Next Steps
 
@@ -253,10 +254,12 @@ Detailed depth implementation, retained hashes and next review:
    The operator confirms no gateway records are available; the authorized offline
    21-step remaining-budget/durable-preparation rehearsal now passes, including
    incomplete crash replay and refusal to reopen the original archive.
-   Next test the proposed OUTPUT/FORWARD isolation in disposable local namespaces;
-   the operator confirms VNIC public IPv4 through Internet Gateway, but no guard
-   or complete audit is deployed. Evaluate a separate public source if preserving
-   personal proxy access. Resolve pre-existing first-request evidence or a separate
+   Disposable OUTPUT/FORWARD acceptance now passes 23 dual-stack checks, including
+   earlier accepts, reused sockets and rollback; the host rules were read directly
+   with operator-granted sudo. Next model actual source authorization and a guard
+   lease/ledger that detects coverage loss. No host guard or complete audit is
+   deployed. Evaluate a separate public source if preserving personal proxy access.
+   Resolve pre-existing first-request evidence or a separate
    prospective bootstrap contract; waiting alone cannot satisfy the frozen draft.
    Obtain qualified signer/source records, fresh initial usage/limits and complete
    enforced egress records; then wire authenticated per-dispatch
@@ -298,10 +301,12 @@ Detailed depth implementation, retained hashes and next review:
 
 ## Latest Verification
 
-- VPS egress assessment: documentation links, diff and frozen capture JSON hash
-  checked. Active rules/inventory and cloud topology include operator-supplied
-  evidence; no enforcement test, firewall change or venue request was performed.
-  The implementation regression results below predate this documentation change.
+- Isolated VPS egress fixture: **23 Linux checks / 13 focused Python tests pass**.
+  Dual-stack host/bridge paths, earlier accepts, fresh/reused connections, controls,
+  source checks and rollback pass. Direct host nftables reads show unchanged rule
+  structure excluding counters; no host rule change or venue request was made. Ruff,
+  docs/diff checks and the frozen capture hash pass. Prior application regression
+  results below were not rerun for this standalone infrastructure fixture.
 
 - Offline reservation rehearsal: **36 new / 200 focused tests pass**. All 21
   preparations consume exactly 17 GETs / 468 documented weight / two connections.
