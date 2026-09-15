@@ -14,6 +14,11 @@ NautilusTrader 上的自定义 Strategy / Actor / 风控扩展。
 
 ## 当前入口
 
+`portfolio_joint_attestation.py` 按独立选定的来源/网关公钥验证证据签名，
+绑定原始候选、策略、采集范围、出口地址和有效期，再重算现有额度检查。
+仅验证签发者；实际来源权威、网关覆盖和额度预留仍未获验证。
+见 [联合证据签名验收](../../docs/progress/portfolio-testnet-joint-attestation-2026-09-15.md)。
+
 `portfolio_joint_admission.py` 实现离线首请求容量检查：原始限额重解析、
 时钟/窗口与计数回退拒绝、完整区间用量上界和保守连接合计。候选出口记录
 尚无可信认证器，计算余量不授予网络准入。下一步接口与边界见

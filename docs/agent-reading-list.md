@@ -193,6 +193,14 @@ implemented. Return code 2 means a report was written with admission blocked.
 Actual source/egress evidence and per-dispatch durable activation remain required.
 Do not treat positive arithmetic or caller-supplied authentication flags as admission.
 
+For offline source/gateway claim authorship, read
+`docs/progress/portfolio-testnet-joint-attestation-2026-09-15.md` and
+`apps/strategies_nautilus/portfolio_joint_attestation.py`. Separate selected
+Ed25519 keys bind both claims to original candidates, policy, scope and time.
+Signatures do not qualify signer authorities, traffic completeness or future
+enforcement. Reports remain blocked and never reserve capacity or consume a scope.
+Actual records and authority qualification precede per-dispatch durable admission.
+
 For integrated local TLS joint collection and original-frame replay, read
 `docs/progress/portfolio-testnet-joint-tls-transport-2026-09-14.md`,
 `portfolio_joint_tls_transport.py`, `portfolio_joint_tls_evidence.py` and

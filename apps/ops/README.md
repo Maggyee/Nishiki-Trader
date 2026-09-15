@@ -7,6 +7,11 @@ dashboard snapshot support + Phase 6 passive readiness gate support。
 
 ## 当前入口
 
+`portfolio_joint_attestation` 离线验证显式选定的来源/网关签名及证据哈希，
+持久化新的私有报告。返回 2 表示签发者验证完成但网络准入仍被拒绝；
+报告不会预留额度或激活一次性采集。输入与信任边界见
+[联合证据签名验收](../../docs/progress/portfolio-testnet-joint-attestation-2026-09-15.md)。
+
 `portfolio_joint_admission` 离线检查首个请求的额度与出口证据缺口；重新解析
 原始额度字段并计算完整 17 GET / 468 权重和连接预算。缺少或仅有自报证据时
 返回码为 2（已写报告、准入拒绝），不加载凭证、发送请求或激活采集。
