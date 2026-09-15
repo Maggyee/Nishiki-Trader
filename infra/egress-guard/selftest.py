@@ -12,6 +12,7 @@ import subprocess
 import sys
 import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 ENV = {"PATH": "/usr/sbin:/usr/bin:/sbin:/bin", "LC_ALL": "C"}
@@ -90,17 +91,28 @@ class FixtureDispatchGuard:
         self.path, self.observe, self.actor = path, observe, actor
         self.selected = canonical(selected)
         self.lock = threading.Lock()
+        self.owner_pid = os.getpid()
+        self.stop_requested = threading.Event()
         self.halted = False
+        self.closed = False
         self.attempts = 0
         self.expected = b""
         self.fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_RDWR, 0o600)
 
     def verify_journal(self):
+        self.check_owner()
         held, current = os.fstat(self.fd), self.path.stat(follow_symlinks=False)
         if (held.st_dev, held.st_ino) != (current.st_dev, current.st_ino):
             raise RuntimeError("fixture_audit_replaced")
         if held.st_size != len(self.expected) or os.pread(self.fd, 65536, 0) != self.expected:
             raise RuntimeError("fixture_audit_gap_or_rewrite")
+
+    def check_owner(self):
+        if os.getpid() != self.owner_pid:
+            raise RuntimeError("fixture_controller_process_changed")
+
+    def halt_after_failure(self):
+        self.halted = True
 
     def append(self, kind: str):
         self.verify_journal()
@@ -129,8 +141,9 @@ class FixtureDispatchGuard:
 
     def dispatch(self):
         # The worker owns the client; concurrent callers cannot interleave local records.
+        self.check_owner()  # Before locking: fork may inherit a permanently held lock.
         with self.lock:
-            if self.halted:
+            if self.halted or self.stop_requested.is_set():
                 raise RuntimeError("fixture_dispatch_halted")
             try:
                 self.verify_journal()
@@ -160,12 +173,57 @@ class FixtureDispatchGuard:
                 return result
             except BaseException:
                 # An incomplete prepared record retains the uncertain attempt.
-                self.halted = True
+                self.halt_after_failure()
                 raise
 
     def close(self):
+        self.check_owner()
+        self.stop_requested.set()
+        with self.lock:
+            self.halted = True
+            if not self.closed:
+                self.closed = True
+                os.close(self.fd)
+
+
+class ControlledFixtureGuard(FixtureDispatchGuard):
+    """One trusted owner serializes sends and terminal permission revocation."""
+
+    def __init__(self, path: Path, *, selected: dict, observe, actor, revoke):
+        super().__init__(path, selected=selected, observe=observe, actor=actor)
+        self.revoke = revoke
+        self.revocation_attempted = self.revoked = False
+
+    def revoke_under_lock(self):
         self.halted = True
-        os.close(self.fd)
+        if self.revocation_attempted:
+            if not self.revoked:
+                raise RuntimeError("fixture_revocation_incomplete")
+            return
+        self.revocation_attempted = True
+        # Journal failure must not prevent attempting the kernel deny operation.
+        try:
+            self.append("stop_requested")
+        finally:
+            self.revoke()
+            self.revoked = True
+        self.append("revoked")
+
+    def shutdown(self):
+        self.check_owner()
+        self.stop_requested.set()  # Reject queued sends even before we acquire the lock.
+        with self.lock:
+            self.revoke_under_lock()
+
+    def halt_after_failure(self):
+        self.stop_requested.set()
+        self.revoke_under_lock()
+
+    def close(self):
+        try:
+            self.shutdown()
+        finally:
+            super().close()
 
 
 def run(*args: str, text: str | None = None) -> str:
@@ -202,6 +260,31 @@ class Probe:
 
     def request(self, request: dict) -> dict:
         action = request["action"]
+        if action == "check_authority":
+            status = dict(
+                line.split(":", 1) for line in Path("/proc/self/status").read_text().splitlines()
+            )
+            blocked = []
+            for command in (
+                (IP, "route", "del", "198.51.100.0/24"),
+                ("/usr/bin/nsenter", "--target", "1", "--net", IP, "link", "show"),
+            ):
+                result = subprocess.run(command, capture_output=True, text=True, env=ENV, timeout=3)
+                blocked.append(
+                    result.returncode != 0
+                    and any(
+                        reason in result.stderr
+                        for reason in ("Operation not permitted", "Permission denied")
+                    )
+                )
+            return {
+                "caps": {
+                    k: int(status[k], 16)
+                    for k in ("CapEff", "CapPrm", "CapInh", "CapBnd", "CapAmb")
+                },
+                "no_new_privs": int(status["NoNewPrivs"]),
+                "admin_calls_blocked": blocked,
+            }
         if action == "serve":
             for family, address in ((socket.AF_INET, "0.0.0.0"), (socket.AF_INET6, "::")):
                 listener = socket.socket(family, socket.SOCK_STREAM)
@@ -288,6 +371,11 @@ class Child:
             [
                 "/usr/bin/unshare",
                 "--net",
+                "/usr/bin/setpriv",
+                "--bounding-set=-all",
+                "--inh-caps=-all",
+                "--ambient-caps=-all",
+                "--no-new-privs",
                 PYTHON,
                 "-I",
                 "-c",
@@ -343,7 +431,7 @@ def early_structure() -> list[dict]:
     return result
 
 
-def lease_checks(client: Child, host: Probe) -> list[str]:
+def lease_checks(client: Child, host: Probe) -> tuple[list[str], list[str]]:
     """Actual kernel expiry plus observed-state/audit refusal; no atomicity claim."""
     checks = []
     # /tmp is mounted only in the private mount namespace already verified by worker.
@@ -385,14 +473,15 @@ def lease_checks(client: Child, host: Probe) -> list[str]:
         rows = json.loads(run(NFT, "-j", "list", "counter", "inet", "fixture_lease", "denied"))
         return next(e["counter"]["packets"] for e in rows["nftables"] if "counter" in e)
 
-    def denied(name, actor, *, action="once", address="198.51.100.2", source_ip=None):
+    def denied(name, actor, *, action="once", address="198.51.100.2", source_ip=None, record=True):
         before = denied_packets()
         result = actor.request(
             {"action": action, "key": "expiry", "address": address, "source": source_ip}
         )
         if result["ok"] or denied_packets() <= before:
             raise RuntimeError(f"{name}: expected a kernel-counted refusal")
-        checks.append(name)
+        if record:
+            checks.append(name)
 
     denied("lease_absent_blocks", client)
     grant()
@@ -498,7 +587,127 @@ def lease_checks(client: Child, host: Probe) -> list[str]:
     denied("lease_expiry_blocks_existing_socket", client, action="send")
     denied("lease_expiry_blocks_new_socket", client)
     client.request({"action": "close"})
+    controlled = controller_checks(client, snapshot, grant, denied)
     run(NFT, "delete", "table", "inet", "fixture_lease")
+    return checks, controlled
+
+
+def controller_checks(client, snapshot, grant, denied):
+    checks = []
+    authority = client.request({"action": "check_authority"})
+    if any(authority["caps"].values()) or authority["no_new_privs"] != 1:
+        raise RuntimeError("Fixture sender retained privileges")
+    if authority["admin_calls_blocked"] != [True, True]:
+        raise RuntimeError("Fixture sender can mutate or escape its network namespace")
+    checks.extend(
+        ["sender_capabilities_dropped", "sender_route_admin_refused", "sender_setns_refused"]
+    )
+
+    def revoke():
+        run(NFT, "flush", "set", "inet", "fixture_lease", "destinations")
+        rows = json.loads(run(NFT, "-j", "list", "set", "inet", "fixture_lease", "destinations"))
+        if any(row.get("set", {}).get("elem") for row in rows["nftables"]):
+            raise RuntimeError("Fixture revocation not acknowledged")
+
+    entered, release, changed = threading.Event(), threading.Event(), threading.Event()
+
+    class PausedActor:
+        calls = 0
+
+        def request(self, request):
+            self.calls += 1
+            entered.set()
+            if not release.wait(timeout=5):
+                raise RuntimeError("Fixture controlled send was not released")
+            if changed.is_set():
+                raise RuntimeError("Managed rule mutation overlapped a send")
+            return client.request(request)
+
+    def managed_revoke():
+        changed.set()
+        revoke()
+
+    grant()
+    actor = PausedActor()
+    guard = ControlledFixtureGuard(
+        Path("/tmp/controlled-send"),
+        selected=snapshot(),
+        observe=snapshot,
+        actor=actor,
+        revoke=managed_revoke,
+    )
+    try:
+        with ThreadPoolExecutor(max_workers=3) as pool:
+            sending = pool.submit(guard.dispatch)
+            try:
+                if not entered.wait(timeout=3):
+                    raise RuntimeError("Fixture send did not enter")
+                stopping = pool.submit(guard.shutdown)
+                if not guard.stop_requested.wait(timeout=3):
+                    raise RuntimeError("Fixture stop did not enter")
+                queued = pool.submit(guard.dispatch)
+                if changed.is_set() or stopping.done():
+                    raise RuntimeError("Revocation failed to wait for in-flight dispatch")
+            finally:
+                release.set()
+            if not sending.result(timeout=5)["ok"]:
+                raise RuntimeError("Controlled in-flight request did not complete")
+            stopping.result(timeout=5)
+            try:
+                queued.result(timeout=5)
+            except RuntimeError as exc:
+                if str(exc) != "fixture_dispatch_halted":
+                    raise
+            else:
+                raise RuntimeError("Queued send escaped the stop request")
+        if actor.calls != 1 or not guard.revoked:
+            raise RuntimeError("Managed stop did not retain exactly one send")
+        kinds = [json.loads(row)["kind"] for row in guard.path.read_bytes().splitlines()]
+        if kinds != ["prepared", "succeeded", "stop_requested", "revoked"]:
+            raise RuntimeError("Managed stop audit order differs from send/revoke order")
+        checks.extend(
+            [
+                "managed_revoke_waits_for_send",
+                "queued_send_refused_on_stop",
+                "managed_stop_audit_order",
+            ]
+        )
+        denied("managed_revoke_blocks_raw_sender", client, record=False)
+        checks.append("managed_revoke_blocks_raw_sender")
+    finally:
+        guard.close()
+
+    # A dead controller cannot renew. Existing permission can remain until its
+    # bounded TTL expires; retained preparation is not permission to restart.
+    pid = os.fork()
+    if pid == 0:
+        try:
+            grant("2s")
+
+            class CrashActor:
+                def request(self, request):
+                    os._exit(19)
+
+            crashed = ControlledFixtureGuard(
+                Path("/tmp/controller-crash"),
+                selected=snapshot(),
+                observe=snapshot,
+                actor=CrashActor(),
+                revoke=revoke,
+            )
+            crashed.dispatch()
+        finally:
+            os._exit(20)
+    _pid, result = os.waitpid(pid, 0)
+    if not os.WIFEXITED(result) or os.WEXITSTATUS(result) != 19:
+        raise RuntimeError("Controller crash fixture did not stop during preparation")
+    rows = [json.loads(row) for row in Path("/tmp/controller-crash").read_bytes().splitlines()]
+    if [row["kind"] for row in rows] != ["prepared"]:
+        raise RuntimeError("Controller crash lost its pending preparation")
+    checks.append("controller_crash_keeps_pending_preparation")
+    time.sleep(2.2)
+    denied("controller_crash_expiry_blocks_raw_sender", client, record=False)
+    checks.append("controller_crash_expiry_blocks_raw_sender")
     return checks
 
 
@@ -621,11 +830,12 @@ def worker(original: dict[str, str], source: str) -> dict:
         if early_structure() != earlier:
             raise RuntimeError("Rollback changed the earlier independent policy")
         checks.append("rollback_preserves_earlier_policy")
-        leases = lease_checks(client, host)
+        leases, controlled = lease_checks(client, host)
         return {
             "status": "passed",
             "checks": checks,
             "lease_checks": leases,
+            "controller_checks": controlled,
             "guard_packet_counts": observed,
             "isolated_namespaces": list(NAMESPACES),
             "host_firewall_modified": False,
@@ -633,6 +843,7 @@ def worker(original: dict[str, str], source: str) -> dict:
             "gateway_coverage_qualified": False,
             "capture_admitted": False,
             "uncontrolled_rule_mutation_race_closed": False,
+            "managed_revocation_serialized": True,
         }
     finally:
         host.request({"action": "close"})

@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-15
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Preserve consumed ADR-017 and public-depth scopes. Offline reservation and isolated kernel expiry/observed-loss acceptance pass. The fixture now stops on observed rule/route/audit loss, but a privileged check-to-send race remains demonstrated and unclosed. Next bind actual source identity and policy changes to a trusted controller/transport with persistent audit. No host guard is deployed; historical gateway records and first-request evidence or a separate prospective bootstrap contract remain required. The frozen draft stays at 17 GETs / 468 documented weight; actual joint capture, full-account/UTC/flow/reset qualification and fills/cleanup remain unverified.
+- **Current objective**: Preserve consumed ADR-017 and public-depth scopes. Isolated controller acceptance now separates sender capabilities and serializes terminal revocation with sends. Controller crash falls back to lease expiry; arbitrary privileged changes remain outside the guarantee. Next bind actual source/authorized callers, persistent audit/restart and first-request evidence or a separate prospective bootstrap contract. No host guard is deployed or historical gateway ledger available. The frozen draft stays at 17 GETs / 468 documented weight; actual joint capture, full-account/UTC/flow/reset qualification and fills/cleanup remain unverified.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -235,7 +235,8 @@ Detailed depth implementation, retained hashes and next review:
 [offline per-step reservation rehearsal](progress/portfolio-testnet-joint-reservation-2026-09-15.md),
 [VPS egress assessment and isolation proposal](progress/portfolio-vps-egress-assessment-2026-09-15.md),
 [actual isolated Linux hook acceptance](progress/portfolio-vps-egress-namespace-acceptance-2026-09-15.md),
-[kernel expiry and observed-loss acceptance](progress/portfolio-vps-egress-lease-acceptance-2026-09-15.md).
+[kernel expiry and observed-loss acceptance](progress/portfolio-vps-egress-lease-acceptance-2026-09-15.md),
+[controlled revocation and sender ownership](progress/portfolio-vps-egress-controller-2026-09-15.md).
 
 ## Next Steps
 
@@ -256,9 +257,11 @@ Detailed depth implementation, retained hashes and next review:
    21-step remaining-budget/durable-preparation rehearsal now passes, including
    incomplete crash replay and refusal to reopen the original archive.
    Disposable acceptance now covers dual-stack hooks, expiring permissions and
-   observed rule/route/audit loss. The privileged check-to-send race is demonstrated,
-   not closed. Next bind actual source authorization and policy changes to a
-   trusted controller/transport with persistent audit/restart handling. No host
+   observed rule/route/audit loss. Controlled revocation now serializes with sends;
+   queued requests stop and senders lack administration capabilities. Controller
+   death still relies on TTL expiry; uncontrolled privileged mutation remains
+   unclosed. Next bind actual source/caller authorization and persistent
+   audit/restart handling to this controller boundary. No host
    guard or complete audit is deployed. Evaluate a separate public source if
    preserving personal proxy access.
    Resolve pre-existing first-request evidence or a separate
@@ -303,12 +306,13 @@ Detailed depth implementation, retained hashes and next review:
 
 ## Latest Verification
 
-- Isolated VPS egress fixture: **43 Linux checks / 30 focused Python tests pass**.
-  Adds 20 kernel expiry/observed-loss checks and 17 Python failure/concurrency/crash
-  cases. Observed loss halts future sends; privileged deletion during dispatch
-  still permits one uncertain fixture request. Host rules/IPv6 forwarding remain
-  unchanged. Ruff, docs/diff checks and frozen capture hash pass. Prior application
-  regression below was not rerun; no host deployment or venue request occurred.
+- Isolated VPS egress fixture: **52 Linux checks / 40 focused Python tests pass**.
+  Nine new controller/kernel checks and ten Python cases cover sender capability
+  removal, managed revocation, queued-send refusal, failed audit/revocation,
+  closure, PID ownership and controller-crash TTL fallback. Uncontrolled privileged
+  deletion still permits one uncertain fixture request. Host rules/IPv6 forwarding
+  remain unchanged. Ruff, docs/diff and frozen hash pass; prior application
+  regression was not rerun. No host deployment or venue request occurred.
 
 - Offline reservation rehearsal: **36 new / 200 focused tests pass**. All 21
   preparations consume exactly 17 GETs / 468 documented weight / two connections.

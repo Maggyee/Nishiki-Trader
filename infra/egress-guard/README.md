@@ -24,6 +24,11 @@ The script rejects arguments and host-root execution; child commands use absolut
 paths, isolated Python and a fixed environment. The worker has a 90-second alarm
 and its parent a 100-second timeout. Exiting the disposable PID namespace kills
 its children and releases the temporary network resources.
+After creating each child network namespace, `setpriv` drops all effective,
+permitted, inheritable, ambient and bounding capabilities and sets no-new-privs
+before starting its client/server interpreter. Only the trusted fixture worker
+retains namespace administration capabilities. Kernel tests verify the sender
+cannot change its route or enter the worker's network namespace.
 
 Acceptance covers IPv4/IPv6 host OUTPUT and bridge FORWARD, rejection after an
 earlier independent accept, fresh and already-connected TCP traffic, unaffected
@@ -56,10 +61,36 @@ There is deliberately no claim that snapshots close the check-to-send race.
 The actual fixture deletes the table after the last check and demonstrates one
 successful local send before the post-send check halts the supervisor. That attempt
 remains prepared/uncertain. Report field `uncontrolled_rule_mutation_race_closed`
-stays false. A trusted, serialized network controller and a transport-bound
-production policy are still needed; arbitrary privileged changes can defeat
+stays false. A production controller and a transport-bound
+policy are still needed; arbitrary privileged changes can defeat
 the observed boundary. Tmpfs fsync and abrupt-process tests do not prove survival
 of host power loss. There is no gateway evidence adapter or persistent service.
+
+## Controlled terminal revocation
+
+`ControlledFixtureGuard` adds a terminal shutdown operation using the same lock as
+dispatch. A stop event is set before waiting for that lock, so queued sends cannot
+overtake the stop; an already-running request may finish first. The worker then
+records `stop_requested`, empties the kernel permission set, verifies the empty
+set and records `revoked`. It preserves the default-deny table. There is no
+in-place policy replacement, renewal API or reactivation of the stopped object.
+
+Dispatch failure also attempts revocation under the lock. Audit failure cannot
+skip that attempt; failed revocation is not reported as successful and is not
+automatically retried. The existing TTL remains the fallback. Close drains through
+shutdown, closes the journal and is idempotent. A guard binds its creating PID
+and refuses inherited-process dispatch/shutdown before locking, preventing use
+of a fork-inherited lock or journal. This is process ownership, not authentication
+of a public IPC API.
+
+Actual tests pause a local send while concurrent shutdown and another send queue:
+only the first request executes, then permissions are revoked. A separate
+controller process crashes after preparation; its original event remains and
+the kernel blocks the raw sender after the two-second test TTL expires. Death
+does not imply immediate revocation. Capability dropping does not by itself
+force every possible client in that namespace to journal requests. The fixture
+assumes its fixed client command channel and worker are trusted; it grants no
+complete all-caller quota or production isolation claim.
 
 The namespace topology models hook behavior. It does not reproduce Docker NAT,
 the full Tailscale rules, UDP/QUIC, cloud source mapping, an actual proxy, DNS
@@ -89,8 +120,9 @@ general nft, shell, Python, package, Docker or root access. No password should b
 sent in chat. Revoke this entry using `sudo rm /etc/sudoers.d/orca-trader-audit`
 and recheck `sudo visudo -c`. No sudoers file is installed by the repository script.
 
-Next implementation entrypoint: bind the real egress identity/source to a trusted
-network controller and dispatch transport, with persistent audit/restart handling.
+Next implementation entrypoint: bind an actual source/identity to this controller
+boundary, with authenticated caller admission, persistent audit/restart handling
+and a separately resolved first-request bootstrap contract.
 See the
 [VPS assessment](../../docs/progress/portfolio-vps-egress-assessment-2026-09-15.md).
 The frozen first-request/bootstrap blocker remains independent of sudo access.

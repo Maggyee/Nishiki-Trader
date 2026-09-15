@@ -296,3 +296,137 @@ def test_abrupt_process_exit_preserves_prepared_no_reopen(fixture, tmp_path):
     assert [json.loads(row)["kind"] for row in path.read_bytes().splitlines()] == ["prepared"]
     with pytest.raises(FileExistsError):
         fixture.FixtureDispatchGuard(path, selected={}, observe=lambda: {}, actor=Mock())
+
+
+@pytest.fixture
+def controlled_case(fixture, tmp_path):
+    selected = {"rules": "fixture"}
+    actor = Mock()
+    actor.request.return_value = {"ok": True}
+    revoke = Mock()
+    guard = fixture.ControlledFixtureGuard(
+        tmp_path / "controlled.jsonl",
+        selected=selected,
+        observe=lambda: selected,
+        actor=actor,
+        revoke=revoke,
+    )
+    try:
+        yield guard, actor, revoke
+    finally:
+        try:
+            os.fstat(guard.fd)
+        except OSError:
+            pass
+        else:
+            fixture.FixtureDispatchGuard.close(guard)
+
+
+def test_managed_shutdown_waits_and_rejects_queued_send(controlled_case):
+    guard, actor, revoke = controlled_case
+    entered, release = threading.Event(), threading.Event()
+
+    def send(_request):
+        entered.set()
+        assert release.wait(timeout=2)
+        revoke.assert_not_called()
+        return {"ok": True}
+
+    actor.request.side_effect = send
+    with ThreadPoolExecutor(max_workers=3) as pool:
+        sending = pool.submit(guard.dispatch)
+        try:
+            assert entered.wait(timeout=2)
+            stopping = pool.submit(guard.shutdown)
+            assert guard.stop_requested.wait(timeout=2)
+            queued = pool.submit(guard.dispatch)
+            revoke.assert_not_called()
+            assert not stopping.done()
+        finally:
+            release.set()
+        assert sending.result(timeout=2)["ok"]
+        stopping.result(timeout=2)
+        with pytest.raises(RuntimeError, match="dispatch_halted"):
+            queued.result(timeout=2)
+    assert actor.request.call_count == guard.attempts == 1
+    revoke.assert_called_once()
+    assert [json.loads(row)["kind"] for row in guard.path.read_bytes().splitlines()] == [
+        "prepared",
+        "succeeded",
+        "stop_requested",
+        "revoked",
+    ]
+
+
+def test_shutdown_before_first_request_does_not_consume_attempt(controlled_case):
+    guard, actor, revoke = controlled_case
+    guard.shutdown()
+    guard.shutdown()
+    with pytest.raises(RuntimeError, match="dispatch_halted"):
+        guard.dispatch()
+    actor.request.assert_not_called()
+    revoke.assert_called_once()
+    assert guard.attempts == 0 and guard.revoked
+
+
+@pytest.mark.parametrize("damage", ["audit_gap", "fsync", "transport"])
+def test_dispatch_failure_revokes_even_if_audit_is_broken(
+    fixture, controlled_case, monkeypatch, damage
+):
+    guard, actor, revoke = controlled_case
+    if damage == "audit_gap":
+        guard.path.write_bytes(b"unexpected")
+    elif damage == "fsync":
+        monkeypatch.setattr(fixture.os, "fsync", Mock(side_effect=OSError("fixture disk error")))
+    else:
+        actor.request.side_effect = TimeoutError("uncertain")
+    with pytest.raises((RuntimeError, OSError)):
+        guard.dispatch()
+    assert guard.halted and guard.revoked
+    revoke.assert_called_once()
+    with pytest.raises(RuntimeError, match="dispatch_halted"):
+        guard.dispatch()
+    assert actor.request.call_count == (1 if damage == "transport" else 0)
+
+
+def test_revocation_failure_never_reports_success_or_retries(controlled_case):
+    guard, actor, revoke = controlled_case
+    revoke.side_effect = OSError("kernel refused change")
+    with pytest.raises(OSError, match="kernel refused"):
+        guard.shutdown()
+    assert guard.halted and not guard.revoked
+    with pytest.raises(RuntimeError, match="revocation_incomplete"):
+        guard.shutdown()
+    with pytest.raises(RuntimeError, match="dispatch_halted"):
+        guard.dispatch()
+    revoke.assert_called_once()
+    actor.request.assert_not_called()
+    assert [json.loads(row)["kind"] for row in guard.path.read_bytes().splitlines()] == [
+        "stop_requested"
+    ]
+
+
+def test_close_revokes_and_closes_descriptor(controlled_case):
+    guard, actor, revoke = controlled_case
+    guard.close()
+    guard.close()
+    revoke.assert_called_once()
+    actor.request.assert_not_called()
+    with pytest.raises(OSError):
+        os.fstat(guard.fd)
+
+
+@pytest.mark.parametrize("operation", ["dispatch", "shutdown", "close"])
+def test_inherited_controller_refused_before_acquiring_lock(controlled_case, operation):
+    guard, actor, revoke = controlled_case
+    original_owner, original_lock = guard.owner_pid, guard.lock
+    guard.owner_pid += 10000
+    guard.lock = Mock()
+    try:
+        with pytest.raises(RuntimeError, match="controller_process_changed"):
+            getattr(guard, operation)()
+        guard.lock.assert_not_called()
+        actor.request.assert_not_called()
+        revoke.assert_not_called()
+    finally:
+        guard.owner_pid, guard.lock = original_owner, original_lock

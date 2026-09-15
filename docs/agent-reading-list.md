@@ -234,6 +234,14 @@ sockets. A real privileged-deletion race still permits one uncertain local send.
 Do not treat these checks as continuous all-caller coverage, power-loss durability,
 an actual source mapping, quota reservation or a first-request permit.
 
+For controlled terminal revocation and sender capability separation, read
+`docs/progress/portfolio-vps-egress-controller-2026-09-15.md`. The namespace fixture
+now serializes shutdown with dispatch, rejects queued sends, revokes even after
+audit failure and refuses fork-inherited ownership. Clients lack administration
+capabilities. Controller crash leaves permission until TTL expiry; uncontrolled
+administrator changes and complete all-caller accounting remain outside this
+guarantee. No real source binding, persistent backend or bootstrap permit follows.
+
 For integrated local TLS joint collection and original-frame replay, read
 `docs/progress/portfolio-testnet-joint-tls-transport-2026-09-14.md`,
 `portfolio_joint_tls_transport.py`, `portfolio_joint_tls_evidence.py` and
