@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import subprocess
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -107,3 +110,189 @@ def test_bad_isolation_stops_worker_before_network_mutation(fixture, monkeypatch
         fixture.worker({}, "")
     runner.assert_not_called()
     child.assert_not_called()
+
+
+@pytest.fixture
+def guard_case(fixture, tmp_path):
+    selected = {"namespace": "fixture", "route": "fixture-route", "rules": "fixture-rules"}
+    actor = Mock()
+    actor.request.return_value = {"ok": True}
+    guard = fixture.FixtureDispatchGuard(
+        tmp_path / "attempts.jsonl", selected=selected, observe=lambda: selected, actor=actor
+    )
+    try:
+        yield guard, actor, selected
+    finally:
+        guard.close()
+
+
+def test_preparation_is_synced_before_transport(fixture, guard_case, monkeypatch):
+    guard, actor, _selected = guard_case
+    sync = Mock(wraps=os.fsync)
+    monkeypatch.setattr(fixture.os, "fsync", sync)
+
+    def send(_request):
+        assert sync.call_count == 1
+        rows = [json.loads(row) for row in guard.path.read_bytes().splitlines()]
+        assert [row["kind"] for row in rows] == ["prepared"]
+        assert rows[0]["attempt"] == 1
+        return {"ok": True}
+
+    actor.request.side_effect = send
+    guard.dispatch()
+    assert sync.call_count == 2
+
+
+@pytest.mark.parametrize("field", ["namespace", "route", "rules"])
+def test_identity_loss_sticks_after_restoration(guard_case, field):
+    guard, actor, selected = guard_case
+    guard.dispatch()
+    original = selected[field]
+    selected[field] = "changed"
+    with pytest.raises(RuntimeError, match="identity_or_guard_changed"):
+        guard.dispatch()
+    selected[field] = original
+    with pytest.raises(RuntimeError, match="dispatch_halted"):
+        guard.dispatch()
+    assert actor.request.call_count == guard.attempts == 1
+
+
+@pytest.mark.parametrize("damage", ["truncate", "rewrite", "replace", "unlink"])
+def test_audit_loss_prevents_next_send(guard_case, damage):
+    guard, actor, _selected = guard_case
+    guard.dispatch()
+    if damage == "truncate":
+        guard.path.write_bytes(b"")
+    elif damage == "rewrite":
+        raw = guard.path.read_bytes()
+        guard.path.write_bytes(raw.replace(b"prepared", b"modified"))
+    elif damage == "replace":
+        other = guard.path.with_suffix(".replacement")
+        other.write_bytes(guard.path.read_bytes())
+        other.replace(guard.path)
+    else:
+        guard.path.unlink()
+    with pytest.raises((RuntimeError, OSError)):
+        guard.dispatch()
+    assert guard.halted and guard.attempts == actor.request.call_count == 1
+
+
+@pytest.mark.parametrize("stage", ["prepare", "outcome"])
+def test_fsync_failure_blocks_reuse_and_preserves_attempt(fixture, guard_case, monkeypatch, stage):
+    guard, actor, _selected = guard_case
+    real_sync = os.fsync
+    count = 0
+
+    def sync(fd):
+        nonlocal count
+        count += 1
+        if count == (1 if stage == "prepare" else 2):
+            raise OSError("fixture disk failure")
+        real_sync(fd)
+
+    monkeypatch.setattr(fixture.os, "fsync", sync)
+    with pytest.raises(OSError, match="disk failure"):
+        guard.dispatch()
+    with pytest.raises(RuntimeError, match="dispatch_halted"):
+        guard.dispatch()
+    assert guard.attempts == 1
+    assert actor.request.call_count == (0 if stage == "prepare" else 1)
+
+
+@pytest.mark.parametrize("change", ["identity", "audit"])
+def test_change_after_prepare_refuses_transport(guard_case, change):
+    guard, actor, selected = guard_case
+    count = 0
+
+    def observe():
+        nonlocal count
+        count += 1
+        if count == 2:
+            if change == "identity":
+                selected["route"] = "changed"
+            else:
+                os.ftruncate(guard.fd, 0)
+        return selected
+
+    guard.observe = observe
+    with pytest.raises(RuntimeError):
+        guard.dispatch()
+    actor.request.assert_not_called()
+    assert guard.attempts == 1 and guard.halted
+
+
+@pytest.mark.parametrize("failure", ["failed", "uncertain", "identity_after_send"])
+def test_failure_after_send_never_refunds_or_retries(guard_case, failure):
+    guard, actor, selected = guard_case
+
+    def send(_request):
+        if failure == "uncertain":
+            raise TimeoutError("uncertain fixture outcome")
+        if failure == "identity_after_send":
+            selected["rules"] = "changed"
+            return {"ok": True}
+        return {"ok": False}
+
+    actor.request.side_effect = send
+    with pytest.raises((RuntimeError, TimeoutError)):
+        guard.dispatch()
+    assert guard.attempts == actor.request.call_count == 1
+    with pytest.raises(RuntimeError, match="dispatch_halted"):
+        guard.dispatch()
+    rows = [json.loads(row) for row in guard.path.read_bytes().splitlines()]
+    assert [row["kind"] for row in rows] == (
+        ["prepared", "failed"] if failure == "failed" else ["prepared"]
+    )
+
+
+def test_concurrent_dispatch_is_serialized_and_bounded(guard_case):
+    guard, actor, _selected = guard_case
+    entered = threading.Event()
+    release = threading.Event()
+
+    def send(_request):
+        entered.set()
+        assert release.wait(timeout=2)
+        return {"ok": True}
+
+    actor.request.side_effect = send
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        first = executor.submit(guard.dispatch)
+        assert entered.wait(timeout=2)
+        second = executor.submit(guard.dispatch)
+        try:
+            assert not second.done()
+            assert actor.request.call_count == 1
+        finally:
+            release.set()
+        assert first.result(timeout=2) == second.result(timeout=2) == {"ok": True}
+    rows = [json.loads(row) for row in guard.path.read_bytes().splitlines()]
+    assert [(row["kind"], row["attempt"]) for row in rows] == [
+        ("prepared", 1),
+        ("succeeded", 1),
+        ("prepared", 2),
+        ("succeeded", 2),
+    ]
+    guard.dispatch()
+    guard.dispatch()
+    with pytest.raises(RuntimeError, match="attempt_bound"):
+        guard.dispatch()
+    assert actor.request.call_count == guard.attempts == 4
+
+
+def test_abrupt_process_exit_preserves_prepared_no_reopen(fixture, tmp_path):
+    path = tmp_path / "crashed.jsonl"
+    code = (
+        "import os, runpy\nfrom pathlib import Path\n"
+        f"scope = runpy.run_path({str(SOURCE)!r}, run_name='fixture_test')\n"
+        "class ExitDuringSend:\n"
+        "    def request(self, request): os._exit(17)\n"
+        f"guard = scope['FixtureDispatchGuard'](Path({str(path)!r}), "
+        "selected={}, observe=lambda: {}, actor=ExitDuringSend())\n"
+        "guard.dispatch()\n"
+    )
+    result = subprocess.run(["/usr/bin/python3", "-I", "-c", code], timeout=5, check=False)
+    assert result.returncode == 17
+    assert [json.loads(row)["kind"] for row in path.read_bytes().splitlines()] == ["prepared"]
+    with pytest.raises(FileExistsError):
+        fixture.FixtureDispatchGuard(path, selected={}, observe=lambda: {}, actor=Mock())

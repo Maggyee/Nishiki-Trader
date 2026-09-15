@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-15
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Preserve consumed ADR-017 and public-depth scopes. Offline 21-step reservation acceptance and 23 disposable Linux egress-hook checks pass. A direct sudo-read host rules snapshot confirms the earlier VPS assessment; no host guard is deployed and historical gateway records remain unavailable. Next model the actual source/identity boundary and continuous enforcement, and resolve first-request evidence or a separate prospective bootstrap contract before real dispatch integration. The frozen draft stays at 17 GETs / 468 documented weight; actual joint capture, full-account/UTC/flow/reset qualification and fills/cleanup remain unverified.
+- **Current objective**: Preserve consumed ADR-017 and public-depth scopes. Offline reservation and isolated kernel expiry/observed-loss acceptance pass. The fixture now stops on observed rule/route/audit loss, but a privileged check-to-send race remains demonstrated and unclosed. Next bind actual source identity and policy changes to a trusted controller/transport with persistent audit. No host guard is deployed; historical gateway records and first-request evidence or a separate prospective bootstrap contract remain required. The frozen draft stays at 17 GETs / 468 documented weight; actual joint capture, full-account/UTC/flow/reset qualification and fills/cleanup remain unverified.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -234,7 +234,8 @@ Detailed depth implementation, retained hashes and next review:
 [selected source/gateway authorship](progress/portfolio-testnet-joint-attestation-2026-09-15.md),
 [offline per-step reservation rehearsal](progress/portfolio-testnet-joint-reservation-2026-09-15.md),
 [VPS egress assessment and isolation proposal](progress/portfolio-vps-egress-assessment-2026-09-15.md),
-[actual isolated Linux hook acceptance](progress/portfolio-vps-egress-namespace-acceptance-2026-09-15.md).
+[actual isolated Linux hook acceptance](progress/portfolio-vps-egress-namespace-acceptance-2026-09-15.md),
+[kernel expiry and observed-loss acceptance](progress/portfolio-vps-egress-lease-acceptance-2026-09-15.md).
 
 ## Next Steps
 
@@ -254,11 +255,12 @@ Detailed depth implementation, retained hashes and next review:
    The operator confirms no gateway records are available; the authorized offline
    21-step remaining-budget/durable-preparation rehearsal now passes, including
    incomplete crash replay and refusal to reopen the original archive.
-   Disposable OUTPUT/FORWARD acceptance now passes 23 dual-stack checks, including
-   earlier accepts, reused sockets and rollback; the host rules were read directly
-   with operator-granted sudo. Next model actual source authorization and a guard
-   lease/ledger that detects coverage loss. No host guard or complete audit is
-   deployed. Evaluate a separate public source if preserving personal proxy access.
+   Disposable acceptance now covers dual-stack hooks, expiring permissions and
+   observed rule/route/audit loss. The privileged check-to-send race is demonstrated,
+   not closed. Next bind actual source authorization and policy changes to a
+   trusted controller/transport with persistent audit/restart handling. No host
+   guard or complete audit is deployed. Evaluate a separate public source if
+   preserving personal proxy access.
    Resolve pre-existing first-request evidence or a separate
    prospective bootstrap contract; waiting alone cannot satisfy the frozen draft.
    Obtain qualified signer/source records, fresh initial usage/limits and complete
@@ -301,12 +303,12 @@ Detailed depth implementation, retained hashes and next review:
 
 ## Latest Verification
 
-- Isolated VPS egress fixture: **23 Linux checks / 13 focused Python tests pass**.
-  Dual-stack host/bridge paths, earlier accepts, fresh/reused connections, controls,
-  source checks and rollback pass. Direct host nftables reads show unchanged rule
-  structure excluding counters; no host rule change or venue request was made. Ruff,
-  docs/diff checks and the frozen capture hash pass. Prior application regression
-  results below were not rerun for this standalone infrastructure fixture.
+- Isolated VPS egress fixture: **43 Linux checks / 30 focused Python tests pass**.
+  Adds 20 kernel expiry/observed-loss checks and 17 Python failure/concurrency/crash
+  cases. Observed loss halts future sends; privileged deletion during dispatch
+  still permits one uncertain fixture request. Host rules/IPv6 forwarding remain
+  unchanged. Ruff, docs/diff checks and frozen capture hash pass. Prior application
+  regression below was not rerun; no host deployment or venue request occurred.
 
 - Offline reservation rehearsal: **36 new / 200 focused tests pass**. All 21
   preparations consume exactly 17 GETs / 468 documented weight / two connections.

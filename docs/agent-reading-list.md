@@ -226,6 +226,14 @@ rollback. A direct sudo-read host rules snapshot remains local and is not a
 historical all-caller ledger. No host guard or collector is deployed; source
 identity, continuous enforcement and first-request bootstrap remain unqualified.
 
+For the subsequent isolated timeout-set and observed-loss checks, read
+`docs/progress/portfolio-vps-egress-lease-acceptance-2026-09-15.md`. The same fixture
+adds expiring outbound permissions and a serialized, fsynced local attempt journal.
+Observed table/route/audit loss halts its supervisor; expiry blocks existing
+sockets. A real privileged-deletion race still permits one uncertain local send.
+Do not treat these checks as continuous all-caller coverage, power-loss durability,
+an actual source mapping, quota reservation or a first-request permit.
+
 For integrated local TLS joint collection and original-frame replay, read
 `docs/progress/portfolio-testnet-joint-tls-transport-2026-09-14.md`,
 `portfolio_joint_tls_transport.py`, `portfolio_joint_tls_evidence.py` and

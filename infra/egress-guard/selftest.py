@@ -11,6 +11,7 @@ import socket
 import subprocess
 import sys
 import threading
+import time
 from pathlib import Path
 
 ENV = {"PATH": "/usr/sbin:/usr/bin:/sbin:/bin", "LC_ALL": "C"}
@@ -54,6 +55,117 @@ table inet trader_fixture_guard {
     }
 }
 """
+
+# A separate IPv4-only fixture identity. No real egress address is selected here.
+LEASE_RULES = """
+table inet fixture_lease {
+    set destinations {
+        type ipv4_addr
+        flags timeout
+        timeout 30s
+    }
+    counter denied {}
+    chain output {
+        type filter hook output priority 20; policy accept;
+        ip daddr 198.51.100.2 tcp dport 23456 counter name denied drop
+    }
+    chain forward {
+        type filter hook forward priority 20; policy drop;
+        iifname "br-fixture" ip saddr 192.0.2.2 ip daddr @destinations tcp dport 23456 accept
+        iifname "wan" ip saddr 198.51.100.2 ip daddr 192.0.2.2 tcp sport 23456 accept
+        counter name denied drop
+    }
+}
+"""
+
+
+def canonical(value) -> bytes:
+    return json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
+
+
+class FixtureDispatchGuard:
+    """Bounded local supervisor exercise; NOT a production lease or quota authority."""
+
+    def __init__(self, path: Path, *, selected: dict, observe, actor):
+        self.path, self.observe, self.actor = path, observe, actor
+        self.selected = canonical(selected)
+        self.lock = threading.Lock()
+        self.halted = False
+        self.attempts = 0
+        self.expected = b""
+        self.fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_RDWR, 0o600)
+
+    def verify_journal(self):
+        held, current = os.fstat(self.fd), self.path.stat(follow_symlinks=False)
+        if (held.st_dev, held.st_ino) != (current.st_dev, current.st_ino):
+            raise RuntimeError("fixture_audit_replaced")
+        if held.st_size != len(self.expected) or os.pread(self.fd, 65536, 0) != self.expected:
+            raise RuntimeError("fixture_audit_gap_or_rewrite")
+
+    def append(self, kind: str):
+        self.verify_journal()
+        row = (
+            canonical(
+                {
+                    "kind": kind,
+                    "attempt": self.attempts,
+                    "monotonic_ns": time.monotonic_ns(),
+                    "identity_sha256": hashlib.sha256(self.selected).hexdigest(),
+                    "previous_sha256": hashlib.sha256(self.expected).hexdigest(),
+                }
+            )
+            + b"\n"
+        )
+        if len(self.expected) + len(row) > 65536:
+            raise RuntimeError("fixture_audit_bound")
+        remaining = row
+        while remaining:
+            written = os.write(self.fd, remaining)
+            if written <= 0:
+                raise OSError("fixture_audit_short_write")
+            remaining = remaining[written:]
+        os.fsync(self.fd)
+        self.expected += row
+
+    def dispatch(self):
+        # The worker owns the client; concurrent callers cannot interleave local records.
+        with self.lock:
+            if self.halted:
+                raise RuntimeError("fixture_dispatch_halted")
+            try:
+                self.verify_journal()
+                if canonical(self.observe()) != self.selected:
+                    raise RuntimeError("fixture_identity_or_guard_changed")
+                if self.attempts >= 4:
+                    raise RuntimeError("fixture_attempt_bound")
+                self.attempts += 1  # Failed/uncertain preparation is never refunded.
+                self.append("prepared")
+                if canonical(self.observe()) != self.selected:
+                    raise RuntimeError("fixture_changed_during_preparation")
+                self.verify_journal()
+                result = self.actor.request(
+                    {
+                        "action": "once",
+                        "key": "lease",
+                        "address": "198.51.100.2",
+                        "source": "192.0.2.2",
+                    }
+                )
+                if not result["ok"]:
+                    self.append("failed")
+                    raise RuntimeError("fixture_transport_failed")
+                if canonical(self.observe()) != self.selected:
+                    raise RuntimeError("fixture_changed_during_transport")
+                self.append("succeeded")
+                return result
+            except BaseException:
+                # An incomplete prepared record retains the uncertain attempt.
+                self.halted = True
+                raise
+
+    def close(self):
+        self.halted = True
+        os.close(self.fd)
 
 
 def run(*args: str, text: str | None = None) -> str:
@@ -231,6 +343,165 @@ def early_structure() -> list[dict]:
     return result
 
 
+def lease_checks(client: Child, host: Probe) -> list[str]:
+    """Actual kernel expiry plus observed-state/audit refusal; no atomicity claim."""
+    checks = []
+    # /tmp is mounted only in the private mount namespace already verified by worker.
+    run("/usr/bin/mount", "-t", "tmpfs", "-o", "size=1m,nosuid,nodev,noexec", "tmpfs", "/tmp")
+    run(NFT, "-f", "-", text=LEASE_RULES)
+
+    def grant(duration="20s"):
+        run(NFT, "flush", "set", "inet", "fixture_lease", "destinations")
+        run(
+            NFT,
+            "-f",
+            "-",
+            text=(
+                "add element inet fixture_lease destinations "
+                "{ 198.51.100.2 timeout " + duration + " }\n"
+            ),
+        )
+
+    def snapshot():
+        def stable(value):
+            if isinstance(value, dict):
+                return {
+                    k: stable(v)
+                    for k, v in value.items()
+                    if k not in {"metainfo", "expires", "packets", "bytes"}
+                }
+            if isinstance(value, list):
+                return [stable(v) for v in value if not (isinstance(v, dict) and "metainfo" in v)]
+            return value
+
+        return {
+            "rules": stable(json.loads(run(NFT, "-j", "list", "table", "inet", "fixture_lease"))),
+            "route": json.loads(client.ip("-j", "route", "get", "198.51.100.2")),
+            "namespace": os.readlink(f"/proc/{client.process.pid}/ns/net"),
+            "source": "192.0.2.2",
+        }
+
+    def denied_packets():
+        rows = json.loads(run(NFT, "-j", "list", "counter", "inet", "fixture_lease", "denied"))
+        return next(e["counter"]["packets"] for e in rows["nftables"] if "counter" in e)
+
+    def denied(name, actor, *, action="once", address="198.51.100.2", source_ip=None):
+        before = denied_packets()
+        result = actor.request(
+            {"action": action, "key": "expiry", "address": address, "source": source_ip}
+        )
+        if result["ok"] or denied_packets() <= before:
+            raise RuntimeError(f"{name}: expected a kernel-counted refusal")
+        checks.append(name)
+
+    denied("lease_absent_blocks", client)
+    grant()
+    denied("lease_rejects_host_caller", host)
+    denied("lease_rejects_spoofed_source", client, source_ip="192.0.2.99")
+    denied("lease_rejects_ipv6_fallback", client, address="fd00:7472:2::2")
+
+    class CountedActor:
+        calls = 0
+
+        def request(self, request):
+            self.calls += 1
+            return client.request(request)
+
+    def exercise_loss(name, mutate, restore):
+        grant()
+        actor = CountedActor()
+        guard = FixtureDispatchGuard(
+            Path("/tmp/" + name), selected=snapshot(), observe=snapshot, actor=actor
+        )
+        try:
+            guard.dispatch()
+            checks.append(name + "_initial_dispatch")
+            mutate(guard)
+            try:
+                guard.dispatch()
+            except (RuntimeError, OSError):
+                pass
+            else:
+                raise RuntimeError(name + ": loss was not detected")
+            if actor.calls != 1 or not guard.halted or guard.attempts != 1:
+                raise RuntimeError(name + ": loss triggered another transport call")
+            checks.append(name + "_blocks_before_transport")
+            restore()
+            try:
+                guard.dispatch()
+            except RuntimeError as exc:
+                if str(exc) != "fixture_dispatch_halted":
+                    raise
+            else:
+                raise RuntimeError(name + ": restoration reset the halt")
+            checks.append(name + "_restoration_keeps_halt")
+        finally:
+            guard.close()
+
+    exercise_loss(
+        "lease_table_removed",
+        lambda _guard: run(NFT, "delete", "table", "inet", "fixture_lease"),
+        lambda: run(NFT, "-f", "-", text=LEASE_RULES),
+    )
+    exercise_loss(
+        "lease_route_changed",
+        lambda _guard: client.ip(
+            "route", "replace", "198.51.100.0/24", "via", "192.0.2.1", "src", "192.0.2.99"
+        ),
+        lambda: client.ip("route", "replace", "198.51.100.0/24", "via", "192.0.2.1"),
+    )
+    exercise_loss("lease_audit_gap", lambda guard: os.ftruncate(guard.fd, 0), lambda: None)
+    exercise_loss(
+        "lease_revoked",
+        lambda _guard: run(NFT, "flush", "set", "inet", "fixture_lease", "destinations"),
+        grant,
+    )
+    # Expose the remaining race honestly: a privileged deletion after the final
+    # observation can permit a send. A post-send check can only mark it uncertain.
+    grant()
+
+    class DeleteDuringSend(CountedActor):
+        def request(self, request):
+            run(NFT, "delete", "table", "inet", "fixture_lease")
+            result = super().request(request)
+            if not result["ok"]:
+                raise AssertionError("Race fixture did not reach the local peer")
+            return result
+
+    race_actor = DeleteDuringSend()
+    race_guard = FixtureDispatchGuard(
+        Path("/tmp/lease-race"), selected=snapshot(), observe=snapshot, actor=race_actor
+    )
+    try:
+        try:
+            race_guard.dispatch()
+        except RuntimeError:
+            pass
+        else:
+            raise RuntimeError("Race did not invalidate the completed send")
+        rows = [json.loads(row) for row in race_guard.path.read_bytes().splitlines()]
+        if (
+            race_actor.calls != 1
+            or not race_guard.halted
+            or [r["kind"] for r in rows] != ["prepared"]
+        ):
+            raise RuntimeError("Race must retain one uncertain preparation")
+        checks.append("lease_privileged_deletion_race_retains_uncertain_send")
+    finally:
+        race_guard.close()
+        run(NFT, "-f", "-", text=LEASE_RULES)
+    grant("2s")
+    if not client.request({"action": "open", "key": "expiry", "address": "198.51.100.2"})["ok"]:
+        raise RuntimeError("Could not establish the expiring fixture connection")
+    checks.append("lease_live_connection_allowed")
+    time.sleep(2.2)  # No renewal: expiry must work without a polling supervisor.
+    denied("lease_expiry_blocks_existing_socket", client, action="send")
+    denied("lease_expiry_blocks_new_socket", client)
+    client.request({"action": "close"})
+    run(NFT, "delete", "table", "inet", "fixture_lease")
+    return checks
+
+
 def worker(original: dict[str, str], source: str) -> dict:
     def deadline(_signum, _frame):
         raise TimeoutError("Fixture exceeded its 90-second deadline")
@@ -350,15 +621,18 @@ def worker(original: dict[str, str], source: str) -> dict:
         if early_structure() != earlier:
             raise RuntimeError("Rollback changed the earlier independent policy")
         checks.append("rollback_preserves_earlier_policy")
+        leases = lease_checks(client, host)
         return {
             "status": "passed",
             "checks": checks,
+            "lease_checks": leases,
             "guard_packet_counts": observed,
             "isolated_namespaces": list(NAMESPACES),
             "host_firewall_modified": False,
             "external_requests": 0,
             "gateway_coverage_qualified": False,
             "capture_admitted": False,
+            "uncontrolled_rule_mutation_race_closed": False,
         }
     finally:
         host.request({"action": "close"})
