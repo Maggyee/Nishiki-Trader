@@ -285,8 +285,16 @@ code drift invalidates the object; nonroot launch clears supplementary groups an
 binds expected kernel credentials. No account or installation was created. The
 current environment lacks subordinate ID ranges/mapping helpers, so real distinct
 UID/filesystem isolation remains unverified; do not substitute the same-UID fixture.
-Next prepare a reviewed install package/entrypoint and actual separate-user
-acceptance, then qualify source/paths/storage and the separate bootstrap transport.
+The successor [bundle report](progress/portfolio-egress-bundle-2026-09-16.md),
+[v2 contract](progress/portfolio-egress-installation-contract-2026-09-16-v2.json),
+`infra/egress-guard/package.py` and `helper_entry.py` now provide deterministic
+packing, pinned inspection, first-install-only provisioning and a fixed read-only
+installed check. Provisioning is implemented/tested with simulated accounts only;
+no host apply occurred. v2 binds four sources; keep the historical v1 bytes intact.
+The installer preserves storage, refuses existing/partial installations, and never
+starts a collector or changes networking. Next review the concrete package for
+actual installation and separate-user acceptance, then qualify source/paths/storage
+and the separate bootstrap transport.
 
 For actual disposable Linux egress-hook acceptance, read
 `docs/progress/portfolio-vps-egress-namespace-acceptance-2026-09-15.md` and

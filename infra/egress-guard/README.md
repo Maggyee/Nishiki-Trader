@@ -304,10 +304,10 @@ none are guessed or provisioned by this checker. Password lock still needs separ
 verification when the account is provisioned; this checker does not read shadow.
 
 The installed manifest has exactly `schema_version`, `collector` and `files`.
-Use schema `portfolio.egress_installation.v1`; `collector` contains exactly the
+Use schema `portfolio.egress_installation.v2`; `collector` contains exactly the
 name and actual numeric UID/GID, while `files` maps `collector_launcher.py`,
-`inspect_binding.py` and `installation.py` to their SHA256 strings. The separate
-[review contract](../../docs/progress/portfolio-egress-installation-contract-2026-09-16.json)
+`inspect_binding.py`, `installation.py` and `helper_entry.py` to their SHA256 strings. The separate
+[review contract](../../docs/progress/portfolio-egress-installation-contract-2026-09-16-v2.json)
 pins modes and current source hashes but is **not** the installed manifest.
 
 Authority verification rechecks account identity, mount namespace, path/device/
@@ -321,8 +321,9 @@ bytes and binds the manifest hash into the process identity. Its dedicated branc
 uses explicit `setpriv --reuid/--regid --clear-groups`, verifies all four UID/GID
 values and empty supplementary groups, and expects those IDs in kernel message
 credentials. Installation authority is rechecked with process identity. This is
-not a public privileged entrypoint or an installer; trusted installed startup code
-is still required to establish trust in the checker itself.
+an internal collector branch. The separate fixed `helper_entry.py --check` establishes
+filesystem trust in the verifier before loading it and performs read-only checks;
+it does not expose that collector branch or activation operations.
 
 The public checker writes an exclusive private report and always exits 2 after
 inspection, including when local checks pass. It never grants network/deployment
@@ -330,6 +331,53 @@ authority. Current host installation is unavailable; this session has no subordi
 UID/GID ranges or `newuidmap`/`newgidmap`, so the dedicated-user branch currently has
 unit acceptance only. The existing same-UID rootless integration still passes but
 does not qualify cross-user isolation. See the [implementation report](../../docs/progress/portfolio-egress-installation-2026-09-16.md).
+
+## Reviewable installation bundle and fixed check entry
+
+`package.py` builds a deterministic uncompressed USTAR archive of the four fixed
+sources, its own bytes as `install.py`, an inactive-phase `README.md` and the
+SHA256 inventory `bundle.json`. `inspect` requires a selected whole-archive hash,
+checks bounded regular members and canonical archive bytes, and never extracts
+or executes them. The v2 manifest includes the new entrypoint; v1 manifests are
+rejected and historical v1 contracts remain unchanged.
+
+```bash
+/usr/bin/python3 -I infra/egress-guard/package.py build --output data/NEW-BUNDLE.tar
+/usr/bin/python3 -I infra/egress-guard/package.py inspect --bundle data/NEW-BUNDLE.tar --sha256 SELECTED_SHA256
+```
+
+The bundled installer's explicit `apply` is **implemented but not run on this
+host**. After bundle review and host-install authorization, stage its reviewed
+`install.py` under a protected root-owned directory as a single-link 0444 file,
+then use `/usr/bin/python3 -I /PROTECTED/install.py apply --bundle /BUNDLE --sha256
+SELECTED_SHA256`. Never elevate the mutable checkout. `apply` requires real/effective
+UID 0, isolated Python, protected installer paths and exact installer bytes matching
+the pinned bundle. Hash selection is the operator's trust decision, not publisher
+authentication. Trusted root and system Python/libraries remain prerequisites.
+
+The installer checks all fixed parents, rejects any existing code root or manifest,
+validates/reuses a correct account or creates `trader-egress` only when both user
+and group are absent, and checks its password is locked with `passwd -S`. It creates
+no home/mail spool/login log entry. Sources are exclusively written/fsynced as
+0444, fixed storage is created 0700 or preserved, and the root-owned 0600 manifest
+is published last. The exclusive code directory marks an attempt before account
+mutation. Failure after this marker blocks rerun and leaves evidence for manual
+inspection; no automatic deletion, upgrade, permission repair or scope reset exists.
+Missing parent directories may be created. No sudoers, services or network settings
+are installed. Tests simulate accounts and ownership under a private filesystem
+root; actual account creation and distinct-UID isolation remain unverified.
+
+The sole installed public operation is:
+
+```bash
+/usr/bin/python3 -I /usr/local/lib/trader-egress/helper_entry.py --check
+```
+
+It rejects checkout invocation, requires isolated Python, checks the root-owned
+no-follow verifier path before executing its source, then checks the entire v2
+installation. Both success and refusal return 2; all admission flags stay false.
+No collection or kernel activation is possible through this entrypoint. See the
+[bundle report and pinned artifact](../../docs/progress/portfolio-egress-bundle-2026-09-16.md).
 
 ## Shared-source NAT and proxy acceptance
 

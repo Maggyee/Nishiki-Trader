@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-16
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Reuse the existing public IPv4. Fixed installation authority checks and an explicit nonroot collector launch branch now follow isolated authenticated-launch acceptance. Actual installation and cross-user filesystem isolation remain unverified; this environment lacks subordinate ID ranges/mapping helpers. Next prepare a reviewed installation package/entrypoint and actual dedicated-user acceptance, then qualify source/paths/storage and bootstrap transport. The 12-second collector / 20-second blackout remains unapproved and undeployed. No real scope is activated.
+- **Current objective**: Reuse the existing public IPv4. A reproducible pinned installation bundle, first-install-only provisioner and fixed read-only check entry now follow installation/nonroot-launch implementation. Actual host installation and cross-user filesystem isolation remain unverified; this environment lacks subordinate ID mappings. Next review the concrete package for inactive installation and dedicated-user acceptance, then qualify source/paths/storage and bootstrap transport. The 12-second collector / 20-second blackout remains unapproved and undeployed. No real scope is activated.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -245,7 +245,8 @@ Detailed depth implementation, retained hashes and next review:
 [durable window activation and crash replay](progress/portfolio-maintenance-persistence-2026-09-16.md),
 [read-only host binding and drift preflight](progress/portfolio-egress-binding-preflight-2026-09-16.md),
 [isolated collector launch and authenticated IPC](progress/portfolio-collector-launcher-2026-09-16.md),
-[fixed installation authority and nonroot launch](progress/portfolio-egress-installation-2026-09-16.md).
+[fixed installation authority and nonroot launch](progress/portfolio-egress-installation-2026-09-16.md),
+and [reviewable installation bundle](progress/portfolio-egress-bundle-2026-09-16.md).
 
 ## Next Steps
 
@@ -292,10 +293,12 @@ Detailed depth implementation, retained hashes and next review:
    now validate root-owned paths/code, a dedicated account and original bytes through
    held descriptors; a separate launch branch clears groups and binds nonroot IDs.
    Actual installation is absent/unqualified, and separate-user integration remains
-   unverified without ID mappings or authorized host provisioning. Next prepare the
-   reviewed install package/entrypoint and dedicated-user acceptance, then qualify
-   public mapping, complete paths and storage. The 20-second interruption is not accepted or
-   deployed. Do not silently stop services; the host inspector remains read-only.
+   unverified without ID mappings or authorized host provisioning. A pinned reproducible
+   bundle, first-install-only provisioner and fixed read-only check entry are now
+   implemented; temporary-root tests simulate account changes, no host apply occurred.
+   Review the concrete package for inactive installation and dedicated-user acceptance,
+   then qualify public mapping, complete paths and storage. The 20-second interruption
+   is not accepted or deployed. Do not silently stop services; the host inspector remains read-only.
    The separate one-GET REST bootstrap proposal acknowledges unknown prior usage;
    review/implement it before any activation. It cannot satisfy or silently amend
    the frozen joint draft; waiting alone still supplies no historical evidence.
@@ -339,14 +342,15 @@ Detailed depth implementation, retained hashes and next review:
 
 ## Latest Verification
 
-- Installation/launcher: **259 focused Python tests / 14 isolated integration
-  checks pass**, adding 32 installation and 11 nonroot-launch cases. Fixed-path
-  authority, source bytes, account exclusivity, descriptor cleanup and terminal
-  drift refusal pass; requested UID/GID/group-drop and installed-source binding
-  have unit acceptance. Actual rootless integration still uses the same UID and
-  cannot qualify cross-user isolation. Host installation check remains blocked.
-  Ruff/format, links and frozen-byte checks pass. No host provisioning or venue
-  requests; the unchanged 151-check network harness was not rerun.
+- Installation bundle/launcher: **321 focused Python tests pass** (62 added).
+  Two isolated-Python builds produce identical SHA256; pinned archive inspection
+  passes. Tampered archives, untrusted entry/installer paths, unsafe accounts,
+  existing installations and partial-failure retries are rejected. Private-root
+  installation tests preserve consumed storage and publish the manifest last;
+  they simulate users and do not qualify actual root ownership/cross-UID isolation.
+  Ruff/format, documentation links, frozen bytes and diff checks pass. No host
+  provisioning or venue requests. The unchanged 14-check rootless launcher and
+  151-check network harness were not rerun; their prior results remain historical.
 
 - Persistent maintenance-window fixture: **151 Linux checks / 149 focused Python
   tests pass** (11 additional kernel checks, 23 additional Python cases). Window

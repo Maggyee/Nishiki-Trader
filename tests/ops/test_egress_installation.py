@@ -263,3 +263,13 @@ def test_foreign_process_cannot_use_or_close_authority_handles(policy, staged):
     finally:
         install.owner_pid = owner
         install.close()
+
+
+def test_legacy_manifest_cannot_omit_fixed_entrypoint(policy, staged):
+    manifest = local_path(policy, staged, policy.MANIFEST)
+    document = json.loads(manifest.read_bytes())
+    document["schema_version"] = "portfolio.egress_installation.v1"
+    del document["files"]["helper_entry.py"]
+    manifest.write_text(json.dumps(document))
+    with pytest.raises(ValueError, match="manifest_schema"):
+        policy.TrustedInstallation()

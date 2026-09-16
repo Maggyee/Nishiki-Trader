@@ -16,8 +16,8 @@ ACCOUNT = "trader-egress"
 CODE_ROOT = "/usr/local/lib/trader-egress"
 MANIFEST = "/etc/trader/egress-install.json"
 STORAGE_ROOT = "/var/lib/trader/egress"
-FILES = ("collector_launcher.py", "inspect_binding.py", "installation.py")
-PROFILE = "portfolio.egress_installation.v1"
+FILES = ("collector_launcher.py", "inspect_binding.py", "installation.py", "helper_entry.py")
+PROFILE = "portfolio.egress_installation.v2"
 LIMIT = 1024 * 1024
 
 
