@@ -228,6 +228,15 @@ records local snapshots, not cloud mapping or deployment qualification. The one-
 activated exception or implemented transport. Selective coverage must be verified;
 do not silently stop services or grant the frozen joint run.
 
+For subsequent actual shared-source SNAT/proxy acceptance, read
+`docs/progress/portfolio-shared-egress-acceptance-2026-09-16.md` and
+`infra/egress-guard/selftest.py`. Five caller paths share the observed fixture
+source; selected-target filtering and durable collector dispatch pass. Explicit
+counterexamples preserve false provider-wide coverage/cohosted-service flags:
+unlisted targets remain reachable and other services on a protected IP are blocked.
+Next resolve actual provider/caller policy or a bounded maintenance alternative
+before deployment; no host rules, proxy settings or real scopes were changed.
+
 For actual disposable Linux egress-hook acceptance, read
 `docs/progress/portfolio-vps-egress-namespace-acceptance-2026-09-15.md` and
 `infra/egress-guard/README.md`. The standalone non-root fixture passes 23 checks

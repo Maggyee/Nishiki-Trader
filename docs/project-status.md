@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-16
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Reuse the existing public IPv4 per the operator’s revised selection; no second address or cloud provisioning is required. Next stage shared-source host/proxy/container caller coverage, preserving unrelated proxy traffic, then bind the controller and fixed storage. Current source mapping and all-caller accounting remain unqualified. The one-public-GET / 20-weight bootstrap remains a separate unimplemented Draft; the frozen joint 17-GET / 468-weight contract and all consumed scopes remain unchanged.
+- **Current objective**: Reuse the existing public IPv4. Actual isolated SNAT/proxy acceptance now passes for selected destinations and durable collector dispatch. Counterexamples demonstrate that unlisted targets remain reachable and unrelated services sharing a protected IP are blocked. Next establish actual provider/caller coverage or prepare a bounded maintenance alternative, then bind source/controller/storage before deployment. No host guard or bootstrap is activated; frozen joint and consumed scopes remain unchanged.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -239,7 +239,8 @@ Detailed depth implementation, retained hashes and next review:
 [controlled revocation and sender ownership](progress/portfolio-vps-egress-controller-2026-09-15.md),
 [fixed-scope persistence and crash replay](progress/portfolio-vps-egress-persistence-2026-09-16.md),
 [historical dedicated IPv4 proposal](progress/portfolio-dedicated-egress-bootstrap-2026-09-16.md),
-[current shared IPv4 revision](progress/portfolio-shared-egress-bootstrap-2026-09-16.md).
+[current shared IPv4 revision](progress/portfolio-shared-egress-bootstrap-2026-09-16.md),
+[actual shared-source NAT/proxy acceptance](progress/portfolio-shared-egress-acceptance-2026-09-16.md).
 
 ## Next Steps
 
@@ -268,11 +269,13 @@ Detailed depth implementation, retained hashes and next review:
    and every reopen is refused. Next bind actual source/caller authorization and
    qualify the selected storage root and deployed crash/revocation behavior.
    No host guard or complete audit is deployed. The operator now selects the
-   existing public IPv4; no second address is required. Stage host/proxy/container
-   coverage for that shared source, preserving unrelated proxy traffic, then bind
-   actual source evidence, the controller and fixed storage. The inspector exists;
-   its source blocker is topology-neutral. Do not infer quota isolation from a
-   namespace or silently stop existing services to assert exclusive access.
+   existing public IPv4; no second address is required. Local SNAT/proxy acceptance
+   now verifies five caller paths and durable collector dispatch, with other-address
+   controls preserved. Unlisted targets and cohosted-service counterexamples keep
+   provider-wide coverage false. Next resolve actual provider/caller coverage or
+   prepare a bounded maintenance alternative; then bind actual source/controller/
+   storage and review rollout. Do not silently stop existing services or infer
+   quota isolation from a namespace. The host inspector remains read-only.
    The separate one-GET REST bootstrap proposal acknowledges unknown prior usage;
    review/implement it before any activation. It cannot satisfy or silently amend
    the frozen joint draft; waiting alone still supplies no historical evidence.
@@ -315,6 +318,14 @@ Detailed depth implementation, retained hashes and next review:
 - Nautilus is the only execution engine; LLMs never enter the order path.
 
 ## Latest Verification
+
+- Shared-source NAT/proxy fixture: **105 Linux checks / 104 focused Python tests
+  pass** (49 new kernel checks, 15 new Python cases). Actual local SNAT, direct and
+  proxy paths, TCP/UDP/IPv6 refusals, durable collector dispatch, existing-socket
+  revocation and rollback pass. Unlisted-endpoint reachability and cohosted-service
+  collateral blocking are explicit counterexamples, not coverage qualification.
+  Ruff/format, links, frozen hashes and diff checks pass; full application regression
+  was not rerun. No host rules, real proxy or venue requests were changed.
 
 - Shared-source revision: **24 inspector tests pass**; Ruff/format, documentation
   links, unchanged earlier proposal/frozen contract, new proposal consistency and

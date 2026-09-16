@@ -6,6 +6,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import select
 import signal
 import socket
 import stat
@@ -14,6 +15,7 @@ import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import suppress
 from pathlib import Path
 
 ENV = {"PATH": "/usr/sbin:/usr/bin:/sbin:/bin", "LC_ALL": "C"}
@@ -21,6 +23,7 @@ IP = "/usr/sbin/ip"
 NFT = "/usr/sbin/nft"
 PYTHON = "/usr/bin/python3"
 PORT = 23456
+PROXY_PORT = 23457
 NAMESPACES = ("user", "net", "mnt", "pid")
 EARLY_RULES = """
 table inet fixture_early {
@@ -76,6 +79,43 @@ table inet fixture_lease {
         iifname "br-fixture" ip saddr 192.0.2.2 ip daddr @destinations tcp dport 23456 accept
         iifname "wan" ip saddr 198.51.100.2 ip daddr 192.0.2.2 tcp sport 23456 accept
         counter name denied drop
+    }
+}
+"""
+
+# Selected literal destinations, deliberately NOT a complete provider inventory.
+SHARED_NAT_RULES = """
+table ip fixture_shared_nat {
+    chain source {
+        type nat hook postrouting priority 100; policy accept;
+        oifname "wan" ip daddr 198.51.100.0/24 snat to 198.51.100.1
+    }
+}
+"""
+SHARED_GUARD_RULES = """
+table inet fixture_shared_guard {
+    set permits { type ipv4_addr; flags timeout; timeout 30s; }
+    counter host_denied {}
+    counter forwarded_denied {}
+    counter collector_denied {}
+    counter spoof_denied {}
+    chain input {
+        type filter hook input priority 30; policy accept;
+        iifname "br-fixture" counter name collector_denied drop
+    }
+    chain output {
+        type filter hook output priority 30; policy accept;
+        ip daddr 198.51.100.2 counter name host_denied drop
+        ip6 daddr fd00:7472:2::2 counter name host_denied drop
+    }
+    chain forward {
+        type filter hook forward priority 30; policy accept;
+        iifname "br-fixture" ip saddr != 192.0.2.2 counter name spoof_denied drop
+        iifname != "br-fixture" ip saddr 192.0.2.2 counter name spoof_denied drop
+        iifname "br-fixture" ip saddr 192.0.2.2 ip daddr @permits tcp dport 23456 accept
+        iifname "br-fixture" counter name collector_denied drop
+        ip daddr 198.51.100.2 counter name forwarded_denied drop
+        ip6 daddr fd00:7472:2::2 counter name forwarded_denied drop
     }
 }
 """
@@ -424,12 +464,33 @@ class Probe:
             }
         if action == "serve":
             for family, address in ((socket.AF_INET, "0.0.0.0"), (socket.AF_INET6, "::")):
-                listener = socket.socket(family, socket.SOCK_STREAM)
-                if family == socket.AF_INET6:
-                    listener.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1)
-                listener.bind((address, PORT))
-                listener.listen(16)
-                threading.Thread(target=self.accept, args=(listener,), daemon=True).start()
+                for port in (PORT, PORT + 2):
+                    listener = socket.socket(family, socket.SOCK_STREAM)
+                    if family == socket.AF_INET6:
+                        listener.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1)
+                    listener.bind((address, port))
+                    listener.listen(16)
+                    threading.Thread(target=self.accept, args=(listener,), daemon=True).start()
+                # A wildcard UDP socket can reply from the primary address even
+                # when the client targeted an alias. Bind each fixture address
+                # so a connected UDP client receives the expected source tuple.
+                udp_addresses = (
+                    ("198.51.100.2", "198.51.100.3")
+                    if family == socket.AF_INET
+                    else ("fd00:7472:2::2", "fd00:7472:2::3")
+                )
+                for udp_address in udp_addresses:
+                    udp = socket.socket(family, socket.SOCK_DGRAM)
+                    if family == socket.AF_INET6:
+                        udp.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1)
+                    udp.bind((udp_address, PORT))
+                    threading.Thread(target=self.udp_echo, args=(udp,), daemon=True).start()
+            return {"ok": True}
+        if action == "serve_proxy":
+            listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            listener.bind(("0.0.0.0", PROXY_PORT))
+            listener.listen(16)
+            threading.Thread(target=self.accept_proxy, args=(listener,), daemon=True).start()
             return {"ok": True}
         if action == "close":
             for connection in self.connections.values():
@@ -439,47 +500,132 @@ class Probe:
         key = request["key"]
         connection = None
         try:
-            if action in ("once", "open"):
-                family = socket.AF_INET6 if ":" in request["address"] else socket.AF_INET
-                connection = socket.socket(family, socket.SOCK_STREAM)
+            if action in ("once", "open", "udp"):
+                target = request.get("proxy") or request["address"]
+                family = socket.AF_INET6 if ":" in target else socket.AF_INET
+                connection = socket.socket(
+                    family, socket.SOCK_DGRAM if action == "udp" else socket.SOCK_STREAM
+                )
                 connection.settimeout(0.6)
                 if request.get("source"):
                     connection.bind((request["source"], 0))
-                connection.connect((request["address"], PORT))
+                connection.connect(
+                    (target, PROXY_PORT if request.get("proxy") else request.get("port", PORT))
+                )
+                if request.get("proxy"):
+                    connection.settimeout(1.2)  # Proxy's upstream timeout is 0.6s.
+                    connection.sendall(
+                        canonical(
+                            {"address": request["address"], "port": request.get("port", PORT)}
+                        )
+                        + b"\n"
+                    )
+                    if self.line(connection) != b"OK\n":
+                        return {"ok": False, "error": "proxy_upstream_refused"}
             elif action == "send":
                 connection = self.connections[key]
             else:
                 raise ValueError("Unknown probe action")
-            payload = b"fixture-echo\n"
+            payload = b"fixture-peer\n" if request.get("observe_peer") else b"fixture-echo\n"
             connection.sendall(payload)
-            received = b""
-            while len(received) < len(payload):
-                chunk = connection.recv(len(payload) - len(received))
-                if not chunk:
-                    break
-                received += chunk
-            if received != payload:
+            received = connection.recv(128) if action == "udp" else self.line(connection)
+            if request.get("observe_peer"):
+                observed_peer = received.decode().strip()
+                if observed_peer != "198.51.100.1":
+                    raise RuntimeError("Fixture clients do not share the selected SNAT source")
+            elif received != payload:
                 raise RuntimeError("Fixture echo mismatch")
             if action == "open":
                 self.connections[key] = connection
-            return {"ok": True}
+            return {"ok": True, **({"peer": observed_peer} if request.get("observe_peer") else {})}
         except OSError as exc:
             return {"ok": False, "error": type(exc).__name__}
         finally:
             if connection is not None and (
-                action == "once" or (action == "open" and key not in self.connections)
+                action in ("once", "udp") or (action == "open" and key not in self.connections)
             ):
                 connection.close()
 
     @staticmethod
-    def echo(connection: socket.socket) -> None:
+    def line(connection: socket.socket) -> bytes:
+        value = b""
+        while len(value) < 256:
+            chunk = connection.recv(1)
+            if not chunk:
+                raise ConnectionError("Fixture peer closed a line")
+            value += chunk
+            if chunk == b"\n":
+                return value
+        raise ValueError("Fixture line exceeds bound")
+
+    @classmethod
+    def echo(cls, connection: socket.socket) -> None:
         with connection:
             connection.settimeout(30)
             try:
-                while data := connection.recv(64):
-                    connection.sendall(data)
+                while True:
+                    data = cls.line(connection)
+                    connection.sendall(
+                        (connection.getpeername()[0] + "\n").encode()
+                        if data == b"fixture-peer\n"
+                        else data
+                    )
             except OSError:
                 pass
+
+    @staticmethod
+    def udp_echo(listener):
+        while True:
+            data, peer = listener.recvfrom(256)
+            listener.sendto((peer[0] + "\n").encode() if data == b"fixture-peer\n" else data, peer)
+
+    @classmethod
+    def proxy_connection(cls, connection):
+        with connection:
+            connection.settimeout(0.6)
+            upstream = None
+            try:
+                target = json.loads(cls.line(connection))
+                if (
+                    target != {"address": target.get("address"), "port": target.get("port")}
+                    or target["address"]
+                    not in {
+                        "198.51.100.2",
+                        "198.51.100.3",
+                        "198.51.100.4",
+                        "fd00:7472:2::2",
+                        "fd00:7472:2::3",
+                    }
+                    or type(target["port"]) is not int
+                    or target["port"] not in {PORT, PORT + 2}
+                ):
+                    raise ValueError("Only fixed fixture proxy destinations are allowed")
+                family = socket.AF_INET6 if ":" in target["address"] else socket.AF_INET
+                upstream = socket.socket(family, socket.SOCK_STREAM)
+                upstream.settimeout(0.6)
+                upstream.connect((target["address"], target["port"]))
+                connection.sendall(b"OK\n")
+                while True:
+                    ready, _, _ = select.select([connection, upstream], [], [], 30)
+                    if not ready:
+                        return
+                    for reader in ready:
+                        data = reader.recv(256)
+                        if not data:
+                            return
+                        (upstream if reader is connection else connection).sendall(data)
+            except (OSError, ValueError, TypeError, AttributeError):
+                with suppress(OSError):
+                    connection.sendall(b"NO\n")
+            finally:
+                if upstream is not None:
+                    upstream.close()
+
+    @classmethod
+    def accept_proxy(cls, listener):
+        while True:
+            connection, _ = listener.accept()
+            threading.Thread(target=cls.proxy_connection, args=(connection,), daemon=True).start()
 
     @classmethod
     def accept(cls, listener: socket.socket) -> None:
@@ -497,17 +643,17 @@ def child_loop() -> None:
 
 def embedded(source: str, entrypoint: str) -> str:
     return (
+        f"source = {source!r}\n"
         "scope = {'__name__': 'trader_fixture'}\n"
-        f"exec(compile({source!r}, '<trader-fixture>', 'exec'), scope)\n" + entrypoint
+        "exec(compile(source, '<trader-fixture>', 'exec'), scope)\n" + entrypoint
     )
 
 
 class Child:
-    def __init__(self, source: str) -> None:
+    def __init__(self, source: str, *, new_net=True) -> None:
         self.process = subprocess.Popen(
             [
-                "/usr/bin/unshare",
-                "--net",
+                *(["/usr/bin/unshare", "--net"] if new_net else []),
                 "/usr/bin/setpriv",
                 "--bounding-set=-all",
                 "--inh-caps=-all",
@@ -883,6 +1029,284 @@ def controller_checks(client, snapshot, grant, denied):
     return checks
 
 
+def shared_source_checks(client, peer, host, source, children):
+    """Actual SNAT/proxy traffic and counterexamples to destination-list coverage."""
+    checks = []
+    competitor = Child(source)
+    children.append(competitor)
+    proxy = Child(source, new_net=False)
+    children.append(proxy)
+    router_ns = namespace_ids()["net"]
+    if os.readlink(f"/proc/{competitor.process.pid}/ns/net") == router_ns:
+        raise RuntimeError("Competing caller must have its own network namespace")
+    if os.readlink(f"/proc/{proxy.process.pid}/ns/net") != router_ns:
+        raise RuntimeError("Proxy must create actual host OUTPUT traffic")
+    authority = proxy.request({"action": "check_authority"})
+    if any(authority["caps"].values()) or authority["no_new_privs"] != 1:
+        raise RuntimeError("Proxy retained administration capabilities")
+    checks.append("shared_proxy_has_no_administration_capabilities")
+    run(IP, "link", "add", "routed", "type", "veth", "peer", "name", "other")
+    run(IP, "link", "set", "other", "netns", str(competitor.process.pid))
+    run(IP, "link", "set", "routed", "up")
+    run(IP, "address", "add", "203.0.113.1/24", "dev", "routed")
+    run(IP, "-6", "address", "add", "fd00:7472:3::1/64", "dev", "routed", "nodad")
+    competitor.ip("link", "set", "lo", "up")
+    competitor.ip("link", "set", "other", "up")
+    competitor.ip("address", "add", "203.0.113.2/24", "dev", "other")
+    competitor.ip("-6", "address", "add", "fd00:7472:3::2/64", "dev", "other", "nodad")
+    competitor.ip("route", "add", "198.51.100.0/24", "via", "203.0.113.1")
+    competitor.ip("-6", "route", "add", "fd00:7472:2::/64", "via", "fd00:7472:3::1")
+    peer.ip("-6", "route", "add", "fd00:7472:3::/64", "via", "fd00:7472:2::1")
+    peer.ip("address", "add", "198.51.100.4/24", "dev", "peer")
+    run(NFT, "--check", "-f", "-", text=SHARED_NAT_RULES)
+    run(NFT, "-f", "-", text=SHARED_NAT_RULES)
+    if proxy.request({"action": "serve_proxy"}) != {"ok": True}:
+        raise RuntimeError("Shared-source proxy failed to start")
+
+    def count(name):
+        rows = json.loads(run(NFT, "-j", "list", "counter", "inet", "fixture_shared_guard", name))
+        return next(row["counter"]["packets"] for row in rows["nftables"] if "counter" in row)
+
+    def check(name, actor, *, allowed, counter=None, **request):
+        before = count(counter) if counter else None
+        result = actor.request(
+            {"action": "once", "key": name, "address": "198.51.100.2", **request}
+        )
+        if result["ok"] != allowed:
+            raise RuntimeError(f"{name}: unexpected shared-source outcome {result}")
+        if counter and count(counter) <= before:
+            raise RuntimeError(f"{name}: missing intended kernel denial")
+        checks.append(name)
+        return result
+
+    actors = [
+        ("host", host, {}, "host_denied"),
+        ("collector", client, {}, "collector_denied"),
+        ("forwarded", competitor, {}, "forwarded_denied"),
+        ("host_proxy", host, {"proxy": "127.0.0.1"}, "host_denied"),
+        ("forwarded_proxy", competitor, {"proxy": "203.0.113.1"}, "host_denied"),
+    ]
+    for label, actor, options, _counter in actors:
+        check(
+            f"shared_baseline_{label}",
+            actor,
+            allowed=True,
+            action="open",
+            key=label,
+            observe_peer=True,
+            **options,
+        )
+    check("shared_baseline_colocated_service", host, allowed=True, port=PORT + 2, observe_peer=True)
+    run(NFT, "--check", "-f", "-", text=SHARED_GUARD_RULES)
+    run(NFT, "-f", "-", text=SHARED_GUARD_RULES)
+    for label, actor, options, counter in actors:
+        for action in ("send", "once"):
+            check(
+                f"shared_blocks_{label}_{action}",
+                actor,
+                allowed=False,
+                counter=counter,
+                action=action,
+                key=label,
+                **options,
+            )
+        if label != "collector":
+            for address in ("198.51.100.3", "fd00:7472:2::3"):
+                check(
+                    f"shared_control_{label}_{address}",
+                    actor,
+                    allowed=True,
+                    address=address,
+                    **options,
+                )
+    for label, actor, counter in (
+        ("host", host, "host_denied"),
+        ("forwarded", competitor, "forwarded_denied"),
+        ("collector", client, "collector_denied"),
+    ):
+        check(f"shared_blocks_{label}_udp", actor, allowed=False, counter=counter, action="udp")
+        check(
+            f"shared_blocks_{label}_ipv6",
+            actor,
+            allowed=False,
+            counter=counter,
+            address="fd00:7472:2::2",
+        )
+        if label != "collector":
+            check(
+                f"shared_udp_control_{label}",
+                actor,
+                allowed=True,
+                action="udp",
+                address="198.51.100.3",
+                observe_peer=True,
+            )
+    check(
+        "shared_collector_cannot_reach_host_proxy",
+        client,
+        allowed=False,
+        counter="collector_denied",
+        proxy="192.0.2.1",
+        address="198.51.100.3",
+    )
+    check(
+        "shared_collector_cannot_use_other_destination",
+        client,
+        allowed=False,
+        counter="collector_denied",
+        address="198.51.100.3",
+    )
+    competitor.ip("address", "add", "192.0.2.2/32", "dev", "other")
+    check(
+        "shared_other_ingress_cannot_spoof_collector",
+        competitor,
+        allowed=False,
+        counter="spoof_denied",
+        source="192.0.2.2",
+    )
+    competitor.ip("address", "del", "192.0.2.2/32", "dev", "other")
+
+    # Keep both successful counterexamples visible: literal-IP enforcement is
+    # neither a provider inventory nor a way to preserve every cohosted service.
+    check(
+        "shared_unlisted_target_remains_reachable",
+        host,
+        allowed=True,
+        address="198.51.100.4",
+        observe_peer=True,
+    )
+    check(
+        "shared_proxy_unlisted_target_remains_reachable",
+        competitor,
+        allowed=True,
+        proxy="203.0.113.1",
+        address="198.51.100.4",
+        observe_peer=True,
+    )
+    check(
+        "shared_colocated_unrelated_service_is_blocked",
+        host,
+        allowed=False,
+        counter="host_denied",
+        port=PORT + 2,
+    )
+
+    def stable(value):
+        if isinstance(value, dict):
+            return {
+                key: stable(item)
+                for key, item in value.items()
+                if key not in {"metainfo", "expires", "packets", "bytes"}
+            }
+        if isinstance(value, list):
+            return [
+                stable(item)
+                for item in value
+                if not (isinstance(item, dict) and "metainfo" in item)
+            ]
+        return value
+
+    def observe():
+        return {
+            "guard": stable(
+                json.loads(run(NFT, "-j", "list", "table", "inet", "fixture_shared_guard"))
+            ),
+            "nat": stable(json.loads(run(NFT, "-j", "list", "table", "ip", "fixture_shared_nat"))),
+            "route": json.loads(client.ip("-j", "route", "get", "198.51.100.2")),
+            "collector_namespace": os.readlink(f"/proc/{client.process.pid}/ns/net"),
+            "fixture_snat_source": "198.51.100.1",
+        }
+
+    def revoke():
+        run(NFT, "flush", "set", "inet", "fixture_shared_guard", "permits")
+        rows = json.loads(run(NFT, "-j", "list", "set", "inet", "fixture_shared_guard", "permits"))
+        if any(row.get("set", {}).get("elem") for row in rows["nftables"]):
+            raise RuntimeError("Shared-source permission was not revoked")
+
+    class JournalBoundActor:
+        def request(self, request):
+            rows = [json.loads(row) for row in guard.path.read_bytes().splitlines()]
+            if rows[-1]["kind"] != "prepared":
+                raise RuntimeError("Shared-source transport preceded durable preparation")
+            return client.request(
+                {**request, "action": "open", "key": "shared-prepared", "observe_peer": True}
+            )
+
+    storage = Path("/tmp/shared-controller")
+    storage.mkdir(mode=0o700)
+    run(
+        NFT,
+        "-f",
+        "-",
+        text="add element inet fixture_shared_guard permits { 198.51.100.2 timeout 20s }",
+    )
+    selected = observe()
+    guard = PersistentFixtureGuard(
+        storage, selected=selected, observe=observe, actor=JournalBoundActor(), revoke=revoke
+    )
+    try:
+        if guard.dispatch().get("peer") != "198.51.100.1":
+            raise RuntimeError("Controlled collector used a different source")
+        checks.append("shared_durable_collector_dispatch_uses_same_source")
+        check(
+            "shared_permission_does_not_admit_proxy",
+            host,
+            allowed=False,
+            counter="host_denied",
+            proxy="127.0.0.1",
+        )
+        check(
+            "shared_permission_does_not_admit_forwarded_caller",
+            competitor,
+            allowed=False,
+            counter="forwarded_denied",
+        )
+    finally:
+        guard.close()
+    raw = guard.path.read_bytes()
+    report = review_fixture_journal(
+        raw, selected=selected, expected_sha256=hashlib.sha256(raw).hexdigest()
+    )
+    if report["recorded_preparations"] != 1 or not report["revocation_recorded"]:
+        raise RuntimeError("Shared-source journal replay differs")
+    checks.append("shared_durable_journal_replays_terminal_scope")
+    check(
+        "shared_revocation_blocks_existing_collector_socket",
+        client,
+        allowed=False,
+        counter="collector_denied",
+        action="send",
+        key="shared-prepared",
+    )
+    check(
+        "shared_revocation_blocks_new_collector_socket",
+        client,
+        allowed=False,
+        counter="collector_denied",
+    )
+    # Rollback is tested only after terminal revocation and closing the collector.
+    for actor in (host, client, competitor):
+        actor.request({"action": "close"})
+    run(NFT, "delete", "table", "inet", "fixture_shared_guard")
+    check(
+        "shared_rollback_restores_proxy_target",
+        host,
+        allowed=True,
+        proxy="127.0.0.1",
+        observe_peer=True,
+    )
+    check("shared_rollback_restores_forwarded_target", competitor, allowed=True, observe_peer=True)
+    check(
+        "shared_rollback_restores_colocated_service",
+        host,
+        allowed=True,
+        port=PORT + 2,
+        observe_peer=True,
+    )
+    run(NFT, "delete", "table", "ip", "fixture_shared_nat")
+    return checks
+
+
 def worker(original: dict[str, str], source: str) -> dict:
     def deadline(_signum, _frame):
         raise TimeoutError("Fixture exceeded its 90-second deadline")
@@ -1003,11 +1427,19 @@ def worker(original: dict[str, str], source: str) -> dict:
             raise RuntimeError("Rollback changed the earlier independent policy")
         checks.append("rollback_preserves_earlier_policy")
         leases, controlled = lease_checks(client, host)
+        shared = shared_source_checks(client, peer, host, source, children)
+        if early_structure() != earlier:
+            raise RuntimeError("Shared rollback changed the earlier policy")
+        shared.append("shared_rollback_preserves_earlier_policy")
         return {
             "status": "passed",
             "checks": checks,
             "lease_checks": leases,
             "controller_checks": controlled,
+            "shared_source_checks": shared,
+            "fixture_shared_snat_verified": True,
+            "provider_destination_coverage_qualified": False,
+            "colocated_service_preservation_qualified": False,
             "guard_packet_counts": observed,
             "isolated_namespaces": list(NAMESPACES),
             "host_firewall_modified": False,
@@ -1034,7 +1466,7 @@ def main() -> int:
     source = Path(__file__).read_text()
     original = namespace_ids()
     entrypoint = (
-        f"result = scope['worker']({original!r}, {source!r})\n"
+        f"result = scope['worker']({original!r}, source)\n"
         f"result['script_sha256'] = {hashlib.sha256(source.encode()).hexdigest()!r}\n"
         "print(scope['json'].dumps(result, sort_keys=True))\n"
     )

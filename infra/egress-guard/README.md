@@ -93,9 +93,10 @@ force every possible client in that namespace to journal requests. The fixture
 assumes its fixed client command channel and worker are trusted; it grants no
 complete all-caller quota or production isolation claim.
 
-The namespace topology models hook behavior. It does not reproduce Docker NAT,
-the full Tailscale rules, UDP/QUIC, cloud source mapping, an actual proxy, DNS
-rotation, offload or provider-wide quota scopes. No production identity
+The initial namespace topology models hook behavior. The shared-source extension
+below adds explicit local SNAT, UDP echo and a TCP tunnel proxy. It does not
+reproduce full Docker/Tailscale or sing-box behavior, QUIC, cloud source mapping,
+DNS rotation, offload or provider-wide quota scopes. No production identity
 authorization, persistent guard lease or complete traffic-loss detector is
 implemented. Rule-removal tests demonstrate restored fixture connectivity;
 deployment still requires stopping collection before removing its guard.
@@ -181,10 +182,26 @@ exit 1 means report failure. This is a non-atomic snapshot, not a cloud mapping,
 historical ledger, deployment authority or network permit. No DNS, venue, cloud
 metadata, credentials or proxy configuration are accessed.
 
-Next implementation entrypoint: stage shared-source host/proxy/container caller
-coverage while preserving unrelated proxy traffic, bind the authorized collector
-and fixed storage root, and prepare concrete rollout/rollback. Keep actual current
-cloud mapping evidence separate from local inspection. Then implement and review the separate
-one-GET REST bootstrap. Its proposed unknown-prior-usage exception is not activated
-by the topology selection. The frozen joint first-request blocker and all consumed
-scopes remain unchanged.
+## Shared-source NAT and proxy acceptance
+
+The same `selftest.py` now includes 49 additional actual kernel checks: direct
+host, collector, competing routed caller and two proxy-client paths are observed
+at the peer with one SNAT source. Selected destinations are blocked for new and
+existing TCP sockets and UDP/IPv6 alternatives; other-address direct/proxy controls
+remain usable. The proxy is an unprivileged bounded fixture tunnel, not sing-box.
+The persistent controller prepares before the actual collector send, and terminal
+revocation blocks its existing connection. Rollback follows collector closure and
+preserves the earlier independent policy. All mutations remain inside disposable
+namespaces; no host sudo or real venue is involved.
+
+Two negative results are intentional: an unlisted destination remains reachable
+with the shared source, and a separate service on the protected IP is also blocked.
+Therefore the report retains false provider-wide coverage and cohosted-service
+preservation flags. See the [acceptance report](../../docs/progress/portfolio-shared-egress-acceptance-2026-09-16.md).
+
+Next establish the real provider/caller coverage policy and proxy effects, or
+prepare a bounded maintenance-window alternative with watchdog/rollback for review.
+Do not deploy a three-hostname IP list as exhaustive coverage or silently stop
+existing services. Actual source/caller/fixed-storage binding and the separate
+one-GET REST bootstrap implementation/review remain necessary. No proposal or
+consumed scope is activated by these fixture results.

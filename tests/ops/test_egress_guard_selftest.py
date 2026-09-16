@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import os
+import socket
 import subprocess
 import threading
 from concurrent.futures import ThreadPoolExecutor
@@ -689,3 +690,75 @@ def test_uncertain_attempt_survives_terminal_revocation(fixture, persistent_case
     report = review_persistent(fixture, guard, selected)
     assert report["revocation_recorded"] and report["uncertain_attempt"] == 1
     assert report["recorded_preparations"] == 1
+
+
+@pytest.mark.parametrize("new_net", [True, False])
+def test_proxy_and_namespace_children_both_drop_capabilities(fixture, monkeypatch, new_net):
+    process = Mock()
+    process.stdout.readline.return_value = '{"ready": true}\n'
+    popen = Mock(return_value=process)
+    monkeypatch.setattr(fixture.subprocess, "Popen", popen)
+    fixture.Child("# fixture source", new_net=new_net)
+    argv = popen.call_args.args[0]
+    assert ("--net" in argv) is new_net
+    assert ("/usr/bin/unshare" in argv) is new_net
+    assert argv[argv.index("/usr/bin/setpriv") + 1 : argv.index(fixture.PYTHON)] == [
+        "--bounding-set=-all",
+        "--inh-caps=-all",
+        "--ambient-caps=-all",
+        "--no-new-privs",
+    ]
+    assert popen.call_args.kwargs["env"] == fixture.ENV
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        b"{}\n",
+        b"[]\n",
+        b"not-json\n",
+        b"\xff\n",
+        b"x" * 256,
+        b'{"address":"example.com","port":23456}\n',
+        b'{"address":"127.0.0.1","port":23456}\n',
+        b'{"address":"198.51.100.2","port":true}\n',
+        b'{"address":"198.51.100.2","port":443}\n',
+        b'{"address":"198.51.100.2","port":23456,"extra":1}\n',
+    ],
+)
+def test_fixture_proxy_rejects_unselected_targets_before_socket(fixture, monkeypatch, raw):
+    client, server = socket.socketpair()
+    opener = Mock(side_effect=AssertionError("No upstream socket allowed"))
+    monkeypatch.setattr(fixture.socket, "socket", opener)
+    try:
+        client.settimeout(1)
+        client.sendall(raw)
+        fixture.Probe.proxy_connection(server)
+        assert client.recv(3) == b"NO\n"
+        opener.assert_not_called()
+    finally:
+        client.close()
+        server.close()
+
+
+def test_fixture_line_reassembles_fragmented_input(fixture):
+    connection = Mock()
+    connection.recv.side_effect = [b"a", b"b", b"\n"]
+    assert fixture.Probe.line(connection) == b"ab\n"
+    assert connection.recv.call_count == 3
+
+
+def test_fixture_line_rejects_eof(fixture):
+    connection = Mock()
+    connection.recv.side_effect = [b"a", b""]
+    with pytest.raises(ConnectionError):
+        fixture.Probe.line(connection)
+
+
+def test_embedded_worker_passes_original_source_without_duplicating_it(fixture):
+    source = "value = 41\n# distinctive-source-marker"
+    script = fixture.embedded(source, "result = (scope['value'], source)\n")
+    scope = {}
+    exec(script, scope)
+    assert scope["result"] == (41, source)
+    assert script.count("distinctive-source-marker") == 1
