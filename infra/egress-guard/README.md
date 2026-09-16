@@ -307,7 +307,7 @@ The installed manifest has exactly `schema_version`, `collector` and `files`.
 Use schema `portfolio.egress_installation.v2`; `collector` contains exactly the
 name and actual numeric UID/GID, while `files` maps `collector_launcher.py`,
 `inspect_binding.py`, `installation.py` and `helper_entry.py` to their SHA256 strings. The separate
-[review contract](../../docs/progress/portfolio-egress-installation-contract-2026-09-16-v2.json)
+[review contract](../../docs/progress/portfolio-egress-installation-contract-2026-09-16-v3.json)
 pins modes and current source hashes but is **not** the installed manifest.
 
 Authority verification rechecks account identity, mount namespace, path/device/
@@ -328,9 +328,9 @@ it does not expose that collector branch or activation operations.
 The public checker writes an exclusive private report and always exits 2 after
 inspection, including when local checks pass. It never grants network/deployment
 authority. Current host installation is unavailable; this session has no subordinate
-UID/GID ranges or `newuidmap`/`newgidmap`, so the dedicated-user branch currently has
-unit acceptance only. The existing same-UID rootless integration still passes but
-does not qualify cross-user isolation. See the [implementation report](../../docs/progress/portfolio-egress-installation-2026-09-16.md).
+UID/GID ranges or `newuidmap`/`newgidmap`. The new sudo-backed disposable acceptance
+below now verifies actual distinct kernel UIDs and root-owned file protection;
+the older same-UID rootless integration alone does not. See the [historical implementation report](../../docs/progress/portfolio-egress-installation-2026-09-16.md).
 
 ## Reviewable installation bundle and fixed check entry
 
@@ -364,8 +364,9 @@ is published last. The exclusive code directory marks an attempt before account
 mutation. Failure after this marker blocks rerun and leaves evidence for manual
 inspection; no automatic deletion, upgrade, permission repair or scope reset exists.
 Missing parent directories may be created. No sudoers, services or network settings
-are installed. Tests simulate accounts and ownership under a private filesystem
-root; actual account creation and distinct-UID isolation remain unverified.
+are installed. Unit tests simulate accounts and ownership under a private filesystem
+root. The successor disposable acceptance below also runs actual useradd, password
+status, installed checks and distinct-UID filesystem/IPC operations.
 
 The sole installed public operation is:
 
@@ -378,6 +379,44 @@ no-follow verifier path before executing its source, then checks the entire v2
 installation. Both success and refusal return 2; all admission flags stay false.
 No collection or kernel activation is possible through this entrypoint. See the
 [bundle report and pinned artifact](../../docs/progress/portfolio-egress-bundle-2026-09-16.md).
+
+## Actual disposable installation and distinct-UID acceptance
+
+`installation_selftest.py` is an explicit sudo-backed test wrapper, run as an
+ordinary user. It requires existing `sudo -n` permission; it never installs a sudo
+rule, mapping helper, host account or service. It pins the corrected installer and
+bundle, enters fresh private mount/network/PID namespaces, and refuses to mutate
+anything unless running as namespace PID 1 with all three namespaces different.
+Synthetic passwd/group/shadow files and installation/storage paths live on private
+tmpfs mounts. The original host databases are never copied into the fixture.
+
+```bash
+/usr/bin/python3 -I infra/egress-guard/installation_selftest.py --report data/NEW-ISOLATED-INSTALLATION.json
+```
+
+The installed package actually creates a nonroot system user, verifies its locked
+password and runs the fixed check in a fresh process. `FixtureCollector.from_installation`
+then executes the dedicated-UID branch, validates kernel credentials, performs one
+control observation and closes the child. A separate fixed probe running under the
+same IDs with empty groups/capabilities tests readable code, denied writes/removal/
+chmod, denied manifest access and denied storage read/write/delete/scope creation.
+The consumed fixture bytes survive both installation and a refused second install.
+Storage mode drift blocks a fresh check and permanently invalidates held authority.
+
+The current system rejects `useradd -K CREATE_MAIL_SPOOL=no`, which the earlier
+mocked tests did not reveal. `package.py` now uses supported system-user arguments.
+The real test verifies no mail/login-log creation even with fixture
+`CREATE_MAIL_SPOOL=yes`. The four installed sources and v2 manifest shape stay the
+same; only the installer and whole-bundle hash change. Old artifacts/contracts
+remain historical; use the v3 review contract linked above for the corrected bundle.
+
+The acceptance passes **40 actual checks**. Host passwd/group hashes, fixed path
+observations and caller namespaces compare equal before/after. The worker alarm is
+45 seconds, command timeout 10 seconds, parent communication deadline 55 seconds;
+PID-namespace teardown reaps descendants. No interface is brought up or external
+request made. This qualifies the tested disposable process/filesystem boundary,
+not deployment on the real host, disk/power-loss durability, complete traffic
+coverage or collection admission. See the [actual acceptance report](../../docs/progress/portfolio-egress-isolated-installation-2026-09-16.md).
 
 ## Shared-source NAT and proxy acceptance
 

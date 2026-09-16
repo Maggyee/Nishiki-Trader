@@ -1,0 +1,93 @@
+{
+  "actual_distinct_uid_fixture_verified": true,
+  "all_ancestor_directories": "root_owned_no_group_or_other_write_no_symlinks",
+  "authority_uid": 0,
+  "bundle": {
+    "format": "canonical_uncompressed_ustar",
+    "inspection_executes_packaged_code": false,
+    "installer_sha256": "7f519e26c0f85951e8d60f8cf8eaa6e774fb002c74647ee4892b491cef8b549d",
+    "path": "data/egress-installation-bundle-2026-09-16-v2.tar",
+    "reproducible_builds": 2,
+    "sha256": "995380e089df6c658a2ee7fa8224441d6173ed08b9656fc6447fad85d62800ec"
+  },
+  "code_root": "/usr/local/lib/trader-egress",
+  "collector": {
+    "dedicated_uid_and_primary_gid_required": true,
+    "gid": null,
+    "home": "/nonexistent",
+    "name": "trader-egress",
+    "password_lock_required_at_provisioning": true,
+    "password_lock_verified": false,
+    "shell": "/usr/sbin/nologin",
+    "supplementary_groups": [],
+    "uid": null
+  },
+  "collector_launch": "fixed_command_explicit_nonroot_uid_gid_clear_groups_zero_capabilities_no_new_privileges",
+  "date": "2026-09-16",
+  "dedicated_uid_qualified": false,
+  "entrypoint_exit_code": 2,
+  "entrypoint_starts_collector": false,
+  "files": {
+    "collector_launcher.py": {
+      "mode": "0444",
+      "sha256": "d1d94a8edd0730244b6dbc7c0e24746157985e7b36b82f865397402ce0433579"
+    },
+    "helper_entry.py": {
+      "mode": "0444",
+      "sha256": "2a91437ed9080ae481eae7496e43cfe35d29888e1e3a5a12b10605b6dc320c9b"
+    },
+    "inspect_binding.py": {
+      "mode": "0444",
+      "sha256": "27c3302222bc819767ba874d7000f2b038662fa72004cb56da25a1003c38e322"
+    },
+    "installation.py": {
+      "mode": "0444",
+      "sha256": "c6a5398a45f9045f699d1133a11b891e10364c131c48873ed0eb07b8f17049ff"
+    }
+  },
+  "fixed_entrypoint": "/usr/bin/python3 -I /usr/local/lib/trader-egress/helper_entry.py --check",
+  "focused_tests_passed": 335,
+  "host_deployment_qualified": false,
+  "installation_performed": false,
+  "installer": "root_isolated_reviewed_source_first_install_only_manifest_last_no_automatic_rollback",
+  "installer_acceptance": "actual_system_useradd_passwd_and_distinct_kernel_uid_in_private_mount_network_pid_namespaces",
+  "installer_creates": "fixed_code_and_manifest_missing_parent_directories_dedicated_locked_account_missing_fixed_storage",
+  "installer_preserves": "existing_correct_storage_and_all_consumed_records",
+  "isolated_acceptance": {
+    "checks_passed": 40,
+    "fixture_gid": 20999,
+    "fixture_uid": 20999,
+    "harness_sha256": "199d195f9819efdb45a5660220763fce92e3f893f35f859842c0ec98c798812a",
+    "host_account_and_path_observations_unchanged": true,
+    "password_lock_verified": true,
+    "path": "data/egress-isolated-installation-2026-09-16-final.json",
+    "sha256": "23bbbbd5624bb4aaf9088d4cdbea02b4fa6858f43a8129e51bbb3fa4939c1a14"
+  },
+  "manifest_files_values": "exact_sha256_strings_for_the_four_fixed_basenames",
+  "manifest_keys": [
+    "schema_version",
+    "collector",
+    "files"
+  ],
+  "manifest_mode": "0600",
+  "manifest_path": "/etc/trader/egress-install.json",
+  "manifest_schema_version": "portfolio.egress_installation.v2",
+  "network_admitted": false,
+  "remaining_requirements": [
+    "review_corrected_bundle_and_authorize_actual_inactive_host_installation",
+    "actual_host_installation_and_storage_acceptance",
+    "fixed_privileged_activation_operation_not_implemented",
+    "public_source_mapping_and_complete_egress_paths",
+    "host_restart_storage_durability_and_rollback",
+    "separate_one_get_bootstrap_transport_and_policy",
+    "explicit_maintenance_interruption_acceptance"
+  ],
+  "runtime": "hold_no_follow_descriptors_recheck_account_paths_modes_bytes_and_mount_namespace",
+  "schema_version": "portfolio.egress_installation_contract.v3",
+  "source_files": "regular_single_link_exact_mode_hash_and_original_bytes",
+  "startup": "verify_fixed_installation_before_loading_selected_reader_and_launcher_source",
+  "status": "disposable_actual_installation_and_distinct_uid_verified_host_not_installed",
+  "storage_mode": "0700",
+  "storage_root": "/var/lib/trader/egress",
+  "venue_requests_made": 0
+}

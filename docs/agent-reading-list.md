@@ -296,6 +296,18 @@ starts a collector or changes networking. Next review the concrete package for
 actual installation and separate-user acceptance, then qualify source/paths/storage
 and the separate bootstrap transport.
 
+For actual installation and separate kernel-UID acceptance, read
+`docs/progress/portfolio-egress-isolated-installation-2026-09-16.md`, its linked v3
+review contract and `infra/egress-guard/installation_selftest.py`. Existing sudo
+permission now permits disposable private mount/network/PID namespaces with
+synthetic account databases, actual useradd/password checks, installed entrypoint,
+distinct-UID IPC and kernel-denied filesystem attacks. This closes the earlier
+same-UID acceptance gap without subordinate mappings or host provisioning. The
+old installer's unsupported `useradd -K CREATE_MAIL_SPOOL=no` is removed; old
+bundle/v2 contract hashes are historical, use v3's corrected bundle pin. Actual
+host installation, persistent disk/storage and source/path qualification remain
+missing; no host network policy or real scope was activated.
+
 For actual disposable Linux egress-hook acceptance, read
 `docs/progress/portfolio-vps-egress-namespace-acceptance-2026-09-15.md` and
 `infra/egress-guard/README.md`. The standalone non-root fixture passes 23 checks

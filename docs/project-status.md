@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-16
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Reuse the existing public IPv4. A reproducible pinned installation bundle, first-install-only provisioner and fixed read-only check entry now follow installation/nonroot-launch implementation. Actual host installation and cross-user filesystem isolation remain unverified; this environment lacks subordinate ID mappings. Next review the concrete package for inactive installation and dedicated-user acceptance, then qualify source/paths/storage and bootstrap transport. The 12-second collector / 20-second blackout remains unapproved and undeployed. No real scope is activated.
+- **Current objective**: Reuse the existing public IPv4. Actual disposable installation and distinct-UID filesystem/IPC acceptance now pass using existing sudo permission and private mount/network/PID namespaces. A real useradd failure exposed an unsupported installer option, now fixed in the newly pinned bundle. No host account or installation exists yet. Next review the corrected bundle for inactive host installation, then qualify host storage/source/paths and bootstrap transport. The 12-second collector / 20-second blackout remains unapproved and undeployed. No real scope is activated.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -246,7 +246,8 @@ Detailed depth implementation, retained hashes and next review:
 [read-only host binding and drift preflight](progress/portfolio-egress-binding-preflight-2026-09-16.md),
 [isolated collector launch and authenticated IPC](progress/portfolio-collector-launcher-2026-09-16.md),
 [fixed installation authority and nonroot launch](progress/portfolio-egress-installation-2026-09-16.md),
-and [reviewable installation bundle](progress/portfolio-egress-bundle-2026-09-16.md).
+[reviewable installation bundle](progress/portfolio-egress-bundle-2026-09-16.md),
+and [actual disposable installation/UID acceptance](progress/portfolio-egress-isolated-installation-2026-09-16.md).
 
 ## Next Steps
 
@@ -292,12 +293,12 @@ and [reviewable installation bundle](progress/portfolio-egress-bundle-2026-09-16
    does not qualify production identity/storage isolation. Fixed installation checks
    now validate root-owned paths/code, a dedicated account and original bytes through
    held descriptors; a separate launch branch clears groups and binds nonroot IDs.
-   Actual installation is absent/unqualified, and separate-user integration remains
-   unverified without ID mappings or authorized host provisioning. A pinned reproducible
-   bundle, first-install-only provisioner and fixed read-only check entry are now
-   implemented; temporary-root tests simulate account changes, no host apply occurred.
-   Review the concrete package for inactive installation and dedicated-user acceptance,
-   then qualify public mapping, complete paths and storage. The 20-second interruption
+   Actual host installation remains absent. The corrected pinned bundle now passes
+   actual useradd/password checks, fixed installed entry, distinct kernel UID/IPC
+   and filesystem denial tests in disposable private namespaces using existing sudo
+   access. Host account/path observations remain unchanged. Review this corrected
+   bundle for inactive host installation, then qualify host storage, public mapping
+   and complete paths. The 20-second interruption
    is not accepted or deployed. Do not silently stop services; the host inspector remains read-only.
    The separate one-GET REST bootstrap proposal acknowledges unknown prior usage;
    review/implement it before any activation. It cannot satisfy or silently amend
@@ -342,15 +343,16 @@ and [reviewable installation bundle](progress/portfolio-egress-bundle-2026-09-16
 
 ## Latest Verification
 
-- Installation bundle/launcher: **321 focused Python tests pass** (62 added).
-  Two isolated-Python builds produce identical SHA256; pinned archive inspection
-  passes. Tampered archives, untrusted entry/installer paths, unsafe accounts,
-  existing installations and partial-failure retries are rejected. Private-root
-  installation tests preserve consumed storage and publish the manifest last;
-  they simulate users and do not qualify actual root ownership/cross-UID isolation.
-  Ruff/format, documentation links, frozen bytes and diff checks pass. No host
-  provisioning or venue requests. The unchanged 14-check rootless launcher and
-  151-check network harness were not rerun; their prior results remain historical.
+- Installation/UID acceptance: **40 actual disposable Linux checks / 335 focused
+  Python tests pass**. Actual useradd caught unsupported `-K CREATE_MAIL_SPOOL=no`;
+  removing it allows the reviewed installer to complete. Root-owned code/manifest,
+  locked dedicated account, distinct UID IPC, kernel-denied file/state access,
+  repeat-install refusal and permanent drift invalidation pass. Host passwd/group
+  hashes, installation path observations and caller namespaces are unchanged.
+  Corrected bundle and report are pinned in the v3 review contract. Ruff/format,
+  links, prior frozen artifacts and diff checks pass. No host installation or venue
+  requests. Disk/power-loss durability and complete host egress remain unqualified;
+  unchanged 14/151-check earlier namespace harnesses were not rerun.
 
 - Persistent maintenance-window fixture: **151 Linux checks / 149 focused Python
   tests pass** (11 additional kernel checks, 23 additional Python cases). Window

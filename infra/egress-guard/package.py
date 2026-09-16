@@ -295,8 +295,6 @@ def apply(contents):
                     "/nonexistent",
                     "--no-create-home",
                     "--no-log-init",
-                    "-K",
-                    "CREATE_MAIL_SPOOL=no",
                     "--shell",
                     "/usr/sbin/nologin",
                     ACCOUNT,
