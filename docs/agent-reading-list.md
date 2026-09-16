@@ -237,6 +237,15 @@ unlisted targets remain reachable and other services on a protected IP are block
 Next resolve actual provider/caller policy or a bounded maintenance alternative
 before deployment; no host rules, proxy settings or real scopes were changed.
 
+For the bounded maintenance alternative, read
+`docs/progress/portfolio-maintenance-window-2026-09-16.md` and its JSON. The isolated
+12-second collector / 20-second blackout expires in that order even after crash
+or SIGSTOP; ordinary traffic resumes while collector quarantine remains. This
+would interrupt unrelated host/proxy egress if deployed. Host interruption is not
+accepted and no deployment occurred. Durable host-window activation before kernel
+changes, actual path/source/storage binding and a privileged helper remain missing;
+the in-memory fixture object and its request journal do not close that lifecycle gap.
+
 For actual disposable Linux egress-hook acceptance, read
 `docs/progress/portfolio-vps-egress-namespace-acceptance-2026-09-15.md` and
 `infra/egress-guard/README.md`. The standalone non-root fixture passes 23 checks

@@ -1,0 +1,42 @@
+{
+  "schema_version": "portfolio.shared_egress_maintenance_proposal.v1",
+  "status": "isolated_fixture_verified_host_proposal_not_activated",
+  "date": "2026-09-16",
+  "source_selection": "existing_public_ipv4",
+  "interruption_accepted": false,
+  "host_deployment_qualified": false,
+  "network_admitted": false,
+  "maximum_window": {
+    "collector_permission_ms": 12000,
+    "other_caller_blackout_ms": 20000,
+    "minimum_expiry_gap_ms": 1000,
+    "renewals": 0,
+    "activation_retries": 0
+  },
+  "ordinary_traffic_restore": "atomic_terminal_flush_or_kernel_blackout_expiry",
+  "collector_after_restore": "permanent_quarantine_no_new_or_existing_outbound_send",
+  "inflight_inbound_responses_all_blocked": false,
+  "application_session_recovery_guaranteed": false,
+  "scope_binding": {
+    "bootstrap_proposal": "docs/progress/portfolio-shared-egress-bootstrap-2026-09-16.json",
+    "http_gets": 1,
+    "documented_request_weight": 20,
+    "automatic_bootstrap_activation": false,
+    "joint_capture_activation": false,
+    "late_setup_policy": "abort_if_request_deadline_and_close_do_not_fit_remaining_permission"
+  },
+  "remaining_host_requirements": [
+    "durable_window_consumption_before_kernel_activation",
+    "actual_source_collector_interface_route_and_storage_binding",
+    "privileged_helper_and_all_external_path_acceptance",
+    "startup_failure_and_host_restart_behavior",
+    "bounded_rollout_rollback_and_out_of_band_recovery",
+    "explicit_service_interruption_acceptance"
+  ],
+  "fixture_limits": [
+    "in_memory_window_activation_not_global_durable_authority",
+    "one_fixture_wan_not_complete_host_topology",
+    "kernel_available_unchanged_rules_assumed",
+    "no_past_usage_or_current_provider_capacity_proof"
+  ]
+}

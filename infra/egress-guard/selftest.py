@@ -120,6 +120,120 @@ table inet fixture_shared_guard {
 }
 """
 
+# The collector remains denied when the timed blackout expires. Only other
+# callers regain normal forwarding. Literal fixture interfaces, never host rules.
+WINDOW_RULES = """
+table inet fixture_window {
+    set blackout { type ifname; flags timeout; }
+    set permits { type ipv4_addr; flags timeout; }
+    counter host_denied {}
+    counter forwarded_denied {}
+    counter collector_denied {}
+    counter spoof_denied {}
+    chain input {
+        type filter hook input priority 40; policy accept;
+        iifname "br-fixture" counter name collector_denied drop
+    }
+    chain output {
+        type filter hook output priority 40; policy accept;
+        oifname @blackout counter name host_denied drop
+    }
+    chain forward {
+        type filter hook forward priority 40; policy accept;
+        iifname "br-fixture" ip saddr != 192.0.2.2 counter name spoof_denied drop
+        iifname != "br-fixture" ip saddr 192.0.2.2 counter name spoof_denied drop
+        iifname "br-fixture" oifname @blackout ip saddr 192.0.2.2 ip daddr @permits tcp dport 23456 accept
+        iifname "br-fixture" counter name collector_denied drop
+        oifname @blackout counter name forwarded_denied drop
+    }
+}
+"""
+
+
+def stable_rules(value):
+    if isinstance(value, dict):
+        return {
+            key: stable_rules(item)
+            for key, item in value.items()
+            if key not in {"metainfo", "expires", "packets", "bytes"}
+        }
+    if isinstance(value, list):
+        return [
+            stable_rules(item)
+            for item in value
+            if not (isinstance(item, dict) and "metainfo" in item)
+        ]
+    return value
+
+
+class FixtureMaintenanceWindow:
+    """One local activation; kernel expiry restores competitors, never collector."""
+
+    def __init__(self, *, collector_ms=12000, blackout_ms=20000):
+        if (
+            type(collector_ms) is not int
+            or type(blackout_ms) is not int
+            or not 1 <= collector_ms <= 12000
+            or not collector_ms + 1000 <= blackout_ms <= 20000
+        ):
+            raise ValueError("fixture_window_requires_bounded_ordered_deadlines")
+        self.collector_ms, self.blackout_ms = collector_ms, blackout_ms
+        self.owner_pid = os.getpid()
+        self.claimed = self.ended = self.revoked = False
+        self.lock = threading.Lock()
+
+    def activate(self):
+        if os.getpid() != self.owner_pid:
+            raise RuntimeError("fixture_window_foreign_owner")
+        with self.lock:
+            if self.claimed or self.ended:
+                raise RuntimeError("fixture_window_reactivation_or_foreign_owner")
+            # An uncertain transaction consumes this object's activation too. There
+            # is no renewal or alternate-name interface; this is not disk authority.
+            self.claimed = True
+            run(
+                NFT,
+                "-f",
+                "-",
+                text=(
+                    'add element inet fixture_window blackout { "wan" timeout '
+                    + str(self.blackout_ms)
+                    + "ms }\n"
+                    + "add element inet fixture_window permits { 198.51.100.2 timeout "
+                    + str(self.collector_ms)
+                    + "ms }\n"
+                ),
+            )
+
+    def revoke(self):
+        if os.getpid() != self.owner_pid:
+            raise RuntimeError("fixture_window_foreign_owner")
+        with self.lock:
+            if self.ended:
+                if not self.revoked:
+                    raise RuntimeError("fixture_window_revocation_uncertain")
+                return
+            self.ended = True
+            # One nft transaction prevents restoring competitors while the collector
+            # still has permission. Failure relies on the original shorter TTLs.
+            run(
+                NFT,
+                "-f",
+                "-",
+                text=(
+                    "flush set inet fixture_window permits\nflush set inet fixture_window blackout\n"
+                ),
+            )
+            rows = json.loads(run(NFT, "-j", "list", "table", "inet", "fixture_window"))
+            sets = [row["set"] for row in rows["nftables"] if "set" in row]
+            if (
+                len(sets) != 2
+                or {item.get("name") for item in sets} != {"blackout", "permits"}
+                or any(item.get("elem") for item in sets)
+            ):
+                raise RuntimeError("fixture_window_revocation_not_observed")
+            self.revoked = True
+
 
 def canonical(value) -> bytes:
     return json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
@@ -1191,27 +1305,14 @@ def shared_source_checks(client, peer, host, source, children):
         port=PORT + 2,
     )
 
-    def stable(value):
-        if isinstance(value, dict):
-            return {
-                key: stable(item)
-                for key, item in value.items()
-                if key not in {"metainfo", "expires", "packets", "bytes"}
-            }
-        if isinstance(value, list):
-            return [
-                stable(item)
-                for item in value
-                if not (isinstance(item, dict) and "metainfo" in item)
-            ]
-        return value
-
     def observe():
         return {
-            "guard": stable(
+            "guard": stable_rules(
                 json.loads(run(NFT, "-j", "list", "table", "inet", "fixture_shared_guard"))
             ),
-            "nat": stable(json.loads(run(NFT, "-j", "list", "table", "ip", "fixture_shared_nat"))),
+            "nat": stable_rules(
+                json.loads(run(NFT, "-j", "list", "table", "ip", "fixture_shared_nat"))
+            ),
             "route": json.loads(client.ip("-j", "route", "get", "198.51.100.2")),
             "collector_namespace": os.readlink(f"/proc/{client.process.pid}/ns/net"),
             "fixture_snat_source": "198.51.100.1",
@@ -1303,7 +1404,308 @@ def shared_source_checks(client, peer, host, source, children):
         port=PORT + 2,
         observe_peer=True,
     )
+    windows = maintenance_window_checks(client, competitor, host)
     run(NFT, "delete", "table", "ip", "fixture_shared_nat")
+    return checks, windows
+
+
+def maintenance_window_checks(client, competitor, host):
+    """Bounded broad egress exclusion; test early stop, crash and stopped owner."""
+    checks = []
+    run(NFT, "--check", "-f", "-", text=WINDOW_RULES)
+    run(NFT, "-f", "-", text=WINDOW_RULES)
+
+    def count(name):
+        rows = json.loads(run(NFT, "-j", "list", "counter", "inet", "fixture_window", name))
+        return next(row["counter"]["packets"] for row in rows["nftables"] if "counter" in row)
+
+    def check(name, actor, *, allowed, counter=None, **request):
+        before = count(counter) if counter else None
+        result = actor.request(
+            {"action": "once", "key": name, "address": "198.51.100.4", **request}
+        )
+        if result["ok"] != allowed:
+            raise RuntimeError(f"{name}: unexpected window outcome {result}")
+        if counter and count(counter) <= before:
+            raise RuntimeError(f"{name}: missing window denial counter")
+        checks.append(name)
+
+    def observe():
+        return {
+            "window": stable_rules(
+                json.loads(run(NFT, "-j", "list", "table", "inet", "fixture_window"))
+            ),
+            "nat": stable_rules(
+                json.loads(run(NFT, "-j", "list", "table", "ip", "fixture_shared_nat"))
+            ),
+            "collector_namespace": os.readlink(f"/proc/{client.process.pid}/ns/net"),
+            "route": json.loads(client.ip("-j", "route", "get", "198.51.100.2")),
+        }
+
+    def replay(root):
+        path = root / PersistentFixtureGuard.SCOPE / "attempts.jsonl"
+        raw = path.read_bytes()
+        selected = json.loads((root / "selected.json").read_bytes())
+        result = review_fixture_journal(
+            raw, selected=selected, expected_sha256=hashlib.sha256(raw).hexdigest()
+        )
+        if result["recorded_preparations"] != 1 or result["restart_allowed"]:
+            raise RuntimeError("Window journal lost consumption or allowed restart")
+        return result
+
+    check(
+        "window_inactive_collector_stays_denied",
+        client,
+        allowed=False,
+        counter="collector_denied",
+        address="198.51.100.2",
+    )
+    check(
+        "window_inactive_host_works",
+        host,
+        allowed=True,
+        action="open",
+        key="window-existing",
+        observe_peer=True,
+    )
+    check(
+        "window_inactive_proxy_works",
+        host,
+        allowed=True,
+        action="open",
+        key="window-proxy-existing",
+        proxy="127.0.0.1",
+        observe_peer=True,
+    )
+    window = FixtureMaintenanceWindow()
+    window.activate()
+    normal_start = time.monotonic()
+    storage = Path("/tmp/window-normal")
+    storage.mkdir(mode=0o700)
+    selected = observe()
+    (storage / "selected.json").write_bytes(canonical(selected))
+    guard = PersistentFixtureGuard(
+        storage, selected=selected, observe=observe, actor=client, revoke=window.revoke
+    )
+    try:
+        guard.dispatch()
+        checks.append("window_durable_collector_dispatch_allowed")
+        check("window_blocks_unlisted_host", host, allowed=False, counter="host_denied")
+        check(
+            "window_blocks_existing_host_socket",
+            host,
+            allowed=False,
+            counter="host_denied",
+            action="send",
+            key="window-existing",
+        )
+        check(
+            "window_blocks_existing_proxy_socket",
+            host,
+            allowed=False,
+            counter="host_denied",
+            action="send",
+            key="window-proxy-existing",
+        )
+        check(
+            "window_blocks_unlisted_proxy",
+            host,
+            allowed=False,
+            counter="host_denied",
+            proxy="127.0.0.1",
+        )
+        check(
+            "window_blocks_forwarded_caller", competitor, allowed=False, counter="forwarded_denied"
+        )
+        check(
+            "window_blocks_forwarded_proxy",
+            competitor,
+            allowed=False,
+            counter="host_denied",
+            proxy="203.0.113.1",
+        )
+        check(
+            "window_blocks_cohosted_service",
+            host,
+            allowed=False,
+            counter="host_denied",
+            address="198.51.100.2",
+            port=PORT + 2,
+        )
+        check(
+            "window_blocks_host_ipv6",
+            host,
+            allowed=False,
+            counter="host_denied",
+            address="fd00:7472:2::3",
+        )
+        check(
+            "window_blocks_forwarded_ipv6",
+            competitor,
+            allowed=False,
+            counter="forwarded_denied",
+            address="fd00:7472:2::3",
+        )
+        check(
+            "window_blocks_host_udp",
+            host,
+            allowed=False,
+            counter="host_denied",
+            action="udp",
+            address="198.51.100.3",
+        )
+        check(
+            "window_blocks_forwarded_udp",
+            competitor,
+            allowed=False,
+            counter="forwarded_denied",
+            action="udp",
+            address="198.51.100.3",
+        )
+        check(
+            "window_collector_cannot_use_proxy",
+            client,
+            allowed=False,
+            counter="collector_denied",
+            proxy="192.0.2.1",
+        )
+    finally:
+        guard.close()
+    if not window.revoked or time.monotonic() - normal_start >= 20:
+        raise RuntimeError("Normal shutdown did not restore traffic before blackout TTL")
+    if not replay(storage)["revocation_recorded"]:
+        raise RuntimeError("Normal window shutdown missing from replay")
+    checks.append("window_early_shutdown_is_recorded")
+    check(
+        "window_early_shutdown_restores_proxy",
+        host,
+        allowed=True,
+        proxy="127.0.0.1",
+        observe_peer=True,
+    )
+    check("window_early_shutdown_restores_forwarding", competitor, allowed=True, observe_peer=True)
+    check(
+        "window_early_shutdown_keeps_collector_denied",
+        client,
+        allowed=False,
+        counter="collector_denied",
+        address="198.51.100.2",
+    )
+    for actor in (host, client, competitor):
+        actor.request({"action": "close"})
+
+    for mode in ("crash", "stopped"):
+        root = Path("/tmp/window-" + mode)
+        root.mkdir(mode=0o700)
+        read_fd, write_fd = os.pipe()
+        pid = os.fork()
+        if pid == 0:
+            os.close(read_fd)
+            try:
+                short = FixtureMaintenanceWindow(collector_ms=1000, blackout_ms=4000)
+                short.activate()
+                os.write(write_fd, (str(time.monotonic()) + "\n").encode())
+                os.close(write_fd)
+                selected = observe()
+                (root / "selected.json").write_bytes(canonical(selected))
+
+                class InterruptedActor:
+                    def request(self, request, scenario=mode):
+                        result = client.request(
+                            {
+                                **request,
+                                "action": "open",
+                                "key": "window-interrupted",
+                                "observe_peer": True,
+                            }
+                        )
+                        if not result["ok"]:
+                            raise RuntimeError("Interrupted collector did not establish its socket")
+                        if scenario == "crash":
+                            os._exit(19)
+                        os.kill(os.getpid(), signal.SIGSTOP)
+                        return result
+
+                interrupted = PersistentFixtureGuard(
+                    root,
+                    selected=selected,
+                    observe=observe,
+                    actor=InterruptedActor(),
+                    revoke=short.revoke,
+                )
+                try:
+                    interrupted.dispatch()
+                except RuntimeError:
+                    interrupted.close()
+                    os._exit(21)  # Resumed owner observes expired state and stops.
+                os._exit(22)
+            finally:
+                os._exit(23)
+        os.close(write_fd)
+        with os.fdopen(read_fd) as pipe:
+            started = float(pipe.readline())
+        _pid, status = os.waitpid(pid, os.WUNTRACED)
+        if mode == "crash":
+            if not os.WIFEXITED(status) or os.WEXITSTATUS(status) != 19:
+                raise RuntimeError("Window crash did not retain an uncertain send")
+        elif not os.WIFSTOPPED(status):
+            raise RuntimeError("Window owner failed before its deliberate stop")
+        checks.append(f"window_{mode}_owner_interrupted_after_send")
+        remaining = started + 1.15 - time.monotonic()
+        if remaining > 0:
+            time.sleep(remaining)
+        check(
+            f"window_{mode}_collector_expires_first",
+            client,
+            allowed=False,
+            counter="collector_denied",
+            address="198.51.100.2",
+            action="send",
+            key="window-interrupted",
+        )
+        check(
+            f"window_{mode}_other_callers_still_blocked", host, allowed=False, counter="host_denied"
+        )
+        remaining = started + 4.15 - time.monotonic()
+        if remaining > 0:
+            time.sleep(remaining)
+        check(
+            f"window_{mode}_kernel_restores_proxy",
+            host,
+            allowed=True,
+            proxy="127.0.0.1",
+            observe_peer=True,
+        )
+        check(
+            f"window_{mode}_kernel_restores_forwarding", competitor, allowed=True, observe_peer=True
+        )
+        check(
+            f"window_{mode}_collector_remains_denied",
+            client,
+            allowed=False,
+            counter="collector_denied",
+            address="198.51.100.2",
+        )
+        if mode == "stopped":
+            os.kill(pid, signal.SIGCONT)
+            _pid, status = os.waitpid(pid, 0)
+            if not os.WIFEXITED(status) or os.WEXITSTATUS(status) != 21:
+                raise RuntimeError("Resumed controller did not stop on expired state")
+            checks.append("window_resumed_owner_cannot_complete_or_renew")
+        result = replay(root)
+        if result["uncertain_attempt"] != 1:
+            raise RuntimeError("Window replay lost the uncertain send")
+        checks.append(f"window_{mode}_retains_uncertain_attempt")
+        client.request({"action": "close"})
+        # Between independent fixture scenarios only; no reopening of journals.
+        run(
+            NFT,
+            "-f",
+            "-",
+            text="flush set inet fixture_window permits\nflush set inet fixture_window blackout\n",
+        )
+    # Permanent collector quarantine is removed only during isolated test teardown.
+    run(NFT, "delete", "table", "inet", "fixture_window")
     return checks
 
 
@@ -1427,7 +1829,7 @@ def worker(original: dict[str, str], source: str) -> dict:
             raise RuntimeError("Rollback changed the earlier independent policy")
         checks.append("rollback_preserves_earlier_policy")
         leases, controlled = lease_checks(client, host)
-        shared = shared_source_checks(client, peer, host, source, children)
+        shared, windows = shared_source_checks(client, peer, host, source, children)
         if early_structure() != earlier:
             raise RuntimeError("Shared rollback changed the earlier policy")
         shared.append("shared_rollback_preserves_earlier_policy")
@@ -1437,6 +1839,9 @@ def worker(original: dict[str, str], source: str) -> dict:
             "lease_checks": leases,
             "controller_checks": controlled,
             "shared_source_checks": shared,
+            "maintenance_window_checks": windows,
+            "fixture_kernel_window_expiry_verified": True,
+            "host_maintenance_deployment_qualified": False,
             "fixture_shared_snat_verified": True,
             "provider_destination_coverage_qualified": False,
             "colocated_service_preservation_qualified": False,

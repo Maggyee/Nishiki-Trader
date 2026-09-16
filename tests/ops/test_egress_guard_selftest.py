@@ -762,3 +762,145 @@ def test_embedded_worker_passes_original_source_without_duplicating_it(fixture):
     exec(script, scope)
     assert scope["result"] == (41, source)
     assert script.count("distinctive-source-marker") == 1
+
+
+@pytest.mark.parametrize(
+    "collector,blackout",
+    [
+        (0, 20000),
+        (12001, 20000),
+        (12000, 20001),
+        (12000, 12000),
+        (12000, 12999),
+        (True, 20000),
+        (1000, False),
+        (1.5, 20000),
+        (1000, "4000"),
+    ],
+)
+def test_window_rejects_unbounded_or_reversed_timers_before_commands(
+    fixture, monkeypatch, collector, blackout
+):
+    runner = Mock(side_effect=AssertionError("No rules may be applied"))
+    monkeypatch.setattr(fixture, "run", runner)
+    with pytest.raises(ValueError, match="bounded_ordered"):
+        fixture.FixtureMaintenanceWindow(collector_ms=collector, blackout_ms=blackout)
+    runner.assert_not_called()
+
+
+@pytest.mark.parametrize("failed", [False, True])
+def test_window_activation_cannot_renew_even_after_uncertain_apply(fixture, monkeypatch, failed):
+    runner = Mock(side_effect=RuntimeError("uncertain apply") if failed else None)
+    monkeypatch.setattr(fixture, "run", runner)
+    window = fixture.FixtureMaintenanceWindow()
+    if failed:
+        with pytest.raises(RuntimeError, match="uncertain apply"):
+            window.activate()
+    else:
+        window.activate()
+    assert window.claimed
+    with pytest.raises(RuntimeError, match="reactivation"):
+        window.activate()
+    assert runner.call_count == 1
+    # Both timer elements are in the same atomic nft batch, not successive calls.
+    batch = runner.call_args.kwargs["text"]
+    assert 'blackout { "wan" timeout 20000ms }' in batch
+    assert "permits { 198.51.100.2 timeout 12000ms }" in batch
+
+
+def test_window_terminal_revoke_is_atomic_verified_and_idempotent(fixture, monkeypatch):
+    runner = Mock(
+        return_value='{"nftables": [{"set": {"name": "blackout"}}, {"set": {"name": "permits"}}]}'
+    )
+    monkeypatch.setattr(fixture, "run", runner)
+    window = fixture.FixtureMaintenanceWindow()
+    window.activate()
+    runner.reset_mock()
+    window.revoke()
+    assert window.revoked and window.ended
+    assert runner.call_count == 2  # One mutation transaction, then one verification read.
+    assert runner.call_args_list[0].kwargs["text"].splitlines() == [
+        "flush set inet fixture_window permits",
+        "flush set inet fixture_window blackout",
+    ]
+    window.revoke()
+    assert runner.call_count == 2
+    with pytest.raises(RuntimeError):
+        window.activate()
+
+
+@pytest.mark.parametrize(
+    "kind", ["apply_failure", "read_failure", "permit_remains", "blackout_remains"]
+)
+def test_window_failed_revocation_is_not_success_and_never_retried(fixture, monkeypatch, kind):
+    window = fixture.FixtureMaintenanceWindow()
+    remaining = "permits" if kind == "permit_remains" else "blackout"
+    response = json.dumps({"nftables": [{"set": {"name": remaining, "elem": ["value"]}}]})
+    effects = {
+        "apply_failure": [OSError("apply failed")],
+        "read_failure": ["", OSError("read failed")],
+        "permit_remains": ["", response],
+        "blackout_remains": ["", response],
+    }
+    runner = Mock(side_effect=effects[kind])
+    monkeypatch.setattr(fixture, "run", runner)
+    with pytest.raises((OSError, RuntimeError)):
+        window.revoke()
+    calls = runner.call_count
+    assert window.ended and not window.revoked
+    with pytest.raises(RuntimeError, match="uncertain"):
+        window.revoke()
+    assert runner.call_count == calls
+    with pytest.raises(RuntimeError):
+        window.activate()
+
+
+@pytest.mark.parametrize("operation", ["activate", "revoke"])
+def test_window_foreign_process_cannot_control_timers(fixture, monkeypatch, operation):
+    window = fixture.FixtureMaintenanceWindow()
+    window.owner_pid -= 1
+    runner = Mock(side_effect=AssertionError("Foreign process must not change rules"))
+    monkeypatch.setattr(fixture, "run", runner)
+    with pytest.raises(RuntimeError, match="foreign_owner"):
+        getattr(window, operation)()
+    runner.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "sets", [[], [{"name": "permits"}], [{"name": "permits"}, {"name": "permits"}]]
+)
+def test_window_missing_or_replaced_sets_do_not_verify_revocation(fixture, monkeypatch, sets):
+    runner = Mock(return_value=json.dumps({"nftables": [{"set": item} for item in sets]}))
+    monkeypatch.setattr(fixture, "run", runner)
+    window = fixture.FixtureMaintenanceWindow()
+    with pytest.raises(RuntimeError, match="not_observed"):
+        window.revoke()
+    assert not window.revoked
+
+
+def test_window_shutdown_waits_for_activation_and_prevents_renewal(fixture, monkeypatch):
+    entered, release = threading.Event(), threading.Event()
+    calls = []
+
+    def run(*args, **kwargs):
+        calls.append((args, kwargs))
+        if "add element" in kwargs.get("text", ""):
+            entered.set()
+            assert release.wait(3)
+        return '{"nftables": [{"set": {"name": "blackout"}}, {"set": {"name": "permits"}}]}'
+
+    monkeypatch.setattr(fixture, "run", run)
+    window = fixture.FixtureMaintenanceWindow()
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        active = pool.submit(window.activate)
+        assert entered.wait(3)
+        stopping = pool.submit(window.revoke)
+        assert not stopping.done()
+        assert len(calls) == 1
+        release.set()
+        active.result(3)
+        stopping.result(3)
+    assert window.revoked
+    assert len(calls) == 3
+    with pytest.raises(RuntimeError, match="reactivation"):
+        window.activate()

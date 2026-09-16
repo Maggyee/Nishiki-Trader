@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-16
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Reuse the existing public IPv4. Actual isolated SNAT/proxy acceptance now passes for selected destinations and durable collector dispatch. Counterexamples demonstrate that unlisted targets remain reachable and unrelated services sharing a protected IP are blocked. Next establish actual provider/caller coverage or prepare a bounded maintenance alternative, then bind source/controller/storage before deployment. No host guard or bootstrap is activated; frozen joint and consumed scopes remain unchanged.
+- **Current objective**: Reuse the existing public IPv4. An isolated bounded maintenance alternative now expires collector permission before restoring other traffic, including after controller crash or pause. The 12-second collector / 20-second blackout candidate would interrupt unrelated egress and is not approved or deployed. Next implement durable host-window consumption before kernel activation, bind actual source/caller/storage and external paths, then prepare the privileged helper and rollout. No bootstrap or consumed scope is activated.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -240,7 +240,8 @@ Detailed depth implementation, retained hashes and next review:
 [fixed-scope persistence and crash replay](progress/portfolio-vps-egress-persistence-2026-09-16.md),
 [historical dedicated IPv4 proposal](progress/portfolio-dedicated-egress-bootstrap-2026-09-16.md),
 [current shared IPv4 revision](progress/portfolio-shared-egress-bootstrap-2026-09-16.md),
-[actual shared-source NAT/proxy acceptance](progress/portfolio-shared-egress-acceptance-2026-09-16.md).
+[actual shared-source NAT/proxy acceptance](progress/portfolio-shared-egress-acceptance-2026-09-16.md),
+[bounded maintenance alternative](progress/portfolio-maintenance-window-2026-09-16.md).
 
 ## Next Steps
 
@@ -272,10 +273,12 @@ Detailed depth implementation, retained hashes and next review:
    existing public IPv4; no second address is required. Local SNAT/proxy acceptance
    now verifies five caller paths and durable collector dispatch, with other-address
    controls preserved. Unlisted targets and cohosted-service counterexamples keep
-   provider-wide coverage false. Next resolve actual provider/caller coverage or
-   prepare a bounded maintenance alternative; then bind actual source/controller/
-   storage and review rollout. Do not silently stop existing services or infer
-   quota isolation from a namespace. The host inspector remains read-only.
+   provider-wide coverage false. The bounded maintenance alternative now passes
+   kernel timer/crash/pause checks: collector permission expires before ordinary
+   traffic resumes. Next persist host-window activation before kernel changes and
+   bind actual source/caller/storage/external paths, then prepare the privileged
+   helper and rollout. Its proposed 20-second interruption is not accepted or
+   deployed. Do not silently stop services; the host inspector remains read-only.
    The separate one-GET REST bootstrap proposal acknowledges unknown prior usage;
    review/implement it before any activation. It cannot satisfy or silently amend
    the frozen joint draft; waiting alone still supplies no historical evidence.
@@ -319,6 +322,13 @@ Detailed depth implementation, retained hashes and next review:
 
 ## Latest Verification
 
+- Maintenance-window fixture: **140 Linux checks / 126 focused Python tests pass**
+  (35 new kernel checks, 22 new Python cases). Atomic activation/revocation, early
+  release, ordered kernel expiry after abrupt exit/SIGSTOP, resumed-owner refusal
+  and uncertain-journal replay pass. Actual host deployment and durable window
+  activation remain unqualified. Ruff/format, links, frozen hashes and diff checks
+  pass; full application regression was not rerun. No host or venue changes.
+
 - Shared-source NAT/proxy fixture: **105 Linux checks / 104 focused Python tests
   pass** (49 new kernel checks, 15 new Python cases). Actual local SNAT, direct and
   proxy paths, TCP/UDP/IPv6 refusals, durable collector dispatch, existing-socket
@@ -327,21 +337,9 @@ Detailed depth implementation, retained hashes and next review:
   Ruff/format, links, frozen hashes and diff checks pass; full application regression
   was not rerun. No host rules, real proxy or venue requests were changed.
 
-- Shared-source revision: **24 inspector tests pass**; Ruff/format, documentation
-  links, unchanged earlier proposal/frozen contract, new proposal consistency and
-  diff checks pass. This is a topology-selection/documentation revision plus a
-  neutral blocker label; no new host probe or full application regression.
-
-- Dedicated-source host inspector: **24 tests pass**; actual system-Python run
-  read all seven local sources including sudo nft. Report records 27 interfaces,
-  two IPv4 default-route entries, one IPv6 default-route entry and 27 nft base
-  chains; proposed storage root is missing. This snapshot establishes no public
-  mapping or continuous coverage. **195 focused tests pass** across inspection,
-  existing controller persistence, rate interpretation and joint admission.
-  Ruff, formatting, documentation links, retained-output hashes, proposal cost,
-  frozen-contract hash and diff checks pass. Full application regression was not
-  rerun for this standalone inspector/proposal. No host mutation or venue request
-  occurred.
+- Earlier source selection and read-only host inspection are archived in the
+  linked proposals; all seven host reads passed and fixed storage was absent.
+  Those snapshots do not establish current runtime health or cloud mapping.
 
 - Isolated VPS egress fixture: **56 Linux checks / 65 focused Python tests pass**.
   Four additional kernel checks and 25 Python cases cover fixed-scope ownership,

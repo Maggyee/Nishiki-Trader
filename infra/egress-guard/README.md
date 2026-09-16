@@ -205,3 +205,27 @@ Do not deploy a three-hostname IP list as exhaustive coverage or silently stop
 existing services. Actual source/caller/fixed-storage binding and the separate
 one-GET REST bootstrap implementation/review remain necessary. No proposal or
 consumed scope is activated by these fixture results.
+
+## Bounded maintenance alternative
+
+The same isolated harness now includes `FixtureMaintenanceWindow` and 35 additional
+Linux checks. Its default 12-second collector permission expires before the
+20-second other-caller blackout. Both are installed atomically; terminal shutdown
+flushes both atomically. The collector's permanent deny remains after ordinary
+traffic resumes. A process-owned lock serializes activation/revocation; failed
+activation cannot retry, and missing sets cannot masquerade as verified release.
+
+Actual abrupt-exit and SIGSTOP/SIGCONT scenarios exercise shorter 1/4-second
+deadlines. Kernel expiration restores ordinary direct/proxy requests while keeping
+the collector blocked, even without an active controller. The resumed owner halts;
+the persistent request journal retains its uncertain send. No userspace watchdog
+process is required for this fixture fallback. The overall worker still has its
+90-second bound and the parent its 100-second bound.
+
+This broad window intentionally interrupts unrelated WAN egress, including existing
+connections, IPv6 and UDP. It is a candidate for a separately accepted interruption,
+not a way to promise uninterrupted proxy access. The window's activation ownership
+is in memory; durable host activation before kernel changes, actual complete paths,
+source/storage binding and a privileged helper remain implementation work. No host
+policy or real one-shot bootstrap is installed. See the
+[maintenance proposal and acceptance](../../docs/progress/portfolio-maintenance-window-2026-09-16.md).
