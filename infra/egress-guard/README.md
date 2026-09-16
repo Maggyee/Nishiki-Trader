@@ -490,3 +490,34 @@ initializers without changing original bytes or calling the kernel. The trusted
 caller-selected root remains a boundary: changing/deleting it or restoring old
 storage is not prevented, and process crashes/fsync order do not prove host
 power-loss durability. See the [persistent-window report](../../docs/progress/portfolio-maintenance-persistence-2026-09-16.md).
+
+## Actual host installation and authorized one-shot bootstrap
+
+`host_acceptance.py` performs root-staged acceptance of the installed authority,
+actual dedicated UID, filesystem denial, one IPC observation and fresh-process
+consumed-record replay. Its acceptance scope is separate from real capture.
+
+`bootstrap_once.py` is the reviewed fixed public GET runner, installed separately
+as root-owned read-only code under `/usr/local/lib/trader-egress-bootstrap-v1`.
+A protected plan pins the source commit, code/parser/CA, installed account/manifest,
+boot/MAC and fresh literal endpoint. `/var/lib/trader/egress/rest-bootstrap-v1`
+is permanently consumed before topology or any venue socket. It never retries.
+The child has UID 997, no capabilities/groups, verified TLS and a credential-bound
+IPC channel; root fsyncs received chunks before acknowledging interpretation.
+
+The operator accepted one maximum 20-second ordinary-IP interruption and 12-second
+collector allowance, including unknown prior usage for one exchangeInfo GET.
+Independent inet OUTPUT/FORWARD and WAN netdev egress guards cover raw IPv4/IPv6.
+Narrow temporary FORWARD rules traverse Docker's default drop policy. ARP/LLDP
+remain usable. Kernel TTL restores ordinary traffic even after root helper death,
+while the collector stays blocked. Successful cleanup removes only owned rules,
+namespace and veth; no service shutdown or new recurring service is installed.
+
+`bootstrap_selftest.py` exercises this exact runner in private mount/network/PID
+namespaces with a local TLS peer, normal/raw-IP competitors and forced termination.
+`apps.ops.portfolio_rest_bootstrap_review` reviews pinned original bytes offline.
+See [current report](../../docs/progress/portfolio-egress-host-bootstrap-2026-09-16.md)
+and [accepted contract](../../docs/progress/portfolio-shared-egress-bootstrap-2026-09-16-v2.json)
+for state, hashes and the next entrypoint. Never repeat the real execute command
+when status is uncertain; inspect the fixed scope and expiry instead. Existing
+joint draft, consumed trading/depth scopes and live-order path stay unchanged.

@@ -72,7 +72,8 @@ def _selection(endpoint, role, trust_pem, trust_sha256):
 
 
 class _Journal:
-    def __init__(self, path):
+    def __init__(self, path, *, limit=MAX_ARCHIVE, reserve=0):
+        self.limit, self.reserve = limit, reserve
         self.fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
         self.size = self.seq = 0
         self.previous = None
@@ -99,7 +100,8 @@ class _Journal:
             **fields,
         }
         raw = canonical(row) + b"\n"
-        if self.size + len(raw) > MAX_ARCHIVE:
+        ceiling = self.limit if kind == "aborted" else self.limit - self.reserve
+        if self.size + len(raw) > ceiling:
             raise ProvenanceError("provenance_archive_limit")
         try:
             view = memoryview(raw)
@@ -178,7 +180,19 @@ def _validate_response(role, status, pairs, nonce):
     return 0
 
 
-async def capture_loopback_tls(path, *, endpoint, role, trust_pem, trust_sha256, timeout=10):
+async def capture_loopback_tls(
+    path,
+    *,
+    endpoint,
+    role,
+    trust_pem,
+    trust_sha256,
+    timeout=10,
+    max_body=MAX_BODY,
+    max_archive=MAX_ARCHIVE,
+    incident_reserve=0,
+    close_timeout=5,
+):
     """Capture one TLS connection and one GET/Upgrade; then close within five seconds.
 
     The caller selects a new private archive and an ephemeral fixture trust root.
@@ -188,7 +202,19 @@ async def capture_loopback_tls(path, *, endpoint, role, trust_pem, trust_sha256,
     parsed, context = _selection(endpoint, role, trust_pem, trust_sha256)
     if type(timeout) not in (int, float) or not 0 < timeout <= 10:
         raise ProvenanceError("bounded_provenance_timeout_required")
-    journal = _Journal(path)
+    if (
+        type(max_body) is not int
+        or not 0 < max_body <= MAX_BODY
+        or type(max_archive) is not int
+        or not 4096 <= max_archive <= MAX_ARCHIVE
+        or type(incident_reserve) is not int
+        or not 0 <= incident_reserve <= 4096
+        or incident_reserve >= max_archive
+        or type(close_timeout) not in (int, float)
+        or not 0 < close_timeout <= 5
+    ):
+        raise ProvenanceError("bounded_provenance_limits_required")
+    journal = _Journal(path, limit=max_archive, reserve=incident_reserve)
     writer = None
     failure = None
     nonce = base64.b64encode(os.urandom(16)).decode() if role != "rest" else None
@@ -267,6 +293,8 @@ async def capture_loopback_tls(path, *, endpoint, role, trust_pem, trust_sha256,
             journal.append("response_headers", raw_sha256=digest(raw), length=header_length)
             status, pairs = response_headers(raw)
             length = _validate_response(role, status, pairs, nonce)
+            if length > max_body:
+                raise ProvenanceError("selected_provenance_body_limit")
             if length:
                 while len(response) < header_length + length:
                     await receive()
@@ -285,7 +313,7 @@ async def capture_loopback_tls(path, *, endpoint, role, trust_pem, trust_sha256,
     finally:
         if writer is not None:
             try:
-                async with asyncio.timeout(5):
+                async with asyncio.timeout(close_timeout):
                     writer.close()
                     await writer.wait_closed()
                 journal.append("transport_closed")

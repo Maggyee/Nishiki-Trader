@@ -1,0 +1,149 @@
+{
+  "schema_version": "portfolio.shared_egress_bootstrap_accepted.v2",
+  "status": "accepted_ready_for_single_execution",
+  "date": "2026-09-16",
+  "operator_selected_topology": "reuse_existing_public_ipv4_no_second_address",
+  "bootstrap_exception_accepted": true,
+  "network_admitted": false,
+  "source_binding": {
+    "vnic_reference": null,
+    "cloud_mapping_evidence_sha256": "b6031cd5a5c336eb5c7df69fd19e51e6a85e6ebecb1bbf30a6e6004f0377d467",
+    "collector_uid": 997,
+    "collector_namespace": "trader-egress-bootstrap-v1",
+    "destination_ipv4": null,
+    "resolution_evidence_sha256": null,
+    "deployment_evidence_sha256": "3a4144c98ab8c67866e10509387465824e522c644332ddd099b48ec11a6b3a94",
+    "storage_root_proposal": "/var/lib/trader/egress/rest-bootstrap-v1",
+    "existing_private_ipv4": null,
+    "existing_public_ipv4": null,
+    "provenance": "Operator OCI console mapping matched to local IMDS VNIC/private IPv4/MAC/VLAN; not authenticated OCI API or destination-observed public source. Fresh DNS destination is pinned in protected runtime plan."
+  },
+  "scope_proposal": "portfolio.testnet_rest_bootstrap.v1",
+  "first_request_policy_proposal": "explicit_single_attempt_with_unknown_prior_usage_not_capacity_proof",
+  "operation": {
+    "method": "GET",
+    "authority": "testnet.binance.vision",
+    "port": 443,
+    "path": "/api/v3/exchangeInfo",
+    "query": {},
+    "address_family": 4,
+    "credentials": false,
+    "tls_hostname_verification_required": true,
+    "selected_destination_ipv4_required": true
+  },
+  "maximum_budget": {
+    "tcp_connection_attempts": 1,
+    "tls_handshake_attempts": 1,
+    "http_gets": 1,
+    "documented_request_weight": 20,
+    "private_requests": 0,
+    "websocket_connections": 0,
+    "dns_requests_by_transport": 0,
+    "retries": 0,
+    "redirects": 0,
+    "fallbacks": 0,
+    "deadline_seconds": 10,
+    "close_archive_allowance_seconds": 2,
+    "response_header_bytes": 65536,
+    "response_body_bytes": 8388608,
+    "archive_bytes": 16777216,
+    "incident_reserve_within_archive_bytes": 4096
+  },
+  "consumption": "fixed_scope_durable_before_any_socket_no_reopen_refund_or_resume",
+  "unknown_before_request": [
+    "current_applicable_provider_limits",
+    "prior_request_weight_and_raw_requests_usage",
+    "existing_shared_source_provider_restrictions"
+  ],
+  "evidence_only": [
+    "original_http_status_headers_body",
+    "tls_verification_certificate_and_selected_source_binding",
+    "local_utc_and_monotonic_dispatch_receipt_times",
+    "post_request_rest_rate_observations"
+  ],
+  "success_does_not_qualify": [
+    "pre_request_capacity",
+    "global_history_or_continuity",
+    "websocket_usage_or_market_connection_weight",
+    "server_clock_uncertainty",
+    "joint_capture_admission",
+    "account_equity_utc_baseline_or_trading"
+  ],
+  "preserved_joint_contract": {
+    "path": "docs/progress/portfolio-testnet-joint-capture-contract-2026-09-14.json",
+    "sha256": "91fab40cfd52b51cfac887f2dc45ee9594ce55d33b082f44d4aee31d2738ed48",
+    "gets": 17,
+    "documented_request_weight": 468,
+    "modified": false
+  },
+  "supersedes_proposal": {
+    "path": "docs/progress/portfolio-shared-egress-bootstrap-2026-09-16.json",
+    "sha256": "4a6821642cf26b9c3ee809108b85497b3a943f2d9ec1a1a44950aff41c24f848"
+  },
+  "new_cloud_resources_required": false,
+  "shared_source_policy": {
+    "caller_paths": [
+      "host_output",
+      "docker_forward",
+      "tailscale_forward",
+      "personal_proxy"
+    ],
+    "competing_provider_calls": "bounded_host_ipv4_ipv6_blackout_inet_and_physical_wan_netdev",
+    "unrelated_proxy_availability": "accepted_interruption_at_most_20_seconds_then_restore",
+    "selective_provider_coverage_verified": false,
+    "namespace_implies_separate_quota": false,
+    "blanket_service_shutdown_authorized": false
+  },
+  "transport_implemented": true,
+  "authorization": {
+    "operator_text": "接受这个窗口和单次 GET 的额度不确定性",
+    "maximum_blackout_seconds": 20,
+    "collector_permission_seconds": 12,
+    "single_get_unknown_previous_usage_accepted": true,
+    "second_public_ipv4_required": false
+  },
+  "preparation_evidence": [
+    {
+      "path": "infra/egress-guard/bootstrap_once.py",
+      "sha256": "da64769aa50b04e1f9c1510bb33b1a85de2bb7a0e41ac81c43497e56a8f804d7"
+    },
+    {
+      "path": "infra/egress-guard/bootstrap_selftest.py",
+      "sha256": "a5a6ac1523756cd23b9a113d101bfb0f2cc7aecc279e0c86117deec2bb559c28"
+    },
+    {
+      "path": "apps/strategies_nautilus/portfolio_tls_provenance.py",
+      "sha256": "def476571e9ec56e989eee02b8623b1a657337956ecd88faeabaf9f2efc70044"
+    },
+    {
+      "path": "infra/egress-guard/host_acceptance.py",
+      "sha256": "365bb2e671f8ce92db34ed63db93cf19dc3ed626dbcf9d8f64caf83f2b1b2f43"
+    },
+    {
+      "path": "data/egress-bootstrap-runner-success-2026-09-16-final-v2.json",
+      "sha256": "8f90918315ac79d47fe336f648d9adb219a0880ad93e8dd4f4153243831405f7"
+    },
+    {
+      "path": "data/egress-bootstrap-runner-crash-2026-09-16-final.json",
+      "sha256": "acd938d03f4f003a47f526aaeb169efe6b5ff0102fab1d3d02e2926f97cadcc1"
+    },
+    {
+      "path": "data/egress-host-acceptance-2026-09-16-prepare.json",
+      "sha256": "aaf851ea2b0b9dd23d653fb2b413407744481a444c2dce5c57999ced3eacc40e"
+    },
+    {
+      "path": "data/egress-host-acceptance-2026-09-16-verify.json",
+      "sha256": "3a4144c98ab8c67866e10509387465824e522c644332ddd099b48ec11a6b3a94"
+    },
+    {
+      "path": "data/egress-vnic-metadata-2026-09-16.json",
+      "sha256": "7d567265949bfdc00362ada633a04fd9ce54a1a66e44d2bb4f22d63e4f416db4"
+    },
+    {
+      "path": "data/egress-operator-mapping-2026-09-16-v2.json",
+      "sha256": "b6031cd5a5c336eb5c7df69fd19e51e6a85e6ebecb1bbf30a6e6004f0377d467"
+    }
+  ],
+  "runtime_binding": "Protected root-owned plan pins clean pushed commit, installed manifest, exact runner/parser/CA, collector, fresh selected IPv4, boot ID and WAN MAC; expires after 300 seconds.",
+  "actual_execution": null
+}

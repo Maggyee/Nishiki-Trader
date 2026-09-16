@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-16
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Reuse the existing public IPv4. Actual disposable installation and distinct-UID filesystem/IPC acceptance now pass using existing sudo permission and private mount/network/PID namespaces. A real useradd failure exposed an unsupported installer option, now fixed in the newly pinned bundle. No host account or installation exists yet. Next review the corrected bundle for inactive host installation, then qualify host storage/source/paths and bootstrap transport. The 12-second collector / 20-second blackout remains unapproved and undeployed. No real scope is activated.
+- **Current objective**: Complete the authorized single public REST bootstrap using the existing IPv4. Inactive host installation, UID 997 permissions/IPC and fresh-process state acceptance pass. Operator OCI mapping matches IMDS. The operator accepted one maximum 20-second interruption, 12-second collector permission and unknown prior usage for one public exchangeInfo GET (weight 20). Final runner success/crash isolation tests pass; commit/push preparation, then execute once and replay original evidence. Joint capture and trading remain blocked.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -247,7 +247,8 @@ Detailed depth implementation, retained hashes and next review:
 [isolated collector launch and authenticated IPC](progress/portfolio-collector-launcher-2026-09-16.md),
 [fixed installation authority and nonroot launch](progress/portfolio-egress-installation-2026-09-16.md),
 [reviewable installation bundle](progress/portfolio-egress-bundle-2026-09-16.md),
-and [actual disposable installation/UID acceptance](progress/portfolio-egress-isolated-installation-2026-09-16.md).
+[actual disposable installation/UID acceptance](progress/portfolio-egress-isolated-installation-2026-09-16.md),
+and [current real-host bootstrap preparation](progress/portfolio-egress-host-bootstrap-2026-09-16.md).
 
 ## Next Steps
 
@@ -267,46 +268,20 @@ and [actual disposable installation/UID acceptance](progress/portfolio-egress-is
    The operator confirms no gateway records are available; the authorized offline
    21-step remaining-budget/durable-preparation rehearsal now passes, including
    incomplete crash replay and refusal to reopen the original archive.
-   Disposable acceptance now covers dual-stack hooks, expiring permissions and
-   observed rule/route/audit loss. Controlled revocation now serializes with sends;
-   queued requests stop and senders lack administration capabilities. Controller
-   death still relies on TTL expiry; uncontrolled privileged mutation remains
-   unclosed. Fixed-scope disk persistence now passes process-crash acceptance:
-   initialization consumes the directory, replay retains uncertain preparations,
-   and every reopen is refused. Next bind actual source/caller authorization and
-   qualify the selected storage root and deployed crash/revocation behavior.
-   No host guard or complete audit is deployed. The operator now selects the
-   existing public IPv4; no second address is required. Local SNAT/proxy acceptance
-   now verifies five caller paths and durable collector dispatch, with other-address
-   controls preserved. Unlisted targets and cohosted-service counterexamples keep
-   provider-wide coverage false. The bounded maintenance alternative now passes
-   kernel timer/crash/pause checks: collector permission expires before ordinary
-   traffic resumes. A separate fixed window journal now persists consumption before
-   kernel activation; six process-crash stages retain state and refuse reopening.
-   This does not prove host power-loss durability or prevent storage rollback.
-   Read-only preflight now binds selected local interface/address, host boot,
-   process metadata, network structure and fixed root-owned storage; pinned
-   comparisons reject incomplete bindings and report drift. Actual host reads pass,
-   but no collector is selected and fixed storage is missing/unreadable. The isolated
-   launcher now binds its actual child with pidfd/kernel credentials, then joins
-   durable activation, one control observation and cleanup. Its same-UID fixture
-   does not qualify production identity/storage isolation. Fixed installation checks
-   now validate root-owned paths/code, a dedicated account and original bytes through
-   held descriptors; a separate launch branch clears groups and binds nonroot IDs.
-   Actual host installation remains absent. The corrected pinned bundle now passes
-   actual useradd/password checks, fixed installed entry, distinct kernel UID/IPC
-   and filesystem denial tests in disposable private namespaces using existing sudo
-   access. Host account/path observations remain unchanged. Review this corrected
-   bundle for inactive host installation, then qualify host storage, public mapping
-   and complete paths. The 20-second interruption
-   is not accepted or deployed. Do not silently stop services; the host inspector remains read-only.
-   The separate one-GET REST bootstrap proposal acknowledges unknown prior usage;
-   review/implement it before any activation. It cannot satisfy or silently amend
-   the frozen joint draft; waiting alone still supplies no historical evidence.
+   Host installation is now complete: root-owned code/state, dedicated UID 997,
+   process restart and kernel-denied state/code access pass. Console public/private
+   mapping matches IMDS; this is operator-provided cloud provenance. Final disposable
+   runner acceptance covers ordinary and raw AF_PACKET IP traffic, bounded blackout,
+   distinct-UID TLS/IPC, one fixed GET, cleanup and crash expiry without reopening.
+   See the [host/bootstrap preparation report](progress/portfolio-egress-host-bootstrap-2026-09-16.md)
+   and [accepted successor contract](progress/portfolio-shared-egress-bootstrap-2026-09-16-v2.json).
+   Execute the separately authorized one-shot bootstrap after clean commit/push,
+   retain original root-owned evidence and verify restoration. No retries or second
+   IPv4. No reboot/power-loss or storage-rollback qualification is claimed.
    Obtain qualified signer/source records, fresh initial usage/limits and complete
    enforced egress records; then wire authenticated per-dispatch
    reservations, durable one-shot activation and separate real profile replay.
-   No new capture, seed probe or default-zero connection count is permitted by the draft.
+   The frozen joint draft grants no additional capture or default-zero connection count.
    Keep unpriced/insufficient-depth assets explicit; neither prior depth outcome
    qualifies equity or a UTC baseline.
    Full-account/UTC/flow/reset qualification remains separate and blocked.
@@ -342,6 +317,12 @@ and [actual disposable installation/UID acceptance](progress/portfolio-egress-is
 - Nautilus is the only execution engine; LLMs never enter the order path.
 
 ## Latest Verification
+
+- Current host/bootstrap acceptance: actual inactive installation, distinct UID,
+  nine denied file/state accesses and fresh-process consumed-record replay pass.
+  Final runner success and SIGKILL tests pass in disposable namespaces, including
+  raw-IP blackout/restoration and no reopen. No real bootstrap GET yet; see the
+  linked report for exact evidence pins and focused test results.
 
 - Installation/UID acceptance: **40 actual disposable Linux checks / 335 focused
   Python tests pass**. Actual useradd caught unsupported `-K CREATE_MAIL_SPOOL=no`;
