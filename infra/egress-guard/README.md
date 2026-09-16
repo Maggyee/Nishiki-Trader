@@ -277,6 +277,60 @@ files if its code were changed. Installed code ownership, dedicated UID/IPC poli
 fixed host storage and real source/path authority remain production work. Do not
 install this test harness as a sudo helper. See the [launcher acceptance report](../../docs/progress/portfolio-collector-launcher-2026-09-16.md).
 
+## Fixed installation authority contract
+
+`installation.py` checks the proposed fixed host installation without creating
+accounts, copying code, claiming a scope or starting a collector:
+
+```bash
+/usr/bin/python3 -I infra/egress-guard/installation.py \
+  --report data/NEW-INSTALLATION-CHECK.json
+```
+
+`TrustedInstallation` opens `/etc/trader/egress-install.json`, the three fixed
+source files under `/usr/local/lib/trader-egress`, and `/var/lib/trader/egress`.
+It walks from `/` with held directory descriptors and no-follow opens. Every
+ancestor must be root-owned without group/other write access; code files must
+be regular, single-link, root-owned mode 0444 with matching hashes. The manifest
+must be root-owned mode 0600 and storage a root-owned mode-0700 directory. Symlinks,
+hardlinks, nonregular files and alternate source names are refused. No alternate
+root, account or code path is accepted by the public CLI.
+
+The dedicated `trader-egress` account must have nonzero UID/GID, its own named
+primary group, `/nonexistent` home and `/usr/sbin/nologin` shell. UID aliases,
+shared primary GIDs, group aliases, other group members and supplementary-group
+membership are rejected. The root-owned manifest pins the actual numeric IDs;
+none are guessed or provisioned by this checker. Password lock still needs separate
+verification when the account is provisioned; this checker does not read shadow.
+
+The installed manifest has exactly `schema_version`, `collector` and `files`.
+Use schema `portfolio.egress_installation.v1`; `collector` contains exactly the
+name and actual numeric UID/GID, while `files` maps `collector_launcher.py`,
+`inspect_binding.py` and `installation.py` to their SHA256 strings. The separate
+[review contract](../../docs/progress/portfolio-egress-installation-contract-2026-09-16.json)
+pins modes and current source hashes but is **not** the installed manifest.
+
+Authority verification rechecks account identity, mount namespace, path/device/
+inode/owner/mode and original file bytes through retained descriptors. An observed
+change permanently closes the object; reverting files cannot revive it. Directory
+link counts are excluded so creating an owned consumed-scope directory is allowed.
+The descriptor handles use close-on-exec and are not passed to the collector.
+
+The internal `FixtureCollector.from_installation` entry loads only verified source
+bytes and binds the manifest hash into the process identity. Its dedicated branch
+uses explicit `setpriv --reuid/--regid --clear-groups`, verifies all four UID/GID
+values and empty supplementary groups, and expects those IDs in kernel message
+credentials. Installation authority is rechecked with process identity. This is
+not a public privileged entrypoint or an installer; trusted installed startup code
+is still required to establish trust in the checker itself.
+
+The public checker writes an exclusive private report and always exits 2 after
+inspection, including when local checks pass. It never grants network/deployment
+authority. Current host installation is unavailable; this session has no subordinate
+UID/GID ranges or `newuidmap`/`newgidmap`, so the dedicated-user branch currently has
+unit acceptance only. The existing same-UID rootless integration still passes but
+does not qualify cross-user isolation. See the [implementation report](../../docs/progress/portfolio-egress-installation-2026-09-16.md).
+
 ## Shared-source NAT and proxy acceptance
 
 The same `selftest.py` now includes 49 additional actual kernel checks: direct

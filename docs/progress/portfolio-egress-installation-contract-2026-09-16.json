@@ -1,0 +1,61 @@
+{
+  "all_ancestor_directories": "root_owned_no_group_or_other_write_no_symlinks",
+  "authority_uid": 0,
+  "code_root": "/usr/local/lib/trader-egress",
+  "collector": {
+    "dedicated_uid_and_primary_gid_required": true,
+    "gid": null,
+    "home": "/nonexistent",
+    "name": "trader-egress",
+    "password_lock_required_at_provisioning": true,
+    "password_lock_verified": false,
+    "shell": "/usr/sbin/nologin",
+    "supplementary_groups": [],
+    "uid": null
+  },
+  "collector_launch": "fixed_command_explicit_nonroot_uid_gid_clear_groups_zero_capabilities_no_new_privileges",
+  "date": "2026-09-16",
+  "dedicated_uid_qualified": false,
+  "files": {
+    "collector_launcher.py": {
+      "mode": "0444",
+      "sha256": "d1d94a8edd0730244b6dbc7c0e24746157985e7b36b82f865397402ce0433579"
+    },
+    "inspect_binding.py": {
+      "mode": "0444",
+      "sha256": "27c3302222bc819767ba874d7000f2b038662fa72004cb56da25a1003c38e322"
+    },
+    "installation.py": {
+      "mode": "0444",
+      "sha256": "04ceddded1d6b1df10c52285226c1ddf43a42d95129226d95cd4314675d902eb"
+    }
+  },
+  "host_deployment_qualified": false,
+  "installation_performed": false,
+  "manifest_files_values": "exact_sha256_strings_for_the_three_fixed_basenames",
+  "manifest_keys": [
+    "schema_version",
+    "collector",
+    "files"
+  ],
+  "manifest_mode": "0600",
+  "manifest_path": "/etc/trader/egress-install.json",
+  "manifest_schema_version": "portfolio.egress_installation.v1",
+  "network_admitted": false,
+  "remaining_requirements": [
+    "reviewed_install_package_and_authorized_host_provisioning",
+    "actual_distinct_uid_storage_and_code_isolation_acceptance",
+    "privileged_fixed_operation_entrypoint",
+    "public_source_mapping_and_complete_egress_paths",
+    "host_restart_storage_durability_and_rollback",
+    "separate_one_get_bootstrap_transport_and_policy",
+    "explicit_maintenance_interruption_acceptance"
+  ],
+  "runtime": "hold_no_follow_descriptors_recheck_account_paths_modes_bytes_and_mount_namespace",
+  "schema_version": "portfolio.egress_installation_contract.v1",
+  "source_files": "regular_single_link_exact_mode_hash_and_original_bytes",
+  "startup": "verify_fixed_installation_before_loading_selected_reader_and_launcher_source",
+  "status": "implementation_verified_installation_not_performed",
+  "storage_mode": "0700",
+  "storage_root": "/var/lib/trader/egress"
+}

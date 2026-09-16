@@ -227,3 +227,94 @@ def test_pidfd_failure_reaps_child_and_closes_socket(launcher, monkeypatch):
     process.kill.assert_called_once()
     process.wait.assert_called_once_with(timeout=2)
     assert len(list(Path("/proc/self/fd").iterdir())) == before
+
+
+@pytest.mark.parametrize(
+    "uid,gid", [(0, 12346), (12345, 0), (True, 12346), (12345, True), (None, 12346), (12345, None)]
+)
+def test_dedicated_identity_must_be_complete_nonroot_integers(launcher, monkeypatch, uid, gid):
+    spawn = Mock(side_effect=AssertionError("must not spawn"))
+    monkeypatch.setattr(launcher.subprocess, "Popen", spawn)
+    with pytest.raises(ValueError, match="distinct_nonroot"):
+        launcher.FixtureCollector("pass", Mock(), collector_uid=uid, collector_gid=gid)
+    spawn.assert_not_called()
+
+
+@pytest.mark.parametrize("damage", [None, "uid", "gid", "groups"])
+def test_dedicated_launch_drops_identity_and_verifies_observed_credentials(
+    launcher, monkeypatch, damage
+):
+    process = Mock(pid=123456)
+    spawn = Mock(return_value=process)
+    monkeypatch.setattr(launcher.subprocess, "Popen", spawn)
+    monkeypatch.setattr(launcher.os, "pidfd_open", lambda pid: os.open("/dev/null", os.O_RDONLY))
+    monkeypatch.setattr(launcher.signal, "pidfd_send_signal", Mock())
+    monkeypatch.setattr(launcher.select, "select", lambda *args: ([], [], []))
+    channels = []
+
+    def channel(connection, peer):
+        result = Mock(peer=peer)
+        result.close.side_effect = connection.close
+        channels.append(result)
+        return result
+
+    monkeypatch.setattr(launcher, "ControlChannel", channel)
+    identity = {
+        "uids": [12345] * 4,
+        "gids": [12346] * 4,
+        "groups": [],
+        "capabilities": {"CapEff": 0},
+        "no_new_privileges": 1,
+        "namespaces": {"net": "net:fixture-child"},
+    }
+    if damage == "uid":
+        identity["uids"][2] = 0
+    elif damage == "gid":
+        identity["gids"][0] = 0
+    elif damage == "groups":
+        identity["groups"] = [12347]
+    if damage:
+        with pytest.raises(RuntimeError, match="isolation_missing"):
+            launcher.FixtureCollector(
+                "pass", lambda pid: identity, collector_uid=12345, collector_gid=12346
+            )
+    else:
+        collector = launcher.FixtureCollector(
+            "pass", lambda pid: identity, collector_uid=12345, collector_gid=12346
+        )
+        collector.close()
+    command = spawn.call_args.args[0]
+    for required in (
+        "--reuid=12345",
+        "--regid=12346",
+        "--clear-groups",
+        "--no-new-privs",
+        "--bounding-set=-all",
+    ):
+        assert required in command
+    assert channels[0].peer == (process.pid, 12345, 12346)
+    process.wait.assert_called()
+
+
+def test_installation_entry_loads_only_verified_sources_and_rechecks_authority(launcher):
+    installation = Mock()
+    installation.account = {"uid": 12345, "gid": 12346}
+    installation.manifest_sha256 = "pinned-manifest"
+    installation.source.side_effect = lambda name: {
+        "inspect_binding.py": b'def process_identity(pid):\n    return {"pid": pid}\n',
+        "collector_launcher.py": b"# selected launcher",
+    }[name]
+
+    class Selected(launcher.FixtureCollector):
+        def __init__(self, source, reader, **kwargs):
+            self.source, self.reader, self.identity = source, reader, kwargs
+
+    selected = Selected.from_installation(installation)
+    assert selected.source == "# selected launcher"
+    assert selected.identity == {"collector_uid": 12345, "collector_gid": 12346}
+    assert selected.reader(123) == {"pid": 123, "installation_manifest_sha256": "pinned-manifest"}
+    installation.verify.side_effect = ValueError("installation_changed")
+    with pytest.raises(ValueError, match="installation_changed"):
+        selected.reader(123)
+    with pytest.raises(ValueError, match="installation_changed"):
+        Selected.from_installation(installation)

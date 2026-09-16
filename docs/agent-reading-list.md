@@ -276,6 +276,18 @@ dedicated host identity or storage isolation. This is a bounded selftest, not an
 installed privileged helper. Next establish root-owned installed code, dedicated
 UID and fixed host authority before integrating actual source/paths and bootstrap.
 
+For fixed installation authority and the explicit nonroot launch branch, read
+`docs/progress/portfolio-egress-installation-2026-09-16.md`, its linked installation
+contract JSON and `infra/egress-guard/installation.py`. Root-owned fixed paths,
+original source hashes/bytes, retained no-follow descriptors and a dedicated
+noninteractive account are checked before loading installed sources. Account/path/
+code drift invalidates the object; nonroot launch clears supplementary groups and
+binds expected kernel credentials. No account or installation was created. The
+current environment lacks subordinate ID ranges/mapping helpers, so real distinct
+UID/filesystem isolation remains unverified; do not substitute the same-UID fixture.
+Next prepare a reviewed install package/entrypoint and actual separate-user
+acceptance, then qualify source/paths/storage and the separate bootstrap transport.
+
 For actual disposable Linux egress-hook acceptance, read
 `docs/progress/portfolio-vps-egress-namespace-acceptance-2026-09-15.md` and
 `infra/egress-guard/README.md`. The standalone non-root fixture passes 23 checks

@@ -129,7 +129,18 @@ class FixtureCollector:
     remote request parameters. The public CLI accepts no arguments or code inputs.
     """
 
-    def __init__(self, source, identity_reader):
+    def __init__(self, source, identity_reader, *, collector_uid=None, collector_gid=None):
+        dedicated = collector_uid is not None or collector_gid is not None
+        if dedicated and (
+            type(collector_uid) is not int
+            or type(collector_gid) is not int
+            or collector_uid <= 0
+            or collector_gid <= 0
+            or collector_uid == os.getuid()
+        ):
+            raise ValueError("collector_requires_distinct_nonroot_identity")
+        target_uid = collector_uid if dedicated else os.getuid()
+        target_gid = collector_gid if dedicated else os.getgid()
         self.owner_pid = os.getpid()
         self.lock = threading.Lock()
         self.stop = threading.Event()
@@ -151,6 +162,11 @@ class FixtureCollector:
                     "/usr/bin/unshare",
                     "--net",
                     "/usr/bin/setpriv",
+                    *(
+                        [f"--reuid={target_uid}", f"--regid={target_gid}", "--clear-groups"]
+                        if dedicated
+                        else []
+                    ),
                     "--bounding-set=-all",
                     "--inh-caps=-all",
                     "--ambient-caps=-all",
@@ -168,7 +184,7 @@ class FixtureCollector:
                 cwd="/",
             )
             self.pidfd = os.pidfd_open(self.process.pid)
-            self.channel = ControlChannel(parent, (self.process.pid, os.getuid(), os.getgid()))
+            self.channel = ControlChannel(parent, (self.process.pid, target_uid, target_gid))
             child.close()
             self.channel.receive({"ready"}, 0)
             self.selected = self.binding()
@@ -179,6 +195,14 @@ class FixtureCollector:
                 any(observed["capabilities"].values())
                 or observed["no_new_privileges"] != 1
                 or observed["namespaces"]["net"] == os.readlink("/proc/self/ns/net")
+                or (
+                    dedicated
+                    and (
+                        observed["uids"] != [target_uid] * 4
+                        or observed["gids"] != [target_gid] * 4
+                        or observed["groups"] != []
+                    )
+                )
             ):
                 raise RuntimeError("collector_isolation_missing")
             self.verify()
@@ -188,6 +212,23 @@ class FixtureCollector:
             raise
         finally:
             child.close()
+
+    @classmethod
+    def from_installation(cls, installation):
+        """Internal future-helper entry; never execute caller-provided source/UIDs."""
+        installation.verify()
+        reader = load_source(installation.source("inspect_binding.py").decode())["process_identity"]
+
+        def verified_identity(pid):
+            installation.verify()
+            return {**reader(pid), "installation_manifest_sha256": installation.manifest_sha256}
+
+        return cls(
+            installation.source("collector_launcher.py").decode(),
+            verified_identity,
+            collector_uid=installation.account["uid"],
+            collector_gid=installation.account["gid"],
+        )
 
     def check_owner(self):
         if os.getpid() != self.owner_pid:

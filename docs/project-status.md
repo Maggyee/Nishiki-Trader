@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-16
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Reuse the existing public IPv4. An isolated fixed collector launcher now uses pidfds and kernel message credentials, and joins durable window activation to a journaled control observation and cleanup. Read-only host preflight exists; actual dedicated collector identity and fixed storage remain missing. Next establish root-owned installed code, dedicated UID and fixed helper authority, then qualify actual mapping/paths and bootstrap transport. The 12-second collector / 20-second blackout remains unapproved and undeployed. No real scope is activated.
+- **Current objective**: Reuse the existing public IPv4. Fixed installation authority checks and an explicit nonroot collector launch branch now follow isolated authenticated-launch acceptance. Actual installation and cross-user filesystem isolation remain unverified; this environment lacks subordinate ID ranges/mapping helpers. Next prepare a reviewed installation package/entrypoint and actual dedicated-user acceptance, then qualify source/paths/storage and bootstrap transport. The 12-second collector / 20-second blackout remains unapproved and undeployed. No real scope is activated.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -244,7 +244,8 @@ Detailed depth implementation, retained hashes and next review:
 [bounded maintenance alternative](progress/portfolio-maintenance-window-2026-09-16.md),
 [durable window activation and crash replay](progress/portfolio-maintenance-persistence-2026-09-16.md),
 [read-only host binding and drift preflight](progress/portfolio-egress-binding-preflight-2026-09-16.md),
-[isolated collector launch and authenticated IPC](progress/portfolio-collector-launcher-2026-09-16.md).
+[isolated collector launch and authenticated IPC](progress/portfolio-collector-launcher-2026-09-16.md),
+[fixed installation authority and nonroot launch](progress/portfolio-egress-installation-2026-09-16.md).
 
 ## Next Steps
 
@@ -287,8 +288,12 @@ Detailed depth implementation, retained hashes and next review:
    but no collector is selected and fixed storage is missing/unreadable. The isolated
    launcher now binds its actual child with pidfd/kernel credentials, then joins
    durable activation, one control observation and cleanup. Its same-UID fixture
-   does not qualify production identity/storage isolation. Next establish trusted
-   installed code, dedicated UID and fixed helper authority, then qualify actual
+   does not qualify production identity/storage isolation. Fixed installation checks
+   now validate root-owned paths/code, a dedicated account and original bytes through
+   held descriptors; a separate launch branch clears groups and binds nonroot IDs.
+   Actual installation is absent/unqualified, and separate-user integration remains
+   unverified without ID mappings or authorized host provisioning. Next prepare the
+   reviewed install package/entrypoint and dedicated-user acceptance, then qualify
    public mapping, complete paths and storage. The 20-second interruption is not accepted or
    deployed. Do not silently stop services; the host inspector remains read-only.
    The separate one-GET REST bootstrap proposal acknowledges unknown prior usage;
@@ -334,14 +339,14 @@ Detailed depth implementation, retained hashes and next review:
 
 ## Latest Verification
 
-- Collector launcher: **14 isolated integration checks / 216 focused Python tests
-  pass**, including 30 new launcher/channel cases. Kernel credentials, pidfd death,
-  helper crash, capability removal, authenticated durable window/IPC ordering and
-  terminal cleanup pass. Same-UID impostors, bad frames, passed descriptors,
-  repetition and uncertain results are refused. Ruff/format, links and frozen-byte
-  checks pass. No host mutation or venue request; the unchanged 151-check network
-  harness was not rerun. Host preflight's last two observations still lack an
-  authorized collector and fixed storage; they are not current runtime authority.
+- Installation/launcher: **259 focused Python tests / 14 isolated integration
+  checks pass**, adding 32 installation and 11 nonroot-launch cases. Fixed-path
+  authority, source bytes, account exclusivity, descriptor cleanup and terminal
+  drift refusal pass; requested UID/GID/group-drop and installed-source binding
+  have unit acceptance. Actual rootless integration still uses the same UID and
+  cannot qualify cross-user isolation. Host installation check remains blocked.
+  Ruff/format, links and frozen-byte checks pass. No host provisioning or venue
+  requests; the unchanged 151-check network harness was not rerun.
 
 - Persistent maintenance-window fixture: **151 Linux checks / 149 focused Python
   tests pass** (11 additional kernel checks, 23 additional Python cases). Window
