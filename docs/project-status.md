@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-16
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Complete the authorized single public REST bootstrap using the existing IPv4. Inactive host installation, UID 997 permissions/IPC and fresh-process state acceptance pass. Operator OCI mapping matches IMDS. The operator accepted one maximum 20-second interruption, 12-second collector permission and unknown prior usage for one public exchangeInfo GET (weight 20). Final runner success/crash isolation tests pass; commit/push preparation, then execute once and replay original evidence. Joint capture and trading remain blocked.
+- **Current objective**: The authorized single public REST bootstrap is complete on the existing IPv4: one GET, HTTP 200, 2,495,288 body bytes, no retries. Window preparation through cleanup took 8.40 seconds; network structure restored and existing proxy/Docker/Tailscale remain active. Fixed scope is consumed; two independent replays match. Next integrate original rate/TLS evidence into offline source/gateway and joint-admission review. Joint capture and trading remain blocked.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -248,7 +248,8 @@ Detailed depth implementation, retained hashes and next review:
 [fixed installation authority and nonroot launch](progress/portfolio-egress-installation-2026-09-16.md),
 [reviewable installation bundle](progress/portfolio-egress-bundle-2026-09-16.md),
 [actual disposable installation/UID acceptance](progress/portfolio-egress-isolated-installation-2026-09-16.md),
-and [current real-host bootstrap preparation](progress/portfolio-egress-host-bootstrap-2026-09-16.md).
+[real-host bootstrap preparation](progress/portfolio-egress-host-bootstrap-2026-09-16.md),
+and [completed actual bootstrap](progress/portfolio-egress-bootstrap-result-2026-09-16.md).
 
 ## Next Steps
 
@@ -275,9 +276,12 @@ and [current real-host bootstrap preparation](progress/portfolio-egress-host-boo
    distinct-UID TLS/IPC, one fixed GET, cleanup and crash expiry without reopening.
    See the [host/bootstrap preparation report](progress/portfolio-egress-host-bootstrap-2026-09-16.md)
    and [accepted successor contract](progress/portfolio-shared-egress-bootstrap-2026-09-16-v2.json).
-   Execute the separately authorized one-shot bootstrap after clean commit/push,
-   retain original root-owned evidence and verify restoration. No retries or second
-   IPv4. No reboot/power-loss or storage-rollback qualification is claimed.
+   The [actual one-shot bootstrap](progress/portfolio-egress-bootstrap-result-2026-09-16.md)
+   is complete: HTTP 200, one GET, weight counter 20, 8.40-second upper-bound
+   maintenance interval, restored network and two identical offline replays.
+   Preserve its consumed root-owned scope and use original evidence for offline
+   source/gateway review. No retries or second IPv4. No reboot/power-loss or
+   storage-rollback qualification is claimed.
    Obtain qualified signer/source records, fresh initial usage/limits and complete
    enforced egress records; then wire authenticated per-dispatch
    reservations, durable one-shot activation and separate real profile replay.
@@ -318,11 +322,15 @@ and [current real-host bootstrap preparation](progress/portfolio-egress-host-boo
 
 ## Latest Verification
 
-- Current host/bootstrap acceptance: actual inactive installation, distinct UID,
-  nine denied file/state accesses and fresh-process consumed-record replay pass.
-  Final runner success and SIGKILL tests pass in disposable namespaces, including
-  raw-IP blackout/restoration and no reopen. No real bootstrap GET yet; see the
-  linked report for exact evidence pins and focused test results.
+- Current host/bootstrap acceptance: **533 focused Python tests pass**; final
+  exact-source disposable success and SIGKILL runs verify ordinary/raw-IP expiry,
+  isolation, cleanup and no reopen. Actual clean `471752c` capture completed one
+  public GET (HTTP 200), retained 2,495,288 bytes and response weight count 20.
+  Maintenance preparation to cleanup was 8.398 seconds, with zero cleanup errors.
+  Independent structural snapshots match, all three existing services are active,
+  and two fresh offline replays match exactly. Scope remains consumed, no retry.
+  Ruff/format, pins, links and diff pass; no upstream/live-path changes. Full
+  application regression was not rerun; reboot/power-loss remain unqualified.
 
 - Installation/UID acceptance: **40 actual disposable Linux checks / 335 focused
   Python tests pass**. Actual useradd caught unsupported `-K CREATE_MAIL_SPOOL=no`;

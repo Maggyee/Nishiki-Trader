@@ -23,11 +23,13 @@ Read these before any non-trivial work:
 ## Read When Relevant
 
 For the current authorized single public REST bootstrap, read
+`docs/progress/portfolio-egress-bootstrap-result-2026-09-16.md`, its result JSON,
 `docs/progress/portfolio-egress-host-bootstrap-2026-09-16.md` and
 `docs/progress/portfolio-shared-egress-bootstrap-2026-09-16-v2.json` first.
 They supersede the historical unapproved/not-installed descriptions below. The
 operator accepted one 20-second maximum egress interruption and one GET with
 unknown prior usage. Root-owned fixed scope cannot be reset/reopened/retried.
+Actual GET completed HTTP 200 and restoration/replays pass; scope is consumed.
 Installation and process restart pass; reboot/power-loss and joint admission do not.
 Check the actual result before taking any network action; never infer permission
 for another attempt from an interrupted tool response or a failed HTTP response.

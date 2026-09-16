@@ -1,0 +1,164 @@
+{
+  "schema_version": "portfolio.actual_rest_bootstrap_result.v1",
+  "date": "2026-09-16",
+  "status": "completed_consumed_no_retry",
+  "source_commit": "471752c7ee836ae192011444ef8c009e1fd61c29",
+  "accepted_contract": {
+    "path": "docs/progress/portfolio-shared-egress-bootstrap-2026-09-16-v2.json",
+    "sha256": "cbb0172de68de842fcb42531e5f97baecd32a426b7e4b9ba4d411984e4bbc46d"
+  },
+  "scope": "portfolio.testnet_rest_bootstrap.v1",
+  "fixed_root": "/var/lib/trader/egress/rest-bootstrap-v1",
+  "operation": {
+    "method": "GET",
+    "authority": "testnet.binance.vision",
+    "path": "/api/v3/exchangeInfo",
+    "gets": 1,
+    "tcp_attempts": 1,
+    "tls_attempts": 1,
+    "documented_weight": 20,
+    "private_requests": 0,
+    "retries": 0,
+    "redirects": 0
+  },
+  "http_status": 200,
+  "tls_version": "TLSv1.3",
+  "body_bytes": 2495288,
+  "body_sha256": "28a589f02247bc8ed2ef7719a2dc00d1928293c193a8127eedbca6efaf8e17cc",
+  "certificate_sha256": "cafea1b35b3757b907834e1ef065f5b5838e2bdf2501aaf16b16db6e8d4ff19d",
+  "get_prepared_utc": "2026-09-16T09:34:12.116582+00:00",
+  "window_active_to_cleanup_seconds": 8.376638094,
+  "window_preparation_to_cleanup_upper_bound_seconds": 8.398201882,
+  "cleanup_errors": [],
+  "restoration": {
+    "after_sha256": "beb3e0fadd85f36a5b7b3dfdfc9f96d0e95664908758e30539124e4d88000540",
+    "before_sha256": "5bd4e26ce537c65fbd15446d6de4485fe28a16112b77783e8c97e89935fe132a",
+    "get_preparations": 1,
+    "joint_capture_admitted": false,
+    "live_path_modified": false,
+    "network_changed_fields": [],
+    "original_root_evidence_unchanged": true,
+    "owned_tables_rules_interfaces_namespaces_removed": true,
+    "retries": 0,
+    "schema_version": "portfolio.bootstrap_restoration.v1",
+    "scope_retained_consumed": true,
+    "services": {
+      "docker": "active",
+      "sing-box": "active",
+      "tailscaled": "active"
+    },
+    "tcp_preparations": 1
+  },
+  "replay_reports_byte_identical": true,
+  "observed_rates": {
+    "body_sha256": "28a589f02247bc8ed2ef7719a2dc00d1928293c193a8127eedbca6efaf8e17cc",
+    "connection_attempt_coverage_verified": false,
+    "cross_endpoint_ledger_verified": false,
+    "egress_ip": null,
+    "endpoint_family": "spot_testnet_rest",
+    "exhausted_intervals": [],
+    "freshness_verified": false,
+    "header_pairs_sha256": "74afefde4c8c26a6d4303b085e84547ca1a97a0af6480839a4b6385c201a232a",
+    "network_admitted": false,
+    "rates": [
+      {
+        "count": null,
+        "count_basis": "not_observed",
+        "interval": "DAY",
+        "interval_num": 1,
+        "interval_seconds": 86400,
+        "limit": 160000,
+        "rate_limit_type": "ORDERS",
+        "scope": "account"
+      },
+      {
+        "count": null,
+        "count_basis": "not_observed",
+        "interval": "SECOND",
+        "interval_num": 10,
+        "interval_seconds": 10,
+        "limit": 50,
+        "rate_limit_type": "ORDERS",
+        "scope": "account"
+      },
+      {
+        "count": null,
+        "count_basis": "not_observed",
+        "interval": "MINUTE",
+        "interval_num": 5,
+        "interval_seconds": 300,
+        "limit": 300000,
+        "rate_limit_type": "RAW_REQUESTS",
+        "scope": "ip"
+      },
+      {
+        "count": 20,
+        "count_basis": "server_response_header",
+        "interval": "MINUTE",
+        "interval_num": 1,
+        "interval_seconds": 60,
+        "limit": 6000,
+        "rate_limit_type": "REQUEST_WEIGHT",
+        "scope": "ip"
+      }
+    ],
+    "schema_version": "portfolio.rate_evidence.v1",
+    "source_authenticated": false,
+    "status": "parsed_original_fields_not_admission"
+  },
+  "evidence": [
+    {
+      "path": "data/egress-bootstrap-actual-2026-09-16/plan.json",
+      "sha256": "47738da77cb70fc6d7e22bc812b10f376bf3ef4e763de419859950f278156306"
+    },
+    {
+      "path": "data/egress-bootstrap-actual-2026-09-16/events.jsonl",
+      "sha256": "a10045b8d0c5588462c4da720a98aaab927ad74f32da0336b00d84eca9a6b521"
+    },
+    {
+      "path": "data/egress-bootstrap-actual-2026-09-16/response.bin",
+      "sha256": "75174a374e40923245ba08110536ea2bb6f26d998a18f3c3e52d049c96b58219"
+    },
+    {
+      "path": "data/egress-bootstrap-actual-2026-09-16/replay-1.json",
+      "sha256": "9eac74c08e02c0e3f272b98e1e381684fe0ec76c7536823ae3b447c01a34388a"
+    },
+    {
+      "path": "data/egress-bootstrap-actual-2026-09-16/replay-2.json",
+      "sha256": "9eac74c08e02c0e3f272b98e1e381684fe0ec76c7536823ae3b447c01a34388a"
+    },
+    {
+      "path": "data/egress-bootstrap-actual-2026-09-16/restoration.json",
+      "sha256": "bb02a6961b3c519d0387a1a1479e09a5c4c2be297fc22d3ef3fd69952112a76e"
+    },
+    {
+      "path": "data/egress-host-before-bootstrap-2026-09-16.json",
+      "sha256": "5bd4e26ce537c65fbd15446d6de4485fe28a16112b77783e8c97e89935fe132a"
+    },
+    {
+      "path": "data/egress-host-after-bootstrap-2026-09-16.json",
+      "sha256": "beb3e0fadd85f36a5b7b3dfdfc9f96d0e95664908758e30539124e4d88000540"
+    },
+    {
+      "path": "data/egress-bootstrap-execution-result-2026-09-16.json",
+      "sha256": "6a2993808f4c289df3c5b9c88c166d9e6d143ea5e496aadd8f775f100860c959"
+    },
+    {
+      "path": "data/egress-bootstrap-runtime-install-2026-09-16.json",
+      "sha256": "2ef735ee51c9c3cfef794e1f46cc6bb618c1b2e17f75ee70c3558a7ffd0948df"
+    },
+    {
+      "path": "data/egress-testnet-dns-2026-09-16-execution.json",
+      "sha256": "2a560540cc3cf339c31afc67c56604be50fb3ec1b060ee406fdfb70b425ade22"
+    }
+  ],
+  "source_provenance": "Operator OCI console public/private/VNIC mapping matched to IMDS and host route; TLS hostname and selected remote IP verified. Public NAT source not independently echoed by venue.",
+  "scope_consumed": true,
+  "restart_allowed": false,
+  "joint_capture_admitted": false,
+  "trading_admitted": false,
+  "host_reboot_verified": false,
+  "power_loss_durability_verified": false,
+  "strict_continuity_days": 0,
+  "next_step": "Offline integration of original bootstrap rate/TLS receipts with source and gateway authority review; qualify complete prospective usage and per-dispatch enforcement before any separately authorized joint capture. No repeated bootstrap."
+}

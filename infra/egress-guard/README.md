@@ -521,3 +521,9 @@ and [accepted contract](../../docs/progress/portfolio-shared-egress-bootstrap-20
 for state, hashes and the next entrypoint. Never repeat the real execute command
 when status is uncertain; inspect the fixed scope and expiry instead. Existing
 joint draft, consumed trading/depth scopes and live-order path stay unchanged.
+
+Actual execution is now complete: see the
+[result](../../docs/progress/portfolio-egress-bootstrap-result-2026-09-16.md).
+HTTP 200, one GET, no retry; all owned network resources removed and existing
+services active. The fixed real scope is permanently consumed. The next entrypoint
+is offline original-evidence review; do not invoke `--execute` again.
