@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-16
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: The authorized single public REST bootstrap is complete on the existing IPv4: one GET, HTTP 200, 2,495,288 body bytes, no retries. Window preparation through cleanup took 8.40 seconds; network structure restored and existing proxy/Docker/Tailscale remain active. Fixed scope is consumed; two independent replays match. Next integrate original rate/TLS evidence into offline source/gateway and joint-admission review. Joint capture and trading remain blocked.
+- **Current objective**: Original one-shot REST bootstrap evidence is now integrated into offline joint admission. Two actual reviews match; response-header to body completion took 7.82 seconds, exceeding the frozen 5-second freshness limit. The consumed bootstrap remains successful historical evidence, not a new dispatch permit. Next qualify source/gateway authority and implement prospective all-caller accounting, fresh rate/clock consumption and per-dispatch enforcement. Joint capture and trading remain blocked.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -249,7 +249,8 @@ Detailed depth implementation, retained hashes and next review:
 [reviewable installation bundle](progress/portfolio-egress-bundle-2026-09-16.md),
 [actual disposable installation/UID acceptance](progress/portfolio-egress-isolated-installation-2026-09-16.md),
 [real-host bootstrap preparation](progress/portfolio-egress-host-bootstrap-2026-09-16.md),
-and [completed actual bootstrap](progress/portfolio-egress-bootstrap-result-2026-09-16.md).
+[completed actual bootstrap](progress/portfolio-egress-bootstrap-result-2026-09-16.md),
+and [original bootstrap evidence in joint admission](progress/portfolio-bootstrap-joint-review-2026-09-16.md).
 
 ## Next Steps
 
@@ -279,9 +280,14 @@ and [completed actual bootstrap](progress/portfolio-egress-bootstrap-result-2026
    The [actual one-shot bootstrap](progress/portfolio-egress-bootstrap-result-2026-09-16.md)
    is complete: HTTP 200, one GET, weight counter 20, 8.40-second upper-bound
    maintenance interval, restored network and two identical offline replays.
-   Preserve its consumed root-owned scope and use original evidence for offline
-   source/gateway review. No retries or second IPv4. No reboot/power-loss or
-   storage-rollback qualification is claimed.
+   The [offline bootstrap-to-joint review](progress/portfolio-bootstrap-joint-review-2026-09-16.md)
+   now incorporates the actual original bytes and exposes the 7.82-second header
+   age at body completion. Unknown usage stays unknown and the full 17 GET / 468
+   budget stays reserved in the review. Next follow the report's implementation
+   order: authority qualification, prospective all-caller accounting, fresh
+   rate/clock consumption, provider-charge resolution, then actual joint dispatch.
+   Preserve the consumed scope; no retry, second IPv4 or extended interruption
+   follows. Reboot/power-loss and storage rollback remain unqualified.
    Obtain qualified signer/source records, fresh initial usage/limits and complete
    enforced egress records; then wire authenticated per-dispatch
    reservations, durable one-shot activation and separate real profile replay.
@@ -321,6 +327,13 @@ and [completed actual bootstrap](progress/portfolio-egress-bootstrap-result-2026
 - Nautilus is the only execution engine; LLMs never enter the order path.
 
 ## Latest Verification
+
+- Bootstrap-to-joint integration: **20 new / 234 focused tests pass**. Two fresh
+  reviews of the actual original artifacts are byte-identical and remain blocked.
+  Header receipt time is retained through slow body completion, clock/boot changes
+  cannot manufacture freshness, and unknown counts/upper bounds stay null. Original
+  scope/frozen contract/source pins are unchanged; zero venue requests or kernel
+  mutations. Ruff/format, links and diff pass; no upstream/live-path changes.
 
 - Current host/bootstrap acceptance: **533 focused Python tests pass**; final
   exact-source disposable success and SIGKILL runs verify ordinary/raw-IP expiry,

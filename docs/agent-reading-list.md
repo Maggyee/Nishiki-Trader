@@ -22,6 +22,15 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the current offline use of the completed bootstrap evidence, read
+`docs/progress/portfolio-bootstrap-joint-review-2026-09-16.md` and its JSON.
+`apps.ops.portfolio_joint_admission` accepts pinned original bootstrap plan/events/
+response files without making requests. The actual counter was already over five
+seconds old by body completion; replay cannot refresh it. Full joint budget,
+unknown usage/clock/authority and ended maintenance coverage remain blockers.
+Follow the report's implementation order; never reuse or extend the consumed
+one-shot approval for another or longer maintenance window.
+
 For the current authorized single public REST bootstrap, read
 `docs/progress/portfolio-egress-bootstrap-result-2026-09-16.md`, its result JSON,
 `docs/progress/portfolio-egress-host-bootstrap-2026-09-16.md` and

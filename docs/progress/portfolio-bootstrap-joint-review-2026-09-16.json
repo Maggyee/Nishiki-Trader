@@ -1,0 +1,223 @@
+{
+  "schema_version": "portfolio.bootstrap_joint_gap_result.v1",
+  "date": "2026-09-16",
+  "status": "offline_integration_complete_joint_admission_blocked",
+  "original_bootstrap_result": {
+    "path": "docs/progress/portfolio-egress-bootstrap-result-2026-09-16.json",
+    "sha256": "728423996181c63e4a1f940fcdaf1c7c8d5df5c63432979478f1ad90a0433a77"
+  },
+  "reviews": [
+    {
+      "path": "data/egress-bootstrap-admission-2026-09-16/review-1.json",
+      "sha256": "95a8d22949bf3ba0b2c4d87be90324ac382cea01f34721b74181df2b1b4e4ffc"
+    },
+    {
+      "path": "data/egress-bootstrap-admission-2026-09-16/review-2.json",
+      "sha256": "95a8d22949bf3ba0b2c4d87be90324ac382cea01f34721b74181df2b1b4e4ffc"
+    }
+  ],
+  "review_selection": {
+    "path": "data/egress-bootstrap-admission-2026-09-16/review-selection.json",
+    "sha256": "db5f657901522bfff656773087458279180f70cbc5d4273aeea3882d320423bb"
+  },
+  "reports_identical": true,
+  "original_inputs": [
+    {
+      "name": "plan",
+      "sha256": "47738da77cb70fc6d7e22bc812b10f376bf3ef4e763de419859950f278156306"
+    },
+    {
+      "name": "events",
+      "sha256": "a10045b8d0c5588462c4da720a98aaab927ad74f32da0336b00d84eca9a6b521"
+    },
+    {
+      "name": "response",
+      "sha256": "75174a374e40923245ba08110536ea2bb6f26d998a18f3c3e52d049c96b58219"
+    }
+  ],
+  "contract_sha256": "91fab40cfd52b51cfac887f2dc45ee9594ce55d33b082f44d4aee31d2738ed48",
+  "maximum_scope": {
+    "rest_get_count": 17,
+    "rest_weight": 462,
+    "total_documented_weight": 468,
+    "ws_api_weight": 6
+  },
+  "timing": {
+    "header_persisted_utc_ns": 1789551252451486632,
+    "header_to_complete_ns": 7822518713,
+    "sample_max_age_ns": 5000000000,
+    "header_already_stale_at_body_completion": true,
+    "reported_server_time_ms": 1789551252318,
+    "server_time_interval_ns": null,
+    "review_clock_consistent": true
+  },
+  "interval_reviews": [
+    {
+      "count": null,
+      "count_basis": "not_observed",
+      "headroom_after_documented_reservation": null,
+      "interval": "DAY",
+      "interval_num": 1,
+      "interval_seconds": 86400,
+      "limit": 160000,
+      "other_clients_upper_bound": null,
+      "rate_limit_type": "ORDERS",
+      "reasons": [
+        "historical_bootstrap_not_current_dispatch_sample",
+        "usage_not_observed",
+        "account_scope_not_qualified_by_public_bootstrap"
+      ],
+      "remaining_scope_reservation": null,
+      "role": "rest",
+      "scope": "account",
+      "used_upper_bound": null
+    },
+    {
+      "count": null,
+      "count_basis": "not_observed",
+      "headroom_after_documented_reservation": null,
+      "interval": "SECOND",
+      "interval_num": 10,
+      "interval_seconds": 10,
+      "limit": 50,
+      "other_clients_upper_bound": null,
+      "rate_limit_type": "ORDERS",
+      "reasons": [
+        "historical_bootstrap_not_current_dispatch_sample",
+        "usage_not_observed",
+        "account_scope_not_qualified_by_public_bootstrap"
+      ],
+      "remaining_scope_reservation": null,
+      "role": "rest",
+      "scope": "account",
+      "used_upper_bound": null
+    },
+    {
+      "count": null,
+      "count_basis": "not_observed",
+      "headroom_after_documented_reservation": null,
+      "interval": "MINUTE",
+      "interval_num": 5,
+      "interval_seconds": 300,
+      "limit": 300000,
+      "other_clients_upper_bound": null,
+      "rate_limit_type": "RAW_REQUESTS",
+      "reasons": [
+        "historical_bootstrap_not_current_dispatch_sample",
+        "usage_not_observed",
+        "complete_usage_and_other_caller_upper_bounds_missing"
+      ],
+      "remaining_scope_reservation": 17,
+      "role": "rest",
+      "scope": "ip",
+      "used_upper_bound": null
+    },
+    {
+      "count": 20,
+      "count_basis": "server_response_header",
+      "headroom_after_documented_reservation": null,
+      "interval": "MINUTE",
+      "interval_num": 1,
+      "interval_seconds": 60,
+      "limit": 6000,
+      "other_clients_upper_bound": null,
+      "rate_limit_type": "REQUEST_WEIGHT",
+      "reasons": [
+        "historical_bootstrap_not_current_dispatch_sample",
+        "complete_usage_and_other_caller_upper_bounds_missing"
+      ],
+      "remaining_scope_reservation": 468,
+      "role": "rest",
+      "scope": "ip",
+      "used_upper_bound": null
+    }
+  ],
+  "blockers": [
+    "account_preexisting_rate_samples_missing",
+    "authenticated_complete_egress_adapter_unavailable",
+    "authenticated_initial_source_adapter_unavailable",
+    "bootstrap_counter_stale_before_body_completed",
+    "bootstrap_guard_ended_no_current_or_future_coverage",
+    "bootstrap_header_receipt_stale_at_review",
+    "complete_egress_candidate_missing",
+    "complete_rolling_connection_history_missing",
+    "fresh_qualified_rest_dispatch_sample_missing",
+    "market_connection_charge_unresolved",
+    "qualified_server_clock_interval_missing",
+    "real_capture_profile_and_durable_activation_unimplemented",
+    "rest:ORDERS:10:account_scope_not_qualified_by_public_bootstrap",
+    "rest:ORDERS:10:historical_bootstrap_not_current_dispatch_sample",
+    "rest:ORDERS:10:usage_not_observed",
+    "rest:ORDERS:86400:account_scope_not_qualified_by_public_bootstrap",
+    "rest:ORDERS:86400:historical_bootstrap_not_current_dispatch_sample",
+    "rest:ORDERS:86400:usage_not_observed",
+    "rest:RAW_REQUESTS:300:complete_usage_and_other_caller_upper_bounds_missing",
+    "rest:RAW_REQUESTS:300:historical_bootstrap_not_current_dispatch_sample",
+    "rest:RAW_REQUESTS:300:usage_not_observed",
+    "rest:REQUEST_WEIGHT:60:complete_usage_and_other_caller_upper_bounds_missing",
+    "rest:REQUEST_WEIGHT:60:historical_bootstrap_not_current_dispatch_sample",
+    "source_and_gateway_authority_qualification_missing"
+  ],
+  "next_implementation_order": [
+    {
+      "step": 1,
+      "work": "Bind collector and gateway evidence to explicitly qualified local authorities and original deployed code/storage/route records",
+      "entrypoints": [
+        "infra/egress-guard/installation.py",
+        "infra/egress-guard/inspect_binding.py",
+        "apps/strategies_nautilus/portfolio_joint_attestation.py"
+      ],
+      "acceptance": "Signer keys or matching hashes alone cannot grant coverage/source authority; reject route, account, boot and protected-code drift."
+    },
+    {
+      "step": 2,
+      "work": "Prepare prospective all-caller usage accounting and bounded dispatch enforcement with same-source REST/account/market bindings",
+      "entrypoints": [
+        "infra/egress-guard/bootstrap_once.py",
+        "apps/strategies_nautilus/portfolio_joint_reservation.py"
+      ],
+      "acceptance": "Account for successful, failed and uncertain attempts, entire rolling 300-second connection history, current applicable fixed intervals and entire 125-second capture/close horizon; no silent zero or renewal. Previous 20-second approval is consumed, not authorization for longer/new interruption."
+    },
+    {
+      "step": 3,
+      "work": "Prepare a separately scoped fresh rate/clock acquisition and consumption contract using protected original receipts",
+      "entrypoints": [
+        "apps/ops/portfolio_joint_admission.py",
+        "apps/strategies_nautilus/portfolio_rate_evidence.py",
+        "apps/strategies_nautilus/portfolio_tls_provenance.py"
+      ],
+      "acceptance": "Counter age starts no later than first complete-header receipt, not body completion or replay. Bind qualified server-time interval and future enforcement; never reuse consumed bootstrap or turn serverTime/Date into an exact offset."
+    },
+    {
+      "step": 4,
+      "work": "Resolve provider market connection charge and applicable account versus IP limits before real joint profile integration",
+      "entrypoints": [
+        "docs/progress/portfolio-testnet-joint-capture-contract-2026-09-14.json",
+        "apps/strategies_nautilus/portfolio_joint_admission.py"
+      ],
+      "acceptance": "Retain unknowns or provide independently supported successor contract; do not alter frozen 17 GET / 468-weight draft or default missing charges to zero."
+    },
+    {
+      "step": 5,
+      "work": "Integrate qualified receipts, remaining-scope reservation and fixed durable activation with the real joint transport",
+      "entrypoints": [
+        "apps/strategies_nautilus/portfolio_joint_reservation.py",
+        "apps/strategies_nautilus/portfolio_joint_transport.py"
+      ],
+      "acceptance": "Local failure/crash/clock/expiry and two-process replay acceptance precede any reviewed network authorization; no LLM or research engine enters live orders."
+    }
+  ],
+  "verification": {
+    "focused_tests_passed": 234,
+    "new_tests": 20,
+    "fresh_process_actual_reports": 2,
+    "venue_requests_made": 0,
+    "kernel_mutations": 0
+  },
+  "network_admitted": false,
+  "capacity_reserved": false,
+  "joint_scope_consumed": false,
+  "bootstrap_scope_consumed": true,
+  "trading_admitted": false,
+  "strict_continuity_days": 0
+}

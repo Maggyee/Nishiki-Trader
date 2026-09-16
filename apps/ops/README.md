@@ -21,6 +21,10 @@ dashboard snapshot support + Phase 6 passive readiness gate support。
 原始额度字段并计算完整 17 GET / 468 权重和连接预算。缺少或仅有自报证据时
 返回码为 2（已写报告、准入拒绝），不加载凭证、发送请求或激活采集。
 输入格式与认证边界见 [联合准入检查](../../docs/progress/portfolio-testnet-joint-admission-review-2026-09-14.md)。
+新增 `--bootstrap-plan/events/response` 及对应 SHA256 可接入已完成采集的原始
+归档；按首次完整响应头落盘时间检查计数时效，保留实际字段和未满足条件，
+不把完整正文接收或重放时间作为新样本时间。此模式与 candidate 互斥。
+见 [真实 bootstrap 联合准入复核](../../docs/progress/portfolio-bootstrap-joint-review-2026-09-16.md)。
 
 `portfolio_tls_provenance` 按原始哈希离线回放本机 TLS/Upgrade 来源归档，
 验证原始字节、证书记录、准备/关闭顺序，写入新的私有报告；没有采集或凭证选项。
