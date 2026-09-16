@@ -242,6 +242,8 @@ def canonical(value) -> bytes:
 class FixtureDispatchGuard:
     """Bounded local supervisor exercise; NOT a production lease or quota authority."""
 
+    MAX_ATTEMPTS = 4
+
     def __init__(self, path: Path, *, selected: dict, observe, actor):
         self.path, self.observe, self.actor = path, observe, actor
         self.selected = canonical(selected)
@@ -304,7 +306,7 @@ class FixtureDispatchGuard:
                 self.verify_journal()
                 if canonical(self.observe()) != self.selected:
                     raise RuntimeError("fixture_identity_or_guard_changed")
-                if self.attempts >= 4:
+                if self.attempts >= self.MAX_ATTEMPTS:
                     raise RuntimeError("fixture_attempt_bound")
                 self.attempts += 1  # Failed/uncertain preparation is never refunded.
                 self.append("prepared")
@@ -449,6 +451,94 @@ class PersistentFixtureGuard(ControlledFixtureGuard):
             # Keep descriptor cleanup serialized with concurrent/idempotent closure.
             with self.lock:
                 self.close_storage()
+
+
+class WindowActivationJournal(PersistentFixtureGuard):
+    """A separate fixed on-disk identity with at most one kernel preparation."""
+
+    SCOPE = "fixture-window-v1"
+    MAX_ATTEMPTS = 1
+
+
+class PersistentFixtureMaintenanceWindow:
+    """Consume and fsync a fixed window scope before any kernel activation."""
+
+    def __init__(self, root, *, selected, observe, collector_ms=12000, blackout_ms=20000):
+        self.kernel = FixtureMaintenanceWindow(collector_ms=collector_ms, blackout_ms=blackout_ms)
+
+        def identity(binding):
+            if not isinstance(binding, dict):
+                raise ValueError("fixture_window_binding_required")
+            return {
+                "profile": "fixture.window_activation.v1",
+                "collector_ms": self.kernel.collector_ms,
+                "blackout_ms": self.kernel.blackout_ms,
+                "rules_sha256": hashlib.sha256(WINDOW_RULES.encode()).hexdigest(),
+                "binding": binding,
+            }
+
+        class KernelActor:
+            def request(_self, _request):
+                self.kernel.activate()
+                return {"ok": True}
+
+        def release():
+            # Before any attempted activation there is nothing to revoke. In
+            # particular, a failed fsync must never start a kernel transaction.
+            if self.kernel.claimed:
+                self.kernel.revoke()
+
+        self.selected = json.loads(canonical(identity(selected)))
+        self.journal = WindowActivationJournal(
+            root,
+            selected=self.selected,
+            observe=lambda: identity(observe()),
+            actor=KernelActor(),
+            revoke=release,
+        )
+
+    @property
+    def revoked(self):
+        return self.kernel.revoked
+
+    def activate(self):
+        self.journal.dispatch()
+
+    def revoke(self):
+        self.journal.shutdown()
+
+    def close(self):
+        self.journal.close()
+
+
+def review_window_activation(raw, *, selected, expected_sha256):
+    """Replay recorded kernel attempts only; cannot reactivate or grant a permit."""
+    if (
+        not isinstance(selected, dict)
+        or set(selected) != {"profile", "collector_ms", "blackout_ms", "rules_sha256", "binding"}
+        or selected["profile"] != "fixture.window_activation.v1"
+        or selected["rules_sha256"] != hashlib.sha256(WINDOW_RULES.encode()).hexdigest()
+        or not isinstance(selected["binding"], dict)
+    ):
+        raise RuntimeError("fixture_window_replay_identity")
+    FixtureMaintenanceWindow(
+        collector_ms=selected["collector_ms"], blackout_ms=selected["blackout_ms"]
+    )
+    result = review_fixture_journal(raw, selected=selected, expected_sha256=expected_sha256)
+    rows = [json.loads(line) for line in raw.splitlines()]
+    if result["recorded_preparations"] > 1 or any(row["kind"] == "failed" for row in rows):
+        raise RuntimeError("fixture_window_replay_activation_bound")
+    return {
+        "profile": "fixture.window_activation_replay.v1",
+        "journal_sha256": expected_sha256,
+        "kernel_activation_preparations": result["recorded_preparations"],
+        "kernel_activation_return_recorded": any(row["kind"] == "succeeded" for row in rows),
+        "uncertain_kernel_activation": result["uncertain_attempt"] is not None,
+        "cleanup_recorded": result["revocation_recorded"],
+        "restart_allowed": False,
+        "capture_admitted": False,
+        "gateway_coverage_qualified": False,
+    }
 
 
 def review_fixture_journal(raw: bytes, *, selected: dict, expected_sha256: str) -> dict:
@@ -1442,6 +1532,23 @@ def maintenance_window_checks(client, competitor, host):
             "route": json.loads(client.ip("-j", "route", "get", "198.51.100.2")),
         }
 
+    def window_binding():
+        value = observe()
+        # Only these two owned timer memberships change during activation.
+        # Their definitions and every other rule/route/namespace remain bound.
+        for row in value["window"]["nftables"]:
+            item = row.get("set", {})
+            if item.get("name") in {"blackout", "permits"}:
+                item.pop("elem", None)
+        return value
+
+    def window_replay(root):
+        raw = (root / WindowActivationJournal.SCOPE / "attempts.jsonl").read_bytes()
+        selected = json.loads((root / "window-selected.json").read_bytes())
+        return review_window_activation(
+            raw, selected=selected, expected_sha256=hashlib.sha256(raw).hexdigest()
+        )
+
     def replay(root):
         path = root / PersistentFixtureGuard.SCOPE / "attempts.jsonl"
         raw = path.read_bytes()
@@ -1477,11 +1584,25 @@ def maintenance_window_checks(client, competitor, host):
         proxy="127.0.0.1",
         observe_peer=True,
     )
-    window = FixtureMaintenanceWindow()
-    window.activate()
-    normal_start = time.monotonic()
     storage = Path("/tmp/window-normal")
     storage.mkdir(mode=0o700)
+    window = PersistentFixtureMaintenanceWindow(
+        storage, selected=window_binding(), observe=window_binding
+    )
+    (storage / "window-selected.json").write_bytes(canonical(window.selected))
+    check("persistent_window_claim_does_not_block_host", host, allowed=True, observe_peer=True)
+    native_activate = window.kernel.activate
+
+    def prepared_activate():
+        rows = [json.loads(row) for row in window.journal.path.read_bytes().splitlines()]
+        if [row["kind"] for row in rows] != ["activated", "prepared"]:
+            raise RuntimeError("Kernel activation preceded durable preparation")
+        native_activate()
+
+    window.kernel.activate = prepared_activate
+    window.activate()
+    checks.append("persistent_window_prepared_before_actual_kernel_activation")
+    normal_start = time.monotonic()
     selected = observe()
     (storage / "selected.json").write_bytes(canonical(selected))
     guard = PersistentFixtureGuard(
@@ -1570,12 +1691,31 @@ def maintenance_window_checks(client, competitor, host):
             proxy="192.0.2.1",
         )
     finally:
-        guard.close()
+        try:
+            guard.close()
+        finally:
+            window.close()
     if not window.revoked or time.monotonic() - normal_start >= 20:
         raise RuntimeError("Normal shutdown did not restore traffic before blackout TTL")
     if not replay(storage)["revocation_recorded"]:
         raise RuntimeError("Normal window shutdown missing from replay")
     checks.append("window_early_shutdown_is_recorded")
+    activation = window_replay(storage)
+    if not activation["kernel_activation_return_recorded"] or not activation["cleanup_recorded"]:
+        raise RuntimeError("Window activation and cleanup were not retained")
+    checks.append("persistent_window_terminal_activation_replays")
+    retained = window.journal.path.read_bytes()
+    try:
+        PersistentFixtureMaintenanceWindow(
+            storage, selected=window_binding(), observe=window_binding
+        )
+    except FileExistsError:
+        pass
+    else:
+        raise RuntimeError("Consumed window reopened")
+    if window.journal.path.read_bytes() != retained:
+        raise RuntimeError("Window reopen refusal changed retained bytes")
+    checks.append("persistent_window_reopen_refused_without_changes")
     check(
         "window_early_shutdown_restores_proxy",
         host,
@@ -1594,7 +1734,7 @@ def maintenance_window_checks(client, competitor, host):
     for actor in (host, client, competitor):
         actor.request({"action": "close"})
 
-    for mode in ("crash", "stopped"):
+    for mode in ("activation_crash", "crash", "stopped"):
         root = Path("/tmp/window-" + mode)
         root.mkdir(mode=0o700)
         read_fd, write_fd = os.pipe()
@@ -1602,7 +1742,23 @@ def maintenance_window_checks(client, competitor, host):
         if pid == 0:
             os.close(read_fd)
             try:
-                short = FixtureMaintenanceWindow(collector_ms=1000, blackout_ms=4000)
+                short = PersistentFixtureMaintenanceWindow(
+                    root,
+                    selected=window_binding(),
+                    observe=window_binding,
+                    collector_ms=1000,
+                    blackout_ms=4000,
+                )
+                (root / "window-selected.json").write_bytes(canonical(short.selected))
+                if mode == "activation_crash":
+                    native = short.kernel.activate
+
+                    def crash_after_kernel(activate=native, ready_fd=write_fd):
+                        activate()
+                        os.write(ready_fd, (str(time.monotonic()) + "\n").encode())
+                        os._exit(31)
+
+                    short.kernel.activate = crash_after_kernel
                 short.activate()
                 os.write(write_fd, (str(time.monotonic()) + "\n").encode())
                 os.close(write_fd)
@@ -1637,6 +1793,7 @@ def maintenance_window_checks(client, competitor, host):
                     interrupted.dispatch()
                 except RuntimeError:
                     interrupted.close()
+                    short.close()
                     os._exit(21)  # Resumed owner observes expired state and stops.
                 os._exit(22)
             finally:
@@ -1645,12 +1802,17 @@ def maintenance_window_checks(client, competitor, host):
         with os.fdopen(read_fd) as pipe:
             started = float(pipe.readline())
         _pid, status = os.waitpid(pid, os.WUNTRACED)
-        if mode == "crash":
-            if not os.WIFEXITED(status) or os.WEXITSTATUS(status) != 19:
+        if mode in {"crash", "activation_crash"}:
+            expected_exit = 31 if mode == "activation_crash" else 19
+            if not os.WIFEXITED(status) or os.WEXITSTATUS(status) != expected_exit:
                 raise RuntimeError("Window crash did not retain an uncertain send")
         elif not os.WIFSTOPPED(status):
             raise RuntimeError("Window owner failed before its deliberate stop")
-        checks.append(f"window_{mode}_owner_interrupted_after_send")
+        checks.append(
+            f"window_{mode}_owner_interrupted_after_kernel"
+            if mode == "activation_crash"
+            else f"window_{mode}_owner_interrupted_after_send"
+        )
         remaining = started + 1.15 - time.monotonic()
         if remaining > 0:
             time.sleep(remaining)
@@ -1660,7 +1822,7 @@ def maintenance_window_checks(client, competitor, host):
             allowed=False,
             counter="collector_denied",
             address="198.51.100.2",
-            action="send",
+            action="once" if mode == "activation_crash" else "send",
             key="window-interrupted",
         )
         check(
@@ -1692,10 +1854,22 @@ def maintenance_window_checks(client, competitor, host):
             if not os.WIFEXITED(status) or os.WEXITSTATUS(status) != 21:
                 raise RuntimeError("Resumed controller did not stop on expired state")
             checks.append("window_resumed_owner_cannot_complete_or_renew")
-        result = replay(root)
-        if result["uncertain_attempt"] != 1:
-            raise RuntimeError("Window replay lost the uncertain send")
-        checks.append(f"window_{mode}_retains_uncertain_attempt")
+        activation = window_replay(root)
+        if mode == "activation_crash":
+            if (
+                not activation["uncertain_kernel_activation"]
+                or (root / PersistentFixtureGuard.SCOPE).exists()
+            ):
+                raise RuntimeError("Uncertain kernel activation was lost or became a request")
+            checks.append("persistent_window_crash_retains_uncertain_activation_without_request")
+        else:
+            result = replay(root)
+            if (
+                result["uncertain_attempt"] != 1
+                or not activation["kernel_activation_return_recorded"]
+            ):
+                raise RuntimeError("Window replay lost activation or uncertain send")
+            checks.append(f"window_{mode}_retains_uncertain_attempt")
         client.request({"action": "close"})
         # Between independent fixture scenarios only; no reopening of journals.
         run(

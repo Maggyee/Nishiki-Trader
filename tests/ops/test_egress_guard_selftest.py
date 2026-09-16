@@ -904,3 +904,292 @@ def test_window_shutdown_waits_for_activation_and_prevents_renewal(fixture, monk
     assert len(calls) == 3
     with pytest.raises(RuntimeError, match="reactivation"):
         window.activate()
+
+
+@pytest.fixture
+def durable_window(fixture, monkeypatch, tmp_path):
+    binding = {"namespace": "fixture", "route": "fixture-route"}
+    runner = Mock(
+        return_value='{"nftables": [{"set": {"name": "blackout"}}, {"set": {"name": "permits"}}]}'
+    )
+    monkeypatch.setattr(fixture, "run", runner)
+    window = fixture.PersistentFixtureMaintenanceWindow(
+        tmp_path, selected=binding, observe=lambda: binding
+    )
+    try:
+        yield window, runner, binding
+    finally:
+        with suppress(OSError, RuntimeError):
+            window.close()
+
+
+def review_window(fixture, window):
+    raw = window.journal.path.read_bytes()
+    return fixture.review_window_activation(
+        raw, selected=window.selected, expected_sha256=fixture.hashlib.sha256(raw).hexdigest()
+    )
+
+
+def test_durable_window_syncs_scope_and_preparation_before_kernel(fixture, monkeypatch, tmp_path):
+    synced = []
+    original = os.fsync
+
+    def sync(fd):
+        info = os.fstat(fd)
+        synced.append(
+            "directory"
+            if fixture.stat.S_ISDIR(info.st_mode)
+            else json.loads(os.pread(fd, 65536, 0).splitlines()[-1])["kind"]
+        )
+        original(fd)
+
+    monkeypatch.setattr(fixture.os, "fsync", sync)
+
+    def run(*args, **kwargs):
+        if "add element" in kwargs.get("text", ""):
+            assert synced == ["directory", "directory", "activated", "prepared"]
+        return '{"nftables": [{"set": {"name": "blackout"}}, {"set": {"name": "permits"}}]}'
+
+    monkeypatch.setattr(fixture, "run", run)
+    window = fixture.PersistentFixtureMaintenanceWindow(tmp_path, selected={}, observe=lambda: {})
+    window.activate()
+    window.close()
+    result = review_window(fixture, window)
+    assert result["kernel_activation_preparations"] == 1
+    assert result["kernel_activation_return_recorded"]
+    assert result["cleanup_recorded"] and not result["uncertain_kernel_activation"]
+    assert not result["restart_allowed"] and not result["capture_admitted"]
+
+
+@pytest.mark.parametrize("failed_sync", [1, 2, 3])
+def test_window_failed_initialization_consumes_root_without_kernel(
+    fixture, monkeypatch, tmp_path, failed_sync
+):
+    count = 0
+    original = os.fsync
+
+    def sync(fd):
+        nonlocal count
+        count += 1
+        if count == failed_sync:
+            raise OSError("disk failure")
+        original(fd)
+
+    monkeypatch.setattr(fixture.os, "fsync", sync)
+    runner = Mock(side_effect=AssertionError("No kernel call before durable initialization"))
+    monkeypatch.setattr(fixture, "run", runner)
+    with pytest.raises(OSError):
+        fixture.PersistentFixtureMaintenanceWindow(tmp_path, selected={}, observe=lambda: {})
+    assert (tmp_path / fixture.WindowActivationJournal.SCOPE).is_dir()
+    with pytest.raises(FileExistsError):
+        fixture.PersistentFixtureMaintenanceWindow(tmp_path, selected={}, observe=lambda: {})
+    runner.assert_not_called()
+
+
+@pytest.mark.parametrize("stage", ["preparation", "kernel", "result"])
+def test_window_activation_failure_never_retries_and_revokes_if_attempted(
+    fixture, durable_window, monkeypatch, stage
+):
+    window, runner, _binding = durable_window
+    original = os.fsync
+    calls = 0
+
+    def sync(fd):
+        nonlocal calls
+        calls += 1
+        if calls == (1 if stage == "preparation" else 2):
+            raise OSError("sync failed")
+        original(fd)
+
+    if stage != "kernel":
+        monkeypatch.setattr(fixture.os, "fsync", sync)
+    else:
+
+        def run(*args, **kwargs):
+            if "add element" in kwargs.get("text", ""):
+                raise TimeoutError("uncertain kernel result")
+            return '{"nftables": [{"set": {"name": "blackout"}}, {"set": {"name": "permits"}}]}'
+
+        runner.side_effect = run
+    with pytest.raises((OSError, RuntimeError)):
+        window.activate()
+    additions = [
+        call for call in runner.call_args_list if "add element" in call.kwargs.get("text", "")
+    ]
+    assert len(additions) == (0 if stage == "preparation" else 1)
+    if stage != "preparation":
+        assert window.revoked
+    else:
+        runner.assert_not_called()
+    before = len(additions)
+    with pytest.raises(RuntimeError):
+        window.activate()
+    assert (
+        sum("add element" in call.kwargs.get("text", "") for call in runner.call_args_list)
+        == before
+    )
+
+
+def test_window_duplicate_activation_has_only_one_preparation(fixture, durable_window):
+    window, runner, _binding = durable_window
+    window.activate()
+    with pytest.raises(RuntimeError, match="attempt_bound"):
+        window.activate()
+    result = review_window(fixture, window)
+    assert result["kernel_activation_preparations"] == 1
+    assert result["cleanup_recorded"]
+    assert sum("add element" in call.kwargs.get("text", "") for call in runner.call_args_list) == 1
+
+
+@pytest.mark.parametrize("when", ["before", "after"])
+def test_window_binding_drift_stops_activation_and_keeps_original_identity(
+    fixture, durable_window, when
+):
+    window, runner, binding = durable_window
+    if when == "before":
+        binding["route"] = "changed"
+    else:
+
+        def run(*args, **kwargs):
+            if "add element" in kwargs.get("text", ""):
+                binding["route"] = "changed"
+            return '{"nftables": [{"set": {"name": "blackout"}}, {"set": {"name": "permits"}}]}'
+
+        runner.side_effect = run
+    with pytest.raises(RuntimeError):
+        window.activate()
+    assert window.selected["binding"]["route"] == "fixture-route"
+    if when == "before":
+        runner.assert_not_called()
+    else:
+        assert window.revoked
+        assert review_window(fixture, window)["uncertain_kernel_activation"]
+
+
+def test_window_broken_journal_cannot_skip_kernel_cleanup(fixture, durable_window):
+    window, runner, _binding = durable_window
+    window.activate()
+    window.journal.path.unlink()
+    with pytest.raises(OSError):
+        window.revoke()
+    assert window.revoked
+    assert any("flush set" in call.kwargs.get("text", "") for call in runner.call_args_list)
+
+
+def test_window_close_without_activation_has_no_kernel_side_effect(fixture, durable_window):
+    window, runner, _binding = durable_window
+    window.close()
+    runner.assert_not_called()
+    result = review_window(fixture, window)
+    assert result["kernel_activation_preparations"] == 0
+    assert not result["kernel_activation_return_recorded"]
+    assert result["cleanup_recorded"]
+
+
+@pytest.mark.parametrize(
+    "stage", ["scope", "activated", "prepared", "kernel", "succeeded", "revoked"]
+)
+def test_window_crash_fresh_replay_and_restart_refusal(fixture, tmp_path, stage):
+    loader = (
+        "import importlib.util, pathlib, os, json, hashlib\n"
+        f"spec = importlib.util.spec_from_file_location('fixture', {str(SOURCE)!r})\n"
+        "m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)\n"
+        f"root = pathlib.Path({str(tmp_path)!r})\n"
+    )
+    runner = (
+        "def run(*args, **kwargs):\n"
+        "    with (root / 'kernel-calls').open('a') as stream:\n"
+        "        stream.write(json.dumps(kwargs) + '\\n')\n"
+        "    if 'add element' in kwargs.get('text', ''):\n"
+        + ("        os._exit(71)\n" if stage == "kernel" else "        pass\n")
+        + "    return json.dumps({'nftables': [{'set': {'name': 'blackout'}}, "
+        "{'set': {'name': 'permits'}}]})\n"
+        "m.run = run\n"
+    )
+    setup = "m.os.fsync = lambda fd: os._exit(71)\n" if stage == "scope" else ""
+    script = (
+        loader
+        + runner
+        + setup
+        + "w = m.PersistentFixtureMaintenanceWindow(root, selected={}, observe=lambda: {})\n"
+        "(root / 'selected.json').write_bytes(m.canonical(w.selected))\n"
+    )
+    if stage == "prepared":
+        script += "w.kernel.activate = lambda: os._exit(71)\n"
+    if stage not in ("scope", "activated"):
+        script += "w.activate()\n"
+    if stage == "revoked":
+        script += "w.close()\n"
+    script += "os._exit(71)\n"
+    result = subprocess.run(["/usr/bin/python3", "-I", "-c", script], timeout=5)
+    assert result.returncode == 71
+    path = tmp_path / fixture.WindowActivationJournal.SCOPE / "attempts.jsonl"
+    before = path.read_bytes() if path.exists() else None
+    calls_path = tmp_path / "kernel-calls"
+    calls = calls_path.read_bytes() if calls_path.exists() else b""
+    assert len(calls.splitlines()) == (
+        3 if stage == "revoked" else int(stage in {"kernel", "succeeded"})
+    )
+    if stage != "scope":
+        digest = fixture.hashlib.sha256(before).hexdigest()
+        replay = loader + (
+            "raw = (root / m.WindowActivationJournal.SCOPE / 'attempts.jsonl').read_bytes()\n"
+            "selected = json.loads((root / 'selected.json').read_bytes())\n"
+            "print(json.dumps(m.review_window_activation(raw, selected=selected, "
+            f"expected_sha256={digest!r}), sort_keys=True))\n"
+        )
+        outputs = [
+            subprocess.check_output(["/usr/bin/python3", "-I", "-c", replay], timeout=5)
+            for _ in range(2)
+        ]
+        assert outputs[0] == outputs[1]
+        report = json.loads(outputs[0])
+        assert report["kernel_activation_preparations"] == int(stage != "activated")
+        assert report["uncertain_kernel_activation"] == (stage in {"prepared", "kernel"})
+        assert report["kernel_activation_return_recorded"] == (stage in {"succeeded", "revoked"})
+        assert report["cleanup_recorded"] == (stage == "revoked")
+        assert not any(
+            report[key]
+            for key in ("restart_allowed", "capture_admitted", "gateway_coverage_qualified")
+        )
+    restart = (
+        loader
+        + runner
+        + (
+            "try:\n"
+            "    m.PersistentFixtureMaintenanceWindow(root, selected={}, observe=lambda: {})\n"
+            "except FileExistsError:\n"
+            "    raise SystemExit(0)\n"
+            "raise SystemExit('window unexpectedly reopened')\n"
+        )
+    )
+    subprocess.run(["/usr/bin/python3", "-I", "-c", restart], timeout=5, check=True)
+    assert (path.read_bytes() if path.exists() else None) == before
+    assert (calls_path.read_bytes() if calls_path.exists() else b"") == calls
+
+
+@pytest.mark.parametrize("damage", ["rules", "timer", "binding", "extra_activation", "failed"])
+def test_window_replay_rejects_invalid_identity_or_lifecycle(fixture, durable_window, damage):
+    window, _runner, _binding = durable_window
+    window.activate()
+    if damage == "rules":
+        window.selected["rules_sha256"] = "0" * 64
+    elif damage == "timer":
+        window.selected["collector_ms"] = 20000
+    elif damage == "binding":
+        window.selected["binding"] = []
+    else:
+        # Construct an otherwise hash-valid generic journal; the window profile
+        # must reject a second preparation and generic transport-failure records.
+        if damage == "extra_activation":
+            window.journal.attempts += 1
+            window.journal.append("prepared")
+        else:
+            rows = window.journal.path.read_bytes().splitlines()
+            last = json.loads(rows[-1])
+            last["kind"] = "failed"
+            raw = b"\n".join(rows[:-1]) + b"\n" + fixture.canonical(last) + b"\n"
+            window.journal.path.write_bytes(raw)
+            window.journal.expected = raw
+    with pytest.raises((ValueError, RuntimeError)):
+        review_window(fixture, window)

@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-16
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Reuse the existing public IPv4. An isolated bounded maintenance alternative now expires collector permission before restoring other traffic, including after controller crash or pause. The 12-second collector / 20-second blackout candidate would interrupt unrelated egress and is not approved or deployed. Next implement durable host-window consumption before kernel activation, bind actual source/caller/storage and external paths, then prepare the privileged helper and rollout. No bootstrap or consumed scope is activated.
+- **Current objective**: Reuse the existing public IPv4. The isolated maintenance fixture now persists one-shot window consumption before kernel activation; process crashes retain uncertain activation and fresh processes cannot reopen the scope. Collector permission expires before ordinary traffic resumes. Next bind actual source/caller/fixed storage and external paths, then prepare the privileged helper and rollout. The 12-second collector / 20-second blackout candidate would interrupt unrelated egress and is not approved or deployed. No bootstrap or consumed scope is activated.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -241,7 +241,8 @@ Detailed depth implementation, retained hashes and next review:
 [historical dedicated IPv4 proposal](progress/portfolio-dedicated-egress-bootstrap-2026-09-16.md),
 [current shared IPv4 revision](progress/portfolio-shared-egress-bootstrap-2026-09-16.md),
 [actual shared-source NAT/proxy acceptance](progress/portfolio-shared-egress-acceptance-2026-09-16.md),
-[bounded maintenance alternative](progress/portfolio-maintenance-window-2026-09-16.md).
+[bounded maintenance alternative](progress/portfolio-maintenance-window-2026-09-16.md),
+[durable window activation and crash replay](progress/portfolio-maintenance-persistence-2026-09-16.md).
 
 ## Next Steps
 
@@ -275,8 +276,10 @@ Detailed depth implementation, retained hashes and next review:
    controls preserved. Unlisted targets and cohosted-service counterexamples keep
    provider-wide coverage false. The bounded maintenance alternative now passes
    kernel timer/crash/pause checks: collector permission expires before ordinary
-   traffic resumes. Next persist host-window activation before kernel changes and
-   bind actual source/caller/storage/external paths, then prepare the privileged
+   traffic resumes. A separate fixed window journal now persists consumption before
+   kernel activation; six process-crash stages retain state and refuse reopening.
+   This does not prove host power-loss durability or prevent storage rollback.
+   Next bind actual source/caller/fixed-storage/external paths, then prepare the privileged
    helper and rollout. Its proposed 20-second interruption is not accepted or
    deployed. Do not silently stop services; the host inspector remains read-only.
    The separate one-GET REST bootstrap proposal acknowledges unknown prior usage;
@@ -322,12 +325,14 @@ Detailed depth implementation, retained hashes and next review:
 
 ## Latest Verification
 
-- Maintenance-window fixture: **140 Linux checks / 126 focused Python tests pass**
-  (35 new kernel checks, 22 new Python cases). Atomic activation/revocation, early
-  release, ordered kernel expiry after abrupt exit/SIGSTOP, resumed-owner refusal
-  and uncertain-journal replay pass. Actual host deployment and durable window
-  activation remain unqualified. Ruff/format, links, frozen hashes and diff checks
-  pass; full application regression was not rerun. No host or venue changes.
+- Persistent maintenance-window fixture: **151 Linux checks / 149 focused Python
+  tests pass** (11 additional kernel checks, 23 additional Python cases). Window
+  preparation is fsynced before kernel activation; separate journals distinguish
+  uncertain activation from uncertain requests. Six process-crash stages, two fresh
+  replays, no-reopen refusal, failure cleanup and ordered kernel expiry pass.
+  Actual host deployment, fixed storage authority and power-loss durability remain
+  unqualified. Ruff/format, links, frozen hashes and diff checks pass; full application
+  regression was not rerun. No host or venue changes.
 
 - Shared-source NAT/proxy fixture: **105 Linux checks / 104 focused Python tests
   pass** (49 new kernel checks, 15 new Python cases). Actual local SNAT, direct and

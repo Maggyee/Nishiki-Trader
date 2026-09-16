@@ -208,7 +208,7 @@ consumed scope is activated by these fixture results.
 
 ## Bounded maintenance alternative
 
-The same isolated harness now includes `FixtureMaintenanceWindow` and 35 additional
+The same isolated harness now includes `FixtureMaintenanceWindow` and 46 additional
 Linux checks. Its default 12-second collector permission expires before the
 20-second other-caller blackout. Both are installed atomically; terminal shutdown
 flushes both atomically. The collector's permanent deny remains after ordinary
@@ -224,8 +224,33 @@ process is required for this fixture fallback. The overall worker still has its
 
 This broad window intentionally interrupts unrelated WAN egress, including existing
 connections, IPv6 and UDP. It is a candidate for a separately accepted interruption,
-not a way to promise uninterrupted proxy access. The window's activation ownership
-is in memory; durable host activation before kernel changes, actual complete paths,
-source/storage binding and a privileged helper remain implementation work. No host
-policy or real one-shot bootstrap is installed. See the
+not a way to promise uninterrupted proxy access. Actual complete paths,
+source/fixed-storage binding and a privileged helper remain implementation work. No
+host policy or real one-shot bootstrap is installed. See the historical
 [maintenance proposal and acceptance](../../docs/progress/portfolio-maintenance-window-2026-09-16.md).
+
+`PersistentFixtureMaintenanceWindow` now wraps the kernel controller with a separate
+fixed `fixture-window-v1/attempts.jsonl`. Exclusive scope creation, directory fsyncs
+and a fsynced `prepared` record precede any kernel activation. The activation
+journal permits only one preparation; initialization failure, uncertain kernel
+results and terminal shutdown never allow reopening or renewal. Identity binds
+the timer settings, literal fixture rules hash and selected namespace/route/rules
+snapshot. Only the two owned timer memberships are omitted from the window's
+structural binding; the request journal still observes active membership.
+
+The journal's `activated` record means a storage claim, not a kernel permission.
+`succeeded` records the kernel command returning and a matching observation, not
+complete traffic coverage. A pending preparation remains uncertain after cleanup.
+Close before activation performs no kernel operation; its cleanup record is a
+terminal no-op. Journal failure cannot bypass cleanup after an attempted activation.
+`review_window_activation` only replays selected bytes and always denies restart,
+capture admission and gateway qualification.
+
+Actual namespace acceptance includes abrupt exit after the kernel command but
+before its return record or any request journal. Kernel expiry still restores
+ordinary traffic and keeps the collector quarantined. Separate disk tests crash
+at six lifecycle stages, reproduce two fresh-process replays and refuse fresh
+initializers without changing original bytes or calling the kernel. The trusted
+caller-selected root remains a boundary: changing/deleting it or restoring old
+storage is not prevented, and process crashes/fsync order do not prove host
+power-loss durability. See the [persistent-window report](../../docs/progress/portfolio-maintenance-persistence-2026-09-16.md).

@@ -242,9 +242,17 @@ For the bounded maintenance alternative, read
 12-second collector / 20-second blackout expires in that order even after crash
 or SIGSTOP; ordinary traffic resumes while collector quarantine remains. This
 would interrupt unrelated host/proxy egress if deployed. Host interruption is not
-accepted and no deployment occurred. Durable host-window activation before kernel
-changes, actual path/source/storage binding and a privileged helper remain missing;
-the in-memory fixture object and its request journal do not close that lifecycle gap.
+accepted and no deployment occurred. That historical fixture has in-memory window
+ownership; read the successor below for persistent activation acceptance.
+
+For durable maintenance-window activation, read
+`docs/progress/portfolio-maintenance-persistence-2026-09-16.md`. A separate fixed
+window journal fsyncs consumption and preparation before kernel activation. Six
+process-crash stages, fresh-process replay/refusal and actual kernel-expiry checks
+pass. Storage claim is not kernel activation; uncertain activation is not an
+uncertain request. All restart/admission flags stay false. Actual path/source/fixed
+storage binding, privileged helper and deployment remain missing; process-exit
+tests do not qualify power loss, storage rollback or a global scope authority.
 
 For actual disposable Linux egress-hook acceptance, read
 `docs/progress/portfolio-vps-egress-namespace-acceptance-2026-09-15.md` and
