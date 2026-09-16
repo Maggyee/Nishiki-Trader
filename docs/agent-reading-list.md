@@ -218,15 +218,15 @@ proposals, not deployed controls. No existing gateway records are available;
 the first-request bootstrap policy remains unresolved. Do not infer a seed-probe
 permit or modify the frozen capture contract from this assessment.
 
-For the operator-selected dedicated public IPv4 and prospective REST bootstrap,
-read `docs/progress/portfolio-dedicated-egress-bootstrap-2026-09-16.md` and its
-matching JSON. Preserve existing proxy source/availability. `infra/egress-guard/inspect_host.py`
-records local read-only snapshots; it cannot qualify cloud mapping or deployment.
-The separate one-GET / 20-documented-weight bootstrap is a draft acknowledging
-unknown prior usage, not an activated exception or implemented transport. Source
-selection does not authorize provisioning, a seed request or the frozen joint run.
-Next obtain the actual Oracle secondary-private/public-IP association and stage
-source-routing/controller integration; current fixed storage is not provisioned.
+For the current operator selection to reuse the existing public IPv4, read
+`docs/progress/portfolio-shared-egress-bootstrap-2026-09-16.md` and its matching
+JSON. This supersedes the dedicated-address proposal; do not request a second IP.
+Stage shared-source host/proxy/container caller coverage and preserve unrelated
+proxy traffic. A namespace does not isolate provider quotas. `infra/egress-guard/inspect_host.py`
+records local snapshots, not cloud mapping or deployment qualification. The one-GET
+/ 20-documented-weight bootstrap remains a draft with unknown prior usage, not an
+activated exception or implemented transport. Selective coverage must be verified;
+do not silently stop services or grant the frozen joint run.
 
 For actual disposable Linux egress-hook acceptance, read
 `docs/progress/portfolio-vps-egress-namespace-acceptance-2026-09-15.md` and

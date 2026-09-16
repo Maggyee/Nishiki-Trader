@@ -158,11 +158,12 @@ general nft, shell, Python, package, Docker or root access. No password should b
 sent in chat. Revoke this entry using `sudo rm /etc/sudoers.d/orca-trader-audit`
 and recheck `sudo visudo -c`. No sudoers file is installed by the repository script.
 
-## Read-only dedicated-source preparation
+## Read-only shared-source preparation
 
-The operator selected a dedicated public IPv4 while preserving the existing proxy
-source. The [deployment sequence and separate REST bootstrap proposal](../../docs/progress/portfolio-dedicated-egress-bootstrap-2026-09-16.md)
-specify required cloud/source/storage bindings. No address or guard is provisioned.
+The operator now selects the existing public IPv4, superseding the earlier
+dedicated-address proposal. The [shared-source revision](../../docs/progress/portfolio-shared-egress-bootstrap-2026-09-16.md)
+specifies caller coverage and prospective bootstrap requirements. No new address
+is needed. No host guard is deployed.
 
 ```bash
 /usr/bin/python3 -I infra/egress-guard/inspect_host.py \
@@ -180,9 +181,10 @@ exit 1 means report failure. This is a non-atomic snapshot, not a cloud mapping,
 historical ledger, deployment authority or network permit. No DNS, venue, cloud
 metadata, credentials or proxy configuration are accessed.
 
-Next implementation entrypoint: obtain the actual secondary-private/public-IPv4
-VNIC association, bind the authorized collector and fixed storage root, and stage
-the source-routing/controller integration. Then implement and review the separate
+Next implementation entrypoint: stage shared-source host/proxy/container caller
+coverage while preserving unrelated proxy traffic, bind the authorized collector
+and fixed storage root, and prepare concrete rollout/rollback. Keep actual current
+cloud mapping evidence separate from local inspection. Then implement and review the separate
 one-GET REST bootstrap. Its proposed unknown-prior-usage exception is not activated
 by the topology selection. The frozen joint first-request blocker and all consumed
 scopes remain unchanged.

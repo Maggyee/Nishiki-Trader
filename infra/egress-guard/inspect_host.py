@@ -135,7 +135,7 @@ def collect(*, nft_via_sudo=False, storage_root=None):
     namespace_after = os.readlink("/proc/self/ns/net")
     blockers = [
         "cloud_public_to_private_mapping_missing",
-        "dedicated_source_and_authorized_caller_binding_missing",
+        "selected_source_and_authorized_caller_binding_missing",
         "deployed_guard_and_continuous_ledger_unqualified",
         "fixed_storage_root_and_crash_behavior_unqualified",
         "bootstrap_contract_not_activated",

@@ -1,0 +1,96 @@
+{
+  "schema_version": "portfolio.shared_egress_bootstrap_proposal.v1",
+  "status": "draft_not_activated_no_transport_implemented",
+  "date": "2026-09-16",
+  "operator_selected_topology": "reuse_existing_public_ipv4_no_second_address",
+  "bootstrap_exception_accepted": false,
+  "network_admitted": false,
+  "source_binding": {
+    "vnic_reference": null,
+    "cloud_mapping_evidence_sha256": null,
+    "collector_uid": null,
+    "collector_namespace": null,
+    "destination_ipv4": null,
+    "resolution_evidence_sha256": null,
+    "deployment_evidence_sha256": null,
+    "storage_root_proposal": "/var/lib/trader/egress",
+    "existing_private_ipv4": null,
+    "existing_public_ipv4": null
+  },
+  "scope_proposal": "portfolio.testnet_rest_bootstrap.v1",
+  "first_request_policy_proposal": "explicit_single_attempt_with_unknown_prior_usage_not_capacity_proof",
+  "operation": {
+    "method": "GET",
+    "authority": "testnet.binance.vision",
+    "port": 443,
+    "path": "/api/v3/exchangeInfo",
+    "query": {},
+    "address_family": 4,
+    "credentials": false,
+    "tls_hostname_verification_required": true,
+    "selected_destination_ipv4_required": true
+  },
+  "maximum_budget": {
+    "tcp_connection_attempts": 1,
+    "tls_handshake_attempts": 1,
+    "http_gets": 1,
+    "documented_request_weight": 20,
+    "private_requests": 0,
+    "websocket_connections": 0,
+    "dns_requests_by_transport": 0,
+    "retries": 0,
+    "redirects": 0,
+    "fallbacks": 0,
+    "deadline_seconds": 10,
+    "close_archive_allowance_seconds": 2,
+    "response_header_bytes": 65536,
+    "response_body_bytes": 8388608,
+    "archive_bytes": 16777216,
+    "incident_reserve_within_archive_bytes": 4096
+  },
+  "consumption": "fixed_scope_durable_before_any_socket_no_reopen_refund_or_resume",
+  "unknown_before_request": [
+    "current_applicable_provider_limits",
+    "prior_request_weight_and_raw_requests_usage",
+    "existing_shared_source_provider_restrictions"
+  ],
+  "evidence_only": [
+    "original_http_status_headers_body",
+    "tls_verification_certificate_and_selected_source_binding",
+    "local_utc_and_monotonic_dispatch_receipt_times",
+    "post_request_rest_rate_observations"
+  ],
+  "success_does_not_qualify": [
+    "pre_request_capacity",
+    "global_history_or_continuity",
+    "websocket_usage_or_market_connection_weight",
+    "server_clock_uncertainty",
+    "joint_capture_admission",
+    "account_equity_utc_baseline_or_trading"
+  ],
+  "preserved_joint_contract": {
+    "path": "docs/progress/portfolio-testnet-joint-capture-contract-2026-09-14.json",
+    "sha256": "91fab40cfd52b51cfac887f2dc45ee9594ce55d33b082f44d4aee31d2738ed48",
+    "gets": 17,
+    "documented_request_weight": 468,
+    "modified": false
+  },
+  "supersedes_proposal": {
+    "path": "docs/progress/portfolio-dedicated-egress-bootstrap-2026-09-16.json",
+    "sha256": "e913b21881675db6609366d7d0b7a277f0815b01b3d042a76ddcc6cefbf923b4"
+  },
+  "new_cloud_resources_required": false,
+  "shared_source_policy": {
+    "caller_paths": [
+      "host_output",
+      "docker_forward",
+      "tailscale_forward",
+      "personal_proxy"
+    ],
+    "competing_provider_calls": "serialized_accounting_or_block_during_bounded_scope",
+    "unrelated_proxy_availability": "preserve_and_verify",
+    "selective_provider_coverage_verified": false,
+    "namespace_implies_separate_quota": false,
+    "blanket_service_shutdown_authorized": false
+  }
+}

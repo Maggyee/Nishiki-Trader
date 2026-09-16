@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-16
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Prepare the operator-selected dedicated public IPv4 while preserving the existing proxy source. Local host inspection is implemented; actual Oracle secondary-private/public-IP binding, collector identity and fixed storage are still missing. A separate one-public-GET / 20-documented-weight REST bootstrap proposal now makes unknown prior usage explicit; it is Draft, unimplemented and not activated. Next obtain the cloud binding and stage source-routing/controller integration. The frozen joint draft stays at 17 GETs / 468 documented weight; consumed scopes, full-account/UTC/flow/reset and fills/cleanup blockers remain intact.
+- **Current objective**: Reuse the existing public IPv4 per the operator’s revised selection; no second address or cloud provisioning is required. Next stage shared-source host/proxy/container caller coverage, preserving unrelated proxy traffic, then bind the controller and fixed storage. Current source mapping and all-caller accounting remain unqualified. The one-public-GET / 20-weight bootstrap remains a separate unimplemented Draft; the frozen joint 17-GET / 468-weight contract and all consumed scopes remain unchanged.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -238,7 +238,8 @@ Detailed depth implementation, retained hashes and next review:
 [kernel expiry and observed-loss acceptance](progress/portfolio-vps-egress-lease-acceptance-2026-09-15.md),
 [controlled revocation and sender ownership](progress/portfolio-vps-egress-controller-2026-09-15.md),
 [fixed-scope persistence and crash replay](progress/portfolio-vps-egress-persistence-2026-09-16.md),
-[dedicated IPv4 preparation and REST bootstrap proposal](progress/portfolio-dedicated-egress-bootstrap-2026-09-16.md).
+[historical dedicated IPv4 proposal](progress/portfolio-dedicated-egress-bootstrap-2026-09-16.md),
+[current shared IPv4 revision](progress/portfolio-shared-egress-bootstrap-2026-09-16.md).
 
 ## Next Steps
 
@@ -266,10 +267,12 @@ Detailed depth implementation, retained hashes and next review:
    initialization consumes the directory, replay retains uncertain preparations,
    and every reopen is refused. Next bind actual source/caller authorization and
    qualify the selected storage root and deployed crash/revocation behavior.
-   No host guard or complete audit is deployed. The operator selected a dedicated
-   public IPv4 preserving the personal proxy source. Obtain the actual Oracle
-   secondary-private/public-IP association, then stage the routing/controller and
-   fixed-storage integration. The read-only host inspector is implemented.
+   No host guard or complete audit is deployed. The operator now selects the
+   existing public IPv4; no second address is required. Stage host/proxy/container
+   coverage for that shared source, preserving unrelated proxy traffic, then bind
+   actual source evidence, the controller and fixed storage. The inspector exists;
+   its source blocker is topology-neutral. Do not infer quota isolation from a
+   namespace or silently stop existing services to assert exclusive access.
    The separate one-GET REST bootstrap proposal acknowledges unknown prior usage;
    review/implement it before any activation. It cannot satisfy or silently amend
    the frozen joint draft; waiting alone still supplies no historical evidence.
@@ -312,6 +315,11 @@ Detailed depth implementation, retained hashes and next review:
 - Nautilus is the only execution engine; LLMs never enter the order path.
 
 ## Latest Verification
+
+- Shared-source revision: **24 inspector tests pass**; Ruff/format, documentation
+  links, unchanged earlier proposal/frozen contract, new proposal consistency and
+  diff checks pass. This is a topology-selection/documentation revision plus a
+  neutral blocker label; no new host probe or full application regression.
 
 - Dedicated-source host inspector: **24 tests pass**; actual system-Python run
   read all seven local sources including sudo nft. Report records 27 interfaces,
