@@ -8,6 +8,7 @@ import json
 import os
 import signal
 import socket
+import stat
 import subprocess
 import sys
 import threading
@@ -224,6 +225,142 @@ class ControlledFixtureGuard(FixtureDispatchGuard):
             self.shutdown()
         finally:
             super().close()
+
+
+class PersistentFixtureGuard(ControlledFixtureGuard):
+    """Offline fixed-scope storage exercise. Existing scopes can never resume."""
+
+    SCOPE = "fixture-scope-v1"
+
+    def __init__(self, root: Path, *, selected: dict, observe, actor, revoke):
+        self.root = root.absolute()
+        self.directory_fds = []
+        self.storage_closed = False
+        try:
+            root_fd = os.open(self.root, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+            self.directory_fds.append(root_fd)
+            info = os.fstat(root_fd)
+            if info.st_uid != os.geteuid() or stat.S_IMODE(info.st_mode) != 0o700:
+                raise RuntimeError("fixture_storage_requires_private_owned_root")
+            # The directory itself is the consumed marker, including failed initialization.
+            # No cleanup, alternate archive name, reopen or reset API exists.
+            os.mkdir(self.SCOPE, mode=0o700, dir_fd=root_fd)
+            os.fsync(root_fd)
+            scope_fd = os.open(
+                self.SCOPE, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=root_fd
+            )
+            self.directory_fds.append(scope_fd)
+            super().__init__(
+                self.root / self.SCOPE / "attempts.jsonl",
+                selected=selected,
+                observe=observe,
+                actor=actor,
+                revoke=revoke,
+            )
+            os.fsync(scope_fd)  # Persist the new journal's directory entry before activation.
+            self.append("activated")
+        except BaseException:
+            if hasattr(self, "fd"):
+                os.close(self.fd)
+            self.close_storage()
+            raise
+
+    def verify_journal(self):
+        self.check_owner()
+        for path, fd in zip((self.root, self.root / self.SCOPE), self.directory_fds, strict=True):
+            held, current = os.fstat(fd), path.stat(follow_symlinks=False)
+            if (
+                not stat.S_ISDIR(current.st_mode)
+                or stat.S_IMODE(current.st_mode) != 0o700
+                or current.st_uid != os.geteuid()
+                or (held.st_dev, held.st_ino) != (current.st_dev, current.st_ino)
+            ):
+                raise RuntimeError("fixture_storage_replaced_or_permissions_changed")
+        super().verify_journal()
+        held = os.fstat(self.fd)
+        if held.st_nlink != 1 or stat.S_IMODE(held.st_mode) != 0o600:
+            raise RuntimeError("fixture_journal_links_or_permissions_changed")
+
+    def close_storage(self):
+        if not self.storage_closed:
+            self.storage_closed = True
+            for fd in reversed(self.directory_fds):
+                os.close(fd)
+
+    def close(self):
+        self.check_owner()
+        try:
+            super().close()
+        finally:
+            # Keep descriptor cleanup serialized with concurrent/idempotent closure.
+            with self.lock:
+                self.close_storage()
+
+
+def review_fixture_journal(raw: bytes, *, selected: dict, expected_sha256: str) -> dict:
+    """Read-only selected-byte replay; never a restart, coverage or dispatch permit."""
+    if not raw or len(raw) > 65536 or hashlib.sha256(raw).hexdigest() != expected_sha256:
+        raise RuntimeError("fixture_replay_size_or_hash")
+    identity = hashlib.sha256(canonical(selected)).hexdigest()
+    prefix = b""
+    attempts = 0
+    pending = None
+    state = "initial"
+    last_time = 0
+    for line in raw.splitlines(keepends=True):
+        try:
+            row = json.loads(line)
+        except (ValueError, UnicodeError) as exc:
+            raise RuntimeError("fixture_replay_invalid_json") from exc
+        if not isinstance(row, dict) or set(row) != {
+            "kind",
+            "attempt",
+            "monotonic_ns",
+            "identity_sha256",
+            "previous_sha256",
+        }:
+            raise RuntimeError("fixture_replay_schema")
+        if (
+            canonical(row) + b"\n" != line
+            or row["previous_sha256"] != hashlib.sha256(prefix).hexdigest()
+            or row["identity_sha256"] != identity
+            or type(row["attempt"]) is not int
+            or type(row["monotonic_ns"]) is not int
+            or row["monotonic_ns"] <= 0
+            or row["monotonic_ns"] < last_time
+        ):
+            raise RuntimeError("fixture_replay_chain_or_identity")
+        kind = row["kind"]
+        if kind == "activated" and state == "initial":
+            state = "active"
+        elif kind == "prepared" and state == "active":
+            attempts += 1
+            pending = attempts
+            state = "pending"
+        elif kind in ("succeeded", "failed") and state == "pending":
+            pending = None
+            state = "active" if kind == "succeeded" else "failed"
+        elif kind == "stop_requested" and state in ("active", "pending", "failed"):
+            state = "stopped"
+        elif kind == "revoked" and state == "stopped":
+            state = "revoked"
+        else:
+            raise RuntimeError("fixture_replay_transition")
+        if row["attempt"] != attempts or attempts > 4:
+            raise RuntimeError("fixture_replay_attempt")
+        last_time = row["monotonic_ns"]
+        prefix += line
+    return {
+        "profile": "persistent_fixture_replay_v1",
+        "journal_sha256": expected_sha256,
+        "recorded_preparations": attempts,
+        "uncertain_attempt": pending,
+        "last_state": state,
+        "revocation_recorded": state == "revoked",
+        "restart_allowed": False,
+        "capture_admitted": False,
+        "gateway_coverage_qualified": False,
+    }
 
 
 def run(*args: str, text: str | None = None) -> str:
@@ -708,6 +845,41 @@ def controller_checks(client, snapshot, grant, denied):
     time.sleep(2.2)
     denied("controller_crash_expiry_blocks_raw_sender", client, record=False)
     checks.append("controller_crash_expiry_blocks_raw_sender")
+
+    # Exercise the fixed-scope backend against the actual kernel controller too.
+    # This private tmpfs test complements the separate disk/fresh-process tests.
+    storage = Path("/tmp/persistent-controller")
+    storage.mkdir(mode=0o700)
+    grant()
+    selected = snapshot()
+    persistent = PersistentFixtureGuard(
+        storage, selected=selected, observe=snapshot, actor=client, revoke=revoke
+    )
+    try:
+        persistent.dispatch()
+        checks.append("persistent_scope_dispatches_local_request")
+    finally:
+        persistent.close()
+    raw = persistent.path.read_bytes()
+    report = review_fixture_journal(
+        raw, selected=selected, expected_sha256=hashlib.sha256(raw).hexdigest()
+    )
+    if report["recorded_preparations"] != 1 or not report["revocation_recorded"]:
+        raise RuntimeError("Persistent kernel controller replay differs")
+    checks.append("persistent_scope_replays_terminal_revocation")
+    try:
+        PersistentFixtureGuard(
+            storage, selected=selected, observe=snapshot, actor=client, revoke=revoke
+        )
+    except FileExistsError:
+        pass
+    else:
+        raise RuntimeError("Persistent controller reopened its consumed scope")
+    if persistent.path.read_bytes() != raw:
+        raise RuntimeError("Persistent restart refusal changed its original journal")
+    checks.append("persistent_scope_restart_refused_without_writes")
+    denied("persistent_scope_revocation_blocks_raw_sender", client, record=False)
+    checks.append("persistent_scope_revocation_blocks_raw_sender")
     return checks
 
 

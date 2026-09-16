@@ -8,6 +8,7 @@ import os
 import subprocess
 import threading
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import suppress
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -430,3 +431,261 @@ def test_inherited_controller_refused_before_acquiring_lock(controlled_case, ope
         revoke.assert_not_called()
     finally:
         guard.owner_pid, guard.lock = original_owner, original_lock
+
+
+@pytest.fixture
+def persistent_case(fixture, tmp_path):
+    selected = {"rules": "fixture"}
+    actor, revoke = Mock(), Mock()
+    actor.request.return_value = {"ok": True}
+    guard = fixture.PersistentFixtureGuard(
+        tmp_path, selected=selected, observe=lambda: selected, actor=actor, revoke=revoke
+    )
+    try:
+        yield guard, actor, revoke, selected
+    finally:
+        if not guard.closed:
+            with suppress(RuntimeError, OSError):
+                guard.close()
+
+
+def review_persistent(fixture, guard, selected):
+    raw = guard.path.read_bytes()
+    return fixture.review_fixture_journal(
+        raw, selected=selected, expected_sha256=fixture.hashlib.sha256(raw).hexdigest()
+    )
+
+
+def test_persistent_scope_and_journal_synced_before_send(fixture, tmp_path, monkeypatch):
+    import stat
+
+    syncs = []
+    real_sync = os.fsync
+
+    def sync(fd):
+        syncs.append("directory" if stat.S_ISDIR(os.fstat(fd).st_mode) else "file")
+        real_sync(fd)
+
+    monkeypatch.setattr(fixture.os, "fsync", sync)
+    actor = Mock()
+
+    def send(_request):
+        assert syncs == ["directory", "directory", "file", "file"]
+        assert review_persistent(fixture, guard, {})["uncertain_attempt"] == 1
+        return {"ok": True}
+
+    actor.request.side_effect = send
+    guard = fixture.PersistentFixtureGuard(
+        tmp_path, selected={}, observe=lambda: {}, actor=actor, revoke=Mock()
+    )
+    guard.dispatch()
+    guard.close()
+    report = review_persistent(fixture, guard, {})
+    assert report["recorded_preparations"] == 1
+    assert report["revocation_recorded"]
+    assert not report["restart_allowed"] and not report["capture_admitted"]
+
+
+@pytest.mark.parametrize("sync_number", [1, 2, 3])
+def test_failed_persistent_initialization_consumes_scope(
+    fixture, tmp_path, monkeypatch, sync_number
+):
+    real_sync = os.fsync
+    calls = 0
+
+    def sync(fd):
+        nonlocal calls
+        calls += 1
+        if calls == sync_number:
+            raise OSError("disk unavailable")
+        real_sync(fd)
+
+    actor = Mock()
+    monkeypatch.setattr(fixture.os, "fsync", sync)
+    with pytest.raises(OSError, match="disk unavailable"):
+        fixture.PersistentFixtureGuard(
+            tmp_path, selected={}, observe=lambda: {}, actor=actor, revoke=Mock()
+        )
+    monkeypatch.setattr(fixture.os, "fsync", real_sync)
+    with pytest.raises(FileExistsError):
+        fixture.PersistentFixtureGuard(
+            tmp_path, selected={}, observe=lambda: {}, actor=actor, revoke=Mock()
+        )
+    actor.request.assert_not_called()
+
+
+@pytest.mark.parametrize("damage", ["root_replace", "scope_replace", "permissions", "hardlink"])
+def test_persistent_storage_loss_revokes_before_send(persistent_case, damage):
+    guard, actor, revoke, _ = persistent_case
+    if damage == "root_replace":
+        moved = guard.root.with_name(guard.root.name + "-old")
+        guard.root.rename(moved)
+        guard.root.mkdir(mode=0o700)
+    elif damage == "scope_replace":
+        guard.path.parent.rename(guard.path.parent.with_name("moved"))
+        guard.path.parent.mkdir(mode=0o700)
+    elif damage == "permissions":
+        guard.root.chmod(0o755)
+    else:
+        os.link(guard.path, guard.path.with_name("alias"))
+    with pytest.raises((RuntimeError, OSError)):
+        guard.dispatch()
+    actor.request.assert_not_called()
+    revoke.assert_called_once()
+    assert guard.halted and guard.revoked
+
+
+@pytest.mark.parametrize("damage", ["symlink", "public"])
+def test_persistent_requires_private_root(fixture, tmp_path, damage):
+    root = tmp_path
+    if damage == "symlink":
+        root = tmp_path / "link"
+        root.symlink_to(tmp_path, target_is_directory=True)
+    else:
+        root.chmod(0o755)
+    with pytest.raises((RuntimeError, OSError)):
+        fixture.PersistentFixtureGuard(
+            root, selected={}, observe=lambda: {}, actor=Mock(), revoke=Mock()
+        )
+    assert not (tmp_path / fixture.PersistentFixtureGuard.SCOPE).exists()
+
+
+def test_concurrent_initializers_have_only_one_owner(fixture, tmp_path):
+    def create():
+        try:
+            return fixture.PersistentFixtureGuard(
+                tmp_path, selected={}, observe=lambda: {}, actor=Mock(), revoke=Mock()
+            )
+        except FileExistsError:
+            return None
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        guards = list(pool.map(lambda _: create(), range(2)))
+    owners = [guard for guard in guards if guard is not None]
+    assert len(owners) == 1
+    owners[0].close()
+
+
+@pytest.mark.parametrize("stage", ["scope", "activated", "prepared", "succeeded", "revoked"])
+def test_disk_crash_two_fresh_replays_and_restart_refusal(fixture, tmp_path, stage):
+    # /tmp is ext4 on the acceptance host, not the namespace harness's private tmpfs.
+    loader = (
+        "import importlib.util, pathlib, os, json, hashlib\n"
+        f"spec = importlib.util.spec_from_file_location('fixture', {str(SOURCE)!r})\n"
+        "m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)\n"
+        f"root = pathlib.Path({str(tmp_path)!r})\n"
+    )
+    actor = "class Actor:\n    def request(self, request):\n" + (
+        "        os._exit(71)\n" if stage == "prepared" else "        return {'ok': True}\n"
+    )
+    setup = ""
+    if stage == "scope":
+        setup = "m.os.fsync = lambda fd: os._exit(71)\n"
+    script = (
+        loader
+        + actor
+        + setup
+        + (
+            "g = m.PersistentFixtureGuard(root, selected={}, observe=lambda: {}, "
+            "actor=Actor(), revoke=lambda: None)\n"
+        )
+    )
+    if stage not in ("scope", "activated"):
+        script += "g.dispatch()\n"
+    if stage == "revoked":
+        script += "g.close()\n"
+    script += "os._exit(71)\n"
+    result = subprocess.run(["/usr/bin/python3", "-I", "-c", script], timeout=5)
+    assert result.returncode == 71
+    path = tmp_path / fixture.PersistentFixtureGuard.SCOPE / "attempts.jsonl"
+    before = path.read_bytes() if path.exists() else None
+    if stage != "scope":
+        digest = fixture.hashlib.sha256(before).hexdigest()
+        replay = loader + (
+            f"raw = (root / m.PersistentFixtureGuard.SCOPE / 'attempts.jsonl').read_bytes()\n"
+            f"print(json.dumps(m.review_fixture_journal(raw, selected={{}}, "
+            f"expected_sha256={digest!r}), sort_keys=True))\n"
+        )
+        outputs = [
+            subprocess.check_output(["/usr/bin/python3", "-I", "-c", replay], timeout=5)
+            for _ in range(2)
+        ]
+        assert outputs[0] == outputs[1]
+        report = json.loads(outputs[0])
+        assert report["recorded_preparations"] == (0 if stage == "activated" else 1)
+        assert report["uncertain_attempt"] == (1 if stage == "prepared" else None)
+        assert report["revocation_recorded"] == (stage == "revoked")
+        assert not report["restart_allowed"]
+    restart = (
+        loader
+        + actor
+        + (
+            "try:\n"
+            "    m.PersistentFixtureGuard(root, selected={}, observe=lambda: {}, "
+            "actor=Actor(), revoke=lambda: None)\n"
+            "except FileExistsError:\n"
+            "    raise SystemExit(0)\n"
+            "raise SystemExit('scope unexpectedly reopened')\n"
+        )
+    )
+    subprocess.run(["/usr/bin/python3", "-I", "-c", restart], timeout=5, check=True)
+    assert (path.read_bytes() if path.exists() else None) == before
+
+
+@pytest.mark.parametrize(
+    "damage",
+    [
+        "hash",
+        "identity",
+        "partial",
+        "result_without_prepare",
+        "duplicate",
+        "clock",
+        "attempt",
+        "post_revoke",
+    ],
+)
+def test_persistent_replay_rejects_damage(fixture, persistent_case, damage):
+    guard, _, _, selected = persistent_case
+    guard.dispatch()
+    guard.close()
+    raw = guard.path.read_bytes()
+    digest = fixture.hashlib.sha256(raw).hexdigest()
+    if damage == "hash":
+        digest = "0" * 64
+    elif damage == "identity":
+        selected = {"rules": "different"}
+    else:
+        rows = [json.loads(line) for line in raw.splitlines()]
+        if damage == "partial":
+            raw = raw[:-3]
+        else:
+            if damage == "result_without_prepare":
+                del rows[1]
+            elif damage == "duplicate":
+                rows.insert(1, rows[0].copy())
+            elif damage == "clock":
+                rows[1]["monotonic_ns"] = rows[0]["monotonic_ns"] - 1
+            elif damage == "attempt":
+                rows[1]["attempt"] = True
+            elif damage == "post_revoke":
+                rows.append(rows[1].copy())
+                rows[-1]["monotonic_ns"] = rows[-2]["monotonic_ns"] + 1
+            raw = b""
+            for row in rows:
+                row["previous_sha256"] = fixture.hashlib.sha256(raw).hexdigest()
+                raw += fixture.canonical(row) + b"\n"
+        digest = fixture.hashlib.sha256(raw).hexdigest()
+    with pytest.raises(RuntimeError, match="fixture_replay"):
+        fixture.review_fixture_journal(raw, selected=selected, expected_sha256=digest)
+
+
+def test_uncertain_attempt_survives_terminal_revocation(fixture, persistent_case):
+    guard, actor, _, selected = persistent_case
+    actor.request.side_effect = TimeoutError("unknown outcome")
+    with pytest.raises(TimeoutError):
+        guard.dispatch()
+    guard.close()
+    report = review_persistent(fixture, guard, selected)
+    assert report["revocation_recorded"] and report["uncertain_attempt"] == 1
+    assert report["recorded_preparations"] == 1

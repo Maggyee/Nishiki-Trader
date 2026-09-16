@@ -1,7 +1,8 @@
 # Isolated egress hook acceptance
 
-Purpose: exercise OUTPUT/FORWARD hooks, expiring permissions and observed-loss
-refusal in disposable Linux namespaces.
+Purpose: exercise OUTPUT/FORWARD hooks, expiring permissions, observed-loss
+refusal and fixed-scope journal persistence in disposable Linux namespaces and
+offline disk tests.
 Current phase: Phase 5 entry, offline infrastructure acceptance only. This is not
 a production guard, gateway audit service, quota authority or collection permit.
 
@@ -99,6 +100,43 @@ authorization, persistent guard lease or complete traffic-loss detector is
 implemented. Rule-removal tests demonstrate restored fixture connectivity;
 deployment still requires stopping collection before removing its guard.
 
+## Persistent fixture scope and read-only crash replay
+
+`PersistentFixtureGuard` extends the same controller with one fixed
+`fixture-scope-v1/attempts.jsonl` beneath a pre-existing, caller-selected private
+storage root (owned by the process user, mode 0700). Exclusive directory creation
+claims the scope before any transport call. The root directory is fsynced, then
+the new journal's directory entry and activation record are fsynced. Every
+preparation retains the existing write/fsync-before-send rule. Failed startup
+leaves the scope consumed; another process cannot choose a different journal name
+within that root to bypass the marker. Existing scopes are always refused, even
+if empty or terminal. There is no resume, reset or lease-grant API.
+
+Directory identity/permissions and journal links/permissions are checked alongside
+the existing byte-prefix checks. Observed storage loss halts dispatch and attempts
+kernel revocation. This assumes a trusted, stable storage root and filesystem;
+changing roots, deleting markers, restoring backups or privileged concurrent
+filesystem mutations are not prevented by this fixture.
+
+`review_fixture_journal` replays explicitly hash-selected bytes and source identity,
+validates canonical records, hash links, clocks and lifecycle transitions, and
+reports recorded preparations and any pending uncertain attempt. Revocation does
+not erase an uncertain send. Its restart/admission/coverage flags are always false.
+Malformed or incomplete records fail review; a valid incomplete lifecycle is
+reviewable but cannot resume. An observed-now hash is not historical provenance,
+and a caller-rehashed valid prefix cannot prove absence of missing later records.
+
+The Linux harness adds four actual controller checks using its private tmpfs.
+The focused Python suite separately exercises ext4-backed process crashes at five
+stages, two fresh replays of each available journal, concurrent ownership, startup
+fsync failures, storage loss and tampering. Run it with
+`uv run pytest -q tests/ops/test_egress_guard_selftest.py`.
+These tests establish process-exit persistence and the requested OS fsync ordering;
+they do not simulate host power loss, filesystem rollback or restart admission.
+Controller death still relies on the kernel lease TTL. No host guard or real
+collector uses this backend. Detailed evidence and boundaries are in the
+[persistent-scope report](../../docs/progress/portfolio-vps-egress-persistence-2026-09-16.md).
+
 ## Optional host read-only sudo
 
 The agent currently runs as `orca`. Namespace acceptance needs no host sudo.
@@ -120,9 +158,10 @@ general nft, shell, Python, package, Docker or root access. No password should b
 sent in chat. Revoke this entry using `sudo rm /etc/sudoers.d/orca-trader-audit`
 and recheck `sudo visudo -c`. No sudoers file is installed by the repository script.
 
-Next implementation entrypoint: bind an actual source/identity to this controller
-boundary, with authenticated caller admission, persistent audit/restart handling
-and a separately resolved first-request bootstrap contract.
+Next implementation entrypoint: bind an actual source/identity and authorized
+callers to this controller boundary, qualify its fixed storage root and deployed
+crash/revocation behavior, and resolve the separate first-request bootstrap
+contract. The offline persistent scope supports review and permanent refusal only.
 See the
 [VPS assessment](../../docs/progress/portfolio-vps-egress-assessment-2026-09-15.md).
 The frozen first-request/bootstrap blocker remains independent of sudo access.

@@ -242,6 +242,15 @@ capabilities. Controller crash leaves permission until TTL expiry; uncontrolled
 administrator changes and complete all-caller accounting remain outside this
 guarantee. No real source binding, persistent backend or bootstrap permit follows.
 
+For the offline fixed-scope disk journal and crash replay, read
+`docs/progress/portfolio-vps-egress-persistence-2026-09-16.md`. The persistent
+fixture claims one directory before dispatch, fsyncs directory entries and
+records, and refuses every reopen, including after failed startup or a crash.
+Selected-byte replay reports recorded/uncertain attempts without restart authority.
+The storage root is caller-selected, not an authenticated global scope registry;
+power loss, backup rollback and privileged storage replacement are unqualified.
+No real collector, source authorization, host deployment or bootstrap permit follows.
+
 For integrated local TLS joint collection and original-frame replay, read
 `docs/progress/portfolio-testnet-joint-tls-transport-2026-09-14.md`,
 `portfolio_joint_tls_transport.py`, `portfolio_joint_tls_evidence.py` and
