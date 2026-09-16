@@ -218,6 +218,16 @@ proposals, not deployed controls. No existing gateway records are available;
 the first-request bootstrap policy remains unresolved. Do not infer a seed-probe
 permit or modify the frozen capture contract from this assessment.
 
+For the operator-selected dedicated public IPv4 and prospective REST bootstrap,
+read `docs/progress/portfolio-dedicated-egress-bootstrap-2026-09-16.md` and its
+matching JSON. Preserve existing proxy source/availability. `infra/egress-guard/inspect_host.py`
+records local read-only snapshots; it cannot qualify cloud mapping or deployment.
+The separate one-GET / 20-documented-weight bootstrap is a draft acknowledging
+unknown prior usage, not an activated exception or implemented transport. Source
+selection does not authorize provisioning, a seed request or the frozen joint run.
+Next obtain the actual Oracle secondary-private/public-IP association and stage
+source-routing/controller integration; current fixed storage is not provisioned.
+
 For actual disposable Linux egress-hook acceptance, read
 `docs/progress/portfolio-vps-egress-namespace-acceptance-2026-09-15.md` and
 `infra/egress-guard/README.md`. The standalone non-root fixture passes 23 checks

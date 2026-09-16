@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-16
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Preserve consumed ADR-017 and public-depth scopes. Isolated controller acceptance now includes a fixed-scope disk journal: crash replay preserves recorded attempts and every reopen is refused. Controller crash falls back to lease expiry; power loss and privileged storage/network changes remain unqualified. Next bind actual source/authorized callers and a qualified storage root, then resolve first-request evidence or a separate prospective bootstrap contract. No host guard is deployed or historical gateway ledger available. The frozen draft stays at 17 GETs / 468 documented weight; actual joint capture, full-account/UTC/flow/reset qualification and fills/cleanup remain unverified.
+- **Current objective**: Prepare the operator-selected dedicated public IPv4 while preserving the existing proxy source. Local host inspection is implemented; actual Oracle secondary-private/public-IP binding, collector identity and fixed storage are still missing. A separate one-public-GET / 20-documented-weight REST bootstrap proposal now makes unknown prior usage explicit; it is Draft, unimplemented and not activated. Next obtain the cloud binding and stage source-routing/controller integration. The frozen joint draft stays at 17 GETs / 468 documented weight; consumed scopes, full-account/UTC/flow/reset and fills/cleanup blockers remain intact.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -237,7 +237,8 @@ Detailed depth implementation, retained hashes and next review:
 [actual isolated Linux hook acceptance](progress/portfolio-vps-egress-namespace-acceptance-2026-09-15.md),
 [kernel expiry and observed-loss acceptance](progress/portfolio-vps-egress-lease-acceptance-2026-09-15.md),
 [controlled revocation and sender ownership](progress/portfolio-vps-egress-controller-2026-09-15.md),
-[fixed-scope persistence and crash replay](progress/portfolio-vps-egress-persistence-2026-09-16.md).
+[fixed-scope persistence and crash replay](progress/portfolio-vps-egress-persistence-2026-09-16.md),
+[dedicated IPv4 preparation and REST bootstrap proposal](progress/portfolio-dedicated-egress-bootstrap-2026-09-16.md).
 
 ## Next Steps
 
@@ -265,10 +266,13 @@ Detailed depth implementation, retained hashes and next review:
    initialization consumes the directory, replay retains uncertain preparations,
    and every reopen is refused. Next bind actual source/caller authorization and
    qualify the selected storage root and deployed crash/revocation behavior.
-   No host guard or complete audit is deployed. Evaluate a separate public source if
-   preserving personal proxy access.
-   Resolve pre-existing first-request evidence or a separate
-   prospective bootstrap contract; waiting alone cannot satisfy the frozen draft.
+   No host guard or complete audit is deployed. The operator selected a dedicated
+   public IPv4 preserving the personal proxy source. Obtain the actual Oracle
+   secondary-private/public-IP association, then stage the routing/controller and
+   fixed-storage integration. The read-only host inspector is implemented.
+   The separate one-GET REST bootstrap proposal acknowledges unknown prior usage;
+   review/implement it before any activation. It cannot satisfy or silently amend
+   the frozen joint draft; waiting alone still supplies no historical evidence.
    Obtain qualified signer/source records, fresh initial usage/limits and complete
    enforced egress records; then wire authenticated per-dispatch
    reservations, durable one-shot activation and separate real profile replay.
@@ -308,6 +312,17 @@ Detailed depth implementation, retained hashes and next review:
 - Nautilus is the only execution engine; LLMs never enter the order path.
 
 ## Latest Verification
+
+- Dedicated-source host inspector: **24 tests pass**; actual system-Python run
+  read all seven local sources including sudo nft. Report records 27 interfaces,
+  two IPv4 default-route entries, one IPv6 default-route entry and 27 nft base
+  chains; proposed storage root is missing. This snapshot establishes no public
+  mapping or continuous coverage. **195 focused tests pass** across inspection,
+  existing controller persistence, rate interpretation and joint admission.
+  Ruff, formatting, documentation links, retained-output hashes, proposal cost,
+  frozen-contract hash and diff checks pass. Full application regression was not
+  rerun for this standalone inspector/proposal. No host mutation or venue request
+  occurred.
 
 - Isolated VPS egress fixture: **56 Linux checks / 65 focused Python tests pass**.
   Four additional kernel checks and 25 Python cases cover fixed-scope ownership,
