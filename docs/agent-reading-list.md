@@ -254,6 +254,18 @@ uncertain request. All restart/admission flags stay false. Actual path/source/fi
 storage binding, privileged helper and deployment remain missing; process-exit
 tests do not qualify power loss, storage rollback or a global scope authority.
 
+For read-only host binding and drift preflight, read
+`docs/progress/portfolio-egress-binding-preflight-2026-09-16.md` and
+`infra/egress-guard/inspect_binding.py`. It binds local host/collector metadata,
+selected interface/address, full observed network structure and the fixed root-owned
+storage path. Pinned prior snapshots can detect drift; equal incomplete observations
+never match as complete. Actual host reads passed but no collector was selected and
+the fixed storage directory remains absent/unreadable. These are observations, not
+source/caller authority or a helper. Do not substitute the agent/proxy process for
+an authorized collector, create storage or activate the maintenance window from
+these results. Next implement reviewed collector launch/authenticated helper IPC
+and complete source/path/storage qualification before deployment.
+
 For actual disposable Linux egress-hook acceptance, read
 `docs/progress/portfolio-vps-egress-namespace-acceptance-2026-09-15.md` and
 `infra/egress-guard/README.md`. The standalone non-root fixture passes 23 checks

@@ -182,6 +182,56 @@ exit 1 means report failure. This is a non-atomic snapshot, not a cloud mapping,
 historical ledger, deployment authority or network permit. No DNS, venue, cloud
 metadata, credentials or proxy configuration are accessed.
 
+## Read-only host binding preflight
+
+`inspect_binding.py` adds local identity and drift checks around the same seven
+allowlisted host reads. Select the existing WAN interface and its assigned local
+IPv4 explicitly; a local address is not the cloud-mapped public IPv4. Example
+(replace the uppercase placeholders with selected local values):
+
+```bash
+/usr/bin/python3 -I infra/egress-guard/inspect_binding.py \
+  --wan-interface SELECTED_INTERFACE --source-ipv4 SELECTED_LOCAL_IPV4 \
+  --nft-via-sudo --report data/NEW-BINDING-SNAPSHOT.json
+```
+
+Once a reviewed launcher exists, `--collector-pid PID` observes that process's
+start ticks, UID/GID/groups, all five capability sets, no-new-privileges, network/
+user/mount namespaces, cgroup hash and executable metadata. It does not launch,
+signal or authorize the process, read its arguments/environment or access credentials.
+The host boot/namespaces and collector metadata must agree before/after the local
+snapshot. Missing process data, root/mixed UIDs, retained capabilities, missing
+no-new-privileges or a shared host network namespace remain explicit blockers.
+
+Storage is fixed to `/var/lib/trader/egress`; there is no alternate-root CLI option.
+It requires observed root ownership and no group/other write permission on every
+ancestor, with a final mode-0700 directory and no symlink component. Metadata checks
+create no directories or consumed markers and grant no storage authority. This
+future helper requirement differs from the fixture's caller-owned temporary root.
+The embedded legacy inspector retains its own reader-ownership status; the new
+preflight derives the stricter root requirement from the component observations.
+
+Add `--compare data/PRIOR.json --compare-sha256 PRIOR_SHA256` to compare explicitly
+selected original bytes. A fingerprint binds selection, host, collector, storage
+device/inodes and all observed links, addresses, IPv4/IPv6 routes/rules and nft
+structure. Only nft counter observations and known route/address lifetime fields
+are omitted; quota limits and policy rules stay bound. Unknown fields are retained,
+so extra changes may conservatively report drift. Incomplete inputs never produce
+`local_binding_matches=true`, even when both partial snapshots are equal.
+
+Both matching and blocked reports exit 2 and always deny network admission, caller
+authorization and deployment qualification. Exit 1 denotes inspection/input failure.
+Reports are exclusive mode-0600 files (maximum 32 MiB); prior inputs reject symlinks
+and nonregular files, and their hashes/schema are checked before local commands.
+Use a trusted private output parent. stdout contains only blockers, hashes and
+comparison field names. Original addresses/rules/identities stay in ignored local
+reports. No cloud, DNS, venue or packet probe is performed.
+
+This is a non-atomic preflight observation, not an authenticated helper, live process
+handle, code attestation or continuous guard. Public mapping, authorized collector
+launch/IPC, complete tunnels/offload/proxy coverage, durable fixed storage and
+deployment acceptance remain required. See the [binding preflight report](../../docs/progress/portfolio-egress-binding-preflight-2026-09-16.md).
+
 ## Shared-source NAT and proxy acceptance
 
 The same `selftest.py` now includes 49 additional actual kernel checks: direct
