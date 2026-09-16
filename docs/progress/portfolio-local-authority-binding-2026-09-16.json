@@ -1,0 +1,79 @@
+{
+  "schema_version": "portfolio.local_authority_acceptance.v1",
+  "date": "2026-09-16",
+  "status": "actual_local_root_custody_binding_verified",
+  "source": {
+    "path": "infra/egress-guard/authority_binding.py",
+    "sha256": "17e345b87691506e33f6a69037b61ff21d0b6b21a5a6c1a372dc740bf468c634"
+  },
+  "binding_sha256": "ba885da2194a326c12ff7e1eef26fd51f1c9d500c2ddda1279caa49a44d85701",
+  "fresh_process_binding_equal": true,
+  "observations": [
+    {
+      "path": "data/egress-authority-binding-2026-09-16/observation-1.json",
+      "sha256": "7a44b4118f13c4e70042d10c409d0d4c70c69f056a3483d76e54e5b692e89ee4"
+    },
+    {
+      "path": "data/egress-authority-binding-2026-09-16/observation-2.json",
+      "sha256": "b2a82742b5ef123a705ad82605f40c2b290f768dd9028bc2d21832c3cdba20f0"
+    }
+  ],
+  "wrong_binding_refusal": {
+    "path": "data/egress-authority-binding-2026-09-16/wrong-binding.json",
+    "sha256": "4497bc8d13376b7b611864f9517bef1e9bcfcdc2a5166842e6515a0c3a6d8f75"
+  },
+  "host_acceptance": {
+    "path": "data/egress-authority-binding-2026-09-16/acceptance.json",
+    "sha256": "c3deb98727b586241209687a8096a2d012c6d15f5d71d7f375434f777377c920"
+  },
+  "selected_originals": [
+    {
+      "path": "/etc/trader/egress-bootstrap-v1.json",
+      "sha256": "47738da77cb70fc6d7e22bc812b10f376bf3ef4e763de419859950f278156306"
+    },
+    {
+      "path": "/var/lib/trader/egress/rest-bootstrap-v1/plan.json",
+      "sha256": "47738da77cb70fc6d7e22bc812b10f376bf3ef4e763de419859950f278156306"
+    },
+    {
+      "path": "/var/lib/trader/egress/rest-bootstrap-v1/events.jsonl",
+      "sha256": "a10045b8d0c5588462c4da720a98aaab927ad74f32da0336b00d84eca9a6b521"
+    },
+    {
+      "path": "/var/lib/trader/egress/rest-bootstrap-v1/response.bin",
+      "sha256": "75174a374e40923245ba08110536ea2bb6f26d998a18f3c3e52d049c96b58219"
+    },
+    {
+      "path": "/usr/local/lib/trader-egress-bootstrap-v1/bootstrap_once.py",
+      "sha256": "da64769aa50b04e1f9c1510bb33b1a85de2bb7a0e41ac81c43497e56a8f804d7"
+    },
+    {
+      "path": "/usr/local/lib/trader-egress-bootstrap-v1/http_parser.py",
+      "sha256": "def476571e9ec56e989eee02b8623b1a657337956ecd88faeabaf9f2efc70044"
+    },
+    {
+      "path": "/etc/ssl/certs/ca-certificates.crt",
+      "sha256": "42abac4a108699ceed5de68ec2d45928fec88de6108370c99d80f1184f7d9e79"
+    }
+  ],
+  "local_root_custody_verified": true,
+  "historical_source_reauthenticated": false,
+  "source_signer_authority_qualified": false,
+  "gateway_signer_authority_qualified": false,
+  "complete_gateway_coverage_verified": false,
+  "future_enforcement_verified": false,
+  "network_admitted": false,
+  "trading_admitted": false,
+  "venue_requests_made": 0,
+  "network_mutations": 0,
+  "bootstrap_scope_consumed": true,
+  "joint_scope_consumed": false,
+  "verification": {
+    "new_tests": 22,
+    "focused_tests_passed": 100,
+    "actual_matching_processes": 2,
+    "actual_wrong_selection_refused": true,
+    "original_root_files_unchanged": true
+  },
+  "next_step": "Prospective all-caller accounting and dispatch enforcement using held local custody and explicit authority policy; qualify complete historical/future coverage before a separately reviewed network scope."
+}

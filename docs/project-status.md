@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-16
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Original one-shot REST bootstrap evidence is now integrated into offline joint admission. Two actual reviews match; response-header to body completion took 7.82 seconds, exceeding the frozen 5-second freshness limit. The consumed bootstrap remains successful historical evidence, not a new dispatch permit. Next qualify source/gateway authority and implement prospective all-caller accounting, fresh rate/clock consumption and per-dispatch enforcement. Joint capture and trading remain blocked.
+- **Current objective**: Local root custody and source-route binding are implemented and verified on the actual host. Two independent root processes match; wrong selected binding is refused. Held descriptors join installed code/account, original bootstrap files, boot/namespaces and current network structure; observed drift invalidates the object permanently. Next implement prospective all-caller accounting and dispatch enforcement with explicit source/gateway authority policy. The consumed bootstrap, stale rate evidence and joint/trading blocks remain.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -250,7 +250,8 @@ Detailed depth implementation, retained hashes and next review:
 [actual disposable installation/UID acceptance](progress/portfolio-egress-isolated-installation-2026-09-16.md),
 [real-host bootstrap preparation](progress/portfolio-egress-host-bootstrap-2026-09-16.md),
 [completed actual bootstrap](progress/portfolio-egress-bootstrap-result-2026-09-16.md),
-and [original bootstrap evidence in joint admission](progress/portfolio-bootstrap-joint-review-2026-09-16.md).
+[original bootstrap evidence in joint admission](progress/portfolio-bootstrap-joint-review-2026-09-16.md),
+and [actual local custody binding](progress/portfolio-local-authority-binding-2026-09-16.md).
 
 ## Next Steps
 
@@ -284,8 +285,11 @@ and [original bootstrap evidence in joint admission](progress/portfolio-bootstra
    now incorporates the actual original bytes and exposes the 7.82-second header
    age at body completion. Unknown usage stays unknown and the full 17 GET / 468
    budget stays reserved in the review. Next follow the report's implementation
-   order: authority qualification, prospective all-caller accounting, fresh
-   rate/clock consumption, provider-charge resolution, then actual joint dispatch.
+   order. [Local root custody and route binding](progress/portfolio-local-authority-binding-2026-09-16.md)
+   now pass on the actual host with two matching root processes and wrong-selection
+   refusal. Held-file/code/account/boot/network drift closes the binding. Next
+   implement prospective all-caller accounting with explicit authority policy,
+   fresh rate/clock consumption, provider-charge resolution, then joint dispatch.
    Preserve the consumed scope; no retry, second IPv4 or extended interruption
    follows. Reboot/power-loss and storage rollback remain unqualified.
    Obtain qualified signer/source records, fresh initial usage/limits and complete
@@ -327,6 +331,13 @@ and [original bootstrap evidence in joint admission](progress/portfolio-bootstra
 - Nautilus is the only execution engine; LLMs never enter the order path.
 
 ## Latest Verification
+
+- Local authority binding: **22 new / 100 focused tests pass**. Two independent
+  root observations on the actual host have identical bindings; wrong expected
+  selection is refused. File/code/CA/account/boot/route/rule drift permanently
+  closes held descriptors. Original archives and installed sources are unchanged,
+  existing services active, no venue requests or network mutations. Ruff/format,
+  pins, frozen artifacts, links and diff pass; no upstream/live-path change.
 
 - Bootstrap-to-joint integration: **20 new / 234 focused tests pass**. Two fresh
   reviews of the actual original artifacts are byte-identical and remain blocked.

@@ -22,6 +22,14 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the actual local custody/source-route binding, read
+`docs/progress/portfolio-local-authority-binding-2026-09-16.md` and its JSON.
+`infra/egress-guard/authority_binding.py` holds root-owned original/code descriptors
+and invalidates on file/account/boot/network drift. Two actual root processes match.
+It verifies local custody only: no source/gateway signer qualification, continuous
+coverage or dispatch permit follows. Reports cannot recreate the held authority.
+Next implement prospective all-caller accounting without reopening consumed scopes.
+
 For the current offline use of the completed bootstrap evidence, read
 `docs/progress/portfolio-bootstrap-joint-review-2026-09-16.md` and its JSON.
 `apps.ops.portfolio_joint_admission` accepts pinned original bootstrap plan/events/

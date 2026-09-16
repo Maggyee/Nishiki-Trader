@@ -527,3 +527,19 @@ Actual execution is now complete: see the
 HTTP 200, one GET, no retry; all owned network resources removed and existing
 services active. The fixed real scope is permanently consumed. The next entrypoint
 is offline original-evidence review; do not invoke `--execute` again.
+
+## Local root custody and source-route binding
+
+`authority_binding.py` joins the existing installed verifier with held descriptors
+for the fixed consumed bootstrap originals, deployed runner/parser/CA, account,
+boot/namespaces and current structural network. File checks bracket read-only local
+network observations; any observed drift permanently closes the binding. Original
+hashes are selected explicitly; a second process can require an earlier fingerprint.
+There is no dispatch/signing/reset API and reports cannot recreate authority.
+
+Actual root-staged verification now passes in two independent processes, with a
+wrong expected binding refused. See the
+[acceptance report](../../docs/progress/portfolio-local-authority-binding-2026-09-16.md).
+Current local custody does not qualify provider/gateway authority, continuous
+coverage or future enforcement. Next entrypoint: prospective all-caller accounting
+and dispatch checks bound to protected local state; no new maintenance is activated.
