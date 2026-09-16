@@ -266,6 +266,16 @@ an authorized collector, create storage or activate the maintenance window from
 these results. Next implement reviewed collector launch/authenticated helper IPC
 and complete source/path/storage qualification before deployment.
 
+For the subsequent isolated collector launcher and authenticated control channel,
+read `docs/progress/portfolio-collector-launcher-2026-09-16.md` and
+`infra/egress-guard/collector_launcher.py`. A pidfd and per-message kernel credentials
+bind the fixed launched child; a finite channel joins durable window activation,
+journaled control observation and terminal cleanup. The actual fixture passes but
+has no real network transport. Its same-UID rootless mapping does not qualify
+dedicated host identity or storage isolation. This is a bounded selftest, not an
+installed privileged helper. Next establish root-owned installed code, dedicated
+UID and fixed host authority before integrating actual source/paths and bootstrap.
+
 For actual disposable Linux egress-hook acceptance, read
 `docs/progress/portfolio-vps-egress-namespace-acceptance-2026-09-15.md` and
 `infra/egress-guard/README.md`. The standalone non-root fixture passes 23 checks

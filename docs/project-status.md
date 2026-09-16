@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-16
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Reuse the existing public IPv4. Durable maintenance-window activation and read-only local binding/drift preflight are implemented. Actual host reads pass, but no authorized collector is selected and fixed storage is not ready. Next implement the reviewed collector launcher/authenticated helper boundary and qualify actual public mapping, complete paths and fixed storage. The 12-second collector / 20-second blackout candidate is not approved or deployed. No bootstrap or consumed scope is activated.
+- **Current objective**: Reuse the existing public IPv4. An isolated fixed collector launcher now uses pidfds and kernel message credentials, and joins durable window activation to a journaled control observation and cleanup. Read-only host preflight exists; actual dedicated collector identity and fixed storage remain missing. Next establish root-owned installed code, dedicated UID and fixed helper authority, then qualify actual mapping/paths and bootstrap transport. The 12-second collector / 20-second blackout remains unapproved and undeployed. No real scope is activated.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -243,7 +243,8 @@ Detailed depth implementation, retained hashes and next review:
 [actual shared-source NAT/proxy acceptance](progress/portfolio-shared-egress-acceptance-2026-09-16.md),
 [bounded maintenance alternative](progress/portfolio-maintenance-window-2026-09-16.md),
 [durable window activation and crash replay](progress/portfolio-maintenance-persistence-2026-09-16.md),
-[read-only host binding and drift preflight](progress/portfolio-egress-binding-preflight-2026-09-16.md).
+[read-only host binding and drift preflight](progress/portfolio-egress-binding-preflight-2026-09-16.md),
+[isolated collector launch and authenticated IPC](progress/portfolio-collector-launcher-2026-09-16.md).
 
 ## Next Steps
 
@@ -283,9 +284,12 @@ Detailed depth implementation, retained hashes and next review:
    Read-only preflight now binds selected local interface/address, host boot,
    process metadata, network structure and fixed root-owned storage; pinned
    comparisons reject incomplete bindings and report drift. Actual host reads pass,
-   but no collector is selected and fixed storage is missing/unreadable. Next build
-   the reviewed launcher/authenticated helper boundary and qualify actual public
-   mapping, complete paths and storage before rollout. The 20-second interruption is not accepted or
+   but no collector is selected and fixed storage is missing/unreadable. The isolated
+   launcher now binds its actual child with pidfd/kernel credentials, then joins
+   durable activation, one control observation and cleanup. Its same-UID fixture
+   does not qualify production identity/storage isolation. Next establish trusted
+   installed code, dedicated UID and fixed helper authority, then qualify actual
+   public mapping, complete paths and storage. The 20-second interruption is not accepted or
    deployed. Do not silently stop services; the host inspector remains read-only.
    The separate one-GET REST bootstrap proposal acknowledges unknown prior usage;
    review/implement it before any activation. It cannot satisfy or silently amend
@@ -330,13 +334,14 @@ Detailed depth implementation, retained hashes and next review:
 
 ## Latest Verification
 
-- Host-binding preflight: **186 focused Python tests pass**, including 37 new
-  binding cases. Two actual read-only host snapshots complete all seven commands
-  and show no structural drift, but correctly refuse a complete binding because
-  collector identity and fixed storage are missing. Root-ancestor permissions,
-  PID/boot/namespace drift, policy changes, pinned-byte comparison and private
-  output refusal are covered. Ruff/format, links and frozen-byte checks pass.
-  No host mutation or venue request; the unchanged Linux fixture was not rerun.
+- Collector launcher: **14 isolated integration checks / 216 focused Python tests
+  pass**, including 30 new launcher/channel cases. Kernel credentials, pidfd death,
+  helper crash, capability removal, authenticated durable window/IPC ordering and
+  terminal cleanup pass. Same-UID impostors, bad frames, passed descriptors,
+  repetition and uncertain results are refused. Ruff/format, links and frozen-byte
+  checks pass. No host mutation or venue request; the unchanged 151-check network
+  harness was not rerun. Host preflight's last two observations still lack an
+  authorized collector and fixed storage; they are not current runtime authority.
 
 - Persistent maintenance-window fixture: **151 Linux checks / 149 focused Python
   tests pass** (11 additional kernel checks, 23 additional Python cases). Window

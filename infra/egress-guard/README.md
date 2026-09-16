@@ -232,6 +232,51 @@ handle, code attestation or continuous guard. Public mapping, authorized collect
 launch/IPC, complete tunnels/offload/proxy coverage, durable fixed storage and
 deployment acceptance remain required. See the [binding preflight report](../../docs/progress/portfolio-egress-binding-preflight-2026-09-16.md).
 
+## Isolated collector launcher and authenticated control channel
+
+Run the separate bounded launcher acceptance as an ordinary user, without arguments:
+
+```bash
+/usr/bin/python3 -I infra/egress-guard/collector_launcher.py
+```
+
+It reuses `selftest.py`'s namespace-isolation checks and durable journals, plus
+`inspect_binding.py`'s process metadata reader. Sources are loaded once into the
+disposable worker; their hashes are reported. Before any fixture mount/nft mutation,
+the worker must be in fresh user/network/mount/PID namespaces with empty topology.
+Its 25-second alarm and the parent's 30-second timeout bound the run. It installs
+no host service or privileged entrypoint and accepts neither supplied commands
+nor real collector parameters through its public CLI.
+
+`FixtureCollector` launches a fixed system-Python child in another fresh network
+namespace, with all capability sets removed and no-new-privileges. A private Unix
+`SOCK_SEQPACKET` pair is the only control channel; no filesystem socket/listener
+is published. The helper holds a pidfd for its actual child. Every received frame
+must carry matching kernel `SCM_CREDENTIALS` PID/UID/GID, canonical bounded JSON,
+the exact operation/sequence and no extra fields. Cached socketpair `SO_PEERCRED`
+identifies the creating process, so it is deliberately not used as child identity.
+Passed file descriptors, oversized/truncated frames and malformed credentials
+terminate the channel; any received descriptors are closed even on truncation.
+
+The finite protocol is `ready`, at most one `observe`/`observed`, then `close`/
+`closed`. There is no command, path, destination, activation or renewal operation.
+The parent independently binds process metadata and launcher-source hash, verifies
+pidfd liveness and metadata before/after observation, and consumes the local
+attempt before sending. Failure stops processing and reaps the child; helper death
+closes the channel and the child exits on EOF or its receive timeout. Process
+ownership and a lock serialize normal observation/shutdown. There is no retry.
+
+The actual isolated acceptance joins authenticated readiness to durable window
+activation, then a separate journaled control observation, kernel revocation and
+child teardown. Window and IPC attempts remain distinct in replay. The child has
+no IP routes or transport operation; this does not exercise a real HTTP request.
+The existing rootless map gives helper and child the same namespace UID 0, with
+capabilities removed only in the child. It does **not** prove a dedicated host UID
+or filesystem separation: the trusted fixture child could access same-UID fixture
+files if its code were changed. Installed code ownership, dedicated UID/IPC policy,
+fixed host storage and real source/path authority remain production work. Do not
+install this test harness as a sudo helper. See the [launcher acceptance report](../../docs/progress/portfolio-collector-launcher-2026-09-16.md).
+
 ## Shared-source NAT and proxy acceptance
 
 The same `selftest.py` now includes 49 additional actual kernel checks: direct
