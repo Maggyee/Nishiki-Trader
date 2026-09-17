@@ -22,6 +22,15 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For installed native signed-request custody, read
+`docs/progress/portfolio-installed-native-requests-2026-09-17.md` and its JSON.
+Fixture manifest v6 pins twelve sources. A separate ledger/scope validates 20 fixed
+selectors and nine native Ed25519 signatures before root receipts. Public RFC 8032
+fixture keys and fixed routes confer no real source/venue authority. Seven new plus
+35 regression scenarios and independent original/native replays pass. This profile
+never grants kernel permission or dispatches; next join validated selectors to
+actual full native account/route collection and gateway-owned TLS/WS transport.
+
 For installed gateway delivery to a native Nautilus metadata consumer, read
 `docs/progress/portfolio-installed-native-receipt-2026-09-17.md` and its JSON.
 Fixture manifest v5 pins eleven sources and a separate child-only frozen runtime.

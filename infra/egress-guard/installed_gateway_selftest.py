@@ -46,6 +46,7 @@ IPC_SCENARIOS = (
     "ipc_storage_drift",
     "ipc_controller_crash",
 )
+REQUEST_SCENARIOS = IPC_SCENARIOS + ("ipc_runtime_drift",)
 ENV = {"PATH": "/usr/sbin:/usr/bin:/sbin:/bin", "LC_ALL": "C"}
 
 
@@ -73,7 +74,7 @@ if runtime.exists():
     denied('native_runtime_write',lambda:os.open(runtime/'bin/python3.12',os.O_WRONLY))
     denied('native_runtime_replace',lambda:os.unlink(runtime/'bin/python3.12'))
 code=Path('/usr/local/lib/trader-egress')
-for name in ('installed_gateway.py','gateway_tls.py','gateway_joint_ipc.py','gateway_tls_receipt.py','gateway_native_runtime.py','gateway_native_receipt.py','ledger_gateway.py','selftest.py','portfolio_rate_evidence.py','portfolio_tls_provenance.py','portfolio_egress_ledger.py'):
+for name in ('installed_gateway.py','gateway_tls.py','gateway_joint_ipc.py','gateway_tls_receipt.py','gateway_native_runtime.py','gateway_native_receipt.py','gateway_native_requests.py','ledger_gateway.py','selftest.py','portfolio_rate_evidence.py','portfolio_tls_provenance.py','portfolio_egress_ledger.py'):
     path=code/name
     assert path.read_bytes()
     denied('write:'+name,lambda:os.open(path,os.O_WRONLY))
@@ -148,19 +149,23 @@ with socket.socket() as listener:
 def worker(payload):
     base = load(payload["base_source"])
     base["require_isolation"](payload["original"])
+    requests = payload.get("native_requests_profile", False)
     native = payload.get("native_receipt_profile", False)
     receipt = payload.get("tls_receipt_profile", False) or native
     tls = payload.get("tls_profile", False) or receipt
-    ipc = payload.get("joint_ipc_profile", False)
+    ipc = payload.get("joint_ipc_profile", False) or requests
     if (
-        type(native) is not bool
+        type(requests) is not bool
+        or type(native) is not bool
         or type(receipt) is not bool
         or type(tls) is not bool
         or type(ipc) is not bool
         or (tls and ipc)
         or payload["scenario"]
         not in (
-            IPC_SCENARIOS
+            REQUEST_SCENARIOS
+            if requests
+            else IPC_SCENARIOS
             if ipc
             else NATIVE_SCENARIOS
             if native
@@ -204,7 +209,7 @@ def worker(payload):
         0o600,
     )
     native_runtime = None
-    if native:
+    if native or requests:
         native_runtime = load(payload["sources"]["gateway_native_runtime.py"])["stage"](
             base64.b64decode(payload["native_bundle"], validate=True),
             payload["native_bundle_sha256"],
@@ -283,7 +288,15 @@ def worker(payload):
             raise RuntimeError("fixture_peer_not_ready")
         network_run(nft, "-f", "-", text=gateway["RULES"])
         if ipc:
-            return worker_ipc(payload, installed, entry, guards, ledger_module, manifest)
+            return worker_ipc(
+                payload,
+                installed,
+                entry,
+                guards,
+                ledger_module,
+                manifest,
+                native_runtime=native_runtime,
+            )
         command = [
             "/usr/bin/python3",
             "-I",
@@ -686,13 +699,16 @@ def worker(payload):
         peer.stop()
 
 
-def worker_ipc(payload, installed, entry, guards, module, manifest):
+def worker_ipc(payload, installed, entry, guards, module, manifest, *, native_runtime=None):
     """Shared installed fixture environment; IPC never activates a mark grant."""
+    requests = payload.get("native_requests_profile", False)
+    profile = module.REQUEST_PROFILE if requests else module.IPC_PROFILE
+    scope_name = module.REQUEST_SCOPE if requests else module.IPC_SCOPE
     command = [
         "/usr/bin/python3",
         "-I",
         entry["CODE"] + "/installed_gateway.py",
-        "--joint-ipc-fixture",
+        "--native-requests-fixture" if requests else "--joint-ipc-fixture",
     ]
     controller = subprocess.Popen(
         command,
@@ -737,7 +753,7 @@ def worker_ipc(payload, installed, entry, guards, module, manifest):
                 "no_privileged_descriptor_handoff",
             ]
         )
-        scope = Path(entry["STORAGE"]) / module.IPC_SCOPE
+        scope = Path(entry["STORAGE"]) / scope_name
         probe = json.loads(
             run(
                 "/usr/bin/setpriv",
@@ -751,7 +767,7 @@ def worker_ipc(payload, installed, entry, guards, module, manifest):
                 "/usr/bin/python3",
                 "-I",
                 "-c",
-                PROBE.replace("local-egress-attempts-v1", module.IPC_SCOPE),
+                PROBE.replace("local-egress-attempts-v1", scope_name),
             )
         )
         checks.extend(probe["checks"])
@@ -765,7 +781,7 @@ def worker_ipc(payload, installed, entry, guards, module, manifest):
             original,
             expected_sha256=module.digest(original),
             binding_sha256=ready["binding_sha256"],
-            profile=module.IPC_PROFILE,
+            profile=profile,
         )
         if midway["recorded_attempts"] != 10 or midway["pending_attempt"] != 9:
             raise RuntimeError("joint_ipc_unpersisted_receipt")
@@ -780,7 +796,9 @@ def worker_ipc(payload, installed, entry, guards, module, manifest):
         if scenario == "ipc_child_death":
             os.kill(identity["pid"], signal.SIGKILL)
         elif scenario == "ipc_code_drift":
-            path = Path(entry["CODE"]) / "gateway_joint_ipc.py"
+            path = Path(entry["CODE"]) / (
+                "gateway_native_requests.py" if requests else "gateway_joint_ipc.py"
+            )
             before = path.read_bytes()
             path.write_bytes(before + b"\n# fixture drift\n")
 
@@ -799,6 +817,14 @@ def worker_ipc(payload, installed, entry, guards, module, manifest):
 
             def restore():
                 path.chmod(0o700)
+
+        if scenario == "ipc_runtime_drift":
+            run("/usr/bin/mount", "-o", "remount,rw,nosuid,nodev", "/run/trader-native-runtime")
+
+            def restore():
+                run("/usr/bin/mount", "-o", "remount,ro,nosuid,nodev", "/run/trader-native-runtime")
+
+            checks.append("native_request_runtime_drift_injected")
 
         if scenario == "ipc_controller_crash":
             child_pidfd = os.pidfd_open(identity["pid"])
@@ -820,7 +846,13 @@ def worker_ipc(payload, installed, entry, guards, module, manifest):
                 raise RuntimeError("joint_ipc_controller_failed:" + stderr[-3000:])
             terminal = json.loads(stdout)
             if terminal["status"] != (
-                "joint_ipc_accounting_completed" if scenario == "ipc_success" else "refused"
+                (
+                    "native_request_custody_completed"
+                    if requests
+                    else "joint_ipc_accounting_completed"
+                )
+                if scenario == "ipc_success"
+                else "refused"
             ):
                 raise RuntimeError("joint_ipc_wrong_terminal")
         if restore:
@@ -831,7 +863,7 @@ def worker_ipc(payload, installed, entry, guards, module, manifest):
             raw,
             expected_sha256=module.digest(raw),
             binding_sha256=ready["binding_sha256"],
-            profile=module.IPC_PROFILE,
+            profile=profile,
         )
         expected = 20 if scenario == "ipc_success" else 10
         if report["recorded_attempts"] != expected or report["pending_attempt"] != (
@@ -895,7 +927,29 @@ def worker_ipc(payload, installed, entry, guards, module, manifest):
         ):
             raise RuntimeError("prior_consumed_scope_changed")
         checks.append("prior_consumed_scope_preserved")
+        request_result = {}
+        if requests:
+            request_raw = (scope / "requests.jsonl").read_bytes()
+            request_report = load(payload["sources"]["gateway_native_requests.py"])["replay"](
+                request_raw,
+                expected_sha256=module.digest(request_raw),
+                attempts=raw,
+                binding_sha256=ready["binding_sha256"],
+                module=module,
+            )
+            if (request_report["status"] == "complete") != (scenario == "ipc_success"):
+                raise RuntimeError("native_request_completion_mismatch")
+            if any(name.startswith("nautilus_trader") for name in sys.modules):
+                raise RuntimeError("native_package_loaded_by_root")
+            request_result = {
+                "request_archive": request_raw.decode(),
+                "request_replay": request_report,
+                "native_runtime": native_runtime,
+                "root_native_modules_loaded": False,
+            }
+            checks.append("native_signatures_and_exact_selectors_replay_without_native_root_import")
         return {
+            **request_result,
             "status": "passed",
             "scenario": scenario,
             "checks": checks,
@@ -928,6 +982,7 @@ def main(argv=None):
     profiles.add_argument("--tls-profile", action="store_true")
     profiles.add_argument("--tls-receipt-profile", action="store_true")
     profiles.add_argument("--native-receipt-profile", action="store_true")
+    profiles.add_argument("--native-requests-profile", action="store_true")
     profiles.add_argument("--joint-ipc-profile", action="store_true")
     args = parser.parse_args(argv)
     if os.geteuid() == 0:
@@ -957,7 +1012,7 @@ def main(argv=None):
             for name in entry["FILES"]
         }
         native_bundle = None
-        if args.native_receipt_profile:
+        if args.native_receipt_profile or args.native_requests_profile:
             built = subprocess.run(
                 [
                     str(directory.parents[1] / ".venv/bin/python"),
@@ -987,6 +1042,7 @@ def main(argv=None):
             "tls_profile": args.tls_profile,
             "tls_receipt_profile": args.tls_receipt_profile,
             "native_receipt_profile": args.native_receipt_profile,
+            "native_requests_profile": args.native_requests_profile,
             "joint_ipc_profile": args.joint_ipc_profile,
             "base_source": base_source,
             "installer": installer.decode(),
@@ -999,7 +1055,9 @@ def main(argv=None):
         reports = []
         bootstrap = "import json,sys\np=json.load(sys.stdin)\ns={'__name__':'isolated_installed_gateway'}\nexec(compile(p['source'],'<fixture>','exec'),s)\nprint(json.dumps(s['worker'](p),sort_keys=True))\n"
         for scenario in (
-            IPC_SCENARIOS
+            REQUEST_SCENARIOS
+            if args.native_requests_profile
+            else IPC_SCENARIOS
             if args.joint_ipc_profile
             else NATIVE_SCENARIOS
             if args.native_receipt_profile
@@ -1069,6 +1127,7 @@ def main(argv=None):
             "tls_profile": args.tls_profile,
             "tls_receipt_profile": args.tls_receipt_profile,
             "native_receipt_profile": args.native_receipt_profile,
+            "native_requests_profile": args.native_requests_profile,
             "joint_ipc_profile": args.joint_ipc_profile,
             "scenarios": reports,
             "source_sha256": payload["source_sha256"],

@@ -6,6 +6,28 @@ offline disk tests, and retain read-only host deployment-input snapshots.
 Current phase: Phase 5 entry, offline infrastructure acceptance only. This is not
 a production guard, gateway audit service, quota authority or collection permit.
 
+The native request custody successor is `gateway_native_requests.py`:
+
+```bash
+/usr/bin/python3 -I infra/egress-guard/installed_gateway_selftest.py --native-requests-profile --report data/NEW-REQUESTS.json
+```
+
+It reuses the frozen native child runtime and exact PID/UID/GID credential channel.
+The isolated child emits 20 fixed request envelopes, including eight REST signatures
+and one signed WS subscription using Nautilus Ed25519 and the public RFC 8032 test
+key. Root uses system OpenSSL with anonymous file descriptors to verify signatures,
+compares exact methods/paths/parameters and original challenge clocks, and persists
+request hashes before acknowledgements. The fixture budget stays 16 GET selectors /
+448 documented weight with unknown market-connection charge. No kernel grant or
+request dispatch follows. Fixed BTC/ETH/BNB routes and subscription ID zero are
+synthetic selections, not values derived from actual same-run responses.
+
+Manifest v6 pins twelve protected sources. The separate request ledger/scope and
+`requests.jsonl` preserve incomplete attempts after drift, consumer death or root
+crash. Detached replay verifies signatures and receipt ordering with original times;
+it never refreshes expiry or repairs missing acknowledgements. Next connect actual
+account/route collection and root-owned TLS/WS. See [request acceptance](../../docs/progress/portfolio-installed-native-requests-2026-09-17.md).
+
 The native metadata successor adds `gateway_native_runtime.py` and
 `gateway_native_receipt.py`. Run the existing disposable wrapper as an ordinary user:
 
@@ -18,7 +40,7 @@ retaining a `.runtime.tar.gz` beside the report. Only the isolated dedicated UID
 imports Nautilus and constructs BTC/ETH/BNB/USDT Currency objects from the original
 root HTTPS bytes. Its final acknowledgement binds both the native summary and the
 original payload, including original receive clocks. Root parses the expected
-summary with stdlib only. Protected fixture manifest v5 pins eleven sources;
+summary with stdlib only. Protected fixture manifest v6 pins twelve sources;
 base installation and earlier journal profiles remain separate.
 
 The private runtime tmpfs is root-owned and read-only. Files are fully hashed at
@@ -121,7 +143,7 @@ and [lifecycle acceptance](../../docs/progress/portfolio-egress-gateway-lifecycl
 
 The ordinary-user wrapper uses existing sudo to run five fresh private mount,
 network and PID namespaces. It reuses the pinned installer, then stages a separate
-fixture v5 manifest and eleven protected sources in the disposable installation. The
+fixture v6 manifest and twelve protected sources in the disposable installation. The
 fixed installed `installed_gateway.py --fixture` entry consumes the original
 fixed storage scope, authenticates the distinct-UID child and uses the durable
 kernel lifecycle. Neither the collector nor the public wrapper can select another

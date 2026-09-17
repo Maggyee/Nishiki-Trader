@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-17
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Installed HTTPS delivery now reaches an isolated native Nautilus metadata consumer: four Currency objects are constructed before the authenticated final receipt. A frozen child-only runtime is hash-pinned and mounted read-only; failed native parsing or runtime drift leaves the attempt pending. Next connect the full native 20-operation collector, signed selectors, same-run routes and concurrent TLS/WS traffic. Actual all-caller coverage, provider rate/clock qualification, host rollout and trading remain blocked; consumed scopes stay consumed.
+- **Current objective**: Installed isolation now supports native metadata receipts and a separate 20-step signed-request custody rehearsal. The dedicated UID uses Nautilus Ed25519 signing; root verifies fixed selectors, challenge clocks and nine signatures before durable request receipts. The request profile never dispatches traffic. Next join it to gateway-owned TLS/WS and actual same-run account/route collection. Actual authority/coverage, provider rate/clock qualification, host rollout and trading remain blocked; consumed scopes stay consumed.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -318,8 +318,10 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
    now carries one fixed response and original clocks to the isolated UID after kernel
    revocation. [Native metadata consumption](progress/portfolio-installed-native-receipt-2026-09-17.md)
    now constructs four native Currency objects in the isolated child before its final
-   acknowledgement. Next integrate the full native collector, signed selectors,
-   same-run routes and concurrent TLS/WS traffic through the expiring kernel lifecycle.
+   acknowledgement. [Native signed-request custody](progress/portfolio-installed-native-requests-2026-09-17.md)
+   now verifies 20 fixed selectors and nine native signatures in a separate no-dispatch
+   profile. Next connect full native account collection, same-run routes and concurrent
+   TLS/WS traffic through the expiring kernel lifecycle.
    Sampling alone never proves coverage.
    Actual authority policy, fresh rate/clock consumption and provider-charge
    resolution must precede any separately reviewed real joint dispatch.
@@ -365,13 +367,14 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
 
 ## Latest Verification
 
-- Installed native metadata receipt: **25 new / 865 focused tests pass**; **35 actual
-  disposable scenarios** pass (7 native, 28 existing-profile regressions). Two stdlib
-  replays reproduce all 35 original reports; two frozen-runtime native replays
-  reproduce Currency mapping and the precision-17 rejection without repairing
-  missing acknowledgements. See [native receipt acceptance](progress/portfolio-installed-native-receipt-2026-09-17.md).
-  Earlier [stall review](progress/portfolio-installed-tls-receipt-stall-2026-09-17.md)
-  and response acceptance keep their original evidence.
+- Installed native request custody: **52 new / 733 focused tests pass**, with no
+  warnings; **42 actual disposable scenarios** pass (7 request, 35 regression).
+  Two detached replays reproduce all selected records. Two frozen-runtime replays
+  regenerate 80 original requests across seven success/failure scenarios, preserving
+  original missing acknowledgements; metadata mapping regressions also match.
+  See [signed-request custody](progress/portfolio-installed-native-requests-2026-09-17.md).
+  Earlier [native metadata receipt](progress/portfolio-installed-native-receipt-2026-09-17.md)
+  retains its original evidence. Full collector transport integration remains pending.
 - The complete ordinary-process native joint collector retains its prior 20-operation /
   16-GET / 448-weight acceptance and original receipt clocks. Connecting that collector
   to installed gateway-owned sockets remains pending. Earlier details are archived in

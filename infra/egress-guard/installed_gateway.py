@@ -21,13 +21,14 @@ FILES = (
     "gateway_tls_receipt.py",
     "gateway_native_runtime.py",
     "gateway_native_receipt.py",
+    "gateway_native_requests.py",
     "ledger_gateway.py",
     "selftest.py",
     "portfolio_rate_evidence.py",
     "portfolio_tls_provenance.py",
     "portfolio_egress_ledger.py",
 )
-PROFILE = "portfolio.installed_gateway_fixture.v5"
+PROFILE = "portfolio.installed_gateway_fixture.v6"
 
 
 def digest(raw):
@@ -355,18 +356,25 @@ def main():
             ["--joint-ipc-fixture"],
             ["--tls-receipt-fixture"],
             ["--native-receipt-fixture"],
+            ["--native-requests-fixture"],
         )
         or not sys.flags.isolated
         or os.path.abspath(__file__) != CODE + "/installed_gateway.py"
     ):
         raise ValueError("fixed_installed_fixture_entry_required")
-    if sys.argv[1:] == ["--joint-ipc-fixture"]:
+    if sys.argv[1:] in (["--joint-ipc-fixture"], ["--native-requests-fixture"]):
         # Bootstrap through the same held installation before executing the extension.
         authority = installation()
         try:
             fixture_context(authority)
             sources = InstalledGatewaySources(authority)
-            extension = load(sources.source("gateway_joint_ipc.py"))
+            extension = load(
+                sources.source(
+                    "gateway_native_requests.py"
+                    if sys.argv[1:] == ["--native-requests-fixture"]
+                    else "gateway_joint_ipc.py"
+                )
+            )
             extension["run_installed"](globals(), authority, sources)
         finally:
             authority.close()

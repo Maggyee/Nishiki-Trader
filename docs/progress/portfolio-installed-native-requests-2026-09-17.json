@@ -1,0 +1,550 @@
+{
+  "acceptance_scenarios": {
+    "echo-regression": [
+      {
+        "checks": 57,
+        "name": "success",
+        "status": "passed"
+      },
+      {
+        "checks": 57,
+        "name": "code_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 57,
+        "name": "account_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 57,
+        "name": "storage_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 58,
+        "name": "controller_crash",
+        "status": "passed"
+      }
+    ],
+    "ipc-regression": [
+      {
+        "checks": 60,
+        "name": "ipc_success",
+        "status": "passed"
+      },
+      {
+        "checks": 60,
+        "name": "ipc_child_death",
+        "status": "passed"
+      },
+      {
+        "checks": 60,
+        "name": "ipc_code_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 60,
+        "name": "ipc_account_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 60,
+        "name": "ipc_storage_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 61,
+        "name": "ipc_controller_crash",
+        "status": "passed"
+      }
+    ],
+    "native-receipt-regression": [
+      {
+        "checks": 61,
+        "name": "tls_success",
+        "status": "passed"
+      },
+      {
+        "checks": 61,
+        "name": "tls_slow_body",
+        "status": "passed"
+      },
+      {
+        "checks": 61,
+        "name": "native_precision",
+        "status": "passed"
+      },
+      {
+        "checks": 63,
+        "name": "receipt_runtime_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 60,
+        "name": "tls_bad_certificate",
+        "status": "passed"
+      },
+      {
+        "checks": 64,
+        "name": "receipt_child_stopped",
+        "status": "passed"
+      },
+      {
+        "checks": 63,
+        "name": "receipt_controller_crash",
+        "status": "passed"
+      }
+    ],
+    "native-requests-acceptance": [
+      {
+        "checks": 63,
+        "name": "ipc_success",
+        "status": "passed"
+      },
+      {
+        "checks": 63,
+        "name": "ipc_child_death",
+        "status": "passed"
+      },
+      {
+        "checks": 63,
+        "name": "ipc_code_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 63,
+        "name": "ipc_account_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 63,
+        "name": "ipc_storage_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 64,
+        "name": "ipc_controller_crash",
+        "status": "passed"
+      },
+      {
+        "checks": 64,
+        "name": "ipc_runtime_drift",
+        "status": "passed"
+      }
+    ],
+    "receipt-regression": [
+      {
+        "checks": 59,
+        "name": "tls_success",
+        "status": "passed"
+      },
+      {
+        "checks": 59,
+        "name": "tls_slow_body",
+        "status": "passed"
+      },
+      {
+        "checks": 58,
+        "name": "tls_bad_certificate",
+        "status": "passed"
+      },
+      {
+        "checks": 58,
+        "name": "tls_duplicate_weight",
+        "status": "passed"
+      },
+      {
+        "checks": 58,
+        "name": "tls_truncated",
+        "status": "passed"
+      },
+      {
+        "checks": 59,
+        "name": "tls_crash",
+        "status": "passed"
+      },
+      {
+        "checks": 60,
+        "name": "receipt_child_death",
+        "status": "passed"
+      },
+      {
+        "checks": 62,
+        "name": "receipt_child_stopped",
+        "status": "passed"
+      },
+      {
+        "checks": 61,
+        "name": "receipt_controller_crash",
+        "status": "passed"
+      },
+      {
+        "checks": 60,
+        "name": "receipt_code_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 60,
+        "name": "receipt_storage_drift",
+        "status": "passed"
+      }
+    ],
+    "tls-regression": [
+      {
+        "checks": 58,
+        "name": "tls_success",
+        "status": "passed"
+      },
+      {
+        "checks": 58,
+        "name": "tls_slow_body",
+        "status": "passed"
+      },
+      {
+        "checks": 58,
+        "name": "tls_bad_certificate",
+        "status": "passed"
+      },
+      {
+        "checks": 58,
+        "name": "tls_duplicate_weight",
+        "status": "passed"
+      },
+      {
+        "checks": 58,
+        "name": "tls_truncated",
+        "status": "passed"
+      },
+      {
+        "checks": 59,
+        "name": "tls_crash",
+        "status": "passed"
+      }
+    ]
+  },
+  "base_commit": "c4dd19ef7fd86ee9fc352a7aedbf0dc9aeb496e5",
+  "date": "2026-09-17",
+  "detached_replays": [
+    {
+      "path": "data/installed-native-requests-2026-09-17/replay-1.json",
+      "sha256": "3b6009f1badcc76c8703f002549d1a6e9472cd8343c826b7cc351e9357e52be2"
+    },
+    {
+      "path": "data/installed-native-requests-2026-09-17/replay-2.json",
+      "sha256": "3b6009f1badcc76c8703f002549d1a6e9472cd8343c826b7cc351e9357e52be2"
+    },
+    {
+      "path": "data/installed-native-requests-2026-09-17/native-replay-1.json",
+      "sha256": "52371b398750833d4fc4b49a66770aac5495ecfb82f27e099ff4a6c78f338c6e"
+    },
+    {
+      "path": "data/installed-native-requests-2026-09-17/native-replay-2.json",
+      "sha256": "52371b398750833d4fc4b49a66770aac5495ecfb82f27e099ff4a6c78f338c6e"
+    }
+  ],
+  "fixed_request_budget": {
+    "connection_classes": 2,
+    "documented_weight": 448,
+    "get_selectors": 16,
+    "operations": 20,
+    "signed_requests": 9,
+    "unknown_charge_operations": 1
+  },
+  "fixture_key": "Public RFC 8032 vector; no operator credential or real source authentication",
+  "fixture_manifest_profile": "portfolio.installed_gateway_fixture.v6",
+  "host_installation_performed": false,
+  "host_observations_unchanged": true,
+  "kernel_permission_granted_for_request_profile": false,
+  "live_path_affected": false,
+  "namespace_scenarios_passed": 42,
+  "native_joint_collector_integrated": false,
+  "native_regenerated_requests": 80,
+  "native_replayed_scenario_sets": 14,
+  "native_request_reports": {
+    "ipc_account_drift": {
+      "acknowledged_requests": 9,
+      "archive_sha256": "31ad421dbfa2128e64a6c7711e0d227e2d9fd0d404ad2a9df1d499840ecc422f",
+      "binding_sha256": "ce89e6b4c14b7d6ac0e0c1e4f690694cad39873ac3d14fb2af9734a49e917b47",
+      "kernel_permission_granted": false,
+      "native_version": "1.226.0",
+      "network_admitted": false,
+      "prepared_requests": 10,
+      "request_outcomes_recorded": 9,
+      "routes_derived_from_same_run": false,
+      "schema_version": "portfolio.fixture_native_requests.v1",
+      "status": "incomplete_no_resume",
+      "trading_admitted": false,
+      "transport_dispatch_verified": false,
+      "verified_signatures": 5
+    },
+    "ipc_child_death": {
+      "acknowledged_requests": 9,
+      "archive_sha256": "c701af71fc99131d5592737b975091d60994f5d60fd1e2a109b3e58948010bc2",
+      "binding_sha256": "3a39631b362b7226c206b918d7b44a9c1fa4045c9d05185f793c6ea0c62e902a",
+      "kernel_permission_granted": false,
+      "native_version": "1.226.0",
+      "network_admitted": false,
+      "prepared_requests": 10,
+      "request_outcomes_recorded": 9,
+      "routes_derived_from_same_run": false,
+      "schema_version": "portfolio.fixture_native_requests.v1",
+      "status": "incomplete_no_resume",
+      "trading_admitted": false,
+      "transport_dispatch_verified": false,
+      "verified_signatures": 5
+    },
+    "ipc_code_drift": {
+      "acknowledged_requests": 9,
+      "archive_sha256": "5d1f89f630602aef8dd82695791d26b77f260838f0dc77a179b064611d650e55",
+      "binding_sha256": "96860bd090670460e3813d774f094ce50b00a3ea963907e45bec9618c2d9d4de",
+      "kernel_permission_granted": false,
+      "native_version": "1.226.0",
+      "network_admitted": false,
+      "prepared_requests": 10,
+      "request_outcomes_recorded": 9,
+      "routes_derived_from_same_run": false,
+      "schema_version": "portfolio.fixture_native_requests.v1",
+      "status": "incomplete_no_resume",
+      "trading_admitted": false,
+      "transport_dispatch_verified": false,
+      "verified_signatures": 5
+    },
+    "ipc_controller_crash": {
+      "acknowledged_requests": 9,
+      "archive_sha256": "989aa493397c702e3b5b9b0ffedf2702861fc905138ae4cc32e39336a69bf1d6",
+      "binding_sha256": "1b85c926ca91288be61fffe6da92dc438a1da4406f4fbe3aacc19c9c2461314e",
+      "kernel_permission_granted": false,
+      "native_version": "1.226.0",
+      "network_admitted": false,
+      "prepared_requests": 10,
+      "request_outcomes_recorded": 9,
+      "routes_derived_from_same_run": false,
+      "schema_version": "portfolio.fixture_native_requests.v1",
+      "status": "incomplete_no_resume",
+      "trading_admitted": false,
+      "transport_dispatch_verified": false,
+      "verified_signatures": 5
+    },
+    "ipc_runtime_drift": {
+      "acknowledged_requests": 9,
+      "archive_sha256": "88046957765ddcd9f359699155a52f238f5226e3aecc2bc4109eecd4262cd76d",
+      "binding_sha256": "77dc60ba820aea7041fe18421d3f2322208a41ff36e91cf3491a501afd29c57a",
+      "kernel_permission_granted": false,
+      "native_version": "1.226.0",
+      "network_admitted": false,
+      "prepared_requests": 10,
+      "request_outcomes_recorded": 9,
+      "routes_derived_from_same_run": false,
+      "schema_version": "portfolio.fixture_native_requests.v1",
+      "status": "incomplete_no_resume",
+      "trading_admitted": false,
+      "transport_dispatch_verified": false,
+      "verified_signatures": 5
+    },
+    "ipc_storage_drift": {
+      "acknowledged_requests": 9,
+      "archive_sha256": "22226f59133f9016e98b1ec702fd3a79d1e6ad96f8442d5153aea8ad54d4680b",
+      "binding_sha256": "4930cffae7b8fdf5cbf3edb6cec0143b147ef295a262dc63053eff57e0ae1b4b",
+      "kernel_permission_granted": false,
+      "native_version": "1.226.0",
+      "network_admitted": false,
+      "prepared_requests": 10,
+      "request_outcomes_recorded": 9,
+      "routes_derived_from_same_run": false,
+      "schema_version": "portfolio.fixture_native_requests.v1",
+      "status": "incomplete_no_resume",
+      "trading_admitted": false,
+      "transport_dispatch_verified": false,
+      "verified_signatures": 5
+    },
+    "ipc_success": {
+      "acknowledged_requests": 20,
+      "archive_sha256": "a36a3789782dd1e4a7517a604c1dffa3aa235b197e4a5a8a866bfb7d952ea656",
+      "binding_sha256": "f8bb2b835fc4deb92d4d01c91d5f40d93d72689af46fa97f28b08108342cf5f1",
+      "kernel_permission_granted": false,
+      "native_version": "1.226.0",
+      "network_admitted": false,
+      "prepared_requests": 20,
+      "request_outcomes_recorded": 20,
+      "routes_derived_from_same_run": false,
+      "schema_version": "portfolio.fixture_native_requests.v1",
+      "status": "complete",
+      "trading_admitted": false,
+      "transport_dispatch_verified": false,
+      "verified_signatures": 9
+    }
+  },
+  "native_runtime": {
+    "bytes": 213365841,
+    "files": 701,
+    "manifest_sha256": "75f136be0e614515577b7b6386a03b3ff9ad9acec3c43496179beb91e13dbc8b"
+  },
+  "native_signed_request_custody_integrated": true,
+  "native_version": "1.226.0",
+  "network_admitted": false,
+  "next_step": "Join validated requests to gateway-owned TLS/WS and full native same-run account/route collection; keep all real admission blocked.",
+  "original_evidence_modified": false,
+  "protected_source_sha256": {
+    "gateway_joint_ipc.py": "e814ddfdd67b7f43fd031a13a68a6bd87cf992e6de0a92b476751e4f9e3cb6ae",
+    "gateway_native_receipt.py": "6c6526bf6976c3e809c3537fb86ce6c7672f3cbb08aca111ba48eac46025a0b7",
+    "gateway_native_requests.py": "2cbea5e7d162f40ffcadf41673757eeefa29d95603937ef23de43c7309f28163",
+    "gateway_native_runtime.py": "3d319536524fe7f8ee0bbc1f9eca719e748dc24e262e47e9a210b058cafca8a8",
+    "gateway_tls.py": "e3deab645139dfe0737a2bee26f5a625ef905c709ba056c11035521d49355536",
+    "gateway_tls_receipt.py": "bc8902eaede01e91e15004d9eac4de87adca04567832373b33d35e10aae4787c",
+    "installed_gateway.py": "541b67beaa979c34dd7198e310669d009f66019d88f953a929cd0e5fcbff738b",
+    "ledger_gateway.py": "d1afb934a109c776fffc2762b7cba0b2d2fb4f7cc7e91e7e3323ca6e4d6a8132",
+    "portfolio_egress_ledger.py": "4ec4916ca5ef84d0d277a4f9033936f5bec4e399c7b40f23a9a7e6df02fd34c8",
+    "portfolio_rate_evidence.py": "18aa5bdbf1954cebc4802b38daeded07cd60e2ab1b9e508d6686ac89a07abb35",
+    "portfolio_tls_provenance.py": "def476571e9ec56e989eee02b8623b1a657337956ecd88faeabaf9f2efc70044",
+    "selftest.py": "75ba8a36ca075f4236f20e68524117bf1abc1431226271bb0df35912c4ebff5f"
+  },
+  "python_tests": {
+    "files": [
+      {
+        "path": "tests/ops/test_egress_native_requests.py",
+        "sha256": "9ade2336a92bd1cfd50f181a676b4c86254edfa47770db1d8d453919d9e81d62"
+      },
+      {
+        "path": "tests/ops/test_egress_native_receipt.py",
+        "sha256": "cc3b406799a82623e2b986e128b195806035bb3d0eb6e6786a75ed3d65e706f4"
+      },
+      {
+        "path": "tests/ops/test_egress_tls_receipt.py",
+        "sha256": "230189fda6301eca7f7e7029790e9de8db165933e794187331c50f6d8081875b"
+      },
+      {
+        "path": "tests/ops/test_egress_joint_ipc.py",
+        "sha256": "e546fc2bbf479a81ce19c341726a3868c545a6640e73c39a3fdd3062c11d1812"
+      },
+      {
+        "path": "tests/ops/test_egress_gateway_tls.py",
+        "sha256": "6eeb048531f6872712c155c83315242fc84accdc654483436f0e481ba5d63daa"
+      },
+      {
+        "path": "tests/ops/test_egress_installed_gateway.py",
+        "sha256": "a7f65e960c9ce1cd05503c8e1f5a881cb82ad9fb837734a3e1e305ce2aaf62d6"
+      },
+      {
+        "path": "tests/ops/test_egress_installation_selftest.py",
+        "sha256": "b23c06780d60a5e09bf751cfb6d2564a4704dfa3c430721a7e67c04dbe9328ef"
+      },
+      {
+        "path": "tests/ops/test_egress_installation.py",
+        "sha256": "326cba9d265b8aefbfbda38302f956da5705ca648e166734c411e06a5e0a2ded"
+      },
+      {
+        "path": "tests/ops/test_egress_package.py",
+        "sha256": "96b216e5d4f1c5b153d8889650103bb93c65b0debc95c87199ab6fb7ff0bac8b"
+      },
+      {
+        "path": "tests/ops/test_egress_ledger_gateway.py",
+        "sha256": "6cfe8c9c94ab56caa4294f64c85beffa092f18a476f3c0a434e9091940750f26"
+      },
+      {
+        "path": "tests/ops/test_egress_guard_selftest.py",
+        "sha256": "dfe1c8e795e820ab13c9a010d53092aca8c1016330dcff25f16398b606b12efa"
+      },
+      {
+        "path": "tests/ops/test_egress_collector_launcher.py",
+        "sha256": "9e5020262a12cbd4aa606b05b6974437054fb73a6664da4d821f447418976d79"
+      },
+      {
+        "path": "tests/ops/test_egress_authority_binding.py",
+        "sha256": "0a12fececd80168c31aa04e29d4f7f99faef7c0d3ba7b0f0348c596ca0a8dcf6"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_egress_ledger.py",
+        "sha256": "d13ce6c3646dfd5b52664b5aa940d9b1efa192e7392764869cfead7982d2b12a"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_joint_egress.py",
+        "sha256": "af7b4ace53f87f263a68dd761dce8dbe6ea6f6ebe3ab2d3119b190b418471484"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_tls_provenance.py",
+        "sha256": "c4d1c96b8a44bdcb6af96242ec6cd176392f4ca5e733768c2d63b4e54805c5da"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_rate_evidence.py",
+        "sha256": "2f4ae82940cdc346a3ada4f3bd2ca1b5cd049286fd0818446909b54b7aa4567b"
+      }
+    ],
+    "new_tests": 52,
+    "passed": 733,
+    "prior_final_source_run": {
+      "failed": 1,
+      "passed": 732,
+      "reason": "Reused 0.2-second test socket timeout during full prefix replay; aligned test consumer with existing 5-second production wait; full rerun passes."
+    },
+    "seconds": 46.81,
+    "warnings": 0
+  },
+  "replayed_original_scenario_sets": 42,
+  "reports": {
+    "echo-regression": {
+      "path": "data/installed-native-requests-2026-09-17/echo-regression.json",
+      "sha256": "0df9ccd1b5e00993a9e591eab82a24cc95ad27a34e3e469be8efff443591aac9"
+    },
+    "ipc-regression": {
+      "path": "data/installed-native-requests-2026-09-17/ipc-regression.json",
+      "sha256": "f3a0e19917ed2deecdf5a5c4c2f875d5992b62e4b4b8ba87aa17ed2185d8f406"
+    },
+    "native-receipt-regression": {
+      "path": "data/installed-native-requests-2026-09-17/native-receipt-regression.json",
+      "sha256": "495ebefccf64e5bca5bd08f67d35878558ba5970c7a78d84516f0132fd4a5e29"
+    },
+    "native-requests-acceptance": {
+      "path": "data/installed-native-requests-2026-09-17/native-requests-acceptance.json",
+      "sha256": "b948398d471b7ff7e30a7bbf214c26c0c848b3f47f2fa4015c8a1d7e942fd9a6"
+    },
+    "receipt-regression": {
+      "path": "data/installed-native-requests-2026-09-17/receipt-regression.json",
+      "sha256": "61779725a896392fb5336dbdc24d01358a1c2f7ecc365cf0493bcbc982a8ad44"
+    },
+    "tls-regression": {
+      "path": "data/installed-native-requests-2026-09-17/tls-regression.json",
+      "sha256": "8174553ea4d9a52a00ae2cd6072785ca4e4d72c15b5351d39b9821c95de20dd3"
+    }
+  },
+  "retained_drivers": {
+    "extract-runtime.py": {
+      "path": "data/installed-native-requests-2026-09-17/extract-runtime.py",
+      "sha256": "9ab2756bc6f7fac4fc82ee8d247939a0447a316cd94138e9b5096b9dc6d58aec"
+    },
+    "installed_gateway_selftest.py": {
+      "path": "data/installed-native-requests-2026-09-17/installed_gateway_selftest.py",
+      "sha256": "ff5d70f8a5ff2b7e7798e72eca75315ad90ad9ed2bd1ac9248b9b11b4e0da1a2"
+    },
+    "native-replay.py": {
+      "path": "data/installed-native-requests-2026-09-17/native-replay.py",
+      "sha256": "b055b10a8635c54f70e413f2b639904f7e19791441d58eeaf3a00cf4e1ce1fc7"
+    },
+    "replay.py": {
+      "path": "data/installed-native-requests-2026-09-17/replay.py",
+      "sha256": "4a899c7d96e8d1f53c542061c605b5250b83398e273ba8a7631e03bd9ae487b2"
+    }
+  },
+  "retained_selection": {
+    "path": "data/installed-native-requests-2026-09-17/selection.json",
+    "sha256": "6ac60d83a57bd5c51408a4031fc5cc4aa48fbc02b75d1eeba834ba0105b164aa"
+  },
+  "retained_verified_signatures": 39,
+  "root_native_modules_loaded": false,
+  "routes_derived_from_same_run": false,
+  "runtime_bundles": [
+    {
+      "path": "data/installed-native-requests-2026-09-17/native-requests-acceptance.runtime.tar.gz",
+      "sha256": "1325c445fb8315630662591d083abe27869f802c6c086e66e7323d88c4ef3d8e"
+    },
+    {
+      "path": "data/installed-native-requests-2026-09-17/native-receipt-regression.runtime.tar.gz",
+      "sha256": "1325c445fb8315630662591d083abe27869f802c6c086e66e7323d88c4ef3d8e"
+    }
+  ],
+  "schema_version": "portfolio.installed_native_requests_acceptance.v1",
+  "trading_admitted": false,
+  "transport_dispatch_verified": false,
+  "upstream_touched": false,
+  "venue_requests": 0
+}

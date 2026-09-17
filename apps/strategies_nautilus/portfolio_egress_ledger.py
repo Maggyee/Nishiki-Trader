@@ -71,6 +71,8 @@ JOINT_OPERATIONS = {
 
 IPC_PROFILE = "portfolio.fixture_joint_ipc_ledger.v1"
 IPC_SCOPE = "fixture-joint-ipc-v1"
+REQUEST_PROFILE = "portfolio.fixture_native_requests_ledger.v1"
+REQUEST_SCOPE = "fixture-native-requests-v1"
 # Fixed maximum local pilot classification. Tokens contain no endpoint/payload/signature.
 IPC_STEPS = (
     ("clock_initial", "time"),
@@ -108,7 +110,7 @@ def clock():
 
 class State:
     def __init__(self, binding_sha256, *, profile=PROFILE):
-        if profile not in {PROFILE, JOINT_PROFILE, IPC_PROFILE}:
+        if profile not in {PROFILE, JOINT_PROFILE, IPC_PROFILE, REQUEST_PROFILE}:
             raise ValueError("unknown_ledger_profile")
         self.profile = profile
         self.operations = OPERATIONS if profile == PROFILE else JOINT_OPERATIONS
@@ -149,7 +151,8 @@ class State:
         elif kind == "prepared":
             if (
                 self.pending is not None
-                or len(self.attempts) >= (len(IPC_STEPS) if self.profile == IPC_PROFILE else 256)
+                or len(self.attempts)
+                >= (len(IPC_STEPS) if self.profile in {IPC_PROFILE, REQUEST_PROFILE} else 256)
                 or set(payload) != ({"index", "caller", "operation"} | self.link_fields())
                 or type(payload["index"]) is not int
                 or payload["index"] != len(self.attempts)
@@ -160,10 +163,14 @@ class State:
             ):
                 raise ValueError("ledger_preparation_invalid")
             self.validate_link(payload)
-            if self.profile == IPC_PROFILE and (
+            if self.profile in {IPC_PROFILE, REQUEST_PROFILE} and (
                 payload["caller"] != "collector"
                 or payload["operation"] != IPC_STEPS[len(self.attempts)][1]
-                or payload["request_sha256"] != digest(canonical(ipc_request(len(self.attempts))))
+                or (
+                    self.profile == IPC_PROFILE
+                    and payload["request_sha256"]
+                    != digest(canonical(ipc_request(len(self.attempts))))
+                )
             ):
                 raise ValueError("ipc_fixed_operation_required")
             self.pending = payload["index"]
@@ -180,7 +187,7 @@ class State:
                 raise ValueError("ledger_outcome_invalid")
             self.validate_link(payload)
             if (
-                self.profile == IPC_PROFILE
+                self.profile in {IPC_PROFILE, REQUEST_PROFILE}
                 and payload["request_sha256"] != self.attempts[self.pending]["request_sha256"]
             ):
                 raise ValueError("ipc_outcome_request_changed")
@@ -205,7 +212,7 @@ class State:
         self.last_kind = kind
 
     def link_fields(self):
-        if self.profile == IPC_PROFILE:
+        if self.profile in {IPC_PROFILE, REQUEST_PROFILE}:
             return {"request_sha256"}
         return {"joint_prefix_sha256"} if self.profile == JOINT_PROFILE else set()
 
@@ -263,7 +270,7 @@ class State:
                     "transport_dispatch_verified": False,
                     "provider_usage_inferred": False,
                 }
-                if self.profile == IPC_PROFILE
+                if self.profile in {IPC_PROFILE, REQUEST_PROFILE}
                 else {}
             ),
             "schema_version": self.profile,
@@ -296,7 +303,12 @@ class AttemptLedger:
         self.root = Path(root).absolute()
         self.binding, self.clock = binding, clock
         self.state = State(binding_sha256, profile=profile)
-        scope = {PROFILE: SCOPE, JOINT_PROFILE: JOINT_SCOPE, IPC_PROFILE: IPC_SCOPE}[profile]
+        scope = {
+            PROFILE: SCOPE,
+            JOINT_PROFILE: JOINT_SCOPE,
+            IPC_PROFILE: IPC_SCOPE,
+            REQUEST_PROFILE: REQUEST_SCOPE,
+        }[profile]
         self.owner = os.getpid()
         self.lock = threading.Lock()
         self.fds = []
@@ -410,7 +422,8 @@ class AttemptLedger:
                         "operation": operation,
                         **(
                             {"request_sha256": request_sha256}
-                            if self.state.profile == IPC_PROFILE or request_sha256 is not None
+                            if self.state.profile in {IPC_PROFILE, REQUEST_PROFILE}
+                            or request_sha256 is not None
                             else {}
                         ),
                         **(
@@ -441,7 +454,8 @@ class AttemptLedger:
                         "result": result,
                         **(
                             {"request_sha256": request_sha256}
-                            if self.state.profile == IPC_PROFILE or request_sha256 is not None
+                            if self.state.profile in {IPC_PROFILE, REQUEST_PROFILE}
+                            or request_sha256 is not None
                             else {}
                         ),
                         **(
