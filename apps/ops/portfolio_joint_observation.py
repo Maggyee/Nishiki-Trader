@@ -30,6 +30,8 @@ def main(argv=None):
     )
     parser.add_argument("--archive", type=Path, required=True)
     parser.add_argument("--archive-sha256", required=True)
+    parser.add_argument("--attempt-ledger", type=Path)
+    parser.add_argument("--attempt-ledger-sha256")
     parser.add_argument("--report", type=Path, required=True)
     args = parser.parse_args(argv)
     try:
@@ -39,15 +41,33 @@ def main(argv=None):
             or args.report.resolve() == args.archive.resolve()
         ):
             raise ValueError("new distinct output required")
-        report = replay_joint(
-            private_read(args.archive, limit=MAX_ARCHIVE),
-            expected_sha256=args.archive_sha256,
-            evidence_type=TLSJointEvidence
-            if args.tls_loopback_profile
-            else RoutedJointEvidence
-            if args.loopback_profile
-            else JointEvidence,
+        if bool(args.attempt_ledger) != bool(args.attempt_ledger_sha256) or (
+            args.attempt_ledger and not args.tls_loopback_profile
+        ):
+            raise ValueError("TLS profile and both attempt ledger selectors required")
+        report = (
+            None
+            if args.attempt_ledger
+            else replay_joint(
+                private_read(args.archive, limit=MAX_ARCHIVE),
+                expected_sha256=args.archive_sha256,
+                evidence_type=TLSJointEvidence
+                if args.tls_loopback_profile
+                else RoutedJointEvidence
+                if args.loopback_profile
+                else JointEvidence,
+            )
         )
+        if args.attempt_ledger:
+            from apps.strategies_nautilus.portfolio_egress_ledger import LIMIT
+            from apps.strategies_nautilus.portfolio_joint_egress import replay_accounted
+
+            report = replay_accounted(
+                private_read(args.archive, limit=MAX_ARCHIVE),
+                private_read(args.attempt_ledger, limit=LIMIT),
+                joint_sha256=args.archive_sha256,
+                ledger_sha256=args.attempt_ledger_sha256,
+            )
         output = canonical(report) + b"\n"
         write_private_new(args.report, output)
     except Exception:

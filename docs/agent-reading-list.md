@@ -22,6 +22,15 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For complete local joint TLS collection with durable per-operation attempts, read
+`docs/progress/portfolio-joint-egress-accounting-2026-09-17.md` and its JSON.
+`portfolio_joint_egress.py` joins the existing collector to a separate ledger
+profile/scope; cross-file prefixes bind preparations and outcomes. The local
+20-operation / 16-GET / 448-weight budget stays separate from the frozen real
+17-GET / 468-weight draft. Counter ages use original headers/messages. This runs
+as the ordinary project process; installed dedicated-UID/kernel integration is
+still next. Unknown charges, coverage and all real admission remain blocked.
+
 For the installed gateway's fixed local HTTPS request and original receipt binding,
 read `docs/progress/portfolio-egress-gateway-tls-2026-09-17.md` and its JSON.
 `gateway_tls.py` under infra/egress-guard binds one unsigned fixture GET to pending
@@ -29,7 +38,8 @@ attempt/activated-kernel prefixes, verifies TLS and retains raw chunks before
 parsing. Header receipt is sampled immediately after recv, before disk checks.
 Six TLS scenarios and five echo regressions pass under fixture manifest v2;
 unknown provider usage/connection charge and all real admission remain blocked.
-Next integrate bounded multi-operation joint transport and per-operation budgets.
+The successor above connects full local joint transport to durable accounting;
+installed multi-operation gateway enforcement remains pending.
 
 For fixed installation/UID integration of the gateway lifecycle, read
 `docs/progress/portfolio-egress-installed-gateway-2026-09-17.md` and its JSON.

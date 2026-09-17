@@ -1,0 +1,362 @@
+{
+  "abrupt_process_exit_scenarios": 1,
+  "additional_tests_passed": 36,
+  "base_commit": "3562c1d9441434c2f58ea6d0ef21e9458ad75ea3",
+  "complete_caller_coverage_verified": false,
+  "complete_documented_weight": 448,
+  "complete_operations": 20,
+  "complete_rest_gets": 16,
+  "complete_tls_connections": 18,
+  "date": "2026-09-17",
+  "focused_test_seconds": 156.09,
+  "focused_tests_passed": 762,
+  "fresh_replays": [
+    {
+      "path": "data/joint-egress-accounting-2026-09-17/replay-1.json",
+      "sha256": "de3c92444f6019ef90c032d805f598f585858c5987485a91bd94c68063889100"
+    },
+    {
+      "path": "data/joint-egress-accounting-2026-09-17/replay-2.json",
+      "sha256": "de3c92444f6019ef90c032d805f598f585858c5987485a91bd94c68063889100"
+    }
+  ],
+  "fresh_replays_match_original_cli_reports": true,
+  "host_installation_performed": false,
+  "installed_gateway_integrated": false,
+  "live_path_affected": false,
+  "local_tls_scenarios": 15,
+  "network_admitted": false,
+  "next_step": "Join the complete local collector to installed UID/IPC custody, gateway-owned sockets and expiring kernel lifecycle without importing uncontrolled project code as root. Actual provider/coverage/host admission stays blocked.",
+  "provider_connection_charge": null,
+  "provider_control_charge": null,
+  "replay_driver": {
+    "path": "data/joint-egress-accounting-2026-09-17/replay.py",
+    "sha256": "6d9d79f5706da61e22837797a39917a62dd99b8a5514c2c66a9e0ea93b890ae2"
+  },
+  "retained_selection": {
+    "path": "data/joint-egress-accounting-2026-09-17/selection.json",
+    "sha256": "ff5282b4ed1a0675d089865d0b7a246c0cd3cdcf5afd64b06c6c33ad4b9440c0"
+  },
+  "scenarios": [
+    {
+      "attempt_status": "closed",
+      "attempts": {
+        "path": "data/joint-egress-accounting-2026-09-17/success-attempts.jsonl",
+        "sha256": "a0a7daf77a83dca2c615ddf9e404085042a9ff65d1e0ac3d7d830306e9c130cb"
+      },
+      "documented_weight": 448,
+      "joint": {
+        "path": "data/joint-egress-accounting-2026-09-17/success-joint.jsonl",
+        "sha256": "abd87ee3edd90f6b62e7580c519331b03d07b4501190992e2b456c61affb9dea"
+      },
+      "name": "success",
+      "pending_attempt": null,
+      "recorded_attempts": 20,
+      "unknown_charge_attempts": 1
+    },
+    {
+      "attempt_status": "closed",
+      "attempts": {
+        "path": "data/joint-egress-accounting-2026-09-17/burst-attempts.jsonl",
+        "sha256": "3745d426febda17b127fc5e47beaef2e254fd4f3bd74140b1486c426976cab07"
+      },
+      "documented_weight": 448,
+      "joint": {
+        "path": "data/joint-egress-accounting-2026-09-17/burst-joint.jsonl",
+        "sha256": "0f4420495336a435b848bc01ffbea4be88c4f87f3b922901d2fab083046b382c"
+      },
+      "name": "burst",
+      "pending_attempt": null,
+      "recorded_attempts": 20,
+      "unknown_charge_attempts": 1
+    },
+    {
+      "attempt_status": "gap",
+      "attempts": {
+        "path": "data/joint-egress-accounting-2026-09-17/market_drop-attempts.jsonl",
+        "sha256": "365b7a1ad65fb74eedb0abfcbe231991d262ed93aa57e901cbf4f2f35e2dfd76"
+      },
+      "documented_weight": 234,
+      "joint": {
+        "path": "data/joint-egress-accounting-2026-09-17/market_drop-joint.jsonl",
+        "sha256": "8184824eaf0fc4f25ac9c3ec20b2caddb9b3eb33c18565e727a29b5d05017f7a"
+      },
+      "name": "market_drop",
+      "pending_attempt": 10,
+      "recorded_attempts": 11,
+      "unknown_charge_attempts": 1
+    },
+    {
+      "attempt_status": "gap",
+      "attempts": {
+        "path": "data/joint-egress-accounting-2026-09-17/account_drop-attempts.jsonl",
+        "sha256": "a1180d93c63311002ed03521c130ff3db4516d53afa4fbe414b356f198d18336"
+      },
+      "documented_weight": 265,
+      "joint": {
+        "path": "data/joint-egress-accounting-2026-09-17/account_drop-joint.jsonl",
+        "sha256": "6d5d20d8b512f7d759c7e0f3750e3d84f30559c59a057778a8ccf50e3d8e3cff"
+      },
+      "name": "account_drop",
+      "pending_attempt": 14,
+      "recorded_attempts": 15,
+      "unknown_charge_attempts": 1
+    },
+    {
+      "attempt_status": "gap",
+      "attempts": {
+        "path": "data/joint-egress-accounting-2026-09-17/unknown_event-attempts.jsonl",
+        "sha256": "aca12fbb2fc5e9d1a9830228a08b33d772fe8959d513a5369808058800370933"
+      },
+      "documented_weight": 5,
+      "joint": {
+        "path": "data/joint-egress-accounting-2026-09-17/unknown_event-joint.jsonl",
+        "sha256": "1b60ae26d96ecdd20e1ec5ffbbe86c0730f4feb0d642f2e6bb53dd4494e12bee"
+      },
+      "name": "unknown_event",
+      "pending_attempt": 2,
+      "recorded_attempts": 3,
+      "unknown_charge_attempts": 0
+    },
+    {
+      "attempt_status": "gap",
+      "attempts": {
+        "path": "data/joint-egress-accounting-2026-09-17/weight-attempts.jsonl",
+        "sha256": "837b9b855018e29ad684c574c2beb6927c1ea670558a82a214a3144d7888f016"
+      },
+      "documented_weight": 105,
+      "joint": {
+        "path": "data/joint-egress-accounting-2026-09-17/weight-joint.jsonl",
+        "sha256": "31ba688f573c4d278d103aff3d0036d820f21bfd51ec14787561cb58850c7b80"
+      },
+      "name": "weight",
+      "pending_attempt": null,
+      "recorded_attempts": 5,
+      "unknown_charge_attempts": 0
+    },
+    {
+      "attempt_status": "gap",
+      "attempts": {
+        "path": "data/joint-egress-accounting-2026-09-17/buffer-attempts.jsonl",
+        "sha256": "e76c96a352cd5f7474b662fff20a18620c8a1a35339e6ee22b2f0774b6b3c6e8"
+      },
+      "documented_weight": 5,
+      "joint": {
+        "path": "data/joint-egress-accounting-2026-09-17/buffer-joint.jsonl",
+        "sha256": "cad372f8d1ba225e4436ece96610d20687d9b4a208eda19a453a93b91f1d2198"
+      },
+      "name": "buffer",
+      "pending_attempt": 2,
+      "recorded_attempts": 3,
+      "unknown_charge_attempts": 0
+    },
+    {
+      "attempt_status": "incomplete_no_resume",
+      "attempts": {
+        "path": "data/joint-egress-accounting-2026-09-17/disk-attempts.jsonl",
+        "sha256": "a9219f956f317c2ed103ecfa88e2211f00f25375bc6bced0ecc87105b4b49b35"
+      },
+      "documented_weight": 234,
+      "joint": {
+        "path": "data/joint-egress-accounting-2026-09-17/disk-joint.jsonl",
+        "sha256": "839545e2ac3ecc4aef727e2ffc1ce10188217474eb88d16249f5f8efa8d777a1"
+      },
+      "name": "disk",
+      "pending_attempt": 10,
+      "recorded_attempts": 11,
+      "unknown_charge_attempts": 1
+    },
+    {
+      "attempt_status": "gap",
+      "attempts": {
+        "path": "data/joint-egress-accounting-2026-09-17/cancel-attempts.jsonl",
+        "sha256": "245934533e344d3518f1cf85ca469847c857ce6aa775bebe7a77581dac06a97f"
+      },
+      "documented_weight": 229,
+      "joint": {
+        "path": "data/joint-egress-accounting-2026-09-17/cancel-joint.jsonl",
+        "sha256": "b30aebeb9ec948adcfdb1c631c320d2f91009da6e3107b9e0c3969458d55f425"
+      },
+      "name": "cancel",
+      "pending_attempt": 9,
+      "recorded_attempts": 10,
+      "unknown_charge_attempts": 1
+    },
+    {
+      "attempt_status": "closed",
+      "attempts": {
+        "path": "data/joint-egress-accounting-2026-09-17/fragmented-attempts.jsonl",
+        "sha256": "6280dec02122f1dfc0298e7522eb2866565c56cc8014ff1efeb9c7f832c9dee9"
+      },
+      "documented_weight": 448,
+      "joint": {
+        "path": "data/joint-egress-accounting-2026-09-17/fragmented-joint.jsonl",
+        "sha256": "048c721251d15cad9cf39df985d465c047a5df564219e46ccf559d9be0c2aa50"
+      },
+      "name": "fragmented",
+      "pending_attempt": null,
+      "recorded_attempts": 20,
+      "unknown_charge_attempts": 1
+    },
+    {
+      "attempt_status": "gap",
+      "attempts": {
+        "path": "data/joint-egress-accounting-2026-09-17/tls_untrusted-attempts.jsonl",
+        "sha256": "476186790516b443862601d0f8669d8963d30b5425e39c32cc76214534d24129"
+      },
+      "documented_weight": 1,
+      "joint": {
+        "path": "data/joint-egress-accounting-2026-09-17/tls_untrusted-joint.jsonl",
+        "sha256": "28aadc176fed5b69dcab8695572f134924bd04416c60271d9d62b525fefdb069"
+      },
+      "name": "tls_untrusted",
+      "pending_attempt": 0,
+      "recorded_attempts": 1,
+      "unknown_charge_attempts": 0
+    },
+    {
+      "attempt_status": "gap",
+      "attempts": {
+        "path": "data/joint-egress-accounting-2026-09-17/duplicate_weight-attempts.jsonl",
+        "sha256": "4daf20bc2ffff5b9f2a5769f97c5b5ca5397e6001f9b0a0b66f76a4ac97d0145"
+      },
+      "documented_weight": 1,
+      "joint": {
+        "path": "data/joint-egress-accounting-2026-09-17/duplicate_weight-joint.jsonl",
+        "sha256": "f9d08bf407b07657f325b7e1f7e6cef24f42c6147d1708902b81c06596054b2f"
+      },
+      "name": "duplicate_weight",
+      "pending_attempt": 0,
+      "recorded_attempts": 1,
+      "unknown_charge_attempts": 0
+    },
+    {
+      "attempt_status": "incomplete_no_resume",
+      "attempts": {
+        "path": "data/joint-egress-accounting-2026-09-17/ledger_prepare_disk-attempts.jsonl",
+        "sha256": "53ef05b4914825a1a57cba1912e3c5f4b3b82d57314c594be027c58c34225592"
+      },
+      "documented_weight": 0,
+      "joint": {
+        "path": "data/joint-egress-accounting-2026-09-17/ledger_prepare_disk-joint.jsonl",
+        "sha256": "110f5dcb0199a5e1007d9008b17fd357b1b19ff2f2076b80d454a0954d6c9e72"
+      },
+      "name": "ledger_prepare_disk",
+      "pending_attempt": null,
+      "recorded_attempts": 0,
+      "unknown_charge_attempts": 0
+    },
+    {
+      "attempt_status": "incomplete_no_resume",
+      "attempts": {
+        "path": "data/joint-egress-accounting-2026-09-17/ledger_outcome_disk-attempts.jsonl",
+        "sha256": "b0057654aba7a4258eaafe05626e4bc6d07e72560aa3d1e0a02091288f6349d6"
+      },
+      "documented_weight": 1,
+      "joint": {
+        "path": "data/joint-egress-accounting-2026-09-17/ledger_outcome_disk-joint.jsonl",
+        "sha256": "cb687c0fc4576c78e1641d8ecdacc3685edb64238f55d932e92bee1944185481"
+      },
+      "name": "ledger_outcome_disk",
+      "pending_attempt": 0,
+      "recorded_attempts": 1,
+      "unknown_charge_attempts": 0
+    },
+    {
+      "attempt_status": "gap",
+      "attempts": {
+        "path": "data/joint-egress-accounting-2026-09-17/slow_metadata_body-attempts.jsonl",
+        "sha256": "ba1ca3ad5eeeadd43cff9df39085f3072f74729bad5465585568ca582c737a4d"
+      },
+      "documented_weight": 225,
+      "joint": {
+        "path": "data/joint-egress-accounting-2026-09-17/slow_metadata_body-joint.jsonl",
+        "sha256": "fdf2596e1991f5307f3870866dc961adb7a5d9a3876ce3483141dc493b13a90d"
+      },
+      "name": "slow_metadata_body",
+      "pending_attempt": null,
+      "recorded_attempts": 8,
+      "unknown_charge_attempts": 0
+    },
+    {
+      "attempt_status": "incomplete_no_resume",
+      "attempts": {
+        "path": "data/joint-egress-accounting-2026-09-17/sigkill-attempts.jsonl",
+        "sha256": "9bc89e656cf2cfb992b1752264ff8b633a467f77af2202bbe39d527f93295373"
+      },
+      "documented_weight": 1,
+      "joint": {
+        "path": "data/joint-egress-accounting-2026-09-17/sigkill-joint.jsonl",
+        "sha256": "6f6826a384a2afb4bcc2b6ce62aa122be98f2913edca0f5322132157b8247cd0"
+      },
+      "name": "sigkill_after_prepare",
+      "pending_attempt": 0,
+      "recorded_attempts": 1,
+      "unknown_charge_attempts": 0
+    }
+  ],
+  "source_sha256": {
+    "apps/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "apps/bridge/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "apps/bridge/side_semantics.py": "b2527638f9c6e92eb3c492a2ac9b5c3cbcb8d372e33d0078d5b66bedf7db2b54",
+    "apps/bridge/signal_event.py": "9482606e59ea9821c8ca5180022ed350af9b825ff757d68e590eafcbb5e3a5a1",
+    "apps/bridge/store.py": "f1e8de761cebdbeadda30e1567472be63a1aa2c38e4f824bdd2b2425c6b5a158",
+    "apps/bridge/time_utils.py": "b07b12daf4963ff7fdd56847da13af9fa38fab49529aec657a7bfe65cdf24451",
+    "apps/bridge/validators.py": "09bb4c6807916ac3544d0a6560dc995e1286a28f7b68a0f860e576c34f5aff7e",
+    "apps/ops/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "apps/ops/portfolio_egress_ledger.py": "823702819e2f07aef937688dbc13dfb1d38e8d3f7bc87d684cf289fffd38db4f",
+    "apps/ops/portfolio_execution_plan.py": "192ae82cfe9686fe1531547e08d016db1b2c65cf678884f86d88efb327819807",
+    "apps/ops/portfolio_joint_observation.py": "0514aa966ca2be693655302505f601a822037906ab59cfa5799c1b21f020f79f",
+    "apps/ops/research_portfolio_evidence.py": "707619a9147a8b91363e66ae769b9b5904605dc8a158fb9f1105960fd2e2ebdc",
+    "apps/ops/research_portfolio_monitor.py": "7f3b6a577863b13d4d1f51a9962ec48fe23633efd9c6c6505c1c247f281c2f86",
+    "apps/ops/research_shadow_runtime.py": "eef67cda4fd96399d92705a9a2ca1600dc49ec1e823bc26926a7f41159c1d1a7",
+    "apps/strategies_nautilus/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "apps/strategies_nautilus/portfolio_account.py": "ee5a983a121797051c8bc480a77ea72bedc64ab44423899bbc2bda4744190678",
+    "apps/strategies_nautilus/portfolio_account_collector.py": "23d7dfcfb52e8c555c2a3c0e31366e34dc6a0f5d30608b30e631d613539c6c1d",
+    "apps/strategies_nautilus/portfolio_egress_ledger.py": "30673b1470387347cb338eb6fbc81b17f877dddc78127ac048925ce535265fb2",
+    "apps/strategies_nautilus/portfolio_inventory.py": "0739ddf7a74f012bf20e0d2ff25a9d683559813e3be0cebb3245dc92b722a759",
+    "apps/strategies_nautilus/portfolio_joint_egress.py": "9ac0ca56a1d187cf3317ecbb58e61b2debc5b88646c19b91c9226e90b5d06b8a",
+    "apps/strategies_nautilus/portfolio_joint_observation.py": "6917baa3f02740632ff45d82c9630a03d30a7887407ce64575576898cc90347c",
+    "apps/strategies_nautilus/portfolio_joint_routes.py": "90bf2514f68644de32367ee0377210d5cb3a72c6c565a7af8206597870219c34",
+    "apps/strategies_nautilus/portfolio_joint_tls_evidence.py": "61dc282a55b4c98ae28769d9f51172af346cc313299553ab32efc3d42eb0154e",
+    "apps/strategies_nautilus/portfolio_joint_tls_transport.py": "d3a8a64c55e3f760cd1483f8428c0ad80a61ce24f34e260d151bb8567c2e860d",
+    "apps/strategies_nautilus/portfolio_joint_transport.py": "f20f8a79a2b4115979ae767a753ba6d3befcf9e0b8d1b15f65e8ebc2dcbc59b9",
+    "apps/strategies_nautilus/portfolio_market_depth.py": "601df4f1b043c568baf8a37d367e4e7e44fc68a1b19a434ad4c8aa57950d2020",
+    "apps/strategies_nautilus/portfolio_market_depth_archive.py": "b6eaa5d6e15d774c875bb06b404fef38925992a0f4489bbb3053eba339b8fb56",
+    "apps/strategies_nautilus/portfolio_observation_plan.py": "963bbb650f7d1416e4e298c710c39e954dc42ded50d2d2bdbdade41b19a22400",
+    "apps/strategies_nautilus/portfolio_preflight.py": "19bec0a292c0d273fb69d18d586adbc1fc84480a054a19e379636d307c47ca6f",
+    "apps/strategies_nautilus/portfolio_rate_evidence.py": "18aa5bdbf1954cebc4802b38daeded07cd60e2ab1b9e508d6686ac89a07abb35",
+    "apps/strategies_nautilus/portfolio_risk_policy.py": "13a9053d41c3f3c148bc13fabaae0e7dc02c94ce0a73c51e77bb7eb56d0ad90c",
+    "apps/strategies_nautilus/portfolio_session_transport.py": "faee3fab0f41802965fa5880d213bdfda420d078cbfcfd8c80d93a68205db2d7",
+    "apps/strategies_nautilus/portfolio_simulation.py": "096c532d2a760442618afa52188b89976ef14fe9da259d2c46fc2aef3e824f2d",
+    "apps/strategies_nautilus/portfolio_stream.py": "3fc9195ce5bccb75dbdd11e7ece87d5f0f18002e719752779f9e8bb47e99549a",
+    "apps/strategies_nautilus/portfolio_testnet_credentials.py": "6e24f8162ff72ee966fb6654b54ab33238a1e530db2f811307ce798101184f22",
+    "apps/strategies_nautilus/portfolio_testnet_mapping.py": "0864d00bee04cc3565466c0333e8dfe13ee225a7daf3a4522dc80ff1f7dfb770",
+    "apps/strategies_nautilus/portfolio_testnet_observation.py": "75b206416305e8e900bbafee19016d4c85ebe168a8ac2d2f5b2ddba1323a18da",
+    "apps/strategies_nautilus/portfolio_testnet_valuation.py": "652992817476111b52f96d19878e396c97097c4bd61640497da1f0417bd38fa4",
+    "apps/strategies_nautilus/portfolio_tls_provenance.py": "def476571e9ec56e989eee02b8623b1a657337956ecd88faeabaf9f2efc70044",
+    "apps/strategies_nautilus/portfolio_user_stream.py": "d11e13132dddc8f340fe60d57ce11ba0ec9b00666bc54afdb2a6d1d3a4575879",
+    "apps/strategies_nautilus/portfolio_venue.py": "2bc10a873f44ab42d4ed276900a3d44f913322dfd505dd91b22319dc8bbd8314",
+    "apps/strategies_nautilus/portfolio_ws_frames.py": "7dffe35425ca42210f373fb49d8783fa88adabdf4c84de4e94b771786d262228",
+    "apps/strategies_nautilus/runners/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "apps/strategies_nautilus/runners/portfolio_simulation_acceptance.py": "e38d44e2b4b82fa3330f6afa3aedf3f1f6c405dae6a161ad357072c256941143",
+    "apps/strategies_nautilus/signal_consumer.py": "c9ddb8be91177ec398cf2814d8c4e934c04198296dd630ec194244b50ed3510e",
+    "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "tests/strategies_nautilus/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "tests/strategies_nautilus/test_portfolio_joint_egress.py": "af7b4ace53f87f263a68dd761dce8dbe6ea6f6ebe3ab2d3119b190b418471484",
+    "tests/strategies_nautilus/test_portfolio_joint_observation.py": "29855f2c537f9aeebd4ab3022760bf0d4d31d600d9e9be9366fad588f5e3b714",
+    "tests/strategies_nautilus/test_portfolio_joint_routes.py": "fe0407fee979dc4f8a758ff5ab95259fba695b1c71a242283e109ca3b20c8151",
+    "tests/strategies_nautilus/test_portfolio_joint_tls_evidence.py": "16f4e46629e029b54c11cb2941ac89293b2ddd1270e26fe5e32670980aebf350",
+    "tests/strategies_nautilus/test_portfolio_joint_transport.py": "476806be3c82ada891ddf018a972c4a99249b7dd57cfcca16cae2ae6561772b3",
+    "tests/strategies_nautilus/test_portfolio_market_depth.py": "589b09e907a08ec230595288e95a5ad7997fa7016c51589e76877bb9128b7062",
+    "tests/strategies_nautilus/test_portfolio_testnet_credentials.py": "e28588b6292b291f2a8d2ed427366357b234c1fae16b62435a5a5f177a38f85b",
+    "tests/strategies_nautilus/test_portfolio_tls_provenance.py": "c4d1c96b8a44bdcb6af96242ec6cd176392f4ca5e733768c2d63b4e54805c5da",
+    "tests/strategies_nautilus/test_portfolio_user_stream.py": "2274c69ff816c925f914642b2eefefb06c4b3dc618b75c746ef7c20a6c2e0c30"
+  },
+  "status": "local_joint_accounting_complete_installed_integration_pending",
+  "test_warnings": "Three DeprecationWarnings from existing fork tests after native threads start; no failed tests.",
+  "trading_admitted": false,
+  "upstream_touched": false,
+  "used_upper_bound": null,
+  "venue_requests_made": 0
+}

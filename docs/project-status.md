@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-17
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: The installed gateway now owns one fixed local HTTPS exchangeInfo request, binds TLS evidence to durable attempt/kernel prefixes and preserves original header receipt time through body/disk delay. Six TLS scenarios and five echo regressions pass. Next integrate the bounded multi-operation local joint transport with per-operation budgets and gateway accounting. Actual all-caller coverage, provider rate/clock qualification, host rollout and trading remain blocked; consumed scopes stay consumed.
+- **Current objective**: Complete local joint TLS collection now consumes durable per-operation attempts: 20 operations, 16 GETs / 448 documented weight, original counter receipt ages and cross-file replay. Installed dedicated-UID/kernel integration remains next; that gateway still owns one fixed GET. Actual all-caller coverage, provider rate/clock qualification, host rollout and trading remain blocked; consumed scopes stay consumed.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -256,7 +256,8 @@ Detailed depth implementation, retained hashes and next review:
 [isolated ledger gateway integration](progress/portfolio-egress-ledger-gateway-2026-09-17.md),
 [durable gateway lifecycle/crash acceptance](progress/portfolio-egress-gateway-lifecycle-2026-09-17.md),
 [fixed installation/UID gateway integration](progress/portfolio-egress-installed-gateway-2026-09-17.md),
-and [fixed HTTPS request/receipt integration](progress/portfolio-egress-gateway-tls-2026-09-17.md).
+[fixed HTTPS request/receipt integration](progress/portfolio-egress-gateway-tls-2026-09-17.md),
+and [complete local joint attempt accounting](progress/portfolio-joint-egress-accounting-2026-09-17.md).
 
 ## Next Steps
 
@@ -307,7 +308,10 @@ and [fixed HTTPS request/receipt integration](progress/portfolio-egress-gateway-
    [Fixed local HTTPS request/receipt integration](progress/portfolio-egress-gateway-tls-2026-09-17.md)
    now passes, including certificate/response failures, fsync refusal and SIGKILL
    after received headers. Counter receipt time is sampled before storage checks.
-   Next integrate bounded multi-operation joint transport and per-operation budgets.
+   [Complete local joint attempt accounting](progress/portfolio-joint-egress-accounting-2026-09-17.md)
+   now consumes each operation before transport and links outcomes to original TLS
+   receipts; failed attempts never refund. Next join this ordinary-process collector
+   to installed UID/IPC custody, gateway-owned sockets and kernel lifecycle.
    Sampling alone never proves coverage.
    Actual authority policy, fresh rate/clock consumption and provider-charge
    resolution must precede any separately reviewed real joint dispatch.
@@ -352,6 +356,13 @@ and [fixed HTTPS request/receipt integration](progress/portfolio-egress-gateway-
 - Nautilus is the only execution engine; LLMs never enter the order path.
 
 ## Latest Verification
+
+- Local joint accounting: **36 new / 762 focused tests pass**, including 15 actual
+  local TLS scenarios and SIGKILL persistence. Complete **20-operation / 16-GET / 448-weight** TLS
+  collection, durable failed attempts and paired native replay pass. Original
+  header/message receipts govern freshness; delayed bodies cannot refresh usage.
+  Dedicated-UID/kernel integration remains pending; no venue requests or live-path
+  changes. [Acceptance and exact checks](progress/portfolio-joint-egress-accounting-2026-09-17.md).
 
 - Gateway TLS: **33 new / 557 focused tests, six TLS and five echo kernel
   scenarios pass**. One fixed HTTPS request follows durable attempt/grant records;

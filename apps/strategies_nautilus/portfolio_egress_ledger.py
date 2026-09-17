@@ -46,12 +46,39 @@ OPERATIONS = {
 }
 
 
+JOINT_PROFILE = "portfolio.local_joint_egress_attempt_ledger.v1"
+JOINT_SCOPE = "local-joint-egress-attempts-v1"
+JOINT_OPERATIONS = {
+    **OPERATIONS,
+    **{
+        name: {"role": "rest", "documented_weight": weight, "raw_requests": 1, "connections": 0}
+        for name, weight in (
+            ("time", 1),
+            ("account_read", 20),
+            ("open_orders", 80),
+            ("book_ticker", 4),
+            ("depth_100", 5),
+        )
+    },
+    "account_unsubscribe": {
+        "role": "account",
+        "documented_weight": 2,
+        "raw_requests": 0,
+        "connections": 0,
+    },
+}
+
+
 def clock():
     return time.time_ns(), time.monotonic_ns()
 
 
 class State:
-    def __init__(self, binding_sha256):
+    def __init__(self, binding_sha256, *, profile=PROFILE):
+        if profile not in {PROFILE, JOINT_PROFILE}:
+            raise ValueError("unknown_ledger_profile")
+        self.profile = profile
+        self.operations = OPERATIONS if profile == PROFILE else JOINT_OPERATIONS
         if not isinstance(binding_sha256, str) or not re.fullmatch("[0-9a-f]{64}", binding_sha256):
             raise ValueError("selected_binding_digest_required")
         self.binding_sha256 = binding_sha256
@@ -66,7 +93,7 @@ class State:
     def feed(self, row):
         if self.terminal:
             raise ValueError("ledger_already_ended")
-        if row["profile"] != PROFILE or row["binding_sha256"] != self.binding_sha256:
+        if row["profile"] != self.profile or row["binding_sha256"] != self.binding_sha256:
             raise ValueError("ledger_profile_or_binding")
         now, mono = (_integer(row[k], positive=True) for k in ("utc_ns", "monotonic_ns"))
         if self.last and (
@@ -90,20 +117,21 @@ class State:
             if (
                 self.pending is not None
                 or len(self.attempts) >= 256
-                or set(payload) != {"index", "caller", "operation"}
+                or set(payload) != ({"index", "caller", "operation"} | self.link_fields())
                 or type(payload["index"]) is not int
                 or payload["index"] != len(self.attempts)
                 or payload["caller"] not in CALLERS
-                or payload["operation"] not in OPERATIONS
+                or payload["operation"] not in self.operations
                 or self.last_observation is None
                 or self.last_kind != "observed"
             ):
                 raise ValueError("ledger_preparation_invalid")
+            self.validate_link(payload)
             self.pending = payload["index"]
             self.attempts.append({**payload, "prepared_monotonic_ns": mono, "outcome": "uncertain"})
         elif kind == "outcome":
             if (
-                set(payload) != {"index", "result"}
+                set(payload) != ({"index", "result"} | self.link_fields())
                 or type(payload["index"]) is not int
                 or self.pending is None
                 or payload["index"] != self.pending
@@ -111,6 +139,7 @@ class State:
                 or self.last_kind != "observed"
             ):
                 raise ValueError("ledger_outcome_invalid")
+            self.validate_link(payload)
             self.attempts[self.pending]["outcome"] = payload["result"]
             self.pending = None
             if payload["result"] != "succeeded":
@@ -131,6 +160,16 @@ class State:
         self.last = now, mono
         self.last_kind = kind
 
+    def link_fields(self):
+        return {"joint_prefix_sha256"} if self.profile == JOINT_PROFILE else set()
+
+    def validate_link(self, payload):
+        if self.profile == JOINT_PROFILE and (
+            not isinstance(payload["joint_prefix_sha256"], str)
+            or not re.fullmatch("[0-9a-f]{64}", payload["joint_prefix_sha256"])
+        ):
+            raise ValueError("joint_prefix_digest_required")
+
     def report(self, start_ns=None, through_ns=None):
         if self.start is None:
             raise ValueError("empty_ledger")
@@ -147,11 +186,11 @@ class State:
                 attempts = [
                     r
                     for r in selected
-                    if r["caller"] == caller and OPERATIONS[r["operation"]]["role"] == role
+                    if r["caller"] == caller and self.operations[r["operation"]]["role"] == role
                 ]
                 if not attempts:
                     continue
-                units = [OPERATIONS[r["operation"]] for r in attempts]
+                units = [self.operations[r["operation"]] for r in attempts]
                 counts.append(
                     {
                         "caller_label": caller,
@@ -170,7 +209,7 @@ class State:
                     }
                 )
         return {
-            "schema_version": PROFILE,
+            "schema_version": self.profile,
             "binding_sha256": self.binding_sha256,
             "status": self.terminal or "incomplete_no_resume",
             "pending_attempt": self.pending,
@@ -196,10 +235,11 @@ class State:
 class AttemptLedger:
     """Single owned archive; prepare is bookkeeping, never a dispatch capability."""
 
-    def __init__(self, root, *, binding, binding_sha256, clock=clock):
+    def __init__(self, root, *, binding, binding_sha256, clock=clock, profile=PROFILE):
         self.root = Path(root).absolute()
         self.binding, self.clock = binding, clock
-        self.state = State(binding_sha256)
+        self.state = State(binding_sha256, profile=profile)
+        scope = SCOPE if profile == PROFILE else JOINT_SCOPE
         self.owner = os.getpid()
         self.lock = threading.Lock()
         self.fds = []
@@ -212,10 +252,10 @@ class AttemptLedger:
             info = os.fstat(root_fd)
             if info.st_uid != os.geteuid() or stat.S_IMODE(info.st_mode) != 0o700:
                 raise ValueError("private_owned_ledger_root_required")
-            os.mkdir(SCOPE, mode=0o700, dir_fd=root_fd)
+            os.mkdir(scope, mode=0o700, dir_fd=root_fd)
             os.fsync(root_fd)
-            self.path = self.root / SCOPE
-            scope_fd = os.open(SCOPE, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=root_fd)
+            self.path = self.root / scope
+            scope_fd = os.open(scope, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=root_fd)
             self.fds.append(scope_fd)
             fd = os.open(
                 "README.md",
@@ -273,7 +313,7 @@ class AttemptLedger:
             "kind": kind,
             "utc_ns": now,
             "monotonic_ns": mono,
-            "profile": PROFILE,
+            "profile": self.state.profile,
             "binding_sha256": self.state.binding_sha256,
             "payload": payload,
         }
@@ -297,7 +337,7 @@ class AttemptLedger:
         with suppress(Exception):
             self._append("aborted", {"reason": type(exc).__name__}, at=self.state.last)
 
-    def prepare(self, *, caller, operation):
+    def prepare(self, *, caller, operation, joint_prefix_sha256=None):
         self._owner()
         with self.lock:
             if self.closed or self.failed or self.state.terminal:
@@ -305,21 +345,46 @@ class AttemptLedger:
             try:
                 self._observe()
                 index = len(self.state.attempts)
-                self._append("prepared", {"index": index, "caller": caller, "operation": operation})
+                self._append(
+                    "prepared",
+                    {
+                        "index": index,
+                        "caller": caller,
+                        "operation": operation,
+                        **(
+                            {"joint_prefix_sha256": joint_prefix_sha256}
+                            if self.state.profile == JOINT_PROFILE
+                            or joint_prefix_sha256 is not None
+                            else {}
+                        ),
+                    },
+                )
                 self._observe()  # Drift during fsync blocks handoff; consumption stays.
                 return {"index": index, "preparation_persisted": True, "network_admitted": False}
             except BaseException as exc:
                 self._abort(exc)
                 raise
 
-    def outcome(self, *, index, result):
+    def outcome(self, *, index, result, joint_prefix_sha256=None):
         self._owner()
         with self.lock:
             if self.closed or self.failed or self.state.terminal:
                 raise ValueError("ledger_ended_no_retry")
             try:
                 self._observe()
-                self._append("outcome", {"index": index, "result": result})
+                self._append(
+                    "outcome",
+                    {
+                        "index": index,
+                        "result": result,
+                        **(
+                            {"joint_prefix_sha256": joint_prefix_sha256}
+                            if self.state.profile == JOINT_PROFILE
+                            or joint_prefix_sha256 is not None
+                            else {}
+                        ),
+                    },
+                )
             except BaseException as exc:
                 self._abort(exc)
                 raise
@@ -358,10 +423,12 @@ class AttemptLedger:
                     self._release()
 
 
-def replay(raw, *, expected_sha256, binding_sha256, start_ns=None, through_ns=None):
+def replay(
+    raw, *, expected_sha256, binding_sha256, start_ns=None, through_ns=None, profile=PROFILE
+):
     if not isinstance(raw, bytes) or not 0 < len(raw) <= LIMIT or digest(raw) != expected_sha256:
         raise ValueError("selected_ledger_bytes_changed")
-    state, previous = State(binding_sha256), None
+    state, previous = State(binding_sha256, profile=profile), None
     for seq, line in enumerate(raw.splitlines(keepends=True)):
         row = _body(line)
         if (

@@ -7,6 +7,12 @@ dashboard snapshot support + Phase 6 passive readiness gate support。
 
 ## 当前入口
 
+`portfolio_joint_observation --tls-loopback-profile` 可配合 `--attempt-ledger`
+和 `--attempt-ledger-sha256` 交叉回放完整联合采集及逐项消耗。
+`portfolio_egress_ledger --joint-profile` 单独审查失败/中断的联合尝试账本，
+仍以退出码 2 表示无网络准入。两者均无采集入口。
+见 [联合采集记账验收](../../docs/progress/portfolio-joint-egress-accounting-2026-09-17.md)。
+
 `portfolio_egress_ledger` 仅离线回放指定 SHA256 的本地尝试日志，保留失败、
 不确定结果和已观察缺口；可显式指定成对的单调时钟区间。退出码 2 表示报告
 已写入，但不授予网络准入；无创建、恢复或发送模式。见

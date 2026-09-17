@@ -6,13 +6,14 @@ import argparse
 import json
 from pathlib import Path
 
-from apps.strategies_nautilus.portfolio_egress_ledger import LIMIT, replay
+from apps.strategies_nautilus.portfolio_egress_ledger import JOINT_PROFILE, LIMIT, PROFILE, replay
 from apps.strategies_nautilus.portfolio_session_transport import private_read, write_private_new
 from apps.strategies_nautilus.portfolio_tls_provenance import canonical, digest
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--joint-profile", action="store_true")
     parser.add_argument("--archive", type=Path, required=True)
     parser.add_argument("--archive-sha256", required=True)
     parser.add_argument("--binding-sha256", required=True)
@@ -33,6 +34,7 @@ def main(argv=None):
             private_read(args.archive, limit=LIMIT),
             expected_sha256=args.archive_sha256,
             binding_sha256=args.binding_sha256,
+            profile=JOINT_PROFILE if args.joint_profile else PROFILE,
             start_ns=args.start_monotonic_ns,
             through_ns=args.through_monotonic_ns,
         )

@@ -16,7 +16,13 @@ from urllib.parse import parse_qsl, urlencode, urlsplit
 import pytest
 from nautilus_trader.common.component import TestClock
 
+from apps.strategies_nautilus import portfolio_egress_ledger as attempts
 from apps.strategies_nautilus import portfolio_joint_observation as joint
+from apps.strategies_nautilus.portfolio_joint_egress import (
+    binding_pin,
+    replay_accounted,
+    run_accounted_tls_loopback,
+)
 from apps.strategies_nautilus.portfolio_joint_routes import RoutedJointEvidence
 from apps.strategies_nautilus.portfolio_joint_tls_evidence import PROFILE as TLS_PROFILE
 from apps.strategies_nautilus.portfolio_joint_tls_evidence import TLSJointEvidence
@@ -71,10 +77,10 @@ CASES = [
 
 
 @pytest.mark.parametrize(
-    "tls_mode,failure",
-    [(mode, failure) for mode in (False, True) for failure in CASES]
+    "tls_mode,failure,accounted_mode",
+    [(mode, failure, False) for mode in (False, True) for failure in CASES]
     + [
-        (True, failure)
+        (True, failure, False)
         for failure in (
             "tls_untrusted",
             "duplicate_weight",
@@ -82,13 +88,38 @@ CASES = [
             "fragment_gap",
             "unexpected_close",
         )
+    ]
+    + [
+        (True, failure, True)
+        for failure in CASES
+        + [
+            "tls_untrusted",
+            "duplicate_weight",
+            "ledger_prepare_disk",
+            "ledger_outcome_disk",
+            "slow_metadata_body",
+        ]
     ],
 )
 def test_native_signed_joint_loopback(
-    tmp_path, configured, monkeypatch, failure, tls_mode, certificates
+    tmp_path, configured, monkeypatch, failure, tls_mode, certificates, accounted_mode
 ):
+    wire_guard = {}
+
     def only_local_connect(sock, address):
         assert address[0] == "127.0.0.1"
+        if accounted_mode:
+            ledger_raw = wire_guard["ledger_path"].read_bytes()
+            ledger_report = attempts.replay(
+                ledger_raw,
+                expected_sha256=joint.digest(ledger_raw),
+                binding_sha256=wire_guard["pin"],
+                profile=attempts.JOINT_PROFILE,
+            )
+            assert (
+                ledger_report["pending_attempt"]
+                == wire_guard["journal"].state.prepared["operation_id"]
+            )
         return _socket.socket.connect(sock, address)
 
     monkeypatch.setattr(socket.socket, "connect", only_local_connect)
@@ -218,7 +249,13 @@ def test_native_signed_joint_loopback(
                 header = f"HTTP/1.1 200 OK\r\nContent-Length: {len(raw)}\r\nX-MBX-USED-WEIGHT-1M: {usage}\r\nConnection: close\r\n".encode()
                 if failure == "duplicate_weight":
                     header += f"x-mbx-used-weight-1m: {usage}\r\n".encode()
-                writer.write(header + b"\r\n" + raw)
+                if failure == "slow_metadata_body" and path.endswith("/exchangeInfo"):
+                    writer.write(header + b"\r\n")
+                    await writer.drain()
+                    await asyncio.sleep(5.2)
+                    writer.write(raw)
+                else:
+                    writer.write(header + b"\r\n" + raw)
                 await writer.drain()
             except (ConnectionError, asyncio.IncompleteReadError):
                 pass
@@ -401,10 +438,39 @@ def test_native_signed_joint_loopback(
             evidence_type=TLSJointEvidence if tls_mode else RoutedJointEvidence,
             limits=joint.Limits(pending_events=3) if failure == "buffer" else None,
         )
+        ledger_root = tmp_path / "attempts"
+        if accounted_mode:
+            ledger_root.mkdir(mode=0o700)
+            (ledger_root / "README.md").write_text(
+                "Local joint attempt fixture. No real gateway. Next: replay.\n"
+            )
+            ledger_path = ledger_root / attempts.JOINT_SCOPE / "events.jsonl"
+            wire_guard.update(ledger_path=ledger_path, journal=j, pin=binding_pin(selection))
+            if failure in {"ledger_prepare_disk", "ledger_outcome_disk"}:
+
+                def fail_ledger_sync(fd):
+                    target = os.readlink(f"/proc/self/fd/{fd}")
+                    if target == str(ledger_path):
+                        last = json.loads(ledger_path.read_bytes().splitlines()[-1])
+                        if last["kind"] == (
+                            "prepared" if failure == "ledger_prepare_disk" else "outcome"
+                        ):
+                            raise OSError("injected ledger fsync failure")
+                    return original_fsync(fd)
+
+                monkeypatch.setattr(os, "fsync", fail_ledger_sync)
         try:
             async with asyncio.timeout(15):
                 task = asyncio.create_task(
-                    run_tls_loopback(
+                    run_accounted_tls_loopback(
+                        j,
+                        signer,
+                        ledger_root=ledger_root,
+                        trust_pem=certificates["selected"][1],
+                        observe_seconds=0.1,
+                    )
+                    if accounted_mode
+                    else run_tls_loopback(
                         j, signer, trust_pem=certificates["selected"][1], observe_seconds=0.1
                     )
                     if tls_mode
@@ -420,6 +486,57 @@ def test_native_signed_joint_loopback(
                     result = await task
             j.close()
             raw = path.read_bytes()
+            if accounted_mode:
+                ledger_raw = ledger_path.read_bytes()
+                ledger_report = attempts.replay(
+                    ledger_raw,
+                    expected_sha256=joint.digest(ledger_raw),
+                    binding_sha256=wire_guard["pin"],
+                    profile=attempts.JOINT_PROFILE,
+                )
+                assert not ledger_report["network_admitted"]
+                assert ledger_report["used_upper_bound"] is None
+                with pytest.raises(FileExistsError):
+                    attempts.AttemptLedger(
+                        ledger_root,
+                        binding=None,
+                        binding_sha256=wire_guard["pin"],
+                        profile=attempts.JOINT_PROFILE,
+                    )
+                if failure == "ledger_prepare_disk":
+                    assert counts == {"http": 0, "account": 0, "market": 0}
+                elif failure == "ledger_outcome_disk":
+                    assert counts == {"http": 1, "account": 0, "market": 0}
+                elif failure == "slow_metadata_body":
+                    assert counts == {"http": 6, "account": 1, "market": 0}
+                    assert ledger_report["recorded_attempts"] == 8
+                    assert "joint_dispatch_usage" in result["reason"]
+                if failure in {"ledger_prepare_disk", "tls_untrusted", "cancel"}:
+                    outputs = []
+                    for index in range(2):
+                        output = tmp_path / f"failed-attempt-replay-{index}.json"
+                        proc = subprocess.run(
+                            [
+                                sys.executable,
+                                "-m",
+                                "apps.ops.portfolio_egress_ledger",
+                                "--joint-profile",
+                                "--archive",
+                                str(ledger_path),
+                                "--archive-sha256",
+                                joint.digest(ledger_raw),
+                                "--binding-sha256",
+                                wire_guard["pin"],
+                                "--report",
+                                str(output),
+                            ],
+                            capture_output=True,
+                            timeout=30,
+                        )
+                        assert proc.returncode == 2, proc.stdout + proc.stderr
+                        outputs.append(output.read_bytes())
+                    assert outputs[0] == outputs[1]
+                    assert json.loads(outputs[0]) == ledger_report
             assert not errors, errors
             assert (
                 KEY.encode() not in raw and b"PRIVATE KEY" not in raw and b'"signature"' not in raw
@@ -436,6 +553,26 @@ def test_native_signed_joint_loopback(
                 )
                 assert report["summary"] == result["summary"]
                 assert counts == {"http": 16, "account": 1, "market": 1}
+                accounting_report = None
+                if accounted_mode:
+                    accounting_report = replay_accounted(
+                        raw,
+                        ledger_raw,
+                        joint_sha256=joint.digest(raw),
+                        ledger_sha256=joint.digest(ledger_raw),
+                    )
+                    assert accounting_report["documented_weight"] == 448
+                    assert accounting_report["unknown_charge_attempts"] == 1
+                    assert accounting_report["prepared_tcp_connections"] == 18
+                    assert ledger_report["recorded_attempts"] == 20
+                    assert sum(c["raw_requests"] for c in ledger_report["counts"]) == 16
+                    assert accounting_report["joint"] == report
+                if accounted_mode and failure is None:
+                    from tests.strategies_nautilus.test_portfolio_joint_egress import (
+                        assert_rehashed_links_refused,
+                    )
+
+                    assert_rehashed_links_refused(raw, ledger_raw)
                 if failure is None:
                     outputs = []
                     for i in range(2):
@@ -446,6 +583,16 @@ def test_native_signed_joint_loopback(
                                 "-m",
                                 "apps.ops.portfolio_joint_observation",
                                 "--tls-loopback-profile" if tls_mode else "--loopback-profile",
+                                *(
+                                    [
+                                        "--attempt-ledger",
+                                        str(ledger_path),
+                                        "--attempt-ledger-sha256",
+                                        joint.digest(ledger_raw),
+                                    ]
+                                    if accounted_mode
+                                    else []
+                                ),
                                 "--archive",
                                 str(path),
                                 "--archive-sha256",
@@ -458,7 +605,9 @@ def test_native_signed_joint_loopback(
                         )
                         assert proc.returncode == 0, proc.stdout + proc.stderr
                         outputs.append(output.read_bytes())
-                    assert outputs[0] == outputs[1] and json.loads(outputs[0]) == report
+                    assert outputs[0] == outputs[1] and json.loads(outputs[0]) == (
+                        accounting_report or report
+                    )
                     assert path.read_bytes() == raw
                     if tls_mode:
                         # Rehash every row: rejection must come from source semantics,

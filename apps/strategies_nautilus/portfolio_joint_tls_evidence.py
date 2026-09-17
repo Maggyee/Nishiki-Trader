@@ -34,6 +34,7 @@ class Wire:
         self.buffer = bytearray()
         self.headers = None
         self.header_size = 0
+        self.header_receipt_ns = None
         self.body_length = None
         self.frames = ServerFrames() if row["role"] != "http" else None
         self.events = deque()
@@ -74,6 +75,7 @@ class Wire:
                 role, status, pairs, self.opened["websocket_nonce"]
             )
             self.header_size = size
+            self.header_receipt_ns = row["received_ns"]
             self.headers = {"status": status, "pairs": pairs, "sha256": digest(headers)}
         if self.frames is None:
             self.buffer.extend(raw)
@@ -94,6 +96,7 @@ class TLSJointEvidence(RoutedJointEvidence):
         super().__init__()
         self.wires = {}
         self.role_connections = {}
+        self.original_usage_receipt = None
 
     @property
     def retained_bytes(self):
@@ -146,6 +149,10 @@ class TLSJointEvidence(RoutedJointEvidence):
     def _feed(self, row, processed_ns, processed_mono):
         self.dispatch_time = processed_ns, processed_mono
         kind = row["kind"]
+        if kind == "account_wire":
+            wire = self.wires[self.role_connections["account"]]
+            if wire.events:
+                self.original_usage_receipt = wire.events[0][3]
         if kind in {"market_frame", "account_wire"}:
             self._event(
                 "market" if kind == "market_frame" else "account",
@@ -172,6 +179,7 @@ class TLSJointEvidence(RoutedJointEvidence):
                 or str(row["used_weight_1m"]) != _one(wire.headers["pairs"], "x-mbx-used-weight-1m")
             ):
                 raise DepthError("joint_tls_http_original_response_required")
+            self.original_usage_receipt = wire.header_receipt_ns
             wire.http_consumed = True
             wire.buffer.clear()
         elif kind in {"market_connected", "ws_operation"} and (
@@ -302,6 +310,11 @@ class TLSJointEvidence(RoutedJointEvidence):
             wire.closed = True
         else:
             raise DepthError("joint_tls_unknown_receipt")
+
+    def observe_usage(self, value, now):
+        if self.original_usage_receipt is None:
+            raise DepthError("joint_tls_original_usage_receipt_required")
+        super().observe_usage(value, self.original_usage_receipt)
 
     def summary(self):
         return {

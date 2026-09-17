@@ -18,7 +18,7 @@ from apps.strategies_nautilus.portfolio_ws_frames import client_frame
 
 
 class TLSBackend:
-    def __init__(self, journal, trust_pem):
+    def __init__(self, journal, trust_pem, *, accounting=None):
         if (
             type(journal.state) is not TLSJointEvidence
             or not isinstance(trust_pem, bytes)
@@ -27,6 +27,7 @@ class TLSBackend:
         ):
             raise DepthError("joint_tls_selected_trust_required")
         self.journal = journal
+        self.accounting = accounting
         self.context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
         self.context.minimum_version = ssl.TLSVersion.TLSv1_2
         self.context.load_verify_locations(cadata=trust_pem.decode("ascii"))
@@ -44,6 +45,8 @@ class TLSBackend:
         parsed = urlsplit(endpoint)
         connection = self.journal.state.prepared["operation_id"]
         nonce = base64.b64encode(os.urandom(16)).decode() if role != "http" else None
+        if self.accounting is not None:
+            self.accounting.before_wire("connect")
         reader, writer = await asyncio.open_connection(
             "127.0.0.1",
             parsed.port,
@@ -82,9 +85,16 @@ class TLSBackend:
 
     async def chunk(self, connection, reader):
         raw = await reader.read(4096)
+        received_ns, monotonic_ns = self.journal.clock()
         if not raw:
             raise DepthError("joint_tls_unexpected_eof")
-        self.journal.append("tls_chunk", connection_id=connection, **raw_fields(raw))
+        self.journal.append(
+            "tls_chunk",
+            connection_id=connection,
+            received_ns=received_ns,
+            monotonic_ns=monotonic_ns,
+            **raw_fields(raw),
+        )
 
     async def get(self, op, params, headers):
         connection, reader, writer, authority, _ = await self._open("http", op["path"])
@@ -93,6 +103,8 @@ class TLSBackend:
             request = f"GET {target} HTTP/1.1\r\nHost: {authority}\r\nConnection: close\r\n"
             request += "".join(f"{k}: {v}\r\n" for k, v in headers.items()) + "\r\n"
             # Outbound private selectors/signatures never enter the byte journal.
+            if self.accounting is not None:
+                self.accounting.before_wire("request")
             writer.write(request.encode("ascii"))
             await writer.drain()
             wire = self.journal.state.wires[connection]
@@ -116,6 +128,8 @@ class TLSBackend:
         connection, reader, writer, authority, nonce = await self._open(role, target)
         try:
             request = f"GET {target} HTTP/1.1\r\nHost: {authority}\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: {nonce}\r\nSec-WebSocket-Version: 13\r\n\r\n"
+            if self.accounting is not None:
+                self.accounting.before_wire("request")
             writer.write(request.encode("ascii"))
             await writer.drain()
             while self.journal.state.wires[connection].headers is None:
@@ -198,6 +212,8 @@ class TLSWebSocket:
         ):
             raise DepthError("joint_tls_unprepared_account_method")
         async with self.lock:
+            if self.backend.accounting is not None:
+                self.backend.accounting.before_wire("request")
             self.writer.write(client_frame(raw))
             await self.writer.drain()
 
@@ -206,6 +222,8 @@ class TLSWebSocket:
             self.journal.append(
                 "tls_pong_prepared", connection_id=self.connection, **raw_fields(payload)
             )
+            if self.backend.accounting is not None:
+                self.backend.accounting.control()
             self.writer.write(client_frame(payload, 10))
             await self.writer.drain()
 
@@ -217,6 +235,8 @@ class TLSWebSocket:
             if not self.journal.failed:
                 async with self.lock:
                     self.journal.append("tls_close_prepared", connection_id=self.connection)
+                    if self.backend.accounting is not None:
+                        self.backend.accounting.control()
                     self.writer.write(client_frame(b"\x03\xe8", 8))
                     await self.writer.drain()
                 await self.peer_closed.wait()

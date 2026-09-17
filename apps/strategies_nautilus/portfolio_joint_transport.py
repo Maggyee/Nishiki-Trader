@@ -46,7 +46,7 @@ async def run_loopback(journal, signer, *, observe_seconds=0.1):
     return await _run_loopback(journal, signer, observe_seconds=observe_seconds)
 
 
-async def _run_loopback(journal, signer, *, observe_seconds, transport=None):
+async def _run_loopback(journal, signer, *, observe_seconds, transport=None, accounting=None):
     state = journal.state
     if not 0 < observe_seconds <= 10:
         raise DepthError("explicit_bounded_loopback_profile_required")
@@ -56,6 +56,15 @@ async def _run_loopback(journal, signer, *, observe_seconds, transport=None):
 
         if type(state) is not TLSJointEvidence or type(transport) is not TLSBackend:
             raise DepthError("explicit_tls_loopback_backend_required")
+    if accounting is not None:
+        from apps.strategies_nautilus.portfolio_joint_egress import JointAccounting
+
+        if (
+            type(accounting) is not JointAccounting
+            or transport is None
+            or transport.accounting is not accounting
+        ):
+            raise DepthError("explicit_joint_accounting_required")
     manifest = state.manifest
     endpoints = manifest["wire_endpoints"]
     for name, scheme in (("http", "http"), ("account", "ws"), ("market", "ws")):
@@ -170,6 +179,8 @@ async def _run_loopback(journal, signer, *, observe_seconds, transport=None):
         append(
             "operation_prepared", operation=op, operation_id=op_id, request_id=f"loopback-{op_id}"
         )
+        if accounting is not None:
+            accounting.prepare(op, op_id)
         return op, op_id
 
     async def read():
@@ -205,6 +216,8 @@ async def _run_loopback(journal, signer, *, observe_seconds, transport=None):
             **raw_fields(raw),
         )
         healthy()
+        if accounting is not None:
+            accounting.outcome()
 
     async def connect(name, handler):
         if transport is not None:
@@ -277,6 +290,8 @@ async def _run_loopback(journal, signer, *, observe_seconds, transport=None):
                     )
                 )
                 await pending_reply
+                if accounting is not None:
+                    accounting.outcome()
         finally:
             if not pending_reply.done():
                 pending_reply.cancel()
@@ -303,6 +318,8 @@ async def _run_loopback(journal, signer, *, observe_seconds, transport=None):
             prepare()
             await connect("account", account_frame)
             mark_account_connected()
+            if accounting is not None:
+                accounting.outcome()
             await account_request()
             for _ in range(6):
                 await read()  # full account, metadata, then original book routes
@@ -310,6 +327,8 @@ async def _run_loopback(journal, signer, *, observe_seconds, transport=None):
             async with asyncio.timeout(15):
                 await connect("market", market_frame)
                 mark_market_connected()
+                if accounting is not None:
+                    accounting.outcome()
                 await first_frames.wait()
                 healthy()
                 for _ in state.manifest["symbols"]:

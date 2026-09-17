@@ -14,10 +14,16 @@ NautilusTrader 上的自定义 Strategy / Actor / 风控扩展。
 
 ## 当前入口
 
+`portfolio_joint_egress.py` 将完整本地 TLS 联合采集接入独立持久化尝试账本：
+20 项操作、16 GET / 448 已知权重，失败不退款，准备和结果绑定原始联合日志前缀。
+发送前重查账本与计数器时效，行情连接和控制帧的实际费用仍未知。
+普通项目进程验收已完成；下一步接入已安装网关的 UID/IPC 与内核出口控制。
+见 [联合采集记账验收](../../docs/progress/portfolio-joint-egress-accounting-2026-09-17.md)。
+
 `portfolio_egress_ledger.py` 保存本地 REST/账户/行情操作的准备与结果记录，
 在准备落盘前后检查借用的绑定对象，检测漂移后终止；失败/不确定尝试不退还。
 这是本地记账组件，调用者标签未经认证，检查间隔的流量覆盖仍未知，不提供
-发送许可。下一步接入隔离网关验证强制记账。见
+发送许可。隔离单请求网关已有验收；多操作集成仍待完成。见
 [本地出口尝试账本](../../docs/progress/portfolio-egress-attempt-ledger-2026-09-17.md)。
 
 `portfolio_joint_reservation.py` 对固定最大预算执行独立离线验收：
