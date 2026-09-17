@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-17
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: The isolated gateway now consumes the prospective ledger before granting a marked local socket. Authenticated fixture-child identity, unrecorded traffic denial and managed stop/drift/fsync refusal pass actual kernel acceptance. Next integrate fixed installation/dedicated UID and durable kernel lifecycle, including controller crash/expiry. This is not real shared-egress coverage or a deployed collector; consumed bootstrap, stale rates and joint/trading blocks remain.
+- **Current objective**: The isolated ledger gateway now durably records kernel activation/revocation intent and acknowledgements. Four actual controller SIGKILL stages retain uncertainty; kernel expiry denies marked traffic and original scopes cannot reopen. Next integrate fixed installation/dedicated UID with this lifecycle. Real shared-egress coverage, power-loss durability and joint/trading admission remain blocked; the actual bootstrap stays consumed.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -253,7 +253,8 @@ Detailed depth implementation, retained hashes and next review:
 [original bootstrap evidence in joint admission](progress/portfolio-bootstrap-joint-review-2026-09-16.md),
 [actual local custody binding](progress/portfolio-local-authority-binding-2026-09-16.md),
 [local egress attempt accounting](progress/portfolio-egress-attempt-ledger-2026-09-17.md),
-and [isolated ledger gateway integration](progress/portfolio-egress-ledger-gateway-2026-09-17.md).
+[isolated ledger gateway integration](progress/portfolio-egress-ledger-gateway-2026-09-17.md),
+and [durable gateway lifecycle/crash acceptance](progress/portfolio-egress-gateway-lifecycle-2026-09-17.md).
 
 ## Next Steps
 
@@ -296,8 +297,10 @@ and [isolated ledger gateway integration](progress/portfolio-egress-ledger-gatew
    [isolated gateway](progress/portfolio-egress-ledger-gateway-2026-09-17.md) now
    owns its marked socket, verifies fixture-child credentials and blocks unrecorded
    output/forwarding. Managed stop and drift/fsync refusal pass kernel tests.
-   Next integrate fixed installation/dedicated UID and durable kernel lifecycle,
-   then test controller crash/expiry. Sampling alone never proves coverage.
+   [Durable kernel lifecycle and controller crash/expiry](progress/portfolio-egress-gateway-lifecycle-2026-09-17.md)
+   now pass isolated acceptance, preserving uncertain activation/revocation and
+   refusing scope reopen. Next integrate fixed installation/dedicated UID with
+   these journals. Sampling alone never proves coverage.
    Actual authority policy, fresh rate/clock consumption and provider-charge
    resolution must precede any separately reviewed real joint dispatch.
    Preserve the consumed scope; no retry, second IPv4 or extended interruption
@@ -342,13 +345,13 @@ and [isolated ledger gateway integration](progress/portfolio-egress-ledger-gatew
 
 ## Latest Verification
 
-- Ledger gateway: **22 new / 303 focused tests and 21 kernel checks pass**.
-  Six local scenarios retain preparation before sending and deny unrecorded traffic;
-  managed stop, observed drift and fsync failures stop further dispatch. Twelve
-  fresh replays (two per scenario) match the retained originals. No venue/host
-  network changes or upstream/live-path edits. Older kernel scripts and full
-  application regression were not rerun. Details and pins:
-  [gateway acceptance](progress/portfolio-egress-ledger-gateway-2026-09-17.md).
+- Gateway lifecycle: **28 additional / 331 focused tests and 29 kernel checks pass**.
+  Ten local scenarios include four actual SIGKILL stages; activation/revocation
+  records preserve crash uncertainty and kernel expiry denies marked traffic.
+  Five disk crash stages and two fresh replays per kernel archive pass. No venue,
+  host-network, upstream or live-path changes; no power-loss/UID integration claim.
+  Full application regression and older kernel scripts were not rerun. Details:
+  [lifecycle acceptance](progress/portfolio-egress-gateway-lifecycle-2026-09-17.md).
 
 - Bootstrap-to-joint integration: **20 new / 234 focused tests pass**. Two fresh
   reviews of the actual original artifacts are byte-identical and remain blocked.

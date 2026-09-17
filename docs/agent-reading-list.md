@@ -22,14 +22,23 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the durable isolated gateway lifecycle and controller crash/expiry acceptance,
+read `docs/progress/portfolio-egress-gateway-lifecycle-2026-09-17.md` and its JSON.
+The gateway records kernel activation intent before grant and acknowledgement
+before send; revocation is attempted even if audit persistence fails. Four actual
+SIGKILL stages preserve uncertainty; detached replay never infers current kernel
+state or restart permission. Fixed installation/dedicated UID integration and
+power-loss/rollback durability remain pending. No real deployment is enabled.
+
 For the isolated gateway consuming the prospective ledger, read
 `docs/progress/portfolio-egress-ledger-gateway-2026-09-17.md` and its JSON.
 `infra/egress-guard/ledger_gateway.py` owns a fixed local socket, persists before
 mark permission, blocks unmarked/forwarded traffic and serializes terminal stop.
 The authenticated fixture child has no IP path or socket handoff. Six kernel
-scenarios replay independently; no real host/venue mode exists. Next integrate
-fixed installation/dedicated UID and durable kernel lifecycle/crash acceptance;
-actual all-caller coverage and joint/trading admission remain blocked.
+scenarios replay independently; no real host/venue mode exists. The successor
+above adds durable kernel lifecycle/crash acceptance; next integrate fixed
+installation/dedicated UID. Actual all-caller coverage and joint/trading admission
+remain blocked.
 
 For prospective local egress attempt bookkeeping, read
 `docs/progress/portfolio-egress-attempt-ledger-2026-09-17.md` and its JSON.

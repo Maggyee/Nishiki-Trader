@@ -50,10 +50,18 @@ namespaces. The trusted gateway owns its fixed local echo socket; durable
 preparation precedes a five-second mark permission, while all forwarding and
 unmarked output remain denied. The child receives no socket/destination authority.
 Managed stop, observed drift and fsync failures prevent later sends and attempt
-terminal revocation. Six fixture scenarios export exact ledgers for offline replay.
+terminal revocation. Ten fixture scenarios export exact attempt and kernel
+journals for offline replay.
+A separate exclusive `kernel.jsonl` records activation intent before grant,
+acknowledgement before send, stop intent and verified revocation. It binds the
+original pending attempt prefix, mark and five-second TTL. Audit failure cannot
+skip revocation; missing acknowledgements stay uncertain. Four SIGKILL stages
+verify actual expiry without controller cleanup and refusal to reopen the scope.
+The worker/parent deadlines are 70/75 seconds. No replay infers current permission.
 This is not an installed helper, HTTP collector or complete shared-IP accounting.
-Dedicated host UID/storage authority, durable kernel lifecycle and crash/expiry
-integration remain pending. See the [acceptance report](../../docs/progress/portfolio-egress-ledger-gateway-2026-09-17.md).
+Dedicated host UID/storage authority integration and power-loss/rollback durability
+remain pending. See the [original gateway report](../../docs/progress/portfolio-egress-ledger-gateway-2026-09-17.md)
+and [lifecycle acceptance](../../docs/progress/portfolio-egress-gateway-lifecycle-2026-09-17.md).
 
 ## Expiring permission and local dispatch supervision
 

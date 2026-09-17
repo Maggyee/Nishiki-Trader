@@ -266,3 +266,271 @@ def test_parent_timeout_kills_group(module, monkeypatch):
     with pytest.raises(subprocess.TimeoutExpired):
         module.main()
     kill.assert_called_once_with(12345, module.signal.SIGKILL)
+
+
+@pytest.fixture
+def durable(case, module):
+    import apps.strategies_nautilus.portfolio_egress_ledger as ledger_module
+
+    gateway, ledger, events, binding = case
+    lifecycle = module.GatewayLifecycle(ledger, ledger_module)
+    gateway.lifecycle = lifecycle
+
+    def review():
+        raw = lifecycle.path.read_bytes()
+        return module.replay_lifecycle(
+            ledger_module,
+            raw,
+            expected_sha256=digest(raw),
+            attempts=(ledger.path / "events.jsonl").read_bytes(),
+            binding_sha256=PIN,
+        )
+
+    return gateway, lifecycle, review, events
+
+
+def test_durable_activation_precedes_grant_ack_precedes_send(durable):
+    gateway, lifecycle, review, events = durable
+    old_grant, old_send = gateway.grant, gateway.send
+
+    def grant():
+        state = review()
+        assert state["activation_prepared"] and state["activation_uncertain"]
+        assert not state["activation_acknowledged"]
+        old_grant()
+
+    def send():
+        assert review()["activation_acknowledged"]
+        return old_send()
+
+    gateway.grant, gateway.send = grant, send
+    gateway.dispatch()
+    assert review()["revocation_recorded"]
+    assert review()["current_kernel_permission"] is None
+    assert not review()["restart_allowed"]
+    with pytest.raises(FileExistsError):
+        type(lifecycle)(gateway.ledger, lifecycle.module)
+    gateway.close()
+
+
+@pytest.mark.parametrize("kind", ["activation_prepared", "activated", "stop_requested", "revoked"])
+def test_lifecycle_fsync_failure_always_revokes_and_never_retries(durable, monkeypatch, kind):
+    import json
+
+    gateway, lifecycle, review, events = durable
+    fsync = os.fsync
+
+    def fail(fd):
+        if fd == lifecycle.journal.fd:
+            last = json.loads(lifecycle.path.read_bytes().splitlines()[-1])
+            if last["kind"] == kind:
+                raise OSError("lifecycle_fsync_failed")
+        return fsync(fd)
+
+    monkeypatch.setattr(os, "fsync", fail)
+    with pytest.raises((OSError, ValueError)):
+        gateway.dispatch()
+    assert events[-1] == "revoke" and gateway.revoked
+    assert ("send" in events) == (kind in {"stop_requested", "revoked"})
+    assert ("grant" in events) == (kind != "activation_prepared")
+    assert not review()["revocation_recorded"]
+    with pytest.raises(ValueError, match="consumed"):
+        gateway.dispatch()
+
+
+@pytest.mark.parametrize("mutation", ["replace", "append", "chmod", "hardlink", "symlink"])
+def test_lifecycle_storage_loss_blocks_grant_but_not_cleanup(durable, mutation):
+    gateway, lifecycle, review, events = durable
+    path = lifecycle.path
+    if mutation == "replace":
+        path.rename(path.with_suffix(".old"))
+        path.write_bytes(lifecycle.expected)
+        path.chmod(0o600)
+    elif mutation == "append":
+        with path.open("ab") as stream:
+            stream.write(b"garbage\n")
+    elif mutation == "chmod":
+        path.chmod(0o640)
+    elif mutation == "hardlink":
+        os.link(path, path.with_suffix(".link"))
+    else:
+        path.rename(path.with_suffix(".old"))
+        path.symlink_to(path.with_suffix(".old"))
+    with pytest.raises(ValueError):
+        gateway.dispatch()
+    assert events == ["revoke"]
+
+
+def test_kernel_revoke_failure_cannot_record_success(durable):
+    gateway, lifecycle, review, events = durable
+    gateway.revoke = Mock(side_effect=OSError("kernel fault"))
+    with pytest.raises(OSError):
+        gateway.dispatch()
+    assert review()["last_record"] == "stop_requested"
+    assert not review()["revocation_recorded"] and not gateway.revoked
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "no_preparation",
+        "wrong_prefix",
+        "wrong_mark",
+        "wrong_ttl",
+        "skip_ack",
+        "reverse_clock",
+        "unknown_field",
+    ],
+)
+def test_rehashed_lifecycle_semantic_corruption_refused(durable, module, mutation):
+    import json
+
+    gateway, lifecycle, review, events = durable
+    gateway.dispatch()
+    rows = [json.loads(line) for line in lifecycle.path.read_bytes().splitlines()]
+    if mutation == "no_preparation":
+        rows[1]["payload"]["attempt_prefix_sha256"] = digest(
+            gateway.ledger.expected.splitlines(keepends=True)[0]
+        )
+    elif mutation == "wrong_prefix":
+        rows[1]["payload"]["attempt_prefix_sha256"] = "0" * 64
+    elif mutation == "wrong_mark":
+        rows[1]["payload"]["mark"] += 1
+    elif mutation == "wrong_ttl":
+        rows[1]["payload"]["ttl_ms"] += 1
+    elif mutation == "skip_ack":
+        rows[1]["kind"] = "activated"
+        rows[1]["payload"] = {}
+    elif mutation == "reverse_clock":
+        rows[-1]["monotonic_ns"] = rows[0]["monotonic_ns"] - 1
+    else:
+        rows[-1]["extra"] = False
+    raw, previous = b"", None
+    for row in rows:
+        row["previous_sha256"] = previous
+        line = lifecycle.module.canonical(row) + b"\n"
+        raw += line
+        previous = digest(line)
+    with pytest.raises(ValueError):
+        module.replay_lifecycle(
+            lifecycle.module,
+            raw,
+            expected_sha256=digest(raw),
+            attempts=gateway.ledger.expected,
+            binding_sha256=PIN,
+        )
+
+
+@pytest.mark.parametrize("stage", ["activation_prepared", "activated", "stop_requested"])
+def test_durable_prefix_retains_uncertainty_without_current_permission(durable, module, stage):
+    import json
+
+    gateway, lifecycle, review, events = durable
+    gateway.dispatch()
+    prefix = b""
+    for line in lifecycle.path.read_bytes().splitlines(keepends=True):
+        prefix += line
+        if json.loads(line)["kind"] == stage:
+            break
+    state = module.replay_lifecycle(
+        lifecycle.module,
+        prefix,
+        expected_sha256=digest(prefix),
+        attempts=gateway.ledger.expected,
+        binding_sha256=PIN,
+    )
+    assert state["activation_prepared"] and not state["revocation_recorded"]
+    assert state["activation_uncertain"] == (stage == "activation_prepared")
+    assert state["current_kernel_permission"] is None
+    assert not state["network_admitted"]
+
+
+@pytest.mark.parametrize("stage", ["activation_prepared", "grant", "activated", "send", "revoke"])
+def test_disk_sigkill_prefix_and_two_fresh_replays(module, tmp_path, stage):
+    import json
+    import signal
+    import sys
+
+    import apps.strategies_nautilus.portfolio_egress_ledger as ledger_module
+
+    tmp_path.chmod(0o700)
+    bootstrap = f"""
+import importlib.util, json, os, signal
+from pathlib import Path
+from types import SimpleNamespace
+import apps.strategies_nautilus.portfolio_egress_ledger as ledger_module
+spec = importlib.util.spec_from_file_location("gateway_crash", {str(SOURCE)!r})
+m = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(m)
+root = Path({str(tmp_path)!r})
+pin = {PIN!r}
+"""
+    child = (
+        bootstrap
+        + f"""
+writer = ledger_module.AttemptLedger(root, binding=SimpleNamespace(verify=lambda: {{"binding_sha256": pin}}), binding_sha256=pin)
+life = m.GatewayLifecycle(writer, ledger_module)
+def die(stage):
+    if stage == {stage!r}:
+        os.kill(os.getpid(), signal.SIGKILL)
+original = life.record
+def record(kind, payload=None):
+    original(kind, payload)
+    die(kind)
+life.record = record
+gateway = m.FixtureLedgerGateway(writer, lifecycle=life, authorize=lambda: {{"ok": True}}, grant=lambda: die("grant"), send=lambda: die("send") or True, revoke=lambda: die("revoke"))
+gateway.dispatch()
+raise SystemExit(3)
+"""
+    )
+    result = subprocess.run([sys.executable, "-c", child], capture_output=True, timeout=10)
+    assert result.returncode == -signal.SIGKILL, result.stderr.decode()
+    scope = tmp_path / ledger_module.SCOPE
+    raw, attempts = (scope / "kernel.jsonl").read_bytes(), (scope / "events.jsonl").read_bytes()
+    expected = module.replay_lifecycle(
+        ledger_module, raw, expected_sha256=digest(raw), attempts=attempts, binding_sha256=PIN
+    )
+    assert not expected["revocation_recorded"]
+    assert expected["activation_uncertain"] == (stage in {"activation_prepared", "grant"})
+    assert replay(attempts, expected_sha256=digest(attempts), binding_sha256=PIN)[
+        "pending_attempt"
+    ] == (None if stage == "revoke" else 0)
+    replay_script = (
+        bootstrap
+        + f"""
+scope = root / ledger_module.SCOPE
+raw = (scope / "kernel.jsonl").read_bytes()
+attempts = (scope / "events.jsonl").read_bytes()
+assert ledger_module.digest(attempts) == {digest(attempts)!r}
+print(json.dumps(m.replay_lifecycle(ledger_module, raw, expected_sha256={digest(raw)!r}, attempts=attempts, binding_sha256=pin), sort_keys=True))
+"""
+    )
+    outputs = [
+        subprocess.run(
+            [sys.executable, "-c", replay_script], capture_output=True, check=True, timeout=10
+        ).stdout
+        for _ in range(2)
+    ]
+    assert outputs[0] == outputs[1] and json.loads(outputs[0]) == expected
+    with pytest.raises(FileExistsError):
+        AttemptLedger(tmp_path, binding=None, binding_sha256=PIN)
+
+
+@pytest.mark.parametrize("failure", ["stop", "binding_drift"])
+def test_stop_or_binding_drift_during_lifecycle_fsync_blocks_grant(durable, failure):
+    gateway, lifecycle, review, events = durable
+    original = lifecycle.prepare
+
+    def prepare():
+        original()
+        if failure == "stop":
+            gateway.stop.set()
+        else:
+            gateway.ledger.binding.verify = Mock(side_effect=ValueError("drift"))
+
+    lifecycle.prepare = prepare
+    with pytest.raises(ValueError):
+        gateway.dispatch()
+    assert events == ["revoke"]
+    assert review()["activation_uncertain"]
+    assert review()["revocation_recorded"]

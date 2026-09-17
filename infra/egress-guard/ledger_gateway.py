@@ -7,9 +7,11 @@ import json
 import os
 import signal
 import socket
+import stat
 import subprocess
 import sys
 import threading
+import time
 import types
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import suppress
@@ -35,6 +37,209 @@ table inet fixture_ledger_gateway {
 """
 
 
+LIFECYCLE_PROFILE = "portfolio.fixture_gateway_lifecycle.v1"
+LIFECYCLE_LIMIT = 16384
+
+
+def replay_lifecycle(module, raw, *, expected_sha256, attempts, binding_sha256):
+    """Read selected historical bytes; never infer current kernel state or resume."""
+    if not isinstance(raw, bytes) or not 0 < len(raw) <= LIFECYCLE_LIMIT:
+        raise ValueError("lifecycle_archive_size")
+    if module.digest(raw) != expected_sha256:
+        raise ValueError("lifecycle_archive_selection")
+    module.replay(attempts, expected_sha256=module.digest(attempts), binding_sha256=binding_sha256)
+    prefixes = {}
+    end = 0
+    for line in attempts.splitlines(keepends=True):
+        end += len(line)
+        prefixes[module.digest(attempts[:end])] = end
+    previous = last = start = stage = None
+    activation = acknowledged = revoked = False
+    for seq, line in enumerate(raw.splitlines(keepends=True)):
+        row = json.loads(line)
+        if (
+            not isinstance(row, dict)
+            or set(row)
+            != {
+                "seq",
+                "previous_sha256",
+                "kind",
+                "utc_ns",
+                "monotonic_ns",
+                "profile",
+                "binding_sha256",
+                "payload",
+            }
+            or type(row["seq"]) is not int
+            or row["seq"] != seq
+            or row["previous_sha256"] != previous
+            or module.canonical(row) + b"\n" != line
+            or row["profile"] != LIFECYCLE_PROFILE
+            or row["binding_sha256"] != binding_sha256
+        ):
+            raise ValueError("lifecycle_chain_invalid")
+        now, mono = row["utc_ns"], row["monotonic_ns"]
+        if any(type(v) is not int or v <= 0 for v in (now, mono)) or (
+            last
+            and (
+                now < last[0]
+                or mono < last[1]
+                or abs((now - start[0]) - (mono - start[1])) > 50_000_000
+            )
+        ):
+            raise ValueError("lifecycle_clock_discontinuity")
+        kind, payload = row["kind"], row["payload"]
+        if stage is None:
+            valid = kind == "started" and payload == {}
+        elif kind == "activation_prepared" and stage == "started":
+            valid = isinstance(payload, dict) and set(payload) == {
+                "attempt_prefix_sha256",
+                "mark",
+                "ttl_ms",
+            }
+            if valid:
+                selected_end = (
+                    prefixes.get(payload["attempt_prefix_sha256"])
+                    if isinstance(payload["attempt_prefix_sha256"], str)
+                    else None
+                )
+                valid = (
+                    type(payload["mark"]) is int
+                    and payload["mark"] == MARK
+                    and type(payload["ttl_ms"]) is int
+                    and payload["ttl_ms"] == 5000
+                    and selected_end is not None
+                )
+                if valid:
+                    selected = attempts[:selected_end]
+                    last_attempt_row = json.loads(selected.splitlines()[-1])
+                    report = module.replay(
+                        selected,
+                        expected_sha256=module.digest(selected),
+                        binding_sha256=binding_sha256,
+                    )
+                    valid = (
+                        report["pending_attempt"] == 0
+                        and report["recorded_attempts"] == 1
+                        and report["status"] == "incomplete_no_resume"
+                        and report["counts"][0]["caller_label"] == "collector"
+                        and report["counts"][0]["role"] == "rest"
+                        and last_attempt_row["utc_ns"] <= now
+                        and last_attempt_row["monotonic_ns"] <= mono
+                    )
+            activation = bool(valid)
+        elif kind == "activated" and stage == "activation_prepared":
+            valid = payload == {}
+            acknowledged = bool(valid)
+        elif kind == "stop_requested" and stage in {"started", "activation_prepared", "activated"}:
+            valid = payload == {}
+        elif kind == "revoked" and stage == "stop_requested":
+            valid = payload == {}
+            revoked = bool(valid)
+        else:
+            valid = False
+        if not valid:
+            raise ValueError("lifecycle_transition")
+        start = start or (now, mono)
+        last, previous, stage = (now, mono), module.digest(line), kind
+    return {
+        "schema_version": LIFECYCLE_PROFILE,
+        "archive_sha256": expected_sha256,
+        "attempt_archive_sha256": module.digest(attempts),
+        "binding_sha256": binding_sha256,
+        "last_record": stage,
+        "activation_prepared": activation,
+        "activation_acknowledged": acknowledged,
+        "revocation_recorded": revoked,
+        "activation_uncertain": activation and not acknowledged,
+        "current_kernel_permission": None,
+        "restart_allowed": False,
+        "complete_caller_coverage_verified": False,
+        "network_admitted": False,
+        "trading_admitted": False,
+    }
+
+
+class GatewayLifecycle:
+    """Exclusive sibling journal, bound to the owned attempt ledger's storage."""
+
+    def __init__(self, ledger, module):
+        self.ledger, self.module = ledger, module
+        self.path = ledger.path / "kernel.jsonl"
+        self.closed = self.failed = False
+        self.expected = b""
+        ledger._storage()
+        self.journal = module._Journal(self.path, limit=LIFECYCLE_LIMIT)
+        self.reader = None
+        try:
+            self.reader = os.open(self.path, os.O_RDONLY | os.O_NOFOLLOW)
+            self.identity = os.fstat(self.reader)
+            self.record("started")
+        except BaseException:
+            self.close()
+            raise
+
+    def record(self, kind, payload=None):
+        self.ledger._owner()
+        if self.closed or self.failed:
+            raise ValueError("lifecycle_ended")
+        try:
+            self.ledger._storage()
+            info = self.path.stat(follow_symlinks=False)
+            if (
+                (info.st_dev, info.st_ino) != (self.identity.st_dev, self.identity.st_ino)
+                or info.st_uid != os.geteuid()
+                or info.st_nlink != 1
+                or stat.S_IMODE(info.st_mode) != 0o600
+                or os.pread(self.reader, LIFECYCLE_LIMIT + 1, 0) != self.expected
+            ):
+                raise ValueError("lifecycle_storage_changed")
+            row = {
+                "seq": self.journal.seq,
+                "previous_sha256": self.journal.previous,
+                "kind": kind,
+                "utc_ns": time.time_ns(),
+                "monotonic_ns": time.monotonic_ns(),
+                "profile": LIFECYCLE_PROFILE,
+                "binding_sha256": self.ledger.state.binding_sha256,
+                "payload": {} if payload is None else payload,
+            }
+            future = self.expected + self.module.canonical(row) + b"\n"
+            replay_lifecycle(
+                self.module,
+                future,
+                expected_sha256=self.module.digest(future),
+                attempts=self.ledger.expected,
+                binding_sha256=self.ledger.state.binding_sha256,
+            )
+            self.journal.append(
+                kind,
+                **{k: v for k, v in row.items() if k not in {"kind", "seq", "previous_sha256"}},
+            )
+            self.expected = future
+        except BaseException:
+            self.failed = True
+            raise
+
+    def prepare(self):
+        self.record(
+            "activation_prepared",
+            {
+                "attempt_prefix_sha256": self.module.digest(self.ledger.expected),
+                "mark": MARK,
+                "ttl_ms": 5000,
+            },
+        )
+
+    def close(self):
+        self.ledger._owner()
+        if not self.closed:
+            self.closed = True
+            if self.reader is not None:
+                os.close(self.reader)
+            os.close(self.journal.fd)
+
+
 class FixtureLedgerGateway:
     """Trusted fixture owner. Callbacks are harness code, never client inputs.
 
@@ -42,8 +247,9 @@ class FixtureLedgerGateway:
     no socket handoff, no renewal or recovery. Real admission stays false.
     """
 
-    def __init__(self, ledger, *, authorize, grant, send, revoke):
+    def __init__(self, ledger, *, authorize, grant, send, revoke, lifecycle=None):
         self.ledger = ledger
+        self.lifecycle = lifecycle
         self.authorize, self.grant, self.send, self.revoke = authorize, grant, send, revoke
         self.owner = os.getpid()
         self.lock = threading.Lock()
@@ -58,8 +264,14 @@ class FixtureLedgerGateway:
         self.stop.set()
         if not self.revocation_attempted:
             self.revocation_attempted = True
-            self.revoke()  # Audit failure cannot suppress kernel revocation.
-            self.revoked = True
+            try:
+                if self.lifecycle is not None:
+                    self.lifecycle.record("stop_requested")
+            finally:
+                self.revoke()  # Audit failure cannot suppress kernel revocation.
+                self.revoked = True
+            if self.lifecycle is not None:
+                self.lifecycle.record("revoked")
         if not self.revoked:
             raise RuntimeError("gateway_revocation_incomplete")
 
@@ -77,7 +289,14 @@ class FixtureLedgerGateway:
                 self.ledger.checkpoint()
                 if self.stop.is_set():
                     raise ValueError("gateway_stop_before_grant")
+                if self.lifecycle is not None:
+                    self.lifecycle.prepare()
+                    self.ledger.checkpoint()
+                    if self.stop.is_set():
+                        raise ValueError("gateway_stop_before_grant")
                 self.grant()
+                if self.lifecycle is not None:
+                    self.lifecycle.record("activated")
                 self.ledger.checkpoint()
                 if self.stop.is_set():
                     raise ValueError("gateway_stop_before_send")
@@ -108,7 +327,11 @@ class FixtureLedgerGateway:
                 self._revoke()
             finally:
                 self.closed = True
-                self.ledger.close()
+                try:
+                    if self.lifecycle is not None:
+                        self.lifecycle.close()
+                finally:
+                    self.ledger.close()
 
 
 def load(source):
@@ -151,7 +374,7 @@ def worker(payload):
         raise TimeoutError("ledger_gateway_fixture_deadline")
 
     signal.signal(signal.SIGALRM, expired)
-    signal.alarm(40)
+    signal.alarm(70)
     guards = load(payload["sources"]["selftest.py"])
     guards["require_isolation"](payload["original"])
     launch = load(payload["sources"]["collector_launcher.py"])
@@ -273,11 +496,23 @@ def worker(payload):
                 binding = Binding()
                 selected = binding.current()
                 pin = ledger_module.digest(ledger_module.canonical(selected))
+                (root / "binding.json").write_text(json.dumps(selected, sort_keys=True))
                 writer = ledger_module.AttemptLedger(root, binding=binding, binding_sha256=pin)
+                lifecycle = GatewayLifecycle(writer, ledger_module)
+                original_record = lifecycle.record
+
+                def record(kind, payload=None):
+                    original_record(kind, payload)
+                    if scenario == "crash_before_grant" and kind == "activation_prepared":
+                        os.kill(os.getpid(), signal.SIGKILL)
+
+                lifecycle.record = record
                 sent = []
                 entered, release = threading.Event(), threading.Event()
 
                 def send():
+                    if scenario == "crash_before_send":
+                        os.kill(os.getpid(), signal.SIGKILL)
                     # Assert the persisted on-disk prefix immediately at transport entry.
                     raw = (writer.path / "events.jsonl").read_bytes()
                     before = ledger_module.replay(
@@ -307,15 +542,23 @@ def worker(payload):
 
                 def selected_grant():
                     grant()
+                    if scenario == "crash_after_grant":
+                        os.kill(os.getpid(), signal.SIGKILL)
                     if scenario == "rule_drift_after_grant":
                         run(nft, "add", "counter", "inet", "fixture_ledger_gateway", "unexpected")
+
+                def selected_revoke():
+                    revoke()
+                    if scenario == "crash_after_revoke":
+                        os.kill(os.getpid(), signal.SIGKILL)
 
                 gateway = FixtureLedgerGateway(
                     writer,
                     authorize=collector.observe,
                     grant=selected_grant,
                     send=send,
-                    revoke=revoke,
+                    revoke=selected_revoke,
+                    lifecycle=lifecycle,
                 )
                 original_prepare = writer.prepare
 
@@ -363,7 +606,7 @@ def worker(payload):
                                 checks.append("queued_send_refused_after_concurrent_stop")
                             else:
                                 raise RuntimeError("queued_send_executed")
-                    elif scenario == "success":
+                    elif scenario == "success" or scenario.startswith("crash_"):
                         if not gateway.dispatch()["fixture_sent"]:
                             raise RuntimeError("success_send_missing")
                     else:
@@ -396,6 +639,14 @@ def worker(payload):
                         "replay": replay,
                         "sent": len(sent),
                         "revoked": gateway.revoked,
+                        "lifecycle_archive": lifecycle.path.read_text(),
+                        "lifecycle_replay": replay_lifecycle(
+                            ledger_module,
+                            lifecycle.path.read_bytes(),
+                            expected_sha256=ledger_module.digest(lifecycle.path.read_bytes()),
+                            attempts=raw,
+                            binding_sha256=pin,
+                        ),
                     }
                 )
                 try:
@@ -424,6 +675,76 @@ def worker(payload):
             "fsync_failure",
         ):
             exercise(scenario)
+        for scenario in (
+            "crash_before_grant",
+            "crash_after_grant",
+            "crash_before_send",
+            "crash_after_revoke",
+        ):
+            pid = os.fork()
+            if pid == 0:
+                try:
+                    exercise(scenario)
+                finally:
+                    os._exit(3)
+            _, status = os.waitpid(pid, 0)
+            if not os.WIFSIGNALED(status) or os.WTERMSIG(status) != signal.SIGKILL:
+                raise RuntimeError("controller_did_not_die_at_crash_stage")
+            rows = json.loads(
+                run(nft, "-j", "list", "set", "inet", "fixture_ledger_gateway", "permits")
+            )
+            active = any(row.get("set", {}).get("elem") for row in rows["nftables"])
+            if active != (scenario in {"crash_after_grant", "crash_before_send"}):
+                raise RuntimeError("unexpected_post_crash_kernel_permission")
+            if active:
+                time.sleep(5.2)  # Kernel timeout, no controller cleanup or renewal.
+            before = counter("output_denied")
+            try:
+                marked_echo()
+            except OSError:
+                pass
+            else:
+                raise RuntimeError("marked_sender_survived_crash_expiry")
+            if counter("output_denied") <= before:
+                raise RuntimeError("crash_expiry_not_kernel_denied")
+            checks.append(scenario + "_kernel_denied_without_controller_cleanup")
+            root = Path("/tmp/" + scenario)
+            selected = json.loads((root / "binding.json").read_bytes())
+            pin = ledger_module.digest(ledger_module.canonical(selected))
+            scope = root / ledger_module.SCOPE
+            raw = (scope / "events.jsonl").read_bytes()
+            kernel = (scope / "kernel.jsonl").read_bytes()
+            report = replay_lifecycle(
+                ledger_module,
+                kernel,
+                expected_sha256=ledger_module.digest(kernel),
+                attempts=raw,
+                binding_sha256=pin,
+            )
+            if report["revocation_recorded"]:
+                raise RuntimeError("crash_invented_durable_revocation")
+            reports.append(
+                {
+                    "scenario": scenario,
+                    "binding": selected,
+                    "binding_sha256": pin,
+                    "archive": raw.decode(),
+                    "replay": ledger_module.replay(
+                        raw, expected_sha256=ledger_module.digest(raw), binding_sha256=pin
+                    ),
+                    "lifecycle_archive": kernel.decode(),
+                    "lifecycle_replay": report,
+                    "controller_sigkill": True,
+                    "permit_present_after_death": active,
+                    "marked_probe_denied_after_expiry": True,
+                }
+            )
+            try:
+                ledger_module.AttemptLedger(root, binding=None, binding_sha256=pin)
+            except FileExistsError:
+                checks.append(scenario + "_scope_reopen_refused")
+            else:
+                raise RuntimeError("crashed_scope_reopened")
         denied("unrecorded_host_denied_after_revocation", host, request, "output_denied")
         # An unprivileged process in the gateway namespace cannot manufacture a marked socket.
         probe = "import socket\ns=socket.socket()\ntry:\n s.setsockopt(socket.SOL_SOCKET,socket.SO_MARK,29810)\nexcept PermissionError:\n print('denied')\nelse:\n raise SystemExit(3)\n"
@@ -515,7 +836,7 @@ def main():
     )
     try:
         stdout, stderr = process.communicate(
-            json.dumps({"sources": sources, "original": original}), timeout=45
+            json.dumps({"sources": sources, "original": original}), timeout=75
         )
     except BaseException:
         os.killpg(process.pid, signal.SIGKILL)

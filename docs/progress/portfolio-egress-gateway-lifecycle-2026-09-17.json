@@ -1,0 +1,446 @@
+{
+  "additional_tests": 28,
+  "base_commit": "8f3b51f54ff510f1b5317439a00a17ab9a4307ff",
+  "complete_shared_egress_coverage": false,
+  "date": "2026-09-17",
+  "disk_fresh_replays_per_stage": 2,
+  "disk_sigkill_stages": [
+    "activation_prepared",
+    "grant",
+    "activated",
+    "send",
+    "revoke"
+  ],
+  "fixed_installation_uid_integrated": false,
+  "focused_tests_passed": 331,
+  "fresh_replays": [
+    {
+      "path": "data/egress-gateway-lifecycle-2026-09-17/replay-1.json",
+      "sha256": "6f559e46be8ef5f4e7508c207a8fae392d752721e4947c002eb4e098b905e85f"
+    },
+    {
+      "path": "data/egress-gateway-lifecycle-2026-09-17/replay-2.json",
+      "sha256": "6f559e46be8ef5f4e7508c207a8fae392d752721e4947c002eb4e098b905e85f"
+    }
+  ],
+  "host_network_modified": false,
+  "kernel_checks": [
+    "local_host_and_forwarded_baselines_reach_peer",
+    "unrecorded_host_denied",
+    "unrecorded_forwarding_denied",
+    "ipv6_fallback_denied",
+    "unmarked_host_denied_while_permit_active",
+    "forwarded_client_denied_while_permit_active",
+    "success_durable_dispatch_or_refusal",
+    "success_scope_reopen_refused",
+    "queued_send_refused_after_concurrent_stop",
+    "concurrent_stop_durable_dispatch_or_refusal",
+    "concurrent_stop_scope_reopen_refused",
+    "stop_after_prepare_durable_dispatch_or_refusal",
+    "stop_after_prepare_scope_reopen_refused",
+    "rule_drift_durable_dispatch_or_refusal",
+    "rule_drift_scope_reopen_refused",
+    "rule_drift_after_grant_durable_dispatch_or_refusal",
+    "rule_drift_after_grant_scope_reopen_refused",
+    "fsync_failure_durable_dispatch_or_refusal",
+    "fsync_failure_scope_reopen_refused",
+    "crash_before_grant_kernel_denied_without_controller_cleanup",
+    "crash_before_grant_scope_reopen_refused",
+    "crash_after_grant_kernel_denied_without_controller_cleanup",
+    "crash_after_grant_scope_reopen_refused",
+    "crash_before_send_kernel_denied_without_controller_cleanup",
+    "crash_before_send_scope_reopen_refused",
+    "crash_after_revoke_kernel_denied_without_controller_cleanup",
+    "crash_after_revoke_scope_reopen_refused",
+    "unrecorded_host_denied_after_revocation",
+    "capability_dropped_process_cannot_forge_socket_mark"
+  ],
+  "kernel_result": {
+    "path": "data/egress-gateway-lifecycle-2026-09-17/kernel.json",
+    "sha256": "0ded8d2abb5f74f220a8323dd3b4375dae1c3f360053ef39de89a9597a133697"
+  },
+  "live_path_affected": false,
+  "network_admitted": false,
+  "next_step": "Integrate fixed installed source custody, dedicated UID and fixed storage with gateway lifecycle in disposable installation acceptance.",
+  "power_loss_qualified": false,
+  "replay_driver": {
+    "path": "data/egress-gateway-lifecycle-2026-09-17/replay.py",
+    "sha256": "19cddf417fbbcc0d6bc778ac6b3db8e15fec5d146875fe823902f555e2b7249a"
+  },
+  "retained_selection": {
+    "path": "data/egress-gateway-lifecycle-2026-09-17/selection.json",
+    "sha256": "419474bdc0ec22bd0016eeda1da78c33fdbf6e740f5b09f4fe1c8a78ebca375b"
+  },
+  "scenarios": [
+    {
+      "attempt_status": "closed",
+      "attempts": {
+        "path": "data/egress-gateway-lifecycle-2026-09-17/success-attempts.jsonl",
+        "sha256": "2e4293c8f913d90b2149444048a985d05ad49ff8f1fb4db66c3ab0738ce10a6b"
+      },
+      "binding_sha256": "1d261254d64ec85efbdc51f5d585c79e827c7b890622d0b972caafd364ca8188",
+      "controller_sigkill": false,
+      "lifecycle": {
+        "path": "data/egress-gateway-lifecycle-2026-09-17/success-lifecycle.jsonl",
+        "sha256": "68513db2d31cd6fdeaacc85dba84e517a7df57a3449f9f5cb2cbc474ed82ca15"
+      },
+      "lifecycle_report": {
+        "activation_acknowledged": true,
+        "activation_prepared": true,
+        "activation_uncertain": false,
+        "archive_sha256": "68513db2d31cd6fdeaacc85dba84e517a7df57a3449f9f5cb2cbc474ed82ca15",
+        "attempt_archive_sha256": "2e4293c8f913d90b2149444048a985d05ad49ff8f1fb4db66c3ab0738ce10a6b",
+        "binding_sha256": "1d261254d64ec85efbdc51f5d585c79e827c7b890622d0b972caafd364ca8188",
+        "complete_caller_coverage_verified": false,
+        "current_kernel_permission": null,
+        "last_record": "revoked",
+        "network_admitted": false,
+        "restart_allowed": false,
+        "revocation_recorded": true,
+        "schema_version": "portfolio.fixture_gateway_lifecycle.v1",
+        "trading_admitted": false
+      },
+      "marked_probe_denied_after_expiry": null,
+      "name": "success",
+      "pending_attempt": null,
+      "permit_present_after_death": null
+    },
+    {
+      "attempt_status": "closed",
+      "attempts": {
+        "path": "data/egress-gateway-lifecycle-2026-09-17/concurrent_stop-attempts.jsonl",
+        "sha256": "1dcd865d16010507bd88a62287560e9039d991316c4291fb283523f622cdbc92"
+      },
+      "binding_sha256": "119345f08a8acc384327c0e6950d3240e421ae93063044c109efe592d93bf995",
+      "controller_sigkill": false,
+      "lifecycle": {
+        "path": "data/egress-gateway-lifecycle-2026-09-17/concurrent_stop-lifecycle.jsonl",
+        "sha256": "69c6aa09be286e41d6d3e27f250ba4b3bde231330e79585355296b0afeb8fd54"
+      },
+      "lifecycle_report": {
+        "activation_acknowledged": true,
+        "activation_prepared": true,
+        "activation_uncertain": false,
+        "archive_sha256": "69c6aa09be286e41d6d3e27f250ba4b3bde231330e79585355296b0afeb8fd54",
+        "attempt_archive_sha256": "1dcd865d16010507bd88a62287560e9039d991316c4291fb283523f622cdbc92",
+        "binding_sha256": "119345f08a8acc384327c0e6950d3240e421ae93063044c109efe592d93bf995",
+        "complete_caller_coverage_verified": false,
+        "current_kernel_permission": null,
+        "last_record": "revoked",
+        "network_admitted": false,
+        "restart_allowed": false,
+        "revocation_recorded": true,
+        "schema_version": "portfolio.fixture_gateway_lifecycle.v1",
+        "trading_admitted": false
+      },
+      "marked_probe_denied_after_expiry": null,
+      "name": "concurrent_stop",
+      "pending_attempt": null,
+      "permit_present_after_death": null
+    },
+    {
+      "attempt_status": "closed",
+      "attempts": {
+        "path": "data/egress-gateway-lifecycle-2026-09-17/stop_after_prepare-attempts.jsonl",
+        "sha256": "ccd02d6bc73bbe99b1b6d11291884d88c2fd521a7fed02ce99f96a1b79a7e51a"
+      },
+      "binding_sha256": "3f97bf23bcba71ccb15b31a7dbc61b46d97cb733c0395e69d56654a4b9771d8b",
+      "controller_sigkill": false,
+      "lifecycle": {
+        "path": "data/egress-gateway-lifecycle-2026-09-17/stop_after_prepare-lifecycle.jsonl",
+        "sha256": "e095be09c66642b835d88d28d7f1efe6be7cfe7c4acd00fe8b1b9e555cc7a7ef"
+      },
+      "lifecycle_report": {
+        "activation_acknowledged": false,
+        "activation_prepared": false,
+        "activation_uncertain": false,
+        "archive_sha256": "e095be09c66642b835d88d28d7f1efe6be7cfe7c4acd00fe8b1b9e555cc7a7ef",
+        "attempt_archive_sha256": "ccd02d6bc73bbe99b1b6d11291884d88c2fd521a7fed02ce99f96a1b79a7e51a",
+        "binding_sha256": "3f97bf23bcba71ccb15b31a7dbc61b46d97cb733c0395e69d56654a4b9771d8b",
+        "complete_caller_coverage_verified": false,
+        "current_kernel_permission": null,
+        "last_record": "revoked",
+        "network_admitted": false,
+        "restart_allowed": false,
+        "revocation_recorded": true,
+        "schema_version": "portfolio.fixture_gateway_lifecycle.v1",
+        "trading_admitted": false
+      },
+      "marked_probe_denied_after_expiry": null,
+      "name": "stop_after_prepare",
+      "pending_attempt": 0,
+      "permit_present_after_death": null
+    },
+    {
+      "attempt_status": "gap",
+      "attempts": {
+        "path": "data/egress-gateway-lifecycle-2026-09-17/rule_drift-attempts.jsonl",
+        "sha256": "c4d29b61ae317d0884434fb014248b0aad7d054618d17a0dec54172bee30e7f0"
+      },
+      "binding_sha256": "837d872a0a9a46e375deecf24f1ed712cb7a91fe12d1f89078a2ccafb3f538ba",
+      "controller_sigkill": false,
+      "lifecycle": {
+        "path": "data/egress-gateway-lifecycle-2026-09-17/rule_drift-lifecycle.jsonl",
+        "sha256": "6991ade33686daebd9bb16ddb9c92cbd4d1f929d30e3a4f963da11c1e5bfa79c"
+      },
+      "lifecycle_report": {
+        "activation_acknowledged": false,
+        "activation_prepared": false,
+        "activation_uncertain": false,
+        "archive_sha256": "6991ade33686daebd9bb16ddb9c92cbd4d1f929d30e3a4f963da11c1e5bfa79c",
+        "attempt_archive_sha256": "c4d29b61ae317d0884434fb014248b0aad7d054618d17a0dec54172bee30e7f0",
+        "binding_sha256": "837d872a0a9a46e375deecf24f1ed712cb7a91fe12d1f89078a2ccafb3f538ba",
+        "complete_caller_coverage_verified": false,
+        "current_kernel_permission": null,
+        "last_record": "revoked",
+        "network_admitted": false,
+        "restart_allowed": false,
+        "revocation_recorded": true,
+        "schema_version": "portfolio.fixture_gateway_lifecycle.v1",
+        "trading_admitted": false
+      },
+      "marked_probe_denied_after_expiry": null,
+      "name": "rule_drift",
+      "pending_attempt": 0,
+      "permit_present_after_death": null
+    },
+    {
+      "attempt_status": "gap",
+      "attempts": {
+        "path": "data/egress-gateway-lifecycle-2026-09-17/rule_drift_after_grant-attempts.jsonl",
+        "sha256": "a2e5afbbbb80212a7cc9efd97d55b47f774f946f0b36cb39fbc7717142e69e9c"
+      },
+      "binding_sha256": "d2cf21194ceeef3cf7237405982b625b295f1bdecab244ab9e94a50def5fb12a",
+      "controller_sigkill": false,
+      "lifecycle": {
+        "path": "data/egress-gateway-lifecycle-2026-09-17/rule_drift_after_grant-lifecycle.jsonl",
+        "sha256": "a995f9700676f7ff2966bf1236e56ad0dd36f17b9f42b5c4ace0ec7dd2d12ba2"
+      },
+      "lifecycle_report": {
+        "activation_acknowledged": true,
+        "activation_prepared": true,
+        "activation_uncertain": false,
+        "archive_sha256": "a995f9700676f7ff2966bf1236e56ad0dd36f17b9f42b5c4ace0ec7dd2d12ba2",
+        "attempt_archive_sha256": "a2e5afbbbb80212a7cc9efd97d55b47f774f946f0b36cb39fbc7717142e69e9c",
+        "binding_sha256": "d2cf21194ceeef3cf7237405982b625b295f1bdecab244ab9e94a50def5fb12a",
+        "complete_caller_coverage_verified": false,
+        "current_kernel_permission": null,
+        "last_record": "revoked",
+        "network_admitted": false,
+        "restart_allowed": false,
+        "revocation_recorded": true,
+        "schema_version": "portfolio.fixture_gateway_lifecycle.v1",
+        "trading_admitted": false
+      },
+      "marked_probe_denied_after_expiry": null,
+      "name": "rule_drift_after_grant",
+      "pending_attempt": 0,
+      "permit_present_after_death": null
+    },
+    {
+      "attempt_status": "incomplete_no_resume",
+      "attempts": {
+        "path": "data/egress-gateway-lifecycle-2026-09-17/fsync_failure-attempts.jsonl",
+        "sha256": "ab3ee7e3bc4884d8d159c733a265955bd2726f7fe50d249038a63350bce0d220"
+      },
+      "binding_sha256": "4179b7d59ce48e7a8f046f3b7baf924c373b769414d66cbdaefbc92652367142",
+      "controller_sigkill": false,
+      "lifecycle": {
+        "path": "data/egress-gateway-lifecycle-2026-09-17/fsync_failure-lifecycle.jsonl",
+        "sha256": "b69ccc54e08a1195ab02748dcaa20f967526fc1bfff482cfc72f233bc6ae3cab"
+      },
+      "lifecycle_report": {
+        "activation_acknowledged": false,
+        "activation_prepared": false,
+        "activation_uncertain": false,
+        "archive_sha256": "b69ccc54e08a1195ab02748dcaa20f967526fc1bfff482cfc72f233bc6ae3cab",
+        "attempt_archive_sha256": "ab3ee7e3bc4884d8d159c733a265955bd2726f7fe50d249038a63350bce0d220",
+        "binding_sha256": "4179b7d59ce48e7a8f046f3b7baf924c373b769414d66cbdaefbc92652367142",
+        "complete_caller_coverage_verified": false,
+        "current_kernel_permission": null,
+        "last_record": "revoked",
+        "network_admitted": false,
+        "restart_allowed": false,
+        "revocation_recorded": true,
+        "schema_version": "portfolio.fixture_gateway_lifecycle.v1",
+        "trading_admitted": false
+      },
+      "marked_probe_denied_after_expiry": null,
+      "name": "fsync_failure",
+      "pending_attempt": null,
+      "permit_present_after_death": null
+    },
+    {
+      "attempt_status": "incomplete_no_resume",
+      "attempts": {
+        "path": "data/egress-gateway-lifecycle-2026-09-17/crash_before_grant-attempts.jsonl",
+        "sha256": "fe7848285afa4cdabbc72211116f34012083d44bb8d0fb1a861c2aaabf1150e6"
+      },
+      "binding_sha256": "55c5ff49d967a9df93ee5a31745e73ea800569fe90f07bf83eea209fb3df4b01",
+      "controller_sigkill": true,
+      "lifecycle": {
+        "path": "data/egress-gateway-lifecycle-2026-09-17/crash_before_grant-lifecycle.jsonl",
+        "sha256": "ba4c7b7d5579bb71d6f76f3a9358b4d6f38c40774c98d1e11210bd2ed684eb14"
+      },
+      "lifecycle_report": {
+        "activation_acknowledged": false,
+        "activation_prepared": true,
+        "activation_uncertain": true,
+        "archive_sha256": "ba4c7b7d5579bb71d6f76f3a9358b4d6f38c40774c98d1e11210bd2ed684eb14",
+        "attempt_archive_sha256": "fe7848285afa4cdabbc72211116f34012083d44bb8d0fb1a861c2aaabf1150e6",
+        "binding_sha256": "55c5ff49d967a9df93ee5a31745e73ea800569fe90f07bf83eea209fb3df4b01",
+        "complete_caller_coverage_verified": false,
+        "current_kernel_permission": null,
+        "last_record": "activation_prepared",
+        "network_admitted": false,
+        "restart_allowed": false,
+        "revocation_recorded": false,
+        "schema_version": "portfolio.fixture_gateway_lifecycle.v1",
+        "trading_admitted": false
+      },
+      "marked_probe_denied_after_expiry": true,
+      "name": "crash_before_grant",
+      "pending_attempt": 0,
+      "permit_present_after_death": false
+    },
+    {
+      "attempt_status": "incomplete_no_resume",
+      "attempts": {
+        "path": "data/egress-gateway-lifecycle-2026-09-17/crash_after_grant-attempts.jsonl",
+        "sha256": "32cc9701aa78c2ea88ca07fb469bcaa27013f935e5dc3431caabd1867687842f"
+      },
+      "binding_sha256": "3cf9fcb70dedcc5ce8a74e499bd50222fcc510a711c858a5361731c06629d77c",
+      "controller_sigkill": true,
+      "lifecycle": {
+        "path": "data/egress-gateway-lifecycle-2026-09-17/crash_after_grant-lifecycle.jsonl",
+        "sha256": "05c157687b656f717e14723bdf118b1df7ffb61401198b4e3f2e428642700ceb"
+      },
+      "lifecycle_report": {
+        "activation_acknowledged": false,
+        "activation_prepared": true,
+        "activation_uncertain": true,
+        "archive_sha256": "05c157687b656f717e14723bdf118b1df7ffb61401198b4e3f2e428642700ceb",
+        "attempt_archive_sha256": "32cc9701aa78c2ea88ca07fb469bcaa27013f935e5dc3431caabd1867687842f",
+        "binding_sha256": "3cf9fcb70dedcc5ce8a74e499bd50222fcc510a711c858a5361731c06629d77c",
+        "complete_caller_coverage_verified": false,
+        "current_kernel_permission": null,
+        "last_record": "activation_prepared",
+        "network_admitted": false,
+        "restart_allowed": false,
+        "revocation_recorded": false,
+        "schema_version": "portfolio.fixture_gateway_lifecycle.v1",
+        "trading_admitted": false
+      },
+      "marked_probe_denied_after_expiry": true,
+      "name": "crash_after_grant",
+      "pending_attempt": 0,
+      "permit_present_after_death": true
+    },
+    {
+      "attempt_status": "incomplete_no_resume",
+      "attempts": {
+        "path": "data/egress-gateway-lifecycle-2026-09-17/crash_before_send-attempts.jsonl",
+        "sha256": "282c0183a34813b7510903c979a0a56942953805e730a48434f17d1c5b82d54a"
+      },
+      "binding_sha256": "5e181f9d85a0038c1f7cf6704ecbe46cc124eea98179ae8b467d41c164780274",
+      "controller_sigkill": true,
+      "lifecycle": {
+        "path": "data/egress-gateway-lifecycle-2026-09-17/crash_before_send-lifecycle.jsonl",
+        "sha256": "d2303b649ae3f04141cb5936be5268fe4e1f9119789c844e911a922808e7e953"
+      },
+      "lifecycle_report": {
+        "activation_acknowledged": true,
+        "activation_prepared": true,
+        "activation_uncertain": false,
+        "archive_sha256": "d2303b649ae3f04141cb5936be5268fe4e1f9119789c844e911a922808e7e953",
+        "attempt_archive_sha256": "282c0183a34813b7510903c979a0a56942953805e730a48434f17d1c5b82d54a",
+        "binding_sha256": "5e181f9d85a0038c1f7cf6704ecbe46cc124eea98179ae8b467d41c164780274",
+        "complete_caller_coverage_verified": false,
+        "current_kernel_permission": null,
+        "last_record": "activated",
+        "network_admitted": false,
+        "restart_allowed": false,
+        "revocation_recorded": false,
+        "schema_version": "portfolio.fixture_gateway_lifecycle.v1",
+        "trading_admitted": false
+      },
+      "marked_probe_denied_after_expiry": true,
+      "name": "crash_before_send",
+      "pending_attempt": 0,
+      "permit_present_after_death": true
+    },
+    {
+      "attempt_status": "incomplete_no_resume",
+      "attempts": {
+        "path": "data/egress-gateway-lifecycle-2026-09-17/crash_after_revoke-attempts.jsonl",
+        "sha256": "78bf9c61f4d1e4bf536a73862c2bc6432ed1a9201ad94e3273f74af4d775ff81"
+      },
+      "binding_sha256": "91b98db17a171c8b08aa8634c73a96375f49a7c3b5118799d9dafca0f51f5043",
+      "controller_sigkill": true,
+      "lifecycle": {
+        "path": "data/egress-gateway-lifecycle-2026-09-17/crash_after_revoke-lifecycle.jsonl",
+        "sha256": "2f1c9b41653efafcb9bb865899b5b3845755a82601d496bf9388dc60965bbd81"
+      },
+      "lifecycle_report": {
+        "activation_acknowledged": true,
+        "activation_prepared": true,
+        "activation_uncertain": false,
+        "archive_sha256": "2f1c9b41653efafcb9bb865899b5b3845755a82601d496bf9388dc60965bbd81",
+        "attempt_archive_sha256": "78bf9c61f4d1e4bf536a73862c2bc6432ed1a9201ad94e3273f74af4d775ff81",
+        "binding_sha256": "91b98db17a171c8b08aa8634c73a96375f49a7c3b5118799d9dafca0f51f5043",
+        "complete_caller_coverage_verified": false,
+        "current_kernel_permission": null,
+        "last_record": "stop_requested",
+        "network_admitted": false,
+        "restart_allowed": false,
+        "revocation_recorded": false,
+        "schema_version": "portfolio.fixture_gateway_lifecycle.v1",
+        "trading_admitted": false
+      },
+      "marked_probe_denied_after_expiry": true,
+      "name": "crash_after_revoke",
+      "pending_attempt": null,
+      "permit_present_after_death": false
+    }
+  ],
+  "schema_version": "portfolio.fixture_gateway_lifecycle_acceptance.v1",
+  "source_files": [
+    {
+      "path": "infra/egress-guard/collector_launcher.py",
+      "sha256": "d1d94a8edd0730244b6dbc7c0e24746157985e7b36b82f865397402ce0433579"
+    },
+    {
+      "path": "infra/egress-guard/inspect_binding.py",
+      "sha256": "27c3302222bc819767ba874d7000f2b038662fa72004cb56da25a1003c38e322"
+    },
+    {
+      "path": "infra/egress-guard/ledger_gateway.py",
+      "sha256": "d1afb934a109c776fffc2762b7cba0b2d2fb4f7cc7e91e7e3323ca6e4d6a8132"
+    },
+    {
+      "path": "apps/strategies_nautilus/portfolio_egress_ledger.py",
+      "sha256": "b96cee0818026b1b9b32849471cf47d8051a96dcd10aeaeb68440fd3e2daf3f7"
+    },
+    {
+      "path": "apps/strategies_nautilus/portfolio_rate_evidence.py",
+      "sha256": "18aa5bdbf1954cebc4802b38daeded07cd60e2ab1b9e508d6686ac89a07abb35"
+    },
+    {
+      "path": "apps/strategies_nautilus/portfolio_tls_provenance.py",
+      "sha256": "def476571e9ec56e989eee02b8623b1a657337956ecd88faeabaf9f2efc70044"
+    },
+    {
+      "path": "infra/egress-guard/selftest.py",
+      "sha256": "75ba8a36ca075f4236f20e68524117bf1abc1431226271bb0df35912c4ebff5f"
+    }
+  ],
+  "status": "isolated_lifecycle_crash_expiry_passed_real_admission_blocked",
+  "storage_rollback_qualified": false,
+  "test_file": {
+    "path": "tests/ops/test_egress_ledger_gateway.py",
+    "sha256": "6cfe8c9c94ab56caa4294f64c85beffa092f18a476f3c0a434e9091940750f26"
+  },
+  "trading_admitted": false,
+  "upstream_touched": false,
+  "venue_requests": 0
+}
