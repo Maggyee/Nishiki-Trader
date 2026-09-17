@@ -8,10 +8,19 @@ import json
 import os
 import signal
 import subprocess
+import sys
 import time
 from pathlib import Path
 
 SCENARIOS = ("success", "code_drift", "account_drift", "storage_drift", "controller_crash")
+TLS_SCENARIOS = (
+    "tls_success",
+    "tls_slow_body",
+    "tls_bad_certificate",
+    "tls_duplicate_weight",
+    "tls_truncated",
+    "tls_crash",
+)
 ENV = {"PATH": "/usr/sbin:/usr/bin:/sbin:/bin", "LC_ALL": "C"}
 
 
@@ -35,7 +44,7 @@ def denied(name, operation):
         if isinstance(result,int): os.close(result)
         raise RuntimeError('unexpected_permission:'+name)
 code=Path('/usr/local/lib/trader-egress')
-for name in ('installed_gateway.py','ledger_gateway.py','selftest.py','portfolio_rate_evidence.py','portfolio_tls_provenance.py','portfolio_egress_ledger.py'):
+for name in ('installed_gateway.py','gateway_tls.py','ledger_gateway.py','selftest.py','portfolio_rate_evidence.py','portfolio_tls_provenance.py','portfolio_egress_ledger.py'):
     path=code/name
     assert path.read_bytes()
     denied('write:'+name,lambda:os.open(path,os.O_WRONLY))
@@ -60,10 +69,54 @@ print(json.dumps({'checks':checks,'uid':os.getuid(),'gid':os.getgid()}))
 """
 
 
+TLS_PEER = r"""
+import hashlib,json,os,socket,ssl,sys,time
+scenario=sys.argv[1]
+body=json.dumps({'rateLimits':[
+ {'rateLimitType':'REQUEST_WEIGHT','interval':'MINUTE','intervalNum':1,'limit':6000},
+ {'rateLimitType':'RAW_REQUESTS','interval':'MINUTE','intervalNum':5,'limit':61000},
+ {'rateLimitType':'CONNECTIONS','interval':'MINUTE','intervalNum':5,'limit':300}
+]},separators=(',',':')).encode()
+headers=b'HTTP/1.1 200 OK\r\nContent-Length: '+str(len(body)).encode()+b'\r\nX-MBX-USED-WEIGHT-1M: 20\r\n'
+if scenario=='tls_duplicate_weight': headers+=b'x-mbx-used-weight-1m: 20\r\n'
+headers+=b'Connection: close\r\n\r\n'
+context=ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+context.load_cert_chain('/etc/trader/egress-gateway-fixture-ca.pem','/run/gateway-tls-key.pem')
+report={'tls_connections':0,'http_requests':0,'request_sha256':None}
+def save():
+    with open('/run/gateway-tls-peer.json','w') as out:
+        json.dump(report,out,sort_keys=True)
+        out.flush();os.fsync(out.fileno())
+with socket.socket() as listener:
+    listener.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
+    listener.bind(('198.51.100.2',23456));listener.listen(1);listener.settimeout(10)
+    print('ready',flush=True)
+    raw,_=listener.accept();report['tls_connections']=1;save()
+    try:
+        with context.wrap_socket(raw,server_side=True) as connection:
+            connection.settimeout(5)
+            request=b''
+            while b'\r\n\r\n' not in request:
+                chunk=connection.recv(4096)
+                if not chunk: raise ValueError('no_request')
+                request+=chunk
+                if len(request)>4096: raise ValueError('request_limit')
+            expected=b'GET /api/v3/exchangeInfo HTTP/1.1\r\nHost: rest.fixture.invalid:23456\r\nConnection: close\r\n\r\n'
+            if request!=expected: raise ValueError('unexpected_request')
+            report['http_requests']=1;report['request_sha256']=hashlib.sha256(request).hexdigest();save()
+            connection.sendall(headers)
+            if scenario in {'tls_slow_body','tls_crash'}: time.sleep(1.2 if scenario=='tls_slow_body' else 2)
+            connection.sendall(body[:5] if scenario=='tls_truncated' else body)
+    except (ssl.SSLError,OSError,ValueError) as exc:
+        report['ended_with']=type(exc).__name__;save()
+"""
+
+
 def worker(payload):
     base = load(payload["base_source"])
     base["require_isolation"](payload["original"])
-    if payload["scenario"] not in SCENARIOS:
+    tls = payload.get("tls_profile", False)
+    if type(tls) is not bool or payload["scenario"] not in (TLS_SCENARIOS if tls else SCENARIOS):
         raise ValueError("unknown_fixture_scenario")
     # The existing pinned installer and its 40 checks run before extension staging.
     installed = base["worker"](payload)
@@ -100,7 +153,7 @@ def worker(payload):
     gateway = load(payload["sources"]["ledger_gateway.py"])
     ledger_module = gateway["load_ledger"](payload["sources"])
     peer = guards["Child"](payload["sources"]["selftest.py"])
-    controller = None
+    controller = tls_peer = None
     try:
         ip, nft, network_run = guards["IP"], guards["NFT"], guards["run"]
         network_run(ip, "link", "set", "lo", "up")
@@ -113,10 +166,66 @@ def worker(payload):
             peer.ip("address", "add", address, "dev", "peer")
         for address in ("fd00:7472:2::2/64", "fd00:7472:2::3/64"):
             peer.ip("-6", "address", "add", address, "dev", "peer", "nodad")
-        if peer.request({"action": "serve"}) != {"ok": True}:
+        if tls:
+            hostname = (
+                "wrong.fixture.invalid"
+                if payload["scenario"] == "tls_bad_certificate"
+                else "rest.fixture.invalid"
+            )
+            run(
+                "/usr/bin/openssl",
+                "req",
+                "-x509",
+                "-newkey",
+                "rsa:2048",
+                "-nodes",
+                "-days",
+                "1",
+                "-config",
+                "/dev/null",
+                "-subj",
+                "/CN=" + hostname,
+                "-addext",
+                "subjectAltName=DNS:" + hostname,
+                "-keyout",
+                "/run/gateway-tls-key.pem",
+                "-out",
+                "/etc/trader/egress-gateway-fixture-ca.pem",
+            )
+            Path("/etc/trader/egress-gateway-fixture-ca.pem").chmod(0o444)
+            Path("/run/gateway-tls-key.pem").chmod(0o600)
+            tls_peer = subprocess.Popen(
+                [
+                    "/usr/bin/nsenter",
+                    f"--net=/proc/{peer.process.pid}/ns/net",
+                    "/usr/bin/setpriv",
+                    "--bounding-set=-all",
+                    "--inh-caps=-all",
+                    "--ambient-caps=-all",
+                    "--no-new-privs",
+                    "/usr/bin/python3",
+                    "-I",
+                    "-c",
+                    TLS_PEER,
+                    payload["scenario"],
+                ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                env=ENV,
+                cwd="/",
+            )
+            if tls_peer.stdout.readline().strip() != "ready":
+                raise RuntimeError("tls_peer_failed:" + tls_peer.stderr.read()[-2000:])
+        elif peer.request({"action": "serve"}) != {"ok": True}:
             raise RuntimeError("fixture_peer_not_ready")
         network_run(nft, "-f", "-", text=gateway["RULES"])
-        command = ["/usr/bin/python3", "-I", entry["CODE"] + "/installed_gateway.py", "--fixture"]
+        command = [
+            "/usr/bin/python3",
+            "-I",
+            entry["CODE"] + "/installed_gateway.py",
+            "--tls-fixture" if tls else "--fixture",
+        ]
         controller = subprocess.Popen(
             command,
             stdin=subprocess.PIPE,
@@ -209,7 +318,12 @@ def worker(payload):
             def restore():
                 target.chmod(0o700)
 
-        if scenario == "controller_crash":
+        if scenario in {"controller_crash", "tls_crash"}:
+            if tls:
+                controller.stdin.write("continue\n")
+                controller.stdin.flush()
+                if json.loads(controller.stdout.readline()) != {"stage": "tls_headers_persisted"}:
+                    raise RuntimeError("tls_crash_header_persistence_not_acknowledged")
             controller.kill()
             stdout, stderr = controller.communicate(timeout=5)
             if controller.returncode != -signal.SIGKILL:
@@ -226,10 +340,24 @@ def worker(payload):
             stdout, stderr = controller.communicate("continue\n", timeout=10)
             if controller.returncode:
                 raise RuntimeError("installed_controller_failed:" + stderr[-3000:])
-            terminal = json.loads(stdout)
+            messages = [json.loads(line) for line in stdout.splitlines()]
+            expected_progress = (
+                [{"stage": "tls_headers_persisted"}]
+                if tls and scenario != "tls_bad_certificate"
+                else []
+            )
+            if not messages or messages[:-1] != expected_progress:
+                raise RuntimeError("unexpected_controller_progress")
+            terminal = messages[-1]
             if (
                 terminal["status"]
-                != ("fixture_echo_succeeded" if scenario == "success" else "refused")
+                != (
+                    "fixture_tls_succeeded"
+                    if scenario in {"tls_success", "tls_slow_body"}
+                    else "fixture_echo_succeeded"
+                    if scenario == "success"
+                    else "refused"
+                )
                 or not terminal["revoked"]
             ):
                 raise RuntimeError("wrong_installed_gateway_outcome")
@@ -262,12 +390,49 @@ def worker(payload):
             attempts=attempts,
             binding_sha256=ready["binding_sha256"],
         )
-        if attempt_report["pending_attempt"] != (None if scenario == "success" else 0):
+        if attempt_report["pending_attempt"] != (
+            None if scenario in {"success", "tls_success", "tls_slow_body"} else 0
+        ):
             raise RuntimeError("pending_attempt_lost")
         if life_report["revocation_recorded"] != (
-            scenario not in {"controller_crash", "storage_drift"}
+            scenario not in {"controller_crash", "storage_drift", "tls_crash"}
         ):
             raise RuntimeError("invented_or_missing_revocation_record")
+        tls_result = {}
+        if tls:
+            raw_tls = (scope / "tls.jsonl").read_bytes()
+            transport = load(payload["sources"]["gateway_tls.py"])
+            trust = Path("/etc/trader/egress-gateway-fixture-ca.pem").read_bytes()
+            replay = transport["replay"](
+                raw_tls,
+                expected_sha256=base["sha"](raw_tls),
+                attempts=attempts,
+                lifecycle=lifecycle,
+                binding_sha256=ready["binding_sha256"],
+                trust_sha256=base["sha"](trust),
+                ledger_module=ledger_module,
+                gateway_module=gateway,
+                provenance=sys.modules["apps.strategies_nautilus.portfolio_tls_provenance"],
+                rates=sys.modules["apps.strategies_nautilus.portfolio_rate_evidence"],
+            )
+            if (replay["status"] == "complete") != (scenario in {"tls_success", "tls_slow_body"}):
+                raise RuntimeError("tls_replay_completion_mismatch")
+            if scenario == "tls_slow_body" and replay["header_age_at_body_ns"] < 1_000_000_000:
+                raise RuntimeError("tls_header_receipt_refreshed")
+            tls_peer.wait(timeout=5)
+            peer_report = json.loads(Path("/run/gateway-tls-peer.json").read_bytes())
+            if peer_report["tls_connections"] != 1 or peer_report["http_requests"] != (
+                0 if scenario == "tls_bad_certificate" else 1
+            ):
+                raise RuntimeError("tls_peer_request_count_mismatch")
+            checks.append("fixed_tls_request_and_original_header_receipt_verified")
+            tls_result = {
+                "tls_archive": raw_tls.decode(),
+                "tls_replay": replay,
+                "tls_trust_sha256": base["sha"](trust),
+                "tls_trust_pem": trust.decode(),
+                "tls_peer": peer_report,
+            }
         restarted = subprocess.run(
             command,
             input="continue\n",
@@ -287,6 +452,8 @@ def worker(payload):
             scope / "kernel.jsonl"
         ).read_bytes() != lifecycle:
             raise RuntimeError("restart_changed_original_journals")
+        if tls and (scope / "tls.jsonl").read_bytes() != raw_tls:
+            raise RuntimeError("restart_changed_tls_journal")
         checks.append("fresh_installed_process_refuses_scope_without_changing_journals")
         if (
             Path(entry["STORAGE"] + "/consumed.json").read_bytes()
@@ -297,6 +464,7 @@ def worker(payload):
         return {
             "scenario": scenario,
             "status": "passed",
+            **tls_result,
             "checks": checks,
             "base_installation": installed,
             "gateway_manifest": manifest,
@@ -313,12 +481,16 @@ def worker(payload):
         if controller is not None and controller.poll() is None:
             controller.kill()
             controller.communicate(timeout=3)
+        if tls_peer is not None and tls_peer.poll() is None:
+            tls_peer.kill()
+            tls_peer.communicate(timeout=3)
         peer.stop()
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--report", required=True, type=Path)
+    parser.add_argument("--tls-profile", action="store_true")
     args = parser.parse_args(argv)
     if os.geteuid() == 0:
         parser.error("run the disposable wrapper as an ordinary user")
@@ -348,6 +520,7 @@ def main(argv=None):
         }
         payload = {
             "source": Path(__file__).read_text(),
+            "tls_profile": args.tls_profile,
             "base_source": base_source,
             "installer": installer.decode(),
             "bundle": base64.b64encode(bundle).decode(),
@@ -358,7 +531,7 @@ def main(argv=None):
         before = base["host_observation"]()
         reports = []
         bootstrap = "import json,sys\np=json.load(sys.stdin)\ns={'__name__':'isolated_installed_gateway'}\nexec(compile(p['source'],'<fixture>','exec'),s)\nprint(json.dumps(s['worker'](p),sort_keys=True))\n"
-        for scenario in SCENARIOS:
+        for scenario in TLS_SCENARIOS if args.tls_profile else SCENARIOS:
             command = [
                 "/usr/bin/sudo",
                 "-n",
@@ -411,6 +584,7 @@ def main(argv=None):
         result = {
             "schema_version": "portfolio.installed_gateway_acceptance.v1",
             "status": "passed",
+            "tls_profile": args.tls_profile,
             "scenarios": reports,
             "source_sha256": payload["source_sha256"],
             "harness_sha256": base["sha"](payload["source"].encode()),

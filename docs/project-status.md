@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-17
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: The gateway lifecycle now passes fixed root-owned installation, dedicated UID and fixed-storage integration in five disposable scenarios. Installed code/account/storage drift blocks sending; controller crash expires in the kernel, and fresh installed processes cannot reopen consumed scopes. Next bind bounded local TLS requests and per-dispatch accounting to this gateway. Real all-caller coverage, rate/clock qualification, durable host rollout and trading remain blocked; the actual bootstrap stays consumed.
+- **Current objective**: The installed gateway now owns one fixed local HTTPS exchangeInfo request, binds TLS evidence to durable attempt/kernel prefixes and preserves original header receipt time through body/disk delay. Six TLS scenarios and five echo regressions pass. Next integrate the bounded multi-operation local joint transport with per-operation budgets and gateway accounting. Actual all-caller coverage, provider rate/clock qualification, host rollout and trading remain blocked; consumed scopes stay consumed.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -255,7 +255,8 @@ Detailed depth implementation, retained hashes and next review:
 [local egress attempt accounting](progress/portfolio-egress-attempt-ledger-2026-09-17.md),
 [isolated ledger gateway integration](progress/portfolio-egress-ledger-gateway-2026-09-17.md),
 [durable gateway lifecycle/crash acceptance](progress/portfolio-egress-gateway-lifecycle-2026-09-17.md),
-and [fixed installation/UID gateway integration](progress/portfolio-egress-installed-gateway-2026-09-17.md).
+[fixed installation/UID gateway integration](progress/portfolio-egress-installed-gateway-2026-09-17.md),
+and [fixed HTTPS request/receipt integration](progress/portfolio-egress-gateway-tls-2026-09-17.md).
 
 ## Next Steps
 
@@ -303,7 +304,10 @@ and [fixed installation/UID gateway integration](progress/portfolio-egress-insta
    refusing scope reopen. [Fixed installation/dedicated UID integration](progress/portfolio-egress-installed-gateway-2026-09-17.md)
    now passes in five disposable environments, including protected fixed storage,
    actual kernel permission attacks, installation drift and fresh-process refusal.
-   Next bind local TLS requests and per-dispatch accounting to this gateway.
+   [Fixed local HTTPS request/receipt integration](progress/portfolio-egress-gateway-tls-2026-09-17.md)
+   now passes, including certificate/response failures, fsync refusal and SIGKILL
+   after received headers. Counter receipt time is sampled before storage checks.
+   Next integrate bounded multi-operation joint transport and per-operation budgets.
    Sampling alone never proves coverage.
    Actual authority policy, fresh rate/clock consumption and provider-charge
    resolution must precede any separately reviewed real joint dispatch.
@@ -349,14 +353,13 @@ and [fixed installation/UID gateway integration](progress/portfolio-egress-insta
 
 ## Latest Verification
 
-- Installed gateway: **34 new / 473 focused tests and five actual installed
-  kernel scenarios pass**. Dedicated UID 20999 cannot alter source/state or forge
-  marks; installation drift blocks sending, SIGKILL expires, and fresh installed
-  processes refuse consumed scopes. Two independent replay sets match all originals.
-  No host installation, venue request, upstream or live-path change. Tmpfs does
-  not qualify power loss/rollback. Full application regression was not rerun.
-  [Installation/UID acceptance](progress/portfolio-egress-installed-gateway-2026-09-17.md)
-  builds on the prior [29-check lifecycle acceptance](progress/portfolio-egress-gateway-lifecycle-2026-09-17.md).
+- Gateway TLS: **33 new / 557 focused tests, six TLS and five echo kernel
+  scenarios pass**. One fixed HTTPS request follows durable attempt/grant records;
+  original TLS/HTTP bytes replay independently and header receipt is not refreshed
+  by body or storage delay. Certificate/response/fsync failures and mid-response
+  SIGKILL retain consumed uncertainty. Two fresh replay sets match all originals.
+  No venue, host-installation, upstream or live-path change; full application
+  regression was not rerun. [TLS acceptance](progress/portfolio-egress-gateway-tls-2026-09-17.md).
 
 - Bootstrap-to-joint integration: **20 new / 234 focused tests pass**. Two fresh
   reviews of the actual original artifacts are byte-identical and remain blocked.

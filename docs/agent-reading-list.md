@@ -22,6 +22,15 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the installed gateway's fixed local HTTPS request and original receipt binding,
+read `docs/progress/portfolio-egress-gateway-tls-2026-09-17.md` and its JSON.
+`gateway_tls.py` under infra/egress-guard binds one unsigned fixture GET to pending
+attempt/activated-kernel prefixes, verifies TLS and retains raw chunks before
+parsing. Header receipt is sampled immediately after recv, before disk checks.
+Six TLS scenarios and five echo regressions pass under fixture manifest v2;
+unknown provider usage/connection charge and all real admission remain blocked.
+Next integrate bounded multi-operation joint transport and per-operation budgets.
+
 For fixed installation/UID integration of the gateway lifecycle, read
 `docs/progress/portfolio-egress-installed-gateway-2026-09-17.md` and its JSON.
 `installed_gateway.py` and `installed_gateway_selftest.py` under infra/egress-guard
@@ -29,7 +38,8 @@ load protected fixed sources, authenticate the dedicated child and consume fixed
 storage in disposable namespaces only. Five actual scenarios cover success,
 code/account/storage drift, SIGKILL expiry and fresh-process scope refusal.
 No host extension is installed; complete coverage and real admission remain false.
-Next integrate bounded local TLS requests and per-dispatch accounting in isolation.
+The successor above adds a fixed local HTTPS operation; the full multi-operation
+joint transport remains unintegrated with this gateway.
 
 For the durable isolated gateway lifecycle and controller crash/expiry acceptance,
 read `docs/progress/portfolio-egress-gateway-lifecycle-2026-09-17.md` and its JSON.

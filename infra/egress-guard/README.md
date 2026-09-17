@@ -72,7 +72,7 @@ and [lifecycle acceptance](../../docs/progress/portfolio-egress-gateway-lifecycl
 
 The ordinary-user wrapper uses existing sudo to run five fresh private mount,
 network and PID namespaces. It reuses the pinned installer, then stages a separate
-fixture manifest and six protected sources in the disposable installation. The
+fixture v2 manifest and seven protected sources in the disposable installation. The
 fixed installed `installed_gateway.py --fixture` entry consumes the original
 fixed storage scope, authenticates the distinct-UID child and uses the durable
 kernel lifecycle. Neither the collector nor the public wrapper can select another
@@ -80,9 +80,29 @@ scope, endpoint or payload. No gateway extension is installed on the host.
 
 Actual permission attacks, code/account/storage drift, SIGKILL expiry and fresh
 installed-process scope refusal pass. Offline replay never reconstructs installed
-authority or grants restart. The next entrypoint is bounded local TLS request
-integration; provider/source policy and complete all-caller coverage remain blocked.
+authority or grants restart. The TLS successor below adds one fixed HTTPS request;
+provider/source policy and complete all-caller coverage remain blocked.
 See the [installed integration report](../../docs/progress/portfolio-egress-installed-gateway-2026-09-17.md).
+
+## Fixed HTTPS request and original counter receipt
+
+```bash
+/usr/bin/python3 -I infra/egress-guard/installed_gateway_selftest.py --tls-profile --report data/NEW-GATEWAY-TLS.json
+```
+
+The explicit TLS fixture uses the same fixed installation, dedicated child and
+consumed storage. `gateway_tls.py` owns the marked socket to the reserved local
+peer, verifies protected fixture trust and sends only the fixed unsigned
+exchangeInfo GET. Its exclusive TLS journal references the original pending attempt
+and activated kernel prefixes. Raw response chunks precede parsing; their receipt
+clocks precede even disk validation, so delayed body completion never refreshes a
+header counter. The base loopback-only TLS APIs and real capture scopes are unchanged.
+
+Six actual TLS scenarios include wrong certificates, duplicate counters, truncated
+bodies and SIGKILL after headers. Two independent offline replays retain unknown
+usage/connection charges and false network/trading admission. The next entrypoint
+is bounded multi-operation joint transport with per-operation gateway accounting.
+See the [TLS integration report](../../docs/progress/portfolio-egress-gateway-tls-2026-09-17.md).
 
 ## Expiring permission and local dispatch supervision
 

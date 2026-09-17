@@ -16,13 +16,14 @@ STORAGE = "/var/lib/trader/egress"
 ENTRY_PIN = "2a91437ed9080ae481eae7496e43cfe35d29888e1e3a5a12b10605b6dc320c9b"
 FILES = (
     "installed_gateway.py",
+    "gateway_tls.py",
     "ledger_gateway.py",
     "selftest.py",
     "portfolio_rate_evidence.py",
     "portfolio_tls_provenance.py",
     "portfolio_egress_ledger.py",
 )
-PROFILE = "portfolio.installed_gateway_fixture.v1"
+PROFILE = "portfolio.installed_gateway_fixture.v2"
 
 
 def digest(raw):
@@ -122,13 +123,14 @@ def fixture_context(authority):
 
 
 class InstalledBinding:
-    def __init__(self, authority, sources, collector, guards):
+    def __init__(self, authority, sources, collector, guards, *, trust_sha256=None):
         self.authority, self.sources, self.collector, self.guards = (
             authority,
             sources,
             collector,
             guards,
         )
+        self.trust_sha256 = trust_sha256
         self.ended = False
         self.selected = self.current()
         self.pin = digest(json.dumps(self.selected, sort_keys=True, separators=(",", ":")).encode())
@@ -152,6 +154,7 @@ class InstalledBinding:
             "rules": rules,
             "route": json.loads(run(self.guards["IP"], "-j", "route", "get", "198.51.100.2")),
             "net": os.readlink("/proc/self/ns/net"),
+            **({"tls_trust_sha256": self.trust_sha256} if self.trust_sha256 else {}),
         }
 
     def verify(self):
@@ -167,7 +170,7 @@ class InstalledBinding:
             raise
 
 
-def run_controller():
+def run_controller(*, tls=False):
     authority = installation()
     collector = ledger = lifecycle = gateway = None
     try:
@@ -178,9 +181,20 @@ def run_controller():
         module = gateway_code["load_ledger"](
             {name: sources.source(name).decode() for name in FILES}
         )
+        trust = None
+        if tls:
+            fd = authority.open_file("/etc/trader/egress-gateway-fixture-ca.pem", 0o444)
+            trust = os.pread(fd, 65537, 0)
+            authority.verify()
         launcher = load(authority.source("collector_launcher.py"))
         collector = launcher["FixtureCollector"].from_installation(authority)
-        binding = InstalledBinding(authority, sources, collector, guards)
+        binding = InstalledBinding(
+            authority,
+            sources,
+            collector,
+            guards,
+            trust_sha256=digest(trust) if trust is not None else None,
+        )
         # This path cannot be chosen by the caller, collector or report contents.
         ledger = module.AttemptLedger(STORAGE, binding=binding, binding_sha256=binding.pin)
         lifecycle = gateway_code["GatewayLifecycle"](ledger, module)
@@ -223,12 +237,28 @@ def run_controller():
                     raise ValueError("fixture_parent_release_required")
 
         lifecycle.record = ready
+        send = gateway_code["marked_echo"]
+        if tls:
+            transport = load(sources.source("gateway_tls.py"))
+
+            def send():
+                return transport["capture"](
+                    ledger,
+                    lifecycle,
+                    trust,
+                    sys.modules["apps.strategies_nautilus.portfolio_tls_provenance"],
+                    sys.modules["apps.strategies_nautilus.portfolio_rate_evidence"],
+                    on_headers=lambda: print(
+                        json.dumps({"stage": "tls_headers_persisted"}), flush=True
+                    ),
+                )
+
         gateway = gateway_code["FixtureLedgerGateway"](
             ledger,
             lifecycle=lifecycle,
             authorize=collector.observe,
             grant=grant,
-            send=gateway_code["marked_echo"],
+            send=send,
             revoke=revoke,
         )
         try:
@@ -236,9 +266,11 @@ def run_controller():
         except (OSError, ValueError, RuntimeError) as exc:
             outcome = {"status": "refused", "reason": type(exc).__name__}
         else:
-            outcome = {"status": "fixture_echo_succeeded"}
-        with suppress(Exception):
+            outcome = {"status": "fixture_tls_succeeded" if tls else "fixture_echo_succeeded"}
+        try:
             gateway.close()
+        except (OSError, ValueError, RuntimeError) as exc:
+            outcome = {"status": "refused", "reason": type(exc).__name__}
         print(
             json.dumps({**outcome, "revoked": gateway.revoked, "network_admitted": False}),
             flush=True,
@@ -261,12 +293,12 @@ def run_controller():
 
 def main():
     if (
-        sys.argv[1:] != ["--fixture"]
+        sys.argv[1:] not in (["--fixture"], ["--tls-fixture"])
         or not sys.flags.isolated
         or os.path.abspath(__file__) != CODE + "/installed_gateway.py"
     ):
         raise ValueError("fixed_installed_fixture_entry_required")
-    run_controller()
+    run_controller(tls=sys.argv[1:] == ["--tls-fixture"])
     return 0
 
 
