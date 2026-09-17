@@ -15,7 +15,10 @@ before delivery; a missing final digest acknowledgement keeps the attempt pendin
 The separate receipt journal binds original attempt, kernel and TLS records.
 The base installer/launcher and old profiles remain unchanged. This runs only in
 disposable namespaces; native joint REST/WS integration remains the next entrypoint.
-See [response acceptance](../../docs/progress/portfolio-installed-tls-receipt-2026-09-17.md).
+See [response acceptance](../../docs/progress/portfolio-installed-tls-receipt-2026-09-17.md)
+and the [deadline/replay review](../../docs/progress/portfolio-installed-tls-receipt-review-2026-09-17.md).
+The reviewer enforces a single attempt and active preparation prefix; the consumer
+rechecks its total deadline after parsing and before sending acknowledgements.
 
 The installed multi-operation IPC successor is `gateway_joint_ipc.py`, selected by
 `installed_gateway_selftest.py --joint-ipc-profile --report data/NEW-IPC.json`.

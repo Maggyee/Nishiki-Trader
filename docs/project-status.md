@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-17
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: The installed fixture now delivers one gateway-owned HTTPS response and its original receive clocks to the dedicated UID over authenticated IPC. Kernel permission is revoked before receipt delivery; failed acknowledgement retains the pending attempt. Next integrate the full native 20-operation collector and concurrent TLS/WS traffic. Actual all-caller coverage, provider rate/clock qualification, host rollout and trading remain blocked; consumed scopes stay consumed.
+- **Current objective**: Installed single-request HTTPS delivery now rejects contradictory or expanded replay ledgers and refuses consumer acknowledgement after its total deadline. Kernel permission is revoked before response delivery; failed acknowledgement retains the pending attempt. Next integrate the full native 20-operation collector and concurrent TLS/WS traffic. Actual all-caller coverage, provider rate/clock qualification, host rollout and trading remain blocked; consumed scopes stay consumed.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -363,11 +363,11 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
 
 ## Latest Verification
 
-- Installed HTTPS response delivery: **38 new / 828 focused tests pass**; details
-  are recorded in [acceptance](progress/portfolio-installed-tls-receipt-2026-09-17.md).
-  Ten actual response-delivery scenarios and seventeen TLS/IPC/echo regressions pass.
-  Two fresh system-Python replays reproduce all 27 originals. Kernel permission is
-  revoked before delivery; missing confirmation retains the consumed pending attempt.
+- Installed response review: **6 new / 270 focused tests pass**. Replay now requires
+  one attempt and an active pending prefix; contradictory outcomes fail. Consumer
+  deadlines are rechecked after parsing and before acknowledgements. Exact namespace
+  and historical replay results are in the [review](progress/portfolio-installed-tls-receipt-review-2026-09-17.md).
+  The preceding [acceptance](progress/portfolio-installed-tls-receipt-2026-09-17.md) retains its 828-test / 27-scenario evidence.
 - The complete ordinary-process native joint collector retains its prior 20-operation /
   16-GET / 448-weight acceptance and original receipt clocks. Connecting that collector
   to installed gateway-owned sockets remains pending. Earlier details are archived in

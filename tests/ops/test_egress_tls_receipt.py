@@ -347,3 +347,103 @@ def test_durable_transfer_requires_revocation_before_first_data(case, transfer):
     finally:
         case.gateway._revoke = original
         original()
+
+
+def _rechain(rows):
+    raw, previous = b"", None
+    for seq, row in enumerate(rows):
+        row = {**row, "seq": seq, "previous_sha256": previous}
+        line = provenance.canonical(row) + b"\n"
+        raw += line
+        previous = provenance.digest(line)
+    return raw
+
+
+def test_receipt_replay_rejects_additional_attempt_in_full_companion(case, transfer):
+    case.gateway.dispatch()
+    case.ledger.prepare(caller="collector", operation="exchange_info")
+    with pytest.raises(ValueError, match="receipt_single_attempt_required"):
+        review(case, transfer)
+
+
+@pytest.mark.parametrize("terminal", ["aborted", "closed"])
+def test_receipt_replay_rejects_terminal_pending_prefix(case, transfer, monkeypatch, terminal):
+    case.gateway.dispatch()
+    receipts = [
+        json.loads(line) for line in (case.ledger.path / "receipt.jsonl").read_bytes().splitlines()
+    ]
+    prefix, rows = b"", []
+    for line in case.ledger.expected.splitlines(keepends=True):
+        prefix += line
+        rows.append(json.loads(line))
+        if provenance.digest(prefix) == receipts[0]["attempt_prefix_sha256"]:
+            break
+    rows.append(
+        {
+            **rows[-1],
+            "kind": terminal,
+            "payload": {"reason": "fixture_abort"} if terminal == "aborted" else {},
+            **{k: receipts[0][k] for k in ("utc_ns", "monotonic_ns")},
+        }
+    )
+    ended = _rechain(rows)
+    # This is a valid generic ledger with a pending index, but no active transfer.
+    assert (
+        ledger_module.replay(ended, expected_sha256=provenance.digest(ended), binding_sha256=PIN)[
+            "pending_attempt"
+        ]
+        == 0
+    )
+    for row in receipts:
+        row["attempt_prefix_sha256"] = provenance.digest(ended)
+    monkeypatch.setattr(case.ledger, "expected", ended)
+    with pytest.raises(ValueError, match="receipt_pending_and_revocation_required"):
+        review(case, transfer, _rechain(receipts))
+
+
+@pytest.mark.parametrize("outcome", ["failed", "uncertain"])
+def test_receipt_replay_rejects_contradictory_outcome(case, transfer, monkeypatch, outcome):
+    case.gateway.dispatch()
+    rows = [json.loads(line) for line in case.ledger.expected.splitlines()]
+    assert rows[-1]["kind"] == "outcome"
+    rows[-1]["payload"]["result"] = outcome
+    monkeypatch.setattr(case.ledger, "expected", _rechain(rows))
+    with pytest.raises(ValueError, match="receipt_outcome_mismatch"):
+        review(case, transfer)
+
+
+def test_consumer_never_acknowledges_after_validation_exceeds_deadline(
+    case, transfer, monkeypatch, channels
+):
+    original = transfer.extension.validate_payload
+    # Advance only this extension's clock; avoid wall-clock sleeps and keep root
+    # ledger timestamps and TLS deadlines independent of the injected parse delay.
+    elapsed = [0.0]
+    clock = SimpleNamespace(
+        monotonic=lambda: time.monotonic() + elapsed[0],
+        time_ns=time.time_ns,
+        monotonic_ns=time.monotonic_ns,
+    )
+    monkeypatch.setattr(transfer.extension, "time", clock)
+
+    def delayed(*args):
+        result = original(*args)
+        elapsed[0] = transfer.extension.DEADLINE + 1
+        return result
+
+    monkeypatch.setattr(transfer.extension, "validate_payload", delayed)
+    sent = []
+    original_send = channels[1].send
+
+    def send(token, seq):
+        sent.append(token)
+        return original_send(token, seq)
+
+    monkeypatch.setattr(channels[1], "send", send)
+    with pytest.raises((RuntimeError, TimeoutError)):
+        case.gateway.dispatch()
+    transfer.thread.join(timeout=1)
+    assert not transfer.results
+    assert transfer.errors and isinstance(transfer.errors[0], TimeoutError)
+    assert case.ledger.state.pending == 0 and case.gateway.revoked
+    assert not any(token.startswith("accepted:") for token in sent)

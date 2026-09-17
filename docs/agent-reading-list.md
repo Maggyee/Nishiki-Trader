@@ -22,6 +22,12 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the installed response deadline/replay audit, read
+`docs/progress/portfolio-installed-tls-receipt-review-2026-09-17.md` and its JSON.
+The reviewer now rejects extra attempts, terminal preparation prefixes and
+contradictory outcomes; consumers recheck the total deadline before confirming.
+The old selected evidence remains immutable and compatible with the stricter reader.
+
 For installed HTTPS response delivery to the isolated dedicated UID, read
 `docs/progress/portfolio-installed-tls-receipt-2026-09-17.md` and its JSON.
 `gateway_tls_receipt.py` carries one fixed actual response and original root receive

@@ -99,11 +99,15 @@ def receive_payload(channel, provenance, rates):
     """Finite stop-and-wait transfer; the acknowledgement covers parsed exact bytes."""
     deadline = time.monotonic() + DEADLINE
     raw = bytearray()
-    for seq in range(2, 2 + (MAX_PAYLOAD + CHUNK - 1) // CHUNK + 1):
+
+    def bounded():
         remaining = deadline - time.monotonic()
         if remaining <= 0:
             raise TimeoutError("receipt_deadline")
         channel.connection.settimeout(remaining)
+
+    for seq in range(2, 2 + (MAX_PAYLOAD + CHUNK - 1) // CHUNK + 1):
+        bounded()
 
         class Allowed:
             def __contains__(self, token):
@@ -112,12 +116,15 @@ def receive_payload(channel, provenance, rates):
         token = channel.receive(Allowed(), seq)
         if token.startswith("end:"):
             validate_payload(bytes(raw), provenance, rates)
+            bounded()  # Parsing cannot extend permission to acknowledge.
             channel.send("accepted:" + digest(raw), seq)
+            bounded()
             return bytes(raw)
         chunk = base64.b64decode(token[5:], validate=True)
         raw.extend(chunk)
         if len(raw) > MAX_PAYLOAD:
             raise ValueError("receipt_size")
+        bounded()
         channel.send("part", seq)
     raise ValueError("receipt_packet_limit")
 
@@ -303,6 +310,13 @@ def replay(
         provenance=provenance,
         rates=rates,
     )
+    complete = ledger_module.replay(
+        attempts,
+        expected_sha256=digest(attempts),
+        binding_sha256=binding_sha256,
+    )
+    if complete["recorded_attempts"] != 1:
+        raise ValueError("receipt_single_attempt_required")
     payload = payload_from_tls(tls_raw, tls_report)
     validate_payload(payload, provenance, rates)
     first = json.loads(raw.splitlines()[0])
@@ -332,6 +346,7 @@ def replay(
     if (
         before["pending_attempt"] != 0
         or before["recorded_attempts"] != 1
+        or before["status"] != "incomplete_no_resume"
         or kernel["last_record"] != "revoked"
     ):
         raise ValueError("receipt_pending_and_revocation_required")
@@ -372,6 +387,8 @@ def replay(
         rows.append(row)
         previous = digest(line)
     outcomes = [r for r in map(json.loads, attempts.splitlines()) if r["kind"] == "outcome"]
+    if outcomes and outcomes[0]["payload"] != {"index": 0, "result": "succeeded"}:
+        raise ValueError("receipt_outcome_mismatch")
     if outcomes and (
         len(rows) != 2 or any(outcomes[0][k] < rows[-1][k] for k in ("utc_ns", "monotonic_ns"))
     ):

@@ -1,0 +1,99 @@
+{
+  "changed_source_sha256": {
+    "infra/egress-guard/gateway_tls_receipt.py": "15d87ba51892b8979d83c4f0e4af72d97e6f37409e3daf4e63be97ffdbd74f5e",
+    "tests/ops/test_egress_tls_receipt.py": "5d41458f49e5a65aab2986cbec153df5f66c464794a77e16d92b06d48bbece7a"
+  },
+  "current_acceptance": {
+    "path": "data/installed-tls-receipt-review-2026-09-17/receipt-current.json",
+    "sha256": "53a5fe6d22d3882a78b3261e1b4d0cd89fd4eacf123484660ed5508a53d49c66"
+  },
+  "date": "2026-09-17",
+  "findings_fixed": [
+    {
+      "correction": "Require exactly one full-companion attempt, active pending prefix, and succeeded outcome when present.",
+      "id": "single_attempt_replay_consistency",
+      "reproduced_cases": 5
+    },
+    {
+      "correction": "Recheck original total deadline before partial/final acknowledgements and before returning completed payload.",
+      "id": "consumer_deadline_after_parse",
+      "reproduced_cases": 1
+    }
+  ],
+  "fresh_replays": [
+    {
+      "path": "data/installed-tls-receipt-review-2026-09-17/replay-1.json",
+      "sha256": "e277b47f10a75c69f3e4c6f12300cf54459dbdc0a0017a5e7db3c34d1a5913bf"
+    },
+    {
+      "path": "data/installed-tls-receipt-review-2026-09-17/replay-2.json",
+      "sha256": "e277b47f10a75c69f3e4c6f12300cf54459dbdc0a0017a5e7db3c34d1a5913bf"
+    }
+  ],
+  "fresh_replays_match": true,
+  "historical_scenarios_compatible": 27,
+  "historical_selection": {
+    "path": "data/installed-tls-receipt-2026-09-17/selection.json",
+    "sha256": "f5956e3e731c34a5fcf8cb9db0989f632003a8d9944c433fed6622037cf4e84e"
+  },
+  "host_installation_performed": false,
+  "host_observations_unchanged": true,
+  "live_path_affected": false,
+  "namespace_checks_per_scenario": {
+    "receipt_child_death": 51,
+    "receipt_code_drift": 51,
+    "receipt_controller_crash": 52,
+    "receipt_storage_drift": 51,
+    "tls_bad_certificate": 49,
+    "tls_crash": 50,
+    "tls_duplicate_weight": 49,
+    "tls_slow_body": 50,
+    "tls_success": 50,
+    "tls_truncated": 49
+  },
+  "namespace_scenarios_passed": 10,
+  "native_joint_collector_integrated": false,
+  "network_admitted": false,
+  "next_step": "Integrate native signed REST/WS request and receipt flow with fixed root validation, original clocks and gateway-owned transport.",
+  "original_evidence_modified": false,
+  "protected_source_sha256": {
+    "gateway_joint_ipc.py": "e814ddfdd67b7f43fd031a13a68a6bd87cf992e6de0a92b476751e4f9e3cb6ae",
+    "gateway_tls.py": "e3deab645139dfe0737a2bee26f5a625ef905c709ba056c11035521d49355536",
+    "gateway_tls_receipt.py": "15d87ba51892b8979d83c4f0e4af72d97e6f37409e3daf4e63be97ffdbd74f5e",
+    "installed_gateway.py": "4dd6448721d09d81acfb3ef83840e37b46c2088742e1d6ccf2e932a5896bdedd",
+    "ledger_gateway.py": "d1afb934a109c776fffc2762b7cba0b2d2fb4f7cc7e91e7e3323ca6e4d6a8132",
+    "portfolio_egress_ledger.py": "cb3d7a37e444c71583ec83c88c9aae6a8c91f7ac02dc906b6d44478f7f763fec",
+    "portfolio_rate_evidence.py": "18aa5bdbf1954cebc4802b38daeded07cd60e2ab1b9e508d6686ac89a07abb35",
+    "portfolio_tls_provenance.py": "def476571e9ec56e989eee02b8623b1a657337956ecd88faeabaf9f2efc70044",
+    "selftest.py": "75ba8a36ca075f4236f20e68524117bf1abc1431226271bb0df35912c4ebff5f"
+  },
+  "python_tests": {
+    "new_tests": 6,
+    "passed": 270,
+    "seconds": 20.6,
+    "warnings": 0
+  },
+  "replay_driver": {
+    "path": "data/installed-tls-receipt-review-2026-09-17/replay.py",
+    "sha256": "c05c79fa84586e5e65aa489087a6e8d5c9271de46a3732ae783d6d888aff8707"
+  },
+  "replayed_scenario_sets": 37,
+  "retained_selection": {
+    "path": "data/installed-tls-receipt-review-2026-09-17/selection.json",
+    "sha256": "8973f166a132dcf4910de8b5e003d0e0fb93b620dd19d5c967edee82119bfa10"
+  },
+  "reviewed_commit": "fd1bb98bdc509a126a91619ad7e9fa744ba36ab3",
+  "schema_version": "portfolio.installed_tls_receipt_review.v1",
+  "test_files": [
+    "tests/ops/test_egress_tls_receipt.py",
+    "tests/ops/test_egress_gateway_tls.py",
+    "tests/ops/test_egress_installed_gateway.py",
+    "tests/ops/test_egress_joint_ipc.py",
+    "tests/ops/test_egress_ledger_gateway.py",
+    "tests/strategies_nautilus/test_portfolio_egress_ledger.py",
+    "tests/ops/test_egress_collector_launcher.py"
+  ],
+  "trading_admitted": false,
+  "upstream_touched": false,
+  "venue_requests": 0
+}
