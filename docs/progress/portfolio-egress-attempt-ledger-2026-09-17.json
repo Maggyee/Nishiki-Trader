@@ -1,0 +1,92 @@
+{
+  "schema_version": "portfolio.local_egress_attempt_acceptance.v1",
+  "date": "2026-09-17",
+  "status": "synthetic_local_bookkeeping_verified_gateway_integration_pending",
+  "sources": [
+    {
+      "path": "apps/strategies_nautilus/portfolio_egress_ledger.py",
+      "sha256": "b96cee0818026b1b9b32849471cf47d8051a96dcd10aeaeb68440fd3e2daf3f7"
+    },
+    {
+      "path": "apps/ops/portfolio_egress_ledger.py",
+      "sha256": "c205f3c74f0d05ce4dc02a2eb92d5c78a779f1d55dd5d9ecda93b7f888c31599"
+    },
+    {
+      "path": "tests/strategies_nautilus/test_portfolio_egress_ledger.py",
+      "sha256": "d13ce6c3646dfd5b52664b5aa940d9b1efa192e7392764869cfead7982d2b12a"
+    }
+  ],
+  "synthetic_binding_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "fixture": {
+    "path": "data/egress-attempt-ledger-2026-09-17/fixture.py",
+    "sha256": "37897b06c5bbcd61335b77d233d409b7215f512ee5f23e4d6a02406cfd022b43"
+  },
+  "archive": {
+    "path": "data/egress-attempt-ledger-2026-09-17/local-egress-attempts-v1/events.jsonl",
+    "sha256": "65ddb811a125f21e657bc5e8f72796848cb60ee66ac04f94e245abc5dbd3ee46"
+  },
+  "replays": [
+    {
+      "path": "data/egress-attempt-ledger-2026-09-17/replay-1.json",
+      "sha256": "4fa2e027ced6e275fd84249c3ccf282e29738a900c9426b2e025711fd46d3a5d"
+    },
+    {
+      "path": "data/egress-attempt-ledger-2026-09-17/replay-2.json",
+      "sha256": "4fa2e027ced6e275fd84249c3ccf282e29738a900c9426b2e025711fd46d3a5d"
+    }
+  ],
+  "fresh_process_reports_equal": true,
+  "synthetic_result": {
+    "status": "gap",
+    "recorded_attempts": 5,
+    "documented_weight_subtotal_excluding_unknown": 44,
+    "unknown_charge_attempts": 1,
+    "raw_requests": 2,
+    "connection_attempts": 2,
+    "uncertain_attempts": 1,
+    "observed_gap": {
+      "from_monotonic_ns": 1025000000,
+      "reason": "ValueError",
+      "through_monotonic_ns": null
+    }
+  },
+  "verification": {
+    "new_tests": 40,
+    "focused_tests_passed": 239,
+    "focused_suites": [
+      "egress_ledger",
+      "tls_provenance",
+      "joint_reservation",
+      "joint_admission",
+      "egress_authority_binding",
+      "egress_installation"
+    ],
+    "real_binding_implementation_on_fixture_files": true,
+    "sigkill_pending_replayed_in_fresh_processes": true,
+    "actual_host_binding_reobserved": false,
+    "kernel_harness_rerun": false,
+    "full_application_regression_rerun": false
+  },
+  "actual_complete_caller_coverage_verified": false,
+  "caller_labels_authenticated": false,
+  "used_upper_bound": null,
+  "other_callers_upper_bound": null,
+  "future_enforcement_verified": false,
+  "production_transport_integrated": false,
+  "network_admitted": false,
+  "trading_admitted": false,
+  "venue_requests_made": 0,
+  "host_network_mutations": 0,
+  "bootstrap_scope_consumed": true,
+  "joint_scope_consumed": false,
+  "frozen_joint_contract": {
+    "path": "docs/progress/portfolio-testnet-joint-capture-contract-2026-09-14.json",
+    "sha256": "91fab40cfd52b51cfac887f2dc45ee9594ce55d33b082f44d4aee31d2738ed48"
+  },
+  "joint_budget": {
+    "get_requests": 17,
+    "documented_weight": 468
+  },
+  "strict_continuity_days": 0,
+  "next_step": "Wire durable preparation into the isolated controlled gateway; authenticate callers or block unrecorded traffic and test send/revocation races. Qualify continuous history/future enforcement before any separately reviewed real scope."
+}

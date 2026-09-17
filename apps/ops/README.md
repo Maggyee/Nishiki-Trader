@@ -7,6 +7,11 @@ dashboard snapshot support + Phase 6 passive readiness gate support。
 
 ## 当前入口
 
+`portfolio_egress_ledger` 仅离线回放指定 SHA256 的本地尝试日志，保留失败、
+不确定结果和已观察缺口；可显式指定成对的单调时钟区间。退出码 2 表示报告
+已写入，但不授予网络准入；无创建、恢复或发送模式。见
+[本地出口尝试账本](../../docs/progress/portfolio-egress-attempt-ledger-2026-09-17.md)。
+
 `portfolio_joint_reservation` 仅重放显式选择的离线逐步预留验收日志，
 重新验证每一步签名、剩余预算和已准备消耗，保留中断后的待决步骤。
 返回 2 表示报告已写入；不预留真实网关额度、不激活采集。见

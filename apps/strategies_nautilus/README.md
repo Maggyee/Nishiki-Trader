@@ -14,6 +14,12 @@ NautilusTrader 上的自定义 Strategy / Actor / 风控扩展。
 
 ## 当前入口
 
+`portfolio_egress_ledger.py` 保存本地 REST/账户/行情操作的准备与结果记录，
+在准备落盘前后检查借用的绑定对象，检测漂移后终止；失败/不确定尝试不退还。
+这是本地记账组件，调用者标签未经认证，检查间隔的流量覆盖仍未知，不提供
+发送许可。下一步接入隔离网关验证强制记账。见
+[本地出口尝试账本](../../docs/progress/portfolio-egress-attempt-ledger-2026-09-17.md)。
+
 `portfolio_joint_reservation.py` 对固定最大预算执行独立离线验收：
 21 步准备、17 GET / 468 已知权重，逐步验证签名并持久化已准备消耗。
 失败、不确定结果或中断后不允许在原日志重启；不连接传输层或预留真实额度。

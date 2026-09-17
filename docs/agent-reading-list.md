@@ -22,13 +22,23 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For prospective local egress attempt bookkeeping, read
+`docs/progress/portfolio-egress-attempt-ledger-2026-09-17.md` and its JSON.
+`portfolio_egress_ledger.py` under strategies_nautilus persists preparations before
+returning and checks a borrowed binding before/after persistence. Failed/uncertain
+attempts stay consumed; original local scopes never reopen. The ops CLI only
+replays selected bytes. Caller labels are untrusted and sampled observations never
+prove complete coverage: all actual usage upper bounds/admission stay unknown/false.
+Next integrate the isolated controlled gateway, not a real maintenance window.
+
 For the actual local custody/source-route binding, read
 `docs/progress/portfolio-local-authority-binding-2026-09-16.md` and its JSON.
 `infra/egress-guard/authority_binding.py` holds root-owned original/code descriptors
 and invalidates on file/account/boot/network drift. Two actual root processes match.
 It verifies local custody only: no source/gateway signer qualification, continuous
 coverage or dispatch permit follows. Reports cannot recreate the held authority.
-Next implement prospective all-caller accounting without reopening consumed scopes.
+Local attempt bookkeeping is implemented in the successor above; complete caller
+coverage and controlled dispatch enforcement remain pending. Never reopen consumed scopes.
 
 For the current offline use of the completed bootstrap evidence, read
 `docs/progress/portfolio-bootstrap-joint-review-2026-09-16.md` and its JSON.

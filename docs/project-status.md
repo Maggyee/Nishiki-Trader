@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-09-16
+- **Last updated**: 2026-09-17
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Local root custody and source-route binding are implemented and verified on the actual host. Two independent root processes match; wrong selected binding is refused. Held descriptors join installed code/account, original bootstrap files, boot/namespaces and current network structure; observed drift invalidates the object permanently. Next implement prospective all-caller accounting and dispatch enforcement with explicit source/gateway authority policy. The consumed bootstrap, stale rate evidence and joint/trading blocks remain.
+- **Current objective**: Prospective local egress attempt accounting now persists preparations, retains failures/uncertainty and stops on observed custody or clock/storage drift. Pinned offline replay and crash acceptance pass. This is local bookkeeping, not complete shared-egress accounting or dispatch enforcement. Next integrate it with the isolated controlled gateway and authenticate callers or block unrecorded traffic. The actual root binding remains the prior authority input; consumed bootstrap, stale rates and joint/trading blocks remain.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -251,7 +251,8 @@ Detailed depth implementation, retained hashes and next review:
 [real-host bootstrap preparation](progress/portfolio-egress-host-bootstrap-2026-09-16.md),
 [completed actual bootstrap](progress/portfolio-egress-bootstrap-result-2026-09-16.md),
 [original bootstrap evidence in joint admission](progress/portfolio-bootstrap-joint-review-2026-09-16.md),
-and [actual local custody binding](progress/portfolio-local-authority-binding-2026-09-16.md).
+[actual local custody binding](progress/portfolio-local-authority-binding-2026-09-16.md),
+and [local egress attempt accounting](progress/portfolio-egress-attempt-ledger-2026-09-17.md).
 
 ## Next Steps
 
@@ -287,9 +288,14 @@ and [actual local custody binding](progress/portfolio-local-authority-binding-20
    budget stays reserved in the review. Next follow the report's implementation
    order. [Local root custody and route binding](progress/portfolio-local-authority-binding-2026-09-16.md)
    now pass on the actual host with two matching root processes and wrong-selection
-   refusal. Held-file/code/account/boot/network drift closes the binding. Next
-   implement prospective all-caller accounting with explicit authority policy,
-   fresh rate/clock consumption, provider-charge resolution, then joint dispatch.
+   refusal. Held-file/code/account/boot/network drift closes the binding.
+   [Local attempt accounting](progress/portfolio-egress-attempt-ledger-2026-09-17.md)
+   now retains prepared/failed/uncertain attempts and explicit observed gaps;
+   borrowed binding checks bracket preparation. Next wire that ledger into the
+   isolated controlled gateway, authenticate callers or block unrecorded traffic,
+   and test send-versus-revocation races. Sampling alone never proves coverage.
+   Actual authority policy, fresh rate/clock consumption and provider-charge
+   resolution must precede any separately reviewed real joint dispatch.
    Preserve the consumed scope; no retry, second IPv4 or extended interruption
    follows. Reboot/power-loss and storage rollback remain unqualified.
    Obtain qualified signer/source records, fresh initial usage/limits and complete
@@ -332,12 +338,13 @@ and [actual local custody binding](progress/portfolio-local-authority-binding-20
 
 ## Latest Verification
 
-- Local authority binding: **22 new / 100 focused tests pass**. Two independent
-  root observations on the actual host have identical bindings; wrong expected
-  selection is refused. File/code/CA/account/boot/route/rule drift permanently
-  closes held descriptors. Original archives and installed sources are unchanged,
-  existing services active, no venue requests or network mutations. Ruff/format,
-  pins, frozen artifacts, links and diff pass; no upstream/live-path change.
+- Local attempt ledger: **40 new / 239 focused tests pass**. Durable preparations
+  survive SIGKILL as uncertain; failed fsync, clock/storage drift and actual held
+  binding fixture changes stop further preparation. Two fresh synthetic archive
+  replays are identical. Unknown total/other-caller bounds remain null. No venue
+  requests, privileged host/network changes or live-path/upstream edits. Full
+  application and unchanged kernel harnesses were not rerun; details and pins:
+  [acceptance](progress/portfolio-egress-attempt-ledger-2026-09-17.md).
 
 - Bootstrap-to-joint integration: **20 new / 234 focused tests pass**. Two fresh
   reviews of the actual original artifacts are byte-identical and remain blocked.
