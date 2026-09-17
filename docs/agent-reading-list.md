@@ -22,6 +22,15 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For installed gateway delivery to a native Nautilus metadata consumer, read
+`docs/progress/portfolio-installed-native-receipt-2026-09-17.md` and its JSON.
+Fixture manifest v5 pins eleven sources and a separate child-only frozen runtime.
+The dedicated UID constructs four actual native Currency objects before its final
+receipt; root never imports Nautilus. Seven native and 28 legacy scenarios pass;
+two ordinary and two native detached replays preserve original clocks and missing
+acknowledgements. This is one metadata GET only: full native 20-operation collection,
+signed account selectors, route mapping and concurrent WS remain the next entrypoint.
+
 For the installed response deadline/replay audit, read
 `docs/progress/portfolio-installed-tls-receipt-review-2026-09-17.md` and its JSON.
 The reviewer now rejects extra attempts, terminal preparation prefixes and

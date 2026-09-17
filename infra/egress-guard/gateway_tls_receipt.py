@@ -95,7 +95,7 @@ def validate_payload(raw, provenance, rates):
     return rates.rest_rate_evidence(response[end:], pairs)
 
 
-def receive_payload(channel, provenance, rates):
+def receive_payload(channel, provenance, rates, *, native=None):
     """Finite stop-and-wait transfer; the acknowledgement covers parsed exact bytes."""
     deadline = time.monotonic() + DEADLINE
     raw = bytearray()
@@ -116,8 +116,14 @@ def receive_payload(channel, provenance, rates):
         token = channel.receive(Allowed(), seq)
         if token.startswith("end:"):
             validate_payload(bytes(raw), provenance, rates)
+            result = native(bytes(raw)) if native is not None else None
+            token = (
+                "accepted:" + digest(raw)
+                if result is None
+                else "native:" + digest(canonical(result)) + ":" + digest(raw)
+            )
             bounded()  # Parsing cannot extend permission to acknowledge.
-            channel.send("accepted:" + digest(raw), seq)
+            channel.send(token, seq)
             bounded()
             return bytes(raw)
         chunk = base64.b64decode(token[5:], validate=True)
@@ -132,17 +138,24 @@ def receive_payload(channel, provenance, rates):
 def child_loop(fd, parent):
     channel = globals()["ControlChannel"](socket.socket(fileno=fd), parent, timeout=10)
     try:
+        if globals().get("NATIVE_PREPARE") is not None:
+            globals()["NATIVE_PREPARE"]()
         channel.send("ready", 0)
         channel.receive({"start"}, 1)
         channel.send("exchange_info", 1)
-        receive_payload(channel, globals()["PROVENANCE"], globals()["RATES"])
+        receive_payload(
+            channel,
+            globals()["PROVENANCE"],
+            globals()["RATES"],
+            native=globals().get("NATIVE_VALIDATE"),
+        )
         channel.receive({"close"}, 1000)
         channel.send("closed", 1000)
     finally:
         channel.close()
 
 
-def launch(authority, sources, launcher):
+def launch(authority, sources, launcher, *, runtime=None):
     authority.verify()
     reader = launcher["load_source"](authority.source("inspect_binding.py").decode())[
         "process_identity"
@@ -150,7 +163,13 @@ def launch(authority, sources, launcher):
 
     def identity(pid):
         authority.verify()
-        return {**reader(pid), "installation_manifest_sha256": authority.manifest_sha256}
+        if runtime is not None:
+            runtime.verify()
+        return {
+            **reader(pid),
+            "installation_manifest_sha256": authority.manifest_sha256,
+            **({"native_runtime_sha256": runtime.pin} if runtime is not None else {}),
+        }
 
     source = "import types\n"
     for name, raw in (
@@ -163,6 +182,13 @@ def launch(authority, sources, launcher):
         sources.source("gateway_tls_receipt.py"),
     ):
         source += f"exec(compile({raw!r},'<held-source>','exec'))\n"
+    if runtime is not None:
+        runtime.verify()
+        raw = sources.source("gateway_native_receipt.py")
+        source += f"native_scope={{'__name__':'held_native_consumer'}}\nexec(compile({raw!r},'<held-native-consumer>','exec'),native_scope)\nNATIVE_PREPARE=native_scope['prepare_native']\nNATIVE_VALIDATE=native_scope['validate_native']\n"
+        launcher["FixtureCollector"].__init__.__globals__["PYTHON"] = (
+            "/run/trader-native-runtime/bin/python3.12"
+        )
     return launcher["FixtureCollector"](
         source,
         identity,
@@ -182,7 +208,9 @@ def authorize(collector):
     return {"ok": True}
 
 
-def deliver(collector, ledger, lifecycle, payload, provenance, *, on_prepared=None):
+def deliver(
+    collector, ledger, lifecycle, payload, provenance, *, on_prepared=None, native_result=None
+):
     """Kernel permission must already be revoked. Failure never refunds the attempt."""
     if not 0 < len(payload) <= MAX_PAYLOAD:
         raise ValueError("receipt_size")
@@ -235,7 +263,10 @@ def deliver(collector, ledger, lifecycle, payload, provenance, *, on_prepared=No
                 kind=kind,
                 utc_ns=time.time_ns(),
                 monotonic_ns=time.monotonic_ns(),
-                profile=PROFILE,
+                profile=PROFILE
+                if native_result is None
+                else "portfolio.installed_native_receipt.v1",
+                **({"native_result": native_result} if native_result is not None else {}),
                 binding_sha256=ledger.state.binding_sha256,
                 payload_sha256=digest(payload),
                 tls_sha256=json.loads(payload)["tls_sha256"],
@@ -262,7 +293,12 @@ def deliver(collector, ledger, lifecycle, payload, provenance, *, on_prepared=No
         healthy()
         collector.channel.send("end:" + digest(payload), seq)
         bounded()
-        collector.channel.receive({"accepted:" + digest(payload)}, seq)
+        token = (
+            "accepted:" + digest(payload)
+            if native_result is None
+            else "native:" + digest(canonical(native_result)) + ":" + digest(payload)
+        )
+        collector.channel.receive({token}, seq)
         append("acknowledged")
         # Keep the child alive until ledger outcome/close; process identity remains verifiable.
         return True
@@ -295,6 +331,7 @@ def replay(
     transport,
     provenance,
     rates,
+    native=None,
 ):
     """Reconstruct payload from selected raw TLS; bind pending/revoked original prefixes."""
     if (
@@ -325,6 +362,13 @@ def replay(
     payload = payload_from_tls(tls_raw, tls_report)
     validate_payload(payload, provenance, rates)
     first = json.loads(raw.splitlines()[0])
+    native_result = None
+    if native is not None:
+        if first.get("profile") != "portfolio.installed_native_receipt.v1":
+            raise ValueError("native_receipt_profile_required")
+        native_result = native["expected_result"](payload)
+    elif first.get("profile") == "portfolio.installed_native_receipt.v1":
+        raise ValueError("native_receipt_parser_required")
 
     def prefix(original, key):
         end = 0
@@ -366,7 +410,8 @@ def replay(
             kind="prepared" if seq == 0 else "acknowledged",
             utc_ns=row.get("utc_ns"),
             monotonic_ns=row.get("monotonic_ns"),
-            profile=PROFILE,
+            profile=PROFILE if native_result is None else "portfolio.installed_native_receipt.v1",
+            **({"native_result": native_result} if native_result is not None else {}),
             binding_sha256=binding_sha256,
             payload_sha256=digest(payload),
             tls_sha256=tls_report["archive_sha256"],
@@ -403,7 +448,14 @@ def replay(
     ):
         raise ValueError("receipt_outcome_precedes_acknowledgement")
     return {
-        "schema_version": PROFILE,
+        "schema_version": PROFILE
+        if native_result is None
+        else "portfolio.installed_native_receipt.v1",
+        **(
+            {"native_result": native_result, "native_metadata_acknowledged": len(rows) == 2}
+            if native_result is not None
+            else {}
+        ),
         "archive_sha256": expected_sha256,
         "tls_sha256": tls_report["archive_sha256"],
         "payload_sha256": digest(payload),

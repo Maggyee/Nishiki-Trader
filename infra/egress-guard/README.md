@@ -6,6 +6,30 @@ offline disk tests, and retain read-only host deployment-input snapshots.
 Current phase: Phase 5 entry, offline infrastructure acceptance only. This is not
 a production guard, gateway audit service, quota authority or collection permit.
 
+The native metadata successor adds `gateway_native_runtime.py` and
+`gateway_native_receipt.py`. Run the existing disposable wrapper as an ordinary user:
+
+```bash
+/usr/bin/python3 -I infra/egress-guard/installed_gateway_selftest.py --native-receipt-profile --report data/NEW-NATIVE.json
+```
+
+The wrapper freezes the project CPython 3.12/Nautilus 1.226.0 runtime before sudo,
+retaining a `.runtime.tar.gz` beside the report. Only the isolated dedicated UID
+imports Nautilus and constructs BTC/ETH/BNB/USDT Currency objects from the original
+root HTTPS bytes. Its final acknowledgement binds both the native summary and the
+original payload, including original receive clocks. Root parses the expected
+summary with stdlib only. Protected fixture manifest v5 pins eleven sources;
+base installation and earlier journal profiles remain separate.
+
+The private runtime tmpfs is root-owned and read-only. Files are fully hashed at
+startup, held open, then checked for path/inode/metadata and mount changes during
+use; this is not continuous content rehashing or qualification of arbitrary OS
+libraries or concurrent root administration. Native precision rejection, remount
+drift, stopped consumers and crashes retain missing receipts and pending attempts.
+This implements one fixed local metadata GET only. The next entrypoint is full
+native signed REST/account/route/WS integration; no host rollout or real request
+is enabled. See [native acceptance](../../docs/progress/portfolio-installed-native-receipt-2026-09-17.md).
+
 The response-delivery successor is `gateway_tls_receipt.py`, selected by
 `installed_gateway_selftest.py --tls-receipt-profile --report data/NEW-RECEIPT.json`.
 One fixed exchangeInfo request is authenticated before accounting and root-owned
@@ -97,7 +121,7 @@ and [lifecycle acceptance](../../docs/progress/portfolio-egress-gateway-lifecycl
 
 The ordinary-user wrapper uses existing sudo to run five fresh private mount,
 network and PID namespaces. It reuses the pinned installer, then stages a separate
-fixture v4 manifest and nine protected sources in the disposable installation. The
+fixture v5 manifest and eleven protected sources in the disposable installation. The
 fixed installed `installed_gateway.py --fixture` entry consumes the original
 fixed storage scope, authenticates the distinct-UID child and uses the durable
 kernel lifecycle. Neither the collector nor the public wrapper can select another

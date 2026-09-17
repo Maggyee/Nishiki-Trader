@@ -29,6 +29,15 @@ RECEIPT_SCENARIOS = TLS_SCENARIOS + (
     "receipt_code_drift",
     "receipt_storage_drift",
 )
+NATIVE_SCENARIOS = (
+    "tls_success",
+    "tls_slow_body",
+    "native_precision",
+    "receipt_runtime_drift",
+    "tls_bad_certificate",
+    "receipt_child_stopped",
+    "receipt_controller_crash",
+)
 IPC_SCENARIOS = (
     "ipc_success",
     "ipc_child_death",
@@ -54,13 +63,17 @@ def denied(name, operation):
     try:
         result=operation()
     except OSError as exc:
-        if exc.errno not in (errno.EACCES,errno.EPERM): raise
+        if exc.errno not in (errno.EACCES,errno.EPERM,errno.EROFS): raise
         checks.append(name)
     else:
         if isinstance(result,int): os.close(result)
         raise RuntimeError('unexpected_permission:'+name)
+runtime=Path('/run/trader-native-runtime')
+if runtime.exists():
+    denied('native_runtime_write',lambda:os.open(runtime/'bin/python3.12',os.O_WRONLY))
+    denied('native_runtime_replace',lambda:os.unlink(runtime/'bin/python3.12'))
 code=Path('/usr/local/lib/trader-egress')
-for name in ('installed_gateway.py','gateway_tls.py','gateway_joint_ipc.py','gateway_tls_receipt.py','ledger_gateway.py','selftest.py','portfolio_rate_evidence.py','portfolio_tls_provenance.py','portfolio_egress_ledger.py'):
+for name in ('installed_gateway.py','gateway_tls.py','gateway_joint_ipc.py','gateway_tls_receipt.py','gateway_native_runtime.py','gateway_native_receipt.py','ledger_gateway.py','selftest.py','portfolio_rate_evidence.py','portfolio_tls_provenance.py','portfolio_egress_ledger.py'):
     path=code/name
     assert path.read_bytes()
     denied('write:'+name,lambda:os.open(path,os.O_WRONLY))
@@ -93,6 +106,10 @@ body=json.dumps({'rateLimits':[
  {'rateLimitType':'RAW_REQUESTS','interval':'MINUTE','intervalNum':5,'limit':61000},
  {'rateLimitType':'CONNECTIONS','interval':'MINUTE','intervalNum':5,'limit':300}
 ]},separators=(',',':')).encode()
+if sys.argv[2]=='native':
+    metadata=json.loads(body)
+    metadata['symbols']=[{'symbol':asset+'USDT','baseAsset':asset,'baseAssetPrecision':17 if scenario=='native_precision' and asset=='BTC' else 8,'quoteAsset':'USDT','quoteAssetPrecision':8} for asset in ('BTC','ETH','BNB')]
+    body=json.dumps(metadata,separators=(',',':')).encode()
 headers=b'HTTP/1.1 200 OK\r\nContent-Length: '+str(len(body)).encode()+b'\r\nX-MBX-USED-WEIGHT-1M: 20\r\n'
 if scenario=='tls_duplicate_weight': headers+=b'x-mbx-used-weight-1m: 20\r\n'
 headers+=b'Connection: close\r\n\r\n'
@@ -131,11 +148,13 @@ with socket.socket() as listener:
 def worker(payload):
     base = load(payload["base_source"])
     base["require_isolation"](payload["original"])
-    receipt = payload.get("tls_receipt_profile", False)
+    native = payload.get("native_receipt_profile", False)
+    receipt = payload.get("tls_receipt_profile", False) or native
     tls = payload.get("tls_profile", False) or receipt
     ipc = payload.get("joint_ipc_profile", False)
     if (
-        type(receipt) is not bool
+        type(native) is not bool
+        or type(receipt) is not bool
         or type(tls) is not bool
         or type(ipc) is not bool
         or (tls and ipc)
@@ -143,6 +162,8 @@ def worker(payload):
         not in (
             IPC_SCENARIOS
             if ipc
+            else NATIVE_SCENARIOS
+            if native
             else RECEIPT_SCENARIOS
             if receipt
             else TLS_SCENARIOS
@@ -182,6 +203,13 @@ def worker(payload):
         ).encode(),
         0o600,
     )
+    native_runtime = None
+    if native:
+        native_runtime = load(payload["sources"]["gateway_native_runtime.py"])["stage"](
+            base64.b64decode(payload["native_bundle"], validate=True),
+            payload["native_bundle_sha256"],
+            run,
+        )
     guards = load(payload["sources"]["selftest.py"])
     gateway = load(payload["sources"]["ledger_gateway.py"])
     ledger_module = gateway["load_ledger"](payload["sources"])
@@ -241,6 +269,7 @@ def worker(payload):
                     "-c",
                     TLS_PEER,
                     payload["scenario"],
+                    "native" if native else "stdlib",
                 ],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -259,7 +288,13 @@ def worker(payload):
             "/usr/bin/python3",
             "-I",
             entry["CODE"] + "/installed_gateway.py",
-            "--tls-receipt-fixture" if receipt else "--tls-fixture" if tls else "--fixture",
+            "--native-receipt-fixture"
+            if native
+            else "--tls-receipt-fixture"
+            if receipt
+            else "--tls-fixture"
+            if tls
+            else "--fixture",
         ]
         controller = subprocess.Popen(
             command,
@@ -388,6 +423,14 @@ def worker(payload):
                 if not stopped:
                     raise RuntimeError("receipt_child_not_stopped")
                 checks.append("receipt_consumer_sigstop_observed")
+            elif scenario == "receipt_runtime_drift":
+                native_root = "/run/trader-native-runtime"
+                run("/usr/bin/mount", "-o", "remount,rw,nosuid,nodev", native_root)
+
+                def restore():
+                    run("/usr/bin/mount", "-o", "remount,ro,nosuid,nodev", native_root)
+
+                checks.append("native_runtime_mount_drift_injected")
             elif scenario == "receipt_code_drift":
                 target = Path(entry["CODE"]) / "gateway_tls_receipt.py"
                 original = target.read_bytes()
@@ -447,7 +490,7 @@ def worker(payload):
                 if tls and scenario != "tls_bad_certificate"
                 else []
             )
-            if receipt and scenario in {"tls_success", "tls_slow_body"}:
+            if receipt and scenario in {"tls_success", "tls_slow_body", "native_precision"}:
                 expected_progress.append({"stage": "receipt_prepared"})
             if late_receipt:
                 expected_progress = []
@@ -533,7 +576,7 @@ def worker(payload):
                 rates=sys.modules["apps.strategies_nautilus.portfolio_rate_evidence"],
             )
             if (replay["status"] == "complete") != (
-                scenario in {"tls_success", "tls_slow_body"} or late_receipt
+                scenario in {"tls_success", "tls_slow_body", "native_precision"} or late_receipt
             ):
                 raise RuntimeError("tls_replay_completion_mismatch")
             if scenario == "tls_slow_body" and replay["header_age_at_body_ns"] < 1_000_000_000:
@@ -558,6 +601,7 @@ def worker(payload):
             receipt_replay = receipt_code["replay"](
                 receipt_raw,
                 expected_sha256=base["sha"](receipt_raw),
+                native=load(payload["sources"]["gateway_native_receipt.py"]) if native else None,
                 tls_raw=raw_tls,
                 attempts=attempts,
                 lifecycle=lifecycle,
@@ -573,6 +617,10 @@ def worker(payload):
                 scenario in {"tls_success", "tls_slow_body"}
             ):
                 raise RuntimeError("receipt_acknowledgement_mismatch")
+            if native:
+                if receipt_replay["schema_version"] != "portfolio.installed_native_receipt.v1":
+                    raise RuntimeError("native_receipt_profile_missing")
+                tls_result["native_runtime"] = native_runtime
             tls_result.update(receipt_archive=receipt_raw.decode(), receipt_replay=receipt_replay)
             checks.append("authenticated_consumer_receipt_replays_with_original_tls_clocks")
         restarted = subprocess.run(
@@ -609,7 +657,10 @@ def worker(payload):
         ):
             raise RuntimeError("prior_consumed_fixture_state_changed")
         checks.append("prior_consumed_fixture_state_preserved")
+        if any(name.startswith("nautilus_trader") for name in sys.modules):
+            raise RuntimeError("native_package_loaded_by_root")
         return {
+            "root_native_modules_loaded": False,
             "scenario": scenario,
             "status": "passed",
             **tls_result,
@@ -876,6 +927,7 @@ def main(argv=None):
     profiles = parser.add_mutually_exclusive_group()
     profiles.add_argument("--tls-profile", action="store_true")
     profiles.add_argument("--tls-receipt-profile", action="store_true")
+    profiles.add_argument("--native-receipt-profile", action="store_true")
     profiles.add_argument("--joint-ipc-profile", action="store_true")
     args = parser.parse_args(argv)
     if os.geteuid() == 0:
@@ -904,10 +956,37 @@ def main(argv=None):
             ).read_text()
             for name in entry["FILES"]
         }
+        native_bundle = None
+        if args.native_receipt_profile:
+            built = subprocess.run(
+                [
+                    str(directory.parents[1] / ".venv/bin/python"),
+                    "-I",
+                    str(directory / "gateway_native_runtime.py"),
+                ],
+                capture_output=True,
+                check=True,
+                timeout=60,
+                env=ENV,
+            )
+            native_bundle = base64.b64decode(built.stdout.strip(), validate=True)
+            with args.report.with_suffix(".runtime.tar.gz").open("xb") as runtime_output:
+                runtime_output.write(native_bundle)
+                runtime_output.flush()
+                os.fsync(runtime_output.fileno())
         payload = {
+            **(
+                {
+                    "native_bundle": base64.b64encode(native_bundle).decode(),
+                    "native_bundle_sha256": base["sha"](native_bundle),
+                }
+                if native_bundle is not None
+                else {}
+            ),
             "source": Path(__file__).read_text(),
             "tls_profile": args.tls_profile,
             "tls_receipt_profile": args.tls_receipt_profile,
+            "native_receipt_profile": args.native_receipt_profile,
             "joint_ipc_profile": args.joint_ipc_profile,
             "base_source": base_source,
             "installer": installer.decode(),
@@ -922,6 +1001,8 @@ def main(argv=None):
         for scenario in (
             IPC_SCENARIOS
             if args.joint_ipc_profile
+            else NATIVE_SCENARIOS
+            if args.native_receipt_profile
             else RECEIPT_SCENARIOS
             if args.tls_receipt_profile
             else TLS_SCENARIOS
@@ -979,9 +1060,15 @@ def main(argv=None):
             reports.append(report)
         result = {
             "schema_version": "portfolio.installed_gateway_acceptance.v1",
+            **(
+                {"native_bundle_sha256": base["sha"](native_bundle)}
+                if native_bundle is not None
+                else {}
+            ),
             "status": "passed",
             "tls_profile": args.tls_profile,
             "tls_receipt_profile": args.tls_receipt_profile,
+            "native_receipt_profile": args.native_receipt_profile,
             "joint_ipc_profile": args.joint_ipc_profile,
             "scenarios": reports,
             "source_sha256": payload["source_sha256"],

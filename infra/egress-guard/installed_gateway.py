@@ -19,13 +19,15 @@ FILES = (
     "gateway_tls.py",
     "gateway_joint_ipc.py",
     "gateway_tls_receipt.py",
+    "gateway_native_runtime.py",
+    "gateway_native_receipt.py",
     "ledger_gateway.py",
     "selftest.py",
     "portfolio_rate_evidence.py",
     "portfolio_tls_provenance.py",
     "portfolio_egress_ledger.py",
 )
-PROFILE = "portfolio.installed_gateway_fixture.v4"
+PROFILE = "portfolio.installed_gateway_fixture.v5"
 
 
 def digest(raw):
@@ -172,9 +174,9 @@ class InstalledBinding:
             raise
 
 
-def run_controller(*, tls=False, receipt=False):
+def run_controller(*, tls=False, receipt=False, native=False):
     authority = installation()
-    collector = ledger = lifecycle = gateway = None
+    collector = ledger = lifecycle = gateway = runtime = None
     try:
         fixture_context(authority)
         sources = InstalledGatewaySources(authority)
@@ -190,8 +192,11 @@ def run_controller(*, tls=False, receipt=False):
             authority.verify()
         launcher = load(authority.source("collector_launcher.py"))
         receiver = load(sources.source("gateway_tls_receipt.py")) if receipt else None
+        native_code = load(sources.source("gateway_native_receipt.py")) if native else None
+        if native:
+            runtime = load(sources.source("gateway_native_runtime.py"))["NativeRuntime"](authority)
         collector = (
-            receiver["launch"](authority, sources, launcher)
+            receiver["launch"](authority, sources, launcher, runtime=runtime)
             if receipt
             else launcher["FixtureCollector"].from_installation(authority)
         )
@@ -279,6 +284,7 @@ def run_controller(*, tls=False, receipt=False):
                     payload,
                     provenance,
                     on_prepared=prepared,
+                    native_result=native_code["expected_result"](payload) if native else None,
                 )
 
             def send():
@@ -335,6 +341,8 @@ def run_controller(*, tls=False, receipt=False):
         if collector is not None:
             with suppress(Exception):
                 receiver["close"](collector) if receipt else collector.close()
+        if runtime is not None:
+            runtime.close()
         authority.close()
 
 
@@ -346,6 +354,7 @@ def main():
             ["--tls-fixture"],
             ["--joint-ipc-fixture"],
             ["--tls-receipt-fixture"],
+            ["--native-receipt-fixture"],
         )
         or not sys.flags.isolated
         or os.path.abspath(__file__) != CODE + "/installed_gateway.py"
@@ -363,8 +372,10 @@ def main():
             authority.close()
     else:
         run_controller(
-            tls=sys.argv[1:] in (["--tls-fixture"], ["--tls-receipt-fixture"]),
-            receipt=sys.argv[1:] == ["--tls-receipt-fixture"],
+            tls=sys.argv[1:]
+            in (["--tls-fixture"], ["--tls-receipt-fixture"], ["--native-receipt-fixture"]),
+            receipt=sys.argv[1:] in (["--tls-receipt-fixture"], ["--native-receipt-fixture"]),
+            native=sys.argv[1:] == ["--native-receipt-fixture"],
         )
     return 0
 
