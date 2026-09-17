@@ -218,6 +218,9 @@ def deliver(collector, ledger, lifecycle, payload, provenance, *, on_prepared=No
                 or os.pread(reader, JOURNAL_LIMIT + 1, 0) != expected
             ):
                 raise ValueError("receipt_storage_changed")
+            bounded()
+
+        def bounded():
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 raise TimeoutError("receipt_deadline")
@@ -253,10 +256,12 @@ def deliver(collector, ledger, lifecycle, payload, provenance, *, on_prepared=No
             collector.channel.send(
                 "data:" + base64.b64encode(payload[start : start + CHUNK]).decode(), seq
             )
+            bounded()  # A blocked send consumes the same total transfer budget.
             collector.channel.receive({"part"}, seq)
         seq += 1
         healthy()
         collector.channel.send("end:" + digest(payload), seq)
+        bounded()
         collector.channel.receive({"accepted:" + digest(payload)}, seq)
         append("acknowledged")
         # Keep the child alive until ledger outcome/close; process identity remains verifiable.
@@ -386,7 +391,11 @@ def replay(
             raise ValueError("receipt_archive_clock_jump")
         rows.append(row)
         previous = digest(line)
-    outcomes = [r for r in map(json.loads, attempts.splitlines()) if r["kind"] == "outcome"]
+    attempt_rows = list(map(json.loads, attempts.splitlines()))
+    terminals = [r for r in attempt_rows if r["kind"] in {"aborted", "closed"}]
+    if any(r[k] < rows[-1][k] for r in terminals for k in ("utc_ns", "monotonic_ns")):
+        raise ValueError("receipt_terminal_precedes_transfer")
+    outcomes = [r for r in attempt_rows if r["kind"] == "outcome"]
     if outcomes and outcomes[0]["payload"] != {"index": 0, "result": "succeeded"}:
         raise ValueError("receipt_outcome_mismatch")
     if outcomes and (

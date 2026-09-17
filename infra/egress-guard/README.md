@@ -19,6 +19,9 @@ See [response acceptance](../../docs/progress/portfolio-installed-tls-receipt-20
 and the [deadline/replay review](../../docs/progress/portfolio-installed-tls-receipt-review-2026-09-17.md).
 The reviewer enforces a single attempt and active preparation prefix; the consumer
 rechecks its total deadline after parsing and before sending acknowledgements.
+The [stall review](../../docs/progress/portfolio-installed-tls-receipt-stall-2026-09-17.md)
+also verifies send/receive share the remaining time, terminal records follow the
+transfer and an actually stopped consumer is killed/reaped after timeout.
 
 The installed multi-operation IPC successor is `gateway_joint_ipc.py`, selected by
 `installed_gateway_selftest.py --joint-ipc-profile --report data/NEW-IPC.json`.

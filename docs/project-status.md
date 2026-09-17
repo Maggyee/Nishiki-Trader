@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-17
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Installed single-request HTTPS delivery now rejects contradictory or expanded replay ledgers and refuses consumer acknowledgement after its total deadline. Kernel permission is revoked before response delivery; failed acknowledgement retains the pending attempt. Next integrate the full native 20-operation collector and concurrent TLS/WS traffic. Actual all-caller coverage, provider rate/clock qualification, host rollout and trading remain blocked; consumed scopes stay consumed.
+- **Current objective**: Installed single-request HTTPS delivery now rejects contradictory or expanded replay ledgers and enforces the same total deadline across send/receive waits. A stopped consumer times out and is killed/reaped; replay checks terminal ordering. Kernel permission is revoked before response delivery; failed acknowledgement retains the pending attempt. Next integrate the full native 20-operation collector and concurrent TLS/WS traffic. Actual all-caller coverage, provider rate/clock qualification, host rollout and trading remain blocked; consumed scopes stay consumed.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -363,11 +363,12 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
 
 ## Latest Verification
 
-- Installed response review: **6 new / 270 focused tests pass**. Replay now requires
-  one attempt and an active pending prefix; contradictory outcomes fail. Consumer
-  deadlines are rechecked after parsing and before acknowledgements. Exact namespace
-  and historical replay results are in the [review](progress/portfolio-installed-tls-receipt-review-2026-09-17.md).
-  The preceding [acceptance](progress/portfolio-installed-tls-receipt-2026-09-17.md) retains its 828-test / 27-scenario evidence.
+- Installed response stall review: **6 new / 276 focused tests pass**. Send and
+  receive share the remaining deadline; replay rejects termination before receipt.
+  Stopped-consumer kernel/cleanup acceptance and historical replay are recorded in
+  the [stall review](progress/portfolio-installed-tls-receipt-stall-2026-09-17.md).
+  Earlier [deadline review](progress/portfolio-installed-tls-receipt-review-2026-09-17.md)
+  and [828-test acceptance](progress/portfolio-installed-tls-receipt-2026-09-17.md) retain their original evidence.
 - The complete ordinary-process native joint collector retains its prior 20-operation /
   16-GET / 448-weight acceptance and original receipt clocks. Connecting that collector
   to installed gateway-owned sockets remains pending. Earlier details are archived in

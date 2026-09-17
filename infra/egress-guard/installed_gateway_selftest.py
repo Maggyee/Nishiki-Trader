@@ -24,6 +24,7 @@ TLS_SCENARIOS = (
 )
 RECEIPT_SCENARIOS = TLS_SCENARIOS + (
     "receipt_child_death",
+    "receipt_child_stopped",
     "receipt_controller_crash",
     "receipt_code_drift",
     "receipt_storage_drift",
@@ -352,6 +353,7 @@ def worker(payload):
             def restore():
                 target.chmod(0o700)
 
+        stopped_fd = None
         late_receipt = scenario.startswith("receipt_")
         if late_receipt:
             controller.stdin.write("continue\n")
@@ -373,6 +375,19 @@ def worker(payload):
                         raise RuntimeError("receipt_child_not_dead")
                 finally:
                     os.close(child_fd)
+            elif scenario == "receipt_child_stopped":
+                stopped_fd = os.pidfd_open(identity["pid"])
+                signal.pidfd_send_signal(stopped_fd, signal.SIGSTOP)
+                stopped = False
+                for _ in range(100):
+                    status = Path(f"/proc/{identity['pid']}/status").read_text()
+                    if any(line.startswith("State:\tT") for line in status.splitlines()):
+                        stopped = True
+                        break
+                    time.sleep(0.01)
+                if not stopped:
+                    raise RuntimeError("receipt_child_not_stopped")
+                checks.append("receipt_consumer_sigstop_observed")
             elif scenario == "receipt_code_drift":
                 target = Path(entry["CODE"]) / "gateway_tls_receipt.py"
                 original = target.read_bytes()
@@ -451,6 +466,18 @@ def worker(payload):
                 or not terminal["revoked"]
             ):
                 raise RuntimeError("wrong_installed_gateway_outcome")
+        if stopped_fd is not None:
+            try:
+                if (
+                    terminal.get("reason") != "TimeoutError"
+                    or not select.select([stopped_fd], [], [], 1)[0]
+                ):
+                    raise RuntimeError("receipt_stalled_child_timeout_or_cleanup_missing")
+                if Path(f"/proc/{identity['pid']}").exists():
+                    raise RuntimeError("receipt_stalled_child_not_reaped")
+                checks.append("receipt_timeout_kills_and_reaps_stopped_consumer")
+            finally:
+                os.close(stopped_fd)
         if restore is not None:
             restore()
         before = denied_counter()

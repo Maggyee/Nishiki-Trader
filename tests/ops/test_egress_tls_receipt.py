@@ -447,3 +447,82 @@ def test_consumer_never_acknowledges_after_validation_exceeds_deadline(
     assert transfer.errors and isinstance(transfer.errors[0], TimeoutError)
     assert case.ledger.state.pending == 0 and case.gateway.revoked
     assert not any(token.startswith("accepted:") for token in sent)
+
+
+@pytest.mark.parametrize("stage", ["data", "end"])
+def test_gateway_recomputes_receive_timeout_after_blocked_send(case, transfer, monkeypatch, stage):
+    elapsed = [0.0]
+    monkeypatch.setattr(
+        transfer.extension,
+        "time",
+        SimpleNamespace(
+            monotonic=lambda: time.monotonic() + elapsed[0],
+            time_ns=time.time_ns,
+            monotonic_ns=time.monotonic_ns,
+        ),
+    )
+    channel = transfer.collector.channel
+    original_send, original_receive = channel.send, channel.receive
+    checked = []
+
+    def send(token, seq):
+        original_send(token, seq)
+        if token.startswith(stage + ":"):
+            elapsed[0] = 1.0  # A slow send used one second of the original budget.
+
+    def receive(allowed, seq):
+        if elapsed[0]:
+            remaining = channel.connection.gettimeout()
+            checked.append(remaining)
+            assert remaining <= transfer.extension.DEADLINE - 1
+        return original_receive(allowed, seq)
+
+    monkeypatch.setattr(channel, "send", send)
+    monkeypatch.setattr(channel, "receive", receive)
+    case.gateway.dispatch()
+    assert checked and case.ledger.state.pending is None
+
+
+@pytest.mark.parametrize("terminal", ["aborted", "closed"])
+def test_receipt_replay_rejects_terminal_record_before_ack(case, transfer, monkeypatch, terminal):
+    case.gateway.dispatch()
+    receipt_rows = [
+        json.loads(line) for line in (case.ledger.path / "receipt.jsonl").read_bytes().splitlines()
+    ]
+    prefix, rows = b"", []
+    for line in case.ledger.expected.splitlines(keepends=True):
+        prefix += line
+        rows.append(json.loads(line))
+        if provenance.digest(prefix) == receipt_rows[0]["attempt_prefix_sha256"]:
+            break
+    # Keep the valid active prefix but terminate its companion before the ACK.
+    rows.append(
+        {
+            **rows[-1],
+            "kind": terminal,
+            "payload": {"reason": "fixture_abort"} if terminal == "aborted" else {},
+            **{k: receipt_rows[0][k] for k in ("utc_ns", "monotonic_ns")},
+        }
+    )
+    monkeypatch.setattr(case.ledger, "expected", _rechain(rows))
+    with pytest.raises(ValueError, match="receipt_terminal_precedes_transfer"):
+        review(case, transfer)
+
+
+@pytest.mark.parametrize("terminal", ["aborted", "closed"])
+def test_acknowledged_transfer_without_outcome_retains_later_terminal_state(
+    case, transfer, monkeypatch, terminal
+):
+    def lost_outcome(**kwargs):
+        raise OSError("outcome_unpersisted")
+
+    monkeypatch.setattr(case.ledger, "outcome", lost_outcome)
+    with pytest.raises(OSError, match="outcome_unpersisted"):
+        case.gateway.dispatch()
+    if terminal == "aborted":
+        case.ledger._abort(ValueError("fixture_drift_after_ack"))
+    else:
+        case.ledger.close()
+    report = review(case, transfer)
+    assert report["status"] == "acknowledged" and not report["attempt_outcome_recorded"]
+    assert case.ledger.state.pending == 0 and case.gateway.revoked
