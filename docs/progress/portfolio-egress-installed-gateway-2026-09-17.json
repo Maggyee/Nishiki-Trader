@@ -1,0 +1,450 @@
+{
+  "acceptance": {
+    "path": "data/egress-installed-gateway-2026-09-17/acceptance.json",
+    "sha256": "3ed1ac0026f913cb496ff88dd86230e5db84ae18d4aec703c9b533d9a1dc008c"
+  },
+  "additional_tests_passed": 34,
+  "base_bundle_sha256": "995380e089df6c658a2ee7fa8224441d6173ed08b9656fc6447fad85d62800ec",
+  "base_commit": "2876457de2021097536428b2537436a36c866c47",
+  "complete_caller_coverage_verified": false,
+  "date": "2026-09-17",
+  "focused_tests_passed": 473,
+  "fresh_replays": [
+    {
+      "path": "data/egress-installed-gateway-2026-09-17/replay-1.json",
+      "sha256": "19c0b2c18fe5127ba941b56831a90065296af5b19ddbfbb2b80ae5c957cf3b73"
+    },
+    {
+      "path": "data/egress-installed-gateway-2026-09-17/replay-2.json",
+      "sha256": "19c0b2c18fe5127ba941b56831a90065296af5b19ddbfbb2b80ae5c957cf3b73"
+    }
+  ],
+  "host_installation_performed": false,
+  "host_observations_unchanged": true,
+  "live_path_affected": false,
+  "network_admitted": false,
+  "next_step": "Bind bounded local TLS requests and per-dispatch accounting to the installed gateway in isolation; retain unknown charges, original receipt times and real-admission blockers.",
+  "power_loss_qualified": false,
+  "replay_driver": {
+    "path": "data/egress-installed-gateway-2026-09-17/replay.py",
+    "sha256": "6b176a39004752ae26d7f643bd30c208344b2cdeeca7d562b83468d62b00b30c"
+  },
+  "retained_selection": {
+    "path": "data/egress-installed-gateway-2026-09-17/selection.json",
+    "sha256": "ac544384ca668b240349599e910dd82f101aba8c8cf10224d4286693951faffe"
+  },
+  "scenarios": [
+    {
+      "attempt_archive": {
+        "path": "data/egress-installed-gateway-2026-09-17/success-attempts.jsonl",
+        "sha256": "1a2866f9681e83acccb8ff7010430f99c653ce92cbab68206ee50e7eea933a51"
+      },
+      "attempt_status": "closed",
+      "base_installation_checks": 40,
+      "binding_sha256": "c7438b5925a8f058e430648c5e2f49bc9b43fa02579686386085ede36163009a",
+      "checks": [
+        "fixed_root_owned_sources_and_manifest_loaded",
+        "distinct_uid_authenticated_before_preparation",
+        "collector_has_no_privileged_file_descriptors",
+        "write:installed_gateway.py",
+        "unlink:installed_gateway.py",
+        "chmod:installed_gateway.py",
+        "write:ledger_gateway.py",
+        "unlink:ledger_gateway.py",
+        "chmod:ledger_gateway.py",
+        "write:selftest.py",
+        "unlink:selftest.py",
+        "chmod:selftest.py",
+        "write:portfolio_rate_evidence.py",
+        "unlink:portfolio_rate_evidence.py",
+        "chmod:portfolio_rate_evidence.py",
+        "write:portfolio_tls_provenance.py",
+        "unlink:portfolio_tls_provenance.py",
+        "chmod:portfolio_tls_provenance.py",
+        "write:portfolio_egress_ledger.py",
+        "unlink:portfolio_egress_ledger.py",
+        "chmod:portfolio_egress_ledger.py",
+        "read:egress-gateway-fixture.json",
+        "write:egress-gateway-fixture.json",
+        "unlink:egress-gateway-fixture.json",
+        "read:trader-egress-gateway-fixture.json",
+        "write:trader-egress-gateway-fixture.json",
+        "unlink:trader-egress-gateway-fixture.json",
+        "read:events.jsonl",
+        "write:events.jsonl",
+        "unlink:events.jsonl",
+        "read:kernel.jsonl",
+        "write:kernel.jsonl",
+        "unlink:kernel.jsonl",
+        "create_alternative_scope",
+        "forge_socket_mark",
+        "unmarked_egress_denied",
+        "marked_socket_kernel_denied_after_terminal_or_expiry",
+        "fresh_installed_process_refuses_scope_without_changing_journals",
+        "prior_consumed_fixture_state_preserved"
+      ],
+      "fixture_account": {
+        "gid": 20999,
+        "name": "trader-egress",
+        "uid": 20999
+      },
+      "gateway_manifest_sha256": "a959fdf173781fc72d19397fa22932c93716c7e97fd9ff3435bba8f210abd2e0",
+      "lifecycle_archive": {
+        "path": "data/egress-installed-gateway-2026-09-17/success-lifecycle.jsonl",
+        "sha256": "adb48ac6581ed926ae625f8b48c3532b6d1f0c4eb79f3367c5af08942ef410db"
+      },
+      "lifecycle_last_record": "revoked",
+      "name": "success",
+      "pending_attempt": null,
+      "revocation_recorded": true,
+      "terminal": {
+        "network_admitted": false,
+        "revoked": true,
+        "status": "fixture_echo_succeeded"
+      }
+    },
+    {
+      "attempt_archive": {
+        "path": "data/egress-installed-gateway-2026-09-17/code_drift-attempts.jsonl",
+        "sha256": "e550539ade805f2ec1c98d4e29774dab14a6f201a5eb3b0de9cc7bcf49862ff9"
+      },
+      "attempt_status": "gap",
+      "base_installation_checks": 40,
+      "binding_sha256": "d6cbbd3169a77f966385f26b9502e8f1a1a585b879bff7e1e7ecc21216db0fcf",
+      "checks": [
+        "fixed_root_owned_sources_and_manifest_loaded",
+        "distinct_uid_authenticated_before_preparation",
+        "collector_has_no_privileged_file_descriptors",
+        "write:installed_gateway.py",
+        "unlink:installed_gateway.py",
+        "chmod:installed_gateway.py",
+        "write:ledger_gateway.py",
+        "unlink:ledger_gateway.py",
+        "chmod:ledger_gateway.py",
+        "write:selftest.py",
+        "unlink:selftest.py",
+        "chmod:selftest.py",
+        "write:portfolio_rate_evidence.py",
+        "unlink:portfolio_rate_evidence.py",
+        "chmod:portfolio_rate_evidence.py",
+        "write:portfolio_tls_provenance.py",
+        "unlink:portfolio_tls_provenance.py",
+        "chmod:portfolio_tls_provenance.py",
+        "write:portfolio_egress_ledger.py",
+        "unlink:portfolio_egress_ledger.py",
+        "chmod:portfolio_egress_ledger.py",
+        "read:egress-gateway-fixture.json",
+        "write:egress-gateway-fixture.json",
+        "unlink:egress-gateway-fixture.json",
+        "read:trader-egress-gateway-fixture.json",
+        "write:trader-egress-gateway-fixture.json",
+        "unlink:trader-egress-gateway-fixture.json",
+        "read:events.jsonl",
+        "write:events.jsonl",
+        "unlink:events.jsonl",
+        "read:kernel.jsonl",
+        "write:kernel.jsonl",
+        "unlink:kernel.jsonl",
+        "create_alternative_scope",
+        "forge_socket_mark",
+        "unmarked_egress_denied",
+        "marked_socket_kernel_denied_after_terminal_or_expiry",
+        "fresh_installed_process_refuses_scope_without_changing_journals",
+        "prior_consumed_fixture_state_preserved"
+      ],
+      "fixture_account": {
+        "gid": 20999,
+        "name": "trader-egress",
+        "uid": 20999
+      },
+      "gateway_manifest_sha256": "a959fdf173781fc72d19397fa22932c93716c7e97fd9ff3435bba8f210abd2e0",
+      "lifecycle_archive": {
+        "path": "data/egress-installed-gateway-2026-09-17/code_drift-lifecycle.jsonl",
+        "sha256": "f2ae32367766a55827d574af4691c996e9b6d8e93a2f82a8542765ea158b0c6c"
+      },
+      "lifecycle_last_record": "revoked",
+      "name": "code_drift",
+      "pending_attempt": 0,
+      "revocation_recorded": true,
+      "terminal": {
+        "network_admitted": false,
+        "reason": "ValueError",
+        "revoked": true,
+        "status": "refused"
+      }
+    },
+    {
+      "attempt_archive": {
+        "path": "data/egress-installed-gateway-2026-09-17/account_drift-attempts.jsonl",
+        "sha256": "56678ee59c89b067b17c6801bbc000a9206f43c1dd8c1ad1c25bbc3cf211d360"
+      },
+      "attempt_status": "gap",
+      "base_installation_checks": 40,
+      "binding_sha256": "4a40f69ad3e2b8857a9eb332e04445057ba7e476924dfc872e8962a85fa3a935",
+      "checks": [
+        "fixed_root_owned_sources_and_manifest_loaded",
+        "distinct_uid_authenticated_before_preparation",
+        "collector_has_no_privileged_file_descriptors",
+        "write:installed_gateway.py",
+        "unlink:installed_gateway.py",
+        "chmod:installed_gateway.py",
+        "write:ledger_gateway.py",
+        "unlink:ledger_gateway.py",
+        "chmod:ledger_gateway.py",
+        "write:selftest.py",
+        "unlink:selftest.py",
+        "chmod:selftest.py",
+        "write:portfolio_rate_evidence.py",
+        "unlink:portfolio_rate_evidence.py",
+        "chmod:portfolio_rate_evidence.py",
+        "write:portfolio_tls_provenance.py",
+        "unlink:portfolio_tls_provenance.py",
+        "chmod:portfolio_tls_provenance.py",
+        "write:portfolio_egress_ledger.py",
+        "unlink:portfolio_egress_ledger.py",
+        "chmod:portfolio_egress_ledger.py",
+        "read:egress-gateway-fixture.json",
+        "write:egress-gateway-fixture.json",
+        "unlink:egress-gateway-fixture.json",
+        "read:trader-egress-gateway-fixture.json",
+        "write:trader-egress-gateway-fixture.json",
+        "unlink:trader-egress-gateway-fixture.json",
+        "read:events.jsonl",
+        "write:events.jsonl",
+        "unlink:events.jsonl",
+        "read:kernel.jsonl",
+        "write:kernel.jsonl",
+        "unlink:kernel.jsonl",
+        "create_alternative_scope",
+        "forge_socket_mark",
+        "unmarked_egress_denied",
+        "marked_socket_kernel_denied_after_terminal_or_expiry",
+        "fresh_installed_process_refuses_scope_without_changing_journals",
+        "prior_consumed_fixture_state_preserved"
+      ],
+      "fixture_account": {
+        "gid": 20999,
+        "name": "trader-egress",
+        "uid": 20999
+      },
+      "gateway_manifest_sha256": "a959fdf173781fc72d19397fa22932c93716c7e97fd9ff3435bba8f210abd2e0",
+      "lifecycle_archive": {
+        "path": "data/egress-installed-gateway-2026-09-17/account_drift-lifecycle.jsonl",
+        "sha256": "21579559eef4dcefc550b024ba41fd198e9a8dd236f877497a34460540ac07ed"
+      },
+      "lifecycle_last_record": "revoked",
+      "name": "account_drift",
+      "pending_attempt": 0,
+      "revocation_recorded": true,
+      "terminal": {
+        "network_admitted": false,
+        "reason": "ValueError",
+        "revoked": true,
+        "status": "refused"
+      }
+    },
+    {
+      "attempt_archive": {
+        "path": "data/egress-installed-gateway-2026-09-17/storage_drift-attempts.jsonl",
+        "sha256": "1ae220e4f4c72711ee2fc9b6b424bb66bad0a37c170a9bdb4218e075b24e4f76"
+      },
+      "attempt_status": "incomplete_no_resume",
+      "base_installation_checks": 40,
+      "binding_sha256": "f7be57a765844efc5cbbe1583c1522b45648662d2e184e209e87c753dd1fcba0",
+      "checks": [
+        "fixed_root_owned_sources_and_manifest_loaded",
+        "distinct_uid_authenticated_before_preparation",
+        "collector_has_no_privileged_file_descriptors",
+        "write:installed_gateway.py",
+        "unlink:installed_gateway.py",
+        "chmod:installed_gateway.py",
+        "write:ledger_gateway.py",
+        "unlink:ledger_gateway.py",
+        "chmod:ledger_gateway.py",
+        "write:selftest.py",
+        "unlink:selftest.py",
+        "chmod:selftest.py",
+        "write:portfolio_rate_evidence.py",
+        "unlink:portfolio_rate_evidence.py",
+        "chmod:portfolio_rate_evidence.py",
+        "write:portfolio_tls_provenance.py",
+        "unlink:portfolio_tls_provenance.py",
+        "chmod:portfolio_tls_provenance.py",
+        "write:portfolio_egress_ledger.py",
+        "unlink:portfolio_egress_ledger.py",
+        "chmod:portfolio_egress_ledger.py",
+        "read:egress-gateway-fixture.json",
+        "write:egress-gateway-fixture.json",
+        "unlink:egress-gateway-fixture.json",
+        "read:trader-egress-gateway-fixture.json",
+        "write:trader-egress-gateway-fixture.json",
+        "unlink:trader-egress-gateway-fixture.json",
+        "read:events.jsonl",
+        "write:events.jsonl",
+        "unlink:events.jsonl",
+        "read:kernel.jsonl",
+        "write:kernel.jsonl",
+        "unlink:kernel.jsonl",
+        "create_alternative_scope",
+        "forge_socket_mark",
+        "unmarked_egress_denied",
+        "marked_socket_kernel_denied_after_terminal_or_expiry",
+        "fresh_installed_process_refuses_scope_without_changing_journals",
+        "prior_consumed_fixture_state_preserved"
+      ],
+      "fixture_account": {
+        "gid": 20999,
+        "name": "trader-egress",
+        "uid": 20999
+      },
+      "gateway_manifest_sha256": "a959fdf173781fc72d19397fa22932c93716c7e97fd9ff3435bba8f210abd2e0",
+      "lifecycle_archive": {
+        "path": "data/egress-installed-gateway-2026-09-17/storage_drift-lifecycle.jsonl",
+        "sha256": "95f840ff546afbdaea3e9157e95ed065c1f365973650e52592a5a1faf06fdb4c"
+      },
+      "lifecycle_last_record": "activated",
+      "name": "storage_drift",
+      "pending_attempt": 0,
+      "revocation_recorded": false,
+      "terminal": {
+        "network_admitted": false,
+        "reason": "ValueError",
+        "revoked": true,
+        "status": "refused"
+      }
+    },
+    {
+      "attempt_archive": {
+        "path": "data/egress-installed-gateway-2026-09-17/controller_crash-attempts.jsonl",
+        "sha256": "340856370096f96e3120f4ff7d2dccd2b89c568085f4c593b6b2ffdddc4c49e2"
+      },
+      "attempt_status": "incomplete_no_resume",
+      "base_installation_checks": 40,
+      "binding_sha256": "d9f2af69be730d105128dcd84b5e5513579afc7d2099c6352332ec6c6e746740",
+      "checks": [
+        "fixed_root_owned_sources_and_manifest_loaded",
+        "distinct_uid_authenticated_before_preparation",
+        "collector_has_no_privileged_file_descriptors",
+        "write:installed_gateway.py",
+        "unlink:installed_gateway.py",
+        "chmod:installed_gateway.py",
+        "write:ledger_gateway.py",
+        "unlink:ledger_gateway.py",
+        "chmod:ledger_gateway.py",
+        "write:selftest.py",
+        "unlink:selftest.py",
+        "chmod:selftest.py",
+        "write:portfolio_rate_evidence.py",
+        "unlink:portfolio_rate_evidence.py",
+        "chmod:portfolio_rate_evidence.py",
+        "write:portfolio_tls_provenance.py",
+        "unlink:portfolio_tls_provenance.py",
+        "chmod:portfolio_tls_provenance.py",
+        "write:portfolio_egress_ledger.py",
+        "unlink:portfolio_egress_ledger.py",
+        "chmod:portfolio_egress_ledger.py",
+        "read:egress-gateway-fixture.json",
+        "write:egress-gateway-fixture.json",
+        "unlink:egress-gateway-fixture.json",
+        "read:trader-egress-gateway-fixture.json",
+        "write:trader-egress-gateway-fixture.json",
+        "unlink:trader-egress-gateway-fixture.json",
+        "read:events.jsonl",
+        "write:events.jsonl",
+        "unlink:events.jsonl",
+        "read:kernel.jsonl",
+        "write:kernel.jsonl",
+        "unlink:kernel.jsonl",
+        "create_alternative_scope",
+        "forge_socket_mark",
+        "unmarked_egress_denied",
+        "controller_death_retains_permit_until_kernel_expiry",
+        "marked_socket_kernel_denied_after_terminal_or_expiry",
+        "fresh_installed_process_refuses_scope_without_changing_journals",
+        "prior_consumed_fixture_state_preserved"
+      ],
+      "fixture_account": {
+        "gid": 20999,
+        "name": "trader-egress",
+        "uid": 20999
+      },
+      "gateway_manifest_sha256": "a959fdf173781fc72d19397fa22932c93716c7e97fd9ff3435bba8f210abd2e0",
+      "lifecycle_archive": {
+        "path": "data/egress-installed-gateway-2026-09-17/controller_crash-lifecycle.jsonl",
+        "sha256": "a506d66e20367040a4defd8372fb7bfbfcb2b15d5786587bf97091436b4c673f"
+      },
+      "lifecycle_last_record": "activated",
+      "name": "controller_crash",
+      "pending_attempt": 0,
+      "revocation_recorded": false,
+      "terminal": {
+        "revoked": null,
+        "status": "controller_sigkill"
+      }
+    }
+  ],
+  "schema_version": "portfolio.installed_gateway_integration_review.v1",
+  "sources": [
+    {
+      "path": "infra/egress-guard/installed_gateway.py",
+      "sha256": "68295385a64e1546306961672fd0ad1013b79138756145d5bd85373df9dcd52f"
+    },
+    {
+      "path": "infra/egress-guard/ledger_gateway.py",
+      "sha256": "d1afb934a109c776fffc2762b7cba0b2d2fb4f7cc7e91e7e3323ca6e4d6a8132"
+    },
+    {
+      "path": "apps/strategies_nautilus/portfolio_egress_ledger.py",
+      "sha256": "b96cee0818026b1b9b32849471cf47d8051a96dcd10aeaeb68440fd3e2daf3f7"
+    },
+    {
+      "path": "apps/strategies_nautilus/portfolio_rate_evidence.py",
+      "sha256": "18aa5bdbf1954cebc4802b38daeded07cd60e2ab1b9e508d6686ac89a07abb35"
+    },
+    {
+      "path": "apps/strategies_nautilus/portfolio_tls_provenance.py",
+      "sha256": "def476571e9ec56e989eee02b8623b1a657337956ecd88faeabaf9f2efc70044"
+    },
+    {
+      "path": "infra/egress-guard/selftest.py",
+      "sha256": "75ba8a36ca075f4236f20e68524117bf1abc1431226271bb0df35912c4ebff5f"
+    },
+    {
+      "path": "infra/egress-guard/installed_gateway_selftest.py",
+      "sha256": "c6a13ad1ba4fb8875accb96bb5e6b6c0f46ef4a41ccf257523558c21fd513123"
+    },
+    {
+      "path": "infra/egress-guard/installation_selftest.py",
+      "sha256": "199d195f9819efdb45a5660220763fce92e3f893f35f859842c0ec98c798812a"
+    },
+    {
+      "path": "infra/egress-guard/package.py",
+      "sha256": "7f519e26c0f85951e8d60f8cf8eaa6e774fb002c74647ee4892b491cef8b549d"
+    },
+    {
+      "path": "infra/egress-guard/installation.py",
+      "sha256": "c6a5398a45f9045f699d1133a11b891e10364c131c48873ed0eb07b8f17049ff"
+    },
+    {
+      "path": "infra/egress-guard/helper_entry.py",
+      "sha256": "2a91437ed9080ae481eae7496e43cfe35d29888e1e3a5a12b10605b6dc320c9b"
+    },
+    {
+      "path": "infra/egress-guard/collector_launcher.py",
+      "sha256": "d1d94a8edd0730244b6dbc7c0e24746157985e7b36b82f865397402ce0433579"
+    },
+    {
+      "path": "infra/egress-guard/inspect_binding.py",
+      "sha256": "27c3302222bc819767ba874d7000f2b038662fa72004cb56da25a1003c38e322"
+    }
+  ],
+  "status": "disposable_fixed_installation_uid_gateway_passed_real_admission_blocked",
+  "storage_rollback_qualified": false,
+  "tests": {
+    "path": "tests/ops/test_egress_installed_gateway.py",
+    "sha256": "a7f65e960c9ce1cd05503c8e1f5a881cb82ad9fb837734a3e1e305ce2aaf62d6"
+  },
+  "trading_admitted": false,
+  "upstream_touched": false,
+  "venue_requests": 0
+}

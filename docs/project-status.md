@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-17
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: The isolated ledger gateway now durably records kernel activation/revocation intent and acknowledgements. Four actual controller SIGKILL stages retain uncertainty; kernel expiry denies marked traffic and original scopes cannot reopen. Next integrate fixed installation/dedicated UID with this lifecycle. Real shared-egress coverage, power-loss durability and joint/trading admission remain blocked; the actual bootstrap stays consumed.
+- **Current objective**: The gateway lifecycle now passes fixed root-owned installation, dedicated UID and fixed-storage integration in five disposable scenarios. Installed code/account/storage drift blocks sending; controller crash expires in the kernel, and fresh installed processes cannot reopen consumed scopes. Next bind bounded local TLS requests and per-dispatch accounting to this gateway. Real all-caller coverage, rate/clock qualification, durable host rollout and trading remain blocked; the actual bootstrap stays consumed.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -254,7 +254,8 @@ Detailed depth implementation, retained hashes and next review:
 [actual local custody binding](progress/portfolio-local-authority-binding-2026-09-16.md),
 [local egress attempt accounting](progress/portfolio-egress-attempt-ledger-2026-09-17.md),
 [isolated ledger gateway integration](progress/portfolio-egress-ledger-gateway-2026-09-17.md),
-and [durable gateway lifecycle/crash acceptance](progress/portfolio-egress-gateway-lifecycle-2026-09-17.md).
+[durable gateway lifecycle/crash acceptance](progress/portfolio-egress-gateway-lifecycle-2026-09-17.md),
+and [fixed installation/UID gateway integration](progress/portfolio-egress-installed-gateway-2026-09-17.md).
 
 ## Next Steps
 
@@ -299,8 +300,11 @@ and [durable gateway lifecycle/crash acceptance](progress/portfolio-egress-gatew
    output/forwarding. Managed stop and drift/fsync refusal pass kernel tests.
    [Durable kernel lifecycle and controller crash/expiry](progress/portfolio-egress-gateway-lifecycle-2026-09-17.md)
    now pass isolated acceptance, preserving uncertain activation/revocation and
-   refusing scope reopen. Next integrate fixed installation/dedicated UID with
-   these journals. Sampling alone never proves coverage.
+   refusing scope reopen. [Fixed installation/dedicated UID integration](progress/portfolio-egress-installed-gateway-2026-09-17.md)
+   now passes in five disposable environments, including protected fixed storage,
+   actual kernel permission attacks, installation drift and fresh-process refusal.
+   Next bind local TLS requests and per-dispatch accounting to this gateway.
+   Sampling alone never proves coverage.
    Actual authority policy, fresh rate/clock consumption and provider-charge
    resolution must precede any separately reviewed real joint dispatch.
    Preserve the consumed scope; no retry, second IPv4 or extended interruption
@@ -345,13 +349,14 @@ and [durable gateway lifecycle/crash acceptance](progress/portfolio-egress-gatew
 
 ## Latest Verification
 
-- Gateway lifecycle: **28 additional / 331 focused tests and 29 kernel checks pass**.
-  Ten local scenarios include four actual SIGKILL stages; activation/revocation
-  records preserve crash uncertainty and kernel expiry denies marked traffic.
-  Five disk crash stages and two fresh replays per kernel archive pass. No venue,
-  host-network, upstream or live-path changes; no power-loss/UID integration claim.
-  Full application regression and older kernel scripts were not rerun. Details:
-  [lifecycle acceptance](progress/portfolio-egress-gateway-lifecycle-2026-09-17.md).
+- Installed gateway: **34 new / 473 focused tests and five actual installed
+  kernel scenarios pass**. Dedicated UID 20999 cannot alter source/state or forge
+  marks; installation drift blocks sending, SIGKILL expires, and fresh installed
+  processes refuse consumed scopes. Two independent replay sets match all originals.
+  No host installation, venue request, upstream or live-path change. Tmpfs does
+  not qualify power loss/rollback. Full application regression was not rerun.
+  [Installation/UID acceptance](progress/portfolio-egress-installed-gateway-2026-09-17.md)
+  builds on the prior [29-check lifecycle acceptance](progress/portfolio-egress-gateway-lifecycle-2026-09-17.md).
 
 - Bootstrap-to-joint integration: **20 new / 234 focused tests pass**. Two fresh
   reviews of the actual original artifacts are byte-identical and remain blocked.

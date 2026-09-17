@@ -59,9 +59,30 @@ skip revocation; missing acknowledgements stay uncertain. Four SIGKILL stages
 verify actual expiry without controller cleanup and refusal to reopen the scope.
 The worker/parent deadlines are 70/75 seconds. No replay infers current permission.
 This is not an installed helper, HTTP collector or complete shared-IP accounting.
-Dedicated host UID/storage authority integration and power-loss/rollback durability
-remain pending. See the [original gateway report](../../docs/progress/portfolio-egress-ledger-gateway-2026-09-17.md)
+The installed successor below integrates UID/storage authority in disposable
+acceptance; host deployment and power-loss/rollback durability remain pending.
+See the [original gateway report](../../docs/progress/portfolio-egress-ledger-gateway-2026-09-17.md)
 and [lifecycle acceptance](../../docs/progress/portfolio-egress-gateway-lifecycle-2026-09-17.md).
+
+## Fixed installed gateway and dedicated UID
+
+```bash
+/usr/bin/python3 -I infra/egress-guard/installed_gateway_selftest.py --report data/NEW-INSTALLED-GATEWAY.json
+```
+
+The ordinary-user wrapper uses existing sudo to run five fresh private mount,
+network and PID namespaces. It reuses the pinned installer, then stages a separate
+fixture manifest and six protected sources in the disposable installation. The
+fixed installed `installed_gateway.py --fixture` entry consumes the original
+fixed storage scope, authenticates the distinct-UID child and uses the durable
+kernel lifecycle. Neither the collector nor the public wrapper can select another
+scope, endpoint or payload. No gateway extension is installed on the host.
+
+Actual permission attacks, code/account/storage drift, SIGKILL expiry and fresh
+installed-process scope refusal pass. Offline replay never reconstructs installed
+authority or grants restart. The next entrypoint is bounded local TLS request
+integration; provider/source policy and complete all-caller coverage remain blocked.
+See the [installed integration report](../../docs/progress/portfolio-egress-installed-gateway-2026-09-17.md).
 
 ## Expiring permission and local dispatch supervision
 

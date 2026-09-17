@@ -22,13 +22,23 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For fixed installation/UID integration of the gateway lifecycle, read
+`docs/progress/portfolio-egress-installed-gateway-2026-09-17.md` and its JSON.
+`installed_gateway.py` and `installed_gateway_selftest.py` under infra/egress-guard
+load protected fixed sources, authenticate the dedicated child and consume fixed
+storage in disposable namespaces only. Five actual scenarios cover success,
+code/account/storage drift, SIGKILL expiry and fresh-process scope refusal.
+No host extension is installed; complete coverage and real admission remain false.
+Next integrate bounded local TLS requests and per-dispatch accounting in isolation.
+
 For the durable isolated gateway lifecycle and controller crash/expiry acceptance,
 read `docs/progress/portfolio-egress-gateway-lifecycle-2026-09-17.md` and its JSON.
 The gateway records kernel activation intent before grant and acknowledgement
 before send; revocation is attempted even if audit persistence fails. Four actual
 SIGKILL stages preserve uncertainty; detached replay never infers current kernel
-state or restart permission. Fixed installation/dedicated UID integration and
-power-loss/rollback durability remain pending. No real deployment is enabled.
+state or restart permission. The successor above joins fixed installation and
+dedicated UID in disposable acceptance. Host deployment and power-loss/rollback
+durability remain pending. No real deployment is enabled.
 
 For the isolated gateway consuming the prospective ledger, read
 `docs/progress/portfolio-egress-ledger-gateway-2026-09-17.md` and its JSON.
@@ -36,7 +46,7 @@ For the isolated gateway consuming the prospective ledger, read
 mark permission, blocks unmarked/forwarded traffic and serializes terminal stop.
 The authenticated fixture child has no IP path or socket handoff. Six kernel
 scenarios replay independently; no real host/venue mode exists. The successor
-above adds durable kernel lifecycle/crash acceptance; next integrate fixed
+above adds durable kernel lifecycle/crash acceptance, followed by isolated fixed
 installation/dedicated UID. Actual all-caller coverage and joint/trading admission
 remain blocked.
 
