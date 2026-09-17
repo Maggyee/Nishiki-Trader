@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-17
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Complete local joint TLS collection now consumes durable per-operation attempts: 20 operations, 16 GETs / 448 documented weight, original counter receipt ages and cross-file replay. Installed dedicated-UID/kernel integration remains next; that gateway still owns one fixed GET. Actual all-caller coverage, provider rate/clock qualification, host rollout and trading remain blocked; consumed scopes stay consumed.
+- **Current objective**: Installed dedicated-UID/root IPC now consumes the fixed 20-operation local classification sequence before acknowledging each request. Six actual IPC scenarios and eleven TLS/echo regressions pass; IPC grants no egress permission. Next connect the actual native collector and gateway-owned TLS/WS transport through this boundary. Actual all-caller coverage, provider rate/clock qualification, host rollout and trading remain blocked; consumed scopes stay consumed.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -257,7 +257,8 @@ Detailed depth implementation, retained hashes and next review:
 [durable gateway lifecycle/crash acceptance](progress/portfolio-egress-gateway-lifecycle-2026-09-17.md),
 [fixed installation/UID gateway integration](progress/portfolio-egress-installed-gateway-2026-09-17.md),
 [fixed HTTPS request/receipt integration](progress/portfolio-egress-gateway-tls-2026-09-17.md),
-and [complete local joint attempt accounting](progress/portfolio-joint-egress-accounting-2026-09-17.md).
+[complete local joint attempt accounting](progress/portfolio-joint-egress-accounting-2026-09-17.md),
+and [installed multi-operation IPC custody](progress/portfolio-installed-joint-ipc-2026-09-17.md).
 
 ## Next Steps
 
@@ -310,8 +311,10 @@ and [complete local joint attempt accounting](progress/portfolio-joint-egress-ac
    after received headers. Counter receipt time is sampled before storage checks.
    [Complete local joint attempt accounting](progress/portfolio-joint-egress-accounting-2026-09-17.md)
    now consumes each operation before transport and links outcomes to original TLS
-   receipts; failed attempts never refund. Next join this ordinary-process collector
-   to installed UID/IPC custody, gateway-owned sockets and kernel lifecycle.
+   receipts; failed attempts never refund. [Installed multi-operation IPC custody](progress/portfolio-installed-joint-ipc-2026-09-17.md)
+   now authenticates the fixed token sequence and root-owned consumption without
+   granting egress. Next connect actual native request/receipt bytes and gateway-owned
+   TLS/WS sockets through that boundary and the expiring kernel lifecycle.
    Sampling alone never proves coverage.
    Actual authority policy, fresh rate/clock consumption and provider-charge
    resolution must precede any separately reviewed real joint dispatch.
@@ -357,20 +360,15 @@ and [complete local joint attempt accounting](progress/portfolio-joint-egress-ac
 
 ## Latest Verification
 
-- Local joint accounting: **36 new / 762 focused tests pass**, including 15 actual
-  local TLS scenarios and SIGKILL persistence. Complete **20-operation / 16-GET / 448-weight** TLS
-  collection, durable failed attempts and paired native replay pass. Original
-  header/message receipts govern freshness; delayed bodies cannot refresh usage.
-  Dedicated-UID/kernel integration remains pending; no venue requests or live-path
-  changes. [Acceptance and exact checks](progress/portfolio-joint-egress-accounting-2026-09-17.md).
-
-- Gateway TLS: **33 new / 557 focused tests, six TLS and five echo kernel
-  scenarios pass**. One fixed HTTPS request follows durable attempt/grant records;
-  original TLS/HTTP bytes replay independently and header receipt is not refreshed
-  by body or storage delay. Certificate/response/fsync failures and mid-response
-  SIGKILL retain consumed uncertainty. Two fresh replay sets match all originals.
-  No venue, host-installation, upstream or live-path change; full application
-  regression was not rerun. [TLS acceptance](progress/portfolio-egress-gateway-tls-2026-09-17.md).
+- Installed joint IPC: **28 new / 790 distinct focused tests pass**; six actual IPC
+  scenarios, six TLS and five echo regressions also pass. Normal IPC consumes 20 operations; midpoint faults retain index 9 pending.
+  Kernel permission stays absent. Two fresh system-Python replay sets reproduce all
+  17 originals. [Acceptance and exact Python checks](progress/portfolio-installed-joint-ipc-2026-09-17.md).
+- The complete ordinary-process native joint collector retains its prior 20-operation /
+  16-GET / 448-weight acceptance and original receipt clocks. Connecting that collector
+  to installed gateway-owned sockets remains pending. Earlier details are archived in
+  [local accounting](progress/portfolio-joint-egress-accounting-2026-09-17.md) and
+  [one-GET gateway TLS](progress/portfolio-egress-gateway-tls-2026-09-17.md).
 
 - Bootstrap-to-joint integration: **20 new / 234 focused tests pass**. Two fresh
   reviews of the actual original artifacts are byte-identical and remain blocked.

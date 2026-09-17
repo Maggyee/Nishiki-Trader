@@ -1,0 +1,316 @@
+{
+  "actual_ipc_profile_ip_requests": 0,
+  "actual_namespace_scenarios": 17,
+  "base_bundle_sha256": "995380e089df6c658a2ee7fa8224441d6173ed08b9656fc6447fad85d62800ec",
+  "base_commit": "33e97fbb923845c542e6c97e8fc74e6e58306948",
+  "changed_source_sha256": {
+    "apps/ops/portfolio_egress_ledger.py": "47b13e8a94a4715e22b334eed93aadecb481cb09b9c475bb42e3355ac9704841",
+    "apps/strategies_nautilus/portfolio_egress_ledger.py": "cb3d7a37e444c71583ec83c88c9aae6a8c91f7ac02dc906b6d44478f7f763fec",
+    "infra/egress-guard/gateway_joint_ipc.py": "e814ddfdd67b7f43fd031a13a68a6bd87cf992e6de0a92b476751e4f9e3cb6ae",
+    "infra/egress-guard/installed_gateway.py": "a4bd3394c80654f9eca0cd1f1b43ffbdeec24f399d83c2366d23e47ed153d593",
+    "infra/egress-guard/installed_gateway_selftest.py": "1491f7d25986623582583d468ea4d266d324d599885be962e5ed56ad4d5c0e1d",
+    "tests/ops/test_egress_joint_ipc.py": "e546fc2bbf479a81ce19c341726a3868c545a6640e73c39a3fdd3062c11d1812"
+  },
+  "classified_rest_gets": 16,
+  "complete_caller_coverage_verified": false,
+  "date": "2026-09-17",
+  "documented_weight_prepared": 448,
+  "echo_regression_scenarios": 5,
+  "fixed_ipc_operations": 20,
+  "fresh_replays": [
+    {
+      "path": "data/installed-joint-ipc-2026-09-17/replay-1.json",
+      "sha256": "0695b3b0f79d884407826a6b4dbfe448e448a8dbf1879eb5c7dac37d59f3a15d"
+    },
+    {
+      "path": "data/installed-joint-ipc-2026-09-17/replay-2.json",
+      "sha256": "0695b3b0f79d884407826a6b4dbfe448e448a8dbf1879eb5c7dac37d59f3a15d"
+    }
+  ],
+  "fresh_replays_match_original_reports": true,
+  "host_installation_performed": false,
+  "host_observations_unchanged": true,
+  "ipc_kernel_permission_granted": false,
+  "ipc_receipt_is_transport_outcome": false,
+  "ipc_scenarios": 6,
+  "live_path_affected": false,
+  "native_joint_collector_connected_to_installed_gateway": false,
+  "network_admitted": false,
+  "next_step": "Connect actual native collector request/receipt bytes to installed IPC and gateway-owned TLS/WS sockets with fixed selectors, original clocks, control budgets and expiring kernel lifecycle. No real rollout or consumed scope reuse.",
+  "power_loss_qualified": false,
+  "protected_source_count": 8,
+  "protected_source_sha256": {
+    "gateway_joint_ipc.py": "e814ddfdd67b7f43fd031a13a68a6bd87cf992e6de0a92b476751e4f9e3cb6ae",
+    "gateway_tls.py": "634e175a3d16de7ec3f54dfe382fb5d5f0cdb6c7264d49e677edd51bd26d1075",
+    "installed_gateway.py": "a4bd3394c80654f9eca0cd1f1b43ffbdeec24f399d83c2366d23e47ed153d593",
+    "ledger_gateway.py": "d1afb934a109c776fffc2762b7cba0b2d2fb4f7cc7e91e7e3323ca6e4d6a8132",
+    "portfolio_egress_ledger.py": "cb3d7a37e444c71583ec83c88c9aae6a8c91f7ac02dc906b6d44478f7f763fec",
+    "portfolio_rate_evidence.py": "18aa5bdbf1954cebc4802b38daeded07cd60e2ab1b9e508d6686ac89a07abb35",
+    "portfolio_tls_provenance.py": "def476571e9ec56e989eee02b8623b1a657337956ecd88faeabaf9f2efc70044",
+    "selftest.py": "75ba8a36ca075f4236f20e68524117bf1abc1431226271bb0df35912c4ebff5f"
+  },
+  "provider_usage_inferred": false,
+  "python_tests": {
+    "additional_cli_passed": 2,
+    "additional_cli_seconds": 1.93,
+    "focused_batch_passed": 788,
+    "focused_batch_seconds": 159.13,
+    "focused_batch_warnings": 3,
+    "new_tests": 28,
+    "total_distinct_passed": 790,
+    "warning_kind": "Existing fork-after-native-thread DeprecationWarnings"
+  },
+  "replay_driver": {
+    "path": "data/installed-joint-ipc-2026-09-17/replay.py",
+    "sha256": "6caed50009b8560bef508e83f2b8f61fecba30b0a0a9abb4be7e157fedf1188b"
+  },
+  "reports": {
+    "echo-regression": {
+      "path": "data/installed-joint-ipc-2026-09-17/echo-regression.json",
+      "sha256": "1038be7d201b04e1ed192f80bd80a8af19edd9a2a6d386a01b618b0b508125f8"
+    },
+    "ipc-acceptance": {
+      "path": "data/installed-joint-ipc-2026-09-17/ipc-acceptance.json",
+      "sha256": "c095e4baff63d08df53a1748e16077d116a230df0110ad91fd01f9ec14555b42"
+    },
+    "tls-regression": {
+      "path": "data/installed-joint-ipc-2026-09-17/tls-regression.json",
+      "sha256": "21fc2974d6f5838028d90d8b7ad4bde1755c5c0e43ec9d0f05931fb3dff902dd"
+    }
+  },
+  "retained_selection": {
+    "path": "data/installed-joint-ipc-2026-09-17/selection.json",
+    "sha256": "7ac4ed134fcc60d8ff9337067cacf467229a4844b9908c8ec16b9059786f80d9"
+  },
+  "scenarios": [
+    {
+      "attempt_archive": {
+        "path": "data/installed-joint-ipc-2026-09-17/account_drift-attempt_archive.jsonl",
+        "sha256": "4e95114be93926cf2e98c319a7aa46b4cb0c18c9d999d318eefb5adab4795ee7"
+      },
+      "attempt_status": "gap",
+      "binding_sha256": "b93221f5cc4884b0751eab0e416a9beec48038fb00baa0e22478b54ae7653d96",
+      "gateway_manifest_sha256": "0a06d85bf0b3c7933329d78f0082db5fb77ef14a5fee9e4051caefcf80f945dd",
+      "integration_checks": 45,
+      "name": "account_drift",
+      "pending_attempt": 0,
+      "recorded_attempts": 1
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-joint-ipc-2026-09-17/code_drift-attempt_archive.jsonl",
+        "sha256": "6ee932cd24908054e5be1078b48b1487db4edf24b95b045d9338f81ac37a51cc"
+      },
+      "attempt_status": "gap",
+      "binding_sha256": "727b100f0949b74708a926c403c5c581db435f4b04c2515cce669f870e3df1af",
+      "gateway_manifest_sha256": "0a06d85bf0b3c7933329d78f0082db5fb77ef14a5fee9e4051caefcf80f945dd",
+      "integration_checks": 45,
+      "name": "code_drift",
+      "pending_attempt": 0,
+      "recorded_attempts": 1
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-joint-ipc-2026-09-17/controller_crash-attempt_archive.jsonl",
+        "sha256": "bdc8627a5e212aa7faca563be8bea6db898d3f344fa91db6dbb2208d2a5138a9"
+      },
+      "attempt_status": "incomplete_no_resume",
+      "binding_sha256": "bbf37f08fb239c18bf57654a1aafd452b3879b6da4c9767c23a1d7def3801972",
+      "gateway_manifest_sha256": "0a06d85bf0b3c7933329d78f0082db5fb77ef14a5fee9e4051caefcf80f945dd",
+      "integration_checks": 46,
+      "name": "controller_crash",
+      "pending_attempt": 0,
+      "recorded_attempts": 1
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-joint-ipc-2026-09-17/ipc_account_drift-attempt_archive.jsonl",
+        "sha256": "7ed0d316908d7182817482ad3ded4e9d91fdfd56b0d26aea1f41145b6eae6ecd"
+      },
+      "attempt_status": "gap",
+      "binding_sha256": "576ef29f7982e5d59dfa11e32520e38df5858e3306f2d13803053e89a14f52df",
+      "gateway_manifest_sha256": "0a06d85bf0b3c7933329d78f0082db5fb77ef14a5fee9e4051caefcf80f945dd",
+      "integration_checks": 48,
+      "name": "ipc_account_drift",
+      "pending_attempt": 9,
+      "recorded_attempts": 10
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-joint-ipc-2026-09-17/ipc_child_death-attempt_archive.jsonl",
+        "sha256": "003e6f0abff219dcd48bba3eae4ed5f8a9186706df0c01dae7522b16a198c8f6"
+      },
+      "attempt_status": "gap",
+      "binding_sha256": "8be98d352cef74408881124fffb47be12caa44e331d3fe5add6afd7a50303b51",
+      "gateway_manifest_sha256": "0a06d85bf0b3c7933329d78f0082db5fb77ef14a5fee9e4051caefcf80f945dd",
+      "integration_checks": 48,
+      "name": "ipc_child_death",
+      "pending_attempt": 9,
+      "recorded_attempts": 10
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-joint-ipc-2026-09-17/ipc_code_drift-attempt_archive.jsonl",
+        "sha256": "3de0eee7949821349f557725ed4aa27989f594c2cd259e8b87f793e8b0aa8025"
+      },
+      "attempt_status": "gap",
+      "binding_sha256": "560dc330876c99c5dd91c8eda196dbea4b20c3990f823888b929f6c58d0aaa8a",
+      "gateway_manifest_sha256": "0a06d85bf0b3c7933329d78f0082db5fb77ef14a5fee9e4051caefcf80f945dd",
+      "integration_checks": 48,
+      "name": "ipc_code_drift",
+      "pending_attempt": 9,
+      "recorded_attempts": 10
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-joint-ipc-2026-09-17/ipc_controller_crash-attempt_archive.jsonl",
+        "sha256": "edcb4a81b5d189fbda2f874b6797295d061d0e2003aaa9bdc0e372380ae88fb8"
+      },
+      "attempt_status": "incomplete_no_resume",
+      "binding_sha256": "0acd12f8d6d0fdad9462150d5f5a00a02d4cec35960ff94c4034168670b4773d",
+      "gateway_manifest_sha256": "0a06d85bf0b3c7933329d78f0082db5fb77ef14a5fee9e4051caefcf80f945dd",
+      "integration_checks": 49,
+      "name": "ipc_controller_crash",
+      "pending_attempt": 9,
+      "recorded_attempts": 10
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-joint-ipc-2026-09-17/ipc_storage_drift-attempt_archive.jsonl",
+        "sha256": "bd6474714953459ec11221245488b4beb3e676396d5236228098c7ea5bcf642c"
+      },
+      "attempt_status": "incomplete_no_resume",
+      "binding_sha256": "629d26093bcbdc880763e5981508a8e2ceea312252168aba19abc6ff9dafcb2a",
+      "gateway_manifest_sha256": "0a06d85bf0b3c7933329d78f0082db5fb77ef14a5fee9e4051caefcf80f945dd",
+      "integration_checks": 48,
+      "name": "ipc_storage_drift",
+      "pending_attempt": 9,
+      "recorded_attempts": 10
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-joint-ipc-2026-09-17/ipc_success-attempt_archive.jsonl",
+        "sha256": "d4212b0054a030250ddf44ef5d07dd5db379dee25189fd128b268cc90821b451"
+      },
+      "attempt_status": "closed",
+      "binding_sha256": "6ab2ccb84d4f3a571d1a6cd2d918384a60f667ac9e029d5248df9b7982d6a016",
+      "gateway_manifest_sha256": "0a06d85bf0b3c7933329d78f0082db5fb77ef14a5fee9e4051caefcf80f945dd",
+      "integration_checks": 48,
+      "name": "ipc_success",
+      "pending_attempt": null,
+      "recorded_attempts": 20
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-joint-ipc-2026-09-17/storage_drift-attempt_archive.jsonl",
+        "sha256": "4ea9a3267fa59eb866a16a33830c5bea5326fb680a05e408cfbdd1628c25c665"
+      },
+      "attempt_status": "incomplete_no_resume",
+      "binding_sha256": "d31731e5960f7eba6dc313354ba4125f101cb78623e7a1af6a7fddee08ff97a4",
+      "gateway_manifest_sha256": "0a06d85bf0b3c7933329d78f0082db5fb77ef14a5fee9e4051caefcf80f945dd",
+      "integration_checks": 45,
+      "name": "storage_drift",
+      "pending_attempt": 0,
+      "recorded_attempts": 1
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-joint-ipc-2026-09-17/success-attempt_archive.jsonl",
+        "sha256": "ac03bc777fc36515ade3f94baa2f6b318af4c04b118cc3d64ceb14b33299eaa0"
+      },
+      "attempt_status": "closed",
+      "binding_sha256": "4f4bff2f6a09a465fb1b3b8d14aa0c3ab16d9167dee0ef995e0b34eb31730632",
+      "gateway_manifest_sha256": "0a06d85bf0b3c7933329d78f0082db5fb77ef14a5fee9e4051caefcf80f945dd",
+      "integration_checks": 45,
+      "name": "success",
+      "pending_attempt": null,
+      "recorded_attempts": 1
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-joint-ipc-2026-09-17/tls_bad_certificate-attempt_archive.jsonl",
+        "sha256": "48404b8e4c72baca1c9df30d47ff9e2a923c6cbdd49846de96a21ccf1c152c91"
+      },
+      "attempt_status": "closed",
+      "binding_sha256": "fd170ad2b0f09417588e2b6a9be78fe3001964d26d73ad418ff211abb2b46c74",
+      "gateway_manifest_sha256": "0a06d85bf0b3c7933329d78f0082db5fb77ef14a5fee9e4051caefcf80f945dd",
+      "integration_checks": 46,
+      "name": "tls_bad_certificate",
+      "pending_attempt": 0,
+      "recorded_attempts": 1
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-joint-ipc-2026-09-17/tls_crash-attempt_archive.jsonl",
+        "sha256": "8bd3d79f73c0d00e886b7db58a6dde72392049ebf5f4322051f8f0afa0c3c720"
+      },
+      "attempt_status": "incomplete_no_resume",
+      "binding_sha256": "513778e0ba68b6618f159bce8b0c2d1c753a0320dc26dcef2614973c268925cc",
+      "gateway_manifest_sha256": "0a06d85bf0b3c7933329d78f0082db5fb77ef14a5fee9e4051caefcf80f945dd",
+      "integration_checks": 47,
+      "name": "tls_crash",
+      "pending_attempt": 0,
+      "recorded_attempts": 1
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-joint-ipc-2026-09-17/tls_duplicate_weight-attempt_archive.jsonl",
+        "sha256": "60cc7f9b2ec10ce51455fef8331e298d48af1fcb860a1cc2349725132571877c"
+      },
+      "attempt_status": "closed",
+      "binding_sha256": "f00a3ecd5c9baf9ec45522e3bdd2c41e69f4c0e04ad047bb391dc915e2433d0c",
+      "gateway_manifest_sha256": "0a06d85bf0b3c7933329d78f0082db5fb77ef14a5fee9e4051caefcf80f945dd",
+      "integration_checks": 46,
+      "name": "tls_duplicate_weight",
+      "pending_attempt": 0,
+      "recorded_attempts": 1
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-joint-ipc-2026-09-17/tls_slow_body-attempt_archive.jsonl",
+        "sha256": "76993ad311a61a82ef3ff0f2ad88d796e71ff83a1f382874164d09961560f88b"
+      },
+      "attempt_status": "closed",
+      "binding_sha256": "4918cebd923390644bbe9b323a0a70cb616ac91679be839654931ddb24b6b836",
+      "gateway_manifest_sha256": "0a06d85bf0b3c7933329d78f0082db5fb77ef14a5fee9e4051caefcf80f945dd",
+      "integration_checks": 46,
+      "name": "tls_slow_body",
+      "pending_attempt": null,
+      "recorded_attempts": 1
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-joint-ipc-2026-09-17/tls_success-attempt_archive.jsonl",
+        "sha256": "d17f6f4d0901dee1bf0b4502461873cacb1a1defc25a4aab08fcf3a7ebb4e8c3"
+      },
+      "attempt_status": "closed",
+      "binding_sha256": "29931a275efea1ed0922975c70712e41c77afb46428a244500153133b9605497",
+      "gateway_manifest_sha256": "0a06d85bf0b3c7933329d78f0082db5fb77ef14a5fee9e4051caefcf80f945dd",
+      "integration_checks": 46,
+      "name": "tls_success",
+      "pending_attempt": null,
+      "recorded_attempts": 1
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-joint-ipc-2026-09-17/tls_truncated-attempt_archive.jsonl",
+        "sha256": "3899063534c187d77c92ad3b1c3bc5b526e9befcdb31b5fc4202847ad31fafc3"
+      },
+      "attempt_status": "closed",
+      "binding_sha256": "444385fca7fd1a52ebf03878dec99cdf38e6a2f07caaac3754a2472d93bc2c0d",
+      "gateway_manifest_sha256": "0a06d85bf0b3c7933329d78f0082db5fb77ef14a5fee9e4051caefcf80f945dd",
+      "integration_checks": 46,
+      "name": "tls_truncated",
+      "pending_attempt": 0,
+      "recorded_attempts": 1
+    }
+  ],
+  "status": "installed_multi_operation_ipc_accounting_complete_transport_pending",
+  "supplemental_manifest_schema": "portfolio.installed_gateway_fixture.v3",
+  "tls_regression_scenarios": 6,
+  "trading_admitted": false,
+  "uncontrolled_privileged_mutation_race_closed": false,
+  "unknown_market_charge_operations": 1,
+  "upstream_touched": false,
+  "venue_requests": 0
+}

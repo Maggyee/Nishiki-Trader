@@ -17,13 +17,14 @@ ENTRY_PIN = "2a91437ed9080ae481eae7496e43cfe35d29888e1e3a5a12b10605b6dc320c9b"
 FILES = (
     "installed_gateway.py",
     "gateway_tls.py",
+    "gateway_joint_ipc.py",
     "ledger_gateway.py",
     "selftest.py",
     "portfolio_rate_evidence.py",
     "portfolio_tls_provenance.py",
     "portfolio_egress_ledger.py",
 )
-PROFILE = "portfolio.installed_gateway_fixture.v2"
+PROFILE = "portfolio.installed_gateway_fixture.v3"
 
 
 def digest(raw):
@@ -293,12 +294,23 @@ def run_controller(*, tls=False):
 
 def main():
     if (
-        sys.argv[1:] not in (["--fixture"], ["--tls-fixture"])
+        sys.argv[1:] not in (["--fixture"], ["--tls-fixture"], ["--joint-ipc-fixture"])
         or not sys.flags.isolated
         or os.path.abspath(__file__) != CODE + "/installed_gateway.py"
     ):
         raise ValueError("fixed_installed_fixture_entry_required")
-    run_controller(tls=sys.argv[1:] == ["--tls-fixture"])
+    if sys.argv[1:] == ["--joint-ipc-fixture"]:
+        # Bootstrap through the same held installation before executing the extension.
+        authority = installation()
+        try:
+            fixture_context(authority)
+            sources = InstalledGatewaySources(authority)
+            extension = load(sources.source("gateway_joint_ipc.py"))
+            extension["run_installed"](globals(), authority, sources)
+        finally:
+            authority.close()
+    else:
+        run_controller(tls=sys.argv[1:] == ["--tls-fixture"])
     return 0
 
 

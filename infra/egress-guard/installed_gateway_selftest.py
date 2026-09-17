@@ -6,6 +6,7 @@ import argparse
 import base64
 import json
 import os
+import select
 import signal
 import subprocess
 import sys
@@ -20,6 +21,14 @@ TLS_SCENARIOS = (
     "tls_duplicate_weight",
     "tls_truncated",
     "tls_crash",
+)
+IPC_SCENARIOS = (
+    "ipc_success",
+    "ipc_child_death",
+    "ipc_code_drift",
+    "ipc_account_drift",
+    "ipc_storage_drift",
+    "ipc_controller_crash",
 )
 ENV = {"PATH": "/usr/sbin:/usr/bin:/sbin:/bin", "LC_ALL": "C"}
 
@@ -44,7 +53,7 @@ def denied(name, operation):
         if isinstance(result,int): os.close(result)
         raise RuntimeError('unexpected_permission:'+name)
 code=Path('/usr/local/lib/trader-egress')
-for name in ('installed_gateway.py','gateway_tls.py','ledger_gateway.py','selftest.py','portfolio_rate_evidence.py','portfolio_tls_provenance.py','portfolio_egress_ledger.py'):
+for name in ('installed_gateway.py','gateway_tls.py','gateway_joint_ipc.py','ledger_gateway.py','selftest.py','portfolio_rate_evidence.py','portfolio_tls_provenance.py','portfolio_egress_ledger.py'):
     path=code/name
     assert path.read_bytes()
     denied('write:'+name,lambda:os.open(path,os.O_WRONLY))
@@ -116,7 +125,14 @@ def worker(payload):
     base = load(payload["base_source"])
     base["require_isolation"](payload["original"])
     tls = payload.get("tls_profile", False)
-    if type(tls) is not bool or payload["scenario"] not in (TLS_SCENARIOS if tls else SCENARIOS):
+    ipc = payload.get("joint_ipc_profile", False)
+    if (
+        type(tls) is not bool
+        or type(ipc) is not bool
+        or (tls and ipc)
+        or payload["scenario"]
+        not in (IPC_SCENARIOS if ipc else TLS_SCENARIOS if tls else SCENARIOS)
+    ):
         raise ValueError("unknown_fixture_scenario")
     # The existing pinned installer and its 40 checks run before extension staging.
     installed = base["worker"](payload)
@@ -220,6 +236,8 @@ def worker(payload):
         elif peer.request({"action": "serve"}) != {"ok": True}:
             raise RuntimeError("fixture_peer_not_ready")
         network_run(nft, "-f", "-", text=gateway["RULES"])
+        if ipc:
+            return worker_ipc(payload, installed, entry, guards, ledger_module, manifest)
         command = [
             "/usr/bin/python3",
             "-I",
@@ -487,10 +505,247 @@ def worker(payload):
         peer.stop()
 
 
+def worker_ipc(payload, installed, entry, guards, module, manifest):
+    """Shared installed fixture environment; IPC never activates a mark grant."""
+    command = [
+        "/usr/bin/python3",
+        "-I",
+        entry["CODE"] + "/installed_gateway.py",
+        "--joint-ipc-fixture",
+    ]
+    controller = subprocess.Popen(
+        command,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        env=ENV,
+        cwd="/",
+    )
+    run, nft = guards["run"], guards["NFT"]
+    checks = []
+    restore = None
+    try:
+        line = controller.stdout.readline()
+        if not line:
+            raise RuntimeError("joint_ipc_controller_not_ready:" + controller.stderr.read()[-3000:])
+        ready = json.loads(line)
+        if ready["stage"] != "joint_ipc_ready":
+            raise RuntimeError("joint_ipc_ready_required")
+        identity = ready["binding"]["collector"]["process"]
+        account = installed["fixture_account"]
+        if (
+            identity["uids"] != [account["uid"]] * 4
+            or identity["gids"] != [account["gid"]] * 4
+            or identity["groups"]
+        ):
+            raise RuntimeError("joint_ipc_distinct_uid_required")
+        descriptors = [os.readlink(p) for p in Path(f"/proc/{identity['pid']}/fd").iterdir()]
+        if any(
+            any(
+                prefix in target
+                for prefix in ("/var/lib/trader", entry["CODE"], "/etc/trader", entry["CONTEXT"])
+            )
+            for target in descriptors
+        ):
+            raise RuntimeError("joint_ipc_privileged_descriptor_inherited")
+        checks.extend(
+            [
+                "fixed_installed_sources_held",
+                "dedicated_uid_pid_authenticated",
+                "no_privileged_descriptor_handoff",
+            ]
+        )
+        scope = Path(entry["STORAGE"]) / module.IPC_SCOPE
+        probe = json.loads(
+            run(
+                "/usr/bin/setpriv",
+                f"--reuid={account['uid']}",
+                f"--regid={account['gid']}",
+                "--clear-groups",
+                "--bounding-set=-all",
+                "--inh-caps=-all",
+                "--ambient-caps=-all",
+                "--no-new-privs",
+                "/usr/bin/python3",
+                "-I",
+                "-c",
+                PROBE.replace("local-egress-attempts-v1", module.IPC_SCOPE),
+            )
+        )
+        checks.extend(probe["checks"])
+        controller.stdin.write("continue\n")
+        controller.stdin.flush()
+        barrier = controller.stdout.readline()
+        if not barrier or json.loads(barrier) != {"stage": "joint_ipc_prepared", "index": 9}:
+            raise RuntimeError("joint_ipc_midpoint_missing:" + controller.stderr.read()[-3000:])
+        original = (scope / "events.jsonl").read_bytes()
+        midway = module.replay(
+            original,
+            expected_sha256=module.digest(original),
+            binding_sha256=ready["binding_sha256"],
+            profile=module.IPC_PROFILE,
+        )
+        if midway["recorded_attempts"] != 10 or midway["pending_attempt"] != 9:
+            raise RuntimeError("joint_ipc_unpersisted_receipt")
+        checks.append("ten_operations_prepared_before_tenth_receipt")
+        permits = json.loads(
+            run(nft, "-j", "list", "set", "inet", "fixture_ledger_gateway", "permits")
+        )
+        if any(r.get("set", {}).get("elem") for r in permits["nftables"]):
+            raise RuntimeError("ipc_granted_kernel_permission")
+        checks.append("ipc_preparations_never_grant_kernel_permission")
+        scenario = payload["scenario"]
+        if scenario == "ipc_child_death":
+            os.kill(identity["pid"], signal.SIGKILL)
+        elif scenario == "ipc_code_drift":
+            path = Path(entry["CODE"]) / "gateway_joint_ipc.py"
+            before = path.read_bytes()
+            path.write_bytes(before + b"\n# fixture drift\n")
+
+            def restore():
+                path.write_bytes(before)
+        elif scenario == "ipc_account_drift":
+            path = Path("/etc/group")
+            before = path.read_bytes()
+            path.write_bytes(before + b"foreign:x:22000:trader-egress\n")
+
+            def restore():
+                path.write_bytes(before)
+        elif scenario == "ipc_storage_drift":
+            path = Path(entry["STORAGE"])
+            path.chmod(0o755)
+
+            def restore():
+                path.chmod(0o700)
+
+        if scenario == "ipc_controller_crash":
+            child_pidfd = os.pidfd_open(identity["pid"])
+            try:
+                controller.kill()
+                stdout, stderr = controller.communicate(timeout=5)
+                if controller.returncode != -signal.SIGKILL:
+                    raise RuntimeError("joint_ipc_controller_did_not_die")
+                if not select.select([child_pidfd], [], [], 2)[0]:
+                    raise RuntimeError("joint_ipc_child_survived_channel_loss")
+                os.waitpid(identity["pid"], 0)
+                checks.append("controller_death_closes_channel_and_reaps_orphan")
+            finally:
+                os.close(child_pidfd)
+            terminal = {"status": "controller_sigkill"}
+        else:
+            stdout, stderr = controller.communicate("continue\n", timeout=20)
+            if controller.returncode:
+                raise RuntimeError("joint_ipc_controller_failed:" + stderr[-3000:])
+            terminal = json.loads(stdout)
+            if terminal["status"] != (
+                "joint_ipc_accounting_completed" if scenario == "ipc_success" else "refused"
+            ):
+                raise RuntimeError("joint_ipc_wrong_terminal")
+        if restore:
+            restore()
+            restore = None
+        raw = (scope / "events.jsonl").read_bytes()
+        report = module.replay(
+            raw,
+            expected_sha256=module.digest(raw),
+            binding_sha256=ready["binding_sha256"],
+            profile=module.IPC_PROFILE,
+        )
+        expected = 20 if scenario == "ipc_success" else 10
+        if report["recorded_attempts"] != expected or report["pending_attempt"] != (
+            None if expected == 20 else 9
+        ):
+            raise RuntimeError("joint_ipc_consumption_lost")
+        if not raw.startswith(original):
+            raise RuntimeError("joint_ipc_original_prefix_changed")
+        checks.append("success_or_failure_keeps_original_consumption")
+
+        # Even a root-owned marked socket must remain denied: no grant ever occurred.
+        def count():
+            return next(
+                r["counter"]["packets"]
+                for r in json.loads(
+                    run(
+                        nft,
+                        "-j",
+                        "list",
+                        "counter",
+                        "inet",
+                        "fixture_ledger_gateway",
+                        "output_denied",
+                    )
+                )["nftables"]
+                if "counter" in r
+            )
+
+        before_count = count()
+        gateway = load(payload["sources"]["ledger_gateway.py"])
+        try:
+            gateway["marked_echo"]()
+        except OSError:
+            pass
+        else:
+            raise RuntimeError("joint_ipc_marked_connection_allowed")
+        if count() <= before_count:
+            raise RuntimeError("joint_ipc_missing_kernel_denial")
+        checks.append("marked_socket_denied_after_ipc_or_crash")
+        restarted = subprocess.run(
+            command,
+            input="continue\n",
+            capture_output=True,
+            text=True,
+            env=ENV,
+            cwd="/",
+            timeout=10,
+        )
+        if (
+            restarted.returncode != 1
+            or "FileExistsError" not in restarted.stderr
+            or restarted.stdout
+        ):
+            raise RuntimeError("joint_ipc_consumed_scope_reopened")
+        if (scope / "events.jsonl").read_bytes() != raw:
+            raise RuntimeError("joint_ipc_restart_mutated_archive")
+        checks.append("fresh_installed_process_cannot_reopen_scope")
+        if (
+            Path(entry["STORAGE"] + "/consumed.json").read_bytes()
+            != b'{"fixture_only":true,"consumed":true}\n'
+        ):
+            raise RuntimeError("prior_consumed_scope_changed")
+        checks.append("prior_consumed_scope_preserved")
+        return {
+            "status": "passed",
+            "scenario": scenario,
+            "checks": checks,
+            "base_installation": installed,
+            "gateway_manifest": manifest,
+            "gateway_manifest_sha256": module.digest(Path(entry["MANIFEST"]).read_bytes()),
+            "binding": ready["binding"],
+            "binding_sha256": ready["binding_sha256"],
+            "attempt_archive": raw.decode(),
+            "attempt_replay": report,
+            "terminal": terminal,
+            "kernel_permission_granted": False,
+            "transport_dispatch_verified": False,
+            "venue_requests": 0,
+            "network_admitted": False,
+            "trading_admitted": False,
+        }
+    finally:
+        if restore:
+            restore()
+        if controller.poll() is None:
+            controller.kill()
+        controller.communicate(timeout=5)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--report", required=True, type=Path)
-    parser.add_argument("--tls-profile", action="store_true")
+    profiles = parser.add_mutually_exclusive_group()
+    profiles.add_argument("--tls-profile", action="store_true")
+    profiles.add_argument("--joint-ipc-profile", action="store_true")
     args = parser.parse_args(argv)
     if os.geteuid() == 0:
         parser.error("run the disposable wrapper as an ordinary user")
@@ -521,6 +776,7 @@ def main(argv=None):
         payload = {
             "source": Path(__file__).read_text(),
             "tls_profile": args.tls_profile,
+            "joint_ipc_profile": args.joint_ipc_profile,
             "base_source": base_source,
             "installer": installer.decode(),
             "bundle": base64.b64encode(bundle).decode(),
@@ -531,7 +787,13 @@ def main(argv=None):
         before = base["host_observation"]()
         reports = []
         bootstrap = "import json,sys\np=json.load(sys.stdin)\ns={'__name__':'isolated_installed_gateway'}\nexec(compile(p['source'],'<fixture>','exec'),s)\nprint(json.dumps(s['worker'](p),sort_keys=True))\n"
-        for scenario in TLS_SCENARIOS if args.tls_profile else SCENARIOS:
+        for scenario in (
+            IPC_SCENARIOS
+            if args.joint_ipc_profile
+            else TLS_SCENARIOS
+            if args.tls_profile
+            else SCENARIOS
+        ):
             command = [
                 "/usr/bin/sudo",
                 "-n",
@@ -585,6 +847,7 @@ def main(argv=None):
             "schema_version": "portfolio.installed_gateway_acceptance.v1",
             "status": "passed",
             "tls_profile": args.tls_profile,
+            "joint_ipc_profile": args.joint_ipc_profile,
             "scenarios": reports,
             "source_sha256": payload["source_sha256"],
             "harness_sha256": base["sha"](payload["source"].encode()),

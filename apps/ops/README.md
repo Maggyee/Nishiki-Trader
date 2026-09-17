@@ -7,6 +7,10 @@ dashboard snapshot support + Phase 6 passive readiness gate support。
 
 ## 当前入口
 
+`portfolio_egress_ledger --ipc-profile` 仅重放安装隔离验收中的多操作 IPC 账本。
+准备/确认记录不代表交易所请求、内核放行或真实额度，退出码仍为 2。
+见 [专用 UID IPC 验收](../../docs/progress/portfolio-installed-joint-ipc-2026-09-17.md)。
+
 `portfolio_joint_observation --tls-loopback-profile` 可配合 `--attempt-ledger`
 和 `--attempt-ledger-sha256` 交叉回放完整联合采集及逐项消耗。
 `portfolio_egress_ledger --joint-profile` 单独审查失败/中断的联合尝试账本，

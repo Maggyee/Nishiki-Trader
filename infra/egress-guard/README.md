@@ -6,6 +6,14 @@ offline disk tests, and retain read-only host deployment-input snapshots.
 Current phase: Phase 5 entry, offline infrastructure acceptance only. This is not
 a production guard, gateway audit service, quota authority or collection permit.
 
+The installed multi-operation IPC successor is `gateway_joint_ipc.py`, selected by
+`installed_gateway_selftest.py --joint-ipc-profile --report data/NEW-IPC.json`.
+It reuses the pinned child launcher and per-message credentials, then durably
+consumes 20 fixed operation classifications in a separate root-owned scope before
+acknowledgement. It never grants a mark or performs IP transport. Next connect the
+actual native collector, signed selectors and gateway-owned TLS/WS sockets through
+this boundary. See [IPC acceptance](../../docs/progress/portfolio-installed-joint-ipc-2026-09-17.md).
+
 Run from the project root as an ordinary user, without sudo:
 
 ```bash
@@ -72,7 +80,7 @@ and [lifecycle acceptance](../../docs/progress/portfolio-egress-gateway-lifecycl
 
 The ordinary-user wrapper uses existing sudo to run five fresh private mount,
 network and PID namespaces. It reuses the pinned installer, then stages a separate
-fixture v2 manifest and seven protected sources in the disposable installation. The
+fixture v3 manifest and eight protected sources in the disposable installation. The
 fixed installed `installed_gateway.py --fixture` entry consumes the original
 fixed storage scope, authenticates the distinct-UID child and uses the durable
 kernel lifecycle. Neither the collector nor the public wrapper can select another

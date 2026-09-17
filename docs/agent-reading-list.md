@@ -22,14 +22,23 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For installed dedicated-UID multi-operation IPC/root accounting, read
+`docs/progress/portfolio-installed-joint-ipc-2026-09-17.md` and its JSON.
+`gateway_joint_ipc.py` under infra/egress-guard authenticates each fixed token
+through the pinned channel and persists before its receipt, under fixture manifest
+v3/eight sources. The separate IPC ledger never grants an egress mark or claims
+transport outcomes. Six actual IPC and eleven TLS/echo scenarios pass. Next connect
+the actual native collector and gateway-owned TLS/WS sockets through this boundary;
+fixed classifications do not qualify signed payloads, routes or real admission.
+
 For complete local joint TLS collection with durable per-operation attempts, read
 `docs/progress/portfolio-joint-egress-accounting-2026-09-17.md` and its JSON.
 `portfolio_joint_egress.py` joins the existing collector to a separate ledger
 profile/scope; cross-file prefixes bind preparations and outcomes. The local
 20-operation / 16-GET / 448-weight budget stays separate from the frozen real
 17-GET / 468-weight draft. Counter ages use original headers/messages. This runs
-as the ordinary project process; installed dedicated-UID/kernel integration is
-still next. Unknown charges, coverage and all real admission remain blocked.
+as the ordinary project process; the successor above verifies the separate
+installed IPC boundary, while native collector/socket integration remains pending. Unknown charges, coverage and all real admission remain blocked.
 
 For the installed gateway's fixed local HTTPS request and original receipt binding,
 read `docs/progress/portfolio-egress-gateway-tls-2026-09-17.md` and its JSON.
