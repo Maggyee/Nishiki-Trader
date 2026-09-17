@@ -6,6 +6,17 @@ offline disk tests, and retain read-only host deployment-input snapshots.
 Current phase: Phase 5 entry, offline infrastructure acceptance only. This is not
 a production guard, gateway audit service, quota authority or collection permit.
 
+The response-delivery successor is `gateway_tls_receipt.py`, selected by
+`installed_gateway_selftest.py --tls-receipt-profile --report data/NEW-RECEIPT.json`.
+One fixed exchangeInfo request is authenticated before accounting and root-owned
+TLS. Original response bytes and root receive clocks reach the isolated stdlib
+consumer over the unchanged credential-framed channel. Kernel permission is revoked
+before delivery; a missing final digest acknowledgement keeps the attempt pending.
+The separate receipt journal binds original attempt, kernel and TLS records.
+The base installer/launcher and old profiles remain unchanged. This runs only in
+disposable namespaces; native joint REST/WS integration remains the next entrypoint.
+See [response acceptance](../../docs/progress/portfolio-installed-tls-receipt-2026-09-17.md).
+
 The installed multi-operation IPC successor is `gateway_joint_ipc.py`, selected by
 `installed_gateway_selftest.py --joint-ipc-profile --report data/NEW-IPC.json`.
 It reuses the pinned child launcher and per-message credentials, then durably
@@ -80,7 +91,7 @@ and [lifecycle acceptance](../../docs/progress/portfolio-egress-gateway-lifecycl
 
 The ordinary-user wrapper uses existing sudo to run five fresh private mount,
 network and PID namespaces. It reuses the pinned installer, then stages a separate
-fixture v3 manifest and eight protected sources in the disposable installation. The
+fixture v4 manifest and nine protected sources in the disposable installation. The
 fixed installed `installed_gateway.py --fixture` entry consumes the original
 fixed storage scope, authenticates the distinct-UID child and uses the durable
 kernel lifecycle. Neither the collector nor the public wrapper can select another

@@ -22,6 +22,15 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For installed HTTPS response delivery to the isolated dedicated UID, read
+`docs/progress/portfolio-installed-tls-receipt-2026-09-17.md` and its JSON.
+`gateway_tls_receipt.py` carries one fixed actual response and original root receive
+clocks through the pinned credential channel. The kernel permit is revoked before
+transfer; full TLS, pending-attempt and revoked-kernel originals bind the receipt.
+Fixture manifest v4 has nine protected sources; 27 actual scenarios replay twice.
+This is a stdlib fixture consumer, not the native joint collector. Next connect the
+full native signed REST/WS flow without importing project packages as root.
+
 For installed dedicated-UID multi-operation IPC/root accounting, read
 `docs/progress/portfolio-installed-joint-ipc-2026-09-17.md` and its JSON.
 `gateway_joint_ipc.py` under infra/egress-guard authenticates each fixed token

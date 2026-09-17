@@ -1,0 +1,725 @@
+{
+  "actual_namespace_scenarios": 27,
+  "base_bundle_sha256": "995380e089df6c658a2ee7fa8224441d6173ed08b9656fc6447fad85d62800ec",
+  "base_commit": "3b8daf8b06704b506853b96a45f7bed22cbe6110",
+  "changed_source_sha256": {
+    "infra/egress-guard/gateway_tls.py": "e3deab645139dfe0737a2bee26f5a625ef905c709ba056c11035521d49355536",
+    "infra/egress-guard/gateway_tls_receipt.py": "a6304552848ffc1ed5ba0dbfa8dbadb2d53d7a8762b988b9a4b299fb8ae86b62",
+    "infra/egress-guard/installed_gateway.py": "4dd6448721d09d81acfb3ef83840e37b46c2088742e1d6ccf2e932a5896bdedd",
+    "infra/egress-guard/installed_gateway_selftest.py": "4d7f717c5d2257aa08a8a53ef85b6353e412b84cdf2bcbda328c8b4427d67666",
+    "tests/ops/test_egress_tls_receipt.py": "095e1b379aa2e48a81edc92bc6a0002bf834142dc8a843f8e22d659abe2ff238"
+  },
+  "chunk_limit_bytes": 512,
+  "complete_caller_coverage_verified": false,
+  "date": "2026-09-17",
+  "echo_regression_scenarios": 5,
+  "fresh_replays": [
+    {
+      "path": "data/installed-tls-receipt-2026-09-17/replay-1.json",
+      "sha256": "b392d49906d6cf6e3714e9913f39daa4f3354a47dac8ff380873083b74863d69"
+    },
+    {
+      "path": "data/installed-tls-receipt-2026-09-17/replay-2.json",
+      "sha256": "b392d49906d6cf6e3714e9913f39daa4f3354a47dac8ff380873083b74863d69"
+    }
+  ],
+  "fresh_replays_match_original_reports": true,
+  "host_installation_performed": false,
+  "host_observations_unchanged": true,
+  "ipc_regression_scenarios": 6,
+  "kernel_revoked_before_receipt_transfer": true,
+  "live_path_affected": false,
+  "native_joint_collector_connected_to_installed_gateway": false,
+  "network_admitted": false,
+  "next_step": "Integrate native signed REST/WS request and receipt flow, fixed selectors, same-run routes and concurrent control traffic with gateway-owned TLS and per-operation durable consumption. No host rollout or consumed-scope reuse.",
+  "original_root_header_receipt_preserved": true,
+  "payload_limit_bytes": 180000,
+  "power_loss_qualified": false,
+  "protected_manifest_profile": "portfolio.installed_gateway_fixture.v4",
+  "protected_source_count": 9,
+  "protected_source_sha256": {
+    "gateway_joint_ipc.py": "e814ddfdd67b7f43fd031a13a68a6bd87cf992e6de0a92b476751e4f9e3cb6ae",
+    "gateway_tls.py": "e3deab645139dfe0737a2bee26f5a625ef905c709ba056c11035521d49355536",
+    "gateway_tls_receipt.py": "a6304552848ffc1ed5ba0dbfa8dbadb2d53d7a8762b988b9a4b299fb8ae86b62",
+    "installed_gateway.py": "4dd6448721d09d81acfb3ef83840e37b46c2088742e1d6ccf2e932a5896bdedd",
+    "ledger_gateway.py": "d1afb934a109c776fffc2762b7cba0b2d2fb4f7cc7e91e7e3323ca6e4d6a8132",
+    "portfolio_egress_ledger.py": "cb3d7a37e444c71583ec83c88c9aae6a8c91f7ac02dc906b6d44478f7f763fec",
+    "portfolio_rate_evidence.py": "18aa5bdbf1954cebc4802b38daeded07cd60e2ab1b9e508d6686ac89a07abb35",
+    "portfolio_tls_provenance.py": "def476571e9ec56e989eee02b8623b1a657337956ecd88faeabaf9f2efc70044",
+    "selftest.py": "75ba8a36ca075f4236f20e68524117bf1abc1431226271bb0df35912c4ebff5f"
+  },
+  "python_tests": {
+    "focused_batch_passed": 828,
+    "focused_batch_seconds": 170.11,
+    "focused_batch_warnings": 3,
+    "new_tests": 38,
+    "warning_kind": "Existing fork-after-native-thread DeprecationWarnings"
+  },
+  "receipt_scenarios": 10,
+  "replay_driver": {
+    "path": "data/installed-tls-receipt-2026-09-17/replay.py",
+    "sha256": "c05c79fa84586e5e65aa489087a6e8d5c9271de46a3732ae783d6d888aff8707"
+  },
+  "reports": {
+    "echo-regression": {
+      "path": "data/installed-tls-receipt-2026-09-17/echo-regression.json",
+      "sha256": "78dd48d7a0ebb36a36f85d3a6a0453aa21a339cb71c8d1beed8cdd336353c769"
+    },
+    "ipc-regression": {
+      "path": "data/installed-tls-receipt-2026-09-17/ipc-regression.json",
+      "sha256": "aedc057bb22173f73f73b0117e284b5fab6a7c8fdcb8305dcd382579f62c57af"
+    },
+    "receipt-acceptance": {
+      "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance.json",
+      "sha256": "d68d6a948a5e963ba8f73dd2d4ef266d5d264cfc86303e5a3bb017d1983f9592"
+    },
+    "tls-regression": {
+      "path": "data/installed-tls-receipt-2026-09-17/tls-regression.json",
+      "sha256": "5e6af27a3f0f1b0da6014a2cac4a11e0ac2643706a2d0ec3ad0104395f0f40f9"
+    }
+  },
+  "retained_selection": {
+    "path": "data/installed-tls-receipt-2026-09-17/selection.json",
+    "sha256": "f5956e3e731c34a5fcf8cb9db0989f632003a8d9944c433fed6622037cf4e84e"
+  },
+  "scenarios": [
+    {
+      "attempt_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/echo-regression-success-attempt_archive.jsonl",
+        "sha256": "3918891a77ecc5433da080649943edf070d6d07ad99cab2da9a339e76411e9d0"
+      },
+      "attempt_outcome_recorded": null,
+      "attempt_status": "closed",
+      "binding_sha256": "13e0559f70d26d4163ef9c8b2f964f75ec0ebdd5c8c2ef5e13f890ba042c739e",
+      "gateway_manifest_sha256": "eb510b66dd28f48d63dac7d2c42c7b8c9c871df54ffaa2486f1b68ca7c71b1f3",
+      "integration_checks": 48,
+      "lifecycle_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/echo-regression-success-lifecycle_archive.jsonl",
+        "sha256": "331ee0624c09120c2d44771e29c1863b3ba74d18afcf8a9c00f3f4f205b1e170"
+      },
+      "name": "success",
+      "pending_attempt": null,
+      "receipt_status": null,
+      "recorded_attempts": 1,
+      "report": "echo-regression",
+      "tls_status": null
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/echo-regression-code_drift-attempt_archive.jsonl",
+        "sha256": "59f28feed804f9c6de8e8f539d0d0e0ada901484ac9bd9b075a1706bfd9c6fc7"
+      },
+      "attempt_outcome_recorded": null,
+      "attempt_status": "gap",
+      "binding_sha256": "7b509ebc50144077fd9efaede5ef0dbdbbddd5cda8e2681939c2187641a49629",
+      "gateway_manifest_sha256": "eb510b66dd28f48d63dac7d2c42c7b8c9c871df54ffaa2486f1b68ca7c71b1f3",
+      "integration_checks": 48,
+      "lifecycle_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/echo-regression-code_drift-lifecycle_archive.jsonl",
+        "sha256": "5822aa3930b888243e5f630ddec381894745874a7629d38fc70d067a8cbf617e"
+      },
+      "name": "code_drift",
+      "pending_attempt": 0,
+      "receipt_status": null,
+      "recorded_attempts": 1,
+      "report": "echo-regression",
+      "tls_status": null
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/echo-regression-account_drift-attempt_archive.jsonl",
+        "sha256": "ed7bc47e70ba4df8f657d694abb166b7705913ef3e30c509665a75d3f5debf22"
+      },
+      "attempt_outcome_recorded": null,
+      "attempt_status": "gap",
+      "binding_sha256": "3d5dfc9ed56eabbb7e57a27db9211d5749a323b9cf1ba2e64b8d4c6e392cb80b",
+      "gateway_manifest_sha256": "eb510b66dd28f48d63dac7d2c42c7b8c9c871df54ffaa2486f1b68ca7c71b1f3",
+      "integration_checks": 48,
+      "lifecycle_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/echo-regression-account_drift-lifecycle_archive.jsonl",
+        "sha256": "fdec521210e171c37f81a5204e9f41198d18fc8f1862b2357e7e5ac6829ca805"
+      },
+      "name": "account_drift",
+      "pending_attempt": 0,
+      "receipt_status": null,
+      "recorded_attempts": 1,
+      "report": "echo-regression",
+      "tls_status": null
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/echo-regression-storage_drift-attempt_archive.jsonl",
+        "sha256": "44aa253939582628bcd520fecf87c8f417c570aa7d86e0d560d433c6bfccc31b"
+      },
+      "attempt_outcome_recorded": null,
+      "attempt_status": "incomplete_no_resume",
+      "binding_sha256": "c41eaf94f3acf3ab2129b72d175edd71709877424049524611a60dacb34822d2",
+      "gateway_manifest_sha256": "eb510b66dd28f48d63dac7d2c42c7b8c9c871df54ffaa2486f1b68ca7c71b1f3",
+      "integration_checks": 48,
+      "lifecycle_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/echo-regression-storage_drift-lifecycle_archive.jsonl",
+        "sha256": "cb89aae5ac53f5bbae20b08708ba8948ad39a92c5a1e2eae0244e5967dfc46cc"
+      },
+      "name": "storage_drift",
+      "pending_attempt": 0,
+      "receipt_status": null,
+      "recorded_attempts": 1,
+      "report": "echo-regression",
+      "tls_status": null
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/echo-regression-controller_crash-attempt_archive.jsonl",
+        "sha256": "77c7bfb229947f0ab8f063575eb31ff445401d26bc56b1451ed1b6103cd27be6"
+      },
+      "attempt_outcome_recorded": null,
+      "attempt_status": "incomplete_no_resume",
+      "binding_sha256": "d5dbf18e6fbfb01b7b3e722fd9cbb45fe270766aead871dd104c50c221e7b704",
+      "gateway_manifest_sha256": "eb510b66dd28f48d63dac7d2c42c7b8c9c871df54ffaa2486f1b68ca7c71b1f3",
+      "integration_checks": 49,
+      "lifecycle_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/echo-regression-controller_crash-lifecycle_archive.jsonl",
+        "sha256": "523a91360988ce49e1b3d4180d9a993cac96e113beea0937f0b32f121bd34bba"
+      },
+      "name": "controller_crash",
+      "pending_attempt": 0,
+      "receipt_status": null,
+      "recorded_attempts": 1,
+      "report": "echo-regression",
+      "tls_status": null
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/ipc-regression-ipc_success-attempt_archive.jsonl",
+        "sha256": "b2ba07b52ea6fec39f8065ea770dba852a6462440e6d9c160156e974e58525b1"
+      },
+      "attempt_outcome_recorded": null,
+      "attempt_status": "closed",
+      "binding_sha256": "24ea5b397c5d5ff7110c5383080b8c415968394adc65c89e62aac8af8997cbb1",
+      "gateway_manifest_sha256": "eb510b66dd28f48d63dac7d2c42c7b8c9c871df54ffaa2486f1b68ca7c71b1f3",
+      "integration_checks": 51,
+      "name": "ipc_success",
+      "pending_attempt": null,
+      "receipt_status": null,
+      "recorded_attempts": 20,
+      "report": "ipc-regression",
+      "tls_status": null
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/ipc-regression-ipc_child_death-attempt_archive.jsonl",
+        "sha256": "379804c2b7070fe2e75c985bfa72b174ad5d21401ab2847142a53bef9369731a"
+      },
+      "attempt_outcome_recorded": null,
+      "attempt_status": "gap",
+      "binding_sha256": "2476e1608cbe77c81853bbee946ee07f011d3eb033084b55a86a8aa772816b56",
+      "gateway_manifest_sha256": "eb510b66dd28f48d63dac7d2c42c7b8c9c871df54ffaa2486f1b68ca7c71b1f3",
+      "integration_checks": 51,
+      "name": "ipc_child_death",
+      "pending_attempt": 9,
+      "receipt_status": null,
+      "recorded_attempts": 10,
+      "report": "ipc-regression",
+      "tls_status": null
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/ipc-regression-ipc_code_drift-attempt_archive.jsonl",
+        "sha256": "f1e602f12bf113e84f367ca699e96adc13436931e190175bcff0c28348fd9c72"
+      },
+      "attempt_outcome_recorded": null,
+      "attempt_status": "gap",
+      "binding_sha256": "fc8aa42277a236303bc81152e87a29fee003973e0393894f1a1b659fa42986c0",
+      "gateway_manifest_sha256": "eb510b66dd28f48d63dac7d2c42c7b8c9c871df54ffaa2486f1b68ca7c71b1f3",
+      "integration_checks": 51,
+      "name": "ipc_code_drift",
+      "pending_attempt": 9,
+      "receipt_status": null,
+      "recorded_attempts": 10,
+      "report": "ipc-regression",
+      "tls_status": null
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/ipc-regression-ipc_account_drift-attempt_archive.jsonl",
+        "sha256": "41efb83f68fd55410aa63af6febfff19c590fee12a3e45fb1da066c523fa50f9"
+      },
+      "attempt_outcome_recorded": null,
+      "attempt_status": "gap",
+      "binding_sha256": "7ad8216b50a811887731c2d31d473d90b6a0e0834b6d9737e53770c8bfaa298e",
+      "gateway_manifest_sha256": "eb510b66dd28f48d63dac7d2c42c7b8c9c871df54ffaa2486f1b68ca7c71b1f3",
+      "integration_checks": 51,
+      "name": "ipc_account_drift",
+      "pending_attempt": 9,
+      "receipt_status": null,
+      "recorded_attempts": 10,
+      "report": "ipc-regression",
+      "tls_status": null
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/ipc-regression-ipc_storage_drift-attempt_archive.jsonl",
+        "sha256": "786cfc2d1e23b5907c0934d1f9aa6f3be2ffb55bf5204391e6f8d3799f62de14"
+      },
+      "attempt_outcome_recorded": null,
+      "attempt_status": "incomplete_no_resume",
+      "binding_sha256": "326dac9017170c6a367ae4ebb551d95133ea9ff13d2838ffe391da30c257c138",
+      "gateway_manifest_sha256": "eb510b66dd28f48d63dac7d2c42c7b8c9c871df54ffaa2486f1b68ca7c71b1f3",
+      "integration_checks": 51,
+      "name": "ipc_storage_drift",
+      "pending_attempt": 9,
+      "receipt_status": null,
+      "recorded_attempts": 10,
+      "report": "ipc-regression",
+      "tls_status": null
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/ipc-regression-ipc_controller_crash-attempt_archive.jsonl",
+        "sha256": "4773f49d03a07c8f1573416d610520083eab36fc8079bcd5c7ca3836d0e45ad6"
+      },
+      "attempt_outcome_recorded": null,
+      "attempt_status": "incomplete_no_resume",
+      "binding_sha256": "054b90b3b00167a3f5287e28ce3e36e82e9269352826b776661abd9edf679e67",
+      "gateway_manifest_sha256": "eb510b66dd28f48d63dac7d2c42c7b8c9c871df54ffaa2486f1b68ca7c71b1f3",
+      "integration_checks": 52,
+      "name": "ipc_controller_crash",
+      "pending_attempt": 9,
+      "receipt_status": null,
+      "recorded_attempts": 10,
+      "report": "ipc-regression",
+      "tls_status": null
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-tls_success-attempt_archive.jsonl",
+        "sha256": "7770f819f24872bd03c619f770907b705fa3c2490d6a42e90dfec394cee1dad6"
+      },
+      "attempt_outcome_recorded": true,
+      "attempt_status": "closed",
+      "binding_sha256": "95cd01ebe10319d8ce8e1bec37cf2a2684648ba85f962d8683cff8a6502fd951",
+      "gateway_manifest_sha256": "eb510b66dd28f48d63dac7d2c42c7b8c9c871df54ffaa2486f1b68ca7c71b1f3",
+      "integration_checks": 50,
+      "lifecycle_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-tls_success-lifecycle_archive.jsonl",
+        "sha256": "e31a87deb07427e87bae5f74d8c2e4df597bfb8a49a5ba6f0e23211f52e12a57"
+      },
+      "name": "tls_success",
+      "pending_attempt": null,
+      "receipt_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-tls_success-receipt_archive.jsonl",
+        "sha256": "b9f118faf49e3e01d9811f051005e7f15fee903e997a7f8473693bd30ca30f0a"
+      },
+      "receipt_status": "acknowledged",
+      "recorded_attempts": 1,
+      "report": "receipt-acceptance",
+      "tls_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-tls_success-tls_archive.jsonl",
+        "sha256": "e1190098520d9be9eeba2fcd821da5c228162fbd2fb1c7a425c944332e6a19cf"
+      },
+      "tls_status": "complete"
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-tls_slow_body-attempt_archive.jsonl",
+        "sha256": "0e17a49ac9163614497352a25b8e999ef98101755b4bd4b8015d3b9b844b4053"
+      },
+      "attempt_outcome_recorded": true,
+      "attempt_status": "closed",
+      "binding_sha256": "1a8e83c39a7b2cd729b8f5f3e2ab32ad62155d0f9ebb0bdb8681f67018e9ad90",
+      "gateway_manifest_sha256": "eb510b66dd28f48d63dac7d2c42c7b8c9c871df54ffaa2486f1b68ca7c71b1f3",
+      "integration_checks": 50,
+      "lifecycle_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-tls_slow_body-lifecycle_archive.jsonl",
+        "sha256": "abf4d591f76a61e9b6eec1509e067c1a0685d9ee05bc6cfc15ae6ece220e7b26"
+      },
+      "name": "tls_slow_body",
+      "pending_attempt": null,
+      "receipt_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-tls_slow_body-receipt_archive.jsonl",
+        "sha256": "58bc1644f2d3ed028e1d743090521153644409476c302e9ad0a662edd97e597c"
+      },
+      "receipt_status": "acknowledged",
+      "recorded_attempts": 1,
+      "report": "receipt-acceptance",
+      "tls_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-tls_slow_body-tls_archive.jsonl",
+        "sha256": "802d53d688f4053fa71a37b431c46ee29abc9d6e7a8f7ee2fe93a6008cab0372"
+      },
+      "tls_status": "complete"
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-tls_bad_certificate-attempt_archive.jsonl",
+        "sha256": "fee2576f9a4c9cf3c475c6f1ff2a1e29241d55d12aa405bc51cb2236d71570ca"
+      },
+      "attempt_outcome_recorded": null,
+      "attempt_status": "closed",
+      "binding_sha256": "58eec32be1df700e824a36a324d69081ca43429def9acb46960de2b6ab717d2d",
+      "gateway_manifest_sha256": "eb510b66dd28f48d63dac7d2c42c7b8c9c871df54ffaa2486f1b68ca7c71b1f3",
+      "integration_checks": 49,
+      "lifecycle_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-tls_bad_certificate-lifecycle_archive.jsonl",
+        "sha256": "932e5a10f199691a40f292822045952fda166e143a8ad1fd264c8085e369e3b6"
+      },
+      "name": "tls_bad_certificate",
+      "pending_attempt": 0,
+      "receipt_status": null,
+      "recorded_attempts": 1,
+      "report": "receipt-acceptance",
+      "tls_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-tls_bad_certificate-tls_archive.jsonl",
+        "sha256": "25a3e2f34e90b04335930aa8e8c1789c04f7a09d4a7eb5b2a3aa9b3b18d45a98"
+      },
+      "tls_status": "incomplete_no_resume"
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-tls_duplicate_weight-attempt_archive.jsonl",
+        "sha256": "47ac70c99e37cda45d6b1e0536030f449e2e66f07be3f849a3c08abad22926f0"
+      },
+      "attempt_outcome_recorded": null,
+      "attempt_status": "closed",
+      "binding_sha256": "3e574aecb07a0bcd0bad57d856eb151e2f602775490f8b30cae826c7324b0b81",
+      "gateway_manifest_sha256": "eb510b66dd28f48d63dac7d2c42c7b8c9c871df54ffaa2486f1b68ca7c71b1f3",
+      "integration_checks": 49,
+      "lifecycle_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-tls_duplicate_weight-lifecycle_archive.jsonl",
+        "sha256": "dbe4841dcbe5d08aa8ea1cecf0230d2cd6c0260fd68e363abad361071cb4b196"
+      },
+      "name": "tls_duplicate_weight",
+      "pending_attempt": 0,
+      "receipt_status": null,
+      "recorded_attempts": 1,
+      "report": "receipt-acceptance",
+      "tls_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-tls_duplicate_weight-tls_archive.jsonl",
+        "sha256": "c33b6f51e7b1d08049e7b032d673e652eaec1eb09d5a56de4e49d735d0764013"
+      },
+      "tls_status": "incomplete_no_resume"
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-tls_truncated-attempt_archive.jsonl",
+        "sha256": "6dce304353ab0eec1647115e6f1703ecd7fadeddab6632e39636d644f731e552"
+      },
+      "attempt_outcome_recorded": null,
+      "attempt_status": "closed",
+      "binding_sha256": "8bae30fa01a9051d118713a8109d78fb37ba400de938fcf4d5f9aa692bde5b1f",
+      "gateway_manifest_sha256": "eb510b66dd28f48d63dac7d2c42c7b8c9c871df54ffaa2486f1b68ca7c71b1f3",
+      "integration_checks": 49,
+      "lifecycle_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-tls_truncated-lifecycle_archive.jsonl",
+        "sha256": "da56c9015f42cd2327b33230c77ce4751b90b2974feb95f811b0b5f61893f87f"
+      },
+      "name": "tls_truncated",
+      "pending_attempt": 0,
+      "receipt_status": null,
+      "recorded_attempts": 1,
+      "report": "receipt-acceptance",
+      "tls_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-tls_truncated-tls_archive.jsonl",
+        "sha256": "edc7109a9b58bcd7a84d041de208624808a336924e3400e119f5dd172715682d"
+      },
+      "tls_status": "incomplete_no_resume"
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-tls_crash-attempt_archive.jsonl",
+        "sha256": "2e4df604ca0ec5ffa690d3e3c4dc4291826c2d94825667e945c03afda2c065be"
+      },
+      "attempt_outcome_recorded": null,
+      "attempt_status": "incomplete_no_resume",
+      "binding_sha256": "f6ecfab70d457ffdff032f5e1e3205eebf3da8f83267f74a70f5b3592031cd43",
+      "gateway_manifest_sha256": "eb510b66dd28f48d63dac7d2c42c7b8c9c871df54ffaa2486f1b68ca7c71b1f3",
+      "integration_checks": 50,
+      "lifecycle_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-tls_crash-lifecycle_archive.jsonl",
+        "sha256": "904f620e462e80638f762ff4d31841efab9f92c560c6ac0ef64f8c440fe94804"
+      },
+      "name": "tls_crash",
+      "pending_attempt": 0,
+      "receipt_status": null,
+      "recorded_attempts": 1,
+      "report": "receipt-acceptance",
+      "tls_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-tls_crash-tls_archive.jsonl",
+        "sha256": "f79075d8bf2db0482f6fb5841ef7d6e9cec3f5b5d3780e1f962114729ab80964"
+      },
+      "tls_status": "incomplete_no_resume"
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-receipt_child_death-attempt_archive.jsonl",
+        "sha256": "efacee9bacd9d15f1551c6babe82bfe6bdb273e7f258a8713b312e41d3af544d"
+      },
+      "attempt_outcome_recorded": false,
+      "attempt_status": "gap",
+      "binding_sha256": "6cc9512edb7e481483beec78e999f77db993f0cc8a49540e85e48cce79a332e2",
+      "gateway_manifest_sha256": "eb510b66dd28f48d63dac7d2c42c7b8c9c871df54ffaa2486f1b68ca7c71b1f3",
+      "integration_checks": 51,
+      "lifecycle_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-receipt_child_death-lifecycle_archive.jsonl",
+        "sha256": "a56a4fffbfda56770f319c7dbc3aac7290c14cc9a7c92c99a8e23c2bd9b8b9bb"
+      },
+      "name": "receipt_child_death",
+      "pending_attempt": 0,
+      "receipt_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-receipt_child_death-receipt_archive.jsonl",
+        "sha256": "b078ca9d3676efeaa2120f2b7cf183a4c0033190b09f2b9899906356ed383798"
+      },
+      "receipt_status": "incomplete_no_resume",
+      "recorded_attempts": 1,
+      "report": "receipt-acceptance",
+      "tls_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-receipt_child_death-tls_archive.jsonl",
+        "sha256": "15e511bbf6e62cca32f6523722c054cefc6e5cb3eb9195d8e8f19b6bb0e6ab8e"
+      },
+      "tls_status": "complete"
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-receipt_controller_crash-attempt_archive.jsonl",
+        "sha256": "991422ba93ecc0c2dde7f808412b0dae04e325365d6ba0ed9a92fd8e23381c9c"
+      },
+      "attempt_outcome_recorded": false,
+      "attempt_status": "incomplete_no_resume",
+      "binding_sha256": "2ad4947f256627828ea9eb44a2b322540c48786a7b318ed11887b6b1d96d07c9",
+      "gateway_manifest_sha256": "eb510b66dd28f48d63dac7d2c42c7b8c9c871df54ffaa2486f1b68ca7c71b1f3",
+      "integration_checks": 52,
+      "lifecycle_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-receipt_controller_crash-lifecycle_archive.jsonl",
+        "sha256": "b840abc3b09a32b889ae89c5b644f24d7425ae8a660c5ef29d78f0e9250e0ec7"
+      },
+      "name": "receipt_controller_crash",
+      "pending_attempt": 0,
+      "receipt_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-receipt_controller_crash-receipt_archive.jsonl",
+        "sha256": "d28225dd1c9f4a3698a2c158865e20c431304a30129c105234df6cf6ce6c84d9"
+      },
+      "receipt_status": "incomplete_no_resume",
+      "recorded_attempts": 1,
+      "report": "receipt-acceptance",
+      "tls_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-receipt_controller_crash-tls_archive.jsonl",
+        "sha256": "db3c70baa3c06a24add8ad5de3441b02d612dafb00b87e238fa15af164853e2d"
+      },
+      "tls_status": "complete"
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-receipt_code_drift-attempt_archive.jsonl",
+        "sha256": "47b77a1e986755f197455a54d1070d196d6433b8be0cbb5fb688c1a18d67a939"
+      },
+      "attempt_outcome_recorded": false,
+      "attempt_status": "gap",
+      "binding_sha256": "059b8bf39d9012fd702a8454f3276464a064032041c6d9498286a645872fc083",
+      "gateway_manifest_sha256": "eb510b66dd28f48d63dac7d2c42c7b8c9c871df54ffaa2486f1b68ca7c71b1f3",
+      "integration_checks": 51,
+      "lifecycle_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-receipt_code_drift-lifecycle_archive.jsonl",
+        "sha256": "ff015aa42fc2276d3b94b66800fd0552b6f0dd597a3ce961df9b005b15a90288"
+      },
+      "name": "receipt_code_drift",
+      "pending_attempt": 0,
+      "receipt_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-receipt_code_drift-receipt_archive.jsonl",
+        "sha256": "a459216fbe8a7cf1ff4cdf67919eff51baadb97cdf2bf00e945d9415e60d3da3"
+      },
+      "receipt_status": "incomplete_no_resume",
+      "recorded_attempts": 1,
+      "report": "receipt-acceptance",
+      "tls_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-receipt_code_drift-tls_archive.jsonl",
+        "sha256": "a59d008b8d281451f5c8bc5034cc1d91034a5bd2d1ce00002f98723ecd1a4a33"
+      },
+      "tls_status": "complete"
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-receipt_storage_drift-attempt_archive.jsonl",
+        "sha256": "cc03f10e18ebbf502fda5f0c69e1429b323706b6a8e1d1e6de34e638d53554d2"
+      },
+      "attempt_outcome_recorded": false,
+      "attempt_status": "incomplete_no_resume",
+      "binding_sha256": "662c4f6127a87e9521d06bc54b0cccf46f332939a72b94d81194c2ed305eb93a",
+      "gateway_manifest_sha256": "eb510b66dd28f48d63dac7d2c42c7b8c9c871df54ffaa2486f1b68ca7c71b1f3",
+      "integration_checks": 51,
+      "lifecycle_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-receipt_storage_drift-lifecycle_archive.jsonl",
+        "sha256": "f9915480d147380e8dac957e357003ed5f262bcd2115d0754b315b5081ec2fcb"
+      },
+      "name": "receipt_storage_drift",
+      "pending_attempt": 0,
+      "receipt_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-receipt_storage_drift-receipt_archive.jsonl",
+        "sha256": "eae71cd30a3769169d065713910c3c86b9494de60794812b6cb404de04f14eb0"
+      },
+      "receipt_status": "incomplete_no_resume",
+      "recorded_attempts": 1,
+      "report": "receipt-acceptance",
+      "tls_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/receipt-acceptance-receipt_storage_drift-tls_archive.jsonl",
+        "sha256": "9a10a1aaa0ff469ea7b31fd27ec6ab4ab459409f56396b6c925b70080495baf1"
+      },
+      "tls_status": "complete"
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/tls-regression-tls_success-attempt_archive.jsonl",
+        "sha256": "f630f9b33feff3c6bff65d52fe6b6d2b373f9be9db7d3959fd0e6da426979a4d"
+      },
+      "attempt_outcome_recorded": null,
+      "attempt_status": "closed",
+      "binding_sha256": "b7d1df8317d77e2d722778f201742d28f0b4c9a84645ab99c3bccc67779bc108",
+      "gateway_manifest_sha256": "eb510b66dd28f48d63dac7d2c42c7b8c9c871df54ffaa2486f1b68ca7c71b1f3",
+      "integration_checks": 49,
+      "lifecycle_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/tls-regression-tls_success-lifecycle_archive.jsonl",
+        "sha256": "5dc521416789370b576731198bb32a1e7b2f67e0a2d9648ac87b3268b1d53b10"
+      },
+      "name": "tls_success",
+      "pending_attempt": null,
+      "receipt_status": null,
+      "recorded_attempts": 1,
+      "report": "tls-regression",
+      "tls_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/tls-regression-tls_success-tls_archive.jsonl",
+        "sha256": "0e2f4bb61308e5980112e31c6e18c6d3c608fcd373c8053c8561a805c390227b"
+      },
+      "tls_status": "complete"
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/tls-regression-tls_slow_body-attempt_archive.jsonl",
+        "sha256": "8bad0b472233fe58e43475163040920f319597545758c1a82f46a8acd63e884f"
+      },
+      "attempt_outcome_recorded": null,
+      "attempt_status": "closed",
+      "binding_sha256": "854b8a03747d1ae73425fe6605caa2f90ab93c115717510d570b9e6b21844182",
+      "gateway_manifest_sha256": "eb510b66dd28f48d63dac7d2c42c7b8c9c871df54ffaa2486f1b68ca7c71b1f3",
+      "integration_checks": 49,
+      "lifecycle_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/tls-regression-tls_slow_body-lifecycle_archive.jsonl",
+        "sha256": "c738ea09e6ffceda68941a73b2ecffd38b56b82a695eca8f6cb0476911ff4fad"
+      },
+      "name": "tls_slow_body",
+      "pending_attempt": null,
+      "receipt_status": null,
+      "recorded_attempts": 1,
+      "report": "tls-regression",
+      "tls_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/tls-regression-tls_slow_body-tls_archive.jsonl",
+        "sha256": "ff0fe5e20c927632dfbab46a54a67ad369711044b3c13731c39a4348efc88b41"
+      },
+      "tls_status": "complete"
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/tls-regression-tls_bad_certificate-attempt_archive.jsonl",
+        "sha256": "8e8030198955da0ffecddd3a8fa8f52dfd6f9c7b4d70d3954d95f40dfecbde8c"
+      },
+      "attempt_outcome_recorded": null,
+      "attempt_status": "closed",
+      "binding_sha256": "d38924ba6e18ef87ef5bd899d307d3383f9184090d488c806e518b4b7a1f4b78",
+      "gateway_manifest_sha256": "eb510b66dd28f48d63dac7d2c42c7b8c9c871df54ffaa2486f1b68ca7c71b1f3",
+      "integration_checks": 49,
+      "lifecycle_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/tls-regression-tls_bad_certificate-lifecycle_archive.jsonl",
+        "sha256": "0a34d50b22d1bc483fcc4ed39b0b8323d548380d0bef0ffd858abe31db4912dc"
+      },
+      "name": "tls_bad_certificate",
+      "pending_attempt": 0,
+      "receipt_status": null,
+      "recorded_attempts": 1,
+      "report": "tls-regression",
+      "tls_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/tls-regression-tls_bad_certificate-tls_archive.jsonl",
+        "sha256": "26f313e6150cebdd3162646111028952b7c61306d0781f0cded6e6bd286df6a9"
+      },
+      "tls_status": "incomplete_no_resume"
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/tls-regression-tls_duplicate_weight-attempt_archive.jsonl",
+        "sha256": "7d395716edda637644a123b745f678004a9b87316b5f3a5a2227569fa5c325f3"
+      },
+      "attempt_outcome_recorded": null,
+      "attempt_status": "closed",
+      "binding_sha256": "0f8b4b7bb189207bcf7e09877b3039bb5dd55c531a1e27585152b1b67892c273",
+      "gateway_manifest_sha256": "eb510b66dd28f48d63dac7d2c42c7b8c9c871df54ffaa2486f1b68ca7c71b1f3",
+      "integration_checks": 49,
+      "lifecycle_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/tls-regression-tls_duplicate_weight-lifecycle_archive.jsonl",
+        "sha256": "5c6d97f7d67ee1920c64261779094fd72134665f9e26d8044461d3705f8a3f32"
+      },
+      "name": "tls_duplicate_weight",
+      "pending_attempt": 0,
+      "receipt_status": null,
+      "recorded_attempts": 1,
+      "report": "tls-regression",
+      "tls_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/tls-regression-tls_duplicate_weight-tls_archive.jsonl",
+        "sha256": "75434bb5db951e7d7161221803ef3b55177f103659b3b14d41958a12d56783e3"
+      },
+      "tls_status": "incomplete_no_resume"
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/tls-regression-tls_truncated-attempt_archive.jsonl",
+        "sha256": "15bacd54369d03a2a03847187609ab247226d3f904566e6f764ab13bdf3af89a"
+      },
+      "attempt_outcome_recorded": null,
+      "attempt_status": "closed",
+      "binding_sha256": "5a21652dcd7663417facd93f024a1a6e8121719ce5c189b02d5c17881a3812bc",
+      "gateway_manifest_sha256": "eb510b66dd28f48d63dac7d2c42c7b8c9c871df54ffaa2486f1b68ca7c71b1f3",
+      "integration_checks": 49,
+      "lifecycle_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/tls-regression-tls_truncated-lifecycle_archive.jsonl",
+        "sha256": "22f0f8897daabbfc068c6cb27b78ac80c9cb7f4875efd0106191f0bf0c78370a"
+      },
+      "name": "tls_truncated",
+      "pending_attempt": 0,
+      "receipt_status": null,
+      "recorded_attempts": 1,
+      "report": "tls-regression",
+      "tls_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/tls-regression-tls_truncated-tls_archive.jsonl",
+        "sha256": "eeb3ee38bb89b0ac0058cbf2d8108ef80605d7ae3cae39c04795c6d382fd273d"
+      },
+      "tls_status": "incomplete_no_resume"
+    },
+    {
+      "attempt_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/tls-regression-tls_crash-attempt_archive.jsonl",
+        "sha256": "b1f09fbfae5cf357dc978b0fe26e4c0c4dcf65980bdf81015a4a31733f5e43a4"
+      },
+      "attempt_outcome_recorded": null,
+      "attempt_status": "incomplete_no_resume",
+      "binding_sha256": "ca2045cca131d755383201f1710c770949330fec04e3a7f870d2ffd1d95e9dd0",
+      "gateway_manifest_sha256": "eb510b66dd28f48d63dac7d2c42c7b8c9c871df54ffaa2486f1b68ca7c71b1f3",
+      "integration_checks": 50,
+      "lifecycle_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/tls-regression-tls_crash-lifecycle_archive.jsonl",
+        "sha256": "ddaaeb06c2c8238c5eb42ae67581ba0631e5eb5370a482f9a9b129ea16bbcff3"
+      },
+      "name": "tls_crash",
+      "pending_attempt": 0,
+      "receipt_status": null,
+      "recorded_attempts": 1,
+      "report": "tls-regression",
+      "tls_archive": {
+        "path": "data/installed-tls-receipt-2026-09-17/tls-regression-tls_crash-tls_archive.jsonl",
+        "sha256": "b662e1be3ccac304fdfd80ef9ef8daa8bd8c01726e5b04496fffe42e8ec1e1ab"
+      },
+      "tls_status": "incomplete_no_resume"
+    }
+  ],
+  "schema_version": "portfolio.installed_tls_receipt_acceptance.v1",
+  "successful_fixture_requests_per_receipt_session": 1,
+  "tls_regression_scenarios": 6,
+  "trading_admitted": false,
+  "transfer_deadline_seconds": 5,
+  "upstream_touched": false,
+  "venue_requests": 0
+}

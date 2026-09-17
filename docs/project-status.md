@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-17
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Installed dedicated-UID/root IPC now consumes the fixed 20-operation local classification sequence before acknowledging each request. Six actual IPC scenarios and eleven TLS/echo regressions pass; IPC grants no egress permission. Next connect the actual native collector and gateway-owned TLS/WS transport through this boundary. Actual all-caller coverage, provider rate/clock qualification, host rollout and trading remain blocked; consumed scopes stay consumed.
+- **Current objective**: The installed fixture now delivers one gateway-owned HTTPS response and its original receive clocks to the dedicated UID over authenticated IPC. Kernel permission is revoked before receipt delivery; failed acknowledgement retains the pending attempt. Next integrate the full native 20-operation collector and concurrent TLS/WS traffic. Actual all-caller coverage, provider rate/clock qualification, host rollout and trading remain blocked; consumed scopes stay consumed.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -258,7 +258,8 @@ Detailed depth implementation, retained hashes and next review:
 [fixed installation/UID gateway integration](progress/portfolio-egress-installed-gateway-2026-09-17.md),
 [fixed HTTPS request/receipt integration](progress/portfolio-egress-gateway-tls-2026-09-17.md),
 [complete local joint attempt accounting](progress/portfolio-joint-egress-accounting-2026-09-17.md),
-and [installed multi-operation IPC custody](progress/portfolio-installed-joint-ipc-2026-09-17.md).
+[installed multi-operation IPC custody](progress/portfolio-installed-joint-ipc-2026-09-17.md),
+and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt-2026-09-17.md).
 
 ## Next Steps
 
@@ -313,8 +314,10 @@ and [installed multi-operation IPC custody](progress/portfolio-installed-joint-i
    now consumes each operation before transport and links outcomes to original TLS
    receipts; failed attempts never refund. [Installed multi-operation IPC custody](progress/portfolio-installed-joint-ipc-2026-09-17.md)
    now authenticates the fixed token sequence and root-owned consumption without
-   granting egress. Next connect actual native request/receipt bytes and gateway-owned
-   TLS/WS sockets through that boundary and the expiring kernel lifecycle.
+   granting egress. [Installed HTTPS response delivery](progress/portfolio-installed-tls-receipt-2026-09-17.md)
+   now carries one fixed response and original clocks to the isolated UID after kernel
+   revocation. Next integrate the full native collector, signed selectors, same-run
+   routes and concurrent TLS/WS traffic through the expiring kernel lifecycle.
    Sampling alone never proves coverage.
    Actual authority policy, fresh rate/clock consumption and provider-charge
    resolution must precede any separately reviewed real joint dispatch.
@@ -360,10 +363,11 @@ and [installed multi-operation IPC custody](progress/portfolio-installed-joint-i
 
 ## Latest Verification
 
-- Installed joint IPC: **28 new / 790 distinct focused tests pass**; six actual IPC
-  scenarios, six TLS and five echo regressions also pass. Normal IPC consumes 20 operations; midpoint faults retain index 9 pending.
-  Kernel permission stays absent. Two fresh system-Python replay sets reproduce all
-  17 originals. [Acceptance and exact Python checks](progress/portfolio-installed-joint-ipc-2026-09-17.md).
+- Installed HTTPS response delivery: **38 new / 828 focused tests pass**; details
+  are recorded in [acceptance](progress/portfolio-installed-tls-receipt-2026-09-17.md).
+  Ten actual response-delivery scenarios and seventeen TLS/IPC/echo regressions pass.
+  Two fresh system-Python replays reproduce all 27 originals. Kernel permission is
+  revoked before delivery; missing confirmation retains the consumed pending attempt.
 - The complete ordinary-process native joint collector retains its prior 20-operation /
   16-GET / 448-weight acceptance and original receipt clocks. Connecting that collector
   to installed gateway-owned sockets remains pending. Earlier details are archived in

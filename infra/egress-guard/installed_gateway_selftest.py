@@ -22,6 +22,12 @@ TLS_SCENARIOS = (
     "tls_truncated",
     "tls_crash",
 )
+RECEIPT_SCENARIOS = TLS_SCENARIOS + (
+    "receipt_child_death",
+    "receipt_controller_crash",
+    "receipt_code_drift",
+    "receipt_storage_drift",
+)
 IPC_SCENARIOS = (
     "ipc_success",
     "ipc_child_death",
@@ -53,7 +59,7 @@ def denied(name, operation):
         if isinstance(result,int): os.close(result)
         raise RuntimeError('unexpected_permission:'+name)
 code=Path('/usr/local/lib/trader-egress')
-for name in ('installed_gateway.py','gateway_tls.py','gateway_joint_ipc.py','ledger_gateway.py','selftest.py','portfolio_rate_evidence.py','portfolio_tls_provenance.py','portfolio_egress_ledger.py'):
+for name in ('installed_gateway.py','gateway_tls.py','gateway_joint_ipc.py','gateway_tls_receipt.py','ledger_gateway.py','selftest.py','portfolio_rate_evidence.py','portfolio_tls_provenance.py','portfolio_egress_ledger.py'):
     path=code/name
     assert path.read_bytes()
     denied('write:'+name,lambda:os.open(path,os.O_WRONLY))
@@ -124,14 +130,24 @@ with socket.socket() as listener:
 def worker(payload):
     base = load(payload["base_source"])
     base["require_isolation"](payload["original"])
-    tls = payload.get("tls_profile", False)
+    receipt = payload.get("tls_receipt_profile", False)
+    tls = payload.get("tls_profile", False) or receipt
     ipc = payload.get("joint_ipc_profile", False)
     if (
-        type(tls) is not bool
+        type(receipt) is not bool
+        or type(tls) is not bool
         or type(ipc) is not bool
         or (tls and ipc)
         or payload["scenario"]
-        not in (IPC_SCENARIOS if ipc else TLS_SCENARIOS if tls else SCENARIOS)
+        not in (
+            IPC_SCENARIOS
+            if ipc
+            else RECEIPT_SCENARIOS
+            if receipt
+            else TLS_SCENARIOS
+            if tls
+            else SCENARIOS
+        )
     ):
         raise ValueError("unknown_fixture_scenario")
     # The existing pinned installer and its 40 checks run before extension staging.
@@ -242,7 +258,7 @@ def worker(payload):
             "/usr/bin/python3",
             "-I",
             entry["CODE"] + "/installed_gateway.py",
-            "--tls-fixture" if tls else "--fixture",
+            "--tls-receipt-fixture" if receipt else "--tls-fixture" if tls else "--fixture",
         ]
         controller = subprocess.Popen(
             command,
@@ -336,7 +352,57 @@ def worker(payload):
             def restore():
                 target.chmod(0o700)
 
-        if scenario in {"controller_crash", "tls_crash"}:
+        late_receipt = scenario.startswith("receipt_")
+        if late_receipt:
+            controller.stdin.write("continue\n")
+            controller.stdin.flush()
+            for stage in ("tls_headers_persisted", "receipt_prepared"):
+                if json.loads(controller.stdout.readline()) != {"stage": stage}:
+                    raise RuntimeError("receipt_barrier_missing")
+            rows = json.loads(
+                network_run(nft, "-j", "list", "set", "inet", "fixture_ledger_gateway", "permits")
+            )
+            if any(row.get("set", {}).get("elem") for row in rows["nftables"]):
+                raise RuntimeError("receipt_wait_retained_permission")
+            checks.append("kernel_revoked_before_receipt_wait")
+            if scenario == "receipt_child_death":
+                child_fd = os.pidfd_open(identity["pid"])
+                try:
+                    signal.pidfd_send_signal(child_fd, signal.SIGKILL)
+                    if not select.select([child_fd], [], [], 2)[0]:
+                        raise RuntimeError("receipt_child_not_dead")
+                finally:
+                    os.close(child_fd)
+            elif scenario == "receipt_code_drift":
+                target = Path(entry["CODE"]) / "gateway_tls_receipt.py"
+                original = target.read_bytes()
+                target.write_bytes(original + b"\n# fixture drift\n")
+
+                def restore():
+                    target.write_bytes(original)
+            elif scenario == "receipt_storage_drift":
+                target = Path(entry["STORAGE"])
+                target.chmod(0o755)
+
+                def restore():
+                    target.chmod(0o700)
+
+        if scenario == "receipt_controller_crash":
+            orphan_fd = os.pidfd_open(identity["pid"])
+            controller.kill()
+            controller.communicate(timeout=5)
+            try:
+                if (
+                    controller.returncode != -signal.SIGKILL
+                    or not select.select([orphan_fd], [], [], 5)[0]
+                ):
+                    raise RuntimeError("receipt_controller_or_orphan_survived")
+                os.waitpid(identity["pid"], 0)
+            finally:
+                os.close(orphan_fd)
+            terminal = {"status": "controller_sigkill", "revoked": True}
+            checks.append("receipt_controller_death_exits_child_with_no_kernel_permit")
+        elif scenario in {"controller_crash", "tls_crash"}:
             if tls:
                 controller.stdin.write("continue\n")
                 controller.stdin.flush()
@@ -355,7 +421,9 @@ def worker(payload):
             terminal = {"status": "controller_sigkill", "revoked": None}
             checks.append("controller_death_retains_permit_until_kernel_expiry")
         else:
-            stdout, stderr = controller.communicate("continue\n", timeout=10)
+            stdout, stderr = controller.communicate(
+                "continue\ncontinue\n" if receipt and not late_receipt else "continue\n", timeout=10
+            )
             if controller.returncode:
                 raise RuntimeError("installed_controller_failed:" + stderr[-3000:])
             messages = [json.loads(line) for line in stdout.splitlines()]
@@ -364,13 +432,17 @@ def worker(payload):
                 if tls and scenario != "tls_bad_certificate"
                 else []
             )
+            if receipt and scenario in {"tls_success", "tls_slow_body"}:
+                expected_progress.append({"stage": "receipt_prepared"})
+            if late_receipt:
+                expected_progress = []
             if not messages or messages[:-1] != expected_progress:
                 raise RuntimeError("unexpected_controller_progress")
             terminal = messages[-1]
             if (
                 terminal["status"]
                 != (
-                    "fixture_tls_succeeded"
+                    ("fixture_receipt_succeeded" if receipt else "fixture_tls_succeeded")
                     if scenario in {"tls_success", "tls_slow_body"}
                     else "fixture_echo_succeeded"
                     if scenario == "success"
@@ -433,7 +505,9 @@ def worker(payload):
                 provenance=sys.modules["apps.strategies_nautilus.portfolio_tls_provenance"],
                 rates=sys.modules["apps.strategies_nautilus.portfolio_rate_evidence"],
             )
-            if (replay["status"] == "complete") != (scenario in {"tls_success", "tls_slow_body"}):
+            if (replay["status"] == "complete") != (
+                scenario in {"tls_success", "tls_slow_body"} or late_receipt
+            ):
                 raise RuntimeError("tls_replay_completion_mismatch")
             if scenario == "tls_slow_body" and replay["header_age_at_body_ns"] < 1_000_000_000:
                 raise RuntimeError("tls_header_receipt_refreshed")
@@ -451,6 +525,29 @@ def worker(payload):
                 "tls_trust_pem": trust.decode(),
                 "tls_peer": peer_report,
             }
+        if receipt and (scope / "receipt.jsonl").exists():
+            receipt_code = load(payload["sources"]["gateway_tls_receipt.py"])
+            receipt_raw = (scope / "receipt.jsonl").read_bytes()
+            receipt_replay = receipt_code["replay"](
+                receipt_raw,
+                expected_sha256=base["sha"](receipt_raw),
+                tls_raw=raw_tls,
+                attempts=attempts,
+                lifecycle=lifecycle,
+                trust_sha256=base["sha"](trust),
+                ledger_module=ledger_module,
+                gateway_module=gateway,
+                transport=transport,
+                provenance=sys.modules["apps.strategies_nautilus.portfolio_tls_provenance"],
+                rates=sys.modules["apps.strategies_nautilus.portfolio_rate_evidence"],
+                binding_sha256=ready["binding_sha256"],
+            )
+            if (receipt_replay["status"] == "acknowledged") != (
+                scenario in {"tls_success", "tls_slow_body"}
+            ):
+                raise RuntimeError("receipt_acknowledgement_mismatch")
+            tls_result.update(receipt_archive=receipt_raw.decode(), receipt_replay=receipt_replay)
+            checks.append("authenticated_consumer_receipt_replays_with_original_tls_clocks")
         restarted = subprocess.run(
             command,
             input="continue\n",
@@ -472,6 +569,12 @@ def worker(payload):
             raise RuntimeError("restart_changed_original_journals")
         if tls and (scope / "tls.jsonl").read_bytes() != raw_tls:
             raise RuntimeError("restart_changed_tls_journal")
+        if (
+            receipt
+            and (scope / "receipt.jsonl").exists()
+            and (scope / "receipt.jsonl").read_bytes() != receipt_raw
+        ):
+            raise RuntimeError("restart_changed_receipt_journal")
         checks.append("fresh_installed_process_refuses_scope_without_changing_journals")
         if (
             Path(entry["STORAGE"] + "/consumed.json").read_bytes()
@@ -745,6 +848,7 @@ def main(argv=None):
     parser.add_argument("--report", required=True, type=Path)
     profiles = parser.add_mutually_exclusive_group()
     profiles.add_argument("--tls-profile", action="store_true")
+    profiles.add_argument("--tls-receipt-profile", action="store_true")
     profiles.add_argument("--joint-ipc-profile", action="store_true")
     args = parser.parse_args(argv)
     if os.geteuid() == 0:
@@ -776,6 +880,7 @@ def main(argv=None):
         payload = {
             "source": Path(__file__).read_text(),
             "tls_profile": args.tls_profile,
+            "tls_receipt_profile": args.tls_receipt_profile,
             "joint_ipc_profile": args.joint_ipc_profile,
             "base_source": base_source,
             "installer": installer.decode(),
@@ -790,6 +895,8 @@ def main(argv=None):
         for scenario in (
             IPC_SCENARIOS
             if args.joint_ipc_profile
+            else RECEIPT_SCENARIOS
+            if args.tls_receipt_profile
             else TLS_SCENARIOS
             if args.tls_profile
             else SCENARIOS
@@ -847,6 +954,7 @@ def main(argv=None):
             "schema_version": "portfolio.installed_gateway_acceptance.v1",
             "status": "passed",
             "tls_profile": args.tls_profile,
+            "tls_receipt_profile": args.tls_receipt_profile,
             "joint_ipc_profile": args.joint_ipc_profile,
             "scenarios": reports,
             "source_sha256": payload["source_sha256"],

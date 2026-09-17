@@ -18,13 +18,14 @@ FILES = (
     "installed_gateway.py",
     "gateway_tls.py",
     "gateway_joint_ipc.py",
+    "gateway_tls_receipt.py",
     "ledger_gateway.py",
     "selftest.py",
     "portfolio_rate_evidence.py",
     "portfolio_tls_provenance.py",
     "portfolio_egress_ledger.py",
 )
-PROFILE = "portfolio.installed_gateway_fixture.v3"
+PROFILE = "portfolio.installed_gateway_fixture.v4"
 
 
 def digest(raw):
@@ -171,7 +172,7 @@ class InstalledBinding:
             raise
 
 
-def run_controller(*, tls=False):
+def run_controller(*, tls=False, receipt=False):
     authority = installation()
     collector = ledger = lifecycle = gateway = None
     try:
@@ -188,7 +189,12 @@ def run_controller(*, tls=False):
             trust = os.pread(fd, 65537, 0)
             authority.verify()
         launcher = load(authority.source("collector_launcher.py"))
-        collector = launcher["FixtureCollector"].from_installation(authority)
+        receiver = load(sources.source("gateway_tls_receipt.py")) if receipt else None
+        collector = (
+            receiver["launch"](authority, sources, launcher)
+            if receipt
+            else launcher["FixtureCollector"].from_installation(authority)
+        )
         binding = InstalledBinding(
             authority,
             sources,
@@ -242,6 +248,39 @@ def run_controller(*, tls=False):
         if tls:
             transport = load(sources.source("gateway_tls.py"))
 
+            def completed(raw):
+                # Close the kernel window before waiting for the consumer. The
+                # attempt stays pending until the authenticated payload receipt.
+                gateway._revoke()
+                provenance = sys.modules["apps.strategies_nautilus.portfolio_tls_provenance"]
+                report = transport["replay"](
+                    raw,
+                    expected_sha256=digest(raw),
+                    attempts=ledger.expected,
+                    lifecycle=lifecycle.expected,
+                    binding_sha256=binding.pin,
+                    trust_sha256=digest(trust),
+                    ledger_module=module,
+                    gateway_module=gateway_code,
+                    provenance=provenance,
+                    rates=sys.modules["apps.strategies_nautilus.portfolio_rate_evidence"],
+                )
+                payload = receiver["payload_from_tls"](raw, report)
+
+                def prepared():
+                    print(json.dumps({"stage": "receipt_prepared"}), flush=True)
+                    if sys.stdin.readline() != "continue\n":
+                        raise ValueError("fixture_parent_release_required")
+
+                return receiver["deliver"](
+                    collector,
+                    ledger,
+                    lifecycle,
+                    payload,
+                    provenance,
+                    on_prepared=prepared,
+                )
+
             def send():
                 return transport["capture"](
                     ledger,
@@ -249,6 +288,7 @@ def run_controller(*, tls=False):
                     trust,
                     sys.modules["apps.strategies_nautilus.portfolio_tls_provenance"],
                     sys.modules["apps.strategies_nautilus.portfolio_rate_evidence"],
+                    on_complete=completed if receipt else None,
                     on_headers=lambda: print(
                         json.dumps({"stage": "tls_headers_persisted"}), flush=True
                     ),
@@ -257,7 +297,7 @@ def run_controller(*, tls=False):
         gateway = gateway_code["FixtureLedgerGateway"](
             ledger,
             lifecycle=lifecycle,
-            authorize=collector.observe,
+            authorize=(lambda: receiver["authorize"](collector)) if receipt else collector.observe,
             grant=grant,
             send=send,
             revoke=revoke,
@@ -267,7 +307,13 @@ def run_controller(*, tls=False):
         except (OSError, ValueError, RuntimeError) as exc:
             outcome = {"status": "refused", "reason": type(exc).__name__}
         else:
-            outcome = {"status": "fixture_tls_succeeded" if tls else "fixture_echo_succeeded"}
+            outcome = {
+                "status": "fixture_receipt_succeeded"
+                if receipt
+                else "fixture_tls_succeeded"
+                if tls
+                else "fixture_echo_succeeded"
+            }
         try:
             gateway.close()
         except (OSError, ValueError, RuntimeError) as exc:
@@ -288,13 +334,19 @@ def run_controller(*, tls=False):
                     ledger.close()
         if collector is not None:
             with suppress(Exception):
-                collector.close()
+                receiver["close"](collector) if receipt else collector.close()
         authority.close()
 
 
 def main():
     if (
-        sys.argv[1:] not in (["--fixture"], ["--tls-fixture"], ["--joint-ipc-fixture"])
+        sys.argv[1:]
+        not in (
+            ["--fixture"],
+            ["--tls-fixture"],
+            ["--joint-ipc-fixture"],
+            ["--tls-receipt-fixture"],
+        )
         or not sys.flags.isolated
         or os.path.abspath(__file__) != CODE + "/installed_gateway.py"
     ):
@@ -310,7 +362,10 @@ def main():
         finally:
             authority.close()
     else:
-        run_controller(tls=sys.argv[1:] == ["--tls-fixture"])
+        run_controller(
+            tls=sys.argv[1:] in (["--tls-fixture"], ["--tls-receipt-fixture"]),
+            receipt=sys.argv[1:] == ["--tls-receipt-fixture"],
+        )
     return 0
 
 

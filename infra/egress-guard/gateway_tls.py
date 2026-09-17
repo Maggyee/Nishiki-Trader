@@ -21,7 +21,7 @@ LIMIT = 2 * 1024 * 1024
 BODY_LIMIT = 65536
 
 
-def capture(ledger, lifecycle, trust, provenance, rates, *, on_headers=None):
+def capture(ledger, lifecycle, trust, provenance, rates, *, on_headers=None, on_complete=None):
     """No caller-selected destination/request, retry, socket handoff or credentials."""
     parsed, context = provenance._selection(ENDPOINT, "rest", trust, provenance.digest(trust))
     ledger.checkpoint()
@@ -172,6 +172,8 @@ def capture(ledger, lifecycle, trust, provenance, rates, *, on_headers=None):
         if reader is not None:
             os.close(reader)
         os.close(journal.fd)
+    if on_complete is not None:
+        return on_complete(expected)
     return True
 
 
