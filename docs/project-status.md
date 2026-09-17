@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-17
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Prospective local egress attempt accounting now persists preparations, retains failures/uncertainty and stops on observed custody or clock/storage drift. Pinned offline replay and crash acceptance pass. This is local bookkeeping, not complete shared-egress accounting or dispatch enforcement. Next integrate it with the isolated controlled gateway and authenticate callers or block unrecorded traffic. The actual root binding remains the prior authority input; consumed bootstrap, stale rates and joint/trading blocks remain.
+- **Current objective**: The isolated gateway now consumes the prospective ledger before granting a marked local socket. Authenticated fixture-child identity, unrecorded traffic denial and managed stop/drift/fsync refusal pass actual kernel acceptance. Next integrate fixed installation/dedicated UID and durable kernel lifecycle, including controller crash/expiry. This is not real shared-egress coverage or a deployed collector; consumed bootstrap, stale rates and joint/trading blocks remain.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -252,7 +252,8 @@ Detailed depth implementation, retained hashes and next review:
 [completed actual bootstrap](progress/portfolio-egress-bootstrap-result-2026-09-16.md),
 [original bootstrap evidence in joint admission](progress/portfolio-bootstrap-joint-review-2026-09-16.md),
 [actual local custody binding](progress/portfolio-local-authority-binding-2026-09-16.md),
-and [local egress attempt accounting](progress/portfolio-egress-attempt-ledger-2026-09-17.md).
+[local egress attempt accounting](progress/portfolio-egress-attempt-ledger-2026-09-17.md),
+and [isolated ledger gateway integration](progress/portfolio-egress-ledger-gateway-2026-09-17.md).
 
 ## Next Steps
 
@@ -291,9 +292,12 @@ and [local egress attempt accounting](progress/portfolio-egress-attempt-ledger-2
    refusal. Held-file/code/account/boot/network drift closes the binding.
    [Local attempt accounting](progress/portfolio-egress-attempt-ledger-2026-09-17.md)
    now retains prepared/failed/uncertain attempts and explicit observed gaps;
-   borrowed binding checks bracket preparation. Next wire that ledger into the
-   isolated controlled gateway, authenticate callers or block unrecorded traffic,
-   and test send-versus-revocation races. Sampling alone never proves coverage.
+   borrowed binding checks bracket preparation. The
+   [isolated gateway](progress/portfolio-egress-ledger-gateway-2026-09-17.md) now
+   owns its marked socket, verifies fixture-child credentials and blocks unrecorded
+   output/forwarding. Managed stop and drift/fsync refusal pass kernel tests.
+   Next integrate fixed installation/dedicated UID and durable kernel lifecycle,
+   then test controller crash/expiry. Sampling alone never proves coverage.
    Actual authority policy, fresh rate/clock consumption and provider-charge
    resolution must precede any separately reviewed real joint dispatch.
    Preserve the consumed scope; no retry, second IPv4 or extended interruption
@@ -338,13 +342,13 @@ and [local egress attempt accounting](progress/portfolio-egress-attempt-ledger-2
 
 ## Latest Verification
 
-- Local attempt ledger: **40 new / 239 focused tests pass**. Durable preparations
-  survive SIGKILL as uncertain; failed fsync, clock/storage drift and actual held
-  binding fixture changes stop further preparation. Two fresh synthetic archive
-  replays are identical. Unknown total/other-caller bounds remain null. No venue
-  requests, privileged host/network changes or live-path/upstream edits. Full
-  application and unchanged kernel harnesses were not rerun; details and pins:
-  [acceptance](progress/portfolio-egress-attempt-ledger-2026-09-17.md).
+- Ledger gateway: **22 new / 303 focused tests and 21 kernel checks pass**.
+  Six local scenarios retain preparation before sending and deny unrecorded traffic;
+  managed stop, observed drift and fsync failures stop further dispatch. Twelve
+  fresh replays (two per scenario) match the retained originals. No venue/host
+  network changes or upstream/live-path edits. Older kernel scripts and full
+  application regression were not rerun. Details and pins:
+  [gateway acceptance](progress/portfolio-egress-ledger-gateway-2026-09-17.md).
 
 - Bootstrap-to-joint integration: **20 new / 234 focused tests pass**. Two fresh
   reviews of the actual original artifacts are byte-identical and remain blocked.

@@ -22,6 +22,15 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the isolated gateway consuming the prospective ledger, read
+`docs/progress/portfolio-egress-ledger-gateway-2026-09-17.md` and its JSON.
+`infra/egress-guard/ledger_gateway.py` owns a fixed local socket, persists before
+mark permission, blocks unmarked/forwarded traffic and serializes terminal stop.
+The authenticated fixture child has no IP path or socket handoff. Six kernel
+scenarios replay independently; no real host/venue mode exists. Next integrate
+fixed installation/dedicated UID and durable kernel lifecycle/crash acceptance;
+actual all-caller coverage and joint/trading admission remain blocked.
+
 For prospective local egress attempt bookkeeping, read
 `docs/progress/portfolio-egress-attempt-ledger-2026-09-17.md` and its JSON.
 `portfolio_egress_ledger.py` under strategies_nautilus persists preparations before
@@ -29,7 +38,7 @@ returning and checks a borrowed binding before/after persistence. Failed/uncerta
 attempts stay consumed; original local scopes never reopen. The ops CLI only
 replays selected bytes. Caller labels are untrusted and sampled observations never
 prove complete coverage: all actual usage upper bounds/admission stay unknown/false.
-Next integrate the isolated controlled gateway, not a real maintenance window.
+The successor above integrates a disposable gateway; no real maintenance window follows.
 
 For the actual local custody/source-route binding, read
 `docs/progress/portfolio-local-authority-binding-2026-09-16.md` and its JSON.

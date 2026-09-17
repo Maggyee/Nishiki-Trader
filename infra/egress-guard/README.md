@@ -37,6 +37,24 @@ control destinations, fixture source spoof rejection, and removal of only the
 owned guard table while preserving the earlier policy. Failed probes must also
 increment the intended nft counter. Packet counts are not API request counts.
 
+## Prospective ledger gateway integration
+
+Run the separate rootless acceptance with no arguments:
+
+```bash
+/usr/bin/python3 -I infra/egress-guard/ledger_gateway.py
+```
+
+It reuses the attempt ledger and authenticated collector launcher inside fresh
+namespaces. The trusted gateway owns its fixed local echo socket; durable
+preparation precedes a five-second mark permission, while all forwarding and
+unmarked output remain denied. The child receives no socket/destination authority.
+Managed stop, observed drift and fsync failures prevent later sends and attempt
+terminal revocation. Six fixture scenarios export exact ledgers for offline replay.
+This is not an installed helper, HTTP collector or complete shared-IP accounting.
+Dedicated host UID/storage authority, durable kernel lifecycle and crash/expiry
+integration remain pending. See the [acceptance report](../../docs/progress/portfolio-egress-ledger-gateway-2026-09-17.md).
+
 ## Expiring permission and local dispatch supervision
 
 The additional IPv4-only fixture permits one bridge source/destination/port through
