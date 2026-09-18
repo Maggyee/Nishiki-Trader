@@ -1,0 +1,1534 @@
+{
+  "acceptance_scenarios": {
+    "account-acceptance-final": [
+      {
+        "checks": 65,
+        "name": "tls_success",
+        "status": "passed"
+      },
+      {
+        "checks": 65,
+        "name": "tls_slow_body",
+        "status": "passed"
+      },
+      {
+        "checks": 65,
+        "name": "native_precision",
+        "status": "passed"
+      },
+      {
+        "checks": 67,
+        "name": "receipt_runtime_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 63,
+        "name": "tls_bad_certificate",
+        "status": "passed"
+      },
+      {
+        "checks": 68,
+        "name": "receipt_child_stopped",
+        "status": "passed"
+      },
+      {
+        "checks": 67,
+        "name": "receipt_controller_crash",
+        "status": "passed"
+      }
+    ],
+    "echo-regression": [
+      {
+        "checks": 60,
+        "name": "success",
+        "status": "passed"
+      },
+      {
+        "checks": 60,
+        "name": "code_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 60,
+        "name": "account_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 60,
+        "name": "storage_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 61,
+        "name": "controller_crash",
+        "status": "passed"
+      }
+    ],
+    "ipc-regression": [
+      {
+        "checks": 63,
+        "name": "ipc_success",
+        "status": "passed"
+      },
+      {
+        "checks": 63,
+        "name": "ipc_child_death",
+        "status": "passed"
+      },
+      {
+        "checks": 63,
+        "name": "ipc_code_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 63,
+        "name": "ipc_account_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 63,
+        "name": "ipc_storage_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 64,
+        "name": "ipc_controller_crash",
+        "status": "passed"
+      }
+    ],
+    "native-receipt-regression": [
+      {
+        "checks": 64,
+        "name": "tls_success",
+        "status": "passed"
+      },
+      {
+        "checks": 64,
+        "name": "tls_slow_body",
+        "status": "passed"
+      },
+      {
+        "checks": 64,
+        "name": "native_precision",
+        "status": "passed"
+      },
+      {
+        "checks": 66,
+        "name": "receipt_runtime_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 63,
+        "name": "tls_bad_certificate",
+        "status": "passed"
+      },
+      {
+        "checks": 67,
+        "name": "receipt_child_stopped",
+        "status": "passed"
+      },
+      {
+        "checks": 66,
+        "name": "receipt_controller_crash",
+        "status": "passed"
+      }
+    ],
+    "native-requests-regression": [
+      {
+        "checks": 66,
+        "name": "ipc_success",
+        "status": "passed"
+      },
+      {
+        "checks": 66,
+        "name": "ipc_child_death",
+        "status": "passed"
+      },
+      {
+        "checks": 66,
+        "name": "ipc_code_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 66,
+        "name": "ipc_account_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 66,
+        "name": "ipc_storage_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 67,
+        "name": "ipc_controller_crash",
+        "status": "passed"
+      },
+      {
+        "checks": 67,
+        "name": "ipc_runtime_drift",
+        "status": "passed"
+      }
+    ],
+    "receipt-regression": [
+      {
+        "checks": 62,
+        "name": "tls_success",
+        "status": "passed"
+      },
+      {
+        "checks": 62,
+        "name": "tls_slow_body",
+        "status": "passed"
+      },
+      {
+        "checks": 61,
+        "name": "tls_bad_certificate",
+        "status": "passed"
+      },
+      {
+        "checks": 61,
+        "name": "tls_duplicate_weight",
+        "status": "passed"
+      },
+      {
+        "checks": 61,
+        "name": "tls_truncated",
+        "status": "passed"
+      },
+      {
+        "checks": 62,
+        "name": "tls_crash",
+        "status": "passed"
+      },
+      {
+        "checks": 63,
+        "name": "receipt_child_death",
+        "status": "passed"
+      },
+      {
+        "checks": 65,
+        "name": "receipt_child_stopped",
+        "status": "passed"
+      },
+      {
+        "checks": 64,
+        "name": "receipt_controller_crash",
+        "status": "passed"
+      },
+      {
+        "checks": 63,
+        "name": "receipt_code_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 63,
+        "name": "receipt_storage_drift",
+        "status": "passed"
+      }
+    ],
+    "tls-regression": [
+      {
+        "checks": 61,
+        "name": "tls_success",
+        "status": "passed"
+      },
+      {
+        "checks": 61,
+        "name": "tls_slow_body",
+        "status": "passed"
+      },
+      {
+        "checks": 61,
+        "name": "tls_bad_certificate",
+        "status": "passed"
+      },
+      {
+        "checks": 61,
+        "name": "tls_duplicate_weight",
+        "status": "passed"
+      },
+      {
+        "checks": 61,
+        "name": "tls_truncated",
+        "status": "passed"
+      },
+      {
+        "checks": 62,
+        "name": "tls_crash",
+        "status": "passed"
+      }
+    ]
+  },
+  "account_reports": {
+    "native_precision": {
+      "account_selection_sha256": "fe5d69b4c2f6ba273d4cf546fc30eefa51c80b28571f2872b23a7b613e6bead5",
+      "attempt_replay": {
+        "archive_sha256": "1b8741b61bcd41e503a8f729e00fd3b3f213d2f7a1a0d8002ef8a214ea692a7e",
+        "binding_sha256": "4bb7feadccab84455b489fe16ecf01fc97f9a0c114836a711bcd3ee51e3b1d3d",
+        "caller_labels_authenticated": false,
+        "complete_caller_coverage_verified": false,
+        "counts": [
+          {
+            "caller_label": "collector",
+            "connection_attempts": 0,
+            "documented_weight": 20,
+            "outcomes": {
+              "failed": 0,
+              "succeeded": 0,
+              "uncertain": 1
+            },
+            "prepared_attempts": 1,
+            "raw_requests": 1,
+            "role": "rest",
+            "unknown_charge_attempts": 0
+          }
+        ],
+        "coverage_between_observations_verified": false,
+        "future_enforcement_verified": false,
+        "history_after_last_observation_available": false,
+        "history_before_start_available": false,
+        "interval_boundary": "both_edges_inclusive_local_clock_not_provider_bucket",
+        "interval_monotonic_ns": [
+          6217841350720391,
+          6217842265236810
+        ],
+        "network_admitted": false,
+        "observed_gap": null,
+        "other_callers_upper_bound": null,
+        "pending_attempt": 0,
+        "recorded_attempts": 1,
+        "restart_allowed": false,
+        "schema_version": "portfolio.fixture_signed_account_tls_ledger.v1",
+        "status": "closed",
+        "trading_admitted": false,
+        "used_upper_bound": null
+      },
+      "binding_sha256": "4bb7feadccab84455b489fe16ecf01fc97f9a0c114836a711bcd3ee51e3b1d3d",
+      "receipt_replay": {
+        "archive_sha256": "91b3ca3628e8375c33a3e0be76964736cf36dbd93961582a1716b746d2d855fc",
+        "attempt_outcome_recorded": false,
+        "body_receipt": {
+          "monotonic_ns": 6217842050336304,
+          "seq": 4,
+          "utc_ns": 1789694749551127441
+        },
+        "header_receipt": {
+          "monotonic_ns": 6217842049663820,
+          "seq": 3,
+          "utc_ns": 1789694749550454077
+        },
+        "native_account_acknowledged": false,
+        "native_collector_integrated": false,
+        "native_result": {
+          "account_uid": 41001,
+          "balances": [
+            {
+              "currency": "BNB",
+              "free": "1.00000000",
+              "locked": "0.10000000",
+              "precision": 8,
+              "total": "1.10000000"
+            },
+            {
+              "currency": "BTC",
+              "free": "0.000000001",
+              "locked": "0.00100000",
+              "precision": 8,
+              "total": "0.001000001"
+            },
+            {
+              "currency": "ETH",
+              "free": "0.00000000",
+              "locked": "0.00000000",
+              "precision": 8,
+              "total": "0.00000000"
+            },
+            {
+              "currency": "USDT",
+              "free": "500.00000000",
+              "locked": "12.50000000",
+              "precision": 8,
+              "total": "512.50000000"
+            }
+          ],
+          "body_receipt": {
+            "monotonic_ns": 6217842050336304,
+            "seq": 4,
+            "utc_ns": 1789694749551127441
+          },
+          "header_receipt": {
+            "monotonic_ns": 6217842049663820,
+            "seq": 3,
+            "utc_ns": 1789694749550454077
+          },
+          "native_version": "1.226.0",
+          "profile": "portfolio.installed_native_account_receipt.v1",
+          "qualified_for_execution": false,
+          "tls_sha256": "1634eecdabb9f18062677457eee72a0a334d8adfd91b0dbadd24453c8703b5fc"
+        },
+        "network_admitted": false,
+        "payload_sha256": "3a96c87e5a5547dc8cadb1552fbcde3a27066d09ae109a5a20609740feb5fd64",
+        "restart_allowed": false,
+        "schema_version": "portfolio.installed_native_account_receipt.v1",
+        "status": "incomplete_no_resume",
+        "tls_sha256": "1634eecdabb9f18062677457eee72a0a334d8adfd91b0dbadd24453c8703b5fc",
+        "trading_admitted": false
+      },
+      "root_native_modules_loaded": false,
+      "tls_peer": {
+        "http_requests": 1,
+        "native_signature_verified": true,
+        "request_sha256": "4057b97775d4ea156991c9ed4a52ec3ba619cceb08f107d38cddc9a193611bba",
+        "tls_connections": 1
+      },
+      "tls_replay": {
+        "archive_sha256": "1634eecdabb9f18062677457eee72a0a334d8adfd91b0dbadd24453c8703b5fc",
+        "binding_sha256": "4bb7feadccab84455b489fe16ecf01fc97f9a0c114836a711bcd3ee51e3b1d3d",
+        "body_receipt": {
+          "monotonic_ns": 6217842050336304,
+          "seq": 4,
+          "utc_ns": 1789694749551127441
+        },
+        "complete_caller_coverage_verified": false,
+        "current_usage_upper_bound": null,
+        "header_age_at_body_ns": 672484,
+        "header_receipt": {
+          "monotonic_ns": 6217842049663820,
+          "seq": 3,
+          "utc_ns": 1789694749550454077
+        },
+        "http_request_prepared": true,
+        "last_record": "completed",
+        "network_admitted": false,
+        "prepared_tcp_connections": 1,
+        "provider_connection_charge": null,
+        "rate_evidence": {
+          "connection_charge": null,
+          "freshness_verified": false,
+          "limit": null,
+          "network_admitted": false,
+          "raw_requests_usage": null,
+          "schema_version": "portfolio.fixture_account_rate_receipt.v1",
+          "source_authenticated": false,
+          "used_weight_1m": 20
+        },
+        "restart_allowed": false,
+        "schema_version": "portfolio.installed_signed_account_tls.v1",
+        "source_authenticated_for_real_venue": false,
+        "status": "complete",
+        "trading_admitted": false
+      }
+    },
+    "receipt_child_stopped": {
+      "account_selection_sha256": "a5c2bc2d585301ca4fd73ecafdd9ada5e308c54d277610dc483c325604c7c120",
+      "attempt_replay": {
+        "archive_sha256": "06364c863697445b67eb173a60cf5cddd86d6c628fcfd77280b5b9759c63f897",
+        "binding_sha256": "2ae766badcd40cc4cebe5138ddf5dc61b81be2cd8c901dd4716685e47e2399a0",
+        "caller_labels_authenticated": false,
+        "complete_caller_coverage_verified": false,
+        "counts": [
+          {
+            "caller_label": "collector",
+            "connection_attempts": 0,
+            "documented_weight": 20,
+            "outcomes": {
+              "failed": 0,
+              "succeeded": 0,
+              "uncertain": 1
+            },
+            "prepared_attempts": 1,
+            "raw_requests": 1,
+            "role": "rest",
+            "unknown_charge_attempts": 0
+          }
+        ],
+        "coverage_between_observations_verified": false,
+        "future_enforcement_verified": false,
+        "history_after_last_observation_available": false,
+        "history_before_start_available": false,
+        "interval_boundary": "both_edges_inclusive_local_clock_not_provider_bucket",
+        "interval_monotonic_ns": [
+          6217863163263550,
+          6217868942894801
+        ],
+        "network_admitted": false,
+        "observed_gap": null,
+        "other_callers_upper_bound": null,
+        "pending_attempt": 0,
+        "recorded_attempts": 1,
+        "restart_allowed": false,
+        "schema_version": "portfolio.fixture_signed_account_tls_ledger.v1",
+        "status": "closed",
+        "trading_admitted": false,
+        "used_upper_bound": null
+      },
+      "binding_sha256": "2ae766badcd40cc4cebe5138ddf5dc61b81be2cd8c901dd4716685e47e2399a0",
+      "receipt_replay": {
+        "archive_sha256": "2dfe373afc26d17ceb23e43bd855f3d5b886357eb86255ab36a2a450b8239c4c",
+        "attempt_outcome_recorded": false,
+        "body_receipt": {
+          "monotonic_ns": 6217863846269981,
+          "seq": 4,
+          "utc_ns": 1789694771347061158
+        },
+        "header_receipt": {
+          "monotonic_ns": 6217863845577057,
+          "seq": 3,
+          "utc_ns": 1789694771346366874
+        },
+        "native_account_acknowledged": false,
+        "native_collector_integrated": false,
+        "native_result": {
+          "account_uid": 41001,
+          "balances": [
+            {
+              "currency": "BNB",
+              "free": "1.00000000",
+              "locked": "0.10000000",
+              "precision": 8,
+              "total": "1.10000000"
+            },
+            {
+              "currency": "BTC",
+              "free": "0.01000000",
+              "locked": "0.00100000",
+              "precision": 8,
+              "total": "0.01100000"
+            },
+            {
+              "currency": "ETH",
+              "free": "0.00000000",
+              "locked": "0.00000000",
+              "precision": 8,
+              "total": "0.00000000"
+            },
+            {
+              "currency": "USDT",
+              "free": "500.00000000",
+              "locked": "12.50000000",
+              "precision": 8,
+              "total": "512.50000000"
+            }
+          ],
+          "body_receipt": {
+            "monotonic_ns": 6217863846269981,
+            "seq": 4,
+            "utc_ns": 1789694771347061158
+          },
+          "header_receipt": {
+            "monotonic_ns": 6217863845577057,
+            "seq": 3,
+            "utc_ns": 1789694771346366874
+          },
+          "native_version": "1.226.0",
+          "profile": "portfolio.installed_native_account_receipt.v1",
+          "qualified_for_execution": false,
+          "tls_sha256": "3b0060fcc611bbbcf918a0d21781216c3613082d4911efbe8d5b35297b7d45be"
+        },
+        "network_admitted": false,
+        "payload_sha256": "60471a65c5a6002f2253c90be2df5e265728414f253f57e8ec3de44f110cfcfa",
+        "restart_allowed": false,
+        "schema_version": "portfolio.installed_native_account_receipt.v1",
+        "status": "incomplete_no_resume",
+        "tls_sha256": "3b0060fcc611bbbcf918a0d21781216c3613082d4911efbe8d5b35297b7d45be",
+        "trading_admitted": false
+      },
+      "root_native_modules_loaded": false,
+      "tls_peer": {
+        "http_requests": 1,
+        "native_signature_verified": true,
+        "request_sha256": "4ebc898e8cac8510de6ccac5dd61ef39dd98aac00525350bd2510a02bb22ce3a",
+        "tls_connections": 1
+      },
+      "tls_replay": {
+        "archive_sha256": "3b0060fcc611bbbcf918a0d21781216c3613082d4911efbe8d5b35297b7d45be",
+        "binding_sha256": "2ae766badcd40cc4cebe5138ddf5dc61b81be2cd8c901dd4716685e47e2399a0",
+        "body_receipt": {
+          "monotonic_ns": 6217863846269981,
+          "seq": 4,
+          "utc_ns": 1789694771347061158
+        },
+        "complete_caller_coverage_verified": false,
+        "current_usage_upper_bound": null,
+        "header_age_at_body_ns": 692924,
+        "header_receipt": {
+          "monotonic_ns": 6217863845577057,
+          "seq": 3,
+          "utc_ns": 1789694771346366874
+        },
+        "http_request_prepared": true,
+        "last_record": "completed",
+        "network_admitted": false,
+        "prepared_tcp_connections": 1,
+        "provider_connection_charge": null,
+        "rate_evidence": {
+          "connection_charge": null,
+          "freshness_verified": false,
+          "limit": null,
+          "network_admitted": false,
+          "raw_requests_usage": null,
+          "schema_version": "portfolio.fixture_account_rate_receipt.v1",
+          "source_authenticated": false,
+          "used_weight_1m": 20
+        },
+        "restart_allowed": false,
+        "schema_version": "portfolio.installed_signed_account_tls.v1",
+        "source_authenticated_for_real_venue": false,
+        "status": "complete",
+        "trading_admitted": false
+      }
+    },
+    "receipt_controller_crash": {
+      "account_selection_sha256": "1c82ea00f5bb0e996a345cefcc608f3419fd1ebaa317fbfc545d8ce5bebbaab0",
+      "attempt_replay": {
+        "archive_sha256": "c740eefe0898800ba1f9f82238694c596b9c005c6caa347d523ef6d775f0dc6a",
+        "binding_sha256": "3081eff63fa25661b1629670924194adfeffd6f90105f0a619669438cc353f07",
+        "caller_labels_authenticated": false,
+        "complete_caller_coverage_verified": false,
+        "counts": [
+          {
+            "caller_label": "collector",
+            "connection_attempts": 0,
+            "documented_weight": 20,
+            "outcomes": {
+              "failed": 0,
+              "succeeded": 0,
+              "uncertain": 1
+            },
+            "prepared_attempts": 1,
+            "raw_requests": 1,
+            "role": "rest",
+            "unknown_charge_attempts": 0
+          }
+        ],
+        "coverage_between_observations_verified": false,
+        "future_enforcement_verified": false,
+        "history_after_last_observation_available": false,
+        "history_before_start_available": false,
+        "interval_boundary": "both_edges_inclusive_local_clock_not_provider_bucket",
+        "interval_monotonic_ns": [
+          6217875937286802,
+          6217876728712731
+        ],
+        "network_admitted": false,
+        "observed_gap": null,
+        "other_callers_upper_bound": null,
+        "pending_attempt": 0,
+        "recorded_attempts": 1,
+        "restart_allowed": false,
+        "schema_version": "portfolio.fixture_signed_account_tls_ledger.v1",
+        "status": "incomplete_no_resume",
+        "trading_admitted": false,
+        "used_upper_bound": null
+      },
+      "binding_sha256": "3081eff63fa25661b1629670924194adfeffd6f90105f0a619669438cc353f07",
+      "receipt_replay": {
+        "archive_sha256": "69984513ac254831c29f09e590efbad55ff35da69c7469fa0bb9013fac3d8015",
+        "attempt_outcome_recorded": false,
+        "body_receipt": {
+          "monotonic_ns": 6217876623927851,
+          "seq": 4,
+          "utc_ns": 1789694784124718908
+        },
+        "header_receipt": {
+          "monotonic_ns": 6217876623274847,
+          "seq": 3,
+          "utc_ns": 1789694784124064984
+        },
+        "native_account_acknowledged": false,
+        "native_collector_integrated": false,
+        "native_result": {
+          "account_uid": 41001,
+          "balances": [
+            {
+              "currency": "BNB",
+              "free": "1.00000000",
+              "locked": "0.10000000",
+              "precision": 8,
+              "total": "1.10000000"
+            },
+            {
+              "currency": "BTC",
+              "free": "0.01000000",
+              "locked": "0.00100000",
+              "precision": 8,
+              "total": "0.01100000"
+            },
+            {
+              "currency": "ETH",
+              "free": "0.00000000",
+              "locked": "0.00000000",
+              "precision": 8,
+              "total": "0.00000000"
+            },
+            {
+              "currency": "USDT",
+              "free": "500.00000000",
+              "locked": "12.50000000",
+              "precision": 8,
+              "total": "512.50000000"
+            }
+          ],
+          "body_receipt": {
+            "monotonic_ns": 6217876623927851,
+            "seq": 4,
+            "utc_ns": 1789694784124718908
+          },
+          "header_receipt": {
+            "monotonic_ns": 6217876623274847,
+            "seq": 3,
+            "utc_ns": 1789694784124064984
+          },
+          "native_version": "1.226.0",
+          "profile": "portfolio.installed_native_account_receipt.v1",
+          "qualified_for_execution": false,
+          "tls_sha256": "81fe084a2bd36cc385dd7588e443a0323bb8dcadc6b26d8dd710eaf5e829b9f2"
+        },
+        "network_admitted": false,
+        "payload_sha256": "786a1c92479510cd8204ee43e4fb67c9c3d85bc58d4c6feae947f0cd6b8974a7",
+        "restart_allowed": false,
+        "schema_version": "portfolio.installed_native_account_receipt.v1",
+        "status": "incomplete_no_resume",
+        "tls_sha256": "81fe084a2bd36cc385dd7588e443a0323bb8dcadc6b26d8dd710eaf5e829b9f2",
+        "trading_admitted": false
+      },
+      "root_native_modules_loaded": false,
+      "tls_peer": {
+        "http_requests": 1,
+        "native_signature_verified": true,
+        "request_sha256": "e2d2688e75ac5372bb49dfae4b538afbbc2b21e98eb33efe9c703e27e8f27b8c",
+        "tls_connections": 1
+      },
+      "tls_replay": {
+        "archive_sha256": "81fe084a2bd36cc385dd7588e443a0323bb8dcadc6b26d8dd710eaf5e829b9f2",
+        "binding_sha256": "3081eff63fa25661b1629670924194adfeffd6f90105f0a619669438cc353f07",
+        "body_receipt": {
+          "monotonic_ns": 6217876623927851,
+          "seq": 4,
+          "utc_ns": 1789694784124718908
+        },
+        "complete_caller_coverage_verified": false,
+        "current_usage_upper_bound": null,
+        "header_age_at_body_ns": 653004,
+        "header_receipt": {
+          "monotonic_ns": 6217876623274847,
+          "seq": 3,
+          "utc_ns": 1789694784124064984
+        },
+        "http_request_prepared": true,
+        "last_record": "completed",
+        "network_admitted": false,
+        "prepared_tcp_connections": 1,
+        "provider_connection_charge": null,
+        "rate_evidence": {
+          "connection_charge": null,
+          "freshness_verified": false,
+          "limit": null,
+          "network_admitted": false,
+          "raw_requests_usage": null,
+          "schema_version": "portfolio.fixture_account_rate_receipt.v1",
+          "source_authenticated": false,
+          "used_weight_1m": 20
+        },
+        "restart_allowed": false,
+        "schema_version": "portfolio.installed_signed_account_tls.v1",
+        "source_authenticated_for_real_venue": false,
+        "status": "complete",
+        "trading_admitted": false
+      }
+    },
+    "receipt_runtime_drift": {
+      "account_selection_sha256": "57c96a24992f74048afffcbd1232e3f68bf92f1607c783fd026589e078283130",
+      "attempt_replay": {
+        "archive_sha256": "9c2f9af5851b7fa90eabf5b19ebda6b111fefd5d34d3333addfce369a13a3f97",
+        "binding_sha256": "9a3893091fc1ccc458f71aa30a90a9cb7f1f5b75e237e6f0ec22379b2faef6fd",
+        "caller_labels_authenticated": false,
+        "complete_caller_coverage_verified": false,
+        "counts": [
+          {
+            "caller_label": "collector",
+            "connection_attempts": 0,
+            "documented_weight": 20,
+            "outcomes": {
+              "failed": 0,
+              "succeeded": 0,
+              "uncertain": 1
+            },
+            "prepared_attempts": 1,
+            "raw_requests": 1,
+            "role": "rest",
+            "unknown_charge_attempts": 0
+          }
+        ],
+        "coverage_between_observations_verified": false,
+        "future_enforcement_verified": false,
+        "history_after_last_observation_available": false,
+        "history_before_start_available": false,
+        "interval_boundary": "both_edges_inclusive_local_clock_not_provider_bucket",
+        "interval_monotonic_ns": [
+          6217848508712284,
+          6217849303825151
+        ],
+        "network_admitted": false,
+        "observed_gap": {
+          "from_monotonic_ns": 6217849303825151,
+          "reason": "ValueError",
+          "through_monotonic_ns": null
+        },
+        "other_callers_upper_bound": null,
+        "pending_attempt": 0,
+        "recorded_attempts": 1,
+        "restart_allowed": false,
+        "schema_version": "portfolio.fixture_signed_account_tls_ledger.v1",
+        "status": "gap",
+        "trading_admitted": false,
+        "used_upper_bound": null
+      },
+      "binding_sha256": "9a3893091fc1ccc458f71aa30a90a9cb7f1f5b75e237e6f0ec22379b2faef6fd",
+      "receipt_replay": {
+        "archive_sha256": "ceaec70ec7d8abb77b0e4e07aa5202b5514153698854633763e0aed8ef4a9979",
+        "attempt_outcome_recorded": false,
+        "body_receipt": {
+          "monotonic_ns": 6217849188155657,
+          "seq": 4,
+          "utc_ns": 1789694756688946594
+        },
+        "header_receipt": {
+          "monotonic_ns": 6217849187463053,
+          "seq": 3,
+          "utc_ns": 1789694756688252710
+        },
+        "native_account_acknowledged": false,
+        "native_collector_integrated": false,
+        "native_result": {
+          "account_uid": 41001,
+          "balances": [
+            {
+              "currency": "BNB",
+              "free": "1.00000000",
+              "locked": "0.10000000",
+              "precision": 8,
+              "total": "1.10000000"
+            },
+            {
+              "currency": "BTC",
+              "free": "0.01000000",
+              "locked": "0.00100000",
+              "precision": 8,
+              "total": "0.01100000"
+            },
+            {
+              "currency": "ETH",
+              "free": "0.00000000",
+              "locked": "0.00000000",
+              "precision": 8,
+              "total": "0.00000000"
+            },
+            {
+              "currency": "USDT",
+              "free": "500.00000000",
+              "locked": "12.50000000",
+              "precision": 8,
+              "total": "512.50000000"
+            }
+          ],
+          "body_receipt": {
+            "monotonic_ns": 6217849188155657,
+            "seq": 4,
+            "utc_ns": 1789694756688946594
+          },
+          "header_receipt": {
+            "monotonic_ns": 6217849187463053,
+            "seq": 3,
+            "utc_ns": 1789694756688252710
+          },
+          "native_version": "1.226.0",
+          "profile": "portfolio.installed_native_account_receipt.v1",
+          "qualified_for_execution": false,
+          "tls_sha256": "83b9cd8145a8a8a7082523a927fa8f8b5f7dd21d138bb969128e417327e33253"
+        },
+        "network_admitted": false,
+        "payload_sha256": "2a313a8b90e7ee211f0f0b5111083d4e4db9d301c8a6e5808a2b67f236ec82e1",
+        "restart_allowed": false,
+        "schema_version": "portfolio.installed_native_account_receipt.v1",
+        "status": "incomplete_no_resume",
+        "tls_sha256": "83b9cd8145a8a8a7082523a927fa8f8b5f7dd21d138bb969128e417327e33253",
+        "trading_admitted": false
+      },
+      "root_native_modules_loaded": false,
+      "tls_peer": {
+        "http_requests": 1,
+        "native_signature_verified": true,
+        "request_sha256": "21ee05134c675417b88665e71ecc1258ea2c856cdd41a252edd6b5d1b031ff04",
+        "tls_connections": 1
+      },
+      "tls_replay": {
+        "archive_sha256": "83b9cd8145a8a8a7082523a927fa8f8b5f7dd21d138bb969128e417327e33253",
+        "binding_sha256": "9a3893091fc1ccc458f71aa30a90a9cb7f1f5b75e237e6f0ec22379b2faef6fd",
+        "body_receipt": {
+          "monotonic_ns": 6217849188155657,
+          "seq": 4,
+          "utc_ns": 1789694756688946594
+        },
+        "complete_caller_coverage_verified": false,
+        "current_usage_upper_bound": null,
+        "header_age_at_body_ns": 692604,
+        "header_receipt": {
+          "monotonic_ns": 6217849187463053,
+          "seq": 3,
+          "utc_ns": 1789694756688252710
+        },
+        "http_request_prepared": true,
+        "last_record": "completed",
+        "network_admitted": false,
+        "prepared_tcp_connections": 1,
+        "provider_connection_charge": null,
+        "rate_evidence": {
+          "connection_charge": null,
+          "freshness_verified": false,
+          "limit": null,
+          "network_admitted": false,
+          "raw_requests_usage": null,
+          "schema_version": "portfolio.fixture_account_rate_receipt.v1",
+          "source_authenticated": false,
+          "used_weight_1m": 20
+        },
+        "restart_allowed": false,
+        "schema_version": "portfolio.installed_signed_account_tls.v1",
+        "source_authenticated_for_real_venue": false,
+        "status": "complete",
+        "trading_admitted": false
+      }
+    },
+    "tls_bad_certificate": {
+      "account_selection_sha256": "b9e74c266f5af34502e5a11b87abe8be3960915b3edeb8654c3ff953638394f8",
+      "attempt_replay": {
+        "archive_sha256": "39897dcf7352603c823fb19e4bc7d91d44fada92512a1367009a8532922cd765",
+        "binding_sha256": "c671a81cb15a81a0893f84dd78243476d3a2c71430a2ff74c2d9cdb28c01cc71",
+        "caller_labels_authenticated": false,
+        "complete_caller_coverage_verified": false,
+        "counts": [
+          {
+            "caller_label": "collector",
+            "connection_attempts": 0,
+            "documented_weight": 20,
+            "outcomes": {
+              "failed": 0,
+              "succeeded": 0,
+              "uncertain": 1
+            },
+            "prepared_attempts": 1,
+            "raw_requests": 1,
+            "role": "rest",
+            "unknown_charge_attempts": 0
+          }
+        ],
+        "coverage_between_observations_verified": false,
+        "future_enforcement_verified": false,
+        "history_after_last_observation_available": false,
+        "history_before_start_available": false,
+        "interval_boundary": "both_edges_inclusive_local_clock_not_provider_bucket",
+        "interval_monotonic_ns": [
+          6217855842076447,
+          6217856526553285
+        ],
+        "network_admitted": false,
+        "observed_gap": null,
+        "other_callers_upper_bound": null,
+        "pending_attempt": 0,
+        "recorded_attempts": 1,
+        "restart_allowed": false,
+        "schema_version": "portfolio.fixture_signed_account_tls_ledger.v1",
+        "status": "closed",
+        "trading_admitted": false,
+        "used_upper_bound": null
+      },
+      "binding_sha256": "c671a81cb15a81a0893f84dd78243476d3a2c71430a2ff74c2d9cdb28c01cc71",
+      "root_native_modules_loaded": false,
+      "tls_peer": {
+        "ended_with": "SSLError",
+        "http_requests": 0,
+        "request_sha256": null,
+        "tls_connections": 1
+      },
+      "tls_replay": {
+        "archive_sha256": "624243cc315bb7f5ef68ef6957a699ef5e67965822e5d6dae5a2fef37f7e6327",
+        "binding_sha256": "c671a81cb15a81a0893f84dd78243476d3a2c71430a2ff74c2d9cdb28c01cc71",
+        "body_receipt": null,
+        "complete_caller_coverage_verified": false,
+        "current_usage_upper_bound": null,
+        "header_age_at_body_ns": null,
+        "header_receipt": null,
+        "http_request_prepared": false,
+        "last_record": "aborted",
+        "network_admitted": false,
+        "prepared_tcp_connections": 1,
+        "provider_connection_charge": null,
+        "rate_evidence": null,
+        "restart_allowed": false,
+        "schema_version": "portfolio.installed_signed_account_tls.v1",
+        "source_authenticated_for_real_venue": false,
+        "status": "incomplete_no_resume",
+        "trading_admitted": false
+      }
+    },
+    "tls_slow_body": {
+      "account_selection_sha256": "c7684419a67444d22f2890bfc856c09f872466ca8073d97ac60ba62d664aa8c5",
+      "attempt_replay": {
+        "archive_sha256": "c950613fe221b5b4cae0d3ca821345568b66d856b64d0114d16c98c563a022d1",
+        "binding_sha256": "d03c52aef22796e7965bb115e16a6ca796a9d0dbce5c54929da753d57e8b7e83",
+        "caller_labels_authenticated": false,
+        "complete_caller_coverage_verified": false,
+        "counts": [
+          {
+            "caller_label": "collector",
+            "connection_attempts": 0,
+            "documented_weight": 20,
+            "outcomes": {
+              "failed": 0,
+              "succeeded": 1,
+              "uncertain": 0
+            },
+            "prepared_attempts": 1,
+            "raw_requests": 1,
+            "role": "rest",
+            "unknown_charge_attempts": 0
+          }
+        ],
+        "coverage_between_observations_verified": false,
+        "future_enforcement_verified": false,
+        "history_after_last_observation_available": false,
+        "history_before_start_available": false,
+        "interval_boundary": "both_edges_inclusive_local_clock_not_provider_bucket",
+        "interval_monotonic_ns": [
+          6217832586199163,
+          6217834781107138
+        ],
+        "network_admitted": false,
+        "observed_gap": null,
+        "other_callers_upper_bound": null,
+        "pending_attempt": null,
+        "recorded_attempts": 1,
+        "restart_allowed": false,
+        "schema_version": "portfolio.fixture_signed_account_tls_ledger.v1",
+        "status": "closed",
+        "trading_admitted": false,
+        "used_upper_bound": null
+      },
+      "binding_sha256": "d03c52aef22796e7965bb115e16a6ca796a9d0dbce5c54929da753d57e8b7e83",
+      "receipt_replay": {
+        "archive_sha256": "665839bfbb71ca76208507336d368ed3485f76cb6f8d869d50e340e19d7269f4",
+        "attempt_outcome_recorded": true,
+        "body_receipt": {
+          "monotonic_ns": 6217834493592911,
+          "seq": 4,
+          "utc_ns": 1789694741994382768
+        },
+        "header_receipt": {
+          "monotonic_ns": 6217833292252588,
+          "seq": 3,
+          "utc_ns": 1789694740793042765
+        },
+        "native_account_acknowledged": true,
+        "native_collector_integrated": false,
+        "native_result": {
+          "account_uid": 41001,
+          "balances": [
+            {
+              "currency": "BNB",
+              "free": "1.00000000",
+              "locked": "0.10000000",
+              "precision": 8,
+              "total": "1.10000000"
+            },
+            {
+              "currency": "BTC",
+              "free": "0.01000000",
+              "locked": "0.00100000",
+              "precision": 8,
+              "total": "0.01100000"
+            },
+            {
+              "currency": "ETH",
+              "free": "0.00000000",
+              "locked": "0.00000000",
+              "precision": 8,
+              "total": "0.00000000"
+            },
+            {
+              "currency": "USDT",
+              "free": "500.00000000",
+              "locked": "12.50000000",
+              "precision": 8,
+              "total": "512.50000000"
+            }
+          ],
+          "body_receipt": {
+            "monotonic_ns": 6217834493592911,
+            "seq": 4,
+            "utc_ns": 1789694741994382768
+          },
+          "header_receipt": {
+            "monotonic_ns": 6217833292252588,
+            "seq": 3,
+            "utc_ns": 1789694740793042765
+          },
+          "native_version": "1.226.0",
+          "profile": "portfolio.installed_native_account_receipt.v1",
+          "qualified_for_execution": false,
+          "tls_sha256": "aad72cf73efff71d2fa8a21bf2767c3431b886cf2f8a44618e3ca9b5841ce345"
+        },
+        "network_admitted": false,
+        "payload_sha256": "3412f4abf0c31385ea06f45f862e761be3a5e2cf0010f2b9b59a98e5ed650ea1",
+        "restart_allowed": false,
+        "schema_version": "portfolio.installed_native_account_receipt.v1",
+        "status": "acknowledged",
+        "tls_sha256": "aad72cf73efff71d2fa8a21bf2767c3431b886cf2f8a44618e3ca9b5841ce345",
+        "trading_admitted": false
+      },
+      "root_native_modules_loaded": false,
+      "tls_peer": {
+        "http_requests": 1,
+        "native_signature_verified": true,
+        "request_sha256": "76ca54cadcc9200cbb824fd6de2217e4e606e4407766432b8707f48bf4b31d1b",
+        "tls_connections": 1
+      },
+      "tls_replay": {
+        "archive_sha256": "aad72cf73efff71d2fa8a21bf2767c3431b886cf2f8a44618e3ca9b5841ce345",
+        "binding_sha256": "d03c52aef22796e7965bb115e16a6ca796a9d0dbce5c54929da753d57e8b7e83",
+        "body_receipt": {
+          "monotonic_ns": 6217834493592911,
+          "seq": 4,
+          "utc_ns": 1789694741994382768
+        },
+        "complete_caller_coverage_verified": false,
+        "current_usage_upper_bound": null,
+        "header_age_at_body_ns": 1201340323,
+        "header_receipt": {
+          "monotonic_ns": 6217833292252588,
+          "seq": 3,
+          "utc_ns": 1789694740793042765
+        },
+        "http_request_prepared": true,
+        "last_record": "completed",
+        "network_admitted": false,
+        "prepared_tcp_connections": 1,
+        "provider_connection_charge": null,
+        "rate_evidence": {
+          "connection_charge": null,
+          "freshness_verified": false,
+          "limit": null,
+          "network_admitted": false,
+          "raw_requests_usage": null,
+          "schema_version": "portfolio.fixture_account_rate_receipt.v1",
+          "source_authenticated": false,
+          "used_weight_1m": 20
+        },
+        "restart_allowed": false,
+        "schema_version": "portfolio.installed_signed_account_tls.v1",
+        "source_authenticated_for_real_venue": false,
+        "status": "complete",
+        "trading_admitted": false
+      }
+    },
+    "tls_success": {
+      "account_selection_sha256": "f8b8310afa2ca9784793129cdd6a955067dabd53fdeb14f47a1240d6b36b17e4",
+      "attempt_replay": {
+        "archive_sha256": "0942a61342d040847a1b473d7bf2acb594bfc3e5954991e1038e93837e0a7cb4",
+        "binding_sha256": "581d0cb6e304ba4a5964da7366ab0c2623799216b9c0f82b085fc600ca2700e0",
+        "caller_labels_authenticated": false,
+        "complete_caller_coverage_verified": false,
+        "counts": [
+          {
+            "caller_label": "collector",
+            "connection_attempts": 0,
+            "documented_weight": 20,
+            "outcomes": {
+              "failed": 0,
+              "succeeded": 1,
+              "uncertain": 0
+            },
+            "prepared_attempts": 1,
+            "raw_requests": 1,
+            "role": "rest",
+            "unknown_charge_attempts": 0
+          }
+        ],
+        "coverage_between_observations_verified": false,
+        "future_enforcement_verified": false,
+        "history_after_last_observation_available": false,
+        "history_before_start_available": false,
+        "interval_boundary": "both_edges_inclusive_local_clock_not_provider_bucket",
+        "interval_monotonic_ns": [
+          6217824732361815,
+          6217825864841877
+        ],
+        "network_admitted": false,
+        "observed_gap": null,
+        "other_callers_upper_bound": null,
+        "pending_attempt": null,
+        "recorded_attempts": 1,
+        "restart_allowed": false,
+        "schema_version": "portfolio.fixture_signed_account_tls_ledger.v1",
+        "status": "closed",
+        "trading_admitted": false,
+        "used_upper_bound": null
+      },
+      "binding_sha256": "581d0cb6e304ba4a5964da7366ab0c2623799216b9c0f82b085fc600ca2700e0",
+      "receipt_replay": {
+        "archive_sha256": "1d10d9f44eb4f1ef027bb2a6a3b9e25a6c16bc6fb62e112771b81d4f9482634e",
+        "attempt_outcome_recorded": true,
+        "body_receipt": {
+          "monotonic_ns": 6217825511583524,
+          "seq": 4,
+          "utc_ns": 1789694733012374621
+        },
+        "header_receipt": {
+          "monotonic_ns": 6217825510879720,
+          "seq": 3,
+          "utc_ns": 1789694733011669417
+        },
+        "native_account_acknowledged": true,
+        "native_collector_integrated": false,
+        "native_result": {
+          "account_uid": 41001,
+          "balances": [
+            {
+              "currency": "BNB",
+              "free": "1.00000000",
+              "locked": "0.10000000",
+              "precision": 8,
+              "total": "1.10000000"
+            },
+            {
+              "currency": "BTC",
+              "free": "0.01000000",
+              "locked": "0.00100000",
+              "precision": 8,
+              "total": "0.01100000"
+            },
+            {
+              "currency": "ETH",
+              "free": "0.00000000",
+              "locked": "0.00000000",
+              "precision": 8,
+              "total": "0.00000000"
+            },
+            {
+              "currency": "USDT",
+              "free": "500.00000000",
+              "locked": "12.50000000",
+              "precision": 8,
+              "total": "512.50000000"
+            }
+          ],
+          "body_receipt": {
+            "monotonic_ns": 6217825511583524,
+            "seq": 4,
+            "utc_ns": 1789694733012374621
+          },
+          "header_receipt": {
+            "monotonic_ns": 6217825510879720,
+            "seq": 3,
+            "utc_ns": 1789694733011669417
+          },
+          "native_version": "1.226.0",
+          "profile": "portfolio.installed_native_account_receipt.v1",
+          "qualified_for_execution": false,
+          "tls_sha256": "6efd63ca0440c492a3ba05e3730df4bf9c40138ba3d023d7fec6bdb6ef6eb648"
+        },
+        "network_admitted": false,
+        "payload_sha256": "4bd9c284d0f927ff202349d6d055bcd9b25044bbbb4c12445a1de17909d5ec61",
+        "restart_allowed": false,
+        "schema_version": "portfolio.installed_native_account_receipt.v1",
+        "status": "acknowledged",
+        "tls_sha256": "6efd63ca0440c492a3ba05e3730df4bf9c40138ba3d023d7fec6bdb6ef6eb648",
+        "trading_admitted": false
+      },
+      "root_native_modules_loaded": false,
+      "tls_peer": {
+        "http_requests": 1,
+        "native_signature_verified": true,
+        "request_sha256": "ffb81dcff63109c6fef5272547ed4f554af55de1635df94d4147706418d320b4",
+        "tls_connections": 1
+      },
+      "tls_replay": {
+        "archive_sha256": "6efd63ca0440c492a3ba05e3730df4bf9c40138ba3d023d7fec6bdb6ef6eb648",
+        "binding_sha256": "581d0cb6e304ba4a5964da7366ab0c2623799216b9c0f82b085fc600ca2700e0",
+        "body_receipt": {
+          "monotonic_ns": 6217825511583524,
+          "seq": 4,
+          "utc_ns": 1789694733012374621
+        },
+        "complete_caller_coverage_verified": false,
+        "current_usage_upper_bound": null,
+        "header_age_at_body_ns": 703804,
+        "header_receipt": {
+          "monotonic_ns": 6217825510879720,
+          "seq": 3,
+          "utc_ns": 1789694733011669417
+        },
+        "http_request_prepared": true,
+        "last_record": "completed",
+        "network_admitted": false,
+        "prepared_tcp_connections": 1,
+        "provider_connection_charge": null,
+        "rate_evidence": {
+          "connection_charge": null,
+          "freshness_verified": false,
+          "limit": null,
+          "network_admitted": false,
+          "raw_requests_usage": null,
+          "schema_version": "portfolio.fixture_account_rate_receipt.v1",
+          "source_authenticated": false,
+          "used_weight_1m": 20
+        },
+        "restart_allowed": false,
+        "schema_version": "portfolio.installed_signed_account_tls.v1",
+        "source_authenticated_for_real_venue": false,
+        "status": "complete",
+        "trading_admitted": false
+      }
+    }
+  },
+  "actual_source_authority_qualified": false,
+  "base_commit": "2b67a3b88ae64059ba45afa1ec2b4052d74196ff",
+  "complete_caller_coverage_verified": false,
+  "date": "2026-09-18",
+  "detached_replays": [
+    {
+      "path": "data/installed-signed-account-2026-09-18/replay-1.json",
+      "sha256": "b793977aa70caea199dd9515340bd59132a79285c3e28c893482b0a66e56f501"
+    },
+    {
+      "path": "data/installed-signed-account-2026-09-18/replay-2.json",
+      "sha256": "b793977aa70caea199dd9515340bd59132a79285c3e28c893482b0a66e56f501"
+    },
+    {
+      "path": "data/installed-signed-account-2026-09-18/native-replay-1.json",
+      "sha256": "3a4c16be56151b48820470eb46a1f5bfb2c8e8717b1c5bfc31d3d8ff0df7464c"
+    },
+    {
+      "path": "data/installed-signed-account-2026-09-18/native-replay-2.json",
+      "sha256": "3a4c16be56151b48820470eb46a1f5bfb2c8e8717b1c5bfc31d3d8ff0df7464c"
+    }
+  ],
+  "fixture_account": {
+    "assets": [
+      "BNB",
+      "BTC",
+      "ETH",
+      "USDT"
+    ],
+    "documented_weight": 20,
+    "get_requests": 1,
+    "precision": 8,
+    "uid": 41001
+  },
+  "fixture_key": "Public RFC 8032 vector; no operator credential or real source authentication",
+  "fixture_manifest_profile": "portfolio.installed_gateway_fixture.v7",
+  "full_account_equity_qualified": false,
+  "host_installation_performed": false,
+  "host_observations_unchanged": true,
+  "live_path_affected": false,
+  "local_fixture_transport_dispatch_verified": true,
+  "namespace_scenarios_passed": 49,
+  "native_joint_collector_integrated": false,
+  "native_regenerated_requests": 87,
+  "native_replayed_scenario_sets": 21,
+  "native_runtime": {
+    "bytes": 213365841,
+    "files": 701,
+    "manifest_sha256": "75f136be0e614515577b7b6386a03b3ff9ad9acec3c43496179beb91e13dbc8b"
+  },
+  "native_signed_account_tls_receipt_integrated": true,
+  "native_version": "1.226.0",
+  "network_admitted": false,
+  "next_step": "Join repeated account/open-order reads and same-run metadata/routes, then concurrent gateway-owned TLS/WS for the full native collector. Real scopes remain consumed and admission blocked.",
+  "original_evidence_modified": false,
+  "protected_source_sha256": {
+    "gateway_joint_ipc.py": "e814ddfdd67b7f43fd031a13a68a6bd87cf992e6de0a92b476751e4f9e3cb6ae",
+    "gateway_native_account.py": "fa4f306e4b12e38c653dfa180396a5792624aef8d06761cdb0a892060391b501",
+    "gateway_native_receipt.py": "6c6526bf6976c3e809c3537fb86ce6c7672f3cbb08aca111ba48eac46025a0b7",
+    "gateway_native_requests.py": "2cbea5e7d162f40ffcadf41673757eeefa29d95603937ef23de43c7309f28163",
+    "gateway_native_runtime.py": "3d319536524fe7f8ee0bbc1f9eca719e748dc24e262e47e9a210b058cafca8a8",
+    "gateway_tls.py": "c3f56e7089d9ad3ea1e246e59e4d69e899974045da67004e6058386fce71b8c8",
+    "gateway_tls_receipt.py": "b9b79da22c7c23483f41faec05ecd15708aa7deebf57b6b9f21cde89bb425d0e",
+    "installed_gateway.py": "9c57bf3b4169e2932939d1d18e99850fd6ec4e3be8e58eaa7d947ba02d53e71c",
+    "ledger_gateway.py": "590c23e735d82e2fdf54b47a0d62329c0d49a52416212ea2f3d69b0548a7325f",
+    "portfolio_egress_ledger.py": "b95d01d34a54630455fccd049eb11f08bf82f6c2f2b38462b22b6384ebd5728f",
+    "portfolio_rate_evidence.py": "18aa5bdbf1954cebc4802b38daeded07cd60e2ab1b9e508d6686ac89a07abb35",
+    "portfolio_tls_provenance.py": "def476571e9ec56e989eee02b8623b1a657337956ecd88faeabaf9f2efc70044",
+    "selftest.py": "75ba8a36ca075f4236f20e68524117bf1abc1431226271bb0df35912c4ebff5f"
+  },
+  "python_tests": {
+    "files": [
+      {
+        "path": "tests/ops/test_egress_signed_account.py",
+        "sha256": "6d23f369ec3c3981c50f5f495d5940591b672b3a64d8940d7c2b35c0a04a12e9"
+      },
+      {
+        "path": "tests/ops/test_egress_native_requests.py",
+        "sha256": "9ade2336a92bd1cfd50f181a676b4c86254edfa47770db1d8d453919d9e81d62"
+      },
+      {
+        "path": "tests/ops/test_egress_native_receipt.py",
+        "sha256": "cc3b406799a82623e2b986e128b195806035bb3d0eb6e6786a75ed3d65e706f4"
+      },
+      {
+        "path": "tests/ops/test_egress_tls_receipt.py",
+        "sha256": "230189fda6301eca7f7e7029790e9de8db165933e794187331c50f6d8081875b"
+      },
+      {
+        "path": "tests/ops/test_egress_joint_ipc.py",
+        "sha256": "e546fc2bbf479a81ce19c341726a3868c545a6640e73c39a3fdd3062c11d1812"
+      },
+      {
+        "path": "tests/ops/test_egress_gateway_tls.py",
+        "sha256": "6eeb048531f6872712c155c83315242fc84accdc654483436f0e481ba5d63daa"
+      },
+      {
+        "path": "tests/ops/test_egress_installed_gateway.py",
+        "sha256": "a7f65e960c9ce1cd05503c8e1f5a881cb82ad9fb837734a3e1e305ce2aaf62d6"
+      },
+      {
+        "path": "tests/ops/test_egress_installation_selftest.py",
+        "sha256": "b23c06780d60a5e09bf751cfb6d2564a4704dfa3c430721a7e67c04dbe9328ef"
+      },
+      {
+        "path": "tests/ops/test_egress_installation.py",
+        "sha256": "326cba9d265b8aefbfbda38302f956da5705ca648e166734c411e06a5e0a2ded"
+      },
+      {
+        "path": "tests/ops/test_egress_package.py",
+        "sha256": "96b216e5d4f1c5b153d8889650103bb93c65b0debc95c87199ab6fb7ff0bac8b"
+      },
+      {
+        "path": "tests/ops/test_egress_ledger_gateway.py",
+        "sha256": "6cfe8c9c94ab56caa4294f64c85beffa092f18a476f3c0a434e9091940750f26"
+      },
+      {
+        "path": "tests/ops/test_egress_guard_selftest.py",
+        "sha256": "dfe1c8e795e820ab13c9a010d53092aca8c1016330dcff25f16398b606b12efa"
+      },
+      {
+        "path": "tests/ops/test_egress_collector_launcher.py",
+        "sha256": "9e5020262a12cbd4aa606b05b6974437054fb73a6664da4d821f447418976d79"
+      },
+      {
+        "path": "tests/ops/test_egress_authority_binding.py",
+        "sha256": "0a12fececd80168c31aa04e29d4f7f99faef7c0d3ba7b0f0348c596ca0a8dcf6"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_egress_ledger.py",
+        "sha256": "d13ce6c3646dfd5b52664b5aa940d9b1efa192e7392764869cfead7982d2b12a"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_joint_egress.py",
+        "sha256": "af7b4ace53f87f263a68dd761dce8dbe6ea6f6ebe3ab2d3119b190b418471484"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_tls_provenance.py",
+        "sha256": "c4d1c96b8a44bdcb6af96242ec6cd176392f4ca5e733768c2d63b4e54805c5da"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_rate_evidence.py",
+        "sha256": "2f4ae82940cdc346a3ada4f3bd2ca1b5cd049286fd0818446909b54b7aa4567b"
+      }
+    ],
+    "new_tests": 29,
+    "passed": 762,
+    "seconds": 77.82,
+    "warnings": 0
+  },
+  "replayed_original_scenario_sets": 49,
+  "reports": {
+    "account-acceptance-final": {
+      "path": "data/installed-signed-account-2026-09-18/account-acceptance-final.json",
+      "sha256": "99be1267560f8b27485960c0410840116c2192150e8d67d2ac522a7ef4435c8e"
+    },
+    "echo-regression": {
+      "path": "data/installed-signed-account-2026-09-18/echo-regression.json",
+      "sha256": "e4bc94c7eb8ae13ec92b67f24152867c628b7b2571185ab32c3f358a8d300d6e"
+    },
+    "ipc-regression": {
+      "path": "data/installed-signed-account-2026-09-18/ipc-regression.json",
+      "sha256": "b693bbdf48f1dc8b21836b1b779ab541cfeffac340737c01a31df2c6bbffcdca"
+    },
+    "native-receipt-regression": {
+      "path": "data/installed-signed-account-2026-09-18/native-receipt-regression.json",
+      "sha256": "0282ba53c57c2e05204e6acc5f387c0f4a9fc28c39e52e01a3d4ddd75b6c6fb8"
+    },
+    "native-requests-regression": {
+      "path": "data/installed-signed-account-2026-09-18/native-requests-regression.json",
+      "sha256": "a4cff7dcba316f6dbf91b87c54d57bb41312d4219db933507e0d334f7d1aeb06"
+    },
+    "receipt-regression": {
+      "path": "data/installed-signed-account-2026-09-18/receipt-regression.json",
+      "sha256": "03f68317243f391e21a02ea93fba12c556524645ec6bb6a8ccf9ea224481eead"
+    },
+    "tls-regression": {
+      "path": "data/installed-signed-account-2026-09-18/tls-regression.json",
+      "sha256": "b851a8a0762efa50bfd8113de4df40e76fcc36f7e64bae767919fc3fe17f49a6"
+    }
+  },
+  "retained_drivers": {
+    "extract-runtime.py": {
+      "path": "data/installed-signed-account-2026-09-18/extract-runtime.py",
+      "sha256": "37084902bd26361db5c38a6b8ad83b022d1e94005f27b6009f8e6dace2cdc66e"
+    },
+    "installed_gateway_selftest.py": {
+      "path": "data/installed-signed-account-2026-09-18/installed_gateway_selftest.py",
+      "sha256": "3edcdbd24ee8f7a0e57a4f9682df594f8664d92310a644a315a802304633b69e"
+    },
+    "native-replay.py": {
+      "path": "data/installed-signed-account-2026-09-18/native-replay.py",
+      "sha256": "96fc4e685974efef219db6e046676e6b12229a38c1f84fa444a43d98ecc9e504"
+    },
+    "replay.py": {
+      "path": "data/installed-signed-account-2026-09-18/replay.py",
+      "sha256": "4c43da8e1630caf7315c34b7a70c6a3d7a0e6c49074079bbdcd40674254fc383"
+    }
+  },
+  "retained_selection": {
+    "path": "data/installed-signed-account-2026-09-18/selection.json",
+    "sha256": "f91b8fd18004f48e2cb40df7c5db2c44c8014d2069f89b02a6f197172a9c0916"
+  },
+  "root_native_modules_loaded": false,
+  "routes_derived_from_same_run": false,
+  "runtime_bundles": [
+    {
+      "path": "data/installed-signed-account-2026-09-18/account-acceptance-final.runtime.tar.gz",
+      "sha256": "fb48c56fc70023d0b52d57c5080c13c2be89d830a2f70906ab7fdaa75412fedb"
+    },
+    {
+      "path": "data/installed-signed-account-2026-09-18/native-receipt-regression.runtime.tar.gz",
+      "sha256": "0ba194eadcde376f4e96821c1b1ebe65827dd396cd1ba657cb4f5e5cf9aa84a2"
+    },
+    {
+      "path": "data/installed-signed-account-2026-09-18/native-requests-regression.runtime.tar.gz",
+      "sha256": "0ba194eadcde376f4e96821c1b1ebe65827dd396cd1ba657cb4f5e5cf9aa84a2"
+    }
+  ],
+  "schema_version": "portfolio.installed_signed_account_acceptance.v1",
+  "trading_admitted": false,
+  "unselected_diagnostics": {
+    "concurrent_startup_availability_qualified": false,
+    "earlier_success": {
+      "path": "data/installed-signed-account-2026-09-18/account-initial.json",
+      "sha256": "bcf1a93d399fad330751d0246a39230b7842be0381b0548e4753371870c463ac"
+    },
+    "failed_report": {
+      "path": "data/installed-signed-account-2026-09-18/account-acceptance.json",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reason": "Concurrent native child startup timed out before account ledger creation or network activation. Production deadlines unchanged; separate final seven-scenario run passed. Earlier success predates final verifier-time recheck. Neither diagnostic is selected acceptance evidence.",
+    "startup_refusal": {
+      "path": "data/installed-signed-account-2026-09-18/account-startup-refusal.json",
+      "sha256": "0d18491f60f530af4b7182c5cc41e7eb4a7b17aa25ec41361849fe1e524082eb"
+    }
+  },
+  "upstream_touched": false,
+  "venue_requests": 0
+}

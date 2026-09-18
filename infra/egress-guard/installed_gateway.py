@@ -22,13 +22,14 @@ FILES = (
     "gateway_native_runtime.py",
     "gateway_native_receipt.py",
     "gateway_native_requests.py",
+    "gateway_native_account.py",
     "ledger_gateway.py",
     "selftest.py",
     "portfolio_rate_evidence.py",
     "portfolio_tls_provenance.py",
     "portfolio_egress_ledger.py",
 )
-PROFILE = "portfolio.installed_gateway_fixture.v6"
+PROFILE = "portfolio.installed_gateway_fixture.v7"
 
 
 def digest(raw):
@@ -175,7 +176,7 @@ class InstalledBinding:
             raise
 
 
-def run_controller(*, tls=False, receipt=False, native=False):
+def run_controller(*, tls=False, receipt=False, native=False, account=False):
     authority = installation()
     collector = ledger = lifecycle = gateway = runtime = None
     try:
@@ -186,6 +187,14 @@ def run_controller(*, tls=False, receipt=False, native=False):
         module = gateway_code["load_ledger"](
             {name: sources.source(name).decode() for name in FILES}
         )
+        account_code = load(sources.source("gateway_native_account.py")) if account else None
+        if account:
+            module = account_code["ledger_view"](module)
+        rates = (
+            account_code["rates_view"]()
+            if account
+            else sys.modules["apps.strategies_nautilus.portfolio_rate_evidence"]
+        )
         trust = None
         if tls:
             fd = authority.open_file("/etc/trader/egress-gateway-fixture-ca.pem", 0o444)
@@ -193,11 +202,19 @@ def run_controller(*, tls=False, receipt=False, native=False):
             authority.verify()
         launcher = load(authority.source("collector_launcher.py"))
         receiver = load(sources.source("gateway_tls_receipt.py")) if receipt else None
-        native_code = load(sources.source("gateway_native_receipt.py")) if native else None
+        native_code = (
+            account_code
+            if account
+            else load(sources.source("gateway_native_receipt.py"))
+            if native
+            else None
+        )
         if native:
             runtime = load(sources.source("gateway_native_runtime.py"))["NativeRuntime"](authority)
         collector = (
-            receiver["launch"](authority, sources, launcher, runtime=runtime)
+            account_code["launch"](authority, sources, launcher, runtime)
+            if account
+            else receiver["launch"](authority, sources, launcher, runtime=runtime)
             if receipt
             else launcher["FixtureCollector"].from_installation(authority)
         )
@@ -209,7 +226,9 @@ def run_controller(*, tls=False, receipt=False, native=False):
             trust_sha256=digest(trust) if trust is not None else None,
         )
         # This path cannot be chosen by the caller, collector or report contents.
-        ledger = module.AttemptLedger(STORAGE, binding=binding, binding_sha256=binding.pin)
+        ledger = module.AttemptLedger(
+            STORAGE, binding=binding, binding_sha256=binding.pin, profile=module.PROFILE
+        )
         lifecycle = gateway_code["GatewayLifecycle"](ledger, module)
         run, nft = guards["run"], guards["NFT"]
 
@@ -269,7 +288,7 @@ def run_controller(*, tls=False, receipt=False, native=False):
                     ledger_module=module,
                     gateway_module=gateway_code,
                     provenance=provenance,
-                    rates=sys.modules["apps.strategies_nautilus.portfolio_rate_evidence"],
+                    rates=rates,
                 )
                 payload = receiver["payload_from_tls"](raw, report)
 
@@ -294,17 +313,26 @@ def run_controller(*, tls=False, receipt=False, native=False):
                     lifecycle,
                     trust,
                     sys.modules["apps.strategies_nautilus.portfolio_tls_provenance"],
-                    sys.modules["apps.strategies_nautilus.portfolio_rate_evidence"],
+                    rates,
                     on_complete=completed if receipt else None,
                     on_headers=lambda: print(
                         json.dumps({"stage": "tls_headers_persisted"}), flush=True
                     ),
                 )
 
+        def authorize():
+            nonlocal transport
+            if account:
+                requests = load(sources.source("gateway_native_requests.py"))
+                contract = account_code["authorize"](collector, ledger, authority, requests)
+                transport = account_code["transport_view"](transport, contract)
+                return {"ok": True, "request_sha256": contract.request_pin}
+            return receiver["authorize"](collector) if receipt else collector.observe()
+
         gateway = gateway_code["FixtureLedgerGateway"](
             ledger,
             lifecycle=lifecycle,
-            authorize=(lambda: receiver["authorize"](collector)) if receipt else collector.observe,
+            authorize=authorize,
             grant=grant,
             send=send,
             revoke=revoke,
@@ -357,6 +385,7 @@ def main():
             ["--tls-receipt-fixture"],
             ["--native-receipt-fixture"],
             ["--native-requests-fixture"],
+            ["--signed-account-fixture"],
         )
         or not sys.flags.isolated
         or os.path.abspath(__file__) != CODE + "/installed_gateway.py"
@@ -381,9 +410,20 @@ def main():
     else:
         run_controller(
             tls=sys.argv[1:]
-            in (["--tls-fixture"], ["--tls-receipt-fixture"], ["--native-receipt-fixture"]),
-            receipt=sys.argv[1:] in (["--tls-receipt-fixture"], ["--native-receipt-fixture"]),
-            native=sys.argv[1:] == ["--native-receipt-fixture"],
+            in (
+                ["--tls-fixture"],
+                ["--tls-receipt-fixture"],
+                ["--native-receipt-fixture"],
+                ["--signed-account-fixture"],
+            ),
+            receipt=sys.argv[1:]
+            in (
+                ["--tls-receipt-fixture"],
+                ["--native-receipt-fixture"],
+                ["--signed-account-fixture"],
+            ),
+            native=sys.argv[1:] in (["--native-receipt-fixture"], ["--signed-account-fixture"]),
+            account=sys.argv[1:] == ["--signed-account-fixture"],
         )
     return 0
 

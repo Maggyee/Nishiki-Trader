@@ -74,7 +74,7 @@ if runtime.exists():
     denied('native_runtime_write',lambda:os.open(runtime/'bin/python3.12',os.O_WRONLY))
     denied('native_runtime_replace',lambda:os.unlink(runtime/'bin/python3.12'))
 code=Path('/usr/local/lib/trader-egress')
-for name in ('installed_gateway.py','gateway_tls.py','gateway_joint_ipc.py','gateway_tls_receipt.py','gateway_native_runtime.py','gateway_native_receipt.py','gateway_native_requests.py','ledger_gateway.py','selftest.py','portfolio_rate_evidence.py','portfolio_tls_provenance.py','portfolio_egress_ledger.py'):
+for name in ('installed_gateway.py','gateway_tls.py','gateway_joint_ipc.py','gateway_tls_receipt.py','gateway_native_runtime.py','gateway_native_receipt.py','gateway_native_requests.py','gateway_native_account.py','ledger_gateway.py','selftest.py','portfolio_rate_evidence.py','portfolio_tls_provenance.py','portfolio_egress_ledger.py'):
     path=code/name
     assert path.read_bytes()
     denied('write:'+name,lambda:os.open(path,os.O_WRONLY))
@@ -111,6 +111,12 @@ if sys.argv[2]=='native':
     metadata=json.loads(body)
     metadata['symbols']=[{'symbol':asset+'USDT','baseAsset':asset,'baseAssetPrecision':17 if scenario=='native_precision' and asset=='BTC' else 8,'quoteAsset':'USDT','quoteAssetPrecision':8} for asset in ('BTC','ETH','BNB')]
     body=json.dumps(metadata,separators=(',',':')).encode()
+if sys.argv[2]=='account':
+    body=json.dumps({'uid':41001,'accountType':'SPOT','balances':[
+        {'asset':'BTC','free':'0.000000001' if scenario=='native_precision' else '0.01000000','locked':'0.00100000'},
+        {'asset':'ETH','free':'0.00000000','locked':'0.00000000'},
+        {'asset':'BNB','free':'1.00000000','locked':'0.10000000'},
+        {'asset':'USDT','free':'500.00000000','locked':'12.50000000'}]},separators=(',',':')).encode()
 headers=b'HTTP/1.1 200 OK\r\nContent-Length: '+str(len(body)).encode()+b'\r\nX-MBX-USED-WEIGHT-1M: 20\r\n'
 if scenario=='tls_duplicate_weight': headers+=b'x-mbx-used-weight-1m: 20\r\n'
 headers+=b'Connection: close\r\n\r\n'
@@ -136,6 +142,22 @@ with socket.socket() as listener:
                 request+=chunk
                 if len(request)>4096: raise ValueError('request_limit')
             expected=b'GET /api/v3/exchangeInfo HTTP/1.1\r\nHost: rest.fixture.invalid:23456\r\nConnection: close\r\n\r\n'
+            if sys.argv[2]=='account':
+                from urllib.parse import parse_qsl,urlencode
+                lines=request.decode('ascii').split('\r\n')
+                if len(lines)!=6 or not lines[0].startswith('GET /api/v3/account?') or not lines[0].endswith(' HTTP/1.1'):
+                    raise ValueError('account_request_line')
+                query=lines[0][len('GET /api/v3/account?'):-len(' HTTP/1.1')]
+                params=parse_qsl(query,strict_parsing=True)
+                if [k for k,v in params]!=['timestamp','recvWindow','signature'] or params[1][1]!='5000' or urlencode(params)!=query:
+                    raise ValueError('account_request_params')
+                if not params[0][1].isdigit() or not 0<=time.time_ns()//1000000-int(params[0][1])<=5000:
+                    raise ValueError('account_request_expired')
+                scope={'__name__':'fixture_signature_verifier'}
+                exec(compile(open('/usr/local/lib/trader-egress/gateway_native_requests.py').read(),'<held-fixture-verifier>','exec'),scope)
+                scope['verify_signature'](urlencode(params[:-1]),params[-1][1])
+                expected=('GET /api/v3/account?'+query+' HTTP/1.1\r\nHost: rest.fixture.invalid:23456\r\nX-MBX-APIKEY: '+scope['API_KEY']+'\r\nConnection: close\r\n\r\n').encode()
+                report['native_signature_verified']=True
             if request!=expected: raise ValueError('unexpected_request')
             report['http_requests']=1;report['request_sha256']=hashlib.sha256(request).hexdigest();save()
             connection.sendall(headers)
@@ -150,12 +172,14 @@ def worker(payload):
     base = load(payload["base_source"])
     base["require_isolation"](payload["original"])
     requests = payload.get("native_requests_profile", False)
-    native = payload.get("native_receipt_profile", False)
+    signed = payload.get("signed_account_profile", False)
+    native = payload.get("native_receipt_profile", False) or signed
     receipt = payload.get("tls_receipt_profile", False) or native
     tls = payload.get("tls_profile", False) or receipt
     ipc = payload.get("joint_ipc_profile", False) or requests
     if (
-        type(requests) is not bool
+        type(signed) is not bool
+        or type(requests) is not bool
         or type(native) is not bool
         or type(receipt) is not bool
         or type(tls) is not bool
@@ -218,6 +242,14 @@ def worker(payload):
     guards = load(payload["sources"]["selftest.py"])
     gateway = load(payload["sources"]["ledger_gateway.py"])
     ledger_module = gateway["load_ledger"](payload["sources"])
+    account_code = load(payload["sources"]["gateway_native_account.py"]) if signed else None
+    if signed:
+        ledger_module = account_code["ledger_view"](ledger_module)
+    rates = (
+        account_code["rates_view"]()
+        if signed
+        else sys.modules["apps.strategies_nautilus.portfolio_rate_evidence"]
+    )
     peer = guards["Child"](payload["sources"]["selftest.py"])
     controller = tls_peer = None
     try:
@@ -274,7 +306,7 @@ def worker(payload):
                     "-c",
                     TLS_PEER,
                     payload["scenario"],
-                    "native" if native else "stdlib",
+                    "account" if signed else "native" if native else "stdlib",
                 ],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -301,7 +333,9 @@ def worker(payload):
             "/usr/bin/python3",
             "-I",
             entry["CODE"] + "/installed_gateway.py",
-            "--native-receipt-fixture"
+            "--signed-account-fixture"
+            if signed
+            else "--native-receipt-fixture"
             if native
             else "--tls-receipt-fixture"
             if receipt
@@ -369,7 +403,7 @@ def worker(payload):
                 "/usr/bin/python3",
                 "-I",
                 "-c",
-                PROBE,
+                PROBE.replace("local-egress-attempts-v1", ledger_module.SCOPE),
             )
         )
         if (probe["uid"], probe["gid"]) != (
@@ -575,6 +609,16 @@ def worker(payload):
         if tls:
             raw_tls = (scope / "tls.jsonl").read_bytes()
             transport = load(payload["sources"]["gateway_tls.py"])
+            selection_raw = None
+            if signed:
+                selection_raw = (scope / "account-request.json").read_bytes()
+                contract = account_code["AccountContract"](
+                    load(payload["sources"]["gateway_native_requests.py"]),
+                    json.loads(selection_raw),
+                )
+                if contract.raw != selection_raw:
+                    raise RuntimeError("noncanonical_signed_account_selection")
+                transport = account_code["transport_view"](transport, contract)
             trust = Path("/etc/trader/egress-gateway-fixture-ca.pem").read_bytes()
             replay = transport["replay"](
                 raw_tls,
@@ -586,7 +630,7 @@ def worker(payload):
                 ledger_module=ledger_module,
                 gateway_module=gateway,
                 provenance=sys.modules["apps.strategies_nautilus.portfolio_tls_provenance"],
-                rates=sys.modules["apps.strategies_nautilus.portfolio_rate_evidence"],
+                rates=rates,
             )
             if (replay["status"] == "complete") != (
                 scenario in {"tls_success", "tls_slow_body", "native_precision"} or late_receipt
@@ -607,14 +651,32 @@ def worker(payload):
                 "tls_trust_sha256": base["sha"](trust),
                 "tls_trust_pem": trust.decode(),
                 "tls_peer": peer_report,
+                **(
+                    {
+                        "account_selection": selection_raw.decode(),
+                        "account_selection_sha256": base["sha"](selection_raw),
+                    }
+                    if signed
+                    else {}
+                ),
             }
+            if signed and scenario != "tls_bad_certificate":
+                if not peer_report.get("native_signature_verified") or peer_report[
+                    "request_sha256"
+                ] != base["sha"](contract.request):
+                    raise RuntimeError("peer_signed_account_request_mismatch")
+                checks.append("native_signed_request_matches_independent_tls_peer_verification")
         if receipt and (scope / "receipt.jsonl").exists():
             receipt_code = load(payload["sources"]["gateway_tls_receipt.py"])
             receipt_raw = (scope / "receipt.jsonl").read_bytes()
             receipt_replay = receipt_code["replay"](
                 receipt_raw,
                 expected_sha256=base["sha"](receipt_raw),
-                native=load(payload["sources"]["gateway_native_receipt.py"]) if native else None,
+                native=account_code
+                if signed
+                else load(payload["sources"]["gateway_native_receipt.py"])
+                if native
+                else None,
                 tls_raw=raw_tls,
                 attempts=attempts,
                 lifecycle=lifecycle,
@@ -623,7 +685,7 @@ def worker(payload):
                 gateway_module=gateway,
                 transport=transport,
                 provenance=sys.modules["apps.strategies_nautilus.portfolio_tls_provenance"],
-                rates=sys.modules["apps.strategies_nautilus.portfolio_rate_evidence"],
+                rates=rates,
                 binding_sha256=ready["binding_sha256"],
             )
             if (receipt_replay["status"] == "acknowledged") != (
@@ -631,7 +693,9 @@ def worker(payload):
             ):
                 raise RuntimeError("receipt_acknowledgement_mismatch")
             if native:
-                if receipt_replay["schema_version"] != "portfolio.installed_native_receipt.v1":
+                if receipt_replay["schema_version"] != (
+                    account_code["PROFILE"] if signed else "portfolio.installed_native_receipt.v1"
+                ):
                     raise RuntimeError("native_receipt_profile_missing")
                 tls_result["native_runtime"] = native_runtime
             tls_result.update(receipt_archive=receipt_raw.decode(), receipt_replay=receipt_replay)
@@ -983,6 +1047,7 @@ def main(argv=None):
     profiles.add_argument("--tls-receipt-profile", action="store_true")
     profiles.add_argument("--native-receipt-profile", action="store_true")
     profiles.add_argument("--native-requests-profile", action="store_true")
+    profiles.add_argument("--signed-account-profile", action="store_true")
     profiles.add_argument("--joint-ipc-profile", action="store_true")
     args = parser.parse_args(argv)
     if os.geteuid() == 0:
@@ -1012,7 +1077,11 @@ def main(argv=None):
             for name in entry["FILES"]
         }
         native_bundle = None
-        if args.native_receipt_profile or args.native_requests_profile:
+        if (
+            args.native_receipt_profile
+            or args.native_requests_profile
+            or args.signed_account_profile
+        ):
             built = subprocess.run(
                 [
                     str(directory.parents[1] / ".venv/bin/python"),
@@ -1043,6 +1112,7 @@ def main(argv=None):
             "tls_receipt_profile": args.tls_receipt_profile,
             "native_receipt_profile": args.native_receipt_profile,
             "native_requests_profile": args.native_requests_profile,
+            "signed_account_profile": args.signed_account_profile,
             "joint_ipc_profile": args.joint_ipc_profile,
             "base_source": base_source,
             "installer": installer.decode(),
@@ -1060,7 +1130,7 @@ def main(argv=None):
             else IPC_SCENARIOS
             if args.joint_ipc_profile
             else NATIVE_SCENARIOS
-            if args.native_receipt_profile
+            if args.native_receipt_profile or args.signed_account_profile
             else RECEIPT_SCENARIOS
             if args.tls_receipt_profile
             else TLS_SCENARIOS
@@ -1128,6 +1198,7 @@ def main(argv=None):
             "tls_receipt_profile": args.tls_receipt_profile,
             "native_receipt_profile": args.native_receipt_profile,
             "native_requests_profile": args.native_requests_profile,
+            "signed_account_profile": args.signed_account_profile,
             "joint_ipc_profile": args.joint_ipc_profile,
             "scenarios": reports,
             "source_sha256": payload["source_sha256"],

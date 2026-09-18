@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-09-17
+- **Last updated**: 2026-09-18
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: Installed isolation now supports native metadata receipts and a separate 20-step signed-request custody rehearsal. The dedicated UID uses Nautilus Ed25519 signing; root verifies fixed selectors, challenge clocks and nine signatures before durable request receipts. The request profile never dispatches traffic. Next join it to gateway-owned TLS/WS and actual same-run account/route collection. Actual authority/coverage, provider rate/clock qualification, host rollout and trading remain blocked; consumed scopes stay consumed.
+- **Current objective**: A signed fixture account GET now runs end to end: the isolated Nautilus child signs, root validates and owns HTTPS, then the child constructs exact AccountBalance objects from original response bytes after kernel revocation. Precision loss or missing acknowledgement leaves the attempt pending. The separate 20-step request rehearsal remains available. Next integrate repeated account reads, same-run metadata/routes and concurrent TLS/WS. Real authority/coverage, provider limits/clocks, host rollout, qualified equity and trading remain blocked; consumed scopes stay consumed.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -320,7 +320,9 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
    now constructs four native Currency objects in the isolated child before its final
    acknowledgement. [Native signed-request custody](progress/portfolio-installed-native-requests-2026-09-17.md)
    now verifies 20 fixed selectors and nine native signatures in a separate no-dispatch
-   profile. Next connect full native account collection, same-run routes and concurrent
+   profile. [Signed account HTTPS integration](progress/portfolio-installed-signed-account-2026-09-18.md)
+   now joins one validated request to root TLS and exact native balance receipts.
+   Next connect repeated full account reads, same-run metadata/routes and concurrent
    TLS/WS traffic through the expiring kernel lifecycle.
    Sampling alone never proves coverage.
    Actual authority policy, fresh rate/clock consumption and provider-charge
@@ -367,14 +369,14 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
 
 ## Latest Verification
 
-- Installed native request custody: **52 new / 733 focused tests pass**, with no
-  warnings; **42 actual disposable scenarios** pass (7 request, 35 regression).
-  Two detached replays reproduce all selected records. Two frozen-runtime replays
-  regenerate 80 original requests across seven success/failure scenarios, preserving
-  original missing acknowledgements; metadata mapping regressions also match.
-  See [signed-request custody](progress/portfolio-installed-native-requests-2026-09-17.md).
-  Earlier [native metadata receipt](progress/portfolio-installed-native-receipt-2026-09-17.md)
-  retains its original evidence. Full collector transport integration remains pending.
+- Installed signed account exchange: **29 new / 762 focused tests pass**, no
+  warnings; **49 actual disposable scenarios** pass (7 account, 42 regression).
+  Two detached replays match all original reports; two frozen-runtime replays
+  reproduce signed requests and exact balance mapping without repairing missing
+  receipts. See [signed account acceptance](progress/portfolio-installed-signed-account-2026-09-18.md).
+  A concurrent run refused native startup before activation; unchanged deadlines
+  pass the separate final run. Earlier [request custody](progress/portfolio-installed-native-requests-2026-09-17.md)
+  and metadata evidence remain immutable. Full joint transport remains pending.
 - The complete ordinary-process native joint collector retains its prior 20-operation /
   16-GET / 448-weight acceptance and original receipt clocks. Connecting that collector
   to installed gateway-owned sockets remains pending. Earlier details are archived in

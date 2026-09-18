@@ -20,6 +20,10 @@ MAX_PAYLOAD = 180000
 CHUNK = 512
 DEADLINE = 5
 JOURNAL_LIMIT = 8192
+NATIVE_PROFILES = {
+    "portfolio.installed_native_receipt.v1",
+    "portfolio.installed_native_account_receipt.v1",
+}
 
 
 def canonical(value):
@@ -212,6 +216,8 @@ def deliver(
     collector, ledger, lifecycle, payload, provenance, *, on_prepared=None, native_result=None
 ):
     """Kernel permission must already be revoked. Failure never refunds the attempt."""
+    if native_result is not None and native_result.get("profile") not in NATIVE_PROFILES:
+        raise ValueError("native_receipt_profile_required")
     if not 0 < len(payload) <= MAX_PAYLOAD:
         raise ValueError("receipt_size")
     if (
@@ -263,9 +269,7 @@ def deliver(
                 kind=kind,
                 utc_ns=time.time_ns(),
                 monotonic_ns=time.monotonic_ns(),
-                profile=PROFILE
-                if native_result is None
-                else "portfolio.installed_native_receipt.v1",
+                profile=PROFILE if native_result is None else native_result["profile"],
                 **({"native_result": native_result} if native_result is not None else {}),
                 binding_sha256=ledger.state.binding_sha256,
                 payload_sha256=digest(payload),
@@ -364,10 +368,13 @@ def replay(
     first = json.loads(raw.splitlines()[0])
     native_result = None
     if native is not None:
-        if first.get("profile") != "portfolio.installed_native_receipt.v1":
+        if (
+            native.get("PROFILE") not in NATIVE_PROFILES
+            or first.get("profile") != native["PROFILE"]
+        ):
             raise ValueError("native_receipt_profile_required")
         native_result = native["expected_result"](payload)
-    elif first.get("profile") == "portfolio.installed_native_receipt.v1":
+    elif first.get("profile") in NATIVE_PROFILES:
         raise ValueError("native_receipt_parser_required")
 
     def prefix(original, key):
@@ -410,7 +417,7 @@ def replay(
             kind="prepared" if seq == 0 else "acknowledged",
             utc_ns=row.get("utc_ns"),
             monotonic_ns=row.get("monotonic_ns"),
-            profile=PROFILE if native_result is None else "portfolio.installed_native_receipt.v1",
+            profile=PROFILE if native_result is None else native_result["profile"],
             **({"native_result": native_result} if native_result is not None else {}),
             binding_sha256=binding_sha256,
             payload_sha256=digest(payload),
@@ -441,18 +448,27 @@ def replay(
     if any(r[k] < rows[-1][k] for r in terminals for k in ("utc_ns", "monotonic_ns")):
         raise ValueError("receipt_terminal_precedes_transfer")
     outcomes = [r for r in attempt_rows if r["kind"] == "outcome"]
-    if outcomes and outcomes[0]["payload"] != {"index": 0, "result": "succeeded"}:
+    outcome = {"index": 0, "result": "succeeded"}
+    if complete["schema_version"] == "portfolio.fixture_signed_account_tls_ledger.v1":
+        prepared_row = next(r for r in attempt_rows if r["kind"] == "prepared")
+        outcome["request_sha256"] = prepared_row["payload"]["request_sha256"]
+    if outcomes and outcomes[0]["payload"] != outcome:
         raise ValueError("receipt_outcome_mismatch")
     if outcomes and (
         len(rows) != 2 or any(outcomes[0][k] < rows[-1][k] for k in ("utc_ns", "monotonic_ns"))
     ):
         raise ValueError("receipt_outcome_precedes_acknowledgement")
     return {
-        "schema_version": PROFILE
-        if native_result is None
-        else "portfolio.installed_native_receipt.v1",
+        "schema_version": PROFILE if native_result is None else native_result["profile"],
         **(
-            {"native_result": native_result, "native_metadata_acknowledged": len(rows) == 2}
+            {
+                "native_result": native_result,
+                (
+                    "native_account_acknowledged"
+                    if native_result["profile"] == "portfolio.installed_native_account_receipt.v1"
+                    else "native_metadata_acknowledged"
+                ): len(rows) == 2,
+            }
             if native_result is not None
             else {}
         ),

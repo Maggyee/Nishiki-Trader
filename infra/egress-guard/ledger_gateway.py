@@ -283,9 +283,26 @@ class FixtureLedgerGateway:
             self.used = True
             try:
                 # Kernel SCM_CREDENTIALS + pidfd binding, not a supplied label.
-                if self.authorize() != {"ok": True}:
+                authorization = self.authorize()
+                signed = (
+                    self.ledger.state.profile == "portfolio.fixture_signed_account_tls_ledger.v1"
+                )
+                links = {}
+                if signed:
+                    if (
+                        not isinstance(authorization, dict)
+                        or set(authorization) != {"ok", "request_sha256"}
+                        or authorization["ok"] is not True
+                    ):
+                        raise ValueError("gateway_signed_authentication_failed")
+                    links = {"request_sha256": authorization["request_sha256"]}
+                elif authorization != {"ok": True}:
                     raise ValueError("gateway_authentication_failed")
-                receipt = self.ledger.prepare(caller="collector", operation="exchange_info")
+                receipt = self.ledger.prepare(
+                    caller="collector",
+                    operation="account_read" if signed else "exchange_info",
+                    **links,
+                )
                 self.ledger.checkpoint()
                 if self.stop.is_set():
                     raise ValueError("gateway_stop_before_grant")
@@ -302,7 +319,7 @@ class FixtureLedgerGateway:
                     raise ValueError("gateway_stop_before_send")
                 result = self.send()  # Owned fixed socket; never returned to client.
                 self.ledger.outcome(
-                    index=receipt["index"], result="succeeded" if result else "failed"
+                    index=receipt["index"], result="succeeded" if result else "failed", **links
                 )
                 if not result:
                     raise RuntimeError("gateway_transport_failed")

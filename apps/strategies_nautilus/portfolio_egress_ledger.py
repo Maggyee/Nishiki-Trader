@@ -73,6 +73,8 @@ IPC_PROFILE = "portfolio.fixture_joint_ipc_ledger.v1"
 IPC_SCOPE = "fixture-joint-ipc-v1"
 REQUEST_PROFILE = "portfolio.fixture_native_requests_ledger.v1"
 REQUEST_SCOPE = "fixture-native-requests-v1"
+ACCOUNT_PROFILE = "portfolio.fixture_signed_account_tls_ledger.v1"
+ACCOUNT_SCOPE = "fixture-signed-account-tls-v1"
 # Fixed maximum local pilot classification. Tokens contain no endpoint/payload/signature.
 IPC_STEPS = (
     ("clock_initial", "time"),
@@ -110,7 +112,7 @@ def clock():
 
 class State:
     def __init__(self, binding_sha256, *, profile=PROFILE):
-        if profile not in {PROFILE, JOINT_PROFILE, IPC_PROFILE, REQUEST_PROFILE}:
+        if profile not in {PROFILE, JOINT_PROFILE, IPC_PROFILE, REQUEST_PROFILE, ACCOUNT_PROFILE}:
             raise ValueError("unknown_ledger_profile")
         self.profile = profile
         self.operations = OPERATIONS if profile == PROFILE else JOINT_OPERATIONS
@@ -173,6 +175,12 @@ class State:
                 )
             ):
                 raise ValueError("ipc_fixed_operation_required")
+            if self.profile == ACCOUNT_PROFILE and (
+                self.attempts
+                or payload["caller"] != "collector"
+                or payload["operation"] != "account_read"
+            ):
+                raise ValueError("single_signed_account_attempt_required")
             self.pending = payload["index"]
             self.attempts.append({**payload, "prepared_monotonic_ns": mono, "outcome": "uncertain"})
         elif kind == "outcome":
@@ -187,7 +195,7 @@ class State:
                 raise ValueError("ledger_outcome_invalid")
             self.validate_link(payload)
             if (
-                self.profile in {IPC_PROFILE, REQUEST_PROFILE}
+                self.profile in {IPC_PROFILE, REQUEST_PROFILE, ACCOUNT_PROFILE}
                 and payload["request_sha256"] != self.attempts[self.pending]["request_sha256"]
             ):
                 raise ValueError("ipc_outcome_request_changed")
@@ -212,7 +220,7 @@ class State:
         self.last_kind = kind
 
     def link_fields(self):
-        if self.profile in {IPC_PROFILE, REQUEST_PROFILE}:
+        if self.profile in {IPC_PROFILE, REQUEST_PROFILE, ACCOUNT_PROFILE}:
             return {"request_sha256"}
         return {"joint_prefix_sha256"} if self.profile == JOINT_PROFILE else set()
 
@@ -308,6 +316,7 @@ class AttemptLedger:
             JOINT_PROFILE: JOINT_SCOPE,
             IPC_PROFILE: IPC_SCOPE,
             REQUEST_PROFILE: REQUEST_SCOPE,
+            ACCOUNT_PROFILE: ACCOUNT_SCOPE,
         }[profile]
         self.owner = os.getpid()
         self.lock = threading.Lock()
@@ -422,7 +431,7 @@ class AttemptLedger:
                         "operation": operation,
                         **(
                             {"request_sha256": request_sha256}
-                            if self.state.profile in {IPC_PROFILE, REQUEST_PROFILE}
+                            if self.state.profile in {IPC_PROFILE, REQUEST_PROFILE, ACCOUNT_PROFILE}
                             or request_sha256 is not None
                             else {}
                         ),
@@ -454,7 +463,7 @@ class AttemptLedger:
                         "result": result,
                         **(
                             {"request_sha256": request_sha256}
-                            if self.state.profile in {IPC_PROFILE, REQUEST_PROFILE}
+                            if self.state.profile in {IPC_PROFILE, REQUEST_PROFILE, ACCOUNT_PROFILE}
                             or request_sha256 is not None
                             else {}
                         ),

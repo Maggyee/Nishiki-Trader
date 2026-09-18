@@ -6,6 +6,28 @@ offline disk tests, and retain read-only host deployment-input snapshots.
 Current phase: Phase 5 entry, offline infrastructure acceptance only. This is not
 a production guard, gateway audit service, quota authority or collection permit.
 
+The signed account successor is `gateway_native_account.py`:
+
+```bash
+/usr/bin/python3 -I infra/egress-guard/installed_gateway_selftest.py --signed-account-profile --report data/NEW-ACCOUNT.json
+```
+
+It joins one isolated native Ed25519 request to the root-owned local HTTPS socket,
+then delivers original response bytes/clocks for actual native AccountBalance
+construction. Root validates the fixed GET, public fixture key and original signing
+window; verifier time reduces the remaining connect/write allowance. The separate
+account ledger binds the request digest and a pinned `account-request.json` original.
+Kernel permission is revoked before consumer delivery; any native Money rounding
+or missing final receipt keeps the attempt pending. Account header usage is retained
+without fabricating exchangeInfo rate limits. The four fixture assets/precision are
+fixed, and no actual account, route, WS, equity or trading qualification follows.
+
+Supplemental manifest v7 pins thirteen sources. The base installation/launcher and
+prior journal profiles remain separate. Seven actual account scenarios plus 42
+regressions and detached original/native replays are recorded in
+[signed account acceptance](../../docs/progress/portfolio-installed-signed-account-2026-09-18.md).
+Next join repeated account reads and same-run metadata/routes to concurrent TLS/WS.
+
 The native request custody successor is `gateway_native_requests.py`:
 
 ```bash
@@ -22,7 +44,7 @@ request hashes before acknowledgements. The fixture budget stays 16 GET selector
 request dispatch follows. Fixed BTC/ETH/BNB routes and subscription ID zero are
 synthetic selections, not values derived from actual same-run responses.
 
-Manifest v6 pins twelve protected sources. The separate request ledger/scope and
+Manifest v7 pins thirteen protected sources. The separate request ledger/scope and
 `requests.jsonl` preserve incomplete attempts after drift, consumer death or root
 crash. Detached replay verifies signatures and receipt ordering with original times;
 it never refreshes expiry or repairs missing acknowledgements. Next connect actual
@@ -40,7 +62,7 @@ retaining a `.runtime.tar.gz` beside the report. Only the isolated dedicated UID
 imports Nautilus and constructs BTC/ETH/BNB/USDT Currency objects from the original
 root HTTPS bytes. Its final acknowledgement binds both the native summary and the
 original payload, including original receive clocks. Root parses the expected
-summary with stdlib only. Protected fixture manifest v6 pins twelve sources;
+summary with stdlib only. Protected fixture manifest v7 pins thirteen sources;
 base installation and earlier journal profiles remain separate.
 
 The private runtime tmpfs is root-owned and read-only. Files are fully hashed at
@@ -143,7 +165,7 @@ and [lifecycle acceptance](../../docs/progress/portfolio-egress-gateway-lifecycl
 
 The ordinary-user wrapper uses existing sudo to run five fresh private mount,
 network and PID namespaces. It reuses the pinned installer, then stages a separate
-fixture v6 manifest and twelve protected sources in the disposable installation. The
+fixture v7 manifest and thirteen protected sources in the disposable installation. The
 fixed installed `installed_gateway.py --fixture` entry consumes the original
 fixed storage scope, authenticates the distinct-UID child and uses the durable
 kernel lifecycle. Neither the collector nor the public wrapper can select another

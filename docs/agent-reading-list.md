@@ -22,6 +22,16 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the signed fixture account request → root HTTPS → native balance receipt path,
+read `docs/progress/portfolio-installed-signed-account-2026-09-18.md` and its JSON.
+Manifest v7 pins thirteen sources. The separate one-GET account ledger binds the
+native request hash; kernel permission is revoked before exact AccountBalance
+construction and acknowledgement. Recheck the original five-second signing window
+before connect/write, including verifier time. Native Money rounding is refused;
+account responses do not advertise rate limits, so limits/other usage remain unknown.
+Public test keys and fixed four-asset precision qualify no real account or equity.
+Next join repeated account reads, same-run metadata/routes and concurrent WS.
+
 For installed native signed-request custody, read
 `docs/progress/portfolio-installed-native-requests-2026-09-17.md` and its JSON.
 Fixture manifest v6 pins twelve sources. A separate ledger/scope validates 20 fixed

@@ -21,9 +21,20 @@ LIMIT = 2 * 1024 * 1024
 BODY_LIMIT = 65536
 
 
-def capture(ledger, lifecycle, trust, provenance, rates, *, on_headers=None, on_complete=None):
+def capture(
+    ledger, lifecycle, trust, provenance, rates, *, on_headers=None, on_complete=None, account=None
+):
     """No caller-selected destination/request, retry, socket handoff or credentials."""
+    # Certificate context remains fixed to the same fixture host; account selectors
+    # are independently validated by the held signed-account contract.
     parsed, context = provenance._selection(ENDPOINT, "rest", trust, provenance.digest(trust))
+    profile, endpoint, request = (
+        (PROFILE, ENDPOINT, REQUEST)
+        if account is None
+        else (account.TLS_PROFILE, account.ENDPOINT, account.request)
+    )
+    if account is not None:
+        account.check(ledger)
     ledger.checkpoint()
     if ledger.state.pending != 0 or len(ledger.state.attempts) != 1:
         raise ValueError("pending_fixed_attempt_required")
@@ -73,18 +84,20 @@ def capture(ledger, lifecycle, trust, provenance, rates, *, on_headers=None, on_
         try:
             append(
                 "connection_prepared",
-                profile=PROFILE,
+                profile=profile,
                 binding_sha256=ledger.state.binding_sha256,
                 attempt_prefix_sha256=provenance.digest(ledger.expected),
                 lifecycle_prefix_sha256=provenance.digest(lifecycle.expected),
-                endpoint=ENDPOINT,
+                endpoint=endpoint,
                 peer=list(PEER),
                 trust_sha256=provenance.digest(trust),
+                **({"account_selection_sha256": account.pin} if account is not None else {}),
             )
             ledger.checkpoint()
             connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             connection.setsockopt(socket.SOL_SOCKET, socket.SO_MARK, MARK)
-            connection.settimeout(timeout())
+            remaining = account.check(ledger) if account is not None else 4
+            connection.settimeout(min(timeout(), remaining))
             connection.connect(PEER)
             connection.settimeout(timeout())
             connection = context.wrap_socket(connection, server_hostname=parsed.hostname)
@@ -108,10 +121,11 @@ def capture(ledger, lifecycle, trust, provenance, rates, *, on_headers=None, on_
                 verify_mode="CERT_REQUIRED",
                 tls_minimum_version="TLSv1.2",
             )
-            append("request_prepared", **provenance.raw_fields(REQUEST))
+            append("request_prepared", **provenance.raw_fields(request))
             ledger.checkpoint()
-            connection.settimeout(timeout())
-            connection.sendall(REQUEST)
+            remaining = account.check(ledger) if account is not None else 4
+            connection.settimeout(min(timeout(), remaining))
+            connection.sendall(request)
             response = bytearray()
             header_end = length = None
             while True:
@@ -189,6 +203,7 @@ def replay(
     gateway_module,
     provenance,
     rates,
+    account=None,
 ):
     """Selected historical bytes only; malformed complete transcripts never pass."""
     if (
@@ -197,6 +212,13 @@ def replay(
         or provenance.digest(raw) != expected_sha256
     ):
         raise ValueError("selected_gateway_tls_archive")
+    profile, endpoint, request = (
+        (PROFILE, ENDPOINT, REQUEST)
+        if account is None
+        else (account.TLS_PROFILE, account.ENDPOINT, account.request)
+    )
+    if account is not None:
+        account.validate_attempts(attempts, binding_sha256)
     previous = None
     rows = []
     for line in raw.splitlines(keepends=True):
@@ -238,16 +260,19 @@ def replay(
             "peer",
             "trust_sha256",
         }
+        | ({"account_selection_sha256"} if account is not None else set())
         or first["kind"] != "connection_prepared"
-        or first["profile"] != PROFILE
+        or first["profile"] != profile
         or first["binding_sha256"] != binding_sha256
-        or first["endpoint"] != ENDPOINT
+        or first["endpoint"] != endpoint
         or first["peer"] != list(PEER)
         or first["trust_sha256"] != trust_sha256
         or not isinstance(trust_sha256, str)
         or re.fullmatch("[0-9a-f]{64}", trust_sha256) is None
     ):
         raise ValueError("gateway_tls_selection")
+    if account is not None and first["account_selection_sha256"] != account.pin:
+        raise ValueError("gateway_tls_account_selection")
     # Verify complete companion archives before selecting their acknowledged prefixes.
     ledger_module.replay(
         attempts, expected_sha256=provenance.digest(attempts), binding_sha256=binding_sha256
@@ -337,10 +362,12 @@ def replay(
         elif kind == "request_prepared" and stage == "tls_connected":
             if (
                 fields != {"raw_b64", "raw_sha256"}
-                or base64.b64decode(row["raw_b64"], validate=True) != REQUEST
-                or row["raw_sha256"] != provenance.digest(REQUEST)
+                or base64.b64decode(row["raw_b64"], validate=True) != request
+                or row["raw_sha256"] != provenance.digest(request)
             ):
                 raise ValueError("gateway_tls_fixed_request")
+            if account is not None:
+                account.validate_at(row["utc_ns"], row["monotonic_ns"])
             request_prepared = True
         elif kind == "response_chunk" and stage in {"request_prepared", "response_chunk"}:
             if fields != {"raw_b64", "raw_sha256"}:
@@ -398,7 +425,7 @@ def replay(
             raise ValueError("gateway_tls_transition")
         stage = kind
     return {
-        "schema_version": PROFILE,
+        "schema_version": profile,
         "archive_sha256": expected_sha256,
         "binding_sha256": binding_sha256,
         "status": "complete" if stage == "completed" else "incomplete_no_resume",
