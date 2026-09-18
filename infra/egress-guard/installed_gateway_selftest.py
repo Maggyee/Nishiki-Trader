@@ -47,6 +47,15 @@ IPC_SCENARIOS = (
     "ipc_controller_crash",
 )
 REQUEST_SCENARIOS = IPC_SCENARIOS + ("ipc_runtime_drift",)
+SEQUENCE_SCENARIOS = (
+    "sequence_success",
+    "sequence_metadata_mismatch",
+    "sequence_balance_drift",
+    "sequence_second_precision",
+    "sequence_child_stopped",
+    "sequence_controller_crash",
+    "sequence_code_drift",
+)
 ENV = {"PATH": "/usr/sbin:/usr/bin:/sbin:/bin", "LC_ALL": "C"}
 
 
@@ -74,7 +83,7 @@ if runtime.exists():
     denied('native_runtime_write',lambda:os.open(runtime/'bin/python3.12',os.O_WRONLY))
     denied('native_runtime_replace',lambda:os.unlink(runtime/'bin/python3.12'))
 code=Path('/usr/local/lib/trader-egress')
-for name in ('installed_gateway.py','gateway_tls.py','gateway_joint_ipc.py','gateway_tls_receipt.py','gateway_native_runtime.py','gateway_native_receipt.py','gateway_native_requests.py','gateway_native_account.py','ledger_gateway.py','selftest.py','portfolio_rate_evidence.py','portfolio_tls_provenance.py','portfolio_egress_ledger.py'):
+for name in ('installed_gateway.py','gateway_tls.py','gateway_joint_ipc.py','gateway_tls_receipt.py','gateway_native_runtime.py','gateway_native_receipt.py','gateway_native_requests.py','gateway_native_account.py','gateway_read_sequence.py','ledger_gateway.py','selftest.py','portfolio_rate_evidence.py','portfolio_tls_provenance.py','portfolio_egress_ledger.py'):
     path=code/name
     assert path.read_bytes()
     denied('write:'+name,lambda:os.open(path,os.O_WRONLY))
@@ -109,11 +118,11 @@ body=json.dumps({'rateLimits':[
 ]},separators=(',',':')).encode()
 if sys.argv[2]=='native':
     metadata=json.loads(body)
-    metadata['symbols']=[{'symbol':asset+'USDT','baseAsset':asset,'baseAssetPrecision':17 if scenario=='native_precision' and asset=='BTC' else 8,'quoteAsset':'USDT','quoteAssetPrecision':8} for asset in ('BTC','ETH','BNB')]
+    metadata['symbols']=[{'symbol':asset+'USDT','baseAsset':asset,'baseAssetPrecision':17 if scenario=='native_precision' and asset=='BTC' else 7 if scenario=='sequence_metadata_mismatch' and asset=='BTC' else 8,'quoteAsset':'USDT','quoteAssetPrecision':8} for asset in ('BTC','ETH','BNB')]
     body=json.dumps(metadata,separators=(',',':')).encode()
 if sys.argv[2]=='account':
     body=json.dumps({'uid':41001,'accountType':'SPOT','balances':[
-        {'asset':'BTC','free':'0.000000001' if scenario=='native_precision' else '0.01000000','locked':'0.00100000'},
+        {'asset':'BTC','free':'0.000000001' if scenario=='native_precision' else '0.02000000' if scenario=='sequence_balance_drift' else '0.01000000','locked':'0.00100000'},
         {'asset':'ETH','free':'0.00000000','locked':'0.00000000'},
         {'asset':'BNB','free':'1.00000000','locked':'0.10000000'},
         {'asset':'USDT','free':'500.00000000','locked':'12.50000000'}]},separators=(',',':')).encode()
@@ -172,13 +181,15 @@ def worker(payload):
     base = load(payload["base_source"])
     base["require_isolation"](payload["original"])
     requests = payload.get("native_requests_profile", False)
+    sequence = payload.get("read_sequence_profile", False)
     signed = payload.get("signed_account_profile", False)
-    native = payload.get("native_receipt_profile", False) or signed
+    native = payload.get("native_receipt_profile", False) or signed or sequence
     receipt = payload.get("tls_receipt_profile", False) or native
     tls = payload.get("tls_profile", False) or receipt
     ipc = payload.get("joint_ipc_profile", False) or requests
     if (
-        type(signed) is not bool
+        type(sequence) is not bool
+        or type(signed) is not bool
         or type(requests) is not bool
         or type(native) is not bool
         or type(receipt) is not bool
@@ -187,7 +198,9 @@ def worker(payload):
         or (tls and ipc)
         or payload["scenario"]
         not in (
-            REQUEST_SCENARIOS
+            SEQUENCE_SCENARIOS
+            if sequence
+            else REQUEST_SCENARIOS
             if requests
             else IPC_SCENARIOS
             if ipc
@@ -328,6 +341,10 @@ def worker(payload):
                 ledger_module,
                 manifest,
                 native_runtime=native_runtime,
+            )
+        if sequence:
+            return worker_sequence(
+                payload, installed, entry, guards, manifest, native_runtime, tls_peer, peer
             )
         command = [
             "/usr/bin/python3",
@@ -763,6 +780,268 @@ def worker(payload):
         peer.stop()
 
 
+def worker_sequence(payload, installed, entry, guards, manifest, native_runtime, tls_peer, peer):
+    """Drive fixed barriers only; parent is namespace PID 1 and has no host network."""
+    code = load(payload["sources"]["gateway_read_sequence.py"])
+    modules = code["load_sources"](payload["sources"])
+    root = Path(entry["STORAGE"]) / code["SCOPE"]
+    command = [
+        "/usr/bin/python3",
+        "-I",
+        entry["CODE"] + "/installed_gateway.py",
+        "--read-sequence-fixture",
+    ]
+    controller = subprocess.Popen(
+        command,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        env=ENV,
+        cwd="/",
+    )
+    checks, peers, bindings, descriptor_counts = [], [], [], []
+    scenario = payload["scenario"]
+    index = 0
+    stopped = None
+    restore = None
+
+    def revoked():
+        rows = json.loads(
+            guards["run"](
+                guards["NFT"], "-j", "list", "set", "inet", "fixture_ledger_gateway", "permits"
+            )
+        )
+        if any(row.get("set", {}).get("elem") for row in rows["nftables"]):
+            raise RuntimeError("sequence_kernel_permit_retained")
+
+    def release():
+        controller.stdin.write("continue\n")
+        controller.stdin.flush()
+
+    def finish_peer():
+        tls_peer.wait(timeout=5)
+        value = json.loads(Path("/run/gateway-tls-peer.json").read_bytes())
+        if value["http_requests"] != 1 or (index and not value.get("native_signature_verified")):
+            raise RuntimeError("sequence_peer_request_mismatch")
+        peers.append(value)
+
+    try:
+        while True:
+            line = controller.stdout.readline()
+            if not line:
+                raise RuntimeError(
+                    "sequence_controller_no_message:" + controller.stderr.read()[-3000:]
+                )
+            message = json.loads(line)
+            if message.get("stage") in {"activated", "receipt_prepared"}:
+                descriptor_counts.append(len(list(Path(f"/proc/{controller.pid}/fd").iterdir())))
+            stage = message.get("stage")
+            if stage == "activated":
+                index = message["binding"]["read_sequence"]["index"]
+                if index != len(bindings):
+                    raise RuntimeError("sequence_step_order")
+                bindings.append(message["binding"])
+                identity = message["binding"]["collector"]["process"]
+                if (
+                    identity["uids"] != [installed["fixture_account"]["uid"]] * 4
+                    or identity["gids"] != [installed["fixture_account"]["gid"]] * 4
+                    or identity["groups"]
+                ):
+                    raise RuntimeError("sequence_child_identity")
+                if index == 0:
+                    probe = json.loads(
+                        guards["run"](
+                            "/usr/bin/setpriv",
+                            f"--reuid={identity['uids'][0]}",
+                            f"--regid={identity['gids'][0]}",
+                            "--clear-groups",
+                            "--bounding-set=-all",
+                            "--inh-caps=-all",
+                            "--ambient-caps=-all",
+                            "--no-new-privs",
+                            "/usr/bin/python3",
+                            "-I",
+                            "-c",
+                            PROBE.replace(
+                                "local-egress-attempts-v1",
+                                code["SCOPE"] + "/metadata/local-egress-attempts-v1",
+                            ),
+                        )
+                    )
+                    checks.extend(probe["checks"])
+                else:
+                    selected_scenario = (
+                        "native_precision"
+                        if index == 2 and scenario == "sequence_second_precision"
+                        else "sequence_balance_drift"
+                        if index == 2 and scenario == "sequence_balance_drift"
+                        else "tls_success"
+                    )
+                    tls_peer = subprocess.Popen(
+                        [
+                            "/usr/bin/nsenter",
+                            f"--net=/proc/{peer.process.pid}/ns/net",
+                            "/usr/bin/setpriv",
+                            "--bounding-set=-all",
+                            "--inh-caps=-all",
+                            "--ambient-caps=-all",
+                            "--no-new-privs",
+                            "/usr/bin/python3",
+                            "-I",
+                            "-c",
+                            TLS_PEER,
+                            selected_scenario,
+                            "account",
+                        ],
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        text=True,
+                        env=ENV,
+                        cwd="/",
+                    )
+                    if tls_peer.stdout.readline().strip() != "ready":
+                        raise RuntimeError(
+                            "sequence_peer_not_ready:" + tls_peer.stderr.read()[-2000:]
+                        )
+                release()
+            elif stage == "tls_headers_persisted":
+                pass
+            elif stage == "receipt_prepared":
+                revoked()
+                checks.append(f"step_{index}_kernel_revoked_before_native_receipt")
+                if index == 2 and scenario == "sequence_child_stopped":
+                    stopped = os.pidfd_open(bindings[-1]["collector"]["process"]["pid"])
+                    signal.pidfd_send_signal(stopped, signal.SIGSTOP)
+                release()
+            elif stage == "sequence_step_accepted":
+                if message["index"] != index:
+                    raise RuntimeError("sequence_acknowledgement_order")
+                revoked()
+                if index == 1 and scenario == "sequence_controller_crash":
+                    controller.kill()
+                    controller.communicate(timeout=5)
+                    terminal = {"status": "controller_sigkill_after_first_account"}
+                    checks.append("crash_between_steps_retains_consumed_sequence_without_permit")
+                    break
+                if index == 0 and scenario == "sequence_code_drift":
+                    target = Path(entry["CODE"]) / "gateway_read_sequence.py"
+                    original = target.read_bytes()
+                    target.write_bytes(original + b"\n# fixture drift\n")
+                    restore = (target, original)
+                release()
+            elif message.get("status") in {"fixture_receipt_succeeded", "refused"}:
+                finish_peer()
+            elif message.get("status") in {"sequence_completed", "sequence_refused"}:
+                terminal = message
+                break
+            else:
+                raise RuntimeError("sequence_unexpected_message")
+        stdout, stderr = controller.communicate(timeout=10)
+        if stdout or (controller.returncode and scenario != "sequence_controller_crash"):
+            raise RuntimeError("sequence_controller_exit:" + stderr[-3000:])
+        if stopped is not None:
+            if (
+                not select.select([stopped], [], [], 1)[0]
+                or Path(f"/proc/{bindings[-1]['collector']['process']['pid']}").exists()
+            ):
+                raise RuntimeError("sequence_stopped_child_not_reaped")
+            checks.append("second_account_stopped_consumer_killed_and_reaped")
+        if restore is not None:
+            restore[0].write_bytes(restore[1])
+        revoked()
+        try:
+            modules["gateway"]["marked_echo"]()
+        except OSError:
+            checks.append("sequence_terminal_marked_socket_denied")
+        else:
+            raise RuntimeError("sequence_terminal_socket_allowed")
+        raw = (root / "sequence.jsonl").read_bytes()
+        prepared = [r for r in map(json.loads, raw.splitlines()) if r["kind"] == "prepared"]
+        bundles = []
+        for i in range(len(prepared)):
+            directory = root / code["STEPS"][i]
+            scope = directory / (modules["ledger"].ACCOUNT_SCOPE if i else modules["ledger"].SCOPE)
+            bundle = {}
+            for key, name in code["FILES"].items():
+                path = directory / name if key == "binding" else scope / name
+                if path.exists():
+                    bundle[key] = path.read_text()
+            bundles.append(bundle)
+        report = code["replay"](
+            raw, expected_sha256=code["digest"](raw), bundles=bundles, modules=modules
+        )
+        expected = {
+            "sequence_success": (3, 3),
+            "sequence_metadata_mismatch": (1, 0),
+            "sequence_balance_drift": (3, 2),
+            "sequence_second_precision": (3, 2),
+            "sequence_child_stopped": (3, 2),
+            "sequence_controller_crash": (2, 2),
+            "sequence_code_drift": (1, 1),
+        }[scenario]
+        if (
+            (report["prepared_steps"], report["accepted_steps"]) != expected
+            or (report["status"] == "complete") != (scenario == "sequence_success")
+            or len(peers) != expected[0]
+        ):
+            raise RuntimeError(
+                "sequence_replay_counts:"
+                + str((report["prepared_steps"], report["accepted_steps"], len(peers), terminal))
+            )
+        if max(descriptor_counts) >= 1024:
+            raise RuntimeError("sequence_descriptor_budget_exceeded")
+        checks.append("bounded_controller_descriptors_below_1024_without_limit_change")
+        checks.append("selected_parent_and_all_child_originals_replay")
+        originals = {
+            str(p.relative_to(root)): p.read_bytes() for p in root.rglob("*") if p.is_file()
+        }
+        restarted = subprocess.run(
+            command,
+            input="continue\n",
+            capture_output=True,
+            text=True,
+            env=ENV,
+            cwd="/",
+            timeout=10,
+        )
+        if (
+            restarted.returncode != 1
+            or restarted.stdout
+            or "FileExistsError" not in restarted.stderr
+            or originals
+            != {str(p.relative_to(root)): p.read_bytes() for p in root.rglob("*") if p.is_file()}
+        ):
+            raise RuntimeError("sequence_restart_changed_consumed_scope")
+        checks.append("fresh_process_refuses_consumed_parent_and_preserves_all_originals")
+        if any(name.startswith("nautilus_trader") for name in sys.modules):
+            raise RuntimeError("sequence_native_loaded_by_root")
+        return {
+            "status": "passed",
+            "scenario": scenario,
+            "checks": checks,
+            "base_installation": installed,
+            "gateway_manifest": manifest,
+            "native_runtime": native_runtime,
+            "controller_descriptor_counts": descriptor_counts,
+            "sequence_archive": raw.decode(),
+            "bundles": bundles,
+            "sequence_replay": report,
+            "tls_peers": peers,
+            "terminal": terminal,
+            "root_native_modules_loaded": False,
+        }
+    finally:
+        if controller.poll() is None:
+            controller.kill()
+            controller.communicate(timeout=3)
+        if tls_peer.poll() is None:
+            tls_peer.kill()
+            tls_peer.communicate(timeout=3)
+        if stopped is not None:
+            os.close(stopped)
+
+
 def worker_ipc(payload, installed, entry, guards, module, manifest, *, native_runtime=None):
     """Shared installed fixture environment; IPC never activates a mark grant."""
     requests = payload.get("native_requests_profile", False)
@@ -1048,6 +1327,7 @@ def main(argv=None):
     profiles.add_argument("--native-receipt-profile", action="store_true")
     profiles.add_argument("--native-requests-profile", action="store_true")
     profiles.add_argument("--signed-account-profile", action="store_true")
+    profiles.add_argument("--read-sequence-profile", action="store_true")
     profiles.add_argument("--joint-ipc-profile", action="store_true")
     args = parser.parse_args(argv)
     if os.geteuid() == 0:
@@ -1081,6 +1361,7 @@ def main(argv=None):
             args.native_receipt_profile
             or args.native_requests_profile
             or args.signed_account_profile
+            or args.read_sequence_profile
         ):
             built = subprocess.run(
                 [
@@ -1113,6 +1394,7 @@ def main(argv=None):
             "native_receipt_profile": args.native_receipt_profile,
             "native_requests_profile": args.native_requests_profile,
             "signed_account_profile": args.signed_account_profile,
+            "read_sequence_profile": args.read_sequence_profile,
             "joint_ipc_profile": args.joint_ipc_profile,
             "base_source": base_source,
             "installer": installer.decode(),
@@ -1125,7 +1407,9 @@ def main(argv=None):
         reports = []
         bootstrap = "import json,sys\np=json.load(sys.stdin)\ns={'__name__':'isolated_installed_gateway'}\nexec(compile(p['source'],'<fixture>','exec'),s)\nprint(json.dumps(s['worker'](p),sort_keys=True))\n"
         for scenario in (
-            REQUEST_SCENARIOS
+            SEQUENCE_SCENARIOS
+            if args.read_sequence_profile
+            else REQUEST_SCENARIOS
             if args.native_requests_profile
             else IPC_SCENARIOS
             if args.joint_ipc_profile
@@ -1199,6 +1483,7 @@ def main(argv=None):
             "native_receipt_profile": args.native_receipt_profile,
             "native_requests_profile": args.native_requests_profile,
             "signed_account_profile": args.signed_account_profile,
+            "read_sequence_profile": args.read_sequence_profile,
             "joint_ipc_profile": args.joint_ipc_profile,
             "scenarios": reports,
             "source_sha256": payload["source_sha256"],

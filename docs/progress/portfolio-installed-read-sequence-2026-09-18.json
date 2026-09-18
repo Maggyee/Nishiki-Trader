@@ -1,0 +1,713 @@
+{
+  "acceptance_scenarios": {
+    "account-regression": [
+      {
+        "checks": 68,
+        "name": "tls_success",
+        "status": "passed"
+      },
+      {
+        "checks": 68,
+        "name": "tls_slow_body",
+        "status": "passed"
+      },
+      {
+        "checks": 68,
+        "name": "native_precision",
+        "status": "passed"
+      },
+      {
+        "checks": 70,
+        "name": "receipt_runtime_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 66,
+        "name": "tls_bad_certificate",
+        "status": "passed"
+      },
+      {
+        "checks": 71,
+        "name": "receipt_child_stopped",
+        "status": "passed"
+      },
+      {
+        "checks": 70,
+        "name": "receipt_controller_crash",
+        "status": "passed"
+      }
+    ],
+    "echo-regression": [
+      {
+        "checks": 63,
+        "name": "success",
+        "status": "passed"
+      },
+      {
+        "checks": 63,
+        "name": "code_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 63,
+        "name": "account_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 63,
+        "name": "storage_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 64,
+        "name": "controller_crash",
+        "status": "passed"
+      }
+    ],
+    "native-receipt-regression": [
+      {
+        "checks": 67,
+        "name": "tls_success",
+        "status": "passed"
+      },
+      {
+        "checks": 67,
+        "name": "tls_slow_body",
+        "status": "passed"
+      },
+      {
+        "checks": 67,
+        "name": "native_precision",
+        "status": "passed"
+      },
+      {
+        "checks": 69,
+        "name": "receipt_runtime_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 66,
+        "name": "tls_bad_certificate",
+        "status": "passed"
+      },
+      {
+        "checks": 70,
+        "name": "receipt_child_stopped",
+        "status": "passed"
+      },
+      {
+        "checks": 69,
+        "name": "receipt_controller_crash",
+        "status": "passed"
+      }
+    ],
+    "native-requests-regression": [
+      {
+        "checks": 69,
+        "name": "ipc_success",
+        "status": "passed"
+      },
+      {
+        "checks": 69,
+        "name": "ipc_child_death",
+        "status": "passed"
+      },
+      {
+        "checks": 69,
+        "name": "ipc_code_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 69,
+        "name": "ipc_account_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 69,
+        "name": "ipc_storage_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 70,
+        "name": "ipc_controller_crash",
+        "status": "passed"
+      },
+      {
+        "checks": 70,
+        "name": "ipc_runtime_drift",
+        "status": "passed"
+      }
+    ],
+    "sequence-final": [
+      {
+        "checks": 66,
+        "name": "sequence_success",
+        "status": "passed"
+      },
+      {
+        "checks": 64,
+        "name": "sequence_metadata_mismatch",
+        "status": "passed"
+      },
+      {
+        "checks": 66,
+        "name": "sequence_balance_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 66,
+        "name": "sequence_second_precision",
+        "status": "passed"
+      },
+      {
+        "checks": 67,
+        "name": "sequence_child_stopped",
+        "status": "passed"
+      },
+      {
+        "checks": 66,
+        "name": "sequence_controller_crash",
+        "status": "passed"
+      },
+      {
+        "checks": 64,
+        "name": "sequence_code_drift",
+        "status": "passed"
+      }
+    ]
+  },
+  "account_stream_fence_verified": false,
+  "actual_source_authority_qualified": false,
+  "atomic_account_snapshot": false,
+  "base_commit": "81843b67d5a3d6cdc5ee3f315f1aee99e5984ad9",
+  "complete_caller_coverage_verified": false,
+  "complete_sequence_budget": {
+    "actual_total_usage_qualified": false,
+    "documented_weight": 60,
+    "get_requests": 3
+  },
+  "date": "2026-09-18",
+  "detached_replays": [
+    {
+      "path": "data/installed-read-sequence-2026-09-18/replay-1.json",
+      "sha256": "9faadbccf6092054301a29babbec4eb8ab2006f7339466c07c5d373b137b4042"
+    },
+    {
+      "path": "data/installed-read-sequence-2026-09-18/replay-2.json",
+      "sha256": "9faadbccf6092054301a29babbec4eb8ab2006f7339466c07c5d373b137b4042"
+    },
+    {
+      "path": "data/installed-read-sequence-2026-09-18/native-replay-1.json",
+      "sha256": "3f1ccc143a81ff2baa663fc9ec8f373c9378c54987ad397042097c7da817dc6c"
+    },
+    {
+      "path": "data/installed-read-sequence-2026-09-18/native-replay-2.json",
+      "sha256": "3f1ccc143a81ff2baa663fc9ec8f373c9378c54987ad397042097c7da817dc6c"
+    }
+  ],
+  "fixture_account": {
+    "assets": [
+      "BNB",
+      "BTC",
+      "ETH",
+      "USDT"
+    ],
+    "precision": 8,
+    "uid": 41001
+  },
+  "fixture_key": "Public RFC 8032 test vector; no operator credential or real source authority",
+  "fixture_manifest_profile": "portfolio.installed_gateway_fixture.v8",
+  "full_account_equity_qualified": false,
+  "host_installation_performed": false,
+  "host_observations_unchanged": true,
+  "legacy_namespace_scenarios": 26,
+  "live_path_affected": false,
+  "maximum_observed_controller_descriptors": 962,
+  "namespace_scenarios_passed": 33,
+  "native_joint_collector_integrated": false,
+  "native_read_sequence_integrated": true,
+  "native_regenerated_requests": 96,
+  "native_replayed_scenario_sets": 28,
+  "native_runtime": {
+    "bytes": 213365841,
+    "files": 701,
+    "manifest_sha256": "75f136be0e614515577b7b6386a03b3ff9ad9acec3c43496179beb91e13dbc8b"
+  },
+  "native_version": "1.226.0",
+  "network_admitted": false,
+  "next_step": "Add open-order reconciliation and same-run market route selection, then concurrent gateway-owned TLS/WS. Keep original clocks, per-operation consumption and all real admission blocked.",
+  "original_evidence_modified": false,
+  "protected_source_sha256": {
+    "gateway_joint_ipc.py": "e814ddfdd67b7f43fd031a13a68a6bd87cf992e6de0a92b476751e4f9e3cb6ae",
+    "gateway_native_account.py": "fa4f306e4b12e38c653dfa180396a5792624aef8d06761cdb0a892060391b501",
+    "gateway_native_receipt.py": "6c6526bf6976c3e809c3537fb86ce6c7672f3cbb08aca111ba48eac46025a0b7",
+    "gateway_native_requests.py": "2cbea5e7d162f40ffcadf41673757eeefa29d95603937ef23de43c7309f28163",
+    "gateway_native_runtime.py": "3d319536524fe7f8ee0bbc1f9eca719e748dc24e262e47e9a210b058cafca8a8",
+    "gateway_read_sequence.py": "0bd71830f92bbc9b55ed191c648630cfe5f0c77118920bccdf8d273866142e02",
+    "gateway_tls.py": "c3f56e7089d9ad3ea1e246e59e4d69e899974045da67004e6058386fce71b8c8",
+    "gateway_tls_receipt.py": "b9b79da22c7c23483f41faec05ecd15708aa7deebf57b6b9f21cde89bb425d0e",
+    "installed_gateway.py": "5442542bb928921d6f05058093b760926f89a08471503dab45cd1a8e3bc3f3ab",
+    "ledger_gateway.py": "590c23e735d82e2fdf54b47a0d62329c0d49a52416212ea2f3d69b0548a7325f",
+    "portfolio_egress_ledger.py": "b95d01d34a54630455fccd049eb11f08bf82f6c2f2b38462b22b6384ebd5728f",
+    "portfolio_rate_evidence.py": "18aa5bdbf1954cebc4802b38daeded07cd60e2ab1b9e508d6686ac89a07abb35",
+    "portfolio_tls_provenance.py": "def476571e9ec56e989eee02b8623b1a657337956ecd88faeabaf9f2efc70044",
+    "selftest.py": "75ba8a36ca075f4236f20e68524117bf1abc1431226271bb0df35912c4ebff5f"
+  },
+  "python_tests": {
+    "files": [
+      {
+        "path": "tests/ops/test_egress_read_sequence.py",
+        "sha256": "fcdf4151854525d5b6bfc42075e3e3d639cbffe10cfc240e8bf3f6143fa02670"
+      },
+      {
+        "path": "tests/ops/test_egress_signed_account.py",
+        "sha256": "6d23f369ec3c3981c50f5f495d5940591b672b3a64d8940d7c2b35c0a04a12e9"
+      },
+      {
+        "path": "tests/ops/test_egress_native_requests.py",
+        "sha256": "9ade2336a92bd1cfd50f181a676b4c86254edfa47770db1d8d453919d9e81d62"
+      },
+      {
+        "path": "tests/ops/test_egress_native_receipt.py",
+        "sha256": "cc3b406799a82623e2b986e128b195806035bb3d0eb6e6786a75ed3d65e706f4"
+      },
+      {
+        "path": "tests/ops/test_egress_tls_receipt.py",
+        "sha256": "230189fda6301eca7f7e7029790e9de8db165933e794187331c50f6d8081875b"
+      },
+      {
+        "path": "tests/ops/test_egress_joint_ipc.py",
+        "sha256": "e546fc2bbf479a81ce19c341726a3868c545a6640e73c39a3fdd3062c11d1812"
+      },
+      {
+        "path": "tests/ops/test_egress_gateway_tls.py",
+        "sha256": "6eeb048531f6872712c155c83315242fc84accdc654483436f0e481ba5d63daa"
+      },
+      {
+        "path": "tests/ops/test_egress_installed_gateway.py",
+        "sha256": "a7f65e960c9ce1cd05503c8e1f5a881cb82ad9fb837734a3e1e305ce2aaf62d6"
+      },
+      {
+        "path": "tests/ops/test_egress_installation_selftest.py",
+        "sha256": "b23c06780d60a5e09bf751cfb6d2564a4704dfa3c430721a7e67c04dbe9328ef"
+      },
+      {
+        "path": "tests/ops/test_egress_installation.py",
+        "sha256": "326cba9d265b8aefbfbda38302f956da5705ca648e166734c411e06a5e0a2ded"
+      },
+      {
+        "path": "tests/ops/test_egress_package.py",
+        "sha256": "96b216e5d4f1c5b153d8889650103bb93c65b0debc95c87199ab6fb7ff0bac8b"
+      },
+      {
+        "path": "tests/ops/test_egress_ledger_gateway.py",
+        "sha256": "6cfe8c9c94ab56caa4294f64c85beffa092f18a476f3c0a434e9091940750f26"
+      },
+      {
+        "path": "tests/ops/test_egress_guard_selftest.py",
+        "sha256": "dfe1c8e795e820ab13c9a010d53092aca8c1016330dcff25f16398b606b12efa"
+      },
+      {
+        "path": "tests/ops/test_egress_collector_launcher.py",
+        "sha256": "9e5020262a12cbd4aa606b05b6974437054fb73a6664da4d821f447418976d79"
+      },
+      {
+        "path": "tests/ops/test_egress_authority_binding.py",
+        "sha256": "0a12fececd80168c31aa04e29d4f7f99faef7c0d3ba7b0f0348c596ca0a8dcf6"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_egress_ledger.py",
+        "sha256": "d13ce6c3646dfd5b52664b5aa940d9b1efa192e7392764869cfead7982d2b12a"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_joint_egress.py",
+        "sha256": "af7b4ace53f87f263a68dd761dce8dbe6ea6f6ebe3ab2d3119b190b418471484"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_tls_provenance.py",
+        "sha256": "c4d1c96b8a44bdcb6af96242ec6cd176392f4ca5e733768c2d63b4e54805c5da"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_rate_evidence.py",
+        "sha256": "2f4ae82940cdc346a3ada4f3bd2ca1b5cd049286fd0818446909b54b7aa4567b"
+      }
+    ],
+    "new_tests": 32,
+    "output": {
+      "path": "data/installed-read-sequence-2026-09-18/pytest-final.txt",
+      "sha256": "13afba8223734cc8ffecbb3987156ac8d9b72c6fb305200a8e02df2fefe37274"
+    },
+    "passed": 794,
+    "seconds": 52.36,
+    "warnings": 0
+  },
+  "replayed_original_scenario_sets": 33,
+  "reports": {
+    "account-regression": {
+      "path": "data/installed-read-sequence-2026-09-18/account-regression.json",
+      "sha256": "518886a64b6fe44a9f00c54d2476d4aa51363e130196373570c52132023820c2"
+    },
+    "echo-regression": {
+      "path": "data/installed-read-sequence-2026-09-18/echo-regression.json",
+      "sha256": "3c67203277f2362b9c3597a7869a254b8c9ee8367b6b2695af3afbcd6322306f"
+    },
+    "native-receipt-regression": {
+      "path": "data/installed-read-sequence-2026-09-18/native-receipt-regression.json",
+      "sha256": "c9aff3638150be8480889fb18fbb0534e56e7ce1648701a678db6909499b4a04"
+    },
+    "native-requests-regression": {
+      "path": "data/installed-read-sequence-2026-09-18/native-requests-regression.json",
+      "sha256": "214f3fa07badfff26ffa0221cd4e9f756e7d72fe6093a35ff3f28dab385982f4"
+    },
+    "sequence-final": {
+      "path": "data/installed-read-sequence-2026-09-18/sequence-final.json",
+      "sha256": "35aa4906b820c90c1c63f1e3087d7a06ecdbc7f34282b17ccd1c4f0b8e0a8583"
+    }
+  },
+  "resource_limit_increased": false,
+  "retained_drivers": {
+    "extract-runtime.py": {
+      "path": "data/installed-read-sequence-2026-09-18/extract-runtime.py",
+      "sha256": "44d9adb76e5930ca5f787a9e8b8deac8820703a53276d2c7e621251441e7892b"
+    },
+    "installed_gateway_selftest.py": {
+      "path": "data/installed-read-sequence-2026-09-18/installed_gateway_selftest.py",
+      "sha256": "1feb057e84aa21150c8aeee6e2550029df4d3215a86452f8a39e38bfc6717c0f"
+    },
+    "native-replay.py": {
+      "path": "data/installed-read-sequence-2026-09-18/native-replay.py",
+      "sha256": "ee442f63047673373b80c53c852e5c185223d0f4e776f6a64c768a493fa22d53"
+    },
+    "replay.py": {
+      "path": "data/installed-read-sequence-2026-09-18/replay.py",
+      "sha256": "684987cf49b98cf32805540c235e388d511249642be7c093951f84c4a42301d2"
+    },
+    "select-evidence.py": {
+      "path": "data/installed-read-sequence-2026-09-18/select-evidence.py",
+      "sha256": "079a3d7ec76964577e7e8174e837361bdd16ce8371c72380d10abb2bdb4ad5c0"
+    }
+  },
+  "retained_selection": {
+    "path": "data/installed-read-sequence-2026-09-18/selection.json",
+    "sha256": "4ba99943f103856382d3226bbf32090af92720f28632ebc640576391983dd54b"
+  },
+  "root_native_modules_loaded": false,
+  "routes_derived_from_same_run": false,
+  "runtime_bundles": [
+    {
+      "path": "data/installed-read-sequence-2026-09-18/account-regression.runtime.tar.gz",
+      "sha256": "564df01541b0349e2293c296c2174b36073d3fa428de77cd708e82c957fe0523"
+    },
+    {
+      "path": "data/installed-read-sequence-2026-09-18/native-receipt-regression.runtime.tar.gz",
+      "sha256": "96b5fde9caf394d44fcd03367e36f6b37082cdc692ea68e87b47e8de21f9331f"
+    },
+    {
+      "path": "data/installed-read-sequence-2026-09-18/native-requests-regression.runtime.tar.gz",
+      "sha256": "3d6ee93933a42df72bef213ed522f3f5bb3e616f909fdad493fd841b22d7b127"
+    },
+    {
+      "path": "data/installed-read-sequence-2026-09-18/sequence-final.runtime.tar.gz",
+      "sha256": "cfcfec6e186ee7501bed62a8b932468a8c3b3aff4fad2a92d34e36a4511ca3b4"
+    }
+  ],
+  "schema_version": "portfolio.installed_read_sequence_acceptance.v1",
+  "sequence_namespace_scenarios": 7,
+  "sequence_native_read_steps": 16,
+  "sequence_reports": {
+    "sequence_balance_drift": {
+      "accepted_steps": 2,
+      "child_states": [
+        {
+          "binding_sha256": "5078379eedaf9f799985279d8a2ba146ad34b1f11f24b4948c7c08ad5ac6750f",
+          "index": 0,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "f23dcfd76b09553b606c791985e08243d47fb05be624b15aa119db290d7a717e",
+          "index": 1,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "48ec428d0b029c3d4977579fdee1882724c9768be726110cb6801f5240969f0c",
+          "index": 2,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": false
+        }
+      ],
+      "controller_descriptor_counts": [
+        935,
+        937,
+        951,
+        953,
+        960,
+        962
+      ],
+      "parent_archive_sha256": "6ab28830aea08f6f0e7b273360883a58c7873a2a0c2ef8fccb0278070d486426",
+      "peer_requests": 3,
+      "pending_step": 2,
+      "prepared_steps": 3,
+      "status": "incomplete_no_resume",
+      "terminal": {
+        "network_admitted": false,
+        "reason": "sequence_account_balances_changed",
+        "status": "sequence_refused"
+      }
+    },
+    "sequence_child_stopped": {
+      "accepted_steps": 2,
+      "child_states": [
+        {
+          "binding_sha256": "bc989e1011a0e5aa4358d00b09b4e93b3a93170074d999e61e3a1ba35fb9d572",
+          "index": 0,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "78732c4ab28732a8cbbdd78a91640797f2a170dacb41ca4850bf134322655cc6",
+          "index": 1,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "2ffa72ca790dfd8f16abcafae0dbcb23db68deb936967dffe078a3aa9957c3e8",
+          "index": 2,
+          "individually_complete": false,
+          "native_acknowledged": false,
+          "parent_accepted": false
+        }
+      ],
+      "controller_descriptor_counts": [
+        935,
+        937,
+        951,
+        953,
+        960,
+        962
+      ],
+      "parent_archive_sha256": "244355a4b0cfc720a7759bdc84416391fb9f2b2e4f4cd6914cfb4017c958b7f4",
+      "peer_requests": 3,
+      "pending_step": 2,
+      "prepared_steps": 3,
+      "status": "incomplete_no_resume",
+      "terminal": {
+        "network_admitted": false,
+        "reason": "sequence_child_step_refused",
+        "status": "sequence_refused"
+      }
+    },
+    "sequence_code_drift": {
+      "accepted_steps": 1,
+      "child_states": [
+        {
+          "binding_sha256": "ff05f546e6439872175bbac33b499029fa74c4a670e2429aa5f76a604e966bdc",
+          "index": 0,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        }
+      ],
+      "controller_descriptor_counts": [
+        935,
+        937
+      ],
+      "parent_archive_sha256": "6c44b7e5738c6ee9fa899cc94ff434bbe3d546cca10c20ea87d9793b91b68864",
+      "peer_requests": 1,
+      "pending_step": null,
+      "prepared_steps": 1,
+      "status": "incomplete_no_resume",
+      "terminal": {
+        "network_admitted": false,
+        "reason": "installation_bytes_changed",
+        "status": "sequence_refused"
+      }
+    },
+    "sequence_controller_crash": {
+      "accepted_steps": 2,
+      "child_states": [
+        {
+          "binding_sha256": "8daccccd68b852c41c3c933d96cc439490f399f7bbf537a271e21e42ae18cd09",
+          "index": 0,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "93d32782c86eccff1fe5020ed0744df7dd2334e4e46c3810264bbd543c4b57fc",
+          "index": 1,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        }
+      ],
+      "controller_descriptor_counts": [
+        935,
+        937,
+        951,
+        953
+      ],
+      "parent_archive_sha256": "7781ab3cb87941b9bc75bc67ed53cc06c61c853a344f68050e72e0d99558c588",
+      "peer_requests": 2,
+      "pending_step": null,
+      "prepared_steps": 2,
+      "status": "incomplete_no_resume",
+      "terminal": {
+        "status": "controller_sigkill_after_first_account"
+      }
+    },
+    "sequence_metadata_mismatch": {
+      "accepted_steps": 0,
+      "child_states": [
+        {
+          "binding_sha256": "d863e1b800aed05a03ac27fb7293a31c591bc5df43515de614a8e5cefbf60195",
+          "index": 0,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": false
+        }
+      ],
+      "controller_descriptor_counts": [
+        935,
+        937
+      ],
+      "parent_archive_sha256": "47398cfd041fee7edf96fc514dc2240f5105e639659c05fd5b28deaeb4aff05c",
+      "peer_requests": 1,
+      "pending_step": 0,
+      "prepared_steps": 1,
+      "status": "incomplete_no_resume",
+      "terminal": {
+        "network_admitted": false,
+        "reason": "sequence_metadata_precision_mismatch",
+        "status": "sequence_refused"
+      }
+    },
+    "sequence_second_precision": {
+      "accepted_steps": 2,
+      "child_states": [
+        {
+          "binding_sha256": "474c0f697a636b1f55c87d57d5be632deb1da871cf3a2625b0c39f930fcd4b98",
+          "index": 0,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "886a198ecd7d4886c699474e785b88b380fcd3191ff5be96c7e4b89a1d2ac38a",
+          "index": 1,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "13b880e0f6388ba94c3dd2dc95c69e3769f61e68e97e72f8d375a40e7b768606",
+          "index": 2,
+          "individually_complete": false,
+          "native_acknowledged": false,
+          "parent_accepted": false
+        }
+      ],
+      "controller_descriptor_counts": [
+        935,
+        937,
+        951,
+        953,
+        960,
+        962
+      ],
+      "parent_archive_sha256": "b72c45504f3dd66a8ec234d9713057b68fe5c59f0b2d181e96f05b9235c67cb3",
+      "peer_requests": 3,
+      "pending_step": 2,
+      "prepared_steps": 3,
+      "status": "incomplete_no_resume",
+      "terminal": {
+        "network_admitted": false,
+        "reason": "sequence_child_step_refused",
+        "status": "sequence_refused"
+      }
+    },
+    "sequence_success": {
+      "accepted_steps": 3,
+      "child_states": [
+        {
+          "binding_sha256": "9faec5006757562cb5045e405f7fc98f0eba3810eda584d418886c2e5eb26bd3",
+          "index": 0,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "008d150bf1f4cf4863acee11b153c5aa7e82cb9f842c9c2b70998baa2f1f26a8",
+          "index": 1,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "66a7a0740c8ecc2215e03322cca9a4ea745248a88eaadd25267828f187dd7cee",
+          "index": 2,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        }
+      ],
+      "controller_descriptor_counts": [
+        935,
+        937,
+        951,
+        953,
+        960,
+        962
+      ],
+      "parent_archive_sha256": "5f2ae87e1deb08d6ab1e6971e31c7bd3b6db0e926c77bc5431ccf58929431518",
+      "peer_requests": 3,
+      "pending_step": null,
+      "prepared_steps": 3,
+      "status": "complete",
+      "terminal": {
+        "network_admitted": false,
+        "status": "sequence_completed"
+      }
+    }
+  },
+  "sequence_signed_account_requests": 9,
+  "sequence_steps": [
+    "metadata",
+    "account_first",
+    "account_second"
+  ],
+  "trading_admitted": false,
+  "unselected_diagnostics": {
+    "description": {
+      "path": "data/installed-read-sequence-2026-09-18/diagnostics.json",
+      "sha256": "8751510f74e38ec3b0f3ae98dfbc25cf666949602fe2c1a5328953d6d95f88d9"
+    },
+    "reports": [
+      {
+        "path": "data/installed-read-sequence-2026-09-18/sequence-initial.json",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "data/installed-read-sequence-2026-09-18/sequence-debug.json",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "data/installed-read-sequence-2026-09-18/sequence-fixed.json",
+        "sha256": "000bd8851b6fdd88b4e92a694b19c88d3e67b4d24ff5b3a83137233482436395"
+      },
+      {
+        "path": "data/installed-read-sequence-2026-09-18/sequence-acceptance.json",
+        "sha256": "145b9127f785a037ed15e6198cb45c7437358def47762d4ae7b1307624704090"
+      }
+    ]
+  },
+  "upstream_touched": false,
+  "venue_requests": 0,
+  "verification_scope": "Current-source sequence, signed account, native metadata, native request custody and echo namespace modes. Focused Python regressions also cover unchanged IPC, TLS and stdlib receipt paths; their prior namespace evidence is retained, not recaptured."
+}

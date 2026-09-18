@@ -23,13 +23,14 @@ FILES = (
     "gateway_native_receipt.py",
     "gateway_native_requests.py",
     "gateway_native_account.py",
+    "gateway_read_sequence.py",
     "ledger_gateway.py",
     "selftest.py",
     "portfolio_rate_evidence.py",
     "portfolio_tls_provenance.py",
     "portfolio_egress_ledger.py",
 )
-PROFILE = "portfolio.installed_gateway_fixture.v7"
+PROFILE = "portfolio.installed_gateway_fixture.v8"
 
 
 def digest(raw):
@@ -129,13 +130,14 @@ def fixture_context(authority):
 
 
 class InstalledBinding:
-    def __init__(self, authority, sources, collector, guards, *, trust_sha256=None):
+    def __init__(self, authority, sources, collector, guards, *, trust_sha256=None, sequence=None):
         self.authority, self.sources, self.collector, self.guards = (
             authority,
             sources,
             collector,
             guards,
         )
+        self.sequence = sequence
         self.trust_sha256 = trust_sha256
         self.ended = False
         self.selected = self.current()
@@ -154,6 +156,7 @@ class InstalledBinding:
             if "set" in row:
                 row["set"].pop("elem", None)
         return {
+            **({"read_sequence": self.sequence.verify()} if self.sequence is not None else {}),
             "base_manifest_sha256": self.authority.manifest_sha256,
             "gateway_manifest_sha256": self.sources.manifest_sha256,
             "collector": self.collector.selected,
@@ -176,7 +179,7 @@ class InstalledBinding:
             raise
 
 
-def run_controller(*, tls=False, receipt=False, native=False, account=False):
+def run_controller(*, tls=False, receipt=False, native=False, account=False, sequence=None):
     authority = installation()
     collector = ledger = lifecycle = gateway = runtime = None
     try:
@@ -224,10 +227,16 @@ def run_controller(*, tls=False, receipt=False, native=False, account=False):
             collector,
             guards,
             trust_sha256=digest(trust) if trust is not None else None,
+            sequence=sequence,
         )
+        if sequence is not None:
+            sequence.bind(binding.selected)
         # This path cannot be chosen by the caller, collector or report contents.
         ledger = module.AttemptLedger(
-            STORAGE, binding=binding, binding_sha256=binding.pin, profile=module.PROFILE
+            STORAGE if sequence is None else sequence.storage,
+            binding=binding,
+            binding_sha256=binding.pin,
+            profile=module.PROFILE,
         )
         lifecycle = gateway_code["GatewayLifecycle"](ledger, module)
         run, nft = guards["run"], guards["NFT"]
@@ -353,10 +362,12 @@ def run_controller(*, tls=False, receipt=False, native=False, account=False):
             gateway.close()
         except (OSError, ValueError, RuntimeError) as exc:
             outcome = {"status": "refused", "reason": type(exc).__name__}
+        outcome = {**outcome, "revoked": gateway.revoked, "network_admitted": False}
         print(
-            json.dumps({**outcome, "revoked": gateway.revoked, "network_admitted": False}),
+            json.dumps(outcome),
             flush=True,
         )
+        return outcome
     finally:
         if gateway is not None:
             with suppress(Exception):
@@ -386,6 +397,7 @@ def main():
             ["--native-receipt-fixture"],
             ["--native-requests-fixture"],
             ["--signed-account-fixture"],
+            ["--read-sequence-fixture"],
         )
         or not sys.flags.isolated
         or os.path.abspath(__file__) != CODE + "/installed_gateway.py"
@@ -405,6 +417,15 @@ def main():
                 )
             )
             extension["run_installed"](globals(), authority, sources)
+        finally:
+            authority.close()
+    elif sys.argv[1:] == ["--read-sequence-fixture"]:
+        authority = installation()
+        try:
+            fixture_context(authority)
+            sources = InstalledGatewaySources(authority)
+            code = load(sources.source("gateway_read_sequence.py"))
+            code["run_installed"](globals(), authority, sources)
         finally:
             authority.close()
     else:

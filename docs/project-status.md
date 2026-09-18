@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-18
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: A signed fixture account GET now runs end to end: the isolated Nautilus child signs, root validates and owns HTTPS, then the child constructs exact AccountBalance objects from original response bytes after kernel revocation. Precision loss or missing acknowledgement leaves the attempt pending. The separate 20-step request rehearsal remains available. Next integrate repeated account reads, same-run metadata/routes and concurrent TLS/WS. Real authority/coverage, provider limits/clocks, host rollout, qualified equity and trading remain blocked; consumed scopes stay consumed.
+- **Current objective**: A fixed installed metadata → account → account sequence now links three original native receipts under one consumed parent scope. Each step revokes kernel permission and closes before the next preparation; metadata precision and exact repeated balances must agree. Missing receipts, drift, rounding or interruption preserve incomplete/no-resume outcomes. Next integrate open-order reads, same-run routes and concurrent TLS/WS. Real authority/coverage, provider limits/clocks, host rollout, qualified equity and trading remain blocked; consumed scopes stay consumed.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -322,8 +322,9 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
    now verifies 20 fixed selectors and nine native signatures in a separate no-dispatch
    profile. [Signed account HTTPS integration](progress/portfolio-installed-signed-account-2026-09-18.md)
    now joins one validated request to root TLS and exact native balance receipts.
-   Next connect repeated full account reads, same-run metadata/routes and concurrent
-   TLS/WS traffic through the expiring kernel lifecycle.
+   [Three-read native sequence](progress/portfolio-installed-read-sequence-2026-09-18.md)
+   now binds metadata and repeated exact account balances to one consumed parent.
+   Next connect open-order reads, same-run routes and concurrent TLS/WS traffic.
    Sampling alone never proves coverage.
    Actual authority policy, fresh rate/clock consumption and provider-charge
    resolution must precede any separately reviewed real joint dispatch.
@@ -369,14 +370,14 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
 
 ## Latest Verification
 
-- Installed signed account exchange: **29 new / 762 focused tests pass**, no
-  warnings; **49 actual disposable scenarios** pass (7 account, 42 regression).
-  Two detached replays match all original reports; two frozen-runtime replays
-  reproduce signed requests and exact balance mapping without repairing missing
-  receipts. See [signed account acceptance](progress/portfolio-installed-signed-account-2026-09-18.md).
-  A concurrent run refused native startup before activation; unchanged deadlines
-  pass the separate final run. Earlier [request custody](progress/portfolio-installed-native-requests-2026-09-17.md)
-  and metadata evidence remain immutable. Full joint transport remains pending.
+- Installed three-read sequence: **32 new / 794 focused tests pass**, no warnings;
+  **33 disposable scenarios pass** (seven sequence, 26 legacy). Two original and
+  two frozen-runtime replays match, preserving 96 request envelopes and missing
+  acknowledgements. Descriptor exhaustion found during integration is fixed by
+  reusing held paths without increasing limits; observed peak is 962. See
+  [sequence acceptance](progress/portfolio-installed-read-sequence-2026-09-18.md).
+  Earlier evidence remains immutable. Full joint transport, stream fences and
+  real admission remain unqualified.
 - The complete ordinary-process native joint collector retains its prior 20-operation /
   16-GET / 448-weight acceptance and original receipt clocks. Connecting that collector
   to installed gateway-owned sockets remains pending. Earlier details are archived in

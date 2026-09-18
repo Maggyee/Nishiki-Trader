@@ -22,6 +22,15 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the installed three-read metadata/account/account sequence, read
+`docs/progress/portfolio-installed-read-sequence-2026-09-18.md` and its JSON.
+The exclusive parent scope binds each step to its predecessor originals; only
+revoked, closed, native-acknowledged steps allow another preparation. Manifest v8
+pins fourteen sources. Metadata precision and repeated exact balances reconcile
+without claiming an atomic snapshot or stream fence. Descriptor custody reuses
+held paths under the existing limit. Next add open-order reads, same-run routes
+and concurrent TLS/WS; no consumed real scope reopens.
+
 For the signed fixture account request → root HTTPS → native balance receipt path,
 read `docs/progress/portfolio-installed-signed-account-2026-09-18.md` and its JSON.
 Manifest v7 pins thirteen sources. The separate one-GET account ledger binds the

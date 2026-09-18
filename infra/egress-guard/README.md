@@ -6,6 +6,24 @@ offline disk tests, and retain read-only host deployment-input snapshots.
 Current phase: Phase 5 entry, offline infrastructure acceptance only. This is not
 a production guard, gateway audit service, quota authority or collection permit.
 
+The fixed repeated-read successor is `gateway_read_sequence.py`:
+
+```bash
+/usr/bin/python3 -I infra/egress-guard/installed_gateway_selftest.py --read-sequence-profile --report data/NEW-SEQUENCE.json
+```
+
+One root controller sequences metadata and two signed account reads, using a fresh
+isolated native child and the existing one-shot TLS/receipt machinery per step.
+The exclusive parent journal binds original preparations and native acknowledgements;
+each kernel permit is revoked and the child ledger closed before the next step.
+Metadata precision must match the four-asset mapper, and repeated free/locked/total
+balances must agree exactly. Drift or missing receipts never permit a resume.
+Manifest v8 pins fourteen sources; held original paths reuse descriptors without
+raising system limits. See [sequence acceptance](../../docs/progress/portfolio-installed-read-sequence-2026-09-18.md).
+Next add open-order reads and same-run routes, followed by concurrent TLS/WS.
+This fixed fixture does not qualify an atomic snapshot, account stream fence,
+provider quota, real account/equity or execution.
+
 The signed account successor is `gateway_native_account.py`:
 
 ```bash
@@ -22,11 +40,12 @@ or missing final receipt keeps the attempt pending. Account header usage is reta
 without fabricating exchangeInfo rate limits. The four fixture assets/precision are
 fixed, and no actual account, route, WS, equity or trading qualification follows.
 
-Supplemental manifest v7 pins thirteen sources. The base installation/launcher and
+Supplemental manifest v8 pins fourteen sources. The base installation/launcher and
 prior journal profiles remain separate. Seven actual account scenarios plus 42
 regressions and detached original/native replays are recorded in
 [signed account acceptance](../../docs/progress/portfolio-installed-signed-account-2026-09-18.md).
-Next join repeated account reads and same-run metadata/routes to concurrent TLS/WS.
+The sequence above joins repeated reads with metadata precision; market route
+derivation and concurrent TLS/WS remain pending.
 
 The native request custody successor is `gateway_native_requests.py`:
 
@@ -44,7 +63,7 @@ request hashes before acknowledgements. The fixture budget stays 16 GET selector
 request dispatch follows. Fixed BTC/ETH/BNB routes and subscription ID zero are
 synthetic selections, not values derived from actual same-run responses.
 
-Manifest v7 pins thirteen protected sources. The separate request ledger/scope and
+Manifest v8 pins fourteen protected sources. The separate request ledger/scope and
 `requests.jsonl` preserve incomplete attempts after drift, consumer death or root
 crash. Detached replay verifies signatures and receipt ordering with original times;
 it never refreshes expiry or repairs missing acknowledgements. Next connect actual
@@ -62,7 +81,7 @@ retaining a `.runtime.tar.gz` beside the report. Only the isolated dedicated UID
 imports Nautilus and constructs BTC/ETH/BNB/USDT Currency objects from the original
 root HTTPS bytes. Its final acknowledgement binds both the native summary and the
 original payload, including original receive clocks. Root parses the expected
-summary with stdlib only. Protected fixture manifest v7 pins thirteen sources;
+summary with stdlib only. Protected fixture manifest v8 pins fourteen sources;
 base installation and earlier journal profiles remain separate.
 
 The private runtime tmpfs is root-owned and read-only. Files are fully hashed at
@@ -165,7 +184,7 @@ and [lifecycle acceptance](../../docs/progress/portfolio-egress-gateway-lifecycl
 
 The ordinary-user wrapper uses existing sudo to run five fresh private mount,
 network and PID namespaces. It reuses the pinned installer, then stages a separate
-fixture v7 manifest and thirteen protected sources in the disposable installation. The
+fixture v8 manifest and fourteen protected sources in the disposable installation. The
 fixed installed `installed_gateway.py --fixture` entry consumes the original
 fixed storage scope, authenticates the distinct-UID child and uses the durable
 kernel lifecycle. Neither the collector nor the public wrapper can select another
