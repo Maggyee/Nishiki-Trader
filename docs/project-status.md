@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-09-18
+- **Last updated**: 2026-09-19
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: A fixed installed metadata → account → account sequence now links three original native receipts under one consumed parent scope. Each step revokes kernel permission and closes before the next preparation; metadata precision and exact repeated balances must agree. Missing receipts, drift, rounding or interruption preserve incomplete/no-resume outcomes. Next integrate open-order reads, same-run routes and concurrent TLS/WS. Real authority/coverage, provider limits/clocks, host rollout, qualified equity and trading remain blocked; consumed scopes stay consumed.
+- **Current objective**: A fixed installed metadata → account → openOrders → openOrders → account sequence now links five original native receipts under one consumed parent scope. Repeated orders/balances, metadata precision and exact remaining BUY/SELL locks must agree. Each step revokes kernel permission and closes before the next preparation; interruption never permits resume. Next derive same-run routes and integrate concurrent TLS/WS. Real authority/coverage, provider limits/clocks, host rollout, qualified equity and trading remain blocked; consumed scopes stay consumed.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -324,7 +324,9 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
    now joins one validated request to root TLS and exact native balance receipts.
    [Three-read native sequence](progress/portfolio-installed-read-sequence-2026-09-18.md)
    now binds metadata and repeated exact account balances to one consumed parent.
-   Next connect open-order reads, same-run routes and concurrent TLS/WS traffic.
+   [Five-read native order sequence](progress/portfolio-installed-order-sequence-2026-09-18.md)
+   now adds repeated LIMIT/GTC order reports and exact remaining BUY/SELL locks.
+   Next derive same-run routes and integrate concurrent TLS/WS traffic.
    Sampling alone never proves coverage.
    Actual authority policy, fresh rate/clock consumption and provider-charge
    resolution must precede any separately reviewed real joint dispatch.
@@ -370,14 +372,14 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
 
 ## Latest Verification
 
-- Installed three-read sequence: **32 new / 794 focused tests pass**, no warnings;
-  **33 disposable scenarios pass** (seven sequence, 26 legacy). Two original and
-  two frozen-runtime replays match, preserving 96 request envelopes and missing
-  acknowledgements. Descriptor exhaustion found during integration is fixed by
-  reusing held paths without increasing limits; observed peak is 962. See
-  [sequence acceptance](progress/portfolio-installed-read-sequence-2026-09-18.md).
-  Earlier evidence remains immutable. Full joint transport, stream fences and
-  real admission remain unqualified.
+- Installed five-read order sequence: **47 new / 841 focused tests pass**, no warnings;
+  **53 disposable scenarios pass** (nine new order, 44 regression). Two original and
+  two frozen-runtime replays match, preserving 120 request envelopes and missing
+  acknowledgements. Repeated LIMIT/GTC orders and all remaining BUY/SELL locks
+  reconcile exactly; observed descriptor peak is 990 without increasing limits. See
+  [order acceptance](progress/portfolio-installed-order-sequence-2026-09-18.md).
+  Earlier evidence remains immutable. Same-run routes, concurrent TLS/WS, stream
+  fences and real admission remain unqualified. Verification completed September 19.
 - The complete ordinary-process native joint collector retains its prior 20-operation /
   16-GET / 448-weight acceptance and original receipt clocks. Connecting that collector
   to installed gateway-owned sockets remains pending. Earlier details are archived in

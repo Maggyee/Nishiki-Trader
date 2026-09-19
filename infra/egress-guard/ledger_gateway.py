@@ -284,9 +284,10 @@ class FixtureLedgerGateway:
             try:
                 # Kernel SCM_CREDENTIALS + pidfd binding, not a supplied label.
                 authorization = self.authorize()
-                signed = (
-                    self.ledger.state.profile == "portfolio.fixture_signed_account_tls_ledger.v1"
-                )
+                signed = self.ledger.state.profile in {
+                    "portfolio.fixture_signed_account_tls_ledger.v1",
+                    "portfolio.fixture_signed_orders_tls_ledger.v1",
+                }
                 links = {}
                 if signed:
                     if (
@@ -300,7 +301,14 @@ class FixtureLedgerGateway:
                     raise ValueError("gateway_authentication_failed")
                 receipt = self.ledger.prepare(
                     caller="collector",
-                    operation="account_read" if signed else "exchange_info",
+                    operation=(
+                        "open_orders"
+                        if self.ledger.state.profile
+                        == "portfolio.fixture_signed_orders_tls_ledger.v1"
+                        else "account_read"
+                    )
+                    if signed
+                    else "exchange_info",
                     **links,
                 )
                 self.ledger.checkpoint()

@@ -23,6 +23,7 @@ FILES = (
     "gateway_native_receipt.py",
     "gateway_native_requests.py",
     "gateway_native_account.py",
+    "gateway_native_orders.py",
     "gateway_read_sequence.py",
     "ledger_gateway.py",
     "selftest.py",
@@ -30,7 +31,7 @@ FILES = (
     "portfolio_tls_provenance.py",
     "portfolio_egress_ledger.py",
 )
-PROFILE = "portfolio.installed_gateway_fixture.v8"
+PROFILE = "portfolio.installed_gateway_fixture.v9"
 
 
 def digest(raw):
@@ -179,7 +180,10 @@ class InstalledBinding:
             raise
 
 
-def run_controller(*, tls=False, receipt=False, native=False, account=False, sequence=None):
+def run_controller(
+    *, tls=False, receipt=False, native=False, account=False, orders=False, sequence=None
+):
+    account = account or orders
     authority = installation()
     collector = ledger = lifecycle = gateway = runtime = None
     try:
@@ -191,6 +195,8 @@ def run_controller(*, tls=False, receipt=False, native=False, account=False, seq
             {name: sources.source(name).decode() for name in FILES}
         )
         account_code = load(sources.source("gateway_native_account.py")) if account else None
+        if orders:
+            account_code = load(sources.source("gateway_native_orders.py"))["view"](account_code)
         if account:
             module = account_code["ledger_view"](module)
         rates = (
@@ -398,6 +404,7 @@ def main():
             ["--native-requests-fixture"],
             ["--signed-account-fixture"],
             ["--read-sequence-fixture"],
+            ["--order-sequence-fixture"],
         )
         or not sys.flags.isolated
         or os.path.abspath(__file__) != CODE + "/installed_gateway.py"
@@ -419,13 +426,15 @@ def main():
             extension["run_installed"](globals(), authority, sources)
         finally:
             authority.close()
-    elif sys.argv[1:] == ["--read-sequence-fixture"]:
+    elif sys.argv[1:] in (["--read-sequence-fixture"], ["--order-sequence-fixture"]):
         authority = installation()
         try:
             fixture_context(authority)
             sources = InstalledGatewaySources(authority)
             code = load(sources.source("gateway_read_sequence.py"))
-            code["run_installed"](globals(), authority, sources)
+            code["run_installed"](
+                globals(), authority, sources, orders=sys.argv[1:] == ["--order-sequence-fixture"]
+            )
         finally:
             authority.close()
     else:

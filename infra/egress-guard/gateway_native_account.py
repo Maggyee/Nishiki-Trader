@@ -30,13 +30,20 @@ def digest(raw):
     return hashlib.sha256(raw).hexdigest()
 
 
-def ledger_view(module):
+def ledger_view(module, *, profile=None, scope=None):
     """Explicit account-profile reader; never infer a profile from untrusted bytes."""
+    profile = module.ACCOUNT_PROFILE if profile is None else profile
+    scope = module.ACCOUNT_SCOPE if scope is None else scope
+    if (profile, scope) not in {
+        (module.ACCOUNT_PROFILE, module.ACCOUNT_SCOPE),
+        (module.ORDERS_PROFILE, module.ORDERS_SCOPE),
+    }:
+        raise ValueError("signed_read_profile_required")
     values = dict(vars(module))
-    values.update(PROFILE=module.ACCOUNT_PROFILE, SCOPE=module.ACCOUNT_SCOPE)
+    values.update(PROFILE=profile, SCOPE=scope)
 
     def replay(*args, **kwargs):
-        kwargs.setdefault("profile", module.ACCOUNT_PROFILE)
+        kwargs.setdefault("profile", profile)
         return module.replay(*args, **kwargs)
 
     values["replay"] = replay
@@ -148,19 +155,24 @@ def validate_native(payload):
 
 class AccountContract:
     TLS_PROFILE, ENDPOINT = TLS_PROFILE, ENDPOINT
+    SELECTION_PROFILE = SELECTION_PROFILE
+    LEDGER_PROFILE = "portfolio.fixture_signed_account_tls_ledger.v1"
+    CHALLENGE_INDEX = 3
+    PATH = "/api/v3/account"
+    SELECTION_FILE = "account-request.json"
 
     def __init__(self, requests, selection):
         if (
             not isinstance(selection, dict)
             or set(selection) != {"profile", "binding_sha256", "challenge", "request", "received"}
-            or selection["profile"] != SELECTION_PROFILE
+            or selection["profile"] != self.SELECTION_PROFILE
             or not isinstance(selection["binding_sha256"], str)
             or re.fullmatch("[0-9a-f]{64}", selection["binding_sha256"]) is None
             or not isinstance(selection["received"], list)
             or len(selection["received"]) != 2
         ):
             raise ValueError("signed_account_selection")
-        requests["validate_challenge"](selection["challenge"], 3)
+        requests["validate_challenge"](selection["challenge"], self.CHALLENGE_INDEX)
         self.requests = requests
         self.selection = json.loads(canonical(selection))
         self.raw = canonical(selection)
@@ -174,7 +186,9 @@ class AccountContract:
         expected["params"]["signature"] = selection["request"]["request"]["params"]["signature"]
         query = urlencode(expected["params"])
         self.request = (
-            "GET /api/v3/account?"
+            "GET "
+            + self.PATH
+            + "?"
             + query
             + " HTTP/1.1\r\nHost: rest.fixture.invalid:23456\r\nX-MBX-APIKEY: "
             + requests["API_KEY"]
@@ -193,7 +207,7 @@ class AccountContract:
     def check(self, ledger):
         ledger.checkpoint()
         if (
-            ledger.state.profile != "portfolio.fixture_signed_account_tls_ledger.v1"
+            ledger.state.profile != self.LEDGER_PROFILE
             or ledger.state.binding_sha256 != self.selection["binding_sha256"]
             or ledger.state.pending != 0
             or len(ledger.state.attempts) != 1
@@ -217,7 +231,7 @@ class AccountContract:
         if (
             binding_sha256 != self.selection["binding_sha256"]
             or len(prepared) != 1
-            or prepared[0]["profile"] != "portfolio.fixture_signed_account_tls_ledger.v1"
+            or prepared[0]["profile"] != self.LEDGER_PROFILE
             or prepared[0]["payload"].get("request_sha256") != self.request_pin
             or any(
                 not rows[0][key]
@@ -240,13 +254,13 @@ def transport_view(transport, contract):
     return {**transport, "capture": capture, "replay": replay}
 
 
-def authorize(collector, ledger, authority, requests):
+def authorize(collector, ledger, authority, requests, *, contract_type=AccountContract):
     collector.verify()
     if collector.used:
         raise ValueError("signed_account_request_consumed")
     collector.used = True
     challenge = {
-        "index": 3,
+        "index": contract_type.CHALLENGE_INDEX,
         "nonce": os.urandom(16).hex(),
         "utc_ns": time.time_ns(),
         "monotonic_ns": time.monotonic_ns(),
@@ -257,7 +271,7 @@ def authorize(collector, ledger, authority, requests):
     received = [time.time_ns(), time.monotonic_ns()]
     collector.verify()
     selection = {
-        "profile": SELECTION_PROFILE,
+        "profile": contract_type.SELECTION_PROFILE,
         "binding_sha256": ledger.state.binding_sha256,
         "challenge": challenge,
         "request": json.loads(raw),
@@ -265,8 +279,8 @@ def authorize(collector, ledger, authority, requests):
     }
     if canonical(selection["request"]) != raw:
         raise ValueError("signed_account_canonical_request")
-    contract = AccountContract(requests, selection)
-    path = ledger.path / "account-request.json"
+    contract = contract_type(requests, selection)
+    path = ledger.path / contract_type.SELECTION_FILE
     ledger.checkpoint()
     with path.open("xb") as out:
         os.fchmod(out.fileno(), 0o600)
@@ -283,25 +297,25 @@ def authorize(collector, ledger, authority, requests):
     return contract
 
 
-def child_loop(fd, parent):
+def child_loop(fd, parent, *, index=3, native=validate_native):
     prepare_native()
     channel = globals()["ControlChannel"](socket.socket(fileno=fd), parent, timeout=5)
     try:
         channel.send("ready", 0)
         raw = channel.receive(globals()["REQUESTS"]["JsonToken"](), 1).encode()
         challenge = json.loads(raw)
-        globals()["REQUESTS"]["validate_challenge"](challenge, 3)
+        globals()["REQUESTS"]["validate_challenge"](challenge, index)
         if canonical(challenge) != raw:
             raise ValueError("signed_account_challenge_canonical")
         channel.send(globals()["REQUESTS"]["native_request"](challenge).decode(), 1)
-        globals()["RECEIVE"](channel, globals()["PROVENANCE"], rates_view(), native=validate_native)
+        globals()["RECEIVE"](channel, globals()["PROVENANCE"], rates_view(), native=native)
         channel.receive({"close"}, 1000)
         channel.send("closed", 1000)
     finally:
         channel.close()
 
 
-def launch(authority, sources, launcher, runtime):
+def launch(authority, sources, launcher, runtime, *, orders=False):
     reader = launcher["load_source"](authority.source("inspect_binding.py").decode())[
         "process_identity"
     ]
@@ -329,6 +343,9 @@ def launch(authority, sources, launcher, runtime):
         source += f"exec(compile({raw!r},'<held-source>','exec'))\n"
     raw = sources.source("gateway_native_account.py")
     source += f"account_scope={{'__name__':'held_account','ControlChannel':ControlChannel,'REQUESTS':REQUESTS.__dict__,'PROVENANCE':PROVENANCE,'RECEIVE':receive_payload}}\nexec(compile({raw!r},'<held-account>','exec'),account_scope)\nchild_loop=account_scope['child_loop']\n"
+    if orders:
+        raw = sources.source("gateway_native_orders.py")
+        source += f"orders_scope={{'__name__':'held_orders','ACCOUNT':account_scope}}\nexec(compile({raw!r},'<held-orders>','exec'),orders_scope)\nchild_loop=orders_scope['child_loop']\n"
     runtime.verify()
     launcher["FixtureCollector"].__init__.__globals__["PYTHON"] = (
         "/run/trader-native-runtime/bin/python3.12"

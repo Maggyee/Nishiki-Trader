@@ -22,6 +22,15 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the installed five-read metadata/account/orders/orders/account sequence, read
+`docs/progress/portfolio-installed-order-sequence-2026-09-18.md` and its JSON.
+Manifest v9 pins fifteen sources. The explicit order profile maps fixed LIMIT/GTC
+orders to native reports, checks repeated order sets and exactly reconciles remaining
+BUY quote / SELL base locks against all account assets. Each step closes and revokes
+before another preparation; interruption never permits resume. Empty orders require
+zero locks. No fill/fee history, atomic snapshot or stream fence follows. Next derive
+same-run routes and concurrent gateway TLS/WS; all consumed real scopes stay closed.
+
 For the installed three-read metadata/account/account sequence, read
 `docs/progress/portfolio-installed-read-sequence-2026-09-18.md` and its JSON.
 The exclusive parent scope binds each step to its predecessor originals; only

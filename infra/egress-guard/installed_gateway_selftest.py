@@ -56,6 +56,53 @@ SEQUENCE_SCENARIOS = (
     "sequence_controller_crash",
     "sequence_code_drift",
 )
+ORDER_SCENARIOS = (
+    "orders_success",
+    "orders_empty",
+    "orders_changed",
+    "orders_precision",
+    "orders_duplicate",
+    "orders_lock_mismatch",
+    "orders_child_stopped",
+    "orders_controller_crash",
+    "orders_code_drift",
+)
+FIXTURE_ORDERS = [
+    {
+        "symbol": symbol,
+        "orderId": order_id,
+        "clientOrderId": "fixture-" + str(order_id),
+        "price": price,
+        "origQty": qty,
+        "executedQty": filled,
+        "cummulativeQuoteQty": quote,
+        "status": status,
+        "timeInForce": "GTC",
+        "type": "LIMIT",
+        "side": side,
+        "time": 1700000000000,
+        "updateTime": 1700000001000,
+        "isWorking": True,
+        "icebergQty": "0",
+        "stopPrice": "0",
+        "orderListId": -1,
+        "origQuoteOrderQty": "0",
+    }
+    for symbol, order_id, price, qty, filled, quote, status, side in (
+        ("BTCUSDT", 101, "12500.00000000", "0.00100000", "0", "0", "NEW", "BUY"),
+        (
+            "BNBUSDT",
+            102,
+            "250.00000000",
+            "0.20000000",
+            "0.10000000",
+            "25",
+            "PARTIALLY_FILLED",
+            "SELL",
+        ),
+        ("BTCUSDT", 103, "60000.00000000", "0.00100000", "0", "0", "NEW", "SELL"),
+    )
+]
 ENV = {"PATH": "/usr/sbin:/usr/bin:/sbin:/bin", "LC_ALL": "C"}
 
 
@@ -83,7 +130,7 @@ if runtime.exists():
     denied('native_runtime_write',lambda:os.open(runtime/'bin/python3.12',os.O_WRONLY))
     denied('native_runtime_replace',lambda:os.unlink(runtime/'bin/python3.12'))
 code=Path('/usr/local/lib/trader-egress')
-for name in ('installed_gateway.py','gateway_tls.py','gateway_joint_ipc.py','gateway_tls_receipt.py','gateway_native_runtime.py','gateway_native_receipt.py','gateway_native_requests.py','gateway_native_account.py','gateway_read_sequence.py','ledger_gateway.py','selftest.py','portfolio_rate_evidence.py','portfolio_tls_provenance.py','portfolio_egress_ledger.py'):
+for name in ('installed_gateway.py','gateway_tls.py','gateway_joint_ipc.py','gateway_tls_receipt.py','gateway_native_runtime.py','gateway_native_receipt.py','gateway_native_requests.py','gateway_native_account.py','gateway_native_orders.py','gateway_read_sequence.py','ledger_gateway.py','selftest.py','portfolio_rate_evidence.py','portfolio_tls_provenance.py','portfolio_egress_ledger.py'):
     path=code/name
     assert path.read_bytes()
     denied('write:'+name,lambda:os.open(path,os.O_WRONLY))
@@ -108,7 +155,11 @@ print(json.dumps({'checks':checks,'uid':os.getuid(),'gid':os.getgid()}))
 """
 
 
-TLS_PEER = r"""
+TLS_PEER = (
+    "FIXTURE_ORDERS="
+    + repr(FIXTURE_ORDERS)
+    + "\n"
+    + r"""
 import hashlib,json,os,socket,ssl,sys,time
 scenario=sys.argv[1]
 body=json.dumps({'rateLimits':[
@@ -126,6 +177,18 @@ if sys.argv[2]=='account':
         {'asset':'ETH','free':'0.00000000','locked':'0.00000000'},
         {'asset':'BNB','free':'1.00000000','locked':'0.10000000'},
         {'asset':'USDT','free':'500.00000000','locked':'12.50000000'}]},separators=(',',':')).encode()
+if scenario=='orders_empty' and sys.argv[2]=='account':
+    value=json.loads(body)
+    for row in value['balances']:row['locked']='0.00000000'
+    body=json.dumps(value,separators=(',',':')).encode()
+if sys.argv[2]=='orders':
+    value=FIXTURE_ORDERS
+    if scenario=='orders_empty': value=[]
+    elif scenario=='orders_changed': value[0]['orderId']=104
+    elif scenario=='orders_precision': value[0]['origQty']='0.001000001'
+    elif scenario=='orders_duplicate': value.append(value[0])
+    elif scenario=='orders_lock_mismatch': value[0]['price']='12501.00000000'
+    body=json.dumps(value,separators=(',',':')).encode()
 headers=b'HTTP/1.1 200 OK\r\nContent-Length: '+str(len(body)).encode()+b'\r\nX-MBX-USED-WEIGHT-1M: 20\r\n'
 if scenario=='tls_duplicate_weight': headers+=b'x-mbx-used-weight-1m: 20\r\n'
 headers+=b'Connection: close\r\n\r\n'
@@ -151,12 +214,13 @@ with socket.socket() as listener:
                 request+=chunk
                 if len(request)>4096: raise ValueError('request_limit')
             expected=b'GET /api/v3/exchangeInfo HTTP/1.1\r\nHost: rest.fixture.invalid:23456\r\nConnection: close\r\n\r\n'
-            if sys.argv[2]=='account':
+            if sys.argv[2] in {'account','orders'}:
                 from urllib.parse import parse_qsl,urlencode
+                path='/api/v3/openOrders' if sys.argv[2]=='orders' else '/api/v3/account'
                 lines=request.decode('ascii').split('\r\n')
-                if len(lines)!=6 or not lines[0].startswith('GET /api/v3/account?') or not lines[0].endswith(' HTTP/1.1'):
+                if len(lines)!=6 or not lines[0].startswith('GET '+path+'?') or not lines[0].endswith(' HTTP/1.1'):
                     raise ValueError('account_request_line')
-                query=lines[0][len('GET /api/v3/account?'):-len(' HTTP/1.1')]
+                query=lines[0][len('GET '+path+'?'):-len(' HTTP/1.1')]
                 params=parse_qsl(query,strict_parsing=True)
                 if [k for k,v in params]!=['timestamp','recvWindow','signature'] or params[1][1]!='5000' or urlencode(params)!=query:
                     raise ValueError('account_request_params')
@@ -165,7 +229,7 @@ with socket.socket() as listener:
                 scope={'__name__':'fixture_signature_verifier'}
                 exec(compile(open('/usr/local/lib/trader-egress/gateway_native_requests.py').read(),'<held-fixture-verifier>','exec'),scope)
                 scope['verify_signature'](urlencode(params[:-1]),params[-1][1])
-                expected=('GET /api/v3/account?'+query+' HTTP/1.1\r\nHost: rest.fixture.invalid:23456\r\nX-MBX-APIKEY: '+scope['API_KEY']+'\r\nConnection: close\r\n\r\n').encode()
+                expected=('GET '+path+'?'+query+' HTTP/1.1\r\nHost: rest.fixture.invalid:23456\r\nX-MBX-APIKEY: '+scope['API_KEY']+'\r\nConnection: close\r\n\r\n').encode()
                 report['native_signature_verified']=True
             if request!=expected: raise ValueError('unexpected_request')
             report['http_requests']=1;report['request_sha256']=hashlib.sha256(request).hexdigest();save()
@@ -175,20 +239,23 @@ with socket.socket() as listener:
     except (ssl.SSLError,OSError,ValueError) as exc:
         report['ended_with']=type(exc).__name__;save()
 """
+)
 
 
 def worker(payload):
     base = load(payload["base_source"])
     base["require_isolation"](payload["original"])
     requests = payload.get("native_requests_profile", False)
-    sequence = payload.get("read_sequence_profile", False)
+    orders = payload.get("order_sequence_profile", False)
+    sequence = payload.get("read_sequence_profile", False) or orders
     signed = payload.get("signed_account_profile", False)
     native = payload.get("native_receipt_profile", False) or signed or sequence
     receipt = payload.get("tls_receipt_profile", False) or native
     tls = payload.get("tls_profile", False) or receipt
     ipc = payload.get("joint_ipc_profile", False) or requests
     if (
-        type(sequence) is not bool
+        type(orders) is not bool
+        or type(sequence) is not bool
         or type(signed) is not bool
         or type(requests) is not bool
         or type(native) is not bool
@@ -198,7 +265,9 @@ def worker(payload):
         or (tls and ipc)
         or payload["scenario"]
         not in (
-            SEQUENCE_SCENARIOS
+            ORDER_SCENARIOS
+            if orders
+            else SEQUENCE_SCENARIOS
             if sequence
             else REQUEST_SCENARIOS
             if requests
@@ -784,12 +853,15 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
     """Drive fixed barriers only; parent is namespace PID 1 and has no host network."""
     code = load(payload["sources"]["gateway_read_sequence.py"])
     modules = code["load_sources"](payload["sources"])
-    root = Path(entry["STORAGE"]) / code["SCOPE"]
+    orders = payload.get("order_sequence_profile", False)
+    steps = code["ORDER_STEPS"] if orders else code["STEPS"]
+    scope_name = code["ORDER_SCOPE"] if orders else code["SCOPE"]
+    root = Path(entry["STORAGE"]) / scope_name
     command = [
         "/usr/bin/python3",
         "-I",
         entry["CODE"] + "/installed_gateway.py",
-        "--read-sequence-fixture",
+        "--order-sequence-fixture" if orders else "--read-sequence-fixture",
     ]
     controller = subprocess.Popen(
         command,
@@ -865,7 +937,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                             "-c",
                             PROBE.replace(
                                 "local-egress-attempts-v1",
-                                code["SCOPE"] + "/metadata/local-egress-attempts-v1",
+                                scope_name + "/metadata/local-egress-attempts-v1",
                             ),
                         )
                     )
@@ -878,6 +950,17 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                         if index == 2 and scenario == "sequence_balance_drift"
                         else "tls_success"
                     )
+                    if orders:
+                        selected_scenario = (
+                            scenario
+                            if scenario == "orders_empty"
+                            or index == 2
+                            and scenario
+                            in {"orders_precision", "orders_duplicate", "orders_lock_mismatch"}
+                            or index == 3
+                            and scenario == "orders_changed"
+                            else "tls_success"
+                        )
                     tls_peer = subprocess.Popen(
                         [
                             "/usr/bin/nsenter",
@@ -892,7 +975,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                             "-c",
                             TLS_PEER,
                             selected_scenario,
-                            "account",
+                            "orders" if orders and index in {2, 3} else "account",
                         ],
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
@@ -910,7 +993,9 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
             elif stage == "receipt_prepared":
                 revoked()
                 checks.append(f"step_{index}_kernel_revoked_before_native_receipt")
-                if index == 2 and scenario == "sequence_child_stopped":
+                if (index == 2 and scenario == "sequence_child_stopped") or (
+                    index == 3 and scenario == "orders_child_stopped"
+                ):
                     stopped = os.pidfd_open(bindings[-1]["collector"]["process"]["pid"])
                     signal.pidfd_send_signal(stopped, signal.SIGSTOP)
                 release()
@@ -918,13 +1003,17 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                 if message["index"] != index:
                     raise RuntimeError("sequence_acknowledgement_order")
                 revoked()
-                if index == 1 and scenario == "sequence_controller_crash":
+                if (index == 1 and scenario == "sequence_controller_crash") or (
+                    index == 2 and scenario == "orders_controller_crash"
+                ):
                     controller.kill()
                     controller.communicate(timeout=5)
-                    terminal = {"status": "controller_sigkill_after_first_account"}
+                    terminal = {"status": "controller_sigkill_between_reads"}
                     checks.append("crash_between_steps_retains_consumed_sequence_without_permit")
                     break
-                if index == 0 and scenario == "sequence_code_drift":
+                if (index == 0 and scenario == "sequence_code_drift") or (
+                    index == 2 and scenario == "orders_code_drift"
+                ):
                     target = Path(entry["CODE"]) / "gateway_read_sequence.py"
                     original = target.read_bytes()
                     target.write_bytes(original + b"\n# fixture drift\n")
@@ -938,7 +1027,10 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
             else:
                 raise RuntimeError("sequence_unexpected_message")
         stdout, stderr = controller.communicate(timeout=10)
-        if stdout or (controller.returncode and scenario != "sequence_controller_crash"):
+        if stdout or (
+            controller.returncode
+            and scenario not in {"sequence_controller_crash", "orders_controller_crash"}
+        ):
             raise RuntimeError("sequence_controller_exit:" + stderr[-3000:])
         if stopped is not None:
             if (
@@ -960,18 +1052,39 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
         prepared = [r for r in map(json.loads, raw.splitlines()) if r["kind"] == "prepared"]
         bundles = []
         for i in range(len(prepared)):
-            directory = root / code["STEPS"][i]
-            scope = directory / (modules["ledger"].ACCOUNT_SCOPE if i else modules["ledger"].SCOPE)
+            directory = root / steps[i]
+            scope = directory / (
+                modules["ledger"].ORDERS_SCOPE
+                if orders and i in {2, 3}
+                else modules["ledger"].ACCOUNT_SCOPE
+                if i
+                else modules["ledger"].SCOPE
+            )
             bundle = {}
             for key, name in code["FILES"].items():
+                if key == "selection" and orders and i in {2, 3}:
+                    name = "orders-request.json"
                 path = directory / name if key == "binding" else scope / name
                 if path.exists():
                     bundle[key] = path.read_text()
             bundles.append(bundle)
         report = code["replay"](
-            raw, expected_sha256=code["digest"](raw), bundles=bundles, modules=modules
+            raw,
+            expected_sha256=code["digest"](raw),
+            bundles=bundles,
+            modules=modules,
+            orders=orders,
         )
         expected = {
+            "orders_success": (5, 5),
+            "orders_empty": (5, 5),
+            "orders_changed": (4, 3),
+            "orders_precision": (3, 2),
+            "orders_duplicate": (3, 2),
+            "orders_lock_mismatch": (3, 2),
+            "orders_child_stopped": (4, 3),
+            "orders_controller_crash": (3, 3),
+            "orders_code_drift": (3, 3),
             "sequence_success": (3, 3),
             "sequence_metadata_mismatch": (1, 0),
             "sequence_balance_drift": (3, 2),
@@ -982,7 +1095,8 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
         }[scenario]
         if (
             (report["prepared_steps"], report["accepted_steps"]) != expected
-            or (report["status"] == "complete") != (scenario == "sequence_success")
+            or (report["status"] == "complete")
+            != (scenario in {"sequence_success", "orders_success", "orders_empty"})
             or len(peers) != expected[0]
         ):
             raise RuntimeError(
@@ -1328,6 +1442,7 @@ def main(argv=None):
     profiles.add_argument("--native-requests-profile", action="store_true")
     profiles.add_argument("--signed-account-profile", action="store_true")
     profiles.add_argument("--read-sequence-profile", action="store_true")
+    profiles.add_argument("--order-sequence-profile", action="store_true")
     profiles.add_argument("--joint-ipc-profile", action="store_true")
     args = parser.parse_args(argv)
     if os.geteuid() == 0:
@@ -1362,6 +1477,7 @@ def main(argv=None):
             or args.native_requests_profile
             or args.signed_account_profile
             or args.read_sequence_profile
+            or args.order_sequence_profile
         ):
             built = subprocess.run(
                 [
@@ -1395,6 +1511,7 @@ def main(argv=None):
             "native_requests_profile": args.native_requests_profile,
             "signed_account_profile": args.signed_account_profile,
             "read_sequence_profile": args.read_sequence_profile,
+            "order_sequence_profile": args.order_sequence_profile,
             "joint_ipc_profile": args.joint_ipc_profile,
             "base_source": base_source,
             "installer": installer.decode(),
@@ -1407,7 +1524,9 @@ def main(argv=None):
         reports = []
         bootstrap = "import json,sys\np=json.load(sys.stdin)\ns={'__name__':'isolated_installed_gateway'}\nexec(compile(p['source'],'<fixture>','exec'),s)\nprint(json.dumps(s['worker'](p),sort_keys=True))\n"
         for scenario in (
-            SEQUENCE_SCENARIOS
+            ORDER_SCENARIOS
+            if args.order_sequence_profile
+            else SEQUENCE_SCENARIOS
             if args.read_sequence_profile
             else REQUEST_SCENARIOS
             if args.native_requests_profile
@@ -1484,6 +1603,7 @@ def main(argv=None):
             "native_requests_profile": args.native_requests_profile,
             "signed_account_profile": args.signed_account_profile,
             "read_sequence_profile": args.read_sequence_profile,
+            "order_sequence_profile": args.order_sequence_profile,
             "joint_ipc_profile": args.joint_ipc_profile,
             "scenarios": reports,
             "source_sha256": payload["source_sha256"],

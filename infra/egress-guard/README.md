@@ -6,6 +6,24 @@ offline disk tests, and retain read-only host deployment-input snapshots.
 Current phase: Phase 5 entry, offline infrastructure acceptance only. This is not
 a production guard, gateway audit service, quota authority or collection permit.
 
+The five-read successor adds `gateway_native_orders.py` to `gateway_read_sequence.py`:
+
+```bash
+/usr/bin/python3 -I infra/egress-guard/installed_gateway_selftest.py --order-sequence-profile --report data/NEW-ORDERS.json
+```
+
+The separate `fixture-order-sequence-v1` scope fixes metadata → account → openOrders
+→ openOrders → account (five GETs / 220 documented fixture weight). The dedicated
+UID signs each private read and maps open orders to actual native OrderStatusReport
+objects; root owns TLS and revokes permission before receipt delivery. Supported
+orders are fixed-symbol LIMIT/GTC, NEW or PARTIALLY_FILLED, at exact eight-place
+native precision. Repeated orders and balances must agree, and remaining BUY quote
+and SELL base locks must exactly account for every asset's locked balance. Empty
+orders require zero locks. No fill/fee history or atomic stream fence is inferred.
+Manifest v9 pins fifteen sources. The old three-read profile remains distinct.
+See [order acceptance](../../docs/progress/portfolio-installed-order-sequence-2026-09-18.md).
+Next derive same-run book/metadata routes and integrate concurrent gateway TLS/WS.
+
 The fixed repeated-read successor is `gateway_read_sequence.py`:
 
 ```bash
@@ -18,9 +36,9 @@ The exclusive parent journal binds original preparations and native acknowledgem
 each kernel permit is revoked and the child ledger closed before the next step.
 Metadata precision must match the four-asset mapper, and repeated free/locked/total
 balances must agree exactly. Drift or missing receipts never permit a resume.
-Manifest v8 pins fourteen sources; held original paths reuse descriptors without
+Manifest v9 pins fifteen sources; held original paths reuse descriptors without
 raising system limits. See [sequence acceptance](../../docs/progress/portfolio-installed-read-sequence-2026-09-18.md).
-Next add open-order reads and same-run routes, followed by concurrent TLS/WS.
+The five-read profile above adds open orders; same-run routes and concurrent TLS/WS remain pending.
 This fixed fixture does not qualify an atomic snapshot, account stream fence,
 provider quota, real account/equity or execution.
 
@@ -40,7 +58,7 @@ or missing final receipt keeps the attempt pending. Account header usage is reta
 without fabricating exchangeInfo rate limits. The four fixture assets/precision are
 fixed, and no actual account, route, WS, equity or trading qualification follows.
 
-Supplemental manifest v8 pins fourteen sources. The base installation/launcher and
+Supplemental manifest v9 pins fifteen sources. The base installation/launcher and
 prior journal profiles remain separate. Seven actual account scenarios plus 42
 regressions and detached original/native replays are recorded in
 [signed account acceptance](../../docs/progress/portfolio-installed-signed-account-2026-09-18.md).
@@ -63,7 +81,7 @@ request hashes before acknowledgements. The fixture budget stays 16 GET selector
 request dispatch follows. Fixed BTC/ETH/BNB routes and subscription ID zero are
 synthetic selections, not values derived from actual same-run responses.
 
-Manifest v8 pins fourteen protected sources. The separate request ledger/scope and
+Manifest v9 pins fifteen protected sources. The separate request ledger/scope and
 `requests.jsonl` preserve incomplete attempts after drift, consumer death or root
 crash. Detached replay verifies signatures and receipt ordering with original times;
 it never refreshes expiry or repairs missing acknowledgements. Next connect actual
@@ -81,7 +99,7 @@ retaining a `.runtime.tar.gz` beside the report. Only the isolated dedicated UID
 imports Nautilus and constructs BTC/ETH/BNB/USDT Currency objects from the original
 root HTTPS bytes. Its final acknowledgement binds both the native summary and the
 original payload, including original receive clocks. Root parses the expected
-summary with stdlib only. Protected fixture manifest v8 pins fourteen sources;
+summary with stdlib only. Protected fixture manifest v9 pins fifteen sources;
 base installation and earlier journal profiles remain separate.
 
 The private runtime tmpfs is root-owned and read-only. Files are fully hashed at

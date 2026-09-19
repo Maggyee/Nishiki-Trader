@@ -1,0 +1,1055 @@
+{
+  "acceptance_scenarios": {
+    "account-regression": [
+      {
+        "checks": 71,
+        "name": "tls_success",
+        "status": "passed"
+      },
+      {
+        "checks": 71,
+        "name": "tls_slow_body",
+        "status": "passed"
+      },
+      {
+        "checks": 71,
+        "name": "native_precision",
+        "status": "passed"
+      },
+      {
+        "checks": 73,
+        "name": "receipt_runtime_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 69,
+        "name": "tls_bad_certificate",
+        "status": "passed"
+      },
+      {
+        "checks": 74,
+        "name": "receipt_child_stopped",
+        "status": "passed"
+      },
+      {
+        "checks": 73,
+        "name": "receipt_controller_crash",
+        "status": "passed"
+      }
+    ],
+    "echo-regression": [
+      {
+        "checks": 66,
+        "name": "success",
+        "status": "passed"
+      },
+      {
+        "checks": 66,
+        "name": "code_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 66,
+        "name": "account_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 66,
+        "name": "storage_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 67,
+        "name": "controller_crash",
+        "status": "passed"
+      }
+    ],
+    "native-receipt-regression": [
+      {
+        "checks": 70,
+        "name": "tls_success",
+        "status": "passed"
+      },
+      {
+        "checks": 70,
+        "name": "tls_slow_body",
+        "status": "passed"
+      },
+      {
+        "checks": 70,
+        "name": "native_precision",
+        "status": "passed"
+      },
+      {
+        "checks": 72,
+        "name": "receipt_runtime_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 69,
+        "name": "tls_bad_certificate",
+        "status": "passed"
+      },
+      {
+        "checks": 73,
+        "name": "receipt_child_stopped",
+        "status": "passed"
+      },
+      {
+        "checks": 72,
+        "name": "receipt_controller_crash",
+        "status": "passed"
+      }
+    ],
+    "native-requests-regression": [
+      {
+        "checks": 72,
+        "name": "ipc_success",
+        "status": "passed"
+      },
+      {
+        "checks": 72,
+        "name": "ipc_child_death",
+        "status": "passed"
+      },
+      {
+        "checks": 72,
+        "name": "ipc_code_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 72,
+        "name": "ipc_account_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 72,
+        "name": "ipc_storage_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 73,
+        "name": "ipc_controller_crash",
+        "status": "passed"
+      },
+      {
+        "checks": 73,
+        "name": "ipc_runtime_drift",
+        "status": "passed"
+      }
+    ],
+    "orders-initial": [
+      {
+        "checks": 71,
+        "name": "orders_success",
+        "status": "passed"
+      },
+      {
+        "checks": 71,
+        "name": "orders_empty",
+        "status": "passed"
+      },
+      {
+        "checks": 70,
+        "name": "orders_changed",
+        "status": "passed"
+      },
+      {
+        "checks": 69,
+        "name": "orders_precision",
+        "status": "passed"
+      },
+      {
+        "checks": 68,
+        "name": "orders_duplicate",
+        "status": "passed"
+      },
+      {
+        "checks": 69,
+        "name": "orders_lock_mismatch",
+        "status": "passed"
+      },
+      {
+        "checks": 71,
+        "name": "orders_child_stopped",
+        "status": "passed"
+      },
+      {
+        "checks": 70,
+        "name": "orders_controller_crash",
+        "status": "passed"
+      },
+      {
+        "checks": 69,
+        "name": "orders_code_drift",
+        "status": "passed"
+      }
+    ],
+    "receipt-regression": [
+      {
+        "checks": 68,
+        "name": "tls_success",
+        "status": "passed"
+      },
+      {
+        "checks": 68,
+        "name": "tls_slow_body",
+        "status": "passed"
+      },
+      {
+        "checks": 67,
+        "name": "tls_bad_certificate",
+        "status": "passed"
+      },
+      {
+        "checks": 67,
+        "name": "tls_duplicate_weight",
+        "status": "passed"
+      },
+      {
+        "checks": 67,
+        "name": "tls_truncated",
+        "status": "passed"
+      },
+      {
+        "checks": 68,
+        "name": "tls_crash",
+        "status": "passed"
+      },
+      {
+        "checks": 69,
+        "name": "receipt_child_death",
+        "status": "passed"
+      },
+      {
+        "checks": 71,
+        "name": "receipt_child_stopped",
+        "status": "passed"
+      },
+      {
+        "checks": 70,
+        "name": "receipt_controller_crash",
+        "status": "passed"
+      },
+      {
+        "checks": 69,
+        "name": "receipt_code_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 69,
+        "name": "receipt_storage_drift",
+        "status": "passed"
+      }
+    ],
+    "sequence-regression": [
+      {
+        "checks": 69,
+        "name": "sequence_success",
+        "status": "passed"
+      },
+      {
+        "checks": 67,
+        "name": "sequence_metadata_mismatch",
+        "status": "passed"
+      },
+      {
+        "checks": 69,
+        "name": "sequence_balance_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 69,
+        "name": "sequence_second_precision",
+        "status": "passed"
+      },
+      {
+        "checks": 70,
+        "name": "sequence_child_stopped",
+        "status": "passed"
+      },
+      {
+        "checks": 69,
+        "name": "sequence_controller_crash",
+        "status": "passed"
+      },
+      {
+        "checks": 67,
+        "name": "sequence_code_drift",
+        "status": "passed"
+      }
+    ]
+  },
+  "account_stream_fence_verified": false,
+  "actual_source_authority_qualified": false,
+  "atomic_account_snapshot": false,
+  "base_commit": "0b698f498984f181cc6f6918fa8b7f1e413059ad",
+  "complete_caller_coverage_verified": false,
+  "complete_sequence_budget": {
+    "actual_total_usage_qualified": false,
+    "documented_weight": 220,
+    "get_requests": 5
+  },
+  "date": "2026-09-18",
+  "detached_replays": [
+    {
+      "path": "data/installed-order-sequence-2026-09-18/replay-1.json",
+      "sha256": "95522b2b03bd452ae549b554613e600ab38531466ced68fb1b027a28d5a6c0fe"
+    },
+    {
+      "path": "data/installed-order-sequence-2026-09-18/replay-2.json",
+      "sha256": "95522b2b03bd452ae549b554613e600ab38531466ced68fb1b027a28d5a6c0fe"
+    },
+    {
+      "path": "data/installed-order-sequence-2026-09-18/native-replay-1.json",
+      "sha256": "10369023651eaa4ac745efde4c7033489507f08bbef399587c322a6fd032656a"
+    },
+    {
+      "path": "data/installed-order-sequence-2026-09-18/native-replay-2.json",
+      "sha256": "10369023651eaa4ac745efde4c7033489507f08bbef399587c322a6fd032656a"
+    }
+  ],
+  "fixture_account": {
+    "assets": [
+      "BNB",
+      "BTC",
+      "ETH",
+      "USDT"
+    ],
+    "precision": 8,
+    "uid": 41001
+  },
+  "fixture_key": "Public RFC 8032 test vector; no operator credential or real source authority",
+  "fixture_manifest_profile": "portfolio.installed_gateway_fixture.v9",
+  "fixture_orders": {
+    "maximum_orders": 16,
+    "remaining_locks": {
+      "BNB": "0.1",
+      "BTC": "0.001",
+      "ETH": "0",
+      "USDT": "12.5"
+    },
+    "statuses": [
+      "NEW",
+      "PARTIALLY_FILLED"
+    ],
+    "symbols": [
+      "BTCUSDT",
+      "ETHUSDT",
+      "BNBUSDT"
+    ],
+    "time_in_force": [
+      "GTC"
+    ],
+    "types": [
+      "LIMIT"
+    ]
+  },
+  "full_account_equity_qualified": false,
+  "host_installation_performed": false,
+  "host_observations_unchanged": true,
+  "legacy_namespace_scenarios": 44,
+  "live_path_affected": false,
+  "maximum_observed_controller_descriptors": 990,
+  "namespace_scenarios_passed": 53,
+  "native_joint_collector_integrated": false,
+  "native_order_sequence_integrated": true,
+  "native_read_sequence_integrated": true,
+  "native_regenerated_requests": 120,
+  "native_replayed_scenario_sets": 37,
+  "native_runtime": {
+    "bytes": 213365841,
+    "files": 701,
+    "manifest_sha256": "75f136be0e614515577b7b6386a03b3ff9ad9acec3c43496179beb91e13dbc8b"
+  },
+  "native_version": "1.226.0",
+  "network_admitted": false,
+  "next_step": "Derive same-run market routes, then integrate concurrent gateway-owned TLS/WS. Keep original clocks, per-operation consumption and all real admission blocked.",
+  "order_namespace_scenarios": 9,
+  "order_sequence_native_read_steps": 33,
+  "order_sequence_reports": {
+    "orders_changed": {
+      "accepted_steps": 3,
+      "child_states": [
+        {
+          "binding_sha256": "8a06dd2d2ae0a4e3a6196e5c6a58aee9c0c170709ab9f65435cd2331fc723032",
+          "index": 0,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "b90bbcb87daf2c954e5a6a7d886e703e2fbb345af1ae8cbbcac3e91a9d09b00c",
+          "index": 1,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "ed464ea49a9f17bfc2d4ba8c63ffedddf607660c4a960de17b5576ec34cf894a",
+          "index": 2,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "649fada5bd56e4d37921792af95e8cafd3650d6201119de8dc37af7d9f4d5e26",
+          "index": 3,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": false
+        }
+      ],
+      "controller_descriptor_counts": [
+        945,
+        947,
+        961,
+        963,
+        970,
+        972,
+        979,
+        981
+      ],
+      "open_order_locks_matched": true,
+      "parent_archive_sha256": "b6e47727e624f14e5dbc3b89aeda7e33771e6012b2d2297626456caf706cdd29",
+      "pending_step": 3,
+      "prepared_steps": 4,
+      "repeated_balances_equal": false,
+      "repeated_open_orders_equal": false,
+      "status": "incomplete_no_resume",
+      "terminal": {
+        "network_admitted": false,
+        "reason": "sequence_open_orders_changed",
+        "status": "sequence_refused"
+      }
+    },
+    "orders_child_stopped": {
+      "accepted_steps": 3,
+      "child_states": [
+        {
+          "binding_sha256": "800c6b13f44f8ce190c007b8d6a7e77ecdae21c0e9e08290af4b4ad07fc73f25",
+          "index": 0,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "0c60952d9dfc015320b78a769d57dc2909d0a44e2927584b94db16fef442a19e",
+          "index": 1,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "02c7071eed4ab1af9e858951f1f42d6c8c5e56ab1bfb93f7151c22aac3fba2bc",
+          "index": 2,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "faf4dbff6cdff4bc945bfc9960ffd5661a5557719299f7e7d915193cda79e6ed",
+          "index": 3,
+          "individually_complete": false,
+          "native_acknowledged": false,
+          "parent_accepted": false
+        }
+      ],
+      "controller_descriptor_counts": [
+        945,
+        947,
+        961,
+        963,
+        970,
+        972,
+        979,
+        981
+      ],
+      "open_order_locks_matched": true,
+      "parent_archive_sha256": "ebae497c4c60494d2aed49da1346043f2037d139b2bee0d72b36fe4913b564cb",
+      "pending_step": 3,
+      "prepared_steps": 4,
+      "repeated_balances_equal": false,
+      "repeated_open_orders_equal": false,
+      "status": "incomplete_no_resume",
+      "terminal": {
+        "network_admitted": false,
+        "reason": "sequence_child_step_refused",
+        "status": "sequence_refused"
+      }
+    },
+    "orders_code_drift": {
+      "accepted_steps": 3,
+      "child_states": [
+        {
+          "binding_sha256": "35a879aab246738ec6470b412ec2fcc1dab8bfef6a7aed8aadb1121d86804eb4",
+          "index": 0,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "d431c4cc7466b6131efe8450fc2c42b76b83481dcefea7e6c3ffd5a91488d252",
+          "index": 1,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "bd7fafd6066d03f70be56f1c7bc998086701dacd2a50a5b82ff0f2a98a380976",
+          "index": 2,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        }
+      ],
+      "controller_descriptor_counts": [
+        945,
+        947,
+        961,
+        963,
+        970,
+        972
+      ],
+      "open_order_locks_matched": true,
+      "parent_archive_sha256": "8b6b870a7633a4a200eadd7ec9ac1eac8ec399ff34b360a226b7c2732b291891",
+      "pending_step": null,
+      "prepared_steps": 3,
+      "repeated_balances_equal": false,
+      "repeated_open_orders_equal": false,
+      "status": "incomplete_no_resume",
+      "terminal": {
+        "network_admitted": false,
+        "reason": "installation_bytes_changed",
+        "status": "sequence_refused"
+      }
+    },
+    "orders_controller_crash": {
+      "accepted_steps": 3,
+      "child_states": [
+        {
+          "binding_sha256": "ec780d3382223ac37c7799e5b6cbd40d79f0a2f9da79afaad936d527f5e34adf",
+          "index": 0,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "17c6c8fd91248d52e2d22ade6e57b62d2ad6ecf860e2ce2d1711d5ca8326fa92",
+          "index": 1,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "b059859f1244bc886b4751a29683aa706d69c7b666b9fd4ff18aeee3b9c3d5dc",
+          "index": 2,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        }
+      ],
+      "controller_descriptor_counts": [
+        945,
+        947,
+        961,
+        963,
+        970,
+        972
+      ],
+      "open_order_locks_matched": true,
+      "parent_archive_sha256": "8d425129a6bc7d82662e288dd048a3e71c2717a9d43546d8985be14b3258f51b",
+      "pending_step": null,
+      "prepared_steps": 3,
+      "repeated_balances_equal": false,
+      "repeated_open_orders_equal": false,
+      "status": "incomplete_no_resume",
+      "terminal": {
+        "status": "controller_sigkill_between_reads"
+      }
+    },
+    "orders_duplicate": {
+      "accepted_steps": 2,
+      "child_states": [
+        {
+          "binding_sha256": "43a8f802d69313b054f3330d0e90b50a17041f55d4609bf5edb401bb893c0d25",
+          "index": 0,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "3783bf8735264f9f8c496d7e77c1e87298fc04665929db4c5956fc1147f39b4f",
+          "index": 1,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "619394beb0a533d806f88ff29f51a364278a540db5979cb00c85cb3095814dc6",
+          "index": 2,
+          "individually_complete": false,
+          "native_acknowledged": false,
+          "parent_accepted": false
+        }
+      ],
+      "controller_descriptor_counts": [
+        945,
+        947,
+        961,
+        963,
+        970
+      ],
+      "open_order_locks_matched": false,
+      "parent_archive_sha256": "10070ba7f84a30fa7077f6557ef75d3cafa2dc57212bc63f78619c68a902ab46",
+      "pending_step": 2,
+      "prepared_steps": 3,
+      "repeated_balances_equal": false,
+      "repeated_open_orders_equal": false,
+      "status": "incomplete_no_resume",
+      "terminal": {
+        "network_admitted": false,
+        "reason": "sequence_child_step_refused",
+        "status": "sequence_refused"
+      }
+    },
+    "orders_empty": {
+      "accepted_steps": 5,
+      "child_states": [
+        {
+          "binding_sha256": "f217a79b106705b6b1f1136220194bd1f8c11b27e68f456cab0fbddf52e74069",
+          "index": 0,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "bf4714da884cd68e46e4658d8c8ddc79207874de40c46f0df6b9aaa642614b5e",
+          "index": 1,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "08b92b4a8fa8c1c9ad19dbcef0a58b80f35246c5552aef07ed2995fb2084de77",
+          "index": 2,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "b5d447f7d45f38ff293c362feee55fa72490ba44be1d1c6c96e5e26815e62d59",
+          "index": 3,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "628255f6388b7905d15469b5adfa496fe5b7feaa777be12f316450d0a6b73565",
+          "index": 4,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        }
+      ],
+      "controller_descriptor_counts": [
+        945,
+        947,
+        961,
+        963,
+        970,
+        972,
+        979,
+        981,
+        988,
+        990
+      ],
+      "open_order_locks_matched": true,
+      "parent_archive_sha256": "ba79252414609ea77e65e30ddf9d8a5840efa4bd98f74cc9addbabd589e90026",
+      "pending_step": null,
+      "prepared_steps": 5,
+      "repeated_balances_equal": true,
+      "repeated_open_orders_equal": true,
+      "status": "complete",
+      "terminal": {
+        "network_admitted": false,
+        "status": "sequence_completed"
+      }
+    },
+    "orders_lock_mismatch": {
+      "accepted_steps": 2,
+      "child_states": [
+        {
+          "binding_sha256": "09c1c1eacf6544bbd188b6a1b1c1582ccc064b757c30549bd9e3469c29410ffe",
+          "index": 0,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "efe356275c279de1d525d6823a66d346d729d1be0a7a6b44d07bbcf94818e411",
+          "index": 1,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "24a75ef5d6221e0c2f98a407db57e13ba6d528ced5de09f4eb070d7eaadf22ff",
+          "index": 2,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": false
+        }
+      ],
+      "controller_descriptor_counts": [
+        945,
+        947,
+        961,
+        963,
+        970,
+        972
+      ],
+      "open_order_locks_matched": false,
+      "parent_archive_sha256": "04876b414dd5ecd02feb2c73bd4fa47acd903698878dc21b33f17923bac59847",
+      "pending_step": 2,
+      "prepared_steps": 3,
+      "repeated_balances_equal": false,
+      "repeated_open_orders_equal": false,
+      "status": "incomplete_no_resume",
+      "terminal": {
+        "network_admitted": false,
+        "reason": "sequence_order_locks_mismatch",
+        "status": "sequence_refused"
+      }
+    },
+    "orders_precision": {
+      "accepted_steps": 2,
+      "child_states": [
+        {
+          "binding_sha256": "d20fa03483f13ac89a8b2c45aa209ef574da3ba6438a2c6bde283f3567a5ff0d",
+          "index": 0,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "f0cc7569423bff26ed05c22858aeee548a8a5113b73f5fa7dd118be5b792cb35",
+          "index": 1,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "90f53eed2f2d4ccce4e30fb10bf590e9c75afb6af7fff4b53d539c68ec3d1297",
+          "index": 2,
+          "individually_complete": false,
+          "native_acknowledged": false,
+          "parent_accepted": false
+        }
+      ],
+      "controller_descriptor_counts": [
+        945,
+        947,
+        961,
+        963,
+        970,
+        972
+      ],
+      "open_order_locks_matched": false,
+      "parent_archive_sha256": "e3b1bbd83fec2c463f74f850550cf2cca263b44bc476d90212ca1d1fd9fc4628",
+      "pending_step": 2,
+      "prepared_steps": 3,
+      "repeated_balances_equal": false,
+      "repeated_open_orders_equal": false,
+      "status": "incomplete_no_resume",
+      "terminal": {
+        "network_admitted": false,
+        "reason": "sequence_child_step_refused",
+        "status": "sequence_refused"
+      }
+    },
+    "orders_success": {
+      "accepted_steps": 5,
+      "child_states": [
+        {
+          "binding_sha256": "6ffc6f4195aeb3bd7012b3ebc9f177eef49b06eb4f273f1feedcebd4997de6ec",
+          "index": 0,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "6d3556b7ac360e43f6de4b37ca0214a5b21a16f1f5c17e6cf61a9a43ec64e98a",
+          "index": 1,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "5c6489caebde87a53251ff65d70384ed7cd8138260c43527e5a2ceda029f9451",
+          "index": 2,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "606536fd747991ca7a7a34c0d079d8806b5b43aa5a6c490268e8aa19b87eb2ea",
+          "index": 3,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "25021fd2899dda3484c6b7628b30b220d836a0a5ee3830e3a66a6925df67aa8c",
+          "index": 4,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        }
+      ],
+      "controller_descriptor_counts": [
+        945,
+        947,
+        961,
+        963,
+        970,
+        972,
+        979,
+        981,
+        988,
+        990
+      ],
+      "open_order_locks_matched": true,
+      "parent_archive_sha256": "0ed67abaf0fea9e795d658e2707dc55700a4355531e77da62eda8ad54087c952",
+      "pending_step": null,
+      "prepared_steps": 5,
+      "repeated_balances_equal": true,
+      "repeated_open_orders_equal": true,
+      "status": "complete",
+      "terminal": {
+        "network_admitted": false,
+        "status": "sequence_completed"
+      }
+    }
+  },
+  "order_sequence_signed_requests": 24,
+  "original_evidence_modified": false,
+  "prior_evidence_check": {
+    "scenario_originals": 33,
+    "source_copies": 14,
+    "status": "unchanged",
+    "tracked_artifact_pins": 25
+  },
+  "protected_source_sha256": {
+    "gateway_joint_ipc.py": "e814ddfdd67b7f43fd031a13a68a6bd87cf992e6de0a92b476751e4f9e3cb6ae",
+    "gateway_native_account.py": "ea484a339413228606b46f44611d6dfc5d436d9b406dae6395d5d59dc1dc1efc",
+    "gateway_native_orders.py": "775d474cede83cb54926052f4514cb4716a08104aa00ae88edbcc951997aeb08",
+    "gateway_native_receipt.py": "6c6526bf6976c3e809c3537fb86ce6c7672f3cbb08aca111ba48eac46025a0b7",
+    "gateway_native_requests.py": "2cbea5e7d162f40ffcadf41673757eeefa29d95603937ef23de43c7309f28163",
+    "gateway_native_runtime.py": "3d319536524fe7f8ee0bbc1f9eca719e748dc24e262e47e9a210b058cafca8a8",
+    "gateway_read_sequence.py": "c5842617f437552f2ebfb7d529e1c0671abbf394479f8c7de24fc098cbe8630b",
+    "gateway_tls.py": "c3f56e7089d9ad3ea1e246e59e4d69e899974045da67004e6058386fce71b8c8",
+    "gateway_tls_receipt.py": "bb330885fe0367f5225df70beaeaf3df9a990ece601474176d1a71847692c16c",
+    "installed_gateway.py": "33c444196f7fe06ba5326af634cf8f98c8e9b1c84ebd75f160d814b4ce8b75ef",
+    "ledger_gateway.py": "0d50c9d69e8e7cb06474c72a5d74855aac19e87eec00ef5f4f89181712070631",
+    "portfolio_egress_ledger.py": "8a6ce345e6acada2fc2be9ce9104f27f2fbac4f6e88f5c59cf9e83664db2d4a4",
+    "portfolio_rate_evidence.py": "18aa5bdbf1954cebc4802b38daeded07cd60e2ab1b9e508d6686ac89a07abb35",
+    "portfolio_tls_provenance.py": "def476571e9ec56e989eee02b8623b1a657337956ecd88faeabaf9f2efc70044",
+    "selftest.py": "75ba8a36ca075f4236f20e68524117bf1abc1431226271bb0df35912c4ebff5f"
+  },
+  "python_tests": {
+    "files": [
+      {
+        "path": "tests/ops/test_egress_order_sequence.py",
+        "sha256": "6a971f7bc07e44f6006bc05c25d10e55e5f55e203d00994b23b764c3c864825a"
+      },
+      {
+        "path": "tests/ops/test_egress_read_sequence.py",
+        "sha256": "2e88620f5f98f7e8cf5691495dc9ad7c22c616289ddee5bd113b10a98f9e8db8"
+      },
+      {
+        "path": "tests/ops/test_egress_signed_account.py",
+        "sha256": "6d23f369ec3c3981c50f5f495d5940591b672b3a64d8940d7c2b35c0a04a12e9"
+      },
+      {
+        "path": "tests/ops/test_egress_native_requests.py",
+        "sha256": "9ade2336a92bd1cfd50f181a676b4c86254edfa47770db1d8d453919d9e81d62"
+      },
+      {
+        "path": "tests/ops/test_egress_native_receipt.py",
+        "sha256": "cc3b406799a82623e2b986e128b195806035bb3d0eb6e6786a75ed3d65e706f4"
+      },
+      {
+        "path": "tests/ops/test_egress_tls_receipt.py",
+        "sha256": "230189fda6301eca7f7e7029790e9de8db165933e794187331c50f6d8081875b"
+      },
+      {
+        "path": "tests/ops/test_egress_joint_ipc.py",
+        "sha256": "e546fc2bbf479a81ce19c341726a3868c545a6640e73c39a3fdd3062c11d1812"
+      },
+      {
+        "path": "tests/ops/test_egress_gateway_tls.py",
+        "sha256": "6eeb048531f6872712c155c83315242fc84accdc654483436f0e481ba5d63daa"
+      },
+      {
+        "path": "tests/ops/test_egress_installed_gateway.py",
+        "sha256": "a7f65e960c9ce1cd05503c8e1f5a881cb82ad9fb837734a3e1e305ce2aaf62d6"
+      },
+      {
+        "path": "tests/ops/test_egress_installation_selftest.py",
+        "sha256": "b23c06780d60a5e09bf751cfb6d2564a4704dfa3c430721a7e67c04dbe9328ef"
+      },
+      {
+        "path": "tests/ops/test_egress_installation.py",
+        "sha256": "326cba9d265b8aefbfbda38302f956da5705ca648e166734c411e06a5e0a2ded"
+      },
+      {
+        "path": "tests/ops/test_egress_package.py",
+        "sha256": "96b216e5d4f1c5b153d8889650103bb93c65b0debc95c87199ab6fb7ff0bac8b"
+      },
+      {
+        "path": "tests/ops/test_egress_ledger_gateway.py",
+        "sha256": "6cfe8c9c94ab56caa4294f64c85beffa092f18a476f3c0a434e9091940750f26"
+      },
+      {
+        "path": "tests/ops/test_egress_guard_selftest.py",
+        "sha256": "dfe1c8e795e820ab13c9a010d53092aca8c1016330dcff25f16398b606b12efa"
+      },
+      {
+        "path": "tests/ops/test_egress_collector_launcher.py",
+        "sha256": "9e5020262a12cbd4aa606b05b6974437054fb73a6664da4d821f447418976d79"
+      },
+      {
+        "path": "tests/ops/test_egress_authority_binding.py",
+        "sha256": "0a12fececd80168c31aa04e29d4f7f99faef7c0d3ba7b0f0348c596ca0a8dcf6"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_egress_ledger.py",
+        "sha256": "d13ce6c3646dfd5b52664b5aa940d9b1efa192e7392764869cfead7982d2b12a"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_joint_egress.py",
+        "sha256": "af7b4ace53f87f263a68dd761dce8dbe6ea6f6ebe3ab2d3119b190b418471484"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_tls_provenance.py",
+        "sha256": "c4d1c96b8a44bdcb6af96242ec6cd176392f4ca5e733768c2d63b4e54805c5da"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_rate_evidence.py",
+        "sha256": "2f4ae82940cdc346a3ada4f3bd2ca1b5cd049286fd0818446909b54b7aa4567b"
+      }
+    ],
+    "new": 47,
+    "output": {
+      "path": "data/installed-order-sequence-2026-09-18/pytest-final.txt",
+      "sha256": "b6e68d59922dda78bcefb0cafefb61062d550207ec0d42b8a00fce07155279a7"
+    },
+    "passed": 841,
+    "seconds": 53.53,
+    "warnings": false
+  },
+  "replayed_original_scenario_sets": 53,
+  "reports": {
+    "account-regression": {
+      "path": "data/installed-order-sequence-2026-09-18/account-regression.json",
+      "sha256": "072d92653a36d0eb2f6f9f0d26bb3f7ba8be1b37f477e36bbe44b7fd22db957b"
+    },
+    "echo-regression": {
+      "path": "data/installed-order-sequence-2026-09-18/echo-regression.json",
+      "sha256": "5ae9bec859dd1d72fc0b94f07f1ea23aa7386c4780669c3c9ea827decb937368"
+    },
+    "native-receipt-regression": {
+      "path": "data/installed-order-sequence-2026-09-18/native-receipt-regression.json",
+      "sha256": "318493c92ec5c42c6d9f58625bf3b49d03bfffa98d5de4ad87bf843f39f82a74"
+    },
+    "native-requests-regression": {
+      "path": "data/installed-order-sequence-2026-09-18/native-requests-regression.json",
+      "sha256": "14e985795c7ba7e10d6f71f2df8afae696520101f14c287419443d42f972ab1a"
+    },
+    "orders-initial": {
+      "path": "data/installed-order-sequence-2026-09-18/orders-initial.json",
+      "sha256": "fcdf16cab3f2bc61583f515441c515532bfd780424ab7689d68cdd3c608f6b19"
+    },
+    "receipt-regression": {
+      "path": "data/installed-order-sequence-2026-09-18/receipt-regression.json",
+      "sha256": "3ccf54ac7ae0cd6cc98237a3dcfe03cfe88fa782ca3ab7a198b9a146a2ade5ef"
+    },
+    "sequence-regression": {
+      "path": "data/installed-order-sequence-2026-09-18/sequence-regression.json",
+      "sha256": "1f86e5e797ce76c05269520b0f3255869ddf91d4eb1c6323cf053c527de5920f"
+    }
+  },
+  "resource_limit_increased": false,
+  "retained_drivers": {
+    "extract-runtime.py": {
+      "path": "data/installed-order-sequence-2026-09-18/extract-runtime.py",
+      "sha256": "017cb81aab4198305dfae95e5fede3eb25cef824cef12c31d287e3498e3681e6"
+    },
+    "final-tests.py": {
+      "path": "data/installed-order-sequence-2026-09-18/final-tests.py",
+      "sha256": "2eb3987eca7f03c965e35d74ff3de6303d8176cec03901eab3e8f7f5fdd25b85"
+    },
+    "installed_gateway_selftest.py": {
+      "path": "data/installed-order-sequence-2026-09-18/installed_gateway_selftest.py",
+      "sha256": "df6512e7dfb90c84047c21e89449a645a25c63d000ea8c23dc92e7e4599bb375"
+    },
+    "native-replay.py": {
+      "path": "data/installed-order-sequence-2026-09-18/native-replay.py",
+      "sha256": "d79218ca703778d8beb97afe8f07741aac83959ec3296c514af63062e1d14d45"
+    },
+    "record-progress.py": {
+      "path": "data/installed-order-sequence-2026-09-18/record-progress.py",
+      "sha256": "9d247b23ed6ab234907e90dbab4067ed476bb29a555fa19d88d620550ce9fe06"
+    },
+    "replay.py": {
+      "path": "data/installed-order-sequence-2026-09-18/replay.py",
+      "sha256": "dbb947b617d7563cf641132943cad6e27fb597eb8613a20ca076cfe449b61e6c"
+    },
+    "select-evidence.py": {
+      "path": "data/installed-order-sequence-2026-09-18/select-evidence.py",
+      "sha256": "df0a8e9c5d0bf422073d0616fa8a11d5d09c1a931991794cc833295e586a1ac8"
+    }
+  },
+  "retained_selection": {
+    "path": "data/installed-order-sequence-2026-09-18/selection.json",
+    "sha256": "189b445e57db2a7fb9d7a3aeea3f7b257179aad4b149a8aa97cb39824ba67c04"
+  },
+  "root_native_modules_loaded": false,
+  "routes_derived_from_same_run": false,
+  "runtime_bundles": [
+    {
+      "path": "data/installed-order-sequence-2026-09-18/account-regression.runtime.tar.gz",
+      "sha256": "b4960df7b132f79ab5398b566ec19e6223ff6807dd66175196323d00062cc3bb"
+    },
+    {
+      "path": "data/installed-order-sequence-2026-09-18/native-receipt-regression.runtime.tar.gz",
+      "sha256": "dc50de50bfc9505961f3e084861142368a7321ee0ec3e7370a1ebb890d831d3c"
+    },
+    {
+      "path": "data/installed-order-sequence-2026-09-18/native-requests-regression.runtime.tar.gz",
+      "sha256": "b69a99bfa9d6f2575ccf5144fb615af6faf8c87db1e4e3195a7fabbe037a6794"
+    },
+    {
+      "path": "data/installed-order-sequence-2026-09-18/orders-initial.runtime.tar.gz",
+      "sha256": "486921d57b40610c55e16105d6e7920292517860e5c79a6677f5dec616b466b4"
+    },
+    {
+      "path": "data/installed-order-sequence-2026-09-18/sequence-regression.runtime.tar.gz",
+      "sha256": "953ad2e8ac0b38619eb6c1f47e4125baa8b32006d1111c2d033c3fa943de5fb0"
+    }
+  ],
+  "schema_version": "portfolio.installed_order_sequence_acceptance.v1",
+  "sequence_steps": [
+    "metadata",
+    "account_first",
+    "orders_first",
+    "orders_second",
+    "account_second"
+  ],
+  "trading_admitted": false,
+  "upstream_touched": false,
+  "venue_requests": 0,
+  "verification_completed": "2026-09-19",
+  "verification_scope": "Current-source five-read orders, three-read sequence, signed account, native metadata, native requests, stdlib receipt and echo disposable modes. Python regressions cover unchanged pure TLS and IPC paths."
+}

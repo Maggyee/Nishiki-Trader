@@ -9,12 +9,15 @@ import stat
 import sys
 import time
 from contextlib import suppress
-from decimal import Decimal
+from decimal import Decimal, localcontext
 from pathlib import Path
 
 PROFILE = "portfolio.installed_read_sequence.v1"
 SCOPE = "fixture-read-sequence-v1"
 STEPS = ("metadata", "account_first", "account_second")
+ORDER_PROFILE = "portfolio.installed_order_sequence.v1"
+ORDER_SCOPE = "fixture-order-sequence-v1"
+ORDER_STEPS = ("metadata", "account_first", "orders_first", "orders_second", "account_second")
 LIMIT = 65536
 FILES = {
     "binding": "binding.json",
@@ -44,12 +47,14 @@ def load_sources(sources):
 
     gateway = load("ledger_gateway.py")
     ledger = gateway["load_ledger"](sources)
+    account = load("gateway_native_account.py")
     return {
         "gateway": gateway,
         "ledger": ledger,
         "tls": load("gateway_tls.py"),
         "receipt": load("gateway_tls_receipt.py"),
-        "account": load("gateway_native_account.py"),
+        "account": account,
+        "orders": load("gateway_native_orders.py")["view"](account),
         "metadata": load("gateway_native_receipt.py"),
         "requests": load("gateway_native_requests.py"),
         "provenance": sys.modules["apps.strategies_nautilus.portfolio_tls_provenance"],
@@ -57,7 +62,7 @@ def load_sources(sources):
     }
 
 
-def review_bundle(bundle, index, context, selected, modules):
+def review_bundle(bundle, index, context, selected, modules, *, orders=False):
     """Verify originals before considering a step complete; never trust a saved report."""
     allowed = set(FILES) - ({"selection"} if index == 0 else set())
     if (
@@ -85,7 +90,7 @@ def review_bundle(bundle, index, context, selected, modules):
         if set(bundle) != {"binding"}:
             raise ValueError("sequence_attempts_required")
         return result
-    account = modules["account"]
+    account = modules["orders"] if orders and index in {2, 3} else modules["account"]
     ledger = account["ledger_view"](modules["ledger"]) if index else modules["ledger"]
     attempts = bundle["attempts"].encode()
     result["attempts"] = ledger.replay(
@@ -146,15 +151,18 @@ def review_bundle(bundle, index, context, selected, modules):
     return result
 
 
-def reconcile(results):
+def reconcile(results, *, orders=False):
     """Fixed fixture precision and equal endpoint amounts, never a stream fence."""
     metadata = results[0]["native_result"]
     if metadata["currencies"] != [
         {"code": asset, "precision": 8} for asset in ("BNB", "BTC", "ETH", "USDT")
     ]:
         raise ValueError("sequence_metadata_precision_mismatch")
-    if len(results) == 3:
-        first, second = (item["native_result"] for item in results[1:])
+    if orders and len(results) >= 3:
+        reconcile_orders(results)
+    total = len(ORDER_STEPS if orders else STEPS)
+    if len(results) == total:
+        first, second = (results[i]["native_result"] for i in (1, total - 1))
 
         def amounts(value):
             return [
@@ -168,13 +176,59 @@ def reconcile(results):
 
         if first["account_uid"] != second["account_uid"] or amounts(first) != amounts(second):
             raise ValueError("sequence_account_balances_changed")
-    return {"metadata_precision_matched": True, "repeated_balances_equal": len(results) == 3}
+    return {"metadata_precision_matched": True, "repeated_balances_equal": len(results) == total}
 
 
-def replay(raw, *, expected_sha256, bundles, modules):
+def reconcile_orders(results):
+    first = results[2]["native_result"]["orders"]
+    if len(results) >= 4:
+
+        def normalized(rows):
+            return [
+                {
+                    k: (
+                        Decimal(v)
+                        if k
+                        in {
+                            "price",
+                            "origQty",
+                            "executedQty",
+                            "cummulativeQuoteQty",
+                            "icebergQty",
+                            "stopPrice",
+                            "origQuoteOrderQty",
+                            "remainingQty",
+                        }
+                        else v
+                    )
+                    for k, v in row.items()
+                }
+                for row in rows
+            ]
+
+        if normalized(first) != normalized(results[3]["native_result"]["orders"]):
+            raise ValueError("sequence_open_orders_changed")
+    balances = results[1]["native_result"]["balances"]
+    with localcontext() as context:
+        context.prec = 80
+        locks = {row["currency"]: Decimal(0) for row in balances}
+        for row in first:
+            remaining = Decimal(row["origQty"]) - Decimal(row["executedQty"])
+            currency = "USDT" if row["side"] == "BUY" else row["symbol"][:-4]
+            locks[currency] += (
+                remaining * Decimal(row["price"]) if row["side"] == "BUY" else remaining
+            )
+        if any(locks[row["currency"]] != Decimal(row["locked"]) for row in balances):
+            raise ValueError("sequence_order_locks_mismatch")
+
+
+def replay(raw, *, expected_sha256, bundles, modules, orders=False):
+    profile = ORDER_PROFILE if orders else PROFILE
+    steps = ORDER_STEPS if orders else STEPS
+    total = len(steps)
     if not isinstance(raw, bytes) or not 0 < len(raw) <= LIMIT or digest(raw) != expected_sha256:
         raise ValueError("sequence_original_required")
-    if not isinstance(bundles, list) or len(bundles) > 3:
+    if not isinstance(bundles, list) or len(bundles) > total:
         raise ValueError("sequence_bundles")
     rows, previous, prefix = [], None, b""
     results, pending, accepted, selected, context = [], None, 0, None, None
@@ -187,7 +241,7 @@ def replay(raw, *, expected_sha256, bundles, modules):
             or type(row["seq"]) is not int
             or row["seq"] != len(rows)
             or row["previous_sha256"] != previous
-            or row["profile"] != PROFILE
+            or row["profile"] != profile
             or canonical(row) + b"\n" != line
         ):
             raise ValueError("sequence_chain")
@@ -220,18 +274,18 @@ def replay(raw, *, expected_sha256, bundles, modules):
             ):
                 raise ValueError("sequence_selection")
             selected = value
-        elif kind == "prepared" and stage in {"started", "accepted"} and accepted < 3:
+        elif kind == "prepared" and stage in {"started", "accepted"} and accepted < total:
             if (
-                value != {"index": accepted, "step": STEPS[accepted]}
+                value != {"index": accepted, "step": steps[accepted]}
                 or type(value["index"]) is not int
             ):
                 raise ValueError("sequence_fixed_step")
             pending = accepted
-            context = {"profile": PROFILE, "index": pending, "prefix_sha256": digest(prefix + line)}
+            context = {"profile": profile, "index": pending, "prefix_sha256": digest(prefix + line)}
             if len(bundles) <= pending:
                 raise ValueError("sequence_pending_original_required")
             bundle = bundles[pending]
-            report = review_bundle(bundle, pending, context, selected, modules)
+            report = review_bundle(bundle, pending, context, selected, modules, orders=orders)
             # Every child archive follows preparation, and each whole step ends
             # before its acceptance. Original clocks never come from replay time.
             for key, content in bundle.items():
@@ -254,7 +308,7 @@ def replay(raw, *, expected_sha256, bundles, modules):
                 child = json.loads(content.splitlines()[-1])
                 if any(child[k] > row[k] for k in ("utc_ns", "monotonic_ns")):
                     raise ValueError("sequence_acceptance_precedes_child")
-            reconcile(results)
+            reconcile(results, orders=orders)
             # Same trust/install/rules/route/network/runtime throughout, distinct
             # child PIDs are expected. No caller-supplied run identity suffices.
             if pending:
@@ -270,7 +324,7 @@ def replay(raw, *, expected_sha256, bundles, modules):
         elif (
             kind == "completed"
             and stage == "accepted"
-            and accepted == 3
+            and accepted == total
             and value == {}
             or (
                 kind == "refused"
@@ -290,7 +344,7 @@ def replay(raw, *, expected_sha256, bundles, modules):
         raise ValueError("sequence_extra_originals")
     complete = rows[-1]["kind"] == "completed"
     return {
-        "schema_version": PROFILE,
+        "schema_version": profile,
         "archive_sha256": expected_sha256,
         "status": "complete" if complete else "incomplete_no_resume",
         "prepared_steps": len(results),
@@ -298,7 +352,12 @@ def replay(raw, *, expected_sha256, bundles, modules):
         "pending_step": pending,
         "steps": results,
         "metadata_precision_matched": accepted > 0,
-        "repeated_balances_equal": accepted == 3,
+        "repeated_balances_equal": accepted == total,
+        **(
+            {"repeated_open_orders_equal": accepted >= 4, "open_order_locks_matched": accepted >= 3}
+            if orders
+            else {}
+        ),
         "same_run_receipts_verified": complete,
         "atomic_account_snapshot": False,
         "stream_fence_verified": False,
@@ -310,22 +369,26 @@ def replay(raw, *, expected_sha256, bundles, modules):
 
 
 class Sequence:
-    def __init__(self, entry, authority, sources, modules):
+    def __init__(self, entry, authority, sources, modules, *, orders=False):
+        self.orders = orders
+        self.profile = ORDER_PROFILE if orders else PROFILE
+        self.scope = ORDER_SCOPE if orders else SCOPE
+        self.steps = ORDER_STEPS if orders else STEPS
         self.authority, self.modules = authority, modules
         self.owner = os.getpid()
         self.expected, self.bundles, self.index = b"", [], None
         self.fds, self.held = [], {}
         self.failed = False
-        self.path = Path(entry["STORAGE"]) / SCOPE
+        self.path = Path(entry["STORAGE"]) / self.scope
         self.journal = None
         try:
             root = self.hold(Path(entry["STORAGE"]), directory=True)
-            os.mkdir(SCOPE, 0o700, dir_fd=root)
+            os.mkdir(self.scope, 0o700, dir_fd=root)
             os.fsync(root)
             self.directory = self.hold(self.path, directory=True)
             self.write(
                 self.path / "README.md",
-                b"Fixed disposable metadata/account/account sequence. Consumed on creation; no resume. Each step uses its own expiring permission and native receipt. Next entrypoint: offline original replay; no live admission.\n",
+                b"Fixed disposable metadata/account reads and optional repeated open-order sequence. Consumed on creation; no resume. Each step uses its own expiring permission and native receipt. Next entrypoint: offline original replay; no live admission.\n",
             )
             self.journal = modules["provenance"]._Journal(
                 self.path / "sequence.jsonl", limit=LIMIT, reserve=4096
@@ -439,7 +502,7 @@ class Sequence:
             "seq": self.journal.seq,
             "previous_sha256": self.journal.previous,
             "kind": kind,
-            "profile": PROFILE,
+            "profile": self.profile,
             "utc_ns": time.time_ns(),
             "monotonic_ns": time.monotonic_ns(),
             "payload": value,
@@ -447,7 +510,13 @@ class Sequence:
         future = self.expected + canonical(row) + b"\n"
         # Verify before persisting terminal claims. Preparation's empty bundle is
         # a conservative prefix until the child originals exist.
-        replay(future, expected_sha256=digest(future), bundles=self.bundles, modules=self.modules)
+        replay(
+            future,
+            expected_sha256=digest(future),
+            bundles=self.bundles,
+            modules=self.modules,
+            orders=self.orders,
+        )
         self.journal.append(
             kind, **{k: v for k, v in row.items() if k not in {"seq", "previous_sha256", "kind"}}
         )
@@ -457,10 +526,14 @@ class Sequence:
     def prepare(self, index):
         self.index = None
         self.bundles.append({})
-        self.append("prepared", {"index": index, "step": STEPS[index]})
+        self.append("prepared", {"index": index, "step": self.steps[index]})
         self.index = index
-        self.context = {"profile": PROFILE, "index": index, "prefix_sha256": digest(self.expected)}
-        self.storage = self.path / STEPS[index]
+        self.context = {
+            "profile": self.profile,
+            "index": index,
+            "prefix_sha256": digest(self.expected),
+        }
+        self.storage = self.path / self.steps[index]
         self.storage.mkdir(mode=0o700)
         os.fsync(self.directory)
         self.hold(self.storage, directory=True)
@@ -474,12 +547,23 @@ class Sequence:
         self.write(self.storage / "binding.json", canonical(binding))
 
     def read_bundle(self):
-        account = self.index != 0
-        scope = self.storage / (
-            self.modules["ledger"].ACCOUNT_SCOPE if account else self.modules["ledger"].SCOPE
+        kind = (
+            "orders"
+            if self.orders and self.index in {2, 3}
+            else "account"
+            if self.index
+            else "metadata"
         )
+        ledger = (
+            self.modules[kind]["ledger_view"](self.modules["ledger"])
+            if self.index
+            else self.modules["ledger"]
+        )
+        scope = self.storage / ledger.SCOPE
         bundle = {}
         for key, name in FILES.items():
+            if key == "selection" and kind == "orders":
+                name = "orders-request.json"
             path = self.storage / name if key == "binding" else scope / name
             if path.exists():
                 self.hold(path.parent, directory=True)
@@ -497,17 +581,22 @@ class Sequence:
         self.fds = []
 
 
-def run_installed(entry, authority, sources):
+def run_installed(entry, authority, sources, *, orders=False):
     sequence = None
     try:
         authority.verify()
         modules = load_sources({name: sources.source(name).decode() for name in entry["FILES"]})
-        sequence = Sequence(entry, authority, sources, modules)
+        sequence = Sequence(entry, authority, sources, modules, orders=orders)
         try:
-            for index in range(3):
+            for index in range(len(sequence.steps)):
                 sequence.prepare(index)
                 outcome = entry["run_controller"](
-                    tls=True, receipt=True, native=True, account=index != 0, sequence=sequence
+                    tls=True,
+                    receipt=True,
+                    native=True,
+                    account=index != 0,
+                    orders=orders and index in {2, 3},
+                    sequence=sequence,
                 )
                 bundle = sequence.read_bundle()
                 if outcome["status"] != "fixture_receipt_succeeded" or not outcome["revoked"]:

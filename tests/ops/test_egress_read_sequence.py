@@ -19,8 +19,7 @@ from tests.ops.test_egress_signed_account import body
 from tests.ops.test_egress_tls_receipt import _rechain
 
 
-@pytest.fixture(scope="module")
-def captured(tmp_path_factory):
+def capture_sequence(tmp_path_factory, *, orders=False):
     root = tmp_path_factory.mktemp("read-sequence")
     entry = load("installed_gateway")
     code = load("gateway_read_sequence")
@@ -64,7 +63,11 @@ def captured(tmp_path_factory):
         verify=verify, open_file=open_file, open_directory=open_directory, manifest_sha256="a" * 64
     )
     sequence = code.Sequence(
-        {"STORAGE": str(root)}, authority, SimpleNamespace(manifest_sha256="b" * 64), modules
+        {"STORAGE": str(root)},
+        authority,
+        SimpleNamespace(manifest_sha256="b" * 64),
+        modules,
+        orders=orders,
     )
     real_socket = socket.socket
     errors, payloads = [], []
@@ -89,10 +92,14 @@ def captured(tmp_path_factory):
             }
             sequence.bind(binding)
             pin = code.digest(code.canonical(binding))
-            native = modules["account"] if index else modules["metadata"]
-            ledger = (
-                modules["account"]["ledger_view"](modules["ledger"]) if index else modules["ledger"]
+            native = (
+                modules["orders"]
+                if orders and index in {2, 3}
+                else modules["account"]
+                if index
+                else modules["metadata"]
             )
+            ledger = native["ledger_view"](modules["ledger"]) if index else modules["ledger"]
             rates = modules["account"]["rates_view"]() if index else modules["rates"]
             attempt = ledger.AttemptLedger(
                 sequence.storage,
@@ -106,21 +113,21 @@ def captured(tmp_path_factory):
             request_pin = None
             if index:
                 challenge = {
-                    "index": 3,
+                    "index": 4 if orders and index in {2, 3} else 3,
                     "nonce": os.urandom(16).hex(),
                     "utc_ns": time.time_ns(),
                     "monotonic_ns": time.monotonic_ns(),
                 }
                 selected = {
-                    "profile": modules["account"]["SELECTION_PROFILE"],
+                    "profile": native["SELECTION_PROFILE"],
                     "binding_sha256": pin,
                     "challenge": challenge,
                     "request": json.loads(modules["requests"]["native_request"](challenge)),
                     "received": [time.time_ns(), time.monotonic_ns()],
                 }
-                contract = modules["account"]["AccountContract"](modules["requests"], selected)
-                (attempt.path / "account-request.json").write_bytes(contract.raw)
-                (attempt.path / "account-request.json").chmod(0o600)
+                contract = native["AccountContract"](modules["requests"], selected)
+                (attempt.path / contract.SELECTION_FILE).write_bytes(contract.raw)
+                (attempt.path / contract.SELECTION_FILE).chmod(0o600)
                 transport = modules["account"]["transport_view"](transport, contract)
                 request, request_pin = contract.request, contract.request_pin
             value = (
@@ -150,6 +157,8 @@ def captured(tmp_path_factory):
                     ],
                 }
             )
+            if orders and index in {2, 3}:
+                value = copy.deepcopy(load("installed_gateway_selftest").FIXTURE_ORDERS)
             raw = code.canonical(value)
             chunks = [
                 b"HTTP/1.1 200 OK\r\nContent-Length: "
@@ -252,10 +261,11 @@ def captured(tmp_path_factory):
                 "accepted", {"index": index, "bundle_sha256": code.digest(code.canonical(bundle))}
             )
 
-        for index in range(3):
+        for index in range(len(sequence.steps)):
             capture_step(index)
         sequence.append("completed", {})
         yield SimpleNamespace(
+            orders=orders,
             code=code,
             modules=modules,
             raw=sequence.expected,
@@ -276,6 +286,11 @@ def captured(tmp_path_factory):
             os.close(fd)
 
 
+@pytest.fixture(scope="module")
+def captured(tmp_path_factory):
+    yield from capture_sequence(tmp_path_factory)
+
+
 def review(case, raw=None, bundles=None):
     raw = case.raw if raw is None else raw
     return case.code.replay(
@@ -283,6 +298,7 @@ def review(case, raw=None, bundles=None):
         expected_sha256=case.code.digest(raw),
         bundles=case.bundles if bundles is None else bundles,
         modules=case.modules,
+        orders=case.orders,
     )
 
 
