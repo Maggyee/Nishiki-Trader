@@ -19,7 +19,8 @@ from tests.ops.test_egress_signed_account import body
 from tests.ops.test_egress_tls_receipt import _rechain
 
 
-def capture_sequence(tmp_path_factory, *, orders=False):
+def capture_sequence(tmp_path_factory, *, orders=False, routes=False):
+    orders = orders or routes
     root = tmp_path_factory.mktemp("read-sequence")
     entry = load("installed_gateway")
     code = load("gateway_read_sequence")
@@ -68,6 +69,7 @@ def capture_sequence(tmp_path_factory, *, orders=False):
         SimpleNamespace(manifest_sha256="b" * 64),
         modules,
         orders=orders,
+        routes=routes,
     )
     real_socket = socket.socket
     errors, payloads = [], []
@@ -93,7 +95,9 @@ def capture_sequence(tmp_path_factory, *, orders=False):
             sequence.bind(binding)
             pin = code.digest(code.canonical(binding))
             native = (
-                modules["orders"]
+                modules["books"]
+                if routes and index == 5
+                else modules["orders"]
                 if orders and index in {2, 3}
                 else modules["account"]
                 if index
@@ -113,7 +117,7 @@ def capture_sequence(tmp_path_factory, *, orders=False):
             request_pin = None
             if index:
                 challenge = {
-                    "index": 4 if orders and index in {2, 3} else 3,
+                    "index": 8 if routes and index == 5 else 4 if orders and index in {2, 3} else 3,
                     "nonce": os.urandom(16).hex(),
                     "utc_ns": time.time_ns(),
                     "monotonic_ns": time.monotonic_ns(),
@@ -159,6 +163,11 @@ def capture_sequence(tmp_path_factory, *, orders=False):
             )
             if orders and index in {2, 3}:
                 value = copy.deepcopy(load("installed_gateway_selftest").FIXTURE_ORDERS)
+            if routes and index == 0:
+                for row in value["symbols"]:
+                    row.update(status="TRADING", isSpotTradingAllowed=True)
+            if routes and index == 5:
+                value = copy.deepcopy(load("installed_gateway_selftest").FIXTURE_BOOKS)
             raw = code.canonical(value)
             chunks = [
                 b"HTTP/1.1 200 OK\r\nContent-Length: "
@@ -266,6 +275,7 @@ def capture_sequence(tmp_path_factory, *, orders=False):
         sequence.append("completed", {})
         yield SimpleNamespace(
             orders=orders,
+            routes=routes,
             code=code,
             modules=modules,
             raw=sequence.expected,
@@ -299,6 +309,7 @@ def review(case, raw=None, bundles=None):
         bundles=case.bundles if bundles is None else bundles,
         modules=case.modules,
         orders=case.orders,
+        routes=case.routes,
     )
 
 

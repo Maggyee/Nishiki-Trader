@@ -284,12 +284,13 @@ class FixtureLedgerGateway:
             try:
                 # Kernel SCM_CREDENTIALS + pidfd binding, not a supplied label.
                 authorization = self.authorize()
-                signed = self.ledger.state.profile in {
+                selected = self.ledger.state.profile in {
                     "portfolio.fixture_signed_account_tls_ledger.v1",
                     "portfolio.fixture_signed_orders_tls_ledger.v1",
+                    "portfolio.fixture_books_tls_ledger.v1",
                 }
                 links = {}
-                if signed:
+                if selected:
                     if (
                         not isinstance(authorization, dict)
                         or set(authorization) != {"ok", "request_sha256"}
@@ -302,12 +303,14 @@ class FixtureLedgerGateway:
                 receipt = self.ledger.prepare(
                     caller="collector",
                     operation=(
-                        "open_orders"
+                        "book_ticker"
+                        if self.ledger.state.profile == "portfolio.fixture_books_tls_ledger.v1"
+                        else "open_orders"
                         if self.ledger.state.profile
                         == "portfolio.fixture_signed_orders_tls_ledger.v1"
                         else "account_read"
                     )
-                    if signed
+                    if selected
                     else "exchange_info",
                     **links,
                 )

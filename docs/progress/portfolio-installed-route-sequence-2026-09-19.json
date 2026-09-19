@@ -1,0 +1,1535 @@
+{
+  "acceptance_scenarios": {
+    "account-regression": [
+      {
+        "checks": 74,
+        "name": "tls_success",
+        "status": "passed"
+      },
+      {
+        "checks": 74,
+        "name": "tls_slow_body",
+        "status": "passed"
+      },
+      {
+        "checks": 74,
+        "name": "native_precision",
+        "status": "passed"
+      },
+      {
+        "checks": 76,
+        "name": "receipt_runtime_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 72,
+        "name": "tls_bad_certificate",
+        "status": "passed"
+      },
+      {
+        "checks": 77,
+        "name": "receipt_child_stopped",
+        "status": "passed"
+      },
+      {
+        "checks": 76,
+        "name": "receipt_controller_crash",
+        "status": "passed"
+      }
+    ],
+    "echo-regression": [
+      {
+        "checks": 69,
+        "name": "success",
+        "status": "passed"
+      },
+      {
+        "checks": 69,
+        "name": "code_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 69,
+        "name": "account_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 69,
+        "name": "storage_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 70,
+        "name": "controller_crash",
+        "status": "passed"
+      }
+    ],
+    "native-receipt-regression": [
+      {
+        "checks": 73,
+        "name": "tls_success",
+        "status": "passed"
+      },
+      {
+        "checks": 73,
+        "name": "tls_slow_body",
+        "status": "passed"
+      },
+      {
+        "checks": 73,
+        "name": "native_precision",
+        "status": "passed"
+      },
+      {
+        "checks": 75,
+        "name": "receipt_runtime_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 72,
+        "name": "tls_bad_certificate",
+        "status": "passed"
+      },
+      {
+        "checks": 76,
+        "name": "receipt_child_stopped",
+        "status": "passed"
+      },
+      {
+        "checks": 75,
+        "name": "receipt_controller_crash",
+        "status": "passed"
+      }
+    ],
+    "native-requests-regression": [
+      {
+        "checks": 75,
+        "name": "ipc_success",
+        "status": "passed"
+      },
+      {
+        "checks": 75,
+        "name": "ipc_child_death",
+        "status": "passed"
+      },
+      {
+        "checks": 75,
+        "name": "ipc_code_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 75,
+        "name": "ipc_account_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 75,
+        "name": "ipc_storage_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 76,
+        "name": "ipc_controller_crash",
+        "status": "passed"
+      },
+      {
+        "checks": 76,
+        "name": "ipc_runtime_drift",
+        "status": "passed"
+      }
+    ],
+    "orders-regression": [
+      {
+        "checks": 74,
+        "name": "orders_success",
+        "status": "passed"
+      },
+      {
+        "checks": 74,
+        "name": "orders_empty",
+        "status": "passed"
+      },
+      {
+        "checks": 73,
+        "name": "orders_changed",
+        "status": "passed"
+      },
+      {
+        "checks": 72,
+        "name": "orders_precision",
+        "status": "passed"
+      },
+      {
+        "checks": 71,
+        "name": "orders_duplicate",
+        "status": "passed"
+      },
+      {
+        "checks": 72,
+        "name": "orders_lock_mismatch",
+        "status": "passed"
+      },
+      {
+        "checks": 74,
+        "name": "orders_child_stopped",
+        "status": "passed"
+      },
+      {
+        "checks": 73,
+        "name": "orders_controller_crash",
+        "status": "passed"
+      },
+      {
+        "checks": 72,
+        "name": "orders_code_drift",
+        "status": "passed"
+      }
+    ],
+    "receipt-regression": [
+      {
+        "checks": 71,
+        "name": "tls_success",
+        "status": "passed"
+      },
+      {
+        "checks": 71,
+        "name": "tls_slow_body",
+        "status": "passed"
+      },
+      {
+        "checks": 70,
+        "name": "tls_bad_certificate",
+        "status": "passed"
+      },
+      {
+        "checks": 70,
+        "name": "tls_duplicate_weight",
+        "status": "passed"
+      },
+      {
+        "checks": 70,
+        "name": "tls_truncated",
+        "status": "passed"
+      },
+      {
+        "checks": 71,
+        "name": "tls_crash",
+        "status": "passed"
+      },
+      {
+        "checks": 72,
+        "name": "receipt_child_death",
+        "status": "passed"
+      },
+      {
+        "checks": 74,
+        "name": "receipt_child_stopped",
+        "status": "passed"
+      },
+      {
+        "checks": 73,
+        "name": "receipt_controller_crash",
+        "status": "passed"
+      },
+      {
+        "checks": 72,
+        "name": "receipt_code_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 72,
+        "name": "receipt_storage_drift",
+        "status": "passed"
+      }
+    ],
+    "routes-initial": [
+      {
+        "checks": 75,
+        "name": "routes_success",
+        "status": "passed"
+      },
+      {
+        "checks": 75,
+        "name": "routes_two_hops",
+        "status": "passed"
+      },
+      {
+        "checks": 75,
+        "name": "routes_missing",
+        "status": "passed"
+      },
+      {
+        "checks": 75,
+        "name": "routes_depth",
+        "status": "passed"
+      },
+      {
+        "checks": 75,
+        "name": "routes_precision",
+        "status": "passed"
+      },
+      {
+        "checks": 74,
+        "name": "routes_duplicate",
+        "status": "passed"
+      },
+      {
+        "checks": 75,
+        "name": "routes_disabled",
+        "status": "passed"
+      },
+      {
+        "checks": 76,
+        "name": "routes_child_stopped",
+        "status": "passed"
+      },
+      {
+        "checks": 75,
+        "name": "routes_controller_crash",
+        "status": "passed"
+      },
+      {
+        "checks": 74,
+        "name": "routes_code_drift",
+        "status": "passed"
+      }
+    ],
+    "sequence-regression": [
+      {
+        "checks": 72,
+        "name": "sequence_success",
+        "status": "passed"
+      },
+      {
+        "checks": 70,
+        "name": "sequence_metadata_mismatch",
+        "status": "passed"
+      },
+      {
+        "checks": 72,
+        "name": "sequence_balance_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 72,
+        "name": "sequence_second_precision",
+        "status": "passed"
+      },
+      {
+        "checks": 73,
+        "name": "sequence_child_stopped",
+        "status": "passed"
+      },
+      {
+        "checks": 72,
+        "name": "sequence_controller_crash",
+        "status": "passed"
+      },
+      {
+        "checks": 70,
+        "name": "sequence_code_drift",
+        "status": "passed"
+      }
+    ]
+  },
+  "account_stream_fence_verified": false,
+  "actual_source_authority_qualified": false,
+  "atomic_account_snapshot": false,
+  "base_commit": "7bea1f4198e699d94e58789ae717809f294f9c75",
+  "complete_caller_coverage_verified": false,
+  "complete_sequence_budget": {
+    "actual_total_usage_qualified": false,
+    "documented_weight": 224,
+    "get_requests": 6
+  },
+  "date": "2026-09-19",
+  "detached_replays": [
+    {
+      "path": "data/installed-route-sequence-2026-09-19/replay-1.json",
+      "sha256": "94845cf9d2078ee8050943ce01aaf36e5a77b9113a226cf7f4fe7e68e7c248e4"
+    },
+    {
+      "path": "data/installed-route-sequence-2026-09-19/replay-2.json",
+      "sha256": "94845cf9d2078ee8050943ce01aaf36e5a77b9113a226cf7f4fe7e68e7c248e4"
+    },
+    {
+      "path": "data/installed-route-sequence-2026-09-19/native-replay-1.json",
+      "sha256": "fa9a9183edbd044654182bd8daa3b61505f69a8c4f4d634c1d5814195bf1f6ce"
+    },
+    {
+      "path": "data/installed-route-sequence-2026-09-19/native-replay-2.json",
+      "sha256": "fa9a9183edbd044654182bd8daa3b61505f69a8c4f4d634c1d5814195bf1f6ce"
+    }
+  ],
+  "fixture_account": {
+    "assets": [
+      "BNB",
+      "BTC",
+      "ETH",
+      "USDT"
+    ],
+    "precision": 8,
+    "uid": 41001
+  },
+  "fixture_key": "Public RFC 8032 test vector; no operator credential or real source authority",
+  "fixture_manifest_profile": "portfolio.installed_gateway_fixture.v10",
+  "fixture_orders": {
+    "maximum_orders": 16,
+    "remaining_locks": {
+      "BNB": "0.1",
+      "BTC": "0.001",
+      "ETH": "0",
+      "USDT": "12.5"
+    },
+    "statuses": [
+      "NEW",
+      "PARTIALLY_FILLED"
+    ],
+    "symbols": [
+      "BTCUSDT",
+      "ETHUSDT",
+      "BNBUSDT"
+    ],
+    "time_in_force": [
+      "GTC"
+    ],
+    "types": [
+      "LIMIT"
+    ]
+  },
+  "full_account_equity_qualified": false,
+  "host_installation_performed": false,
+  "host_observations_unchanged": true,
+  "legacy_namespace_scenarios": 53,
+  "live_path_affected": false,
+  "maximum_observed_controller_descriptors": 1009,
+  "namespace_scenarios_passed": 63,
+  "native_joint_collector_integrated": false,
+  "native_order_sequence_integrated": true,
+  "native_read_sequence_integrated": true,
+  "native_regenerated_requests": 168,
+  "native_replayed_scenario_sets": 47,
+  "native_route_sequence_integrated": true,
+  "native_runtime": {
+    "bytes": 213365841,
+    "files": 701,
+    "manifest_sha256": "75f136be0e614515577b7b6386a03b3ff9ad9acec3c43496179beb91e13dbc8b"
+  },
+  "native_version": "1.226.0",
+  "network_admitted": false,
+  "next_step": "Integrate concurrent gateway-owned TLS/WS consuming the original-derived symbol union. Preserve inherited descriptor limits, original clocks, per-operation consumption and blocked real admission.",
+  "original_evidence_modified": false,
+  "prior_evidence_check": {
+    "scenario_originals": 53,
+    "source_copies": 15,
+    "status": "unchanged",
+    "tracked_artifact_pins": 25
+  },
+  "protected_source_sha256": {
+    "gateway_book_routes.py": "1bc3a5285be7b8c615fdfe00c442055cd335b0597de403061ecc1ddfa228efd2",
+    "gateway_joint_ipc.py": "e814ddfdd67b7f43fd031a13a68a6bd87cf992e6de0a92b476751e4f9e3cb6ae",
+    "gateway_native_account.py": "0242c144987b2da47c97ac2e5ac239aa14ec63164756bc85a23c943d58a9d511",
+    "gateway_native_orders.py": "775d474cede83cb54926052f4514cb4716a08104aa00ae88edbcc951997aeb08",
+    "gateway_native_receipt.py": "6c6526bf6976c3e809c3537fb86ce6c7672f3cbb08aca111ba48eac46025a0b7",
+    "gateway_native_requests.py": "2cbea5e7d162f40ffcadf41673757eeefa29d95603937ef23de43c7309f28163",
+    "gateway_native_runtime.py": "3d319536524fe7f8ee0bbc1f9eca719e748dc24e262e47e9a210b058cafca8a8",
+    "gateway_read_sequence.py": "0d9cda81f7d8106b7ad1dc94eb82da5d53a39bfd43f9867abbaaa195f7951788",
+    "gateway_tls.py": "c3f56e7089d9ad3ea1e246e59e4d69e899974045da67004e6058386fce71b8c8",
+    "gateway_tls_receipt.py": "bc3f69ad3e6e68e79381cadc54f47133454f4218a96cc7be74e60189a6be9322",
+    "installed_gateway.py": "6f8a28ae0fbaa60cfbcf0613298a1d1e46c49c71cb57663405bca43e05e14d1c",
+    "ledger_gateway.py": "6e6d589dbd424ffb42237f0c226319c10443cdd5db0a3106a2fd1b763b6aaed4",
+    "portfolio_egress_ledger.py": "3cd1ad63037ce5c138b77bd486f1326f022e4aac682d0316cc4be54c60eaedc5",
+    "portfolio_rate_evidence.py": "18aa5bdbf1954cebc4802b38daeded07cd60e2ab1b9e508d6686ac89a07abb35",
+    "portfolio_tls_provenance.py": "def476571e9ec56e989eee02b8623b1a657337956ecd88faeabaf9f2efc70044",
+    "selftest.py": "75ba8a36ca075f4236f20e68524117bf1abc1431226271bb0df35912c4ebff5f"
+  },
+  "python_tests": {
+    "files": [
+      {
+        "path": "tests/ops/test_egress_route_sequence.py",
+        "sha256": "36bd7a58f75e9397181e40dd0e56d88fe370a170de11f52eb3ba11425be34244"
+      },
+      {
+        "path": "tests/ops/test_egress_order_sequence.py",
+        "sha256": "6a971f7bc07e44f6006bc05c25d10e55e5f55e203d00994b23b764c3c864825a"
+      },
+      {
+        "path": "tests/ops/test_egress_read_sequence.py",
+        "sha256": "9fbeb54565a3ff7fc50b51624e4f3dbaced3be3efee7f2d7113828648a6f8603"
+      },
+      {
+        "path": "tests/ops/test_egress_signed_account.py",
+        "sha256": "6d23f369ec3c3981c50f5f495d5940591b672b3a64d8940d7c2b35c0a04a12e9"
+      },
+      {
+        "path": "tests/ops/test_egress_native_requests.py",
+        "sha256": "9ade2336a92bd1cfd50f181a676b4c86254edfa47770db1d8d453919d9e81d62"
+      },
+      {
+        "path": "tests/ops/test_egress_native_receipt.py",
+        "sha256": "cc3b406799a82623e2b986e128b195806035bb3d0eb6e6786a75ed3d65e706f4"
+      },
+      {
+        "path": "tests/ops/test_egress_tls_receipt.py",
+        "sha256": "230189fda6301eca7f7e7029790e9de8db165933e794187331c50f6d8081875b"
+      },
+      {
+        "path": "tests/ops/test_egress_joint_ipc.py",
+        "sha256": "e546fc2bbf479a81ce19c341726a3868c545a6640e73c39a3fdd3062c11d1812"
+      },
+      {
+        "path": "tests/ops/test_egress_gateway_tls.py",
+        "sha256": "6eeb048531f6872712c155c83315242fc84accdc654483436f0e481ba5d63daa"
+      },
+      {
+        "path": "tests/ops/test_egress_installed_gateway.py",
+        "sha256": "a7f65e960c9ce1cd05503c8e1f5a881cb82ad9fb837734a3e1e305ce2aaf62d6"
+      },
+      {
+        "path": "tests/ops/test_egress_installation_selftest.py",
+        "sha256": "b23c06780d60a5e09bf751cfb6d2564a4704dfa3c430721a7e67c04dbe9328ef"
+      },
+      {
+        "path": "tests/ops/test_egress_installation.py",
+        "sha256": "326cba9d265b8aefbfbda38302f956da5705ca648e166734c411e06a5e0a2ded"
+      },
+      {
+        "path": "tests/ops/test_egress_package.py",
+        "sha256": "96b216e5d4f1c5b153d8889650103bb93c65b0debc95c87199ab6fb7ff0bac8b"
+      },
+      {
+        "path": "tests/ops/test_egress_ledger_gateway.py",
+        "sha256": "6cfe8c9c94ab56caa4294f64c85beffa092f18a476f3c0a434e9091940750f26"
+      },
+      {
+        "path": "tests/ops/test_egress_guard_selftest.py",
+        "sha256": "dfe1c8e795e820ab13c9a010d53092aca8c1016330dcff25f16398b606b12efa"
+      },
+      {
+        "path": "tests/ops/test_egress_collector_launcher.py",
+        "sha256": "9e5020262a12cbd4aa606b05b6974437054fb73a6664da4d821f447418976d79"
+      },
+      {
+        "path": "tests/ops/test_egress_authority_binding.py",
+        "sha256": "0a12fececd80168c31aa04e29d4f7f99faef7c0d3ba7b0f0348c596ca0a8dcf6"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_egress_ledger.py",
+        "sha256": "d13ce6c3646dfd5b52664b5aa940d9b1efa192e7392764869cfead7982d2b12a"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_joint_egress.py",
+        "sha256": "af7b4ace53f87f263a68dd761dce8dbe6ea6f6ebe3ab2d3119b190b418471484"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_tls_provenance.py",
+        "sha256": "c4d1c96b8a44bdcb6af96242ec6cd176392f4ca5e733768c2d63b4e54805c5da"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_rate_evidence.py",
+        "sha256": "2f4ae82940cdc346a3ada4f3bd2ca1b5cd049286fd0818446909b54b7aa4567b"
+      }
+    ],
+    "new": 47,
+    "output": {
+      "path": "data/installed-route-sequence-2026-09-19/pytest-final.txt",
+      "sha256": "75cf14eb871136542b0b4278fa36d9e5eb16efdd632c80d20655acd0f4b26be0"
+    },
+    "passed": 888,
+    "seconds": 59.9,
+    "warnings": false
+  },
+  "replayed_original_scenario_sets": 63,
+  "reports": {
+    "account-regression": {
+      "path": "data/installed-route-sequence-2026-09-19/account-regression.json",
+      "sha256": "f53bb3428741cedd5adefcaa2003f3dc0b09fba5b9e3a4992c8ab02251cab497"
+    },
+    "echo-regression": {
+      "path": "data/installed-route-sequence-2026-09-19/echo-regression.json",
+      "sha256": "988acd2a886992389a4acc4c46f6d7339510e868e427b03c69eee71ca2b7dfaf"
+    },
+    "native-receipt-regression": {
+      "path": "data/installed-route-sequence-2026-09-19/native-receipt-regression.json",
+      "sha256": "5f4bf5b69ecd3ed519407479370f47a1d1309dcab3310fb4b8deb92286b906a2"
+    },
+    "native-requests-regression": {
+      "path": "data/installed-route-sequence-2026-09-19/native-requests-regression.json",
+      "sha256": "425a4d5297bd5a62c2d2cfd246fd833c7548384f2eff65fe6ae76906b52124a4"
+    },
+    "orders-regression": {
+      "path": "data/installed-route-sequence-2026-09-19/orders-regression.json",
+      "sha256": "cb0f282df94867cf262f335e9de174a38fb3b8e5fd6e27e06c4f4d5153e0e1dc"
+    },
+    "receipt-regression": {
+      "path": "data/installed-route-sequence-2026-09-19/receipt-regression.json",
+      "sha256": "6869b67f790ca78ebd4208505df015a8f441b899e85b6465f3ccbf72f489c819"
+    },
+    "routes-initial": {
+      "path": "data/installed-route-sequence-2026-09-19/routes-initial.json",
+      "sha256": "74172e274f2869fe3b7f5651515c21dd1ab3947f9670be6686ffe0b7547dae56"
+    },
+    "sequence-regression": {
+      "path": "data/installed-route-sequence-2026-09-19/sequence-regression.json",
+      "sha256": "e32d184b27c40d59ccef2ae72fc51582bfc4dcc4a82597d63ff83f9b33d1857b"
+    }
+  },
+  "resource_limit_increased": false,
+  "retained_drivers": {
+    "extract-runtime.py": {
+      "path": "data/installed-route-sequence-2026-09-19/extract-runtime.py",
+      "sha256": "a85b7a9021c4722033a69beccde4d1c8ba770ec65cc161b79879cde9d1af368b"
+    },
+    "final-tests.py": {
+      "path": "data/installed-route-sequence-2026-09-19/final-tests.py",
+      "sha256": "6647d037e43cfa7c96ae411a011877bfaf4a67c4c965f9a5c4f1291a5d653352"
+    },
+    "installed_gateway_selftest.py": {
+      "path": "data/installed-route-sequence-2026-09-19/installed_gateway_selftest.py",
+      "sha256": "50b7436f3be0378d5ae05848b1042ddad1c789f8d5e9e2c1bf3ffb1cd3918d7c"
+    },
+    "native-replay.py": {
+      "path": "data/installed-route-sequence-2026-09-19/native-replay.py",
+      "sha256": "79795916e9bca33afe542aa98630c1ee428444e37e7c7d107fb0a6d115ab985d"
+    },
+    "record-progress.py": {
+      "path": "data/installed-route-sequence-2026-09-19/record-progress.py",
+      "sha256": "cf33ccbd9cbba1a78a12ace1d5b98acf7c0101101a247dc938c4a1cafdad8ada"
+    },
+    "replay.py": {
+      "path": "data/installed-route-sequence-2026-09-19/replay.py",
+      "sha256": "6e3e19a0d657fa07a8fd1c453fc14c0a24410198cc6e57b208d68a07e8ca8a0e"
+    },
+    "select-evidence.py": {
+      "path": "data/installed-route-sequence-2026-09-19/select-evidence.py",
+      "sha256": "edcc0d23fa987f197258859d5fde9ed36a04e5a90721bf10b7d29204fe803476"
+    }
+  },
+  "retained_selection": {
+    "path": "data/installed-route-sequence-2026-09-19/selection.json",
+    "sha256": "fe131a534153f0a6a509b4bab28f8d36281d01141d1d05dae8f02dd5efa83142"
+  },
+  "root_native_modules_loaded": false,
+  "route_namespace_scenarios": 10,
+  "route_policy": {
+    "aggregate_liquidation_capacity_qualified": false,
+    "assets": [
+      "BNB",
+      "BTC",
+      "ETH",
+      "USDT"
+    ],
+    "exact_capacity_arithmetic": "rational",
+    "max_input_interval_ns": 60000000000,
+    "max_metadata_books": 16,
+    "max_symbols": 3,
+    "name": "fixture_direct_then_two_hops_v1",
+    "same_utc_day_required": true
+  },
+  "route_sequence_native_read_steps": 58,
+  "route_sequence_reports": {
+    "routes_child_stopped": {
+      "accepted_steps": 5,
+      "child_states": [
+        {
+          "binding_sha256": "9b475cddf6c7a08c4db95b552558040c36509c44ebbd7591224bd93f978461e5",
+          "index": 0,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "6c60d99cd429c38b3c46eb0c0df423b60180c8a5e1df7ebd3effb1064d12f379",
+          "index": 1,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "4899e6ac7dd8b0d966e3cbc84b46be2c21566f4b265b486c8f070d410318bb69",
+          "index": 2,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "b40188a914efab0111d68d841d92c9a871d977c9d14e9333a0f747933b887b1e",
+          "index": 3,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "459f2e33d6d157f2d4e95190ccc690ad661dfcf8116996e535e230c4e0d118b8",
+          "index": 4,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "cbf8ba66939cd49e05f2d85a68114c87f64d05499168cef709b9e2412a618c91",
+          "index": 5,
+          "individually_complete": false,
+          "native_acknowledged": false,
+          "parent_accepted": false
+        }
+      ],
+      "controller_descriptor_counts": [
+        955,
+        957,
+        971,
+        973,
+        980,
+        982,
+        989,
+        991,
+        998,
+        1000,
+        1007,
+        1009
+      ],
+      "open_order_locks_matched": true,
+      "parent_archive_sha256": "51feb9e5bca9d897b544e1a5f943b9adb2f105f37241776f29f5d90cd31dbe51",
+      "pending_step": 5,
+      "prepared_steps": 6,
+      "repeated_balances_equal": true,
+      "repeated_open_orders_equal": true,
+      "route_selection": null,
+      "routes_derived_from_same_run": false,
+      "status": "incomplete_no_resume",
+      "terminal": {
+        "network_admitted": false,
+        "reason": "sequence_child_step_refused",
+        "status": "sequence_refused"
+      }
+    },
+    "routes_code_drift": {
+      "accepted_steps": 5,
+      "child_states": [
+        {
+          "binding_sha256": "b095caa50cd0ecd29c8f3fc06405007e108bbd2e4d1900ff409597c1a309ec37",
+          "index": 0,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "808dfd1085c39c37f304297b1ac46d22234cb1f6045aac1292a1f2975a2f4c85",
+          "index": 1,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "39d0c9fc0c8caaaa93199a32f4a94cf85a3bd1b79d916cd3661dcd3f0309b4c5",
+          "index": 2,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "b65e2bbce2395afd3d09eb4456f442b491249523c5511d45d950246742bc4a5f",
+          "index": 3,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "22c8124a073782e91690e4e5ccf00960d551f09f85e9a4b434dc962941818f58",
+          "index": 4,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        }
+      ],
+      "controller_descriptor_counts": [
+        955,
+        957,
+        971,
+        973,
+        980,
+        982,
+        989,
+        991,
+        998,
+        1000
+      ],
+      "open_order_locks_matched": true,
+      "parent_archive_sha256": "e474bf9646f857a8c8748133fa198c74391e192141015230e0d3b02617daf4ed",
+      "pending_step": null,
+      "prepared_steps": 5,
+      "repeated_balances_equal": true,
+      "repeated_open_orders_equal": true,
+      "route_selection": null,
+      "routes_derived_from_same_run": false,
+      "status": "incomplete_no_resume",
+      "terminal": {
+        "network_admitted": false,
+        "reason": "installation_bytes_changed",
+        "status": "sequence_refused"
+      }
+    },
+    "routes_controller_crash": {
+      "accepted_steps": 5,
+      "child_states": [
+        {
+          "binding_sha256": "61127980b4103e3777a15a6acca4281e9dabccd54515a5384884c1aaf1ccfaa0",
+          "index": 0,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "2775f376fc9f4f1eb2591864dde92afdd051511599ea036993293610e9e58dc1",
+          "index": 1,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "d4c38b41bd809f376942a199e8c685b603a549ae60095789d4fd8bc1c7e1bd47",
+          "index": 2,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "b39580319826fe4b5092bedecc281036cf40f0ae8251ed1851fcfc3b140ab1a3",
+          "index": 3,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "d55d43ef57f5a0aad8e58bd495bb9c5c24422fc0bc042f90d5a8aa4791d657ca",
+          "index": 4,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        }
+      ],
+      "controller_descriptor_counts": [
+        955,
+        957,
+        971,
+        973,
+        980,
+        982,
+        989,
+        991,
+        998,
+        1000
+      ],
+      "open_order_locks_matched": true,
+      "parent_archive_sha256": "4b50057bcc072e2bfc657a6f84ec50d4711ad74252a97fbcd84a0a5ff2d81e55",
+      "pending_step": null,
+      "prepared_steps": 5,
+      "repeated_balances_equal": true,
+      "repeated_open_orders_equal": true,
+      "route_selection": null,
+      "routes_derived_from_same_run": false,
+      "status": "incomplete_no_resume",
+      "terminal": {
+        "status": "controller_sigkill_between_reads"
+      }
+    },
+    "routes_depth": {
+      "accepted_steps": 5,
+      "child_states": [
+        {
+          "binding_sha256": "c1d6408c62f13cbcad0c76cdc00570a6795e61d2e3720c7a4db952c269de6684",
+          "index": 0,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "f62a1fbd44dd1d0f36617f9373f6fc835f39c74fce3b7316768885469d616bb5",
+          "index": 1,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "b3e48dba7a59bad9aa245ffd0bd12e13e07ec506373364d9132d2e44545cfe37",
+          "index": 2,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "8bd9e4fa0485e5572d5b6e57a3bddd3c2077a7593740ab242f14ddfcb30d6724",
+          "index": 3,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "9f767a3ab83297a01c7a4eecc2c1a0a8999c3ebbf8b50c8449ffc7e9a0df3b2f",
+          "index": 4,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "80089de6b15b324110ece0840a9a66aafa72b6dd5d69ed31bbce8596c0b5fdb5",
+          "index": 5,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": false
+        }
+      ],
+      "controller_descriptor_counts": [
+        955,
+        957,
+        971,
+        973,
+        980,
+        982,
+        989,
+        991,
+        998,
+        1000,
+        1007,
+        1009
+      ],
+      "open_order_locks_matched": true,
+      "parent_archive_sha256": "ccca62ea9f21c73165e808d95aa6098ab4ffffaaa47dfd2066786d923479e4b1",
+      "pending_step": 5,
+      "prepared_steps": 6,
+      "repeated_balances_equal": true,
+      "repeated_open_orders_equal": true,
+      "route_selection": null,
+      "routes_derived_from_same_run": false,
+      "status": "incomplete_no_resume",
+      "terminal": {
+        "network_admitted": false,
+        "reason": "route_top_book_insufficient",
+        "status": "sequence_refused"
+      }
+    },
+    "routes_disabled": {
+      "accepted_steps": 5,
+      "child_states": [
+        {
+          "binding_sha256": "c969b9334f7d29cfcdc943a4c527f033566fc66bc73e73d9c140355ce3affacf",
+          "index": 0,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "0f6f3fd1a010318b94812b5b69ef5ab283bc4a81d21b34fbeff1e7dd3a247515",
+          "index": 1,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "d93871e19d7caac6a8757a8fa4c19ee0945a9209abe81a351679894aac129f69",
+          "index": 2,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "84a206a6d6a4ff0226f40f9481d2d3daa00bb5c9ac7c345911e83f73af4216f1",
+          "index": 3,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "14ba0e974213d30173f1f28abb71874af5fa4de553bdc7e7947de4dfc8be3b4c",
+          "index": 4,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "fe4c8b9584efa83f4f171daafe6eae1c99175f1f8a27b880a389ee19580a3d0e",
+          "index": 5,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": false
+        }
+      ],
+      "controller_descriptor_counts": [
+        955,
+        957,
+        971,
+        973,
+        980,
+        982,
+        989,
+        991,
+        998,
+        1000,
+        1007,
+        1009
+      ],
+      "open_order_locks_matched": true,
+      "parent_archive_sha256": "bae9e251885af50e14a178221873206bfd0093c2f84c6ff01ee9a1eccc475b25",
+      "pending_step": 5,
+      "prepared_steps": 6,
+      "repeated_balances_equal": true,
+      "repeated_open_orders_equal": true,
+      "route_selection": null,
+      "routes_derived_from_same_run": false,
+      "status": "incomplete_no_resume",
+      "terminal": {
+        "network_admitted": false,
+        "reason": "route_nonzero_asset_unpriced",
+        "status": "sequence_refused"
+      }
+    },
+    "routes_duplicate": {
+      "accepted_steps": 5,
+      "child_states": [
+        {
+          "binding_sha256": "bdf8611c11b3159242da3ef00685b9b4226bea90249b1dc23b41ce9ce71b68b0",
+          "index": 0,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "d3db313e994aa4ae34641b3133b11c6488e1f17330726cc2ccfd302e078b4188",
+          "index": 1,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "7fdadd1dc225a301eb56f05542d929fcfc43da88e28115a526bb8b861c20678d",
+          "index": 2,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "720fdb9be12a3e258e93f3b0fa6accc1a29e813c063d466f92fc6343846a48d8",
+          "index": 3,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "32f288c8b13e777ad76cdf148a0991e3c4e96e1bdd42f3baaad49cfb3174ff31",
+          "index": 4,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "4c033f6a6e0fc7f85e78a74f2f916bfe45f61a92a9e3abe2ef9ee90f922b142b",
+          "index": 5,
+          "individually_complete": false,
+          "native_acknowledged": false,
+          "parent_accepted": false
+        }
+      ],
+      "controller_descriptor_counts": [
+        955,
+        957,
+        971,
+        973,
+        980,
+        982,
+        989,
+        991,
+        998,
+        1000,
+        1007
+      ],
+      "open_order_locks_matched": true,
+      "parent_archive_sha256": "b2e9947d50b5d17c97ae7fe02de3c337de1b6f354f5d215ff961dfbb424a6236",
+      "pending_step": 5,
+      "prepared_steps": 6,
+      "repeated_balances_equal": true,
+      "repeated_open_orders_equal": true,
+      "route_selection": null,
+      "routes_derived_from_same_run": false,
+      "status": "incomplete_no_resume",
+      "terminal": {
+        "network_admitted": false,
+        "reason": "sequence_child_step_refused",
+        "status": "sequence_refused"
+      }
+    },
+    "routes_missing": {
+      "accepted_steps": 5,
+      "child_states": [
+        {
+          "binding_sha256": "2277927f428a392bff10efadde2ef16cead973394053dc1cad27346c46989e9c",
+          "index": 0,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "334a69e318f1949df3d39f4258f120ff5a5d06336dd758dfc24f73032dc9ec32",
+          "index": 1,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "a7e2256c562619d151619f99cd8d7dd84f81e91216bdac582560b236c8f93f46",
+          "index": 2,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "65c95f3d20ac208c46dc8b5f7190c19842bb618b57ecebb3ddebf41f3781fc56",
+          "index": 3,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "835f39b9dc6fa991f2878bb1c1505401e2c0b3983e54ecebd318755728e94ff2",
+          "index": 4,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "3e6cf2cb084a0515313ebe12d9a83acb274b1c48fd639ee71880652abfba282f",
+          "index": 5,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": false
+        }
+      ],
+      "controller_descriptor_counts": [
+        955,
+        957,
+        971,
+        973,
+        980,
+        982,
+        989,
+        991,
+        998,
+        1000,
+        1007,
+        1009
+      ],
+      "open_order_locks_matched": true,
+      "parent_archive_sha256": "ecddfa1d1df40e714dfddf6e70ff421db57c48b692535754f23cfdc1f7b812d0",
+      "pending_step": 5,
+      "prepared_steps": 6,
+      "repeated_balances_equal": true,
+      "repeated_open_orders_equal": true,
+      "route_selection": null,
+      "routes_derived_from_same_run": false,
+      "status": "incomplete_no_resume",
+      "terminal": {
+        "network_admitted": false,
+        "reason": "route_nonzero_asset_unpriced",
+        "status": "sequence_refused"
+      }
+    },
+    "routes_precision": {
+      "accepted_steps": 5,
+      "child_states": [
+        {
+          "binding_sha256": "b13adcca424d61b61e46edc74496016050e5b0af61f480f12251fed56c9de87a",
+          "index": 0,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "cf0cf006d6e0abeebafc121fa9d08eed66a6bcd6e38ad828f4f478858bb18c3d",
+          "index": 1,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "aee10b30f2778e4cdc6de9d6104750c4c1122c2f46689b438096175a678491bb",
+          "index": 2,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "1fe1fccf5f1876975b14d5df23a044318a8da48faa858988c16d708f531f7ee2",
+          "index": 3,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "5e5f682859cdd31422fe88b0c1d5d2ac31ffa5bef7c90c2408d3eb3d41fe5e92",
+          "index": 4,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "b139ac8aca012915f1eb2d4a9d9bb70390e9db7ab82eb1726bac1273d1002bfa",
+          "index": 5,
+          "individually_complete": false,
+          "native_acknowledged": false,
+          "parent_accepted": false
+        }
+      ],
+      "controller_descriptor_counts": [
+        955,
+        957,
+        971,
+        973,
+        980,
+        982,
+        989,
+        991,
+        998,
+        1000,
+        1007,
+        1009
+      ],
+      "open_order_locks_matched": true,
+      "parent_archive_sha256": "e783a894e805e96eae047c317d7da44675697d4fec7bec9bffc2f3c32cc7aa13",
+      "pending_step": 5,
+      "prepared_steps": 6,
+      "repeated_balances_equal": true,
+      "repeated_open_orders_equal": true,
+      "route_selection": null,
+      "routes_derived_from_same_run": false,
+      "status": "incomplete_no_resume",
+      "terminal": {
+        "network_admitted": false,
+        "reason": "sequence_child_step_refused",
+        "status": "sequence_refused"
+      }
+    },
+    "routes_success": {
+      "accepted_steps": 6,
+      "child_states": [
+        {
+          "binding_sha256": "8be69dcbfb22a0e7f5718b8be73d742f01c9138ca2bec17d8f5de85318230fdb",
+          "index": 0,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "d243280cb9f80ce23fbdb55a80a8aba17e765b032dab17e31268c4234ba16f67",
+          "index": 1,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "fb1e5a97c7a24db01bce59b2f452c9049e3164db1adc8ceaebc00a87881e7405",
+          "index": 2,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "b14f5039a028880951d60c5b340639118a6291252b95dfaf6684bef0901487f7",
+          "index": 3,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "3a2380fa65c903783262ddfc0eecd1097d8dedff5d626be57613c71d7be343db",
+          "index": 4,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "44f5f4875151453ce27f5d4cf2fc17003e26f72d50973d07a672126860f5b857",
+          "index": 5,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        }
+      ],
+      "controller_descriptor_counts": [
+        955,
+        957,
+        971,
+        973,
+        980,
+        982,
+        989,
+        991,
+        998,
+        1000,
+        1007,
+        1009
+      ],
+      "open_order_locks_matched": true,
+      "parent_archive_sha256": "cb49dbb86044335c8247eff6fcb9e946e2263fd3b37bfa1782c03fd7dee3a6aa",
+      "pending_step": null,
+      "prepared_steps": 6,
+      "repeated_balances_equal": true,
+      "repeated_open_orders_equal": true,
+      "route_selection": {
+        "account_tls_sha256": "6920836d4f2bbc4cef44a7df2cbd2d450200dbbab7fbb79480cd4886c3cae869",
+        "assets": [
+          {
+            "asset": "BNB",
+            "free": "1.00000000",
+            "locked": "0.10000000",
+            "path": [
+              {
+                "side": "bid",
+                "symbol": "BNBUSDT",
+                "to_asset": "USDT"
+              }
+            ],
+            "status": "selected"
+          },
+          {
+            "asset": "BTC",
+            "free": "0.01000000",
+            "locked": "0.00100000",
+            "path": [
+              {
+                "side": "bid",
+                "symbol": "BTCUSDT",
+                "to_asset": "USDT"
+              }
+            ],
+            "status": "selected"
+          },
+          {
+            "asset": "ETH",
+            "free": "0.00000000",
+            "locked": "0.00000000",
+            "path": [],
+            "status": "zero_balance"
+          },
+          {
+            "asset": "USDT",
+            "free": "500.00000000",
+            "locked": "12.50000000",
+            "path": [],
+            "status": "quote_asset"
+          }
+        ],
+        "books_tls_sha256": "d08e23e4d86d4927bf52693b9fef39aa34b0ad0201c33e547116a2f9fa2f54db",
+        "dispatch_authorized": false,
+        "fixed_at": {
+          "monotonic_ns": 6322250510320256,
+          "seq": 4,
+          "utc_ns": 1789799158011111433
+        },
+        "individual_quote_age_verified": false,
+        "metadata_payload_sha256": "74f733eefd8b9be202e88a80a41d385a2e6edc1d612f71f6774c51f9512a6aea",
+        "metadata_tls_sha256": "0a39b996c0c6bd4e57eea25d7f8e026e59c1bfba8e2a58903c943a2c5980fee3",
+        "policy": "fixture_direct_then_two_hops_v1",
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "unavailable_books": [],
+        "valuation_qualified": false
+      },
+      "routes_derived_from_same_run": true,
+      "status": "complete",
+      "terminal": {
+        "network_admitted": false,
+        "status": "sequence_completed"
+      }
+    },
+    "routes_two_hops": {
+      "accepted_steps": 6,
+      "child_states": [
+        {
+          "binding_sha256": "9b4aa92271c95cabb629e6daf855100ab33a3e08b396349888fa53429164bbd2",
+          "index": 0,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "4a1eb4c281af1abfb8abe2e32ebeaeadf763179d5615dac15f6bf2698ddb86ba",
+          "index": 1,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "d92b223666a97608f8b2cfb7f5ff0dce411e328860fa0b459a1a63943623c796",
+          "index": 2,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "a86cbd1045d3e9663365ce2e91000bd71a65e588f0480fe9d77d9ce9cd9ed4f8",
+          "index": 3,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "ae893a21a9b18fc1946555547267e2dfb0357ea04c5fe2e0a882cde714f293ad",
+          "index": 4,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        },
+        {
+          "binding_sha256": "ec31b8547e1fc60227fea8b97632def2bfc30ee5287b86f13c735ffb6f0f1284",
+          "index": 5,
+          "individually_complete": true,
+          "native_acknowledged": true,
+          "parent_accepted": true
+        }
+      ],
+      "controller_descriptor_counts": [
+        955,
+        957,
+        971,
+        973,
+        980,
+        982,
+        989,
+        991,
+        998,
+        1000,
+        1007,
+        1009
+      ],
+      "open_order_locks_matched": true,
+      "parent_archive_sha256": "8caa65c5889fd760b21e13214bb28a31b6f6b88cd68b8d41faf23bcd6f44878a",
+      "pending_step": null,
+      "prepared_steps": 6,
+      "repeated_balances_equal": true,
+      "repeated_open_orders_equal": true,
+      "route_selection": {
+        "account_tls_sha256": "543c0800cf60f7f74dbd2a9115e18e62caeb3ac3dd6d46b0fe36bbd0941625dc",
+        "assets": [
+          {
+            "asset": "BNB",
+            "free": "1.00000000",
+            "locked": "0.10000000",
+            "path": [
+              {
+                "side": "bid",
+                "symbol": "BNBBTC",
+                "to_asset": "BTC"
+              },
+              {
+                "side": "bid",
+                "symbol": "BTCUSDT",
+                "to_asset": "USDT"
+              }
+            ],
+            "status": "selected"
+          },
+          {
+            "asset": "BTC",
+            "free": "0.01000000",
+            "locked": "0.00100000",
+            "path": [
+              {
+                "side": "bid",
+                "symbol": "BTCUSDT",
+                "to_asset": "USDT"
+              }
+            ],
+            "status": "selected"
+          },
+          {
+            "asset": "ETH",
+            "free": "0.00000000",
+            "locked": "0.00000000",
+            "path": [],
+            "status": "zero_balance"
+          },
+          {
+            "asset": "USDT",
+            "free": "500.00000000",
+            "locked": "12.50000000",
+            "path": [],
+            "status": "quote_asset"
+          }
+        ],
+        "books_tls_sha256": "c9997dd2c86ac21d3b379176e7ce8bbc0746bb6556a32c69aefb04f5b0d919b9",
+        "dispatch_authorized": false,
+        "fixed_at": {
+          "monotonic_ns": 6322266472788897,
+          "seq": 4,
+          "utc_ns": 1789799173973580034
+        },
+        "individual_quote_age_verified": false,
+        "metadata_payload_sha256": "9a6a5edd34d515499a867c2641594c123fba8602a139db2baa35433e123b3a78",
+        "metadata_tls_sha256": "af80ff101709cb331b4a35a0e4cb9a019dc4a4473c5e40295115dc949c35dc5b",
+        "policy": "fixture_direct_then_two_hops_v1",
+        "symbols": [
+          "BNBBTC",
+          "BTCUSDT"
+        ],
+        "unavailable_books": [
+          {
+            "reason": "not_spot_trading",
+            "symbol": "BNBUSDT"
+          }
+        ],
+        "valuation_qualified": false
+      },
+      "routes_derived_from_same_run": true,
+      "status": "complete",
+      "terminal": {
+        "network_admitted": false,
+        "status": "sequence_completed"
+      }
+    }
+  },
+  "route_sequence_request_envelopes": 48,
+  "route_sequence_signed_requests": 40,
+  "route_sequence_unsigned_books_requests": 8,
+  "routes_derived_from_same_run": true,
+  "runtime_bundles": [
+    {
+      "path": "data/installed-route-sequence-2026-09-19/account-regression.runtime.tar.gz",
+      "sha256": "bd3a8ec25d9eadfba50865240b8fc4612b6043ad0835626a7dbe83becdbedf34"
+    },
+    {
+      "path": "data/installed-route-sequence-2026-09-19/native-receipt-regression.runtime.tar.gz",
+      "sha256": "a92d138d2c77bb3aecc43b17f3ddaec52ac0f40436127a6afe9ca1fa065383f9"
+    },
+    {
+      "path": "data/installed-route-sequence-2026-09-19/native-requests-regression.runtime.tar.gz",
+      "sha256": "484c4860d8413068ae02db39f7142e20b718ba80e1b9d6717bbb6c3f4b6d0127"
+    },
+    {
+      "path": "data/installed-route-sequence-2026-09-19/orders-regression.runtime.tar.gz",
+      "sha256": "c27845105b62756dabffc885786b0687658f2fa93a89d9284e1b1bbe2da1e9cb"
+    },
+    {
+      "path": "data/installed-route-sequence-2026-09-19/routes-initial.runtime.tar.gz",
+      "sha256": "5069c93b751f681943d51dbdb79971af5a524ecb89f2b01b36849e631984de14"
+    },
+    {
+      "path": "data/installed-route-sequence-2026-09-19/sequence-regression.runtime.tar.gz",
+      "sha256": "a5628b03bb6579b4190fd092ece7acd23ac47d9ef908c817577fd3fd835b394e"
+    }
+  ],
+  "schema_version": "portfolio.installed_route_sequence_acceptance.v1",
+  "sequence_steps": [
+    "metadata",
+    "account_first",
+    "orders_first",
+    "orders_second",
+    "account_second",
+    "books"
+  ],
+  "trading_admitted": false,
+  "upstream_touched": false,
+  "venue_requests": 0,
+  "verification_completed": "2026-09-19",
+  "verification_scope": "Current-source six-read routes, five-read orders, three-read sequence, signed account, native metadata, native requests, stdlib receipt and echo disposable modes. Python regressions cover unchanged pure TLS and IPC paths."
+}

@@ -6,6 +6,29 @@ offline disk tests, and retain read-only host deployment-input snapshots.
 Current phase: Phase 5 entry, offline infrastructure acceptance only. This is not
 a production guard, gateway audit service, quota authority or collection permit.
 
+The six-read route profile adds `gateway_book_routes.py`:
+
+```bash
+/usr/bin/python3 -I infra/egress-guard/installed_gateway_selftest.py --route-sequence-profile --report data/NEW-ROUTES.json
+```
+
+The distinct `fixture-route-sequence-v1` scope appends one fixed unsigned bookTicker
+GET to metadata/account/orders/orders/account (six GETs / 224 documented weight).
+Its native request selector, original TLS and exact native Price/Quantity receipt
+use the existing isolated channel and revocation boundaries. No QuoteTick or event
+time is fabricated. Root replays the same-run metadata original and native balances
+and books to select direct-then-two-hop routes to USDT, preserving zero balances.
+Every nonzero nonquote asset needs a supported route and sufficient capacity at each
+leg. Choice uses fixed shortest/lexical priority, never the best price; capacities
+use exact rational arithmetic. The selected symbol union is capped at three.
+
+The four fixture assets, eight-place precision, sixteen metadata/book rows and
+60-second same-UTC-day input interval are fixed. Original clocks remain original;
+book age, stream continuity, equity and dispatch remain unqualified. Manifest v10
+pins sixteen sources; the old three/five-read profiles stay distinct. See
+[route acceptance](../../docs/progress/portfolio-installed-route-sequence-2026-09-19.md).
+Next integrate concurrent gateway-owned TLS/WS consuming these selected symbols.
+
 The five-read successor adds `gateway_native_orders.py` to `gateway_read_sequence.py`:
 
 ```bash
@@ -20,9 +43,9 @@ orders are fixed-symbol LIMIT/GTC, NEW or PARTIALLY_FILLED, at exact eight-place
 native precision. Repeated orders and balances must agree, and remaining BUY quote
 and SELL base locks must exactly account for every asset's locked balance. Empty
 orders require zero locks. No fill/fee history or atomic stream fence is inferred.
-Manifest v9 pins fifteen sources. The old three-read profile remains distinct.
+Manifest v10 pins sixteen sources. The old three-read profile remains distinct.
 See [order acceptance](../../docs/progress/portfolio-installed-order-sequence-2026-09-18.md).
-Next derive same-run book/metadata routes and integrate concurrent gateway TLS/WS.
+The six-read profile above derives routes; concurrent gateway TLS/WS remains pending.
 
 The fixed repeated-read successor is `gateway_read_sequence.py`:
 
@@ -36,7 +59,7 @@ The exclusive parent journal binds original preparations and native acknowledgem
 each kernel permit is revoked and the child ledger closed before the next step.
 Metadata precision must match the four-asset mapper, and repeated free/locked/total
 balances must agree exactly. Drift or missing receipts never permit a resume.
-Manifest v9 pins fifteen sources; held original paths reuse descriptors without
+Manifest v10 pins sixteen sources; held original paths reuse descriptors without
 raising system limits. See [sequence acceptance](../../docs/progress/portfolio-installed-read-sequence-2026-09-18.md).
 The five-read profile above adds open orders; same-run routes and concurrent TLS/WS remain pending.
 This fixed fixture does not qualify an atomic snapshot, account stream fence,
@@ -58,7 +81,7 @@ or missing final receipt keeps the attempt pending. Account header usage is reta
 without fabricating exchangeInfo rate limits. The four fixture assets/precision are
 fixed, and no actual account, route, WS, equity or trading qualification follows.
 
-Supplemental manifest v9 pins fifteen sources. The base installation/launcher and
+Supplemental manifest v10 pins sixteen sources. The base installation/launcher and
 prior journal profiles remain separate. Seven actual account scenarios plus 42
 regressions and detached original/native replays are recorded in
 [signed account acceptance](../../docs/progress/portfolio-installed-signed-account-2026-09-18.md).
@@ -81,7 +104,7 @@ request hashes before acknowledgements. The fixture budget stays 16 GET selector
 request dispatch follows. Fixed BTC/ETH/BNB routes and subscription ID zero are
 synthetic selections, not values derived from actual same-run responses.
 
-Manifest v9 pins fifteen protected sources. The separate request ledger/scope and
+Manifest v10 pins sixteen protected sources. The separate request ledger/scope and
 `requests.jsonl` preserve incomplete attempts after drift, consumer death or root
 crash. Detached replay verifies signatures and receipt ordering with original times;
 it never refreshes expiry or repairs missing acknowledgements. Next connect actual
@@ -99,7 +122,7 @@ retaining a `.runtime.tar.gz` beside the report. Only the isolated dedicated UID
 imports Nautilus and constructs BTC/ETH/BNB/USDT Currency objects from the original
 root HTTPS bytes. Its final acknowledgement binds both the native summary and the
 original payload, including original receive clocks. Root parses the expected
-summary with stdlib only. Protected fixture manifest v9 pins fifteen sources;
+summary with stdlib only. Protected fixture manifest v10 pins sixteen sources;
 base installation and earlier journal profiles remain separate.
 
 The private runtime tmpfs is root-owned and read-only. Files are fully hashed at

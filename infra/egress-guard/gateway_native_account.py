@@ -37,6 +37,7 @@ def ledger_view(module, *, profile=None, scope=None):
     if (profile, scope) not in {
         (module.ACCOUNT_PROFILE, module.ACCOUNT_SCOPE),
         (module.ORDERS_PROFILE, module.ORDERS_SCOPE),
+        (module.BOOKS_PROFILE, module.BOOKS_SCOPE),
     }:
         raise ValueError("signed_read_profile_required")
     values = dict(vars(module))
@@ -183,16 +184,16 @@ class AccountContract:
             received=tuple(selection["received"]),
         )
         expected = requests["selected_request"](selection["challenge"])
-        expected["params"]["signature"] = selection["request"]["request"]["params"]["signature"]
+        if expected["headers"]:
+            expected["params"]["signature"] = selection["request"]["request"]["params"]["signature"]
         query = urlencode(expected["params"])
         self.request = (
             "GET "
             + self.PATH
-            + "?"
-            + query
-            + " HTTP/1.1\r\nHost: rest.fixture.invalid:23456\r\nX-MBX-APIKEY: "
-            + requests["API_KEY"]
-            + "\r\nConnection: close\r\n\r\n"
+            + ("?" + query if query else "")
+            + " HTTP/1.1\r\nHost: rest.fixture.invalid:23456\r\n"
+            + "".join(k + ": " + v + "\r\n" for k, v in expected["headers"].items())
+            + "Connection: close\r\n\r\n"
         ).encode("ascii")
 
     def validate_at(self, utc_ns, monotonic_ns):
@@ -315,7 +316,7 @@ def child_loop(fd, parent, *, index=3, native=validate_native):
         channel.close()
 
 
-def launch(authority, sources, launcher, runtime, *, orders=False):
+def launch(authority, sources, launcher, runtime, *, orders=False, books=False):
     reader = launcher["load_source"](authority.source("inspect_binding.py").decode())[
         "process_identity"
     ]
@@ -343,8 +344,8 @@ def launch(authority, sources, launcher, runtime, *, orders=False):
         source += f"exec(compile({raw!r},'<held-source>','exec'))\n"
     raw = sources.source("gateway_native_account.py")
     source += f"account_scope={{'__name__':'held_account','ControlChannel':ControlChannel,'REQUESTS':REQUESTS.__dict__,'PROVENANCE':PROVENANCE,'RECEIVE':receive_payload}}\nexec(compile({raw!r},'<held-account>','exec'),account_scope)\nchild_loop=account_scope['child_loop']\n"
-    if orders:
-        raw = sources.source("gateway_native_orders.py")
+    if orders or books:
+        raw = sources.source("gateway_book_routes.py" if books else "gateway_native_orders.py")
         source += f"orders_scope={{'__name__':'held_orders','ACCOUNT':account_scope}}\nexec(compile({raw!r},'<held-orders>','exec'),orders_scope)\nchild_loop=orders_scope['child_loop']\n"
     runtime.verify()
     launcher["FixtureCollector"].__init__.__globals__["PYTHON"] = (

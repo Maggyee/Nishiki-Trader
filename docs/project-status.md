@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-19
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: A fixed installed metadata → account → openOrders → openOrders → account sequence now links five original native receipts under one consumed parent scope. Repeated orders/balances, metadata precision and exact remaining BUY/SELL locks must agree. Each step revokes kernel permission and closes before the next preparation; interruption never permits resume. Next derive same-run routes and integrate concurrent TLS/WS. Real authority/coverage, provider limits/clocks, host rollout, qualified equity and trading remain blocked; consumed scopes stay consumed.
+- **Current objective**: The installed fixture now links metadata → account → openOrders → openOrders → account → bookTicker. Original metadata and native account/book receipts derive bounded routes to USDT after repeated balance/order and exact lock reconciliation. Every nonzero asset needs supported market legs with sufficient top-book capacity. Kernel permission closes between steps and consumed scopes never resume. Next integrate concurrent gateway-owned TLS/WS using the selected symbols. Real authority/coverage, provider limits/clocks, host rollout, qualified equity and trading remain blocked.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -326,7 +326,10 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
    now binds metadata and repeated exact account balances to one consumed parent.
    [Five-read native order sequence](progress/portfolio-installed-order-sequence-2026-09-18.md)
    now adds repeated LIMIT/GTC order reports and exact remaining BUY/SELL locks.
-   Next derive same-run routes and integrate concurrent TLS/WS traffic.
+   [Six-read route sequence](progress/portfolio-installed-route-sequence-2026-09-19.md)
+   now derives bounded routes from original metadata and native account/book receipts,
+   including exact top-book capacity checks and explicit zero balances.
+   Next integrate concurrent gateway-owned TLS/WS using those selected symbols.
    Sampling alone never proves coverage.
    Actual authority policy, fresh rate/clock consumption and provider-charge
    resolution must precede any separately reviewed real joint dispatch.
@@ -372,14 +375,15 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
 
 ## Latest Verification
 
-- Installed five-read order sequence: **47 new / 841 focused tests pass**, no warnings;
-  **53 disposable scenarios pass** (nine new order, 44 regression). Two original and
-  two frozen-runtime replays match, preserving 120 request envelopes and missing
-  acknowledgements. Repeated LIMIT/GTC orders and all remaining BUY/SELL locks
-  reconcile exactly; observed descriptor peak is 990 without increasing limits. See
-  [order acceptance](progress/portfolio-installed-order-sequence-2026-09-18.md).
-  Earlier evidence remains immutable. Same-run routes, concurrent TLS/WS, stream
-  fences and real admission remain unqualified. Verification completed September 19.
+- Installed six-read route sequence: **47 new / 888 focused tests pass**, no warnings;
+  **63 disposable scenarios pass** (ten route, 53 regression). Two original and
+  two frozen-runtime replays match, reproducing 168 request envelopes across
+  47 native scenario sets. Same-run metadata/account/books select direct or two-hop
+  routes with exact per-asset leg capacities; zero balances stay explicit.
+  Observed descriptor peak is 1,009 under the unchanged 1,024 limit. See
+  [route acceptance](progress/portfolio-installed-route-sequence-2026-09-19.md).
+  Earlier evidence remains immutable. Concurrent gateway TLS/WS, stream fences,
+  event-time freshness, aggregate liquidation capacity and real admission remain unqualified.
 - The complete ordinary-process native joint collector retains its prior 20-operation /
   16-GET / 448-weight acceptance and original receipt clocks. Connecting that collector
   to installed gateway-owned sockets remains pending. Earlier details are archived in

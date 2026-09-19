@@ -22,6 +22,16 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the installed six-read sequence and same-run market routes, read
+`docs/progress/portfolio-installed-route-sequence-2026-09-19.md` and its JSON.
+Manifest v10 pins sixteen sources. The separate route scope appends fixed unsigned
+bookTicker to the five-read account/order sequence, with exact native Price/Quantity
+receipts and no fabricated event time. Original metadata, native account and books
+select bounded direct/two-hop routes with exact per-leg capacity checks; zero assets
+stay explicit. Inputs must fit 60 seconds in one UTC day, without claiming current
+quote freshness. Next integrate concurrent gateway-owned TLS/WS consuming selected
+symbols. Existing scopes and real admission remain closed.
+
 For the installed five-read metadata/account/orders/orders/account sequence, read
 `docs/progress/portfolio-installed-order-sequence-2026-09-18.md` and its JSON.
 Manifest v9 pins fifteen sources. The explicit order profile maps fixed LIMIT/GTC

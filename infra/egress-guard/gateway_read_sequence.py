@@ -18,6 +18,9 @@ STEPS = ("metadata", "account_first", "account_second")
 ORDER_PROFILE = "portfolio.installed_order_sequence.v1"
 ORDER_SCOPE = "fixture-order-sequence-v1"
 ORDER_STEPS = ("metadata", "account_first", "orders_first", "orders_second", "account_second")
+ROUTE_PROFILE = "portfolio.installed_route_sequence.v1"
+ROUTE_SCOPE = "fixture-route-sequence-v1"
+ROUTE_STEPS = (*ORDER_STEPS, "books")
 LIMIT = 65536
 FILES = {
     "binding": "binding.json",
@@ -55,6 +58,7 @@ def load_sources(sources):
         "receipt": load("gateway_tls_receipt.py"),
         "account": account,
         "orders": load("gateway_native_orders.py")["view"](account),
+        "books": load("gateway_book_routes.py")["view"](account),
         "metadata": load("gateway_native_receipt.py"),
         "requests": load("gateway_native_requests.py"),
         "provenance": sys.modules["apps.strategies_nautilus.portfolio_tls_provenance"],
@@ -62,7 +66,7 @@ def load_sources(sources):
     }
 
 
-def review_bundle(bundle, index, context, selected, modules, *, orders=False):
+def review_bundle(bundle, index, context, selected, modules, *, orders=False, routes=False):
     """Verify originals before considering a step complete; never trust a saved report."""
     allowed = set(FILES) - ({"selection"} if index == 0 else set())
     if (
@@ -90,7 +94,13 @@ def review_bundle(bundle, index, context, selected, modules, *, orders=False):
         if set(bundle) != {"binding"}:
             raise ValueError("sequence_attempts_required")
         return result
-    account = modules["orders"] if orders and index in {2, 3} else modules["account"]
+    account = (
+        modules["books"]
+        if routes and index == 5
+        else modules["orders"]
+        if orders and index in {2, 3}
+        else modules["account"]
+    )
     ledger = account["ledger_view"](modules["ledger"]) if index else modules["ledger"]
     attempts = bundle["attempts"].encode()
     result["attempts"] = ledger.replay(
@@ -161,7 +171,7 @@ def reconcile(results, *, orders=False):
     if orders and len(results) >= 3:
         reconcile_orders(results)
     total = len(ORDER_STEPS if orders else STEPS)
-    if len(results) == total:
+    if len(results) >= total:
         first, second = (results[i]["native_result"] for i in (1, total - 1))
 
         def amounts(value):
@@ -176,7 +186,7 @@ def reconcile(results, *, orders=False):
 
         if first["account_uid"] != second["account_uid"] or amounts(first) != amounts(second):
             raise ValueError("sequence_account_balances_changed")
-    return {"metadata_precision_matched": True, "repeated_balances_equal": len(results) == total}
+    return {"metadata_precision_matched": True, "repeated_balances_equal": len(results) >= total}
 
 
 def reconcile_orders(results):
@@ -222,9 +232,28 @@ def reconcile_orders(results):
             raise ValueError("sequence_order_locks_mismatch")
 
 
-def replay(raw, *, expected_sha256, bundles, modules, orders=False):
-    profile = ORDER_PROFILE if orders else PROFILE
-    steps = ORDER_STEPS if orders else STEPS
+def route_result(results, bundles, modules):
+    first, last = (
+        results[0]["native_result"]["header_receipt"],
+        results[5]["native_result"]["body_receipt"],
+    )
+    if (
+        any(not 0 <= last[k] - first[k] <= 60_000_000_000 for k in ("utc_ns", "monotonic_ns"))
+        or abs((last["utc_ns"] - first["utc_ns"]) - (last["monotonic_ns"] - first["monotonic_ns"]))
+        > 50_000_000
+        or first["utc_ns"] // 86_400_000_000_000 != last["utc_ns"] // 86_400_000_000_000
+    ):
+        raise ValueError("route_input_interval_invalid")
+    payload = modules["receipt"]["payload_from_tls"](bundles[0]["tls"].encode(), results[0]["tls"])
+    return modules["books"]["derive"](
+        payload, results[4]["native_result"], results[5]["native_result"]
+    )
+
+
+def replay(raw, *, expected_sha256, bundles, modules, orders=False, routes=False):
+    orders = orders or routes
+    profile = ROUTE_PROFILE if routes else ORDER_PROFILE if orders else PROFILE
+    steps = ROUTE_STEPS if routes else ORDER_STEPS if orders else STEPS
     total = len(steps)
     if not isinstance(raw, bytes) or not 0 < len(raw) <= LIMIT or digest(raw) != expected_sha256:
         raise ValueError("sequence_original_required")
@@ -285,7 +314,9 @@ def replay(raw, *, expected_sha256, bundles, modules, orders=False):
             if len(bundles) <= pending:
                 raise ValueError("sequence_pending_original_required")
             bundle = bundles[pending]
-            report = review_bundle(bundle, pending, context, selected, modules, orders=orders)
+            report = review_bundle(
+                bundle, pending, context, selected, modules, orders=orders, routes=routes
+            )
             # Every child archive follows preparation, and each whole step ends
             # before its acceptance. Original clocks never come from replay time.
             for key, content in bundle.items():
@@ -309,6 +340,8 @@ def replay(raw, *, expected_sha256, bundles, modules, orders=False):
                 if any(child[k] > row[k] for k in ("utc_ns", "monotonic_ns")):
                     raise ValueError("sequence_acceptance_precedes_child")
             reconcile(results, orders=orders)
+            if routes and pending == 5:
+                route_result(results, bundles, modules)
             # Same trust/install/rules/route/network/runtime throughout, distinct
             # child PIDs are expected. No caller-supplied run identity suffices.
             if pending:
@@ -352,7 +385,17 @@ def replay(raw, *, expected_sha256, bundles, modules, orders=False):
         "pending_step": pending,
         "steps": results,
         "metadata_precision_matched": accepted > 0,
-        "repeated_balances_equal": accepted == total,
+        "repeated_balances_equal": accepted >= (5 if orders else 3),
+        **(
+            {
+                "routes_derived_from_same_run": accepted == total,
+                "route_selection": route_result(results, bundles, modules)
+                if accepted == total
+                else None,
+            }
+            if routes
+            else {}
+        ),
         **(
             {"repeated_open_orders_equal": accepted >= 4, "open_order_locks_matched": accepted >= 3}
             if orders
@@ -369,11 +412,12 @@ def replay(raw, *, expected_sha256, bundles, modules, orders=False):
 
 
 class Sequence:
-    def __init__(self, entry, authority, sources, modules, *, orders=False):
-        self.orders = orders
-        self.profile = ORDER_PROFILE if orders else PROFILE
-        self.scope = ORDER_SCOPE if orders else SCOPE
-        self.steps = ORDER_STEPS if orders else STEPS
+    def __init__(self, entry, authority, sources, modules, *, orders=False, routes=False):
+        orders = orders or routes
+        self.orders, self.routes = orders, routes
+        self.profile = ROUTE_PROFILE if routes else ORDER_PROFILE if orders else PROFILE
+        self.scope = ROUTE_SCOPE if routes else ORDER_SCOPE if orders else SCOPE
+        self.steps = ROUTE_STEPS if routes else ORDER_STEPS if orders else STEPS
         self.authority, self.modules = authority, modules
         self.owner = os.getpid()
         self.expected, self.bundles, self.index = b"", [], None
@@ -516,6 +560,7 @@ class Sequence:
             bundles=self.bundles,
             modules=self.modules,
             orders=self.orders,
+            routes=self.routes,
         )
         self.journal.append(
             kind, **{k: v for k, v in row.items() if k not in {"seq", "previous_sha256", "kind"}}
@@ -548,7 +593,9 @@ class Sequence:
 
     def read_bundle(self):
         kind = (
-            "orders"
+            "books"
+            if self.routes and self.index == 5
+            else "orders"
             if self.orders and self.index in {2, 3}
             else "account"
             if self.index
@@ -562,8 +609,8 @@ class Sequence:
         scope = self.storage / ledger.SCOPE
         bundle = {}
         for key, name in FILES.items():
-            if key == "selection" and kind == "orders":
-                name = "orders-request.json"
+            if key == "selection" and kind in {"orders", "books"}:
+                name = kind + "-request.json"
             path = self.storage / name if key == "binding" else scope / name
             if path.exists():
                 self.hold(path.parent, directory=True)
@@ -581,12 +628,13 @@ class Sequence:
         self.fds = []
 
 
-def run_installed(entry, authority, sources, *, orders=False):
+def run_installed(entry, authority, sources, *, orders=False, routes=False):
+    orders = orders or routes
     sequence = None
     try:
         authority.verify()
         modules = load_sources({name: sources.source(name).decode() for name in entry["FILES"]})
-        sequence = Sequence(entry, authority, sources, modules, orders=orders)
+        sequence = Sequence(entry, authority, sources, modules, orders=orders, routes=routes)
         try:
             for index in range(len(sequence.steps)):
                 sequence.prepare(index)
@@ -596,6 +644,7 @@ def run_installed(entry, authority, sources, *, orders=False):
                     native=True,
                     account=index != 0,
                     orders=orders and index in {2, 3},
+                    books=routes and index == 5,
                     sequence=sequence,
                 )
                 bundle = sequence.read_bundle()

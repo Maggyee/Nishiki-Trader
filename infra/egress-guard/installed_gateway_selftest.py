@@ -67,6 +67,26 @@ ORDER_SCENARIOS = (
     "orders_controller_crash",
     "orders_code_drift",
 )
+ROUTE_SCENARIOS = (
+    "routes_success",
+    "routes_two_hops",
+    "routes_missing",
+    "routes_depth",
+    "routes_precision",
+    "routes_duplicate",
+    "routes_disabled",
+    "routes_child_stopped",
+    "routes_controller_crash",
+    "routes_code_drift",
+)
+FIXTURE_BOOKS = [
+    {"symbol": asset + "USDT", "bidPrice": price, "askPrice": ask, "bidQty": "10", "askQty": "10"}
+    for asset, price, ask in (
+        ("BTC", "60000", "60001"),
+        ("ETH", "3000", "3001"),
+        ("BNB", "250", "251"),
+    )
+]
 FIXTURE_ORDERS = [
     {
         "symbol": symbol,
@@ -130,7 +150,7 @@ if runtime.exists():
     denied('native_runtime_write',lambda:os.open(runtime/'bin/python3.12',os.O_WRONLY))
     denied('native_runtime_replace',lambda:os.unlink(runtime/'bin/python3.12'))
 code=Path('/usr/local/lib/trader-egress')
-for name in ('installed_gateway.py','gateway_tls.py','gateway_joint_ipc.py','gateway_tls_receipt.py','gateway_native_runtime.py','gateway_native_receipt.py','gateway_native_requests.py','gateway_native_account.py','gateway_native_orders.py','gateway_read_sequence.py','ledger_gateway.py','selftest.py','portfolio_rate_evidence.py','portfolio_tls_provenance.py','portfolio_egress_ledger.py'):
+for name in ('installed_gateway.py','gateway_tls.py','gateway_joint_ipc.py','gateway_tls_receipt.py','gateway_native_runtime.py','gateway_native_receipt.py','gateway_native_requests.py','gateway_native_account.py','gateway_native_orders.py','gateway_book_routes.py','gateway_read_sequence.py','ledger_gateway.py','selftest.py','portfolio_rate_evidence.py','portfolio_tls_provenance.py','portfolio_egress_ledger.py'):
     path=code/name
     assert path.read_bytes()
     denied('write:'+name,lambda:os.open(path,os.O_WRONLY))
@@ -158,6 +178,8 @@ print(json.dumps({'checks':checks,'uid':os.getuid(),'gid':os.getgid()}))
 TLS_PEER = (
     "FIXTURE_ORDERS="
     + repr(FIXTURE_ORDERS)
+    + "\nFIXTURE_BOOKS="
+    + repr(FIXTURE_BOOKS)
     + "\n"
     + r"""
 import hashlib,json,os,socket,ssl,sys,time
@@ -170,6 +192,10 @@ body=json.dumps({'rateLimits':[
 if sys.argv[2]=='native':
     metadata=json.loads(body)
     metadata['symbols']=[{'symbol':asset+'USDT','baseAsset':asset,'baseAssetPrecision':17 if scenario=='native_precision' and asset=='BTC' else 7 if scenario=='sequence_metadata_mismatch' and asset=='BTC' else 8,'quoteAsset':'USDT','quoteAssetPrecision':8} for asset in ('BTC','ETH','BNB')]
+    if scenario.startswith('routes_'):
+        for row in metadata['symbols']:
+            row.update(status='BREAK' if scenario=='routes_disabled' and row['baseAsset']=='BTC' or scenario=='routes_two_hops' and row['baseAsset']=='BNB' else 'TRADING',isSpotTradingAllowed=True)
+        if scenario=='routes_two_hops':metadata['symbols'].append({'symbol':'BNBBTC','baseAsset':'BNB','quoteAsset':'BTC','baseAssetPrecision':8,'quoteAssetPrecision':8,'status':'TRADING','isSpotTradingAllowed':True})
     body=json.dumps(metadata,separators=(',',':')).encode()
 if sys.argv[2]=='account':
     body=json.dumps({'uid':41001,'accountType':'SPOT','balances':[
@@ -188,6 +214,14 @@ if sys.argv[2]=='orders':
     elif scenario=='orders_precision': value[0]['origQty']='0.001000001'
     elif scenario=='orders_duplicate': value.append(value[0])
     elif scenario=='orders_lock_mismatch': value[0]['price']='12501.00000000'
+    body=json.dumps(value,separators=(',',':')).encode()
+if sys.argv[2]=='books':
+    value=FIXTURE_BOOKS
+    if scenario=='routes_missing':value=value[1:]
+    elif scenario=='routes_depth':value[0]['bidQty']='0.01099999'
+    elif scenario=='routes_precision':value[0]['bidPrice']='60000.000000001'
+    elif scenario=='routes_duplicate':value.append(value[0])
+    elif scenario=='routes_two_hops':value.append({'symbol':'BNBBTC','bidPrice':'0.004','askPrice':'0.005','bidQty':'10','askQty':'10'})
     body=json.dumps(value,separators=(',',':')).encode()
 headers=b'HTTP/1.1 200 OK\r\nContent-Length: '+str(len(body)).encode()+b'\r\nX-MBX-USED-WEIGHT-1M: 20\r\n'
 if scenario=='tls_duplicate_weight': headers+=b'x-mbx-used-weight-1m: 20\r\n'
@@ -214,6 +248,7 @@ with socket.socket() as listener:
                 request+=chunk
                 if len(request)>4096: raise ValueError('request_limit')
             expected=b'GET /api/v3/exchangeInfo HTTP/1.1\r\nHost: rest.fixture.invalid:23456\r\nConnection: close\r\n\r\n'
+            if sys.argv[2]=='books':expected=b'GET /api/v3/ticker/bookTicker HTTP/1.1\r\nHost: rest.fixture.invalid:23456\r\nConnection: close\r\n\r\n'
             if sys.argv[2] in {'account','orders'}:
                 from urllib.parse import parse_qsl,urlencode
                 path='/api/v3/openOrders' if sys.argv[2]=='orders' else '/api/v3/account'
@@ -246,7 +281,8 @@ def worker(payload):
     base = load(payload["base_source"])
     base["require_isolation"](payload["original"])
     requests = payload.get("native_requests_profile", False)
-    orders = payload.get("order_sequence_profile", False)
+    routes = payload.get("route_sequence_profile", False)
+    orders = payload.get("order_sequence_profile", False) or routes
     sequence = payload.get("read_sequence_profile", False) or orders
     signed = payload.get("signed_account_profile", False)
     native = payload.get("native_receipt_profile", False) or signed or sequence
@@ -254,7 +290,8 @@ def worker(payload):
     tls = payload.get("tls_profile", False) or receipt
     ipc = payload.get("joint_ipc_profile", False) or requests
     if (
-        type(orders) is not bool
+        type(routes) is not bool
+        or type(orders) is not bool
         or type(sequence) is not bool
         or type(signed) is not bool
         or type(requests) is not bool
@@ -265,7 +302,9 @@ def worker(payload):
         or (tls and ipc)
         or payload["scenario"]
         not in (
-            ORDER_SCENARIOS
+            ROUTE_SCENARIOS
+            if routes
+            else ORDER_SCENARIOS
             if orders
             else SEQUENCE_SCENARIOS
             if sequence
@@ -853,15 +892,20 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
     """Drive fixed barriers only; parent is namespace PID 1 and has no host network."""
     code = load(payload["sources"]["gateway_read_sequence.py"])
     modules = code["load_sources"](payload["sources"])
-    orders = payload.get("order_sequence_profile", False)
-    steps = code["ORDER_STEPS"] if orders else code["STEPS"]
-    scope_name = code["ORDER_SCOPE"] if orders else code["SCOPE"]
+    routes = payload.get("route_sequence_profile", False)
+    orders = payload.get("order_sequence_profile", False) or routes
+    steps = code["ROUTE_STEPS"] if routes else code["ORDER_STEPS"] if orders else code["STEPS"]
+    scope_name = code["ROUTE_SCOPE"] if routes else code["ORDER_SCOPE"] if orders else code["SCOPE"]
     root = Path(entry["STORAGE"]) / scope_name
     command = [
         "/usr/bin/python3",
         "-I",
         entry["CODE"] + "/installed_gateway.py",
-        "--order-sequence-fixture" if orders else "--read-sequence-fixture",
+        "--route-sequence-fixture"
+        if routes
+        else "--order-sequence-fixture"
+        if orders
+        else "--read-sequence-fixture",
     ]
     controller = subprocess.Popen(
         command,
@@ -894,7 +938,9 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
     def finish_peer():
         tls_peer.wait(timeout=5)
         value = json.loads(Path("/run/gateway-tls-peer.json").read_bytes())
-        if value["http_requests"] != 1 or (index and not value.get("native_signature_verified")):
+        if value["http_requests"] != 1 or (
+            index in {1, 2, 3, 4} and not value.get("native_signature_verified")
+        ):
             raise RuntimeError("sequence_peer_request_mismatch")
         peers.append(value)
 
@@ -961,6 +1007,8 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                             and scenario == "orders_changed"
                             else "tls_success"
                         )
+                    if routes:
+                        selected_scenario = scenario
                     tls_peer = subprocess.Popen(
                         [
                             "/usr/bin/nsenter",
@@ -975,7 +1023,11 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                             "-c",
                             TLS_PEER,
                             selected_scenario,
-                            "orders" if orders and index in {2, 3} else "account",
+                            "books"
+                            if routes and index == 5
+                            else "orders"
+                            if orders and index in {2, 3}
+                            else "account",
                         ],
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
@@ -993,8 +1045,10 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
             elif stage == "receipt_prepared":
                 revoked()
                 checks.append(f"step_{index}_kernel_revoked_before_native_receipt")
-                if (index == 2 and scenario == "sequence_child_stopped") or (
-                    index == 3 and scenario == "orders_child_stopped"
+                if (
+                    (index == 2 and scenario == "sequence_child_stopped")
+                    or (index == 3 and scenario == "orders_child_stopped")
+                    or (index == 5 and scenario == "routes_child_stopped")
                 ):
                     stopped = os.pidfd_open(bindings[-1]["collector"]["process"]["pid"])
                     signal.pidfd_send_signal(stopped, signal.SIGSTOP)
@@ -1003,16 +1057,20 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                 if message["index"] != index:
                     raise RuntimeError("sequence_acknowledgement_order")
                 revoked()
-                if (index == 1 and scenario == "sequence_controller_crash") or (
-                    index == 2 and scenario == "orders_controller_crash"
+                if (
+                    (index == 1 and scenario == "sequence_controller_crash")
+                    or (index == 2 and scenario == "orders_controller_crash")
+                    or (index == 4 and scenario == "routes_controller_crash")
                 ):
                     controller.kill()
                     controller.communicate(timeout=5)
                     terminal = {"status": "controller_sigkill_between_reads"}
                     checks.append("crash_between_steps_retains_consumed_sequence_without_permit")
                     break
-                if (index == 0 and scenario == "sequence_code_drift") or (
-                    index == 2 and scenario == "orders_code_drift"
+                if (
+                    (index == 0 and scenario == "sequence_code_drift")
+                    or (index == 2 and scenario == "orders_code_drift")
+                    or (index == 4 and scenario == "routes_code_drift")
                 ):
                     target = Path(entry["CODE"]) / "gateway_read_sequence.py"
                     original = target.read_bytes()
@@ -1029,7 +1087,12 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
         stdout, stderr = controller.communicate(timeout=10)
         if stdout or (
             controller.returncode
-            and scenario not in {"sequence_controller_crash", "orders_controller_crash"}
+            and scenario
+            not in {
+                "sequence_controller_crash",
+                "orders_controller_crash",
+                "routes_controller_crash",
+            }
         ):
             raise RuntimeError("sequence_controller_exit:" + stderr[-3000:])
         if stopped is not None:
@@ -1054,7 +1117,9 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
         for i in range(len(prepared)):
             directory = root / steps[i]
             scope = directory / (
-                modules["ledger"].ORDERS_SCOPE
+                modules["ledger"].BOOKS_SCOPE
+                if routes and i == 5
+                else modules["ledger"].ORDERS_SCOPE
                 if orders and i in {2, 3}
                 else modules["ledger"].ACCOUNT_SCOPE
                 if i
@@ -1062,6 +1127,8 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
             )
             bundle = {}
             for key, name in code["FILES"].items():
+                if key == "selection" and routes and i == 5:
+                    name = "books-request.json"
                 if key == "selection" and orders and i in {2, 3}:
                     name = "orders-request.json"
                 path = directory / name if key == "binding" else scope / name
@@ -1074,8 +1141,17 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
             bundles=bundles,
             modules=modules,
             orders=orders,
+            routes=routes,
         )
         expected = {
+            **{
+                name: (5, 5)
+                if name in {"routes_controller_crash", "routes_code_drift"}
+                else (6, 6)
+                if name in {"routes_success", "routes_two_hops"}
+                else (6, 5)
+                for name in ROUTE_SCENARIOS
+            },
             "orders_success": (5, 5),
             "orders_empty": (5, 5),
             "orders_changed": (4, 3),
@@ -1096,7 +1172,16 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
         if (
             (report["prepared_steps"], report["accepted_steps"]) != expected
             or (report["status"] == "complete")
-            != (scenario in {"sequence_success", "orders_success", "orders_empty"})
+            != (
+                scenario
+                in {
+                    "sequence_success",
+                    "orders_success",
+                    "orders_empty",
+                    "routes_success",
+                    "routes_two_hops",
+                }
+            )
             or len(peers) != expected[0]
         ):
             raise RuntimeError(
@@ -1443,6 +1528,7 @@ def main(argv=None):
     profiles.add_argument("--signed-account-profile", action="store_true")
     profiles.add_argument("--read-sequence-profile", action="store_true")
     profiles.add_argument("--order-sequence-profile", action="store_true")
+    profiles.add_argument("--route-sequence-profile", action="store_true")
     profiles.add_argument("--joint-ipc-profile", action="store_true")
     args = parser.parse_args(argv)
     if os.geteuid() == 0:
@@ -1478,6 +1564,7 @@ def main(argv=None):
             or args.signed_account_profile
             or args.read_sequence_profile
             or args.order_sequence_profile
+            or args.route_sequence_profile
         ):
             built = subprocess.run(
                 [
@@ -1512,6 +1599,7 @@ def main(argv=None):
             "signed_account_profile": args.signed_account_profile,
             "read_sequence_profile": args.read_sequence_profile,
             "order_sequence_profile": args.order_sequence_profile,
+            "route_sequence_profile": args.route_sequence_profile,
             "joint_ipc_profile": args.joint_ipc_profile,
             "base_source": base_source,
             "installer": installer.decode(),
@@ -1524,7 +1612,9 @@ def main(argv=None):
         reports = []
         bootstrap = "import json,sys\np=json.load(sys.stdin)\ns={'__name__':'isolated_installed_gateway'}\nexec(compile(p['source'],'<fixture>','exec'),s)\nprint(json.dumps(s['worker'](p),sort_keys=True))\n"
         for scenario in (
-            ORDER_SCENARIOS
+            ROUTE_SCENARIOS
+            if args.route_sequence_profile
+            else ORDER_SCENARIOS
             if args.order_sequence_profile
             else SEQUENCE_SCENARIOS
             if args.read_sequence_profile
@@ -1604,6 +1694,7 @@ def main(argv=None):
             "signed_account_profile": args.signed_account_profile,
             "read_sequence_profile": args.read_sequence_profile,
             "order_sequence_profile": args.order_sequence_profile,
+            "route_sequence_profile": args.route_sequence_profile,
             "joint_ipc_profile": args.joint_ipc_profile,
             "scenarios": reports,
             "source_sha256": payload["source_sha256"],

@@ -77,6 +77,8 @@ ACCOUNT_PROFILE = "portfolio.fixture_signed_account_tls_ledger.v1"
 ACCOUNT_SCOPE = "fixture-signed-account-tls-v1"
 ORDERS_PROFILE = "portfolio.fixture_signed_orders_tls_ledger.v1"
 ORDERS_SCOPE = "fixture-signed-orders-tls-v1"
+BOOKS_PROFILE = "portfolio.fixture_books_tls_ledger.v1"
+BOOKS_SCOPE = "fixture-books-tls-v1"
 # Fixed maximum local pilot classification. Tokens contain no endpoint/payload/signature.
 IPC_STEPS = (
     ("clock_initial", "time"),
@@ -121,6 +123,7 @@ class State:
             REQUEST_PROFILE,
             ACCOUNT_PROFILE,
             ORDERS_PROFILE,
+            BOOKS_PROFILE,
         }:
             raise ValueError("unknown_ledger_profile")
         self.profile = profile
@@ -184,11 +187,15 @@ class State:
                 )
             ):
                 raise ValueError("ipc_fixed_operation_required")
-            if self.profile in {ACCOUNT_PROFILE, ORDERS_PROFILE} and (
+            if self.profile in {ACCOUNT_PROFILE, ORDERS_PROFILE, BOOKS_PROFILE} and (
                 self.attempts
                 or payload["caller"] != "collector"
                 or payload["operation"]
-                != ("account_read" if self.profile == ACCOUNT_PROFILE else "open_orders")
+                != {
+                    ACCOUNT_PROFILE: "account_read",
+                    ORDERS_PROFILE: "open_orders",
+                    BOOKS_PROFILE: "book_ticker",
+                }[self.profile]
             ):
                 raise ValueError("single_signed_account_attempt_required")
             self.pending = payload["index"]
@@ -205,7 +212,8 @@ class State:
                 raise ValueError("ledger_outcome_invalid")
             self.validate_link(payload)
             if (
-                self.profile in {IPC_PROFILE, REQUEST_PROFILE, ACCOUNT_PROFILE, ORDERS_PROFILE}
+                self.profile
+                in {IPC_PROFILE, REQUEST_PROFILE, ACCOUNT_PROFILE, ORDERS_PROFILE, BOOKS_PROFILE}
                 and payload["request_sha256"] != self.attempts[self.pending]["request_sha256"]
             ):
                 raise ValueError("ipc_outcome_request_changed")
@@ -230,7 +238,13 @@ class State:
         self.last_kind = kind
 
     def link_fields(self):
-        if self.profile in {IPC_PROFILE, REQUEST_PROFILE, ACCOUNT_PROFILE, ORDERS_PROFILE}:
+        if self.profile in {
+            IPC_PROFILE,
+            REQUEST_PROFILE,
+            ACCOUNT_PROFILE,
+            ORDERS_PROFILE,
+            BOOKS_PROFILE,
+        }:
             return {"request_sha256"}
         return {"joint_prefix_sha256"} if self.profile == JOINT_PROFILE else set()
 
@@ -328,6 +342,7 @@ class AttemptLedger:
             REQUEST_PROFILE: REQUEST_SCOPE,
             ACCOUNT_PROFILE: ACCOUNT_SCOPE,
             ORDERS_PROFILE: ORDERS_SCOPE,
+            BOOKS_PROFILE: BOOKS_SCOPE,
         }[profile]
         self.owner = os.getpid()
         self.lock = threading.Lock()
@@ -443,7 +458,13 @@ class AttemptLedger:
                         **(
                             {"request_sha256": request_sha256}
                             if self.state.profile
-                            in {IPC_PROFILE, REQUEST_PROFILE, ACCOUNT_PROFILE, ORDERS_PROFILE}
+                            in {
+                                IPC_PROFILE,
+                                REQUEST_PROFILE,
+                                ACCOUNT_PROFILE,
+                                ORDERS_PROFILE,
+                                BOOKS_PROFILE,
+                            }
                             or request_sha256 is not None
                             else {}
                         ),
@@ -476,7 +497,13 @@ class AttemptLedger:
                         **(
                             {"request_sha256": request_sha256}
                             if self.state.profile
-                            in {IPC_PROFILE, REQUEST_PROFILE, ACCOUNT_PROFILE, ORDERS_PROFILE}
+                            in {
+                                IPC_PROFILE,
+                                REQUEST_PROFILE,
+                                ACCOUNT_PROFILE,
+                                ORDERS_PROFILE,
+                                BOOKS_PROFILE,
+                            }
                             or request_sha256 is not None
                             else {}
                         ),
