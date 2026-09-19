@@ -79,6 +79,16 @@ ROUTE_SCENARIOS = (
     "routes_controller_crash",
     "routes_code_drift",
 )
+WS_SCENARIOS = (
+    "routes_ws_success",
+    "routes_ws_two_hops",
+    "routes_ws_bad_certificate",
+    "routes_ws_bad_upgrade",
+    "routes_ws_peer_close",
+    "routes_ws_stall",
+    "routes_ws_code_drift",
+    "routes_ws_controller_crash",
+)
 FIXTURE_BOOKS = [
     {"symbol": asset + "USDT", "bidPrice": price, "askPrice": ask, "bidQty": "10", "askQty": "10"}
     for asset, price, ask in (
@@ -150,7 +160,7 @@ if runtime.exists():
     denied('native_runtime_write',lambda:os.open(runtime/'bin/python3.12',os.O_WRONLY))
     denied('native_runtime_replace',lambda:os.unlink(runtime/'bin/python3.12'))
 code=Path('/usr/local/lib/trader-egress')
-for name in ('installed_gateway.py','gateway_tls.py','gateway_joint_ipc.py','gateway_tls_receipt.py','gateway_native_runtime.py','gateway_native_receipt.py','gateway_native_requests.py','gateway_native_account.py','gateway_native_orders.py','gateway_book_routes.py','gateway_read_sequence.py','ledger_gateway.py','selftest.py','portfolio_rate_evidence.py','portfolio_tls_provenance.py','portfolio_egress_ledger.py'):
+for name in ('installed_gateway.py','gateway_tls.py','gateway_joint_ipc.py','gateway_tls_receipt.py','gateway_native_runtime.py','gateway_native_receipt.py','gateway_native_requests.py','gateway_native_account.py','gateway_native_orders.py','gateway_book_routes.py','gateway_read_sequence.py','gateway_concurrent_ws.py','portfolio_ws_frames.py','ledger_gateway.py','selftest.py','portfolio_rate_evidence.py','portfolio_tls_provenance.py','portfolio_egress_ledger.py'):
     path=code/name
     assert path.read_bytes()
     denied('write:'+name,lambda:os.open(path,os.O_WRONLY))
@@ -184,6 +194,7 @@ TLS_PEER = (
     + r"""
 import hashlib,json,os,socket,ssl,sys,time
 scenario=sys.argv[1]
+if scenario.startswith('routes_ws_'):scenario='routes_two_hops' if scenario=='routes_ws_two_hops' else 'routes_success'
 body=json.dumps({'rateLimits':[
  {'rateLimitType':'REQUEST_WEIGHT','interval':'MINUTE','intervalNum':1,'limit':6000},
  {'rateLimitType':'RAW_REQUESTS','interval':'MINUTE','intervalNum':5,'limit':61000},
@@ -277,11 +288,93 @@ with socket.socket() as listener:
 )
 
 
+WS_PEER = r"""
+import base64,hashlib,json,os,socket,ssl,sys,threading,time
+scenario=sys.argv[1]
+context=ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+context.load_cert_chain('/etc/trader/egress-gateway-fixture-ca.pem','/run/gateway-tls-key.pem')
+names={}
+context.set_servername_callback(lambda connection,name,ctx:names.update({id(connection):name}))
+barrier=threading.Barrier(2,timeout=2.5)
+lock=threading.Lock()
+report={'connections':0,'upgrades':0,'pongs':0,'closes':0,'both_upgrades_before_ping':False,'requests':{},'errors':[]}
+def frame(op,data):return bytes([0x80|op,len(data)])+data
+def exact(connection,n):
+    raw=b''
+    while len(raw)<n:
+        chunk=connection.recv(n-len(raw))
+        if not chunk:raise ValueError('eof')
+        raw+=chunk
+    return raw
+def control(connection,op,expected):
+    head=exact(connection,2)
+    if head!=bytes([0x80|op,0x80|len(expected)]):raise ValueError('masked_control_header')
+    mask=exact(connection,4);data=exact(connection,len(expected))
+    if bytes(v^mask[i%4] for i,v in enumerate(data))!=expected:raise ValueError('masked_control_payload')
+def serve(raw):
+    try:
+        with context.wrap_socket(raw,server_side=True) as connection:
+            connection.settimeout(5)
+            name=names[id(connection)]
+            role=name.split('.')[0]
+            if role not in {'account','market'}:raise ValueError('sni')
+            request=b''
+            while b'\r\n\r\n' not in request:
+                request+=connection.recv(4096)
+                if len(request)>4096:raise ValueError('header_limit')
+                if not request:raise ValueError('no_request')
+            lines=request.decode().split('\r\n')
+            nonce=next(line.split(': ',1)[1] for line in lines if line.startswith('Sec-WebSocket-Key: '))
+            if len(base64.b64decode(nonce,validate=True))!=16:raise ValueError('nonce')
+            symbols=['BNBBTC','BTCUSDT'] if scenario=='routes_ws_two_hops' else ['BNBUSDT','BTCUSDT']
+            path='/ws-api/v3' if role=='account' else '/stream?streams='+'/'.join(s.lower()+'@depth@100ms' for s in symbols)
+            expected=(f'GET {path} HTTP/1.1\r\nHost: {role}.fixture.invalid:23456\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: {nonce}\r\nSec-WebSocket-Version: 13\r\n\r\n').encode()
+            if request!=expected:raise ValueError('fixed_request')
+            with lock:
+                if role in report['requests']:raise ValueError('duplicate_role')
+                report['requests'][role]=hashlib.sha256(request).hexdigest()
+            barrier.wait()
+            accept=base64.b64encode(hashlib.sha1(nonce.encode()+b'258EAFA5-E914-47DA-95CA-C5AB0DC85B11').digest())
+            if scenario=='routes_ws_bad_upgrade' and role=='market':accept=b'invalid'
+            headers=b'HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: '+accept+b'\r\n\r\n'
+            connection.sendall(headers[:31]);connection.sendall(headers[31:])
+            with lock:report['upgrades']+=1
+            barrier.wait()
+            with lock:report['both_upgrades_before_ping']=report['upgrades']==2
+            if scenario=='routes_ws_stall':time.sleep(4.5);return
+            if scenario=='routes_ws_peer_close' and role=='market':connection.sendall(frame(8,b'\x03\xe8'));return
+            ping=frame(9,b'fixture:'+role.encode())
+            connection.sendall(ping[:3]);connection.sendall(ping[3:])
+            control(connection,10,b'fixture:'+role.encode())
+            with lock:report['pongs']+=1
+            control(connection,8,b'\x03\xe8')
+            with lock:report['closes']+=1
+            connection.sendall(frame(8,b'\x03\xe8'))
+    except Exception as exc:
+        with lock:report['errors'].append(type(exc).__name__+':'+str(exc)[:100])
+    finally:raw.close()
+threads=[]
+with socket.socket() as listener:
+    listener.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
+    listener.bind(('198.51.100.2',23456));listener.listen(2);listener.settimeout(5)
+    print('ready',flush=True)
+    try:
+        for _ in range(2):
+            raw,_=listener.accept();report['connections']+=1
+            thread=threading.Thread(target=serve,args=(raw,));thread.start();threads.append(thread)
+    except Exception as exc:report['errors'].append(type(exc).__name__)
+    for thread in threads:thread.join()
+with open('/run/gateway-ws-peer.json','w') as out:
+    json.dump(report,out,sort_keys=True);out.flush();os.fsync(out.fileno())
+"""
+
+
 def worker(payload):
     base = load(payload["base_source"])
     base["require_isolation"](payload["original"])
     requests = payload.get("native_requests_profile", False)
-    routes = payload.get("route_sequence_profile", False)
+    concurrent = payload.get("concurrent_ws_profile", False)
+    routes = payload.get("route_sequence_profile", False) or concurrent
     orders = payload.get("order_sequence_profile", False) or routes
     sequence = payload.get("read_sequence_profile", False) or orders
     signed = payload.get("signed_account_profile", False)
@@ -290,7 +383,8 @@ def worker(payload):
     tls = payload.get("tls_profile", False) or receipt
     ipc = payload.get("joint_ipc_profile", False) or requests
     if (
-        type(routes) is not bool
+        type(concurrent) is not bool
+        or type(routes) is not bool
         or type(orders) is not bool
         or type(sequence) is not bool
         or type(signed) is not bool
@@ -302,7 +396,9 @@ def worker(payload):
         or (tls and ipc)
         or payload["scenario"]
         not in (
-            ROUTE_SCENARIOS
+            WS_SCENARIOS
+            if concurrent
+            else ROUTE_SCENARIOS
             if routes
             else ORDER_SCENARIOS
             if orders
@@ -405,7 +501,13 @@ def worker(payload):
                 "-subj",
                 "/CN=" + hostname,
                 "-addext",
-                "subjectAltName=DNS:" + hostname,
+                "subjectAltName=DNS:"
+                + hostname
+                + (
+                    ",DNS:account.fixture.invalid,DNS:market.fixture.invalid"
+                    if concurrent and payload["scenario"] != "routes_ws_bad_certificate"
+                    else ""
+                ),
                 "-keyout",
                 "/run/gateway-tls-key.pem",
                 "-out",
@@ -892,7 +994,8 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
     """Drive fixed barriers only; parent is namespace PID 1 and has no host network."""
     code = load(payload["sources"]["gateway_read_sequence.py"])
     modules = code["load_sources"](payload["sources"])
-    routes = payload.get("route_sequence_profile", False)
+    concurrent = payload.get("concurrent_ws_profile", False)
+    routes = payload.get("route_sequence_profile", False) or concurrent
     orders = payload.get("order_sequence_profile", False) or routes
     steps = code["ROUTE_STEPS"] if routes else code["ORDER_STEPS"] if orders else code["STEPS"]
     scope_name = code["ROUTE_SCOPE"] if routes else code["ORDER_SCOPE"] if orders else code["SCOPE"]
@@ -901,7 +1004,9 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
         "/usr/bin/python3",
         "-I",
         entry["CODE"] + "/installed_gateway.py",
-        "--route-sequence-fixture"
+        "--concurrent-ws-fixture"
+        if concurrent
+        else "--route-sequence-fixture"
         if routes
         else "--order-sequence-fixture"
         if orders
@@ -921,6 +1026,8 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
     index = 0
     stopped = None
     restore = None
+    ws_peer = None
+    ws_result = {}
 
     def revoked():
         rows = json.loads(
@@ -1040,6 +1147,47 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                             "sequence_peer_not_ready:" + tls_peer.stderr.read()[-2000:]
                         )
                 release()
+            elif stage == "ws_prepared":
+                revoked()
+                ws_peer = subprocess.Popen(
+                    [
+                        "/usr/bin/nsenter",
+                        f"--net=/proc/{peer.process.pid}/ns/net",
+                        "/usr/bin/setpriv",
+                        "--bounding-set=-all",
+                        "--inh-caps=-all",
+                        "--ambient-caps=-all",
+                        "--no-new-privs",
+                        "/usr/bin/python3",
+                        "-I",
+                        "-c",
+                        WS_PEER,
+                        scenario,
+                    ],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    env=ENV,
+                    cwd="/",
+                )
+                if ws_peer.stdout.readline().strip() != "ready":
+                    raise RuntimeError("ws_peer_not_ready:" + ws_peer.stderr.read()[-2000:])
+                release()
+            elif stage in {"ws_activated", "ws_both_live"}:
+                descriptor_counts.append(len(list(Path(f"/proc/{controller.pid}/fd").iterdir())))
+                if stage == "ws_both_live" and scenario == "routes_ws_controller_crash":
+                    controller.kill()
+                    controller.communicate(timeout=5)
+                    terminal = {"status": "controller_sigkill_with_ws"}
+                    time.sleep(5.1)
+                    checks.append("concurrent_controller_sigkill_kernel_permission_expires")
+                    break
+                if stage == "ws_both_live" and scenario == "routes_ws_code_drift":
+                    target = Path(entry["CODE"]) / "gateway_concurrent_ws.py"
+                    original = target.read_bytes()
+                    target.write_bytes(original + b"\n# fixture drift\n")
+                    restore = target, original
+                release()
             elif stage == "tls_headers_persisted":
                 pass
             elif stage == "receipt_prepared":
@@ -1092,6 +1240,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                 "sequence_controller_crash",
                 "orders_controller_crash",
                 "routes_controller_crash",
+                "routes_ws_controller_crash",
             }
         ):
             raise RuntimeError("sequence_controller_exit:" + stderr[-3000:])
@@ -1144,6 +1293,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
             routes=routes,
         )
         expected = {
+            **{name: (6, 6) for name in WS_SCENARIOS},
             **{
                 name: (5, 5)
                 if name in {"routes_controller_crash", "routes_code_drift"}
@@ -1173,7 +1323,8 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
             (report["prepared_steps"], report["accepted_steps"]) != expected
             or (report["status"] == "complete")
             != (
-                scenario
+                scenario in WS_SCENARIOS
+                or scenario
                 in {
                     "sequence_success",
                     "orders_success",
@@ -1188,6 +1339,53 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                 "sequence_replay_counts:"
                 + str((report["prepared_steps"], report["accepted_steps"], len(peers), terminal))
             )
+        if concurrent:
+            ws_code = load(payload["sources"]["gateway_concurrent_ws.py"])
+            frames = load(payload["sources"]["portfolio_ws_frames.py"])
+            selected = ws_code["selection"](raw, bundles, code, modules)
+            ws_raw = (root / ws_code["SCOPE"] / "ws.jsonl").read_bytes()
+            ws_report = ws_code["replay"](
+                ws_raw,
+                expected_sha256=ws_code["digest"](ws_raw),
+                selected=selected,
+                provenance=modules["provenance"],
+                frames=frames,
+            )
+            success = scenario in {"routes_ws_success", "routes_ws_two_hops"}
+            if (ws_report["status"] == "complete") != success or ws_report[
+                "prepared_connections"
+            ] != 2:
+                raise RuntimeError("ws_unexpected_result:" + json.dumps(ws_report))
+            if (
+                scenario != "routes_ws_controller_crash"
+                and (terminal.get("concurrent_ws", {}).get("status") == "concurrent_ws_completed")
+                != success
+            ):
+                raise RuntimeError("ws_controller_terminal_mismatch")
+            ws_peer.wait(timeout=8)
+            peer_report = json.loads(Path("/run/gateway-ws-peer.json").read_bytes())
+            if success and (
+                not peer_report["both_upgrades_before_ping"]
+                or peer_report["pongs"] != 2
+                or peer_report["closes"] != 2
+            ):
+                raise RuntimeError("ws_peer_overlap_not_verified")
+            checks.extend(
+                [
+                    "two_ws_attempts_consumed_before_kernel_grant",
+                    "ws_original_route_symbols_and_tls_controls_replay",
+                    "ws_terminal_marked_socket_denied",
+                    "no_signed_ws_subscription_or_native_event_claim",
+                ]
+            )
+            if success:
+                checks.append("both_actual_ws_upgrades_coexist_before_peer_ping_and_client_close")
+            ws_result = {
+                "ws_archive": ws_raw.decode(),
+                "ws_replay": ws_report,
+                "ws_selection": selected,
+                "ws_peer": peer_report,
+            }
         if max(descriptor_counts) + 64 > 1024:
             raise RuntimeError("sequence_descriptor_budget_exceeded")
         checks.append("controller_descriptors_preserve_64_spare_under_1024_without_limit_change")
@@ -1223,6 +1421,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
             "gateway_manifest": manifest,
             "native_runtime": native_runtime,
             "controller_descriptor_counts": descriptor_counts,
+            **ws_result,
             "sequence_archive": raw.decode(),
             "bundles": bundles,
             "sequence_replay": report,
@@ -1237,6 +1436,9 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
         if tls_peer.poll() is None:
             tls_peer.kill()
             tls_peer.communicate(timeout=3)
+        if ws_peer is not None and ws_peer.poll() is None:
+            ws_peer.kill()
+            ws_peer.communicate(timeout=3)
         if stopped is not None:
             os.close(stopped)
 
@@ -1529,6 +1731,7 @@ def main(argv=None):
     profiles.add_argument("--read-sequence-profile", action="store_true")
     profiles.add_argument("--order-sequence-profile", action="store_true")
     profiles.add_argument("--route-sequence-profile", action="store_true")
+    profiles.add_argument("--concurrent-ws-profile", action="store_true")
     profiles.add_argument("--joint-ipc-profile", action="store_true")
     args = parser.parse_args(argv)
     if os.geteuid() == 0:
@@ -1565,6 +1768,7 @@ def main(argv=None):
             or args.read_sequence_profile
             or args.order_sequence_profile
             or args.route_sequence_profile
+            or args.concurrent_ws_profile
         ):
             built = subprocess.run(
                 [
@@ -1600,6 +1804,7 @@ def main(argv=None):
             "read_sequence_profile": args.read_sequence_profile,
             "order_sequence_profile": args.order_sequence_profile,
             "route_sequence_profile": args.route_sequence_profile,
+            "concurrent_ws_profile": args.concurrent_ws_profile,
             "joint_ipc_profile": args.joint_ipc_profile,
             "base_source": base_source,
             "installer": installer.decode(),
@@ -1612,7 +1817,9 @@ def main(argv=None):
         reports = []
         bootstrap = "import json,sys\np=json.load(sys.stdin)\ns={'__name__':'isolated_installed_gateway'}\nexec(compile(p['source'],'<fixture>','exec'),s)\nprint(json.dumps(s['worker'](p),sort_keys=True))\n"
         for scenario in (
-            ROUTE_SCENARIOS
+            WS_SCENARIOS
+            if args.concurrent_ws_profile
+            else ROUTE_SCENARIOS
             if args.route_sequence_profile
             else ORDER_SCENARIOS
             if args.order_sequence_profile
@@ -1695,6 +1902,7 @@ def main(argv=None):
             "read_sequence_profile": args.read_sequence_profile,
             "order_sequence_profile": args.order_sequence_profile,
             "route_sequence_profile": args.route_sequence_profile,
+            "concurrent_ws_profile": args.concurrent_ws_profile,
             "joint_ipc_profile": args.joint_ipc_profile,
             "scenarios": reports,
             "source_sha256": payload["source_sha256"],

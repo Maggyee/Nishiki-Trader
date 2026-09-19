@@ -10,6 +10,7 @@ from nautilus_trader.model.identifiers import InstrumentId
 from nautilus_trader.model.objects import Price, Quantity
 
 from apps.strategies_nautilus.portfolio_stream import canonical
+from apps.strategies_nautilus.portfolio_ws_frames import MAX_FRAME, DepthError
 
 REST = "https://testnet.binance.vision"
 STREAM = "wss://stream.testnet.binance.vision/ws/btcusdt@depth@100ms"
@@ -17,14 +18,9 @@ PROFILE = "testnet_public_depth_evidence_v1"
 SOURCE = {"rest": REST, "stream": STREAM, "symbol": "BTCUSDT", "timestamp_unit": "millisecond"}
 SECOND = 1_000_000_000
 MAX_AGE = 5 * SECOND
-MAX_FRAME = 1024 * 1024
 MAX_BUFFER = 16 * MAX_FRAME
 MAX_EVENTS = 4096
 MAX_ARCHIVE = 64 * MAX_FRAME
-
-
-class DepthError(ValueError):
-    """Codes are fixed project messages, never raw server/parser contents."""
 
 
 def integer(value, *, positive=False):

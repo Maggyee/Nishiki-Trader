@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-19
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: The installed fixture now links metadata → account → openOrders → openOrders → account → bookTicker. Original metadata and native account/book receipts derive bounded routes to USDT after repeated balance/order and exact lock reconciliation. Every nonzero asset needs supported market legs with sufficient top-book capacity. Kernel permission closes between steps and consumed scopes never resume. Descriptor reuse now leaves 180 spare at six-read sampling points under the unchanged 1,024 limit. Next integrate concurrent gateway-owned TLS/WS using the selected symbols. Real authority/coverage, provider limits/clocks, host rollout, qualified equity and trading remain blocked.
+- **Current objective**: The installed fixture links six native reads to original-derived routes and two concurrent gateway-owned TLS/WebSocket channels. Both fixed connection attempts persist before one unrenewable kernel window; exact Upgrade/control exchanges and failure cleanup preserve original evidence. Market targets use the selected symbol union. Next integrate native signed account subscription and event delivery, then the full concurrent REST/depth flow. Stream fences, real authority/coverage, provider limits/clocks, host rollout, qualified equity and trading remain blocked.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -330,10 +330,13 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
    now derives bounded routes from original metadata and native account/book receipts,
    including exact top-book capacity checks and explicit zero balances.
    [Descriptor custody](progress/portfolio-installed-descriptor-custody-2026-09-19.md)
-   now reuses held installation paths with fail-closed revalidation, leaving 180
-   descriptors spare at sampled points without raising the 1,024 limit.
-   Next integrate concurrent gateway-owned TLS/WS using those selected symbols.
-   Sampling alone never proves coverage.
+   now reuses held installation paths with fail-closed revalidation; current
+   concurrent-profile samples leave 176 spare under the unchanged 1,024 limit.
+   [Concurrent TLS/WebSocket upgrade/control integration](progress/portfolio-installed-concurrent-ws-2026-09-19.md)
+   now binds two fixed gateway-owned channels to those original-derived symbols,
+   with shared expiry, durable connection attempts and sibling failure cleanup.
+   Next integrate native signed account subscription and original event delivery,
+   then the remaining concurrent REST/depth flow. Sampling never proves coverage.
    Actual authority policy, fresh rate/clock consumption and provider-charge
    resolution must precede any separately reviewed real joint dispatch.
    Preserve the consumed scope; no retry, second IPv4 or extended interruption
@@ -378,18 +381,18 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
 
 ## Latest Verification
 
-- Installed descriptor custody: **24 new / 912 focused tests pass**, no warnings;
-  **29 current-source disposable scenarios pass** (ten routes, seven signed-account,
-  seven native receipt, five echo). Two original and two frozen-runtime replays match,
-  reproducing 55 request envelopes across 24 native scenario sets. Borrowed canonical
-  paths reuse descriptors with permanent invalidation on observed authority drift.
-  Maximum sampled controller count falls **1,009 → 844**, leaving **180** under the
-  unchanged 1,024 limit; sampled acceptance now requires at least 64 spare.
-  Base bundle selection is updated for disposable tests; host installation is unchanged.
-  See [descriptor acceptance](progress/portfolio-installed-descriptor-custody-2026-09-19.md).
-  Prior [63-scenario route evidence](progress/portfolio-installed-route-sequence-2026-09-19.md)
-  remains immutable. Concurrent gateway TLS/WS, stream fences, event-time freshness,
-  aggregate liquidation capacity and real admission remain unqualified.
+- Installed concurrent TLS/WebSocket Upgrade/control: **32 new / 1,151 focused
+  tests pass**, no warnings; **30 current-source disposable scenarios pass**
+  (eight concurrent, ten route, seven account, five echo). Two original replays
+  match across 30 scenario sets/eight WS archives; two frozen-native replays match
+  across 25 sets and 95 reconstructed request envelopes. Successful peers require
+  both actual upgrades before pinging; failure cases cover bad cert/Upgrade,
+  early close, stall, source drift and controller SIGKILL with kernel expiry.
+  Manifest v11 pins eighteen sources; the base installation bundle is unchanged.
+  Maximum sampled descriptors are **848**, leaving **176** under the unchanged
+  1,024 limit. See [concurrent acceptance](progress/portfolio-installed-concurrent-ws-2026-09-19.md).
+  Prior descriptor/route evidence is immutable. Signed WS subscription, native
+  event delivery, stream fences, event-time freshness and real admission remain pending.
 - The complete ordinary-process native joint collector retains its prior 20-operation /
   16-GET / 448-weight acceptance and original receipt clocks. Connecting that collector
   to installed gateway-owned sockets remains pending. Earlier details are archived in

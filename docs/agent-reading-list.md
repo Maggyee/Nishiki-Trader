@@ -22,6 +22,16 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For concurrent installed gateway TLS/WebSocket upgrade/control acceptance, read
+`docs/progress/portfolio-installed-concurrent-ws-2026-09-19.md` and its JSON.
+Manifest v11 pins eighteen sources. After the six-read route originals complete,
+one controller owns two fixed marked TLS sockets under one unrenewable window;
+market targets use the original-derived symbol union. Both connection attempts
+are persisted before grant; raw chunks precede interpretation and failures cancel
+siblings and revoke permission. This is upgrade/ping/pong/close acceptance only.
+Next integrate native signed account subscription and original event delivery;
+full native joint collection, account stream fences and real admission remain blocked.
+
 For installed descriptor custody and the concurrent-transport resource prerequisite,
 read `docs/progress/portfolio-installed-descriptor-custody-2026-09-19.md` and its JSON.
 The base v2 verifier reuses borrowed canonical directory/file descriptors and

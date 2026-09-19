@@ -1,0 +1,1423 @@
+{
+  "acceptance_scenarios": {
+    "account-regression": [
+      {
+        "checks": 80,
+        "name": "tls_success",
+        "status": "passed"
+      },
+      {
+        "checks": 80,
+        "name": "tls_slow_body",
+        "status": "passed"
+      },
+      {
+        "checks": 80,
+        "name": "native_precision",
+        "status": "passed"
+      },
+      {
+        "checks": 82,
+        "name": "receipt_runtime_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 78,
+        "name": "tls_bad_certificate",
+        "status": "passed"
+      },
+      {
+        "checks": 83,
+        "name": "receipt_child_stopped",
+        "status": "passed"
+      },
+      {
+        "checks": 82,
+        "name": "receipt_controller_crash",
+        "status": "passed"
+      }
+    ],
+    "echo-regression": [
+      {
+        "checks": 75,
+        "name": "success",
+        "status": "passed"
+      },
+      {
+        "checks": 75,
+        "name": "code_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 75,
+        "name": "account_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 75,
+        "name": "storage_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 76,
+        "name": "controller_crash",
+        "status": "passed"
+      }
+    ],
+    "routes-regression": [
+      {
+        "checks": 81,
+        "name": "routes_success",
+        "status": "passed"
+      },
+      {
+        "checks": 81,
+        "name": "routes_two_hops",
+        "status": "passed"
+      },
+      {
+        "checks": 81,
+        "name": "routes_missing",
+        "status": "passed"
+      },
+      {
+        "checks": 81,
+        "name": "routes_depth",
+        "status": "passed"
+      },
+      {
+        "checks": 81,
+        "name": "routes_precision",
+        "status": "passed"
+      },
+      {
+        "checks": 80,
+        "name": "routes_duplicate",
+        "status": "passed"
+      },
+      {
+        "checks": 81,
+        "name": "routes_disabled",
+        "status": "passed"
+      },
+      {
+        "checks": 82,
+        "name": "routes_child_stopped",
+        "status": "passed"
+      },
+      {
+        "checks": 81,
+        "name": "routes_controller_crash",
+        "status": "passed"
+      },
+      {
+        "checks": 80,
+        "name": "routes_code_drift",
+        "status": "passed"
+      }
+    ],
+    "ws-final": [
+      {
+        "checks": 86,
+        "name": "routes_ws_success",
+        "status": "passed"
+      },
+      {
+        "checks": 86,
+        "name": "routes_ws_two_hops",
+        "status": "passed"
+      },
+      {
+        "checks": 85,
+        "name": "routes_ws_bad_certificate",
+        "status": "passed"
+      },
+      {
+        "checks": 85,
+        "name": "routes_ws_bad_upgrade",
+        "status": "passed"
+      },
+      {
+        "checks": 85,
+        "name": "routes_ws_peer_close",
+        "status": "passed"
+      },
+      {
+        "checks": 85,
+        "name": "routes_ws_stall",
+        "status": "passed"
+      },
+      {
+        "checks": 85,
+        "name": "routes_ws_code_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 86,
+        "name": "routes_ws_controller_crash",
+        "status": "passed"
+      }
+    ]
+  },
+  "account_stream_fence_verified": false,
+  "account_ws_subscription_authenticated": false,
+  "actual_source_authority_qualified": false,
+  "additional_project_source": {
+    "current": {
+      "path": "apps/strategies_nautilus/portfolio_market_depth.py",
+      "sha256": "6d6288bb4bc7d128719578c1107ebbfc174073b2c125d192a300e62444c89d2d"
+    },
+    "retained": {
+      "path": "data/installed-concurrent-ws-2026-09-19/portfolio_market_depth.py",
+      "sha256": "6d6288bb4bc7d128719578c1107ebbfc174073b2c125d192a300e62444c89d2d"
+    }
+  },
+  "atomic_account_snapshot": false,
+  "base_bundle": {
+    "path": "data/installed-concurrent-ws-2026-09-19/base-bundle.tar",
+    "sha256": "9240714aaf4977a44633d744d51775e0c3a786051c98c02b131d4ddf08004142"
+  },
+  "base_commit": "e83ffc511796e9e8896505e88b623b3695c6cec7",
+  "base_source_sha256": {
+    "collector_launcher.py": "d1d94a8edd0730244b6dbc7c0e24746157985e7b36b82f865397402ce0433579",
+    "helper_entry.py": "2a91437ed9080ae481eae7496e43cfe35d29888e1e3a5a12b10605b6dc320c9b",
+    "inspect_binding.py": "27c3302222bc819767ba874d7000f2b038662fa72004cb56da25a1003c38e322",
+    "installation.py": "9ab4118c4e13b431171e07dd26099f629a96a5138cdf2437e750fca3cb09e468",
+    "installation_selftest.py": "e2b0e9a59cd3805ebfac2fb4b4b2c1992e8e9d2865862cf70c3876c06e42346e",
+    "package.py": "7f519e26c0f85951e8d60f8cf8eaa6e774fb002c74647ee4892b491cef8b549d"
+  },
+  "complete_caller_coverage_verified": false,
+  "concurrent_tls_ws_upgrade_controls_integrated": true,
+  "concurrent_ws_reports": {
+    "routes_ws_bad_certificate": {
+      "controller_descriptor_counts": [
+        798,
+        800,
+        810,
+        812,
+        819,
+        821,
+        828,
+        830,
+        837,
+        839,
+        846,
+        848,
+        106
+      ],
+      "peer": {
+        "both_upgrades_before_ping": false,
+        "closes": 0,
+        "connections": 2,
+        "errors": [
+          "SSLEOFError:[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1007)",
+          "SSLEOFError:[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1007)"
+        ],
+        "pongs": 0,
+        "requests": {},
+        "upgrades": 0
+      },
+      "replay": {
+        "account_subscription_authenticated": false,
+        "actual_usage_upper_bound": null,
+        "archive_sha256": "c94f9ce18fcce180e84bf1765b7e02c596120ef5d2a780b242f0bdffeb55fc29",
+        "both_channels_live_before_close": false,
+        "channels": {
+          "account": {
+            "header_receipt": null,
+            "received_bytes": 0,
+            "stage": "prepared"
+          },
+          "market": {
+            "header_receipt": null,
+            "received_bytes": 0,
+            "stage": "prepared"
+          }
+        },
+        "documented_account_connect_weight": 2,
+        "last_record": "aborted",
+        "market_connection_charge": null,
+        "native_events_delivered": false,
+        "network_admitted": false,
+        "prepared_connections": 2,
+        "restart_allowed": false,
+        "revocation_recorded": true,
+        "schema_version": "portfolio.installed_concurrent_ws.v1",
+        "sockets_closed_recorded": true,
+        "status": "incomplete_no_resume",
+        "stream_fence_verified": false,
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "trading_admitted": false
+      },
+      "selection": {
+        "base_manifest_sha256": "618251af135ac3f49764301f73c6ed1d176a64fbd9cbe1f3e7dc984b3091ed53",
+        "environment_sha256": "f60fda5e8ecfc37e2c8c52b5b5bfcdd69e08d26ef1752ffd1ea42c95d83369d2",
+        "gateway_manifest_sha256": "0b35e2378329b01ef5add4248a792a30aa56c299ddbc8d67822f479efb5a0aab",
+        "route_archive_sha256": "43176f5b854fa208eeb98a00f53409df9373b82a00cceab03f5085c2f86a983b",
+        "route_bundles_sha256": "6894440fe784231fef27e3750aebbe95b47daa6614d82fabd2f2e18dff938f9b",
+        "route_completed": {
+          "monotonic_ns": 6346815637519412,
+          "utc_ns": 1789823723138309469
+        },
+        "route_selection_sha256": "c27bd38063d3f3635f0c42a3cd0d05b740350b1764f6d138771e8b7032291698",
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "tls_trust_sha256": "1007380df28666dd8ecda0b83a3698d3e94eaaab21e0ec340011be1930795e57"
+      },
+      "terminal": {
+        "concurrent_ws": {
+          "network_admitted": false,
+          "reason": "SSLCertVerificationError",
+          "status": "concurrent_ws_refused"
+        },
+        "network_admitted": false,
+        "status": "sequence_completed"
+      }
+    },
+    "routes_ws_bad_upgrade": {
+      "controller_descriptor_counts": [
+        798,
+        800,
+        810,
+        812,
+        819,
+        821,
+        828,
+        830,
+        837,
+        839,
+        846,
+        848,
+        106
+      ],
+      "peer": {
+        "both_upgrades_before_ping": true,
+        "closes": 0,
+        "connections": 2,
+        "errors": [
+          "ValueError:eof",
+          "ValueError:eof"
+        ],
+        "pongs": 0,
+        "requests": {
+          "account": "e611033dcfb28ae4435360a518cd672345f7078618ec48edb10955ac9b54ac05",
+          "market": "1bdcba4486c26b4509c7088ea61686abbb304b57abd56c54ae81da6d7b99ac87"
+        },
+        "upgrades": 2
+      },
+      "replay": {
+        "account_subscription_authenticated": false,
+        "actual_usage_upper_bound": null,
+        "archive_sha256": "48557b1612b53597f4a0598ca094f27b48fe549290ff6fee2812d1273943555a",
+        "both_channels_live_before_close": false,
+        "channels": {
+          "account": {
+            "header_receipt": null,
+            "received_bytes": 0,
+            "stage": "requested"
+          },
+          "market": {
+            "header_receipt": {
+              "monotonic_ns": 6346831919291961,
+              "utc_ns": 1789823739420082378
+            },
+            "received_bytes": 124,
+            "stage": "requested"
+          }
+        },
+        "documented_account_connect_weight": 2,
+        "last_record": "active",
+        "market_connection_charge": null,
+        "native_events_delivered": false,
+        "network_admitted": false,
+        "prepared_connections": 2,
+        "restart_allowed": false,
+        "revocation_recorded": false,
+        "schema_version": "portfolio.installed_concurrent_ws.v1",
+        "sockets_closed_recorded": false,
+        "status": "incomplete_no_resume",
+        "stream_fence_verified": false,
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "trading_admitted": false
+      },
+      "selection": {
+        "base_manifest_sha256": "618251af135ac3f49764301f73c6ed1d176a64fbd9cbe1f3e7dc984b3091ed53",
+        "environment_sha256": "6204130b879517888c8bb31abd3fc01e2463f914fa9ba76b50e9e111f6aa5b96",
+        "gateway_manifest_sha256": "0b35e2378329b01ef5add4248a792a30aa56c299ddbc8d67822f479efb5a0aab",
+        "route_archive_sha256": "fe4427258b3d2825543e4bb4e3eae143ddfd340508014123a0974ae1a02a3c05",
+        "route_bundles_sha256": "33a4c932ab2ca0a215f361e62a368f743e6f836752187990306a1831fc8130c0",
+        "route_completed": {
+          "monotonic_ns": 6346831440830675,
+          "utc_ns": 1789823738941620532
+        },
+        "route_selection_sha256": "3cba0e29e997ba03924c85fbb0a2779b106336d9ebd7545cc2503e3333c480a3",
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "tls_trust_sha256": "27d592c4f59df32b8d529a679e5474aea059d00057e7bdbdeb4631e5ad72891e"
+      },
+      "terminal": {
+        "concurrent_ws": {
+          "network_admitted": false,
+          "reason": "ProvenanceError",
+          "status": "concurrent_ws_refused"
+        },
+        "network_admitted": false,
+        "status": "sequence_completed"
+      }
+    },
+    "routes_ws_code_drift": {
+      "controller_descriptor_counts": [
+        798,
+        800,
+        810,
+        812,
+        819,
+        821,
+        828,
+        830,
+        837,
+        839,
+        846,
+        848,
+        106,
+        108
+      ],
+      "peer": {
+        "both_upgrades_before_ping": true,
+        "closes": 1,
+        "connections": 2,
+        "errors": [
+          "ValueError:eof"
+        ],
+        "pongs": 2,
+        "requests": {
+          "account": "c9f8c6312bb189aceaad059d0b7138b5bcc998441d1f5dae75aae63b85c7c691",
+          "market": "59c76d67cd2150145d26c07d5e95a51f5ac45ee76cfda22661a88356a3f653de"
+        },
+        "upgrades": 2
+      },
+      "replay": {
+        "account_subscription_authenticated": false,
+        "actual_usage_upper_bound": null,
+        "archive_sha256": "b8d2f68d2e122f9653d5dc89fa20900d9cc6267d06f493e6ab5bb1439b23c0ca",
+        "both_channels_live_before_close": true,
+        "channels": {
+          "account": {
+            "header_receipt": {
+              "monotonic_ns": 6346883566172139,
+              "utc_ns": 1789823791066962716
+            },
+            "received_bytes": 146,
+            "stage": "pong"
+          },
+          "market": {
+            "header_receipt": {
+              "monotonic_ns": 6346883598766620,
+              "utc_ns": 1789823791099557237
+            },
+            "received_bytes": 145,
+            "stage": "closing"
+          }
+        },
+        "documented_account_connect_weight": 2,
+        "last_record": "active",
+        "market_connection_charge": null,
+        "native_events_delivered": false,
+        "network_admitted": false,
+        "prepared_connections": 2,
+        "restart_allowed": false,
+        "revocation_recorded": false,
+        "schema_version": "portfolio.installed_concurrent_ws.v1",
+        "sockets_closed_recorded": false,
+        "status": "incomplete_no_resume",
+        "stream_fence_verified": false,
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "trading_admitted": false
+      },
+      "selection": {
+        "base_manifest_sha256": "618251af135ac3f49764301f73c6ed1d176a64fbd9cbe1f3e7dc984b3091ed53",
+        "environment_sha256": "f11d66f08d8659492f90d3f0675374a4553fd47fe20ce8e4adade066a11d29a3",
+        "gateway_manifest_sha256": "0b35e2378329b01ef5add4248a792a30aa56c299ddbc8d67822f479efb5a0aab",
+        "route_archive_sha256": "2fac318ab1cd02f3ba6d4f2ab8289d67040994c3630a18c27002e4f118b0594f",
+        "route_bundles_sha256": "4f2edebb4a0c7f430020026595fc74b04a743f62391a84f9a9a60b4829ec2ab4",
+        "route_completed": {
+          "monotonic_ns": 6346883036962162,
+          "utc_ns": 1789823790537752219
+        },
+        "route_selection_sha256": "8f6cd5a328b32c0a2f4fedbe0cf12b33b221de053195328b3a7acf96456230fb",
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "tls_trust_sha256": "ec55d278b71fb5a21d48d659808cb1f128bc5f0eed610c5f3dee87c3114dab64"
+      },
+      "terminal": {
+        "concurrent_ws": {
+          "network_admitted": false,
+          "reason": "ValueError",
+          "status": "concurrent_ws_refused"
+        },
+        "network_admitted": false,
+        "status": "sequence_completed"
+      }
+    },
+    "routes_ws_controller_crash": {
+      "controller_descriptor_counts": [
+        798,
+        800,
+        810,
+        812,
+        819,
+        821,
+        828,
+        830,
+        837,
+        839,
+        846,
+        848,
+        106,
+        108
+      ],
+      "peer": {
+        "both_upgrades_before_ping": true,
+        "closes": 0,
+        "connections": 2,
+        "errors": [
+          "ValueError:eof",
+          "ValueError:eof"
+        ],
+        "pongs": 2,
+        "requests": {
+          "account": "3403647916e74fd4e89b3a1b18032f511cb0fc9c1cd78b3902210c4af64bd582",
+          "market": "df58150ef65f4ea4314d2490883c9a68ea529f62eefac42967cb644e3a3c2822"
+        },
+        "upgrades": 2
+      },
+      "replay": {
+        "account_subscription_authenticated": false,
+        "actual_usage_upper_bound": null,
+        "archive_sha256": "a9095b1d9bbbf629f7ddef577d7115de7311c919189721fc434af56727fc17f8",
+        "both_channels_live_before_close": false,
+        "channels": {
+          "account": {
+            "header_receipt": {
+              "monotonic_ns": 6346899304585240,
+              "utc_ns": 1789823806805375977
+            },
+            "received_bytes": 146,
+            "stage": "pong"
+          },
+          "market": {
+            "header_receipt": {
+              "monotonic_ns": 6346899272245160,
+              "utc_ns": 1789823806773035897
+            },
+            "received_bytes": 145,
+            "stage": "pong"
+          }
+        },
+        "documented_account_connect_weight": 2,
+        "last_record": "active",
+        "market_connection_charge": null,
+        "native_events_delivered": false,
+        "network_admitted": false,
+        "prepared_connections": 2,
+        "restart_allowed": false,
+        "revocation_recorded": false,
+        "schema_version": "portfolio.installed_concurrent_ws.v1",
+        "sockets_closed_recorded": false,
+        "status": "incomplete_no_resume",
+        "stream_fence_verified": false,
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "trading_admitted": false
+      },
+      "selection": {
+        "base_manifest_sha256": "618251af135ac3f49764301f73c6ed1d176a64fbd9cbe1f3e7dc984b3091ed53",
+        "environment_sha256": "f11d66f08d8659492f90d3f0675374a4553fd47fe20ce8e4adade066a11d29a3",
+        "gateway_manifest_sha256": "0b35e2378329b01ef5add4248a792a30aa56c299ddbc8d67822f479efb5a0aab",
+        "route_archive_sha256": "f0f64d4e8803e86431980a7e3cd86b452206fa248c92c38deede9a99d7d7ba14",
+        "route_bundles_sha256": "e316c9ef7955efb90e4f28e3961da1ec0e2021638cc5e90cb91e0c313aa77a72",
+        "route_completed": {
+          "monotonic_ns": 6346898771904926,
+          "utc_ns": 1789823806272695143
+        },
+        "route_selection_sha256": "838bcbb8074960e31d46a325c4a03d0f1e41ef8b154a35028de19a4292a42e50",
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "tls_trust_sha256": "92e02685ff57bfc07c4664739da76c55cb974c08662ba5f8523355259d5a4cfa"
+      },
+      "terminal": {
+        "status": "controller_sigkill_with_ws"
+      }
+    },
+    "routes_ws_peer_close": {
+      "controller_descriptor_counts": [
+        798,
+        800,
+        810,
+        812,
+        819,
+        821,
+        828,
+        830,
+        837,
+        839,
+        846,
+        848,
+        106
+      ],
+      "peer": {
+        "both_upgrades_before_ping": true,
+        "closes": 0,
+        "connections": 2,
+        "errors": [
+          "ValueError:eof"
+        ],
+        "pongs": 0,
+        "requests": {
+          "account": "6eddd7dfa775540990d43c30a38f99ba55f530fc718d2de8f80a7a2affdea0e4",
+          "market": "197246e1eadce75bf1b8f191179f0cf7c9b7c1ad49ca650201c27d715b8001c3"
+        },
+        "upgrades": 2
+      },
+      "replay": {
+        "account_subscription_authenticated": false,
+        "actual_usage_upper_bound": null,
+        "archive_sha256": "aa69059714625ca5fe38eebf54497a0e5dbe4c06f90c2dc1a5815d54bb13ec31",
+        "both_channels_live_before_close": false,
+        "channels": {
+          "account": {
+            "header_receipt": null,
+            "received_bytes": 0,
+            "stage": "requested"
+          },
+          "market": {
+            "header_receipt": {
+              "monotonic_ns": 6346847411699006,
+              "utc_ns": 1789823754912489743
+            },
+            "received_bytes": 133,
+            "stage": "upgraded"
+          }
+        },
+        "documented_account_connect_weight": 2,
+        "last_record": "active",
+        "market_connection_charge": null,
+        "native_events_delivered": false,
+        "network_admitted": false,
+        "prepared_connections": 2,
+        "restart_allowed": false,
+        "revocation_recorded": false,
+        "schema_version": "portfolio.installed_concurrent_ws.v1",
+        "sockets_closed_recorded": false,
+        "status": "incomplete_no_resume",
+        "stream_fence_verified": false,
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "trading_admitted": false
+      },
+      "selection": {
+        "base_manifest_sha256": "618251af135ac3f49764301f73c6ed1d176a64fbd9cbe1f3e7dc984b3091ed53",
+        "environment_sha256": "f60fda5e8ecfc37e2c8c52b5b5bfcdd69e08d26ef1752ffd1ea42c95d83369d2",
+        "gateway_manifest_sha256": "0b35e2378329b01ef5add4248a792a30aa56c299ddbc8d67822f479efb5a0aab",
+        "route_archive_sha256": "d9910778097cdb770d7c556b84bdf11bb0f0fa85c663a9fc0d7f935af912eb21",
+        "route_bundles_sha256": "ad9d913a9a1e53f325f5549df1b05ff10c2c5bb3d09d6fca2d2128796eea8a04",
+        "route_completed": {
+          "monotonic_ns": 6346846943490091,
+          "utc_ns": 1789823754444280068
+        },
+        "route_selection_sha256": "41f8980bd80ca9d439dba9bd8536e76b38d704d135473b64d6112cea381d8e73",
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "tls_trust_sha256": "7d26864bf2d7e374185d3571f3268d31ae09a4282e71be14bb26b1da391ac98b"
+      },
+      "terminal": {
+        "concurrent_ws": {
+          "network_admitted": false,
+          "reason": "ValueError",
+          "status": "concurrent_ws_refused"
+        },
+        "network_admitted": false,
+        "status": "sequence_completed"
+      }
+    },
+    "routes_ws_stall": {
+      "controller_descriptor_counts": [
+        798,
+        800,
+        810,
+        812,
+        819,
+        821,
+        828,
+        830,
+        837,
+        839,
+        846,
+        848,
+        106
+      ],
+      "peer": {
+        "both_upgrades_before_ping": true,
+        "closes": 0,
+        "connections": 2,
+        "errors": [],
+        "pongs": 0,
+        "requests": {
+          "account": "b337aab771acd7e25bd3e128f96516d7c110c13291bb021f12ee7f949576994f",
+          "market": "842f55b61a5382c229d1fe30bd1d02e8bc10b8db20ee682892e6b7045b1e1bc9"
+        },
+        "upgrades": 2
+      },
+      "replay": {
+        "account_subscription_authenticated": false,
+        "actual_usage_upper_bound": null,
+        "archive_sha256": "40d90fc18496f885329b778471a09882696826dff59b9aa9608e9937d7da47c3",
+        "both_channels_live_before_close": false,
+        "channels": {
+          "account": {
+            "header_receipt": {
+              "monotonic_ns": 6346863657197695,
+              "utc_ns": 1789823771157988672
+            },
+            "received_bytes": 129,
+            "stage": "upgraded"
+          },
+          "market": {
+            "header_receipt": {
+              "monotonic_ns": 6346863635574708,
+              "utc_ns": 1789823771136365605
+            },
+            "received_bytes": 129,
+            "stage": "upgraded"
+          }
+        },
+        "documented_account_connect_weight": 2,
+        "last_record": "aborted",
+        "market_connection_charge": null,
+        "native_events_delivered": false,
+        "network_admitted": false,
+        "prepared_connections": 2,
+        "restart_allowed": false,
+        "revocation_recorded": true,
+        "schema_version": "portfolio.installed_concurrent_ws.v1",
+        "sockets_closed_recorded": true,
+        "status": "incomplete_no_resume",
+        "stream_fence_verified": false,
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "trading_admitted": false
+      },
+      "selection": {
+        "base_manifest_sha256": "618251af135ac3f49764301f73c6ed1d176a64fbd9cbe1f3e7dc984b3091ed53",
+        "environment_sha256": "f11d66f08d8659492f90d3f0675374a4553fd47fe20ce8e4adade066a11d29a3",
+        "gateway_manifest_sha256": "0b35e2378329b01ef5add4248a792a30aa56c299ddbc8d67822f479efb5a0aab",
+        "route_archive_sha256": "4761394bcc67716c11dfbc458f618fb0504c5b9ee390c260f41904935af78944",
+        "route_bundles_sha256": "8432d6c3babba9de26398255dbc6fef158ad8675125dd2cf26463fdb8bfabc86",
+        "route_completed": {
+          "monotonic_ns": 6346863160370398,
+          "utc_ns": 1789823770661160295
+        },
+        "route_selection_sha256": "152de6298f24a31a8b54eba482d1b76f36b427dea1615663848510b1545b7f89",
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "tls_trust_sha256": "594d9721a76c8f1afa0bd59a8ef1f99a2ac6fe2d459a4685507cb2b6bcd25b16"
+      },
+      "terminal": {
+        "concurrent_ws": {
+          "network_admitted": false,
+          "reason": "TimeoutError",
+          "status": "concurrent_ws_refused"
+        },
+        "network_admitted": false,
+        "status": "sequence_completed"
+      }
+    },
+    "routes_ws_success": {
+      "controller_descriptor_counts": [
+        798,
+        800,
+        810,
+        812,
+        819,
+        821,
+        828,
+        830,
+        837,
+        839,
+        846,
+        848,
+        106,
+        108
+      ],
+      "peer": {
+        "both_upgrades_before_ping": true,
+        "closes": 2,
+        "connections": 2,
+        "errors": [],
+        "pongs": 2,
+        "requests": {
+          "account": "ba46978e43bbd049b3ce35b7961b5af975833b0978d935df789c4c3b56e24dfc",
+          "market": "987829b10c5a3baec1b7d809680b5c2033d294e35e89d8efec42aeaf9f27b0a0"
+        },
+        "upgrades": 2
+      },
+      "replay": {
+        "account_subscription_authenticated": false,
+        "actual_usage_upper_bound": null,
+        "archive_sha256": "e8c322486551e0544f69307e224ee3688fc873778afdd9cd07ee806a83e6929f",
+        "both_channels_live_before_close": true,
+        "channels": {
+          "account": {
+            "header_receipt": {
+              "monotonic_ns": 6346783892215362,
+              "utc_ns": 1789823691393005939
+            },
+            "received_bytes": 150,
+            "stage": "peer_closed"
+          },
+          "market": {
+            "header_receipt": {
+              "monotonic_ns": 6346783925582447,
+              "utc_ns": 1789823691426372864
+            },
+            "received_bytes": 149,
+            "stage": "peer_closed"
+          }
+        },
+        "documented_account_connect_weight": 2,
+        "last_record": "completed",
+        "market_connection_charge": null,
+        "native_events_delivered": false,
+        "network_admitted": false,
+        "prepared_connections": 2,
+        "restart_allowed": false,
+        "revocation_recorded": true,
+        "schema_version": "portfolio.installed_concurrent_ws.v1",
+        "sockets_closed_recorded": true,
+        "status": "complete",
+        "stream_fence_verified": false,
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "trading_admitted": false
+      },
+      "selection": {
+        "base_manifest_sha256": "618251af135ac3f49764301f73c6ed1d176a64fbd9cbe1f3e7dc984b3091ed53",
+        "environment_sha256": "f60fda5e8ecfc37e2c8c52b5b5bfcdd69e08d26ef1752ffd1ea42c95d83369d2",
+        "gateway_manifest_sha256": "0b35e2378329b01ef5add4248a792a30aa56c299ddbc8d67822f479efb5a0aab",
+        "route_archive_sha256": "5e5ccab9a9bbf8a47171a01cfa2f63267d310bf983a8d3bcfaf789cceedea11a",
+        "route_bundles_sha256": "548c3ccc841911ae46bb8c0701bb02e8c51953c1d7a2322b8a65bd9c67e57ff3",
+        "route_completed": {
+          "monotonic_ns": 6346783420213628,
+          "utc_ns": 1789823690921003845
+        },
+        "route_selection_sha256": "27605c5a4ac6b912dcac7fa94c12d3826ef1d8ef0fc2c527f5b638c16e4209e0",
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "tls_trust_sha256": "ebb7c5cb2e5a81b77c6f20a71a95d81b2b36d01f345249d3aebc23e196cf2a6b"
+      },
+      "terminal": {
+        "concurrent_ws": {
+          "network_admitted": false,
+          "status": "concurrent_ws_completed"
+        },
+        "network_admitted": false,
+        "status": "sequence_completed"
+      }
+    },
+    "routes_ws_two_hops": {
+      "controller_descriptor_counts": [
+        798,
+        800,
+        810,
+        812,
+        819,
+        821,
+        828,
+        830,
+        837,
+        839,
+        846,
+        848,
+        106,
+        108
+      ],
+      "peer": {
+        "both_upgrades_before_ping": true,
+        "closes": 2,
+        "connections": 2,
+        "errors": [],
+        "pongs": 2,
+        "requests": {
+          "account": "e6519ca9b28068de5eb40bfe92331708ce5e4e0a4e839b911208ff78d930c8b0",
+          "market": "f4cdb5f57f065ff0a58c214480e77cf494bb696b73236be9421cdb94afdad872"
+        },
+        "upgrades": 2
+      },
+      "replay": {
+        "account_subscription_authenticated": false,
+        "actual_usage_upper_bound": null,
+        "archive_sha256": "2aa3ef86495c1a1af58508d8e7bae1f5831fb2a68fd836c503463d40e8a7c3b3",
+        "both_channels_live_before_close": true,
+        "channels": {
+          "account": {
+            "header_receipt": {
+              "monotonic_ns": 6346799537274602,
+              "utc_ns": 1789823707038065019
+            },
+            "received_bytes": 150,
+            "stage": "peer_closed"
+          },
+          "market": {
+            "header_receipt": {
+              "monotonic_ns": 6346799469690107,
+              "utc_ns": 1789823706970480644
+            },
+            "received_bytes": 149,
+            "stage": "peer_closed"
+          }
+        },
+        "documented_account_connect_weight": 2,
+        "last_record": "completed",
+        "market_connection_charge": null,
+        "native_events_delivered": false,
+        "network_admitted": false,
+        "prepared_connections": 2,
+        "restart_allowed": false,
+        "revocation_recorded": true,
+        "schema_version": "portfolio.installed_concurrent_ws.v1",
+        "sockets_closed_recorded": true,
+        "status": "complete",
+        "stream_fence_verified": false,
+        "symbols": [
+          "BNBBTC",
+          "BTCUSDT"
+        ],
+        "trading_admitted": false
+      },
+      "selection": {
+        "base_manifest_sha256": "618251af135ac3f49764301f73c6ed1d176a64fbd9cbe1f3e7dc984b3091ed53",
+        "environment_sha256": "6204130b879517888c8bb31abd3fc01e2463f914fa9ba76b50e9e111f6aa5b96",
+        "gateway_manifest_sha256": "0b35e2378329b01ef5add4248a792a30aa56c299ddbc8d67822f479efb5a0aab",
+        "route_archive_sha256": "f24d84256730c749c7b6b25a88c2160897ecdbf383470cdc1d20ded020f579b2",
+        "route_bundles_sha256": "85c322961fb6461285f805dd547d79883b2197c3f2741c91e8553f541b2b7278",
+        "route_completed": {
+          "monotonic_ns": 6346798979282242,
+          "utc_ns": 1789823706480072299
+        },
+        "route_selection_sha256": "318716aedd0c9a6289e385c733bc3130de13cd6fadfdc867623ad537d9a7d535",
+        "symbols": [
+          "BNBBTC",
+          "BTCUSDT"
+        ],
+        "tls_trust_sha256": "8af14811a4c29900ada51cb4e58dc9d2fda29d139cf7bf30c96c8056a5b9baad"
+      },
+      "terminal": {
+        "concurrent_ws": {
+          "network_admitted": false,
+          "status": "concurrent_ws_completed"
+        },
+        "network_admitted": false,
+        "status": "sequence_completed"
+      }
+    }
+  },
+  "concurrent_ws_scenarios": 8,
+  "continuous_descriptor_peak_measured": false,
+  "date": "2026-09-19",
+  "descriptor_limit": 1024,
+  "detached_replays": [
+    {
+      "path": "data/installed-concurrent-ws-2026-09-19/replay-1.json",
+      "sha256": "fb2931a4945df2fe3126badd867f911113e124e0e880d615d7065e6927e76187"
+    },
+    {
+      "path": "data/installed-concurrent-ws-2026-09-19/replay-2.json",
+      "sha256": "fb2931a4945df2fe3126badd867f911113e124e0e880d615d7065e6927e76187"
+    },
+    {
+      "path": "data/installed-concurrent-ws-2026-09-19/native-replay-1.json",
+      "sha256": "21018dbfddfb576199fad1c30d53f373c34e6b46deb74770506e68ee6bfc61e2"
+    },
+    {
+      "path": "data/installed-concurrent-ws-2026-09-19/native-replay-2.json",
+      "sha256": "21018dbfddfb576199fad1c30d53f373c34e6b46deb74770506e68ee6bfc61e2"
+    }
+  ],
+  "fixture_manifest_profile": "portfolio.installed_gateway_fixture.v11",
+  "full_account_equity_qualified": false,
+  "gateway_harness_sha256": "9992354f0d473496e06e9b357b0bb0f4927ab2590dcb4282f64bebb9a8889850",
+  "host_installation_performed": false,
+  "host_observations_unchanged": true,
+  "installation_profile": "portfolio.egress_installation.v2",
+  "live_path_affected": false,
+  "maximum_observed_controller_descriptors": 848,
+  "minimum_observed_spare_descriptors": 176,
+  "minimum_required_spare_at_samples": 64,
+  "namespace_scenarios_passed": 30,
+  "native_joint_collector_integrated": false,
+  "native_regenerated_requests": 95,
+  "native_replayed_scenario_sets": 25,
+  "native_runtime": {
+    "bytes": 213365841,
+    "files": 701,
+    "manifest_sha256": "75f136be0e614515577b7b6386a03b3ff9ad9acec3c43496179beb91e13dbc8b"
+  },
+  "native_version": "1.226.0",
+  "native_ws_event_receipts_integrated": false,
+  "network_admitted": false,
+  "next_step": "Join native signed account subscription and original event delivery to gateway-owned channels, then remaining concurrent REST/depth collection. Preserve original clocks, per-operation consumption, sibling cancellation and blocked real admission.",
+  "original_evidence_modified": false,
+  "prior_evidence_check": {
+    "scenario_originals": 29,
+    "source_copies": 16,
+    "status": "unchanged",
+    "tracked_artifact_pins": 46
+  },
+  "prior_evidence_check_output": {
+    "path": "data/installed-concurrent-ws-2026-09-19/prior-evidence.json",
+    "sha256": "bbc9aa1047fbbfde9824745eab33a03dad7d4c2b7ae16281de60eaf344908b5e"
+  },
+  "prior_route_evidence_check": {
+    "scenario_originals": 63,
+    "source_copies": 16,
+    "status": "unchanged",
+    "tracked_artifact_pins": 27
+  },
+  "prior_route_evidence_check_output": {
+    "path": "data/installed-concurrent-ws-2026-09-19/prior-route-evidence.json",
+    "sha256": "d35e61a2fa7f940600d7dfc5c25a41accbaa378d4eef1991f2c1517186525e46"
+  },
+  "protected_source_sha256": {
+    "gateway_book_routes.py": "1bc3a5285be7b8c615fdfe00c442055cd335b0597de403061ecc1ddfa228efd2",
+    "gateway_concurrent_ws.py": "6750d5ed5182e52adb5bacee1f5847f8ef224ec498000b735d84547afb050f7a",
+    "gateway_joint_ipc.py": "e814ddfdd67b7f43fd031a13a68a6bd87cf992e6de0a92b476751e4f9e3cb6ae",
+    "gateway_native_account.py": "0242c144987b2da47c97ac2e5ac239aa14ec63164756bc85a23c943d58a9d511",
+    "gateway_native_orders.py": "775d474cede83cb54926052f4514cb4716a08104aa00ae88edbcc951997aeb08",
+    "gateway_native_receipt.py": "6c6526bf6976c3e809c3537fb86ce6c7672f3cbb08aca111ba48eac46025a0b7",
+    "gateway_native_requests.py": "2cbea5e7d162f40ffcadf41673757eeefa29d95603937ef23de43c7309f28163",
+    "gateway_native_runtime.py": "3d319536524fe7f8ee0bbc1f9eca719e748dc24e262e47e9a210b058cafca8a8",
+    "gateway_read_sequence.py": "0697bffb37081f87f734d3f8b1a77c9a781c60cf13ce3bb6ab17e32501dd4308",
+    "gateway_tls.py": "c3f56e7089d9ad3ea1e246e59e4d69e899974045da67004e6058386fce71b8c8",
+    "gateway_tls_receipt.py": "bc3f69ad3e6e68e79381cadc54f47133454f4218a96cc7be74e60189a6be9322",
+    "installed_gateway.py": "ef86d7ef433a03915444288f64ee6e82a4cd6215e9e30e47b8727dce02d2c0ba",
+    "ledger_gateway.py": "6e6d589dbd424ffb42237f0c226319c10443cdd5db0a3106a2fd1b763b6aaed4",
+    "portfolio_egress_ledger.py": "3cd1ad63037ce5c138b77bd486f1326f022e4aac682d0316cc4be54c60eaedc5",
+    "portfolio_rate_evidence.py": "18aa5bdbf1954cebc4802b38daeded07cd60e2ab1b9e508d6686ac89a07abb35",
+    "portfolio_tls_provenance.py": "def476571e9ec56e989eee02b8623b1a657337956ecd88faeabaf9f2efc70044",
+    "portfolio_ws_frames.py": "c5b72731a63be3edcdf8ea98f582058cb611ab330b4c2b6edcede51620cb3ef3",
+    "selftest.py": "75ba8a36ca075f4236f20e68524117bf1abc1431226271bb0df35912c4ebff5f"
+  },
+  "python_tests": {
+    "files": [
+      {
+        "path": "tests/ops/test_egress_route_sequence.py",
+        "sha256": "36bd7a58f75e9397181e40dd0e56d88fe370a170de11f52eb3ba11425be34244"
+      },
+      {
+        "path": "tests/ops/test_egress_order_sequence.py",
+        "sha256": "6a971f7bc07e44f6006bc05c25d10e55e5f55e203d00994b23b764c3c864825a"
+      },
+      {
+        "path": "tests/ops/test_egress_read_sequence.py",
+        "sha256": "9fbeb54565a3ff7fc50b51624e4f3dbaced3be3efee7f2d7113828648a6f8603"
+      },
+      {
+        "path": "tests/ops/test_egress_signed_account.py",
+        "sha256": "6d23f369ec3c3981c50f5f495d5940591b672b3a64d8940d7c2b35c0a04a12e9"
+      },
+      {
+        "path": "tests/ops/test_egress_native_requests.py",
+        "sha256": "9ade2336a92bd1cfd50f181a676b4c86254edfa47770db1d8d453919d9e81d62"
+      },
+      {
+        "path": "tests/ops/test_egress_native_receipt.py",
+        "sha256": "cc3b406799a82623e2b986e128b195806035bb3d0eb6e6786a75ed3d65e706f4"
+      },
+      {
+        "path": "tests/ops/test_egress_tls_receipt.py",
+        "sha256": "230189fda6301eca7f7e7029790e9de8db165933e794187331c50f6d8081875b"
+      },
+      {
+        "path": "tests/ops/test_egress_joint_ipc.py",
+        "sha256": "e546fc2bbf479a81ce19c341726a3868c545a6640e73c39a3fdd3062c11d1812"
+      },
+      {
+        "path": "tests/ops/test_egress_gateway_tls.py",
+        "sha256": "6eeb048531f6872712c155c83315242fc84accdc654483436f0e481ba5d63daa"
+      },
+      {
+        "path": "tests/ops/test_egress_installed_gateway.py",
+        "sha256": "a7f65e960c9ce1cd05503c8e1f5a881cb82ad9fb837734a3e1e305ce2aaf62d6"
+      },
+      {
+        "path": "tests/ops/test_egress_installation_selftest.py",
+        "sha256": "b23c06780d60a5e09bf751cfb6d2564a4704dfa3c430721a7e67c04dbe9328ef"
+      },
+      {
+        "path": "tests/ops/test_egress_installation.py",
+        "sha256": "01eb78b8bb46c5cc208384674928340e4253a865653275405531e4e0ceec79ab"
+      },
+      {
+        "path": "tests/ops/test_egress_package.py",
+        "sha256": "96b216e5d4f1c5b153d8889650103bb93c65b0debc95c87199ab6fb7ff0bac8b"
+      },
+      {
+        "path": "tests/ops/test_egress_ledger_gateway.py",
+        "sha256": "6cfe8c9c94ab56caa4294f64c85beffa092f18a476f3c0a434e9091940750f26"
+      },
+      {
+        "path": "tests/ops/test_egress_guard_selftest.py",
+        "sha256": "dfe1c8e795e820ab13c9a010d53092aca8c1016330dcff25f16398b606b12efa"
+      },
+      {
+        "path": "tests/ops/test_egress_collector_launcher.py",
+        "sha256": "9e5020262a12cbd4aa606b05b6974437054fb73a6664da4d821f447418976d79"
+      },
+      {
+        "path": "tests/ops/test_egress_authority_binding.py",
+        "sha256": "0a12fececd80168c31aa04e29d4f7f99faef7c0d3ba7b0f0348c596ca0a8dcf6"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_egress_ledger.py",
+        "sha256": "d13ce6c3646dfd5b52664b5aa940d9b1efa192e7392764869cfead7982d2b12a"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_joint_egress.py",
+        "sha256": "af7b4ace53f87f263a68dd761dce8dbe6ea6f6ebe3ab2d3119b190b418471484"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_tls_provenance.py",
+        "sha256": "c4d1c96b8a44bdcb6af96242ec6cd176392f4ca5e733768c2d63b4e54805c5da"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_rate_evidence.py",
+        "sha256": "2f4ae82940cdc346a3ada4f3bd2ca1b5cd049286fd0818446909b54b7aa4567b"
+      },
+      {
+        "path": "tests/ops/test_egress_concurrent_ws.py",
+        "sha256": "8aea0ba0c28a78b3845521084041b76cedf2c94bfb2f26f54c2c5968f4895ba1"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_ws_frames.py",
+        "sha256": "a5a70a2f224aa0165a48d226b94449bf32ef7399fa6e4d7c46d11434bc2a6f63"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_market_depth.py",
+        "sha256": "589b09e907a08ec230595288e95a5ad7997fa7016c51589e76877bb9128b7062"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_market_depth_v2.py",
+        "sha256": "965fd3967eaa6c6cb6878bff8955de6c890859a46a64bace633e526de261cf25"
+      },
+      {
+        "path": "tests/ops/test_portfolio_market_depth.py",
+        "sha256": "12e3db16610a755c3bbb1cf5cd1febe2a1bb64e9fc4d2e25de01a5d3ddfefbb5"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_joint_tls_evidence.py",
+        "sha256": "16f4e46629e029b54c11cb2941ac89293b2ddd1270e26fe5e32670980aebf350"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_joint_transport.py",
+        "sha256": "476806be3c82ada891ddf018a972c4a99249b7dd57cfcca16cae2ae6561772b3"
+      }
+    ],
+    "new": 32,
+    "output": {
+      "path": "data/installed-concurrent-ws-2026-09-19/pytest-final.txt",
+      "sha256": "35b7e39f1abffd38e1e0c33233ae694ca37583981ae2e09176cc3731aa3bde35"
+    },
+    "passed": 1151,
+    "seconds": 169.13,
+    "warnings": false
+  },
+  "replayed_original_scenario_sets": 30,
+  "reports": {
+    "account-regression": {
+      "path": "data/installed-concurrent-ws-2026-09-19/account-regression.json",
+      "sha256": "0d8ee5ecdae820edb282a2bc52f621fae23acc401a1109ab5ff9ae8b1f9bba43"
+    },
+    "echo-regression": {
+      "path": "data/installed-concurrent-ws-2026-09-19/echo-regression.json",
+      "sha256": "4bfbd48a05b26f9da333fb812fa04bb64efc0d4f15b2a6e0777b50ce6e7d432f"
+    },
+    "routes-regression": {
+      "path": "data/installed-concurrent-ws-2026-09-19/routes-regression.json",
+      "sha256": "0b70ef0445b5b8dfb6d90516bd07289c76c2fa710f35eed371345419f74ebbad"
+    },
+    "ws-final": {
+      "path": "data/installed-concurrent-ws-2026-09-19/ws-final.json",
+      "sha256": "70f24d7cb2acfc28410f6fbb87b33c35cba850ffe837858e6522bb2ffdd349bc"
+    }
+  },
+  "resource_limit_increased": false,
+  "retained_drivers": {
+    "extract-runtime.py": {
+      "path": "data/installed-concurrent-ws-2026-09-19/extract-runtime.py",
+      "sha256": "8e53f57faa6a75494a658ac87bf05e02927ffce2c3eeca3ff13fa7fe5442e224"
+    },
+    "final-tests.py": {
+      "path": "data/installed-concurrent-ws-2026-09-19/final-tests.py",
+      "sha256": "e6310cef2ea3cb6fad21d78a92611a5aa2bf902e839366ab824019afac34bf53"
+    },
+    "native-replay.py": {
+      "path": "data/installed-concurrent-ws-2026-09-19/native-replay.py",
+      "sha256": "4600a1da905767b838068ce20d9507d1d3520b749858db3c272c2d340cc485a0"
+    },
+    "record-progress.py": {
+      "path": "data/installed-concurrent-ws-2026-09-19/record-progress.py",
+      "sha256": "65f7cfc0080e83167bf869155551fd80c3c8516e5afee9cb85d0f22be5895eb9"
+    },
+    "replay.py": {
+      "path": "data/installed-concurrent-ws-2026-09-19/replay.py",
+      "sha256": "a2757b383aad8670488a79d16a968577023f67b4326a22bf4657438a25e447bd"
+    },
+    "select-evidence.py": {
+      "path": "data/installed-concurrent-ws-2026-09-19/select-evidence.py",
+      "sha256": "e09bf187e48bb8a1a6897c9428db9725b5e42c6b4bf9238fa3791a596ef4c18c"
+    },
+    "verify-current.py": {
+      "path": "data/installed-concurrent-ws-2026-09-19/verify-current.py",
+      "sha256": "2be2468656d377aa97b06b4b763713a2d8debf71dcb1cecbfd99bcb30475de85"
+    },
+    "verify-prior.py": {
+      "path": "data/installed-concurrent-ws-2026-09-19/verify-prior.py",
+      "sha256": "f229671fdaad77d111d2546ec0cee4517dbcad33cc0c325027f3bc1b9ac667ab"
+    }
+  },
+  "retained_selection": {
+    "path": "data/installed-concurrent-ws-2026-09-19/selection.json",
+    "sha256": "8516670dbd0bc354d25ca873ca7a9333823d7aaadf0894b150fad31cf0c2de34"
+  },
+  "retained_sources": {
+    "collector_launcher.py": {
+      "path": "data/installed-concurrent-ws-2026-09-19/collector_launcher.py",
+      "sha256": "d1d94a8edd0730244b6dbc7c0e24746157985e7b36b82f865397402ce0433579"
+    },
+    "gateway_book_routes.py": {
+      "path": "data/installed-concurrent-ws-2026-09-19/gateway_book_routes.py",
+      "sha256": "1bc3a5285be7b8c615fdfe00c442055cd335b0597de403061ecc1ddfa228efd2"
+    },
+    "gateway_concurrent_ws.py": {
+      "path": "data/installed-concurrent-ws-2026-09-19/gateway_concurrent_ws.py",
+      "sha256": "6750d5ed5182e52adb5bacee1f5847f8ef224ec498000b735d84547afb050f7a"
+    },
+    "gateway_joint_ipc.py": {
+      "path": "data/installed-concurrent-ws-2026-09-19/gateway_joint_ipc.py",
+      "sha256": "e814ddfdd67b7f43fd031a13a68a6bd87cf992e6de0a92b476751e4f9e3cb6ae"
+    },
+    "gateway_native_account.py": {
+      "path": "data/installed-concurrent-ws-2026-09-19/gateway_native_account.py",
+      "sha256": "0242c144987b2da47c97ac2e5ac239aa14ec63164756bc85a23c943d58a9d511"
+    },
+    "gateway_native_orders.py": {
+      "path": "data/installed-concurrent-ws-2026-09-19/gateway_native_orders.py",
+      "sha256": "775d474cede83cb54926052f4514cb4716a08104aa00ae88edbcc951997aeb08"
+    },
+    "gateway_native_receipt.py": {
+      "path": "data/installed-concurrent-ws-2026-09-19/gateway_native_receipt.py",
+      "sha256": "6c6526bf6976c3e809c3537fb86ce6c7672f3cbb08aca111ba48eac46025a0b7"
+    },
+    "gateway_native_requests.py": {
+      "path": "data/installed-concurrent-ws-2026-09-19/gateway_native_requests.py",
+      "sha256": "2cbea5e7d162f40ffcadf41673757eeefa29d95603937ef23de43c7309f28163"
+    },
+    "gateway_native_runtime.py": {
+      "path": "data/installed-concurrent-ws-2026-09-19/gateway_native_runtime.py",
+      "sha256": "3d319536524fe7f8ee0bbc1f9eca719e748dc24e262e47e9a210b058cafca8a8"
+    },
+    "gateway_read_sequence.py": {
+      "path": "data/installed-concurrent-ws-2026-09-19/gateway_read_sequence.py",
+      "sha256": "0697bffb37081f87f734d3f8b1a77c9a781c60cf13ce3bb6ab17e32501dd4308"
+    },
+    "gateway_tls.py": {
+      "path": "data/installed-concurrent-ws-2026-09-19/gateway_tls.py",
+      "sha256": "c3f56e7089d9ad3ea1e246e59e4d69e899974045da67004e6058386fce71b8c8"
+    },
+    "gateway_tls_receipt.py": {
+      "path": "data/installed-concurrent-ws-2026-09-19/gateway_tls_receipt.py",
+      "sha256": "bc3f69ad3e6e68e79381cadc54f47133454f4218a96cc7be74e60189a6be9322"
+    },
+    "helper_entry.py": {
+      "path": "data/installed-concurrent-ws-2026-09-19/helper_entry.py",
+      "sha256": "2a91437ed9080ae481eae7496e43cfe35d29888e1e3a5a12b10605b6dc320c9b"
+    },
+    "inspect_binding.py": {
+      "path": "data/installed-concurrent-ws-2026-09-19/inspect_binding.py",
+      "sha256": "27c3302222bc819767ba874d7000f2b038662fa72004cb56da25a1003c38e322"
+    },
+    "installation.py": {
+      "path": "data/installed-concurrent-ws-2026-09-19/installation.py",
+      "sha256": "9ab4118c4e13b431171e07dd26099f629a96a5138cdf2437e750fca3cb09e468"
+    },
+    "installation_selftest.py": {
+      "path": "data/installed-concurrent-ws-2026-09-19/installation_selftest.py",
+      "sha256": "e2b0e9a59cd3805ebfac2fb4b4b2c1992e8e9d2865862cf70c3876c06e42346e"
+    },
+    "installed_gateway.py": {
+      "path": "data/installed-concurrent-ws-2026-09-19/installed_gateway.py",
+      "sha256": "ef86d7ef433a03915444288f64ee6e82a4cd6215e9e30e47b8727dce02d2c0ba"
+    },
+    "installed_gateway_selftest.py": {
+      "path": "data/installed-concurrent-ws-2026-09-19/installed_gateway_selftest.py",
+      "sha256": "9992354f0d473496e06e9b357b0bb0f4927ab2590dcb4282f64bebb9a8889850"
+    },
+    "ledger_gateway.py": {
+      "path": "data/installed-concurrent-ws-2026-09-19/ledger_gateway.py",
+      "sha256": "6e6d589dbd424ffb42237f0c226319c10443cdd5db0a3106a2fd1b763b6aaed4"
+    },
+    "package.py": {
+      "path": "data/installed-concurrent-ws-2026-09-19/package.py",
+      "sha256": "7f519e26c0f85951e8d60f8cf8eaa6e774fb002c74647ee4892b491cef8b549d"
+    },
+    "portfolio_egress_ledger.py": {
+      "path": "data/installed-concurrent-ws-2026-09-19/portfolio_egress_ledger.py",
+      "sha256": "3cd1ad63037ce5c138b77bd486f1326f022e4aac682d0316cc4be54c60eaedc5"
+    },
+    "portfolio_rate_evidence.py": {
+      "path": "data/installed-concurrent-ws-2026-09-19/portfolio_rate_evidence.py",
+      "sha256": "18aa5bdbf1954cebc4802b38daeded07cd60e2ab1b9e508d6686ac89a07abb35"
+    },
+    "portfolio_tls_provenance.py": {
+      "path": "data/installed-concurrent-ws-2026-09-19/portfolio_tls_provenance.py",
+      "sha256": "def476571e9ec56e989eee02b8623b1a657337956ecd88faeabaf9f2efc70044"
+    },
+    "portfolio_ws_frames.py": {
+      "path": "data/installed-concurrent-ws-2026-09-19/portfolio_ws_frames.py",
+      "sha256": "c5b72731a63be3edcdf8ea98f582058cb611ab330b4c2b6edcede51620cb3ef3"
+    },
+    "selftest.py": {
+      "path": "data/installed-concurrent-ws-2026-09-19/selftest.py",
+      "sha256": "75ba8a36ca075f4236f20e68524117bf1abc1431226271bb0df35912c4ebff5f"
+    }
+  },
+  "root_native_modules_loaded": false,
+  "runtime_bundles": [
+    {
+      "path": "data/installed-concurrent-ws-2026-09-19/account-regression.runtime.tar.gz",
+      "sha256": "91df7e562436f4ad149e93814ce5f6ca62de85f4ad979b0168b637286fcafa6b"
+    },
+    {
+      "path": "data/installed-concurrent-ws-2026-09-19/routes-regression.runtime.tar.gz",
+      "sha256": "7466d147dc80e7a3bc12e7f26a95561fb03d01838640e44997471c4aab163269"
+    },
+    {
+      "path": "data/installed-concurrent-ws-2026-09-19/ws-final.runtime.tar.gz",
+      "sha256": "5f189bf80e7ee5b0ef68c74ab9639d0086f7aafe99bb2c53d4b6a535d8d61447"
+    }
+  ],
+  "schema_version": "portfolio.installed_concurrent_ws_acceptance.v1",
+  "trading_admitted": false,
+  "transport_contract": {
+    "account_connect_documented_weight": 2,
+    "archive_limit": 262144,
+    "byte_limit_per_channel": 8192,
+    "clock_delta_tolerance_ms": 50,
+    "deadline_starts_before_grant": true,
+    "failure": "Cancel sibling, close sockets, attempt revocation despite storage/close failure; missing journal evidence stays uncertain.",
+    "fixed_peer": [
+      "198.51.100.2",
+      23456
+    ],
+    "fixture_control_sequence": [
+      "server_ping",
+      "masked_client_pong",
+      "masked_client_close",
+      "server_close"
+    ],
+    "grant_renewal_allowed": false,
+    "kernel_ttl_ms": 5000,
+    "market_connection_charge": null,
+    "maximum_route_completion_age_ms": 5000,
+    "native_route_prerequisite": {
+      "documented_weight": 224,
+      "get_requests": 6,
+      "originals_replayed_before_ws": true
+    },
+    "native_ws_events": false,
+    "owner": "Root fixture controller, one event loop; no socket handoff.",
+    "profile": "portfolio.installed_concurrent_ws.v1",
+    "raw_chunks_persisted_before_interpretation": true,
+    "roles": [
+      "account",
+      "market"
+    ],
+    "scope": "fixture-route-sequence-v1/concurrent-ws-v1",
+    "signed_subscription": false,
+    "text_data_accepted": false,
+    "total_io_deadline_ms": 4000,
+    "two_connect_preparations_before_grant": true
+  },
+  "unselected_diagnostics": [
+    {
+      "artifact": {
+        "path": "data/installed-concurrent-ws-2026-09-19/success-initial.json",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "reason": "Empty report; Python 3.10 lacks asyncio.timeout_at after six local reads and WS activation."
+    },
+    {
+      "artifact": {
+        "path": "data/installed-concurrent-ws-2026-09-19/success-compat.json",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "reason": "Empty report; Python 3.10 rejects ssl_shutdown_timeout before WS TLS completion."
+    },
+    {
+      "artifact": {
+        "path": "data/installed-concurrent-ws-2026-09-19/success-controls.json",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "reason": "Empty report; implicit int.from_bytes byte order unsupported on system Python during control processing."
+    },
+    {
+      "artifact": {
+        "path": "data/installed-concurrent-ws-2026-09-19/ws-accepted.json",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "reason": "Empty batch report; Python 3.10 asyncio.TimeoutError was not caught after Ruff replaced the compatible exception. A system-Python regression now prevents this."
+    },
+    {
+      "artifact": {
+        "path": "data/installed-concurrent-ws-2026-09-19/success-verified.json",
+        "sha256": "84eaa00b3265c01f88837f51430b6cbb7a41c3a790407f6904d9b4f843362ce1"
+      },
+      "reason": "Passing one-scenario smoke run on preliminary sources; superseded by full final-source ws-final."
+    }
+  ],
+  "upstream_touched": false,
+  "venue_requests": 0,
+  "verification_completed": "2026-09-19",
+  "verification_scope": "Eight concurrent Upgrade/control scenarios, ten six-read route, seven signed-account and five echo scenarios, plus gateway/package/native-depth/ordinary TLS regressions. All peers are disposable local fixtures."
+}

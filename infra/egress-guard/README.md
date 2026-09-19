@@ -6,6 +6,32 @@ offline disk tests, and retain read-only host deployment-input snapshots.
 Current phase: Phase 5 entry, offline infrastructure acceptance only. This is not
 a production guard, gateway audit service, quota authority or collection permit.
 
+The concurrent successor is `gateway_concurrent_ws.py`:
+
+```bash
+/usr/bin/python3 -I infra/egress-guard/installed_gateway_selftest.py --concurrent-ws-profile --report data/NEW-WS.json
+```
+
+It consumes the six-read route parent and then its nested `concurrent-ws-v1` scope;
+a fresh process cannot reopen either. Before either connection, the controller
+persists both fixed account/market connection attempts and one kernel activation
+intent. Two gateway-owned marked TLS sockets share one nonrenewable five-second
+permit and a four-second total I/O deadline measured before grant. The market
+Upgrade URL uses only the symbol union rederived from original route bytes.
+TLS hostname/CA verification, exact HTTP Upgrade, ping/pong and close handshakes
+are replayed from original chunks. One channel's failure cancels its sibling;
+cleanup attempts kernel revocation even after storage or socket-close failure.
+There is no socket handoff, signing or authenticated account subscription yet.
+
+The frame parser is now importable using stdlib alone; native depth mapping keeps
+the same shared exception/limit. Explicit byte order and compatible asyncio APIs
+support the system Python 3.10 used by the root fixture controller. Manifest v11
+pins eighteen sources; the base installation bundle remains unchanged.
+See [concurrent upgrade/control acceptance](../../docs/progress/portfolio-installed-concurrent-ws-2026-09-19.md).
+Next entrypoint: native signed account subscription and original event delivery on
+these gateway-owned channels, followed by the complete concurrent REST/depth flow.
+Host installation, real venue requests and all consumed real scopes are unchanged.
+
 `TrustedInstallation` now owns one descriptor per canonical selected directory or
 file path, including shared ancestors. `open_directory` and `open_file` return
 borrowed handles valid until installation close; callers must not close them.
@@ -20,9 +46,9 @@ from 1,009 to 844 under the unchanged 1,024 descriptor limit. Activation and
 pre-receipt samples must leave at least 64 descriptors spare. This measures sampled
 headroom, not continuous peaks or concurrent socket capacity. The updated base
 bundle pin selects the revised verifier in disposable namespaces only; no host
-helper rollout occurred. Supplemental manifest v10 still pins sixteen sources.
+helper rollout occurred. Supplemental manifest v11 still pins eighteen sources.
 See [descriptor custody acceptance](../../docs/progress/portfolio-installed-descriptor-custody-2026-09-19.md).
-Next entrypoint: concurrent gateway-owned TLS/WS using the original-derived routes.
+The concurrent upgrade/control successor above is now integrated; signed subscription and native event delivery remain pending.
 
 The six-read route profile adds `gateway_book_routes.py`:
 
@@ -42,10 +68,10 @@ use exact rational arithmetic. The selected symbol union is capped at three.
 
 The four fixture assets, eight-place precision, sixteen metadata/book rows and
 60-second same-UTC-day input interval are fixed. Original clocks remain original;
-book age, stream continuity, equity and dispatch remain unqualified. Manifest v10
-pins sixteen sources; the old three/five-read profiles stay distinct. See
+book age, stream continuity, equity and dispatch remain unqualified. Manifest v11
+pins eighteen sources; the old three/five-read profiles stay distinct. See
 [route acceptance](../../docs/progress/portfolio-installed-route-sequence-2026-09-19.md).
-Next integrate concurrent gateway-owned TLS/WS consuming these selected symbols.
+The concurrent upgrade/control successor above consumes these selected symbols; signed subscription and native event delivery remain pending.
 
 The five-read successor adds `gateway_native_orders.py` to `gateway_read_sequence.py`:
 
@@ -61,9 +87,9 @@ orders are fixed-symbol LIMIT/GTC, NEW or PARTIALLY_FILLED, at exact eight-place
 native precision. Repeated orders and balances must agree, and remaining BUY quote
 and SELL base locks must exactly account for every asset's locked balance. Empty
 orders require zero locks. No fill/fee history or atomic stream fence is inferred.
-Manifest v10 pins sixteen sources. The old three-read profile remains distinct.
+Manifest v11 pins eighteen sources. The old three-read profile remains distinct.
 See [order acceptance](../../docs/progress/portfolio-installed-order-sequence-2026-09-18.md).
-The six-read profile above derives routes; concurrent gateway TLS/WS remains pending.
+The successors above derive routes and accept concurrent TLS/WS Upgrade/control exchanges.
 
 The fixed repeated-read successor is `gateway_read_sequence.py`:
 
@@ -77,9 +103,9 @@ The exclusive parent journal binds original preparations and native acknowledgem
 each kernel permit is revoked and the child ledger closed before the next step.
 Metadata precision must match the four-asset mapper, and repeated free/locked/total
 balances must agree exactly. Drift or missing receipts never permit a resume.
-Manifest v10 pins sixteen sources; held original paths reuse descriptors without
+Manifest v11 pins eighteen sources; held original paths reuse descriptors without
 raising system limits. See [sequence acceptance](../../docs/progress/portfolio-installed-read-sequence-2026-09-18.md).
-The five-read profile above adds open orders; same-run routes and concurrent TLS/WS remain pending.
+The successors above add open orders, same-run routes and concurrent TLS/WS Upgrade/control exchanges.
 This fixed fixture does not qualify an atomic snapshot, account stream fence,
 provider quota, real account/equity or execution.
 
@@ -99,12 +125,12 @@ or missing final receipt keeps the attempt pending. Account header usage is reta
 without fabricating exchangeInfo rate limits. The four fixture assets/precision are
 fixed, and no actual account, route, WS, equity or trading qualification follows.
 
-Supplemental manifest v10 pins sixteen sources. The base installation/launcher and
+Supplemental manifest v11 pins eighteen sources. The base installation/launcher and
 prior journal profiles remain separate. Seven actual account scenarios plus 42
 regressions and detached original/native replays are recorded in
 [signed account acceptance](../../docs/progress/portfolio-installed-signed-account-2026-09-18.md).
-The sequence above joins repeated reads with metadata precision; market route
-derivation and concurrent TLS/WS remain pending.
+The successors above join repeated reads, original-derived routes and concurrent
+TLS/WS Upgrade/control exchanges. Signed subscription/native event delivery remains pending.
 
 The native request custody successor is `gateway_native_requests.py`:
 
@@ -122,11 +148,12 @@ request hashes before acknowledgements. The fixture budget stays 16 GET selector
 request dispatch follows. Fixed BTC/ETH/BNB routes and subscription ID zero are
 synthetic selections, not values derived from actual same-run responses.
 
-Manifest v10 pins sixteen protected sources. The separate request ledger/scope and
+Manifest v11 pins eighteen protected sources. The separate request ledger/scope and
 `requests.jsonl` preserve incomplete attempts after drift, consumer death or root
 crash. Detached replay verifies signatures and receipt ordering with original times;
-it never refreshes expiry or repairs missing acknowledgements. Next connect actual
-account/route collection and root-owned TLS/WS. See [request acceptance](../../docs/progress/portfolio-installed-native-requests-2026-09-17.md).
+it never refreshes expiry or repairs missing acknowledgements. The successors above
+connect account/routes and concurrent Upgrade/control; next wire native signed WS
+subscription and event delivery. See [request acceptance](../../docs/progress/portfolio-installed-native-requests-2026-09-17.md).
 
 The native metadata successor adds `gateway_native_runtime.py` and
 `gateway_native_receipt.py`. Run the existing disposable wrapper as an ordinary user:
@@ -140,7 +167,7 @@ retaining a `.runtime.tar.gz` beside the report. Only the isolated dedicated UID
 imports Nautilus and constructs BTC/ETH/BNB/USDT Currency objects from the original
 root HTTPS bytes. Its final acknowledgement binds both the native summary and the
 original payload, including original receive clocks. Root parses the expected
-summary with stdlib only. Protected fixture manifest v10 pins sixteen sources;
+summary with stdlib only. Protected fixture manifest v11 pins eighteen sources;
 base installation and earlier journal profiles remain separate.
 
 The private runtime tmpfs is root-owned and read-only. Files are fully hashed at

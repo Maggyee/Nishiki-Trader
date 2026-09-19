@@ -9,14 +9,18 @@ from __future__ import annotations
 import os
 import struct
 
-from apps.strategies_nautilus.portfolio_market_depth import MAX_FRAME, DepthError
+MAX_FRAME = 1024 * 1024
+
+
+class DepthError(ValueError):
+    """Codes are fixed project messages, never raw server/parser contents."""
 
 
 def close_payload(raw):
     if len(raw) == 1 or len(raw) > 125:
         raise DepthError("tls_ws_invalid_close")
     if raw:
-        code = int.from_bytes(raw[:2])
+        code = int.from_bytes(raw[:2], "big")
         if (
             code not in {1000, 1001, 1002, 1003, 1007, 1008, 1009, 1010, 1011, 1012, 1013, 1014}
             and not 3000 <= code <= 4999
@@ -71,7 +75,7 @@ class ServerFrames:
                 width = 2 if size == 126 else 8
                 if len(self.buffer) < 2 + width:
                     break
-                decoded = int.from_bytes(self.buffer[2 : 2 + width])
+                decoded = int.from_bytes(self.buffer[2 : 2 + width], "big")
                 if decoded < (126 if width == 2 else 65536) or decoded >= 2**63:
                     raise DepthError("tls_ws_noncanonical_length")
                 size, offset = decoded, 2 + width

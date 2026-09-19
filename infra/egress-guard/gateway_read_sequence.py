@@ -628,7 +628,9 @@ class Sequence:
         self.fds = []
 
 
-def run_installed(entry, authority, sources, *, orders=False, routes=False):
+def run_installed(entry, authority, sources, *, orders=False, routes=False, concurrent=False):
+    if concurrent and not routes:
+        raise ValueError("concurrent_ws_requires_routes")
     orders = orders or routes
     sequence = None
     try:
@@ -672,8 +674,19 @@ def run_installed(entry, authority, sources, *, orders=False, routes=False):
                 flush=True,
             )
         else:
+            transport = None
+            if concurrent:
+                code = entry["load"](sources.source("gateway_concurrent_ws.py"))
+                transport = code["run_installed"](entry, authority, sources, sequence)
             print(
-                json.dumps({"status": "sequence_completed", "network_admitted": False}), flush=True
+                json.dumps(
+                    {
+                        "status": "sequence_completed",
+                        "network_admitted": False,
+                        **({"concurrent_ws": transport} if concurrent else {}),
+                    }
+                ),
+                flush=True,
             )
     finally:
         if sequence is not None:
