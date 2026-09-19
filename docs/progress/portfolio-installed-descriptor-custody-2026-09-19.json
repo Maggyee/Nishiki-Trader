@@ -1,0 +1,687 @@
+{
+  "acceptance_scenarios": {
+    "account-regression": [
+      {
+        "checks": 74,
+        "name": "tls_success",
+        "status": "passed"
+      },
+      {
+        "checks": 74,
+        "name": "tls_slow_body",
+        "status": "passed"
+      },
+      {
+        "checks": 74,
+        "name": "native_precision",
+        "status": "passed"
+      },
+      {
+        "checks": 76,
+        "name": "receipt_runtime_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 72,
+        "name": "tls_bad_certificate",
+        "status": "passed"
+      },
+      {
+        "checks": 77,
+        "name": "receipt_child_stopped",
+        "status": "passed"
+      },
+      {
+        "checks": 76,
+        "name": "receipt_controller_crash",
+        "status": "passed"
+      }
+    ],
+    "echo-regression": [
+      {
+        "checks": 69,
+        "name": "success",
+        "status": "passed"
+      },
+      {
+        "checks": 69,
+        "name": "code_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 69,
+        "name": "account_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 69,
+        "name": "storage_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 70,
+        "name": "controller_crash",
+        "status": "passed"
+      }
+    ],
+    "native-receipt-regression": [
+      {
+        "checks": 73,
+        "name": "tls_success",
+        "status": "passed"
+      },
+      {
+        "checks": 73,
+        "name": "tls_slow_body",
+        "status": "passed"
+      },
+      {
+        "checks": 73,
+        "name": "native_precision",
+        "status": "passed"
+      },
+      {
+        "checks": 75,
+        "name": "receipt_runtime_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 72,
+        "name": "tls_bad_certificate",
+        "status": "passed"
+      },
+      {
+        "checks": 76,
+        "name": "receipt_child_stopped",
+        "status": "passed"
+      },
+      {
+        "checks": 75,
+        "name": "receipt_controller_crash",
+        "status": "passed"
+      }
+    ],
+    "routes-accepted": [
+      {
+        "checks": 75,
+        "name": "routes_success",
+        "status": "passed"
+      },
+      {
+        "checks": 75,
+        "name": "routes_two_hops",
+        "status": "passed"
+      },
+      {
+        "checks": 75,
+        "name": "routes_missing",
+        "status": "passed"
+      },
+      {
+        "checks": 75,
+        "name": "routes_depth",
+        "status": "passed"
+      },
+      {
+        "checks": 75,
+        "name": "routes_precision",
+        "status": "passed"
+      },
+      {
+        "checks": 74,
+        "name": "routes_duplicate",
+        "status": "passed"
+      },
+      {
+        "checks": 75,
+        "name": "routes_disabled",
+        "status": "passed"
+      },
+      {
+        "checks": 76,
+        "name": "routes_child_stopped",
+        "status": "passed"
+      },
+      {
+        "checks": 75,
+        "name": "routes_controller_crash",
+        "status": "passed"
+      },
+      {
+        "checks": 74,
+        "name": "routes_code_drift",
+        "status": "passed"
+      }
+    ]
+  },
+  "account_stream_fence_verified": false,
+  "actual_source_authority_qualified": false,
+  "atomic_account_snapshot": false,
+  "base_bundle": {
+    "path": "data/installed-descriptor-custody-2026-09-19/base-bundle.tar",
+    "sha256": "9240714aaf4977a44633d744d51775e0c3a786051c98c02b131d4ddf08004142"
+  },
+  "base_bundle_inspection": "Canonical archive verified with retained package.py; four sources and installer equal retained copies; bundle and base harness pins match all selected reports.",
+  "base_commit": "5de77444457c3748fce7c0ba2cecb67850143d84",
+  "base_source_sha256": {
+    "collector_launcher.py": "d1d94a8edd0730244b6dbc7c0e24746157985e7b36b82f865397402ce0433579",
+    "helper_entry.py": "2a91437ed9080ae481eae7496e43cfe35d29888e1e3a5a12b10605b6dc320c9b",
+    "inspect_binding.py": "27c3302222bc819767ba874d7000f2b038662fa72004cb56da25a1003c38e322",
+    "installation.py": "9ab4118c4e13b431171e07dd26099f629a96a5138cdf2437e750fca3cb09e468",
+    "installation_selftest.py": "e2b0e9a59cd3805ebfac2fb4b4b2c1992e8e9d2865862cf70c3876c06e42346e",
+    "package.py": "7f519e26c0f85951e8d60f8cf8eaa6e774fb002c74647ee4892b491cef8b549d"
+  },
+  "complete_caller_coverage_verified": false,
+  "concurrent_tls_ws_integrated": false,
+  "date": "2026-09-19",
+  "descriptor_acceptance": {
+    "concurrent_transport_capacity_qualified": false,
+    "continuous_peak_measurement": false,
+    "counts_by_route_scenario": {
+      "routes_child_stopped": [
+        794,
+        796,
+        806,
+        808,
+        815,
+        817,
+        824,
+        826,
+        833,
+        835,
+        842,
+        844
+      ],
+      "routes_code_drift": [
+        794,
+        796,
+        806,
+        808,
+        815,
+        817,
+        824,
+        826,
+        833,
+        835
+      ],
+      "routes_controller_crash": [
+        794,
+        796,
+        806,
+        808,
+        815,
+        817,
+        824,
+        826,
+        833,
+        835
+      ],
+      "routes_depth": [
+        794,
+        796,
+        806,
+        808,
+        815,
+        817,
+        824,
+        826,
+        833,
+        835,
+        842,
+        844
+      ],
+      "routes_disabled": [
+        794,
+        796,
+        806,
+        808,
+        815,
+        817,
+        824,
+        826,
+        833,
+        835,
+        842,
+        844
+      ],
+      "routes_duplicate": [
+        794,
+        796,
+        806,
+        808,
+        815,
+        817,
+        824,
+        826,
+        833,
+        835,
+        842
+      ],
+      "routes_missing": [
+        794,
+        796,
+        806,
+        808,
+        815,
+        817,
+        824,
+        826,
+        833,
+        835,
+        842,
+        844
+      ],
+      "routes_precision": [
+        794,
+        796,
+        806,
+        808,
+        815,
+        817,
+        824,
+        826,
+        833,
+        835,
+        842,
+        844
+      ],
+      "routes_success": [
+        794,
+        796,
+        806,
+        808,
+        815,
+        817,
+        824,
+        826,
+        833,
+        835,
+        842,
+        844
+      ],
+      "routes_two_hops": [
+        794,
+        796,
+        806,
+        808,
+        815,
+        817,
+        824,
+        826,
+        833,
+        835,
+        842,
+        844
+      ]
+    },
+    "limit": 1024,
+    "maximum_allowed_at_samples": 960,
+    "maximum_observed": 844,
+    "minimum_observed_spare": 180,
+    "minimum_required_spare": 64,
+    "observed_reduction": 165,
+    "previous_maximum_observed": 1009,
+    "resource_limit_increased": false,
+    "sampling_points": [
+      "activated",
+      "receipt_prepared"
+    ]
+  },
+  "descriptor_policy": {
+    "borrow_rechecks": [
+      "path_identity",
+      "bytes",
+      "mode_and_owner",
+      "account",
+      "mount_namespace"
+    ],
+    "canonical_absolute_paths_only": true,
+    "directories_and_files_cached": true,
+    "drift_permanently_closes": true,
+    "failed_new_acquisition_closes": true,
+    "foreign_process_borrow_and_close_refused": true,
+    "mode_change_refused": true,
+    "ownership": "Borrowed until owner installation close; callers must not close handles.",
+    "thread_concurrency_qualified": false
+  },
+  "detached_replays": [
+    {
+      "path": "data/installed-descriptor-custody-2026-09-19/replay-1.json",
+      "sha256": "ec83dd3a3ec373c6e980de786fec38a9fa4d73c845496988018e43b38517324f"
+    },
+    {
+      "path": "data/installed-descriptor-custody-2026-09-19/replay-2.json",
+      "sha256": "ec83dd3a3ec373c6e980de786fec38a9fa4d73c845496988018e43b38517324f"
+    },
+    {
+      "path": "data/installed-descriptor-custody-2026-09-19/native-replay-1.json",
+      "sha256": "df883178b77b039a4ed5c0a18557da5b9d10cba786aae17c24756e6150d19f75"
+    },
+    {
+      "path": "data/installed-descriptor-custody-2026-09-19/native-replay-2.json",
+      "sha256": "df883178b77b039a4ed5c0a18557da5b9d10cba786aae17c24756e6150d19f75"
+    }
+  ],
+  "fixture_manifest_profile": "portfolio.installed_gateway_fixture.v10",
+  "full_account_equity_qualified": false,
+  "gateway_harness_sha256": "cb18e6eb839e0526f37d4d7ad8830fa4f298ba671bd7c68406c33b52c37f6dcd",
+  "host_installation_performed": false,
+  "host_observations_unchanged": true,
+  "installation_profile": "portfolio.egress_installation.v2",
+  "live_path_affected": false,
+  "namespace_scenarios_passed": 29,
+  "native_joint_collector_integrated": false,
+  "native_regenerated_requests": 55,
+  "native_replayed_scenario_sets": 24,
+  "native_runtime": {
+    "bytes": 213365841,
+    "files": 701,
+    "manifest_sha256": "75f136be0e614515577b7b6386a03b3ff9ad9acec3c43496179beb91e13dbc8b"
+  },
+  "native_version": "1.226.0",
+  "network_admitted": false,
+  "next_step": "Integrate concurrent gateway-owned TLS/WS consuming original-derived route symbols, retaining descriptor limits, original clocks and per-operation consumption. Real admission remains blocked.",
+  "original_evidence_modified": false,
+  "prior_evidence_check": {
+    "scenario_originals": 63,
+    "source_copies": 16,
+    "status": "unchanged",
+    "tracked_artifact_pins": 27
+  },
+  "prior_evidence_check_output": {
+    "path": "data/installed-descriptor-custody-2026-09-19/prior-evidence.json",
+    "sha256": "d35e61a2fa7f940600d7dfc5c25a41accbaa378d4eef1991f2c1517186525e46"
+  },
+  "protected_source_sha256": {
+    "gateway_book_routes.py": "1bc3a5285be7b8c615fdfe00c442055cd335b0597de403061ecc1ddfa228efd2",
+    "gateway_joint_ipc.py": "e814ddfdd67b7f43fd031a13a68a6bd87cf992e6de0a92b476751e4f9e3cb6ae",
+    "gateway_native_account.py": "0242c144987b2da47c97ac2e5ac239aa14ec63164756bc85a23c943d58a9d511",
+    "gateway_native_orders.py": "775d474cede83cb54926052f4514cb4716a08104aa00ae88edbcc951997aeb08",
+    "gateway_native_receipt.py": "6c6526bf6976c3e809c3537fb86ce6c7672f3cbb08aca111ba48eac46025a0b7",
+    "gateway_native_requests.py": "2cbea5e7d162f40ffcadf41673757eeefa29d95603937ef23de43c7309f28163",
+    "gateway_native_runtime.py": "3d319536524fe7f8ee0bbc1f9eca719e748dc24e262e47e9a210b058cafca8a8",
+    "gateway_read_sequence.py": "0d9cda81f7d8106b7ad1dc94eb82da5d53a39bfd43f9867abbaaa195f7951788",
+    "gateway_tls.py": "c3f56e7089d9ad3ea1e246e59e4d69e899974045da67004e6058386fce71b8c8",
+    "gateway_tls_receipt.py": "bc3f69ad3e6e68e79381cadc54f47133454f4218a96cc7be74e60189a6be9322",
+    "installed_gateway.py": "6f8a28ae0fbaa60cfbcf0613298a1d1e46c49c71cb57663405bca43e05e14d1c",
+    "ledger_gateway.py": "6e6d589dbd424ffb42237f0c226319c10443cdd5db0a3106a2fd1b763b6aaed4",
+    "portfolio_egress_ledger.py": "3cd1ad63037ce5c138b77bd486f1326f022e4aac682d0316cc4be54c60eaedc5",
+    "portfolio_rate_evidence.py": "18aa5bdbf1954cebc4802b38daeded07cd60e2ab1b9e508d6686ac89a07abb35",
+    "portfolio_tls_provenance.py": "def476571e9ec56e989eee02b8623b1a657337956ecd88faeabaf9f2efc70044",
+    "selftest.py": "75ba8a36ca075f4236f20e68524117bf1abc1431226271bb0df35912c4ebff5f"
+  },
+  "python_tests": {
+    "files": [
+      {
+        "path": "tests/ops/test_egress_route_sequence.py",
+        "sha256": "36bd7a58f75e9397181e40dd0e56d88fe370a170de11f52eb3ba11425be34244"
+      },
+      {
+        "path": "tests/ops/test_egress_order_sequence.py",
+        "sha256": "6a971f7bc07e44f6006bc05c25d10e55e5f55e203d00994b23b764c3c864825a"
+      },
+      {
+        "path": "tests/ops/test_egress_read_sequence.py",
+        "sha256": "9fbeb54565a3ff7fc50b51624e4f3dbaced3be3efee7f2d7113828648a6f8603"
+      },
+      {
+        "path": "tests/ops/test_egress_signed_account.py",
+        "sha256": "6d23f369ec3c3981c50f5f495d5940591b672b3a64d8940d7c2b35c0a04a12e9"
+      },
+      {
+        "path": "tests/ops/test_egress_native_requests.py",
+        "sha256": "9ade2336a92bd1cfd50f181a676b4c86254edfa47770db1d8d453919d9e81d62"
+      },
+      {
+        "path": "tests/ops/test_egress_native_receipt.py",
+        "sha256": "cc3b406799a82623e2b986e128b195806035bb3d0eb6e6786a75ed3d65e706f4"
+      },
+      {
+        "path": "tests/ops/test_egress_tls_receipt.py",
+        "sha256": "230189fda6301eca7f7e7029790e9de8db165933e794187331c50f6d8081875b"
+      },
+      {
+        "path": "tests/ops/test_egress_joint_ipc.py",
+        "sha256": "e546fc2bbf479a81ce19c341726a3868c545a6640e73c39a3fdd3062c11d1812"
+      },
+      {
+        "path": "tests/ops/test_egress_gateway_tls.py",
+        "sha256": "6eeb048531f6872712c155c83315242fc84accdc654483436f0e481ba5d63daa"
+      },
+      {
+        "path": "tests/ops/test_egress_installed_gateway.py",
+        "sha256": "a7f65e960c9ce1cd05503c8e1f5a881cb82ad9fb837734a3e1e305ce2aaf62d6"
+      },
+      {
+        "path": "tests/ops/test_egress_installation_selftest.py",
+        "sha256": "b23c06780d60a5e09bf751cfb6d2564a4704dfa3c430721a7e67c04dbe9328ef"
+      },
+      {
+        "path": "tests/ops/test_egress_installation.py",
+        "sha256": "01eb78b8bb46c5cc208384674928340e4253a865653275405531e4e0ceec79ab"
+      },
+      {
+        "path": "tests/ops/test_egress_package.py",
+        "sha256": "96b216e5d4f1c5b153d8889650103bb93c65b0debc95c87199ab6fb7ff0bac8b"
+      },
+      {
+        "path": "tests/ops/test_egress_ledger_gateway.py",
+        "sha256": "6cfe8c9c94ab56caa4294f64c85beffa092f18a476f3c0a434e9091940750f26"
+      },
+      {
+        "path": "tests/ops/test_egress_guard_selftest.py",
+        "sha256": "dfe1c8e795e820ab13c9a010d53092aca8c1016330dcff25f16398b606b12efa"
+      },
+      {
+        "path": "tests/ops/test_egress_collector_launcher.py",
+        "sha256": "9e5020262a12cbd4aa606b05b6974437054fb73a6664da4d821f447418976d79"
+      },
+      {
+        "path": "tests/ops/test_egress_authority_binding.py",
+        "sha256": "0a12fececd80168c31aa04e29d4f7f99faef7c0d3ba7b0f0348c596ca0a8dcf6"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_egress_ledger.py",
+        "sha256": "d13ce6c3646dfd5b52664b5aa940d9b1efa192e7392764869cfead7982d2b12a"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_joint_egress.py",
+        "sha256": "af7b4ace53f87f263a68dd761dce8dbe6ea6f6ebe3ab2d3119b190b418471484"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_tls_provenance.py",
+        "sha256": "c4d1c96b8a44bdcb6af96242ec6cd176392f4ca5e733768c2d63b4e54805c5da"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_rate_evidence.py",
+        "sha256": "2f4ae82940cdc346a3ada4f3bd2ca1b5cd049286fd0818446909b54b7aa4567b"
+      }
+    ],
+    "new": 24,
+    "output": {
+      "path": "data/installed-descriptor-custody-2026-09-19/pytest-final.txt",
+      "sha256": "ae22194349dbe5f69069f6c9a15e7a2956a9d7afdcdd515adc120f45c323a516"
+    },
+    "passed": 912,
+    "seconds": 57.49,
+    "warnings": false
+  },
+  "replayed_original_scenario_sets": 29,
+  "reports": {
+    "account-regression": {
+      "path": "data/installed-descriptor-custody-2026-09-19/account-regression.json",
+      "sha256": "33f7644b710a542f8b54a18b90149a91b7db07c0edff345e95b6781f865c6624"
+    },
+    "echo-regression": {
+      "path": "data/installed-descriptor-custody-2026-09-19/echo-regression.json",
+      "sha256": "6d9fbae22bb46683566c46d8013c1a987668d0ce9be28daa750bfe86f1e242a8"
+    },
+    "native-receipt-regression": {
+      "path": "data/installed-descriptor-custody-2026-09-19/native-receipt-regression.json",
+      "sha256": "b19cbe1841240a2894605a5caea3d97f40b5e337262307dd6a754eb375d165e0"
+    },
+    "routes-accepted": {
+      "path": "data/installed-descriptor-custody-2026-09-19/routes-accepted.json",
+      "sha256": "3a734aaf444a94082e806a43eafdc195ede4940f7cc40d95bb036a9c45738257"
+    }
+  },
+  "resource_prerequisite_completed": true,
+  "retained_drivers": {
+    "extract-runtime.py": {
+      "path": "data/installed-descriptor-custody-2026-09-19/extract-runtime.py",
+      "sha256": "bd8946a9922f390e8b83b5a147cf51447f2a32b95d86ff59cc8824d116bc056b"
+    },
+    "final-tests.py": {
+      "path": "data/installed-descriptor-custody-2026-09-19/final-tests.py",
+      "sha256": "493b967e51e94db936430741975a65d20a2cfd1cff6148904ae2f26db17a155e"
+    },
+    "native-replay.py": {
+      "path": "data/installed-descriptor-custody-2026-09-19/native-replay.py",
+      "sha256": "14d98cee038f1a22486e66576436c31e1cc271eb5b036392dafe20234b904e4f"
+    },
+    "record-progress.py": {
+      "path": "data/installed-descriptor-custody-2026-09-19/record-progress.py",
+      "sha256": "73f9837a6cc278a9fbb3a6017d779f68daa1f1d559726acfe2fafa77afdad9f5"
+    },
+    "replay.py": {
+      "path": "data/installed-descriptor-custody-2026-09-19/replay.py",
+      "sha256": "212ba3bdbab61c48b543a6eacfa606756506ae843d64a423ab1ebb30fbc12178"
+    },
+    "select-evidence.py": {
+      "path": "data/installed-descriptor-custody-2026-09-19/select-evidence.py",
+      "sha256": "3b81b058ff14c48d947da223fd768438c6951929b72071295a4ec3f8943fba87"
+    },
+    "verify-prior.py": {
+      "path": "data/installed-descriptor-custody-2026-09-19/verify-prior.py",
+      "sha256": "7589853b2f3d60856ab84205ffbf03241231b9d02bf7eb8d028f05db3a7e025f"
+    }
+  },
+  "retained_selection": {
+    "path": "data/installed-descriptor-custody-2026-09-19/selection.json",
+    "sha256": "061031177418ce0b163742e66c098949d65068e9a464afe392b2594bd92699db"
+  },
+  "retained_sources": {
+    "collector_launcher.py": {
+      "path": "data/installed-descriptor-custody-2026-09-19/collector_launcher.py",
+      "sha256": "d1d94a8edd0730244b6dbc7c0e24746157985e7b36b82f865397402ce0433579"
+    },
+    "gateway_book_routes.py": {
+      "path": "data/installed-descriptor-custody-2026-09-19/gateway_book_routes.py",
+      "sha256": "1bc3a5285be7b8c615fdfe00c442055cd335b0597de403061ecc1ddfa228efd2"
+    },
+    "gateway_joint_ipc.py": {
+      "path": "data/installed-descriptor-custody-2026-09-19/gateway_joint_ipc.py",
+      "sha256": "e814ddfdd67b7f43fd031a13a68a6bd87cf992e6de0a92b476751e4f9e3cb6ae"
+    },
+    "gateway_native_account.py": {
+      "path": "data/installed-descriptor-custody-2026-09-19/gateway_native_account.py",
+      "sha256": "0242c144987b2da47c97ac2e5ac239aa14ec63164756bc85a23c943d58a9d511"
+    },
+    "gateway_native_orders.py": {
+      "path": "data/installed-descriptor-custody-2026-09-19/gateway_native_orders.py",
+      "sha256": "775d474cede83cb54926052f4514cb4716a08104aa00ae88edbcc951997aeb08"
+    },
+    "gateway_native_receipt.py": {
+      "path": "data/installed-descriptor-custody-2026-09-19/gateway_native_receipt.py",
+      "sha256": "6c6526bf6976c3e809c3537fb86ce6c7672f3cbb08aca111ba48eac46025a0b7"
+    },
+    "gateway_native_requests.py": {
+      "path": "data/installed-descriptor-custody-2026-09-19/gateway_native_requests.py",
+      "sha256": "2cbea5e7d162f40ffcadf41673757eeefa29d95603937ef23de43c7309f28163"
+    },
+    "gateway_native_runtime.py": {
+      "path": "data/installed-descriptor-custody-2026-09-19/gateway_native_runtime.py",
+      "sha256": "3d319536524fe7f8ee0bbc1f9eca719e748dc24e262e47e9a210b058cafca8a8"
+    },
+    "gateway_read_sequence.py": {
+      "path": "data/installed-descriptor-custody-2026-09-19/gateway_read_sequence.py",
+      "sha256": "0d9cda81f7d8106b7ad1dc94eb82da5d53a39bfd43f9867abbaaa195f7951788"
+    },
+    "gateway_tls.py": {
+      "path": "data/installed-descriptor-custody-2026-09-19/gateway_tls.py",
+      "sha256": "c3f56e7089d9ad3ea1e246e59e4d69e899974045da67004e6058386fce71b8c8"
+    },
+    "gateway_tls_receipt.py": {
+      "path": "data/installed-descriptor-custody-2026-09-19/gateway_tls_receipt.py",
+      "sha256": "bc3f69ad3e6e68e79381cadc54f47133454f4218a96cc7be74e60189a6be9322"
+    },
+    "helper_entry.py": {
+      "path": "data/installed-descriptor-custody-2026-09-19/helper_entry.py",
+      "sha256": "2a91437ed9080ae481eae7496e43cfe35d29888e1e3a5a12b10605b6dc320c9b"
+    },
+    "inspect_binding.py": {
+      "path": "data/installed-descriptor-custody-2026-09-19/inspect_binding.py",
+      "sha256": "27c3302222bc819767ba874d7000f2b038662fa72004cb56da25a1003c38e322"
+    },
+    "installation.py": {
+      "path": "data/installed-descriptor-custody-2026-09-19/installation.py",
+      "sha256": "9ab4118c4e13b431171e07dd26099f629a96a5138cdf2437e750fca3cb09e468"
+    },
+    "installation_selftest.py": {
+      "path": "data/installed-descriptor-custody-2026-09-19/installation_selftest.py",
+      "sha256": "e2b0e9a59cd3805ebfac2fb4b4b2c1992e8e9d2865862cf70c3876c06e42346e"
+    },
+    "installed_gateway.py": {
+      "path": "data/installed-descriptor-custody-2026-09-19/installed_gateway.py",
+      "sha256": "6f8a28ae0fbaa60cfbcf0613298a1d1e46c49c71cb57663405bca43e05e14d1c"
+    },
+    "installed_gateway_selftest.py": {
+      "path": "data/installed-descriptor-custody-2026-09-19/installed_gateway_selftest.py",
+      "sha256": "cb18e6eb839e0526f37d4d7ad8830fa4f298ba671bd7c68406c33b52c37f6dcd"
+    },
+    "ledger_gateway.py": {
+      "path": "data/installed-descriptor-custody-2026-09-19/ledger_gateway.py",
+      "sha256": "6e6d589dbd424ffb42237f0c226319c10443cdd5db0a3106a2fd1b763b6aaed4"
+    },
+    "package.py": {
+      "path": "data/installed-descriptor-custody-2026-09-19/package.py",
+      "sha256": "7f519e26c0f85951e8d60f8cf8eaa6e774fb002c74647ee4892b491cef8b549d"
+    },
+    "portfolio_egress_ledger.py": {
+      "path": "data/installed-descriptor-custody-2026-09-19/portfolio_egress_ledger.py",
+      "sha256": "3cd1ad63037ce5c138b77bd486f1326f022e4aac682d0316cc4be54c60eaedc5"
+    },
+    "portfolio_rate_evidence.py": {
+      "path": "data/installed-descriptor-custody-2026-09-19/portfolio_rate_evidence.py",
+      "sha256": "18aa5bdbf1954cebc4802b38daeded07cd60e2ab1b9e508d6686ac89a07abb35"
+    },
+    "portfolio_tls_provenance.py": {
+      "path": "data/installed-descriptor-custody-2026-09-19/portfolio_tls_provenance.py",
+      "sha256": "def476571e9ec56e989eee02b8623b1a657337956ecd88faeabaf9f2efc70044"
+    },
+    "selftest.py": {
+      "path": "data/installed-descriptor-custody-2026-09-19/selftest.py",
+      "sha256": "75ba8a36ca075f4236f20e68524117bf1abc1431226271bb0df35912c4ebff5f"
+    }
+  },
+  "root_native_modules_loaded": false,
+  "runtime_bundles": [
+    {
+      "path": "data/installed-descriptor-custody-2026-09-19/account-regression.runtime.tar.gz",
+      "sha256": "a418f521c1acdd82e24d751dadcba26b76d23e1999f2a15e58186218504ee0fa"
+    },
+    {
+      "path": "data/installed-descriptor-custody-2026-09-19/native-receipt-regression.runtime.tar.gz",
+      "sha256": "b1b200242d620fba39615b50f041441089188b1ea363ff33cabf067f6a3cafba"
+    },
+    {
+      "path": "data/installed-descriptor-custody-2026-09-19/routes-accepted.runtime.tar.gz",
+      "sha256": "7ae61abf0847dd7f07666fa0661576ae1df294f8a54d5f4461c9c46e9aab9938"
+    }
+  ],
+  "schema_version": "portfolio.installed_descriptor_custody_acceptance.v1",
+  "trading_admitted": false,
+  "unselected_diagnostics": [
+    {
+      "artifact": {
+        "path": "data/installed-descriptor-custody-2026-09-19/routes-final.json",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "reason": "Empty exclusive report created before bundle_size_or_sha256 rejection with stale base bundle pin; no namespace or network work began. Updated disposable selection rerun is routes-accepted."
+    }
+  ],
+  "upstream_touched": false,
+  "venue_requests": 0,
+  "verification_completed": "2026-09-19",
+  "verification_scope": "Current-source six-read routes, signed account, native metadata receipt and echo disposable modes. The 21-file Python regression batch covers other gateway/package/installation paths. These 29 scenarios do not replace the prior 63-scenario historical acceptance."
+}

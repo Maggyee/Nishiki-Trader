@@ -273,3 +273,130 @@ def test_legacy_manifest_cannot_omit_fixed_entrypoint(policy, staged):
     manifest.write_text(json.dumps(document))
     with pytest.raises(ValueError, match="manifest_schema"):
         policy.TrustedInstallation()
+
+
+def test_repeated_borrowed_paths_do_not_consume_descriptors(policy, staged):
+    install = policy.TrustedInstallation()
+    try:
+        before = len(list(Path("/proc/self/fd").iterdir()))
+        selected = install.open_file(policy.CODE_ROOT + "/collector_launcher.py", 0o444)
+        directory = install.open_directory(policy.CODE_ROOT)
+        for _ in range(128):
+            assert install.open_file(policy.CODE_ROOT + "/collector_launcher.py", 0o444) == selected
+            assert install.open_directory(policy.CODE_ROOT) == directory
+            assert install.open_directory("/") == install.root
+        assert len(list(Path("/proc/self/fd").iterdir())) == before
+        assert len(install.fds) == len(
+            {(os.fstat(fd).st_dev, os.fstat(fd).st_ino) for fd in install.fds}
+        )
+    finally:
+        install.close()
+
+
+def test_new_files_under_held_directory_need_only_one_descriptor_each(policy, staged):
+    install = policy.TrustedInstallation()
+    try:
+        before = len(list(Path("/proc/self/fd").iterdir()))
+        for i in range(32):
+            path = policy.CODE_ROOT + f"/extension_{i}.py"
+            original = local_path(policy, staged, path)
+            original.write_bytes(b"# fixed extension\n")
+            original.chmod(0o444)
+            assert os.pread(install.open_file(path, 0o444), 100, 0) == original.read_bytes()
+        assert len(list(Path("/proc/self/fd").iterdir())) == before + 32
+    finally:
+        install.close()
+
+
+@pytest.mark.parametrize("operation", ["file", "directory"])
+@pytest.mark.parametrize("damage", ["bytes", "replace", "ancestor", "mode", "account", "namespace"])
+def test_cached_open_rechecks_all_authority_and_latches_failure(
+    policy, staged, monkeypatch, operation, damage
+):
+    install = policy.TrustedInstallation()
+    target = local_path(policy, staged, policy.CODE_ROOT + "/collector_launcher.py")
+    original = target.read_bytes()
+    if damage == "bytes":
+        target.chmod(0o644)
+        target.write_bytes(original + b"changed")
+        target.chmod(0o444)
+    elif damage == "replace":
+        target.rename(target.with_suffix(".old"))
+        target.write_bytes(original)
+        target.chmod(0o444)
+    elif damage == "ancestor":
+        parent = local_path(policy, staged, policy.CODE_ROOT)
+        parent.rename(parent.with_name("old-code"))
+        parent.mkdir(mode=0o700)
+    elif damage == "mode":
+        target.chmod(0o644)
+    elif damage == "account":
+        staged[1][0].pw_uid += 1
+    else:
+        monkeypatch.setattr(policy.os, "readlink", lambda p: "mnt:changed")
+
+    def reopen():
+        if operation == "file":
+            return install.open_file(policy.CODE_ROOT + "/collector_launcher.py", 0o444)
+        return install.open_directory(policy.CODE_ROOT)
+
+    with pytest.raises((ValueError, OSError)):
+        reopen()
+    assert install.closed
+    if damage == "bytes":
+        target.chmod(0o644)
+        target.write_bytes(original)
+        target.chmod(0o444)
+    elif damage == "mode":
+        target.chmod(0o444)
+    elif damage == "account":
+        staged[1][0].pw_uid -= 1
+    with pytest.raises(ValueError, match="closed"):
+        reopen()
+
+
+@pytest.mark.parametrize(
+    "path", ["relative", "/usr/../etc", "/usr//local", "/usr/./local", "//usr/local", "/usr/local/"]
+)
+def test_noncanonical_cached_paths_refused_without_leaking(policy, staged, path):
+    before = len(list(Path("/proc/self/fd").iterdir()))
+    install = policy.TrustedInstallation()
+    with pytest.raises(ValueError, match="canonical_absolute"):
+        install.open_directory(path)
+    assert install.closed and len(list(Path("/proc/self/fd").iterdir())) == before
+
+
+def test_same_file_cannot_be_reborrowed_under_another_mode(policy, staged):
+    install = policy.TrustedInstallation()
+    with pytest.raises(ValueError, match="selected_mode_changed"):
+        install.open_file(policy.CODE_ROOT + "/collector_launcher.py", 0o600)
+    assert install.closed
+
+
+def test_new_open_failure_closes_previously_cached_descriptors(policy, staged):
+    before = len(list(Path("/proc/self/fd").iterdir()))
+    install = policy.TrustedInstallation()
+    with pytest.raises(FileNotFoundError):
+        install.open_file(policy.CODE_ROOT + "/missing.py", 0o444)
+    assert install.closed and len(list(Path("/proc/self/fd").iterdir())) == before
+
+
+@pytest.mark.parametrize("operation", ["file", "directory"])
+def test_foreign_owner_cannot_reborrow_or_close_original_descriptors(
+    policy, staged, monkeypatch, operation
+):
+    install = policy.TrustedInstallation()
+    owner = os.getpid()
+    monkeypatch.setattr(policy.os, "getpid", lambda: owner + 1)
+    try:
+        with pytest.raises(ValueError, match="foreign_owner"):
+            if operation == "file":
+                install.open_file(policy.CODE_ROOT + "/collector_launcher.py", 0o444)
+            else:
+                install.open_directory(policy.CODE_ROOT)
+        assert not install.closed
+        for fd in install.fds:
+            os.fstat(fd)
+    finally:
+        monkeypatch.setattr(policy.os, "getpid", lambda: owner)
+        install.close()

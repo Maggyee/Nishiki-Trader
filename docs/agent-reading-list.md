@@ -22,6 +22,15 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For installed descriptor custody and the concurrent-transport resource prerequisite,
+read `docs/progress/portfolio-installed-descriptor-custody-2026-09-19.md` and its JSON.
+The base v2 verifier reuses borrowed canonical directory/file descriptors and
+revalidates held authority; observed drift permanently closes it. Disposable
+six-read sampling falls from 1,009 to 844 descriptors under the unchanged 1,024
+limit; acceptance requires at least 64 spare at sampled points. The base bundle
+pin changes only for disposable acceptance; host installation is unchanged.
+Concurrent gateway TLS/WS remains the next entrypoint, not an accepted capability.
+
 For the installed six-read sequence and same-run market routes, read
 `docs/progress/portfolio-installed-route-sequence-2026-09-19.md` and its JSON.
 Manifest v10 pins sixteen sources. The separate route scope appends fixed unsigned

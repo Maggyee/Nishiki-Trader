@@ -6,6 +6,24 @@ offline disk tests, and retain read-only host deployment-input snapshots.
 Current phase: Phase 5 entry, offline infrastructure acceptance only. This is not
 a production guard, gateway audit service, quota authority or collection permit.
 
+`TrustedInstallation` now owns one descriptor per canonical selected directory or
+file path, including shared ancestors. `open_directory` and `open_file` return
+borrowed handles valid until installation close; callers must not close them.
+Each borrow rechecks held path identity, bytes, ownership/mode, account and mount
+namespace. File reborrows must use the original mode. Observed drift or a failed
+new acquisition permanently closes the authority, without reopening it; foreign
+processes cannot borrow or close the original owner's handles. No-follow opens,
+single-link regular-file checks and the base v2 manifest inventory remain intact.
+
+In disposable six-read acceptance, the maximum sampled controller count falls
+from 1,009 to 844 under the unchanged 1,024 descriptor limit. Activation and
+pre-receipt samples must leave at least 64 descriptors spare. This measures sampled
+headroom, not continuous peaks or concurrent socket capacity. The updated base
+bundle pin selects the revised verifier in disposable namespaces only; no host
+helper rollout occurred. Supplemental manifest v10 still pins sixteen sources.
+See [descriptor custody acceptance](../../docs/progress/portfolio-installed-descriptor-custody-2026-09-19.md).
+Next entrypoint: concurrent gateway-owned TLS/WS using the original-derived routes.
+
 The six-read route profile adds `gateway_book_routes.py`:
 
 ```bash

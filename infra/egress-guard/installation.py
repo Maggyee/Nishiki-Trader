@@ -82,6 +82,7 @@ class TrustedInstallation:
     def __init__(self):
         self.owner_pid = os.getpid()
         self.fds, self.entries, self.contents = [], [], {}
+        self.directories, self.files = {}, {}
         self.closed = False
         try:
             self.root = _root_fd()
@@ -89,6 +90,7 @@ class TrustedInstallation:
             self.root_identity = metadata(os.fstat(self.root))
             self.check_directory(os.fstat(self.root))
             self.mount_namespace = os.readlink("/proc/self/ns/mnt")
+            self.directories["/"] = self.root
             manifest_fd = self.open_file(MANIFEST, 0o600)
             raw = read_fd(manifest_fd)
             document = json.loads(raw)
@@ -130,33 +132,74 @@ class TrustedInstallation:
         ):
             raise ValueError("installation_directory_authority")
 
+    @staticmethod
+    def selected_path(path):
+        value = str(path)
+        if (
+            not value.startswith("/")
+            or value.startswith("//")
+            or str(Path(value)) != value
+            or ".." in Path(value).parts
+        ):
+            raise ValueError("installation_canonical_absolute_path_required")
+        return value
+
     def open_directory(self, path):
-        parent = self.root
-        for name in Path(path).parts[1:]:
+        try:
+            self.verify()
+            path = self.selected_path(path)
+            parent, selected = self.root, ""
+            for name in Path(path).parts[1:]:
+                selected += "/" + name
+                if selected in self.directories:
+                    parent = self.directories[selected]
+                    continue
+                fd = os.open(
+                    name,
+                    os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC,
+                    dir_fd=parent,
+                )
+                self.fds.append(fd)
+                info = os.fstat(fd)
+                self.check_directory(info)
+                self.entries.append((parent, name, fd, metadata(info)))
+                self.directories[selected] = fd
+                parent = fd
+            self.verify()
+            return parent
+        except BaseException:
+            self.close()
+            raise
+
+    def open_file(self, path, mode):
+        try:
+            self.verify()
+            selected = self.selected_path(path)
+            if selected in self.files:
+                fd, expected_mode = self.files[selected]
+                if mode != expected_mode:
+                    raise ValueError("installation_selected_mode_changed")
+                return fd  # Borrowed until close(); never transferred to callers.
+            path = Path(selected)
+            parent = self.open_directory(str(path.parent))
             fd = os.open(
-                name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC, dir_fd=parent
+                path.name,
+                os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC,
+                dir_fd=parent,
             )
             self.fds.append(fd)
             info = os.fstat(fd)
-            self.check_directory(info)
-            self.entries.append((parent, name, fd, metadata(info)))
-            parent = fd
-        return parent
-
-    def open_file(self, path, mode):
-        path = Path(path)
-        parent = self.open_directory(str(path.parent))
-        fd = os.open(
-            path.name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC, dir_fd=parent
-        )
-        self.fds.append(fd)
-        info = os.fstat(fd)
-        if info.st_uid != AUTHORITY_UID or stat.S_IMODE(info.st_mode) != mode:
-            raise ValueError("installation_file_authority")
-        raw = read_fd(fd)
-        self.entries.append((parent, path.name, fd, metadata(info)))
-        self.contents[fd] = raw
-        return fd
+            if info.st_uid != AUTHORITY_UID or stat.S_IMODE(info.st_mode) != mode:
+                raise ValueError("installation_file_authority")
+            raw = read_fd(fd)
+            self.entries.append((parent, path.name, fd, metadata(info)))
+            self.contents[fd] = raw
+            self.files[selected] = fd, mode
+            self.verify()
+            return fd
+        except BaseException:
+            self.close()
+            raise
 
     def verify(self):
         if os.getpid() != self.owner_pid or self.closed:
@@ -165,7 +208,7 @@ class TrustedInstallation:
             if (
                 os.readlink("/proc/self/ns/mnt") != self.mount_namespace
                 or metadata(os.fstat(self.root)) != self.root_identity
-                or _account() != self.account
+                or (hasattr(self, "account") and _account() != self.account)
             ):
                 raise ValueError("installation_authority_changed")
             for parent, name, fd, selected in self.entries:

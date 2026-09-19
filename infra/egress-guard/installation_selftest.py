@@ -16,7 +16,7 @@ import signal
 import subprocess
 from pathlib import Path
 
-PIN = "995380e089df6c658a2ee7fa8224441d6173ed08b9656fc6447fad85d62800ec"
+PIN = "9240714aaf4977a44633d744d51775e0c3a786051c98c02b131d4ddf08004142"
 INSTALLER_PIN = "7f519e26c0f85951e8d60f8cf8eaa6e774fb002c74647ee4892b491cef8b549d"
 ENV = {"PATH": "/usr/sbin:/usr/bin:/sbin:/bin", "LC_ALL": "C"}
 PYTHON = "/usr/bin/python3"

@@ -1188,9 +1188,9 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                 "sequence_replay_counts:"
                 + str((report["prepared_steps"], report["accepted_steps"], len(peers), terminal))
             )
-        if max(descriptor_counts) >= 1024:
+        if max(descriptor_counts) + 64 > 1024:
             raise RuntimeError("sequence_descriptor_budget_exceeded")
-        checks.append("bounded_controller_descriptors_below_1024_without_limit_change")
+        checks.append("controller_descriptors_preserve_64_spare_under_1024_without_limit_change")
         checks.append("selected_parent_and_all_child_originals_replay")
         originals = {
             str(p.relative_to(root)): p.read_bytes() for p in root.rglob("*") if p.is_file()
