@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-22
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: The installed fixture now joins six native reads and original-derived concurrent gateway WebSockets to one native signed account subscription and a partial balance-event receipt. Exact originals and signer identity bind delivery; both sockets close and kernel permission is revoked before the native acknowledgement. Next integrate market/depth events and the remaining concurrent REST/depth flow. Stream fences, real authority/coverage, provider limits/clocks, host rollout, qualified equity and trading remain blocked.
+- **Current objective**: The installed fixture now receives native-signed account events and original-derived market depth increments concurrently, then acknowledges exact native AccountBalance/OrderBookDelta batches after socket closure and kernel revocation. These are bounded unanchored segments. Next integrate per-symbol REST depth snapshots and revision linkage before synchronized books/quotes. Full joint collection, stream fences, real authority/coverage, provider limits/clocks, host rollout, qualified equity and trading remain blocked.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -331,15 +331,17 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
    including exact top-book capacity checks and explicit zero balances.
    [Descriptor custody](progress/portfolio-installed-descriptor-custody-2026-09-19.md)
    now reuses held installation paths with fail-closed revalidation;
-   current-profile samples leave 174 spare under the unchanged 1,024 limit.
+   current-profile samples leave 172 spare under the unchanged 1,024 limit.
    [Concurrent TLS/WebSocket upgrade/control integration](progress/portfolio-installed-concurrent-ws-2026-09-19.md)
    now binds two fixed gateway-owned channels to those original-derived symbols,
    with shared expiry, durable connection attempts and sibling failure cleanup.
    [Signed account WS and partial native receipt](progress/portfolio-installed-signed-ws-2026-09-22.md)
    now persists one native-signed subscription and original partial update, with
-   native acknowledgement only after socket closure and kernel revocation. Next
-   integrate market/depth events and remaining concurrent REST/depth operations.
-   Sampling never proves coverage.
+   native acknowledgement only after socket closure and kernel revocation.
+   [Market depth increment receipts](progress/portfolio-installed-market-ws-2026-09-22.md)
+   now receive both channels concurrently and acknowledge exact native delta batches.
+   Next integrate REST depth snapshots and revision linkage; no synchronized book
+   or QuoteTick follows from the unanchored segments. Sampling never proves coverage.
    Actual authority policy, fresh rate/clock consumption and provider-charge
    resolution must precede any separately reviewed real joint dispatch.
    Preserve the consumed scope; no retry, second IPv4 or extended interruption
@@ -384,17 +386,17 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
 
 ## Latest Verification
 
-- Installed signed account WebSocket / partial native event: **33 new / 1,184 tests pass**,
-  no warnings; **39 current-source disposable scenarios pass** (nine signed WS, eight controls,
-  ten route, seven account, five echo). Two original replays match across 39 sets;
-  two frozen-native replays match across 34 sets and 147 regenerated request
-  envelopes. Four partial results reconstruct offline; only two retain original
-  native acknowledgements. Missing acknowledgements remain incomplete.
-  Manifest v12 pins nineteen sources; the base bundle is unchanged. Maximum
-  sampled descriptors are **850**, leaving **174** under the unchanged 1,024 limit.
-  See [signed WS acceptance](progress/portfolio-installed-signed-ws-2026-09-22.md).
-  Prior originals are immutable. Market/depth delivery, full joint collection,
-  stream fences, event-time freshness and real admission remain pending.
+- Installed concurrent account/market increments: **32 new / 1,216 tests pass**,
+  no warnings; **51 current-source disposable scenarios pass** (twelve market WS, nine signed WS,
+  eight controls, ten route, seven account, five echo). Two original replays match
+  across 51 sets; two frozen-native replays match across 46 sets and 217 regenerated
+  request envelopes. Five market results / twenty delta batches reconstruct offline;
+  only three preserve original native acknowledgements. Missing receipts stay incomplete.
+  Manifest v13 pins twenty sources; the base bundle is unchanged. Maximum sampled
+  descriptors are **852**, leaving **172** under the unchanged 1,024 limit.
+  See [market increment acceptance](progress/portfolio-installed-market-ws-2026-09-22.md).
+  Prior originals are immutable. REST depth snapshots/revision linkage, full joint
+  collection, stream fences, event-time freshness and real admission remain pending.
 - The complete ordinary-process native joint collector retains its prior 20-operation /
   16-GET / 448-weight acceptance and original receipt clocks. Connecting that collector
   to installed gateway-owned sockets remains pending. Earlier details are archived in

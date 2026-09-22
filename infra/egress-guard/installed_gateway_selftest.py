@@ -100,6 +100,20 @@ SIGNED_WS_SCENARIOS = (
     "routes_ws_controller_crash",
     "routes_ws_code_drift",
 )
+MARKET_WS_SCENARIOS = (
+    "routes_ws_success",
+    "routes_ws_two_hops",
+    "routes_ws_overlap",
+    "routes_ws_gap",
+    "routes_ws_duplicate_update",
+    "routes_ws_wrong_stream",
+    "routes_ws_market_precision",
+    "routes_ws_missing_symbol",
+    "routes_ws_extra_market",
+    "routes_ws_child_stopped",
+    "routes_ws_code_drift",
+    "routes_ws_controller_crash",
+)
 FIXTURE_BOOKS = [
     {"symbol": asset + "USDT", "bidPrice": price, "askPrice": ask, "bidQty": "10", "askQty": "10"}
     for asset, price, ask in (
@@ -171,7 +185,7 @@ if runtime.exists():
     denied('native_runtime_write',lambda:os.open(runtime/'bin/python3.12',os.O_WRONLY))
     denied('native_runtime_replace',lambda:os.unlink(runtime/'bin/python3.12'))
 code=Path('/usr/local/lib/trader-egress')
-for name in ('installed_gateway.py','gateway_tls.py','gateway_joint_ipc.py','gateway_tls_receipt.py','gateway_native_runtime.py','gateway_native_receipt.py','gateway_native_requests.py','gateway_native_account.py','gateway_native_orders.py','gateway_book_routes.py','gateway_read_sequence.py','gateway_concurrent_ws.py','gateway_account_ws.py','portfolio_ws_frames.py','ledger_gateway.py','selftest.py','portfolio_rate_evidence.py','portfolio_tls_provenance.py','portfolio_egress_ledger.py'):
+for name in ('installed_gateway.py','gateway_tls.py','gateway_joint_ipc.py','gateway_tls_receipt.py','gateway_native_runtime.py','gateway_native_receipt.py','gateway_native_requests.py','gateway_native_account.py','gateway_native_orders.py','gateway_book_routes.py','gateway_read_sequence.py','gateway_concurrent_ws.py','gateway_account_ws.py','gateway_market_ws.py','portfolio_ws_frames.py','ledger_gateway.py','selftest.py','portfolio_rate_evidence.py','portfolio_tls_provenance.py','portfolio_egress_ledger.py'):
     path=code/name
     assert path.read_bytes()
     denied('write:'+name,lambda:os.open(path,os.O_WRONLY))
@@ -358,7 +372,7 @@ def serve(raw):
             connection.sendall(ping[:3]);connection.sendall(ping[3:])
             control(connection,10,b'fixture:'+role.encode())
             with lock:report['pongs']+=1
-            if sys.argv[2]=='signed' and role=='account':
+            if sys.argv[2] in {'signed','market'} and role=='account':
                 head=exact(connection,2)
                 if head[0]!=0x81 or not head[1]&0x80:raise ValueError('signed_text_required')
                 size=head[1]&127
@@ -385,6 +399,25 @@ def serve(raw):
                 first=frame(1,event_raw[:50]);first=bytes([1])+first[1:]
                 connection.sendall(first[:7]);connection.sendall(first[7:]+frame(0,event_raw[50:]))
                 if scenario=='routes_ws_extra_event':connection.sendall(frame(1,event_raw))
+            if sys.argv[2]=='market' and role=='market':
+                sent=0
+                for index in range(2):
+                    for symbol in symbols:
+                        if scenario=='routes_ws_missing_symbol' and symbol==symbols[-1]:continue
+                        now=time.time_ns()//1000000
+                        event={'stream':symbol.lower()+'@depth@100ms','data':{'e':'depthUpdate','E':now,'s':symbol,'U':100+index*2,'u':101+index*2,'b':[['100.00000000','1.10000000' if index==0 else '0.00000000']],'a':[['101.00000000','2.00000000']]}}
+                        if index==1 and scenario=='routes_ws_overlap':event['data']['U']=101
+                        if index==1 and scenario=='routes_ws_gap':event['data']['U']=104;event['data']['u']=105
+                        if index==1 and scenario=='routes_ws_duplicate_update':event['data']['U']=100;event['data']['u']=101
+                        if scenario=='routes_ws_wrong_stream':event['stream']='foreign@depth@100ms'
+                        if scenario=='routes_ws_market_precision':event['data']['b'][0][0]='100.000000001'
+                        raw=json.dumps(event,separators=(',',':')).encode()
+                        first=frame(1,raw[:30]);first=bytes([1])+first[1:]
+                        connection.sendall(first[:5]);connection.sendall(first[5:]+frame(0,raw[30:]))
+                        sent+=1
+                if scenario=='routes_ws_extra_market':connection.sendall(frame(1,raw));sent+=1
+                with lock:report['market_events_sent']=sent
+            if sys.argv[2]=='market':barrier.wait()
             control(connection,8,b'\x03\xe8')
             with lock:report['closes']+=1
             connection.sendall(frame(8,b'\x03\xe8'))
@@ -411,7 +444,8 @@ def worker(payload):
     base = load(payload["base_source"])
     base["require_isolation"](payload["original"])
     requests = payload.get("native_requests_profile", False)
-    signed_ws = payload.get("signed_ws_profile", False)
+    market_ws = payload.get("market_ws_profile", False)
+    signed_ws = payload.get("signed_ws_profile", False) or market_ws
     concurrent = payload.get("concurrent_ws_profile", False) or signed_ws
     routes = payload.get("route_sequence_profile", False) or concurrent
     orders = payload.get("order_sequence_profile", False) or routes
@@ -435,7 +469,9 @@ def worker(payload):
         or (tls and ipc)
         or payload["scenario"]
         not in (
-            SIGNED_WS_SCENARIOS
+            MARKET_WS_SCENARIOS
+            if market_ws
+            else SIGNED_WS_SCENARIOS
             if signed_ws
             else WS_SCENARIOS
             if concurrent
@@ -1035,7 +1071,8 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
     """Drive fixed barriers only; parent is namespace PID 1 and has no host network."""
     code = load(payload["sources"]["gateway_read_sequence.py"])
     modules = code["load_sources"](payload["sources"])
-    signed_ws = payload.get("signed_ws_profile", False)
+    market_ws = payload.get("market_ws_profile", False)
+    signed_ws = payload.get("signed_ws_profile", False) or market_ws
     concurrent = payload.get("concurrent_ws_profile", False) or signed_ws
     routes = payload.get("route_sequence_profile", False) or concurrent
     orders = payload.get("order_sequence_profile", False) or routes
@@ -1046,7 +1083,9 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
         "/usr/bin/python3",
         "-I",
         entry["CODE"] + "/installed_gateway.py",
-        "--signed-ws-fixture"
+        "--market-ws-fixture"
+        if market_ws
+        else "--signed-ws-fixture"
         if signed_ws
         else "--concurrent-ws-fixture"
         if concurrent
@@ -1207,7 +1246,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                         "-c",
                         WS_PEER,
                         scenario,
-                        "signed" if signed_ws else "controls",
+                        "market" if market_ws else "signed" if signed_ws else "controls",
                     ],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
@@ -1240,7 +1279,13 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                     ws_rows = list(
                         map(
                             json.loads,
-                            (root / "signed-account-ws-v1" / "ws.jsonl").read_bytes().splitlines(),
+                            (
+                                root
+                                / ("account-market-ws-v1" if market_ws else "signed-account-ws-v1")
+                                / "ws.jsonl"
+                            )
+                            .read_bytes()
+                            .splitlines(),
                         )
                     )
                     signer = next(r["payload"] for r in ws_rows if r["kind"] == "signer_prepared")
@@ -1352,7 +1397,9 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
             routes=routes,
         )
         expected = {
-            **{name: (6, 6) for name in (*WS_SCENARIOS, *SIGNED_WS_SCENARIOS)},
+            **{
+                name: (6, 6) for name in (*WS_SCENARIOS, *SIGNED_WS_SCENARIOS, *MARKET_WS_SCENARIOS)
+            },
             **{
                 name: (5, 5)
                 if name in {"routes_controller_crash", "routes_code_drift"}
@@ -1382,7 +1429,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
             (report["prepared_steps"], report["accepted_steps"]) != expected
             or (report["status"] == "complete")
             != (
-                scenario in (*WS_SCENARIOS, *SIGNED_WS_SCENARIOS)
+                scenario in (*WS_SCENARIOS, *SIGNED_WS_SCENARIOS, *MARKET_WS_SCENARIOS)
                 or scenario
                 in {
                     "sequence_success",
@@ -1412,9 +1459,20 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
             )
             if signed_ws:
                 selected = extension["selection"](selected, bundles)
-            ws_raw = (
-                root / (extension["SCOPE"] if signed_ws else ws_code["SCOPE"]) / "ws.jsonl"
-            ).read_bytes()
+            market_code = load(payload["sources"]["gateway_market_ws.py"]) if market_ws else None
+            if market_ws:
+                selected = market_code["selection"](selected, bundles)
+                state_type = market_code["state_type"](
+                    ws_code, extension, load(payload["sources"]["gateway_native_requests.py"])
+                )
+            ws_scope = (
+                market_code["SCOPE"]
+                if market_ws
+                else extension["SCOPE"]
+                if signed_ws
+                else ws_code["SCOPE"]
+            )
+            ws_raw = (root / ws_scope / "ws.jsonl").read_bytes()
             ws_report = ws_code["replay"](
                 ws_raw,
                 expected_sha256=ws_code["digest"](ws_raw),
@@ -1423,7 +1481,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                 frames=frames,
                 state_type=state_type,
             )
-            success = scenario in {"routes_ws_success", "routes_ws_two_hops"}
+            success = scenario in {"routes_ws_success", "routes_ws_two_hops", "routes_ws_overlap"}
             if (ws_report["status"] == "complete") != success or ws_report[
                 "prepared_connections"
             ] != 2:
@@ -1454,6 +1512,16 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
             )
             if success:
                 checks.append("both_actual_ws_upgrades_coexist_before_peer_ping_and_client_close")
+                if market_ws:
+                    if (
+                        not ws_report["market_native_acknowledged"]
+                        or ws_report["market_events_recorded"] != 2 * len(selected["symbols"])
+                        or peer_report.get("market_events_sent") != 2 * len(selected["symbols"])
+                    ):
+                        raise RuntimeError("market_ws_native_event_count")
+                    checks.append(
+                        "original_derived_market_increments_native_acknowledged_after_revocation"
+                    )
             ws_result = {
                 "ws_archive": ws_raw.decode(),
                 "ws_replay": ws_report,
@@ -1807,6 +1875,7 @@ def main(argv=None):
     profiles.add_argument("--route-sequence-profile", action="store_true")
     profiles.add_argument("--concurrent-ws-profile", action="store_true")
     profiles.add_argument("--signed-ws-profile", action="store_true")
+    profiles.add_argument("--market-ws-profile", action="store_true")
     profiles.add_argument("--joint-ipc-profile", action="store_true")
     args = parser.parse_args(argv)
     if os.geteuid() == 0:
@@ -1845,6 +1914,7 @@ def main(argv=None):
             or args.route_sequence_profile
             or args.concurrent_ws_profile
             or args.signed_ws_profile
+            or args.market_ws_profile
         ):
             built = subprocess.run(
                 [
@@ -1882,6 +1952,7 @@ def main(argv=None):
             "route_sequence_profile": args.route_sequence_profile,
             "concurrent_ws_profile": args.concurrent_ws_profile,
             "signed_ws_profile": args.signed_ws_profile,
+            "market_ws_profile": args.market_ws_profile,
             "joint_ipc_profile": args.joint_ipc_profile,
             "base_source": base_source,
             "installer": installer.decode(),
@@ -1894,7 +1965,9 @@ def main(argv=None):
         reports = []
         bootstrap = "import json,sys\np=json.load(sys.stdin)\ns={'__name__':'isolated_installed_gateway'}\nexec(compile(p['source'],'<fixture>','exec'),s)\nprint(json.dumps(s['worker'](p),sort_keys=True))\n"
         for scenario in (
-            SIGNED_WS_SCENARIOS
+            MARKET_WS_SCENARIOS
+            if args.market_ws_profile
+            else SIGNED_WS_SCENARIOS
             if args.signed_ws_profile
             else WS_SCENARIOS
             if args.concurrent_ws_profile
@@ -1983,6 +2056,7 @@ def main(argv=None):
             "route_sequence_profile": args.route_sequence_profile,
             "concurrent_ws_profile": args.concurrent_ws_profile,
             "signed_ws_profile": args.signed_ws_profile,
+            "market_ws_profile": args.market_ws_profile,
             "joint_ipc_profile": args.joint_ipc_profile,
             "scenarios": reports,
             "source_sha256": payload["source_sha256"],

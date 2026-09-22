@@ -259,10 +259,10 @@ def state_type(base, requests):
                 return values
             return [(op, data) for op, data in values if op != 1]
 
-        def message(self, index):
-            wire = self.wires["account"]
+        def message(self, index, role="account"):
+            wire = self.wires[role]
             parser = self.frames["ServerFrames"]()
-            offset, seen = self.headers("account"), []
+            offset, seen = self.headers(role), []
             for stamp in wire["receipts"]:
                 end = stamp["end"]
                 if end <= offset:
@@ -287,6 +287,9 @@ def state_type(base, requests):
                     "event_receipt": self.update["receipt"],
                 }
             )
+
+        def native_result(self):
+            return expected_result(self.payload())
 
         def feed(self, kind, payload, now, mono):
             custom = {
@@ -352,7 +355,7 @@ def state_type(base, requests):
                     or any(w["stage"] != "peer_closed" for w in self.wires.values())
                 ):
                     raise ValueError("account_ws_revoke_before_delivery")
-                result = expected_result(self.payload())
+                result = self.native_result()
                 expected = {"payload_sha256": digest(self.payload()), "native_result": result}
                 if payload != expected:
                     raise ValueError("account_ws_native_receipt_binding")
@@ -499,7 +502,9 @@ def child_loop(fd, parent):
 
 
 class Session:
-    def __init__(self, entry, authority, sources):
+    result = staticmethod(expected_result)
+
+    def __init__(self, entry, authority, sources, *, market=False):
         self.runtime = self.collector = None
         try:
             self.requests = entry["load"](sources.source("gateway_native_requests.py"))
@@ -531,6 +536,13 @@ class Session:
                 sources.source("gateway_account_ws.py"),
             ):
                 source += f"exec(compile({raw!r},'<held-source>','exec'))\n"
+            if market:
+                raw = sources.source("gateway_market_ws.py")
+                source += f"market_scope={{'__name__':'held_market_ws'}}\nexec(compile({raw!r},'<held-market>','exec'),market_scope)\naccount_native=validate_native\nvalidate_native=lambda payload:market_scope['validate_native'](payload,account_native)\n"
+                market_code = entry["load"](raw)
+                self.result = lambda payload: market_code["expected_result"](
+                    payload, expected_result
+                )
             launcher["FixtureCollector"].__init__.__globals__["PYTHON"] = (
                 "/run/trader-native-runtime/bin/python3.12"
             )
@@ -600,9 +612,12 @@ class Session:
             _, raw, stamp = journal.state.message(index)
             journal.append(kind, {**journal.state.provenance.raw_fields(raw), "receipt": stamp})
 
+    async def exchange_market(self, journal, chunk):
+        return
+
     def deliver(self, journal, notify):
         payload = journal.state.payload()
-        result = expected_result(payload)
+        result = self.result(payload)
         fields = {"payload_sha256": digest(payload), "native_result": result}
         journal.append("native_receipt_prepared", fields)
         deadline = journal.state.receipt_started[1] / 1e9 + 5

@@ -478,7 +478,7 @@ async def capture(journal, trust, frames, check, grant, revoke, notify, session=
         journal.append("activated", {})
         notify("ws_activated")
         ready = {role: asyncio.Event() for role in ROLES}
-        subscription_done = asyncio.Event()
+        exchanges_done = {role: asyncio.Event() for role in ROLES}
         loop = asyncio.get_running_loop()
 
         def before_wire():
@@ -558,8 +558,10 @@ async def capture(journal, trust, frames, check, grant, revoke, notify, session=
                 notify("ws_both_live")
                 if session is not None:
                     await session.exchange(journal, writer, chunk, before_wire, deadline)
-                subscription_done.set()
-            await subscription_done.wait()
+            elif session is not None:
+                await session.exchange_market(journal, chunk)
+            exchanges_done[role].set()
+            await exchanges_done[ROLES[1 - ROLES.index(role)]].wait()
             await send("close_prepared", frames["client_frame"](b"\x03\xe8", 8))
             while len(journal.state.events(role)) < 2:
                 await chunk()
@@ -624,7 +626,9 @@ def capture_result(*args):
     return {"status": "concurrent_ws_completed", "network_admitted": False}
 
 
-def run_installed(entry, authority, sources, sequence, *, signed=False):
+def run_installed(entry, authority, sources, sequence, *, signed=False, market=False):
+    if market and not signed:
+        raise ValueError("market_ws_requires_signed_account")
     code = entry["load"](sources.source("gateway_read_sequence.py"))
     frames = entry["load"](sources.source("portfolio_ws_frames.py"))
     guards = entry["load"](sources.source("selftest.py"))
@@ -674,7 +678,10 @@ def run_installed(entry, authority, sources, sequence, *, signed=False):
     extension = entry["load"](sources.source("gateway_account_ws.py")) if signed else None
     if signed:
         selected = extension["selection"](selected, sequence.bundles)
-    scope = extension["SCOPE"] if signed else SCOPE
+    market_code = entry["load"](sources.source("gateway_market_ws.py")) if market else None
+    if market:
+        selected = market_code["selection"](selected, sequence.bundles)
+    scope = market_code["SCOPE"] if market else extension["SCOPE"] if signed else SCOPE
     path = sequence.path / scope
     os.mkdir(scope, 0o700, dir_fd=sequence.directory)
     os.fsync(sequence.directory)
@@ -682,7 +689,9 @@ def run_installed(entry, authority, sources, sequence, *, signed=False):
     sequence.write(
         path / "README.md",
         (
-            b"Fixture signed subscription and partial native event receipt. Phase: disposable acceptance. Consumed on creation; no live admission. Next: offline original replay and full collector integration.\n"
+            b"Fixture account and market increment native receipts. Phase: disposable acceptance. Consumed on creation, no synchronized book or live admission. Next: original replay and REST depth snapshot integration.\n"
+            if market
+            else b"Fixture signed subscription and partial native event receipt. Phase: disposable acceptance. Consumed on creation; no live admission. Next: offline original replay and full collector integration.\n"
             if signed
             else b"Two fixed concurrent fixture TLS/WebSocket upgrades and control exchanges. Consumed on creation. No signing, account subscription, native events or live admission. Next: offline original replay, then signed/native integration.\n"
         ),
@@ -692,8 +701,14 @@ def run_installed(entry, authority, sources, sequence, *, signed=False):
     session = journal = None
     try:
         if signed:
-            session = extension["Session"](entry, authority, sources)
+            session = extension["Session"](entry, authority, sources, market=market)
+            if market:
+                session.exchange_market = lambda journal, chunk: market_code["exchange"](
+                    journal, chunk
+                )
         state_type = extension["state_type"](globals(), session.requests) if signed else State
+        if market:
+            state_type = market_code["state_type"](globals(), extension, session.requests)
         journal = Journal(
             path / "ws.jsonl",
             selected,

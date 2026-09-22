@@ -1,0 +1,3365 @@
+{
+  "acceptance_scenarios": {
+    "account-regression": [
+      {
+        "checks": 86,
+        "name": "tls_success",
+        "status": "passed"
+      },
+      {
+        "checks": 86,
+        "name": "tls_slow_body",
+        "status": "passed"
+      },
+      {
+        "checks": 86,
+        "name": "native_precision",
+        "status": "passed"
+      },
+      {
+        "checks": 88,
+        "name": "receipt_runtime_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 84,
+        "name": "tls_bad_certificate",
+        "status": "passed"
+      },
+      {
+        "checks": 89,
+        "name": "receipt_child_stopped",
+        "status": "passed"
+      },
+      {
+        "checks": 88,
+        "name": "receipt_controller_crash",
+        "status": "passed"
+      }
+    ],
+    "controls-regression": [
+      {
+        "checks": 92,
+        "name": "routes_ws_success",
+        "status": "passed"
+      },
+      {
+        "checks": 92,
+        "name": "routes_ws_two_hops",
+        "status": "passed"
+      },
+      {
+        "checks": 91,
+        "name": "routes_ws_bad_certificate",
+        "status": "passed"
+      },
+      {
+        "checks": 91,
+        "name": "routes_ws_bad_upgrade",
+        "status": "passed"
+      },
+      {
+        "checks": 91,
+        "name": "routes_ws_peer_close",
+        "status": "passed"
+      },
+      {
+        "checks": 91,
+        "name": "routes_ws_stall",
+        "status": "passed"
+      },
+      {
+        "checks": 91,
+        "name": "routes_ws_code_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 92,
+        "name": "routes_ws_controller_crash",
+        "status": "passed"
+      }
+    ],
+    "echo-regression": [
+      {
+        "checks": 81,
+        "name": "success",
+        "status": "passed"
+      },
+      {
+        "checks": 81,
+        "name": "code_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 81,
+        "name": "account_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 81,
+        "name": "storage_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 82,
+        "name": "controller_crash",
+        "status": "passed"
+      }
+    ],
+    "market-final": [
+      {
+        "checks": 94,
+        "name": "routes_ws_success",
+        "status": "passed"
+      },
+      {
+        "checks": 94,
+        "name": "routes_ws_two_hops",
+        "status": "passed"
+      },
+      {
+        "checks": 94,
+        "name": "routes_ws_overlap",
+        "status": "passed"
+      },
+      {
+        "checks": 91,
+        "name": "routes_ws_gap",
+        "status": "passed"
+      },
+      {
+        "checks": 91,
+        "name": "routes_ws_duplicate_update",
+        "status": "passed"
+      },
+      {
+        "checks": 91,
+        "name": "routes_ws_wrong_stream",
+        "status": "passed"
+      },
+      {
+        "checks": 91,
+        "name": "routes_ws_market_precision",
+        "status": "passed"
+      },
+      {
+        "checks": 91,
+        "name": "routes_ws_missing_symbol",
+        "status": "passed"
+      },
+      {
+        "checks": 91,
+        "name": "routes_ws_extra_market",
+        "status": "passed"
+      },
+      {
+        "checks": 93,
+        "name": "routes_ws_child_stopped",
+        "status": "passed"
+      },
+      {
+        "checks": 91,
+        "name": "routes_ws_code_drift",
+        "status": "passed"
+      },
+      {
+        "checks": 92,
+        "name": "routes_ws_controller_crash",
+        "status": "passed"
+      }
+    ],
+    "routes-regression": [
+      {
+        "checks": 87,
+        "name": "routes_success",
+        "status": "passed"
+      },
+      {
+        "checks": 87,
+        "name": "routes_two_hops",
+        "status": "passed"
+      },
+      {
+        "checks": 87,
+        "name": "routes_missing",
+        "status": "passed"
+      },
+      {
+        "checks": 87,
+        "name": "routes_depth",
+        "status": "passed"
+      },
+      {
+        "checks": 87,
+        "name": "routes_precision",
+        "status": "passed"
+      },
+      {
+        "checks": 86,
+        "name": "routes_duplicate",
+        "status": "passed"
+      },
+      {
+        "checks": 87,
+        "name": "routes_disabled",
+        "status": "passed"
+      },
+      {
+        "checks": 88,
+        "name": "routes_child_stopped",
+        "status": "passed"
+      },
+      {
+        "checks": 87,
+        "name": "routes_controller_crash",
+        "status": "passed"
+      },
+      {
+        "checks": 86,
+        "name": "routes_code_drift",
+        "status": "passed"
+      }
+    ],
+    "signed-regression": [
+      {
+        "checks": 93,
+        "name": "routes_ws_success",
+        "status": "passed"
+      },
+      {
+        "checks": 93,
+        "name": "routes_ws_two_hops",
+        "status": "passed"
+      },
+      {
+        "checks": 91,
+        "name": "routes_ws_bad_response",
+        "status": "passed"
+      },
+      {
+        "checks": 91,
+        "name": "routes_ws_wrong_subscription",
+        "status": "passed"
+      },
+      {
+        "checks": 91,
+        "name": "routes_ws_precision",
+        "status": "passed"
+      },
+      {
+        "checks": 91,
+        "name": "routes_ws_extra_event",
+        "status": "passed"
+      },
+      {
+        "checks": 93,
+        "name": "routes_ws_child_stopped",
+        "status": "passed"
+      },
+      {
+        "checks": 92,
+        "name": "routes_ws_controller_crash",
+        "status": "passed"
+      },
+      {
+        "checks": 91,
+        "name": "routes_ws_code_drift",
+        "status": "passed"
+      }
+    ]
+  },
+  "account_stream_fence_verified": false,
+  "actual_source_authority_qualified": false,
+  "atomic_account_snapshot": false,
+  "base_bundle": {
+    "path": "data/installed-market-ws-2026-09-22/base-bundle.tar",
+    "sha256": "9240714aaf4977a44633d744d51775e0c3a786051c98c02b131d4ddf08004142"
+  },
+  "base_commit": "5ce3da2ea3b7e83bd725716a9454916952919153",
+  "base_source_sha256": {
+    "collector_launcher.py": "d1d94a8edd0730244b6dbc7c0e24746157985e7b36b82f865397402ce0433579",
+    "helper_entry.py": "2a91437ed9080ae481eae7496e43cfe35d29888e1e3a5a12b10605b6dc320c9b",
+    "inspect_binding.py": "27c3302222bc819767ba874d7000f2b038662fa72004cb56da25a1003c38e322",
+    "installation.py": "9ab4118c4e13b431171e07dd26099f629a96a5138cdf2437e750fca3cb09e468",
+    "installation_selftest.py": "e2b0e9a59cd3805ebfac2fb4b4b2c1992e8e9d2865862cf70c3876c06e42346e",
+    "package.py": "7f519e26c0f85951e8d60f8cf8eaa6e774fb002c74647ee4892b491cef8b549d"
+  },
+  "complete_caller_coverage_verified": false,
+  "continuous_descriptor_peak_measured": false,
+  "contract": {
+    "account_connect_documented_weight": 2,
+    "archive_limit": 262144,
+    "byte_limit_per_channel": 8192,
+    "clock_delta_tolerance_ms": 50,
+    "completion_requires_native_acknowledgement": true,
+    "deadline_starts_before_grant": true,
+    "events_per_symbol": 2,
+    "first_event_snapshot_anchored": false,
+    "fixed_peer": [
+      "198.51.100.2",
+      23456
+    ],
+    "grant_renewal_allowed": false,
+    "kernel_ttl_ms": 5000,
+    "last_delta_flag": 128,
+    "market_connection_charge": null,
+    "maximum_levels_per_side_per_event": 4,
+    "maximum_route_completion_age_ms": 5000,
+    "maximum_selected_symbols": 3,
+    "native_fixture_price_precision": 8,
+    "native_fixture_size_precision": 8,
+    "native_joint_receipt_after_socket_close_and_revocation": true,
+    "native_objects": [
+      "AccountBalance",
+      "Price",
+      "Quantity",
+      "BookOrder",
+      "OrderBookDelta",
+      "OrderBookDeltas"
+    ],
+    "native_route_prerequisite": {
+      "documented_weight": 224,
+      "get_requests": 6
+    },
+    "native_sequence": "Original u",
+    "native_signer_bound_to_original_route_runtime": true,
+    "native_transfer_deadline_ms": 5000,
+    "native_transfer_max_bytes": 8192,
+    "native_transfer_packet_bytes": 512,
+    "order_book_constructed": false,
+    "overlap_rule": "U <= previous_u + 1 <= u; u must advance; event E cannot decrease per symbol.",
+    "positive_size_action": "UPDATE",
+    "profile": "portfolio.installed_market_ws.v1",
+    "quote_ticks_created": false,
+    "raw_chunks_persisted_before_interpretation": true,
+    "representation_from_original_metadata": true,
+    "requests_persisted_before_wire": true,
+    "roles": [
+      "account",
+      "market"
+    ],
+    "scope": "fixture-route-sequence-v1/account-market-ws-v1",
+    "socket_handoff": false,
+    "subscription_documented_weight": 2,
+    "symbols_from_original_routes": true,
+    "tick_size_validated": false,
+    "total_io_deadline_ms": 4000,
+    "ts_event": "Original E milliseconds * 1000000",
+    "ts_init": "Original complete-message root receive UTC nanoseconds",
+    "zero_size_action": "DELETE"
+  },
+  "date": "2026-09-22",
+  "descriptor_limit": 1024,
+  "detached_replays": [
+    {
+      "path": "data/installed-market-ws-2026-09-22/replay-1.json",
+      "sha256": "d6897760e92bf8a6fa45cf25f237a9033fba1f165d79433b8328a92b96457a78"
+    },
+    {
+      "path": "data/installed-market-ws-2026-09-22/replay-2.json",
+      "sha256": "d6897760e92bf8a6fa45cf25f237a9033fba1f165d79433b8328a92b96457a78"
+    },
+    {
+      "path": "data/installed-market-ws-2026-09-22/native-replay-1.json",
+      "sha256": "8e5c22b276ce86e46b96cb5144b497fede8fb028e52382c627f52d327eefb2e7"
+    },
+    {
+      "path": "data/installed-market-ws-2026-09-22/native-replay-2.json",
+      "sha256": "8e5c22b276ce86e46b96cb5144b497fede8fb028e52382c627f52d327eefb2e7"
+    }
+  ],
+  "fixture_manifest_profile": "portfolio.installed_gateway_fixture.v13",
+  "full_account_equity_qualified": false,
+  "gateway_harness_sha256": "44988335ef2eb274e4b8da2e439cf6fc48b416b1b91f1ffe1b9a222e0bcf1f57",
+  "host_installation_performed": false,
+  "host_observations_unchanged": true,
+  "installation_profile": "portfolio.egress_installation.v2",
+  "live_path_affected": false,
+  "market_ws_reports": {
+    "routes_ws_child_stopped": {
+      "controller_descriptor_counts": [
+        802,
+        804,
+        814,
+        816,
+        823,
+        825,
+        832,
+        834,
+        841,
+        843,
+        850,
+        852,
+        813,
+        815
+      ],
+      "peer": {
+        "both_upgrades_before_ping": true,
+        "closes": 2,
+        "connections": 2,
+        "errors": [],
+        "market_events_sent": 4,
+        "pongs": 2,
+        "requests": {
+          "account": "c15acbbb7f007e68f7a09618ac6b2be2978f0b80d0498d386f70fc8afe01db05",
+          "market": "a91a294d26c181c8fa31fab63c06043ebb8d6ff2893832c4ef4311a7b5a2bfea"
+        },
+        "subscription_signature_verified": true,
+        "upgrades": 2
+      },
+      "replay": {
+        "account_subscription_authenticated": false,
+        "actual_usage_upper_bound": null,
+        "archive_sha256": "a7eca375246ceccf2a063ab4995cafcd241dc5412c496fc02b6bcfd9e5b49599",
+        "both_channels_live_before_close": true,
+        "channels": {
+          "account": {
+            "header_receipt": {
+              "monotonic_ns": 35293070110499,
+              "utc_ns": 1790090526522158979
+            },
+            "received_bytes": 365,
+            "stage": "peer_closed"
+          },
+          "market": {
+            "header_receipt": {
+              "monotonic_ns": 35293122646958,
+              "utc_ns": 1790090526574695438
+            },
+            "received_bytes": 889,
+            "stage": "peer_closed"
+          }
+        },
+        "documented_account_connect_weight": 2,
+        "documented_subscription_weight": 2,
+        "fixture_subscription_acknowledged": true,
+        "last_record": "revoked",
+        "market_connection_charge": null,
+        "market_events_recorded": 4,
+        "market_native_acknowledged": false,
+        "native_events_delivered": false,
+        "native_result": null,
+        "network_admitted": false,
+        "order_book_synchronized": false,
+        "prepared_connections": 2,
+        "quote_ticks_created": false,
+        "real_account_authenticated": false,
+        "restart_allowed": false,
+        "revocation_recorded": true,
+        "schema_version": "portfolio.installed_market_ws.v1",
+        "snapshot_linked": false,
+        "sockets_closed_recorded": true,
+        "status": "incomplete_no_resume",
+        "stream_fence_verified": false,
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "trading_admitted": false
+      },
+      "selection": {
+        "base_manifest_sha256": "618251af135ac3f49764301f73c6ed1d176a64fbd9cbe1f3e7dc984b3091ed53",
+        "environment_sha256": "4cb5d279fbc48bc0888ac67607316046679aacd60efa94540dd95d2cbcd3e9b4",
+        "gateway_manifest_sha256": "1cfd05ed6b6a5aeb5d1b26f6aa538cbf36a6b6a8d48ba7979d53e4ff150dfa43",
+        "market_definitions": [
+          {
+            "price_precision": 8,
+            "size_precision": 8,
+            "symbol": "BNBUSDT"
+          },
+          {
+            "price_precision": 8,
+            "size_precision": 8,
+            "symbol": "BTCUSDT"
+          }
+        ],
+        "market_metadata_tls_sha256": "f2982d64d4180827f4edf8405638ba99e2c668286fe8f4752c1d6714dbc75176",
+        "native_signer_constraints": {
+          "capabilities": {
+            "CapAmb": 0,
+            "CapBnd": 0,
+            "CapEff": 0,
+            "CapInh": 0,
+            "CapPrm": 0
+          },
+          "cgroup_sha256": "c43a0d2accce0609f29c1f8d673415a5b949fc0a6bfe35a7ebb2e482e43977be",
+          "executable": {
+            "device": 122,
+            "inode": 3,
+            "mtime_ns": 1790090513034170867,
+            "size": 23321664
+          },
+          "gids": [
+            20999,
+            20999,
+            20999,
+            20999
+          ],
+          "groups": [],
+          "installation_manifest_sha256": "618251af135ac3f49764301f73c6ed1d176a64fbd9cbe1f3e7dc984b3091ed53",
+          "namespaces": {
+            "mnt": "mnt:[4026532646]",
+            "user": "user:[4026531837]"
+          },
+          "native_runtime_sha256": "75f136be0e614515577b7b6386a03b3ff9ad9acec3c43496179beb91e13dbc8b",
+          "no_new_privileges": 1,
+          "uids": [
+            20999,
+            20999,
+            20999,
+            20999
+          ]
+        },
+        "root_network_namespace": "net:[4026533952]",
+        "route_archive_sha256": "253e15c1bf5e17ac960740a21d8cce3cb62b9b03cde435b0f8db9fb00885add0",
+        "route_bundles_sha256": "f4463d1f9f4479d43f8be13da9a64f219881c6454af9f9173305d4428bd9291a",
+        "route_completed": {
+          "monotonic_ns": 35292003807918,
+          "utc_ns": 1790090525455856118
+        },
+        "route_selection_sha256": "50224ac168a1937c9e500d056c9544cde026ac2a149bd3aaf56bbfaeb986d6ed",
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "tls_trust_sha256": "7b10b8719a8f98525e03f245c1d053644375c3106ea261d4fb7e6d73f427ef03"
+      },
+      "terminal": {
+        "concurrent_ws": {
+          "network_admitted": false,
+          "reason": "TimeoutError",
+          "status": "concurrent_ws_refused"
+        },
+        "network_admitted": false,
+        "status": "sequence_completed"
+      }
+    },
+    "routes_ws_code_drift": {
+      "controller_descriptor_counts": [
+        802,
+        804,
+        814,
+        816,
+        823,
+        825,
+        832,
+        834,
+        841,
+        843,
+        850,
+        852,
+        813,
+        815
+      ],
+      "peer": {
+        "both_upgrades_before_ping": true,
+        "closes": 0,
+        "connections": 2,
+        "errors": [
+          "ValueError:eof",
+          "BrokenBarrierError:"
+        ],
+        "market_events_sent": 4,
+        "pongs": 2,
+        "requests": {
+          "account": "98caa62861a41432a62bdd57b1b2d805795b385c8f649c5ef26fd73a33062021",
+          "market": "d1ce9c77f76c112b0fde4cbfd441e04f92d8ff44cb17e5e16cc0258f56c82fd8"
+        },
+        "upgrades": 2
+      },
+      "replay": {
+        "account_subscription_authenticated": false,
+        "actual_usage_upper_bound": null,
+        "archive_sha256": "f456eb96ac6223a96ee6d310040a34da6e08ee3ec1b74960c20d14854afa9e42",
+        "both_channels_live_before_close": false,
+        "channels": {
+          "account": {
+            "header_receipt": {
+              "monotonic_ns": 35315108533561,
+              "utc_ns": 1790090548560582081
+            },
+            "received_bytes": 146,
+            "stage": "pong"
+          },
+          "market": {
+            "header_receipt": {
+              "monotonic_ns": 35315164731958,
+              "utc_ns": 1790090548616780518
+            },
+            "received_bytes": 145,
+            "stage": "pong"
+          }
+        },
+        "documented_account_connect_weight": 2,
+        "documented_subscription_weight": 0,
+        "fixture_subscription_acknowledged": false,
+        "last_record": "active",
+        "market_connection_charge": null,
+        "market_events_recorded": 0,
+        "market_native_acknowledged": false,
+        "native_events_delivered": false,
+        "native_result": null,
+        "network_admitted": false,
+        "order_book_synchronized": false,
+        "prepared_connections": 2,
+        "quote_ticks_created": false,
+        "real_account_authenticated": false,
+        "restart_allowed": false,
+        "revocation_recorded": false,
+        "schema_version": "portfolio.installed_market_ws.v1",
+        "snapshot_linked": false,
+        "sockets_closed_recorded": false,
+        "status": "incomplete_no_resume",
+        "stream_fence_verified": false,
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "trading_admitted": false
+      },
+      "selection": {
+        "base_manifest_sha256": "618251af135ac3f49764301f73c6ed1d176a64fbd9cbe1f3e7dc984b3091ed53",
+        "environment_sha256": "a46ce17767787a3258fed9aeeacaa83024eac0e4332f77f8508884f5fd7a9a8d",
+        "gateway_manifest_sha256": "1cfd05ed6b6a5aeb5d1b26f6aa538cbf36a6b6a8d48ba7979d53e4ff150dfa43",
+        "market_definitions": [
+          {
+            "price_precision": 8,
+            "size_precision": 8,
+            "symbol": "BNBUSDT"
+          },
+          {
+            "price_precision": 8,
+            "size_precision": 8,
+            "symbol": "BTCUSDT"
+          }
+        ],
+        "market_metadata_tls_sha256": "45625271cc558b3056c2316208ef61a46bd17571ece85735e457ca3218f9ae5e",
+        "native_signer_constraints": {
+          "capabilities": {
+            "CapAmb": 0,
+            "CapBnd": 0,
+            "CapEff": 0,
+            "CapInh": 0,
+            "CapPrm": 0
+          },
+          "cgroup_sha256": "c43a0d2accce0609f29c1f8d673415a5b949fc0a6bfe35a7ebb2e482e43977be",
+          "executable": {
+            "device": 122,
+            "inode": 3,
+            "mtime_ns": 1790090535390281176,
+            "size": 23321664
+          },
+          "gids": [
+            20999,
+            20999,
+            20999,
+            20999
+          ],
+          "groups": [],
+          "installation_manifest_sha256": "618251af135ac3f49764301f73c6ed1d176a64fbd9cbe1f3e7dc984b3091ed53",
+          "namespaces": {
+            "mnt": "mnt:[4026532646]",
+            "user": "user:[4026531837]"
+          },
+          "native_runtime_sha256": "75f136be0e614515577b7b6386a03b3ff9ad9acec3c43496179beb91e13dbc8b",
+          "no_new_privileges": 1,
+          "uids": [
+            20999,
+            20999,
+            20999,
+            20999
+          ]
+        },
+        "root_network_namespace": "net:[4026533974]",
+        "route_archive_sha256": "bef0d64b4ccbb2757fb12319996f5a63aa48101089bfb5275be1613d836cae25",
+        "route_bundles_sha256": "64fbf4c2f49084c0fcb756121be7aae5375d1352e285696d88f1d51f10cd5dbd",
+        "route_completed": {
+          "monotonic_ns": 35314032244890,
+          "utc_ns": 1790090547484293050
+        },
+        "route_selection_sha256": "eac7c9dab9b6ee442306248ed710015807ec8e96b7a782a21cd429b120c05ca3",
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "tls_trust_sha256": "1e181dd18f5e5570efed13fde425a9f6b9b7821adc7ff0d4fc0e7444fa5318df"
+      },
+      "terminal": {
+        "concurrent_ws": {
+          "network_admitted": false,
+          "reason": "ValueError",
+          "status": "concurrent_ws_refused"
+        },
+        "network_admitted": false,
+        "status": "sequence_completed"
+      }
+    },
+    "routes_ws_controller_crash": {
+      "controller_descriptor_counts": [
+        802,
+        804,
+        814,
+        816,
+        823,
+        825,
+        832,
+        834,
+        841,
+        843,
+        850,
+        852,
+        813,
+        815
+      ],
+      "peer": {
+        "both_upgrades_before_ping": true,
+        "closes": 0,
+        "connections": 2,
+        "errors": [
+          "ValueError:eof",
+          "BrokenBarrierError:"
+        ],
+        "market_events_sent": 4,
+        "pongs": 2,
+        "requests": {
+          "account": "56f650cca65223d607ea61d08be0b903a6316b29b150f36ac5bde5f9c070c2dc",
+          "market": "a063f88f409efba5cfe3c970d2c4ad318a4c7e83cd4d431d89ef6e36be2649a4"
+        },
+        "upgrades": 2
+      },
+      "replay": {
+        "account_subscription_authenticated": false,
+        "actual_usage_upper_bound": null,
+        "archive_sha256": "e31536a7fe36f809348b161626cd2735b5f5270012033f8d30a65f0cdbea6587",
+        "both_channels_live_before_close": false,
+        "channels": {
+          "account": {
+            "header_receipt": {
+              "monotonic_ns": 35333198234418,
+              "utc_ns": 1790090566650282818
+            },
+            "received_bytes": 146,
+            "stage": "pong"
+          },
+          "market": {
+            "header_receipt": {
+              "monotonic_ns": 35333253935733,
+              "utc_ns": 1790090566705984213
+            },
+            "received_bytes": 145,
+            "stage": "pong"
+          }
+        },
+        "documented_account_connect_weight": 2,
+        "documented_subscription_weight": 0,
+        "fixture_subscription_acknowledged": false,
+        "last_record": "active",
+        "market_connection_charge": null,
+        "market_events_recorded": 0,
+        "market_native_acknowledged": false,
+        "native_events_delivered": false,
+        "native_result": null,
+        "network_admitted": false,
+        "order_book_synchronized": false,
+        "prepared_connections": 2,
+        "quote_ticks_created": false,
+        "real_account_authenticated": false,
+        "restart_allowed": false,
+        "revocation_recorded": false,
+        "schema_version": "portfolio.installed_market_ws.v1",
+        "snapshot_linked": false,
+        "sockets_closed_recorded": false,
+        "status": "incomplete_no_resume",
+        "stream_fence_verified": false,
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "trading_admitted": false
+      },
+      "selection": {
+        "base_manifest_sha256": "618251af135ac3f49764301f73c6ed1d176a64fbd9cbe1f3e7dc984b3091ed53",
+        "environment_sha256": "ef04b1e40f1cd06375aca3254e76967f04248c0c80617e167d8813b54065e3be",
+        "gateway_manifest_sha256": "1cfd05ed6b6a5aeb5d1b26f6aa538cbf36a6b6a8d48ba7979d53e4ff150dfa43",
+        "market_definitions": [
+          {
+            "price_precision": 8,
+            "size_precision": 8,
+            "symbol": "BNBUSDT"
+          },
+          {
+            "price_precision": 8,
+            "size_precision": 8,
+            "symbol": "BTCUSDT"
+          }
+        ],
+        "market_metadata_tls_sha256": "bc3e6180548ca17ff9508109569faa1427f27c3054e8315ed6cf221091f28406",
+        "native_signer_constraints": {
+          "capabilities": {
+            "CapAmb": 0,
+            "CapBnd": 0,
+            "CapEff": 0,
+            "CapInh": 0,
+            "CapPrm": 0
+          },
+          "cgroup_sha256": "c43a0d2accce0609f29c1f8d673415a5b949fc0a6bfe35a7ebb2e482e43977be",
+          "executable": {
+            "device": 122,
+            "inode": 3,
+            "mtime_ns": 1790090553606371057,
+            "size": 23321664
+          },
+          "gids": [
+            20999,
+            20999,
+            20999,
+            20999
+          ],
+          "groups": [],
+          "installation_manifest_sha256": "618251af135ac3f49764301f73c6ed1d176a64fbd9cbe1f3e7dc984b3091ed53",
+          "namespaces": {
+            "mnt": "mnt:[4026532646]",
+            "user": "user:[4026531837]"
+          },
+          "native_runtime_sha256": "75f136be0e614515577b7b6386a03b3ff9ad9acec3c43496179beb91e13dbc8b",
+          "no_new_privileges": 1,
+          "uids": [
+            20999,
+            20999,
+            20999,
+            20999
+          ]
+        },
+        "root_network_namespace": "net:[4026533996]",
+        "route_archive_sha256": "cda9ea8c7561bad986235b95947a760d0340d4e41286bab27db99676b464d771",
+        "route_bundles_sha256": "50f19d73b18567a4a14246ce94aeea2cdb7760e4871985218259e970bbc03e4f",
+        "route_completed": {
+          "monotonic_ns": 35332130326109,
+          "utc_ns": 1790090565582374349
+        },
+        "route_selection_sha256": "69de6bcac5daef317755991a792c5abeb59ac374da30101f7158dceba8ea5222",
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "tls_trust_sha256": "75c2b4ca9413b755f16b69476fe2361c06a49066bd3978958766548f11e85e10"
+      },
+      "terminal": {
+        "status": "controller_sigkill_with_ws"
+      }
+    },
+    "routes_ws_duplicate_update": {
+      "controller_descriptor_counts": [
+        802,
+        804,
+        814,
+        816,
+        823,
+        825,
+        832,
+        834,
+        841,
+        843,
+        850,
+        852,
+        813,
+        815
+      ],
+      "peer": {
+        "both_upgrades_before_ping": true,
+        "closes": 0,
+        "connections": 2,
+        "errors": [
+          "ValueError:eof",
+          "ValueError:eof"
+        ],
+        "market_events_sent": 4,
+        "pongs": 2,
+        "requests": {
+          "account": "a23cb3d49e2eb45c3bb71c8ec18d0d218a6e04bebc254f34cf16e4699e089c9f",
+          "market": "b595701e7c0cc38258074e416f01fba24421a804d99765222c18e4ab098a6e5f"
+        },
+        "subscription_signature_verified": true,
+        "upgrades": 2
+      },
+      "replay": {
+        "account_subscription_authenticated": false,
+        "actual_usage_upper_bound": null,
+        "archive_sha256": "1590fa5a08cb116f486328d57f55c1f6461bca6ae5c81c103dc4de938f98d89a",
+        "both_channels_live_before_close": false,
+        "channels": {
+          "account": {
+            "header_receipt": {
+              "monotonic_ns": 35204298472324,
+              "utc_ns": 1790090437750520764
+            },
+            "received_bytes": 146,
+            "stage": "pong"
+          },
+          "market": {
+            "header_receipt": {
+              "monotonic_ns": 35204353538595,
+              "utc_ns": 1790090437805586715
+            },
+            "received_bytes": 885,
+            "stage": "pong"
+          }
+        },
+        "documented_account_connect_weight": 2,
+        "documented_subscription_weight": 2,
+        "fixture_subscription_acknowledged": false,
+        "last_record": "active",
+        "market_connection_charge": null,
+        "market_events_recorded": 2,
+        "market_native_acknowledged": false,
+        "native_events_delivered": false,
+        "native_result": null,
+        "network_admitted": false,
+        "order_book_synchronized": false,
+        "prepared_connections": 2,
+        "quote_ticks_created": false,
+        "real_account_authenticated": false,
+        "restart_allowed": false,
+        "revocation_recorded": false,
+        "schema_version": "portfolio.installed_market_ws.v1",
+        "snapshot_linked": false,
+        "sockets_closed_recorded": false,
+        "status": "incomplete_no_resume",
+        "stream_fence_verified": false,
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "trading_admitted": false
+      },
+      "selection": {
+        "base_manifest_sha256": "618251af135ac3f49764301f73c6ed1d176a64fbd9cbe1f3e7dc984b3091ed53",
+        "environment_sha256": "3efc320242f06798e574764bfd759ed973ac75ddd01a7cb5fb1e2a90c64aa1df",
+        "gateway_manifest_sha256": "1cfd05ed6b6a5aeb5d1b26f6aa538cbf36a6b6a8d48ba7979d53e4ff150dfa43",
+        "market_definitions": [
+          {
+            "price_precision": 8,
+            "size_precision": 8,
+            "symbol": "BNBUSDT"
+          },
+          {
+            "price_precision": 8,
+            "size_precision": 8,
+            "symbol": "BTCUSDT"
+          }
+        ],
+        "market_metadata_tls_sha256": "92361d0ea7dab7ce01830c4fe550c740ba38f7de802cf20f316d469a0c5d7318",
+        "native_signer_constraints": {
+          "capabilities": {
+            "CapAmb": 0,
+            "CapBnd": 0,
+            "CapEff": 0,
+            "CapInh": 0,
+            "CapPrm": 0
+          },
+          "cgroup_sha256": "c43a0d2accce0609f29c1f8d673415a5b949fc0a6bfe35a7ebb2e482e43977be",
+          "executable": {
+            "device": 122,
+            "inode": 3,
+            "mtime_ns": 1790090424656734797,
+            "size": 23321664
+          },
+          "gids": [
+            20999,
+            20999,
+            20999,
+            20999
+          ],
+          "groups": [],
+          "installation_manifest_sha256": "618251af135ac3f49764301f73c6ed1d176a64fbd9cbe1f3e7dc984b3091ed53",
+          "namespaces": {
+            "mnt": "mnt:[4026532646]",
+            "user": "user:[4026531837]"
+          },
+          "native_runtime_sha256": "75f136be0e614515577b7b6386a03b3ff9ad9acec3c43496179beb91e13dbc8b",
+          "no_new_privileges": 1,
+          "uids": [
+            20999,
+            20999,
+            20999,
+            20999
+          ]
+        },
+        "root_network_namespace": "net:[4026534018]",
+        "route_archive_sha256": "23828733a6ea485b5721055e9fa300454e82d7aa82251b3f5a1f258dead76fb5",
+        "route_bundles_sha256": "4080aa9298df9578be0356e6b5d88b60fa8e86fefb5d71e17c486b407d553735",
+        "route_completed": {
+          "monotonic_ns": 35203246759254,
+          "utc_ns": 1790090436698807214
+        },
+        "route_selection_sha256": "b918a3648c18863bb0d5426313f820f2bca2a0aa6b626815d45aa66a2f58dda3",
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "tls_trust_sha256": "e48ca7239536c296d424da6b0892d03ff5ad4ba8409c91a4714e1cc1733eebea"
+      },
+      "terminal": {
+        "concurrent_ws": {
+          "network_admitted": false,
+          "reason": "ValueError",
+          "status": "concurrent_ws_refused"
+        },
+        "network_admitted": false,
+        "status": "sequence_completed"
+      }
+    },
+    "routes_ws_extra_market": {
+      "controller_descriptor_counts": [
+        802,
+        804,
+        814,
+        816,
+        823,
+        825,
+        832,
+        834,
+        841,
+        843,
+        850,
+        852,
+        813,
+        815
+      ],
+      "peer": {
+        "both_upgrades_before_ping": true,
+        "closes": 2,
+        "connections": 2,
+        "errors": [],
+        "market_events_sent": 5,
+        "pongs": 2,
+        "requests": {
+          "account": "04ff0b72dd525e2f24d789d9dc95ec84ce825c943f39274d6aa2366fc74a545b",
+          "market": "6a1afb02d20b62d82351074f712c1898f3f5328050604a4da46ecb702f2026c2"
+        },
+        "subscription_signature_verified": true,
+        "upgrades": 2
+      },
+      "replay": {
+        "account_subscription_authenticated": false,
+        "actual_usage_upper_bound": null,
+        "archive_sha256": "945e5a29f6dbaf7d6f257fb27c28ef59ee363edc16d1c0fe0f1b76dfddd8577c",
+        "both_channels_live_before_close": true,
+        "channels": {
+          "account": {
+            "header_receipt": {
+              "monotonic_ns": 35275900281620,
+              "utc_ns": 1790090509352329900
+            },
+            "received_bytes": 365,
+            "stage": "peer_closed"
+          },
+          "market": {
+            "header_receipt": {
+              "monotonic_ns": 35275955962295,
+              "utc_ns": 1790090509408010855
+            },
+            "received_bytes": 1072,
+            "stage": "closing"
+          }
+        },
+        "documented_account_connect_weight": 2,
+        "documented_subscription_weight": 2,
+        "fixture_subscription_acknowledged": true,
+        "last_record": "active",
+        "market_connection_charge": null,
+        "market_events_recorded": 4,
+        "market_native_acknowledged": false,
+        "native_events_delivered": false,
+        "native_result": null,
+        "network_admitted": false,
+        "order_book_synchronized": false,
+        "prepared_connections": 2,
+        "quote_ticks_created": false,
+        "real_account_authenticated": false,
+        "restart_allowed": false,
+        "revocation_recorded": false,
+        "schema_version": "portfolio.installed_market_ws.v1",
+        "snapshot_linked": false,
+        "sockets_closed_recorded": false,
+        "status": "incomplete_no_resume",
+        "stream_fence_verified": false,
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "trading_admitted": false
+      },
+      "selection": {
+        "base_manifest_sha256": "618251af135ac3f49764301f73c6ed1d176a64fbd9cbe1f3e7dc984b3091ed53",
+        "environment_sha256": "bc6a026835b6ad3484fd75b084ca2702c37d4d0a630cd69b8efbf5fa395b6943",
+        "gateway_manifest_sha256": "1cfd05ed6b6a5aeb5d1b26f6aa538cbf36a6b6a8d48ba7979d53e4ff150dfa43",
+        "market_definitions": [
+          {
+            "price_precision": 8,
+            "size_precision": 8,
+            "symbol": "BNBUSDT"
+          },
+          {
+            "price_precision": 8,
+            "size_precision": 8,
+            "symbol": "BTCUSDT"
+          }
+        ],
+        "market_metadata_tls_sha256": "1e361b6aeaa0a9e1892a5849c7cb686348d544200d2505e14e0b1d221c6bfb32",
+        "native_signer_constraints": {
+          "capabilities": {
+            "CapAmb": 0,
+            "CapBnd": 0,
+            "CapEff": 0,
+            "CapInh": 0,
+            "CapPrm": 0
+          },
+          "cgroup_sha256": "c43a0d2accce0609f29c1f8d673415a5b949fc0a6bfe35a7ebb2e482e43977be",
+          "executable": {
+            "device": 122,
+            "inode": 3,
+            "mtime_ns": 1790090495903086339,
+            "size": 23321664
+          },
+          "gids": [
+            20999,
+            20999,
+            20999,
+            20999
+          ],
+          "groups": [],
+          "installation_manifest_sha256": "618251af135ac3f49764301f73c6ed1d176a64fbd9cbe1f3e7dc984b3091ed53",
+          "namespaces": {
+            "mnt": "mnt:[4026532646]",
+            "user": "user:[4026531837]"
+          },
+          "native_runtime_sha256": "75f136be0e614515577b7b6386a03b3ff9ad9acec3c43496179beb91e13dbc8b",
+          "no_new_privileges": 1,
+          "uids": [
+            20999,
+            20999,
+            20999,
+            20999
+          ]
+        },
+        "root_network_namespace": "net:[4026534008]",
+        "route_archive_sha256": "9a69d46c9bad8d780235dfe0ca440da0378445aca22e813b96c8cde7bc73568f",
+        "route_bundles_sha256": "34e4759487974f01aa9ce1c3f6855332a0a3d0df62878086b0de0da4d02f402c",
+        "route_completed": {
+          "monotonic_ns": 35274818335721,
+          "utc_ns": 1790090508270382881
+        },
+        "route_selection_sha256": "cccd75ded20050280cd2c484ee6f26ae6bb29bc45ab361054d7815dc5c149fa5",
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "tls_trust_sha256": "a054e8281b25c1843ee48c403a48c941c5584f3e594ee29a430d5517864388a5"
+      },
+      "terminal": {
+        "concurrent_ws": {
+          "network_admitted": false,
+          "reason": "ValueError",
+          "status": "concurrent_ws_refused"
+        },
+        "network_admitted": false,
+        "status": "sequence_completed"
+      }
+    },
+    "routes_ws_gap": {
+      "controller_descriptor_counts": [
+        802,
+        804,
+        814,
+        816,
+        823,
+        825,
+        832,
+        834,
+        841,
+        843,
+        850,
+        852,
+        813,
+        815
+      ],
+      "peer": {
+        "both_upgrades_before_ping": true,
+        "closes": 0,
+        "connections": 2,
+        "errors": [
+          "ValueError:eof",
+          "ValueError:eof"
+        ],
+        "market_events_sent": 4,
+        "pongs": 2,
+        "requests": {
+          "account": "2d5e9a18fd3c2da1834e7154f33cc7ba39e0c8e96bc39dc2d649e9da9eee45b6",
+          "market": "2c5963f966b1f2cbd2738861811ba44eb2f03f64402e4e16e74228b87e83f335"
+        },
+        "subscription_signature_verified": true,
+        "upgrades": 2
+      },
+      "replay": {
+        "account_subscription_authenticated": false,
+        "actual_usage_upper_bound": null,
+        "archive_sha256": "8aea2477fc9b947fc34b3e881a01b095a8d212bd70a27b38acc0e6ac48dcd885",
+        "both_channels_live_before_close": false,
+        "channels": {
+          "account": {
+            "header_receipt": {
+              "monotonic_ns": 35187769171445,
+              "utc_ns": 1790090421221220005
+            },
+            "received_bytes": 146,
+            "stage": "pong"
+          },
+          "market": {
+            "header_receipt": {
+              "monotonic_ns": 35187707831542,
+              "utc_ns": 1790090421159879782
+            },
+            "received_bytes": 885,
+            "stage": "pong"
+          }
+        },
+        "documented_account_connect_weight": 2,
+        "documented_subscription_weight": 2,
+        "fixture_subscription_acknowledged": false,
+        "last_record": "active",
+        "market_connection_charge": null,
+        "market_events_recorded": 2,
+        "market_native_acknowledged": false,
+        "native_events_delivered": false,
+        "native_result": null,
+        "network_admitted": false,
+        "order_book_synchronized": false,
+        "prepared_connections": 2,
+        "quote_ticks_created": false,
+        "real_account_authenticated": false,
+        "restart_allowed": false,
+        "revocation_recorded": false,
+        "schema_version": "portfolio.installed_market_ws.v1",
+        "snapshot_linked": false,
+        "sockets_closed_recorded": false,
+        "status": "incomplete_no_resume",
+        "stream_fence_verified": false,
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "trading_admitted": false
+      },
+      "selection": {
+        "base_manifest_sha256": "618251af135ac3f49764301f73c6ed1d176a64fbd9cbe1f3e7dc984b3091ed53",
+        "environment_sha256": "4cb5d279fbc48bc0888ac67607316046679aacd60efa94540dd95d2cbcd3e9b4",
+        "gateway_manifest_sha256": "1cfd05ed6b6a5aeb5d1b26f6aa538cbf36a6b6a8d48ba7979d53e4ff150dfa43",
+        "market_definitions": [
+          {
+            "price_precision": 8,
+            "size_precision": 8,
+            "symbol": "BNBUSDT"
+          },
+          {
+            "price_precision": 8,
+            "size_precision": 8,
+            "symbol": "BTCUSDT"
+          }
+        ],
+        "market_metadata_tls_sha256": "1c66d7426c46a2c256eec09fa55ea728025e7c3da6dd424416aecd706bf0f556",
+        "native_signer_constraints": {
+          "capabilities": {
+            "CapAmb": 0,
+            "CapBnd": 0,
+            "CapEff": 0,
+            "CapInh": 0,
+            "CapPrm": 0
+          },
+          "cgroup_sha256": "c43a0d2accce0609f29c1f8d673415a5b949fc0a6bfe35a7ebb2e482e43977be",
+          "executable": {
+            "device": 122,
+            "inode": 3,
+            "mtime_ns": 1790090407686651063,
+            "size": 23321664
+          },
+          "gids": [
+            20999,
+            20999,
+            20999,
+            20999
+          ],
+          "groups": [],
+          "installation_manifest_sha256": "618251af135ac3f49764301f73c6ed1d176a64fbd9cbe1f3e7dc984b3091ed53",
+          "namespaces": {
+            "mnt": "mnt:[4026532646]",
+            "user": "user:[4026531837]"
+          },
+          "native_runtime_sha256": "75f136be0e614515577b7b6386a03b3ff9ad9acec3c43496179beb91e13dbc8b",
+          "no_new_privileges": 1,
+          "uids": [
+            20999,
+            20999,
+            20999,
+            20999
+          ]
+        },
+        "root_network_namespace": "net:[4026533952]",
+        "route_archive_sha256": "10b11468ea1023ed02007d6828326cb61fd40d519a51102bb66562b08df59fdd",
+        "route_bundles_sha256": "d982ce8e88607c98ed1e4b405c6515b9cfef56b23ef0ad2dd2221df16acae056",
+        "route_completed": {
+          "monotonic_ns": 35186632748598,
+          "utc_ns": 1790090420084796518
+        },
+        "route_selection_sha256": "e03c00064526ddb1bfe5cda604f1045d90700b55ae51e96b40398ca9f185bab5",
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "tls_trust_sha256": "a00a59488ff417225b9cca9729c5e6cb9f3afc608260c7fcf81dc1fb46b748ed"
+      },
+      "terminal": {
+        "concurrent_ws": {
+          "network_admitted": false,
+          "reason": "ValueError",
+          "status": "concurrent_ws_refused"
+        },
+        "network_admitted": false,
+        "status": "sequence_completed"
+      }
+    },
+    "routes_ws_market_precision": {
+      "controller_descriptor_counts": [
+        802,
+        804,
+        814,
+        816,
+        823,
+        825,
+        832,
+        834,
+        841,
+        843,
+        850,
+        852,
+        813,
+        815
+      ],
+      "peer": {
+        "both_upgrades_before_ping": true,
+        "closes": 0,
+        "connections": 2,
+        "errors": [
+          "ValueError:eof",
+          "ValueError:eof"
+        ],
+        "market_events_sent": 4,
+        "pongs": 2,
+        "requests": {
+          "account": "9c7c67c1e329e4cb5fd8af9ed36e75a3b5fcc1169e88060bcd7b60ac34c1bcd5",
+          "market": "c3120b43173e6638f8e45755ff5ac6a7d9830845e401e763ecf7b01001f733e2"
+        },
+        "subscription_signature_verified": true,
+        "upgrades": 2
+      },
+      "replay": {
+        "account_subscription_authenticated": false,
+        "actual_usage_upper_bound": null,
+        "archive_sha256": "5964a3a8183612673129dc6219b1e75afd62bcb58ca2d6b18903d0a465a26795",
+        "both_channels_live_before_close": false,
+        "channels": {
+          "account": {
+            "header_receipt": {
+              "monotonic_ns": 35237636200298,
+              "utc_ns": 1790090471088248578
+            },
+            "received_bytes": 146,
+            "stage": "pong"
+          },
+          "market": {
+            "header_receipt": {
+              "monotonic_ns": 35237694759107,
+              "utc_ns": 1790090471146807587
+            },
+            "received_bytes": 889,
+            "stage": "pong"
+          }
+        },
+        "documented_account_connect_weight": 2,
+        "documented_subscription_weight": 2,
+        "fixture_subscription_acknowledged": false,
+        "last_record": "active",
+        "market_connection_charge": null,
+        "market_events_recorded": 0,
+        "market_native_acknowledged": false,
+        "native_events_delivered": false,
+        "native_result": null,
+        "network_admitted": false,
+        "order_book_synchronized": false,
+        "prepared_connections": 2,
+        "quote_ticks_created": false,
+        "real_account_authenticated": false,
+        "restart_allowed": false,
+        "revocation_recorded": false,
+        "schema_version": "portfolio.installed_market_ws.v1",
+        "snapshot_linked": false,
+        "sockets_closed_recorded": false,
+        "status": "incomplete_no_resume",
+        "stream_fence_verified": false,
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "trading_admitted": false
+      },
+      "selection": {
+        "base_manifest_sha256": "618251af135ac3f49764301f73c6ed1d176a64fbd9cbe1f3e7dc984b3091ed53",
+        "environment_sha256": "3efc320242f06798e574764bfd759ed973ac75ddd01a7cb5fb1e2a90c64aa1df",
+        "gateway_manifest_sha256": "1cfd05ed6b6a5aeb5d1b26f6aa538cbf36a6b6a8d48ba7979d53e4ff150dfa43",
+        "market_definitions": [
+          {
+            "price_precision": 8,
+            "size_precision": 8,
+            "symbol": "BNBUSDT"
+          },
+          {
+            "price_precision": 8,
+            "size_precision": 8,
+            "symbol": "BTCUSDT"
+          }
+        ],
+        "market_metadata_tls_sha256": "2f624ab7ba0d95c8abbe87a4ca295dfb1251463e42c48d429d06a968e526f993",
+        "native_signer_constraints": {
+          "capabilities": {
+            "CapAmb": 0,
+            "CapBnd": 0,
+            "CapEff": 0,
+            "CapInh": 0,
+            "CapPrm": 0
+          },
+          "cgroup_sha256": "c43a0d2accce0609f29c1f8d673415a5b949fc0a6bfe35a7ebb2e482e43977be",
+          "executable": {
+            "device": 122,
+            "inode": 3,
+            "mtime_ns": 1790090458073899683,
+            "size": 23321664
+          },
+          "gids": [
+            20999,
+            20999,
+            20999,
+            20999
+          ],
+          "groups": [],
+          "installation_manifest_sha256": "618251af135ac3f49764301f73c6ed1d176a64fbd9cbe1f3e7dc984b3091ed53",
+          "namespaces": {
+            "mnt": "mnt:[4026532646]",
+            "user": "user:[4026531837]"
+          },
+          "native_runtime_sha256": "75f136be0e614515577b7b6386a03b3ff9ad9acec3c43496179beb91e13dbc8b",
+          "no_new_privileges": 1,
+          "uids": [
+            20999,
+            20999,
+            20999,
+            20999
+          ]
+        },
+        "root_network_namespace": "net:[4026534018]",
+        "route_archive_sha256": "d48ce2c5f9c2ab97b74631d20030060b6061a37b8dbbbbd70acf65f429a1469f",
+        "route_bundles_sha256": "bba15a1dcc356ac8465c46d4c93d1b6df7a8910cdff8fc04936f9f4b338a1e84",
+        "route_completed": {
+          "monotonic_ns": 35236594379797,
+          "utc_ns": 1790090470046427997
+        },
+        "route_selection_sha256": "c19167c1b4f28e34a1764e584da4219527aa460fc694cabfc475939366130348",
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "tls_trust_sha256": "8623885a8414e5e81269852030debeea43414f41167a3385ea925b0551e27951"
+      },
+      "terminal": {
+        "concurrent_ws": {
+          "network_admitted": false,
+          "reason": "ValueError",
+          "status": "concurrent_ws_refused"
+        },
+        "network_admitted": false,
+        "status": "sequence_completed"
+      }
+    },
+    "routes_ws_missing_symbol": {
+      "controller_descriptor_counts": [
+        802,
+        804,
+        814,
+        816,
+        823,
+        825,
+        832,
+        834,
+        841,
+        843,
+        850,
+        852,
+        813,
+        815
+      ],
+      "peer": {
+        "both_upgrades_before_ping": true,
+        "closes": 0,
+        "connections": 2,
+        "errors": [
+          "ValueError:eof",
+          "ValueError:eof"
+        ],
+        "market_events_sent": 2,
+        "pongs": 2,
+        "requests": {
+          "account": "9cfcd0a22202878be79b381d2a3e691f2837f32202af27fcb0436ea8876dd475",
+          "market": "197b41432434519cdde0b4d476f03cc2d6a5cd35c1d50cbb76c54a967d78509c"
+        },
+        "subscription_signature_verified": true,
+        "upgrades": 2
+      },
+      "replay": {
+        "account_subscription_authenticated": false,
+        "actual_usage_upper_bound": null,
+        "archive_sha256": "ee45c00354b3efcb997272ae040c2c1048ebb532ab20d89dc262b95111ac533d",
+        "both_channels_live_before_close": false,
+        "channels": {
+          "account": {
+            "header_receipt": {
+              "monotonic_ns": 35255412239328,
+              "utc_ns": 1790090488864287848
+            },
+            "received_bytes": 361,
+            "stage": "pong"
+          },
+          "market": {
+            "header_receipt": {
+              "monotonic_ns": 35255357975220,
+              "utc_ns": 1790090488810023660
+            },
+            "received_bytes": 515,
+            "stage": "pong"
+          }
+        },
+        "documented_account_connect_weight": 2,
+        "documented_subscription_weight": 2,
+        "fixture_subscription_acknowledged": true,
+        "last_record": "aborted",
+        "market_connection_charge": null,
+        "market_events_recorded": 2,
+        "market_native_acknowledged": false,
+        "native_events_delivered": false,
+        "native_result": null,
+        "network_admitted": false,
+        "order_book_synchronized": false,
+        "prepared_connections": 2,
+        "quote_ticks_created": false,
+        "real_account_authenticated": false,
+        "restart_allowed": false,
+        "revocation_recorded": true,
+        "schema_version": "portfolio.installed_market_ws.v1",
+        "snapshot_linked": false,
+        "sockets_closed_recorded": true,
+        "status": "incomplete_no_resume",
+        "stream_fence_verified": false,
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "trading_admitted": false
+      },
+      "selection": {
+        "base_manifest_sha256": "618251af135ac3f49764301f73c6ed1d176a64fbd9cbe1f3e7dc984b3091ed53",
+        "environment_sha256": "4cb5d279fbc48bc0888ac67607316046679aacd60efa94540dd95d2cbcd3e9b4",
+        "gateway_manifest_sha256": "1cfd05ed6b6a5aeb5d1b26f6aa538cbf36a6b6a8d48ba7979d53e4ff150dfa43",
+        "market_definitions": [
+          {
+            "price_precision": 8,
+            "size_precision": 8,
+            "symbol": "BNBUSDT"
+          },
+          {
+            "price_precision": 8,
+            "size_precision": 8,
+            "symbol": "BTCUSDT"
+          }
+        ],
+        "market_metadata_tls_sha256": "a50707e59d5249ec3d22beb5a0762d3c54b82b99223c69795c5be68b471b4899",
+        "native_signer_constraints": {
+          "capabilities": {
+            "CapAmb": 0,
+            "CapBnd": 0,
+            "CapEff": 0,
+            "CapInh": 0,
+            "CapPrm": 0
+          },
+          "cgroup_sha256": "c43a0d2accce0609f29c1f8d673415a5b949fc0a6bfe35a7ebb2e482e43977be",
+          "executable": {
+            "device": 122,
+            "inode": 3,
+            "mtime_ns": 1790090474574981102,
+            "size": 23321664
+          },
+          "gids": [
+            20999,
+            20999,
+            20999,
+            20999
+          ],
+          "groups": [],
+          "installation_manifest_sha256": "618251af135ac3f49764301f73c6ed1d176a64fbd9cbe1f3e7dc984b3091ed53",
+          "namespaces": {
+            "mnt": "mnt:[4026532646]",
+            "user": "user:[4026531837]"
+          },
+          "native_runtime_sha256": "75f136be0e614515577b7b6386a03b3ff9ad9acec3c43496179beb91e13dbc8b",
+          "no_new_privileges": 1,
+          "uids": [
+            20999,
+            20999,
+            20999,
+            20999
+          ]
+        },
+        "root_network_namespace": "net:[4026533952]",
+        "route_archive_sha256": "24bf867d55f3d70bd03d33c19ce5e35197444b6effdad7dff531de893d55ed87",
+        "route_bundles_sha256": "e130d90f0c917777cde956d749873d79e260e5e09b3f6718ae1cbe9cf2c03def",
+        "route_completed": {
+          "monotonic_ns": 35254308576003,
+          "utc_ns": 1790090487760624042
+        },
+        "route_selection_sha256": "e6ccffed5bc581cf7adba8c28d8dff12a2022ff6f715f9cfa9a4a8ab48cb396a",
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "tls_trust_sha256": "53570759e11fe0bc52f3f4db36b010c1693318d0ca3fa121e6908304259a3e89"
+      },
+      "terminal": {
+        "concurrent_ws": {
+          "network_admitted": false,
+          "reason": "TimeoutError",
+          "status": "concurrent_ws_refused"
+        },
+        "network_admitted": false,
+        "status": "sequence_completed"
+      }
+    },
+    "routes_ws_overlap": {
+      "controller_descriptor_counts": [
+        802,
+        804,
+        814,
+        816,
+        823,
+        825,
+        832,
+        834,
+        841,
+        843,
+        850,
+        852,
+        813,
+        815
+      ],
+      "peer": {
+        "both_upgrades_before_ping": true,
+        "closes": 2,
+        "connections": 2,
+        "errors": [],
+        "market_events_sent": 4,
+        "pongs": 2,
+        "requests": {
+          "account": "f2424b738580f136a5e5c38396de381c3606c7cf6c058a8318bb680d17edc244",
+          "market": "ca943dac31497c3be2a72d3e0f5fe9c47abe4335a229af4427319d829c70003e"
+        },
+        "subscription_signature_verified": true,
+        "upgrades": 2
+      },
+      "replay": {
+        "account_subscription_authenticated": false,
+        "actual_usage_upper_bound": null,
+        "archive_sha256": "d8de87008abcb602c75b1e4552fcd594be5dc2f51a6227c0645e3e76c30adb78",
+        "both_channels_live_before_close": true,
+        "channels": {
+          "account": {
+            "header_receipt": {
+              "monotonic_ns": 35170264044152,
+              "utc_ns": 1790090403716092552
+            },
+            "received_bytes": 365,
+            "stage": "peer_closed"
+          },
+          "market": {
+            "header_receipt": {
+              "monotonic_ns": 35170340854931,
+              "utc_ns": 1790090403792903051
+            },
+            "received_bytes": 889,
+            "stage": "peer_closed"
+          }
+        },
+        "documented_account_connect_weight": 2,
+        "documented_subscription_weight": 2,
+        "fixture_subscription_acknowledged": true,
+        "last_record": "completed",
+        "market_connection_charge": null,
+        "market_events_recorded": 4,
+        "market_native_acknowledged": true,
+        "native_events_delivered": true,
+        "native_result": {
+          "account": {
+            "account_uid": null,
+            "balances": [
+              {
+                "currency": "BTC",
+                "free": "0.01000000",
+                "locked": "0.00100000",
+                "precision": 8,
+                "total": "0.01100000"
+              }
+            ],
+            "event_receipt": {
+              "monotonic_ns": 35170569833741,
+              "utc_ns": 1790090404021882661
+            },
+            "event_time_ms": 1790090403942,
+            "full_account_snapshot": false,
+            "last_account_update_ms": 1790090403942,
+            "native_version": "1.226.0",
+            "omitted_assets_unchanged_or_unknown": true,
+            "partial_update": true,
+            "payload_sha256": "d67a576ef645d42987859d512a77bcdc335d51d356582f61148e59b78bf85295",
+            "profile": "portfolio.native_partial_account_ws.v1",
+            "qualified_for_execution": false,
+            "request_sha256": "24e752917b2fe12f275d4e18dbfced76d3d0949bfebcb8370e10c12ad4848bb4",
+            "stream_fence_verified": false,
+            "subscription_id": 0
+          },
+          "definitions": [
+            {
+              "price_precision": 8,
+              "size_precision": 8,
+              "symbol": "BNBUSDT"
+            },
+            {
+              "price_precision": 8,
+              "size_precision": 8,
+              "symbol": "BTCUSDT"
+            }
+          ],
+          "market": [
+            {
+              "deltas": [
+                {
+                  "action": "UPDATE",
+                  "flags": 0,
+                  "instrument_id": "BNBUSDT.BINANCE",
+                  "order": {
+                    "order_id": 0,
+                    "price": "100.00000000",
+                    "side": "BUY",
+                    "size": "1.10000000"
+                  },
+                  "sequence": 101,
+                  "ts_event": 1790090403851000000,
+                  "ts_init": 1790090403941194502,
+                  "type": "OrderBookDelta"
+                },
+                {
+                  "action": "UPDATE",
+                  "flags": 128,
+                  "instrument_id": "BNBUSDT.BINANCE",
+                  "order": {
+                    "order_id": 0,
+                    "price": "101.00000000",
+                    "side": "SELL",
+                    "size": "2.00000000"
+                  },
+                  "sequence": 101,
+                  "ts_event": 1790090403851000000,
+                  "ts_init": 1790090403941194502,
+                  "type": "OrderBookDelta"
+                }
+              ],
+              "first_update_id": 100,
+              "last_update_id": 101,
+              "original_sha256": "1e4fc55c46fbdee6aacc57e4c9c46ec002a129fb61c607fad77ac15816d084d8",
+              "receipt": {
+                "monotonic_ns": 35170489146062,
+                "utc_ns": 1790090403941194502
+              },
+              "symbol": "BNBUSDT"
+            },
+            {
+              "deltas": [
+                {
+                  "action": "UPDATE",
+                  "flags": 0,
+                  "instrument_id": "BTCUSDT.BINANCE",
+                  "order": {
+                    "order_id": 0,
+                    "price": "100.00000000",
+                    "side": "BUY",
+                    "size": "1.10000000"
+                  },
+                  "sequence": 101,
+                  "ts_event": 1790090403851000000,
+                  "ts_init": 1790090403941194502,
+                  "type": "OrderBookDelta"
+                },
+                {
+                  "action": "UPDATE",
+                  "flags": 128,
+                  "instrument_id": "BTCUSDT.BINANCE",
+                  "order": {
+                    "order_id": 0,
+                    "price": "101.00000000",
+                    "side": "SELL",
+                    "size": "2.00000000"
+                  },
+                  "sequence": 101,
+                  "ts_event": 1790090403851000000,
+                  "ts_init": 1790090403941194502,
+                  "type": "OrderBookDelta"
+                }
+              ],
+              "first_update_id": 100,
+              "last_update_id": 101,
+              "original_sha256": "dfc1dd98055f45ade3403728a5de0b9b45c718e90d4a3e3ab5d2d30c66af36a0",
+              "receipt": {
+                "monotonic_ns": 35170489146062,
+                "utc_ns": 1790090403941194502
+              },
+              "symbol": "BTCUSDT"
+            },
+            {
+              "deltas": [
+                {
+                  "action": "DELETE",
+                  "flags": 0,
+                  "instrument_id": "BNBUSDT.BINANCE",
+                  "order": {
+                    "order_id": 0,
+                    "price": "100.00000000",
+                    "side": "BUY",
+                    "size": "0.00000000"
+                  },
+                  "sequence": 103,
+                  "ts_event": 1790090403851000000,
+                  "ts_init": 1790090403941194502,
+                  "type": "OrderBookDelta"
+                },
+                {
+                  "action": "UPDATE",
+                  "flags": 128,
+                  "instrument_id": "BNBUSDT.BINANCE",
+                  "order": {
+                    "order_id": 0,
+                    "price": "101.00000000",
+                    "side": "SELL",
+                    "size": "2.00000000"
+                  },
+                  "sequence": 103,
+                  "ts_event": 1790090403851000000,
+                  "ts_init": 1790090403941194502,
+                  "type": "OrderBookDelta"
+                }
+              ],
+              "first_update_id": 101,
+              "last_update_id": 103,
+              "original_sha256": "ddeaac93b672fd234dd7b554f6eb02b8530f9175cedef02df2ed6582f0adee54",
+              "receipt": {
+                "monotonic_ns": 35170489146062,
+                "utc_ns": 1790090403941194502
+              },
+              "symbol": "BNBUSDT"
+            },
+            {
+              "deltas": [
+                {
+                  "action": "DELETE",
+                  "flags": 0,
+                  "instrument_id": "BTCUSDT.BINANCE",
+                  "order": {
+                    "order_id": 0,
+                    "price": "100.00000000",
+                    "side": "BUY",
+                    "size": "0.00000000"
+                  },
+                  "sequence": 103,
+                  "ts_event": 1790090403851000000,
+                  "ts_init": 1790090403941194502,
+                  "type": "OrderBookDelta"
+                },
+                {
+                  "action": "UPDATE",
+                  "flags": 128,
+                  "instrument_id": "BTCUSDT.BINANCE",
+                  "order": {
+                    "order_id": 0,
+                    "price": "101.00000000",
+                    "side": "SELL",
+                    "size": "2.00000000"
+                  },
+                  "sequence": 103,
+                  "ts_event": 1790090403851000000,
+                  "ts_init": 1790090403941194502,
+                  "type": "OrderBookDelta"
+                }
+              ],
+              "first_update_id": 101,
+              "last_update_id": 103,
+              "original_sha256": "34276418a7ed3a92f3c658a81242c3a2cee679d24d7778f19ea6f7895fbea843",
+              "receipt": {
+                "monotonic_ns": 35170489146062,
+                "utc_ns": 1790090403941194502
+              },
+              "symbol": "BTCUSDT"
+            }
+          ],
+          "metadata_tls_sha256": "ab75bc1255ad08829c471041a5bc36c5010a0977c77b147e3105e890c2e2ccce",
+          "native_version": "1.226.0",
+          "order_book_synchronized": false,
+          "payload_sha256": "8b1b6f76fafaf5537ffbcf618b83995dc19359d69744f6e40918122c0b03983a",
+          "profile": "portfolio.native_account_market_ws.v1",
+          "qualified_for_execution": false,
+          "quote_ticks_created": false,
+          "snapshot_linked": false,
+          "stream_fence_verified": false,
+          "tick_size_validated": false,
+          "unanchored_depth_segment": true
+        },
+        "network_admitted": false,
+        "order_book_synchronized": false,
+        "prepared_connections": 2,
+        "quote_ticks_created": false,
+        "real_account_authenticated": false,
+        "restart_allowed": false,
+        "revocation_recorded": true,
+        "schema_version": "portfolio.installed_market_ws.v1",
+        "snapshot_linked": false,
+        "sockets_closed_recorded": true,
+        "status": "complete",
+        "stream_fence_verified": false,
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "trading_admitted": false
+      },
+      "selection": {
+        "base_manifest_sha256": "618251af135ac3f49764301f73c6ed1d176a64fbd9cbe1f3e7dc984b3091ed53",
+        "environment_sha256": "4cb5d279fbc48bc0888ac67607316046679aacd60efa94540dd95d2cbcd3e9b4",
+        "gateway_manifest_sha256": "1cfd05ed6b6a5aeb5d1b26f6aa538cbf36a6b6a8d48ba7979d53e4ff150dfa43",
+        "market_definitions": [
+          {
+            "price_precision": 8,
+            "size_precision": 8,
+            "symbol": "BNBUSDT"
+          },
+          {
+            "price_precision": 8,
+            "size_precision": 8,
+            "symbol": "BTCUSDT"
+          }
+        ],
+        "market_metadata_tls_sha256": "ab75bc1255ad08829c471041a5bc36c5010a0977c77b147e3105e890c2e2ccce",
+        "native_signer_constraints": {
+          "capabilities": {
+            "CapAmb": 0,
+            "CapBnd": 0,
+            "CapEff": 0,
+            "CapInh": 0,
+            "CapPrm": 0
+          },
+          "cgroup_sha256": "c43a0d2accce0609f29c1f8d673415a5b949fc0a6bfe35a7ebb2e482e43977be",
+          "executable": {
+            "device": 122,
+            "inode": 3,
+            "mtime_ns": 1790090390471566121,
+            "size": 23321664
+          },
+          "gids": [
+            20999,
+            20999,
+            20999,
+            20999
+          ],
+          "groups": [],
+          "installation_manifest_sha256": "618251af135ac3f49764301f73c6ed1d176a64fbd9cbe1f3e7dc984b3091ed53",
+          "namespaces": {
+            "mnt": "mnt:[4026532646]",
+            "user": "user:[4026531837]"
+          },
+          "native_runtime_sha256": "75f136be0e614515577b7b6386a03b3ff9ad9acec3c43496179beb91e13dbc8b",
+          "no_new_privileges": 1,
+          "uids": [
+            20999,
+            20999,
+            20999,
+            20999
+          ]
+        },
+        "root_network_namespace": "net:[4026533952]",
+        "route_archive_sha256": "2a9767fb0e5b4ba75bddffe750988910c4d295b7a57b41de4ec611a5d49f2b08",
+        "route_bundles_sha256": "c72765a5dc11a47cdb123da4099f2e9631f0f357b40d200f64f564b320dc3d9b",
+        "route_completed": {
+          "monotonic_ns": 35169199139297,
+          "utc_ns": 1790090402651187217
+        },
+        "route_selection_sha256": "1061a959c3233dfec147667b0e3c12de72cc2422e50ae00c1fd8a15b83c02a5a",
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "tls_trust_sha256": "e7ce680591eea09ec1f2cd054dc53b2a935cfb70348ffbd02f8c805aecc1db7c"
+      },
+      "terminal": {
+        "concurrent_ws": {
+          "network_admitted": false,
+          "status": "concurrent_ws_completed"
+        },
+        "network_admitted": false,
+        "status": "sequence_completed"
+      }
+    },
+    "routes_ws_success": {
+      "controller_descriptor_counts": [
+        802,
+        804,
+        814,
+        816,
+        823,
+        825,
+        832,
+        834,
+        841,
+        843,
+        850,
+        852,
+        813,
+        815
+      ],
+      "peer": {
+        "both_upgrades_before_ping": true,
+        "closes": 2,
+        "connections": 2,
+        "errors": [],
+        "market_events_sent": 4,
+        "pongs": 2,
+        "requests": {
+          "account": "aeb791ef76c15ad086eb6332e8102d2527a037d513a6d3ec96744621e6ba07f0",
+          "market": "343ca604359b37eed468655fbea4cc6e3fdf8dc3966c1fae052ed4c15fffa464"
+        },
+        "subscription_signature_verified": true,
+        "upgrades": 2
+      },
+      "replay": {
+        "account_subscription_authenticated": false,
+        "actual_usage_upper_bound": null,
+        "archive_sha256": "3c24e4f235d1902711f1ff04bfd259197c68bede0431c6f57272f09ed8bcdd4b",
+        "both_channels_live_before_close": true,
+        "channels": {
+          "account": {
+            "header_receipt": {
+              "monotonic_ns": 35136157631505,
+              "utc_ns": 1790090369609679945
+            },
+            "received_bytes": 365,
+            "stage": "peer_closed"
+          },
+          "market": {
+            "header_receipt": {
+              "monotonic_ns": 35136213349459,
+              "utc_ns": 1790090369665397699
+            },
+            "received_bytes": 889,
+            "stage": "peer_closed"
+          }
+        },
+        "documented_account_connect_weight": 2,
+        "documented_subscription_weight": 2,
+        "fixture_subscription_acknowledged": true,
+        "last_record": "completed",
+        "market_connection_charge": null,
+        "market_events_recorded": 4,
+        "market_native_acknowledged": true,
+        "native_events_delivered": true,
+        "native_result": {
+          "account": {
+            "account_uid": null,
+            "balances": [
+              {
+                "currency": "BTC",
+                "free": "0.01000000",
+                "locked": "0.00100000",
+                "precision": 8,
+                "total": "0.01100000"
+              }
+            ],
+            "event_receipt": {
+              "monotonic_ns": 35136399426818,
+              "utc_ns": 1790090369851475698
+            },
+            "event_time_ms": 1790090369799,
+            "full_account_snapshot": false,
+            "last_account_update_ms": 1790090369799,
+            "native_version": "1.226.0",
+            "omitted_assets_unchanged_or_unknown": true,
+            "partial_update": true,
+            "payload_sha256": "c9760442154d8689e6a59526093c0471d92631f609454998866d8cf6045371a6",
+            "profile": "portfolio.native_partial_account_ws.v1",
+            "qualified_for_execution": false,
+            "request_sha256": "7508b576131b3265f80763ab00b410bdfa1a9a8fbfc84bf820673178c06c33a7",
+            "stream_fence_verified": false,
+            "subscription_id": 0
+          },
+          "definitions": [
+            {
+              "price_precision": 8,
+              "size_precision": 8,
+              "symbol": "BNBUSDT"
+            },
+            {
+              "price_precision": 8,
+              "size_precision": 8,
+              "symbol": "BTCUSDT"
+            }
+          ],
+          "market": [
+            {
+              "deltas": [
+                {
+                  "action": "UPDATE",
+                  "flags": 0,
+                  "instrument_id": "BNBUSDT.BINANCE",
+                  "order": {
+                    "order_id": 0,
+                    "price": "100.00000000",
+                    "side": "BUY",
+                    "size": "1.10000000"
+                  },
+                  "sequence": 101,
+                  "ts_event": 1790090369720000000,
+                  "ts_init": 1790090369794907018,
+                  "type": "OrderBookDelta"
+                },
+                {
+                  "action": "UPDATE",
+                  "flags": 128,
+                  "instrument_id": "BNBUSDT.BINANCE",
+                  "order": {
+                    "order_id": 0,
+                    "price": "101.00000000",
+                    "side": "SELL",
+                    "size": "2.00000000"
+                  },
+                  "sequence": 101,
+                  "ts_event": 1790090369720000000,
+                  "ts_init": 1790090369794907018,
+                  "type": "OrderBookDelta"
+                }
+              ],
+              "first_update_id": 100,
+              "last_update_id": 101,
+              "original_sha256": "c2070c0242f8661ec5e2c6442909e99a7242d0321721fd3f9e0b4f6af02fe438",
+              "receipt": {
+                "monotonic_ns": 35136342858658,
+                "utc_ns": 1790090369794907018
+              },
+              "symbol": "BNBUSDT"
+            },
+            {
+              "deltas": [
+                {
+                  "action": "UPDATE",
+                  "flags": 0,
+                  "instrument_id": "BTCUSDT.BINANCE",
+                  "order": {
+                    "order_id": 0,
+                    "price": "100.00000000",
+                    "side": "BUY",
+                    "size": "1.10000000"
+                  },
+                  "sequence": 101,
+                  "ts_event": 1790090369720000000,
+                  "ts_init": 1790090369794907018,
+                  "type": "OrderBookDelta"
+                },
+                {
+                  "action": "UPDATE",
+                  "flags": 128,
+                  "instrument_id": "BTCUSDT.BINANCE",
+                  "order": {
+                    "order_id": 0,
+                    "price": "101.00000000",
+                    "side": "SELL",
+                    "size": "2.00000000"
+                  },
+                  "sequence": 101,
+                  "ts_event": 1790090369720000000,
+                  "ts_init": 1790090369794907018,
+                  "type": "OrderBookDelta"
+                }
+              ],
+              "first_update_id": 100,
+              "last_update_id": 101,
+              "original_sha256": "7ccc862b042949ca29331a1aff3c1b30479500b15afef35cd72b97eb3229cfa8",
+              "receipt": {
+                "monotonic_ns": 35136342858658,
+                "utc_ns": 1790090369794907018
+              },
+              "symbol": "BTCUSDT"
+            },
+            {
+              "deltas": [
+                {
+                  "action": "DELETE",
+                  "flags": 0,
+                  "instrument_id": "BNBUSDT.BINANCE",
+                  "order": {
+                    "order_id": 0,
+                    "price": "100.00000000",
+                    "side": "BUY",
+                    "size": "0.00000000"
+                  },
+                  "sequence": 103,
+                  "ts_event": 1790090369720000000,
+                  "ts_init": 1790090369794907018,
+                  "type": "OrderBookDelta"
+                },
+                {
+                  "action": "UPDATE",
+                  "flags": 128,
+                  "instrument_id": "BNBUSDT.BINANCE",
+                  "order": {
+                    "order_id": 0,
+                    "price": "101.00000000",
+                    "side": "SELL",
+                    "size": "2.00000000"
+                  },
+                  "sequence": 103,
+                  "ts_event": 1790090369720000000,
+                  "ts_init": 1790090369794907018,
+                  "type": "OrderBookDelta"
+                }
+              ],
+              "first_update_id": 102,
+              "last_update_id": 103,
+              "original_sha256": "a6ed85542fc11a9d61fcf0aa971590ce43c30fcc47d97a0d1ba95f864ae6b850",
+              "receipt": {
+                "monotonic_ns": 35136342858658,
+                "utc_ns": 1790090369794907018
+              },
+              "symbol": "BNBUSDT"
+            },
+            {
+              "deltas": [
+                {
+                  "action": "DELETE",
+                  "flags": 0,
+                  "instrument_id": "BTCUSDT.BINANCE",
+                  "order": {
+                    "order_id": 0,
+                    "price": "100.00000000",
+                    "side": "BUY",
+                    "size": "0.00000000"
+                  },
+                  "sequence": 103,
+                  "ts_event": 1790090369721000000,
+                  "ts_init": 1790090369794907018,
+                  "type": "OrderBookDelta"
+                },
+                {
+                  "action": "UPDATE",
+                  "flags": 128,
+                  "instrument_id": "BTCUSDT.BINANCE",
+                  "order": {
+                    "order_id": 0,
+                    "price": "101.00000000",
+                    "side": "SELL",
+                    "size": "2.00000000"
+                  },
+                  "sequence": 103,
+                  "ts_event": 1790090369721000000,
+                  "ts_init": 1790090369794907018,
+                  "type": "OrderBookDelta"
+                }
+              ],
+              "first_update_id": 102,
+              "last_update_id": 103,
+              "original_sha256": "5322af4d2f0297e24fa182d7edaff521b7baa951be09a7e59987b6d5c52a28a5",
+              "receipt": {
+                "monotonic_ns": 35136342858658,
+                "utc_ns": 1790090369794907018
+              },
+              "symbol": "BTCUSDT"
+            }
+          ],
+          "metadata_tls_sha256": "e2d3bb2c71420ea22b5384dff472c8cb1c2f092a5ab09cf0bd0a2f0c8b303aac",
+          "native_version": "1.226.0",
+          "order_book_synchronized": false,
+          "payload_sha256": "dbb72663f948c9c875d55bb544e00ed6b6048fdbaa90888f3db597e03f2d864b",
+          "profile": "portfolio.native_account_market_ws.v1",
+          "qualified_for_execution": false,
+          "quote_ticks_created": false,
+          "snapshot_linked": false,
+          "stream_fence_verified": false,
+          "tick_size_validated": false,
+          "unanchored_depth_segment": true
+        },
+        "network_admitted": false,
+        "order_book_synchronized": false,
+        "prepared_connections": 2,
+        "quote_ticks_created": false,
+        "real_account_authenticated": false,
+        "restart_allowed": false,
+        "revocation_recorded": true,
+        "schema_version": "portfolio.installed_market_ws.v1",
+        "snapshot_linked": false,
+        "sockets_closed_recorded": true,
+        "status": "complete",
+        "stream_fence_verified": false,
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "trading_admitted": false
+      },
+      "selection": {
+        "base_manifest_sha256": "618251af135ac3f49764301f73c6ed1d176a64fbd9cbe1f3e7dc984b3091ed53",
+        "environment_sha256": "4cb5d279fbc48bc0888ac67607316046679aacd60efa94540dd95d2cbcd3e9b4",
+        "gateway_manifest_sha256": "1cfd05ed6b6a5aeb5d1b26f6aa538cbf36a6b6a8d48ba7979d53e4ff150dfa43",
+        "market_definitions": [
+          {
+            "price_precision": 8,
+            "size_precision": 8,
+            "symbol": "BNBUSDT"
+          },
+          {
+            "price_precision": 8,
+            "size_precision": 8,
+            "symbol": "BTCUSDT"
+          }
+        ],
+        "market_metadata_tls_sha256": "e2d3bb2c71420ea22b5384dff472c8cb1c2f092a5ab09cf0bd0a2f0c8b303aac",
+        "native_signer_constraints": {
+          "capabilities": {
+            "CapAmb": 0,
+            "CapBnd": 0,
+            "CapEff": 0,
+            "CapInh": 0,
+            "CapPrm": 0
+          },
+          "cgroup_sha256": "c43a0d2accce0609f29c1f8d673415a5b949fc0a6bfe35a7ebb2e482e43977be",
+          "executable": {
+            "device": 122,
+            "inode": 3,
+            "mtime_ns": 1790090356427398141,
+            "size": 23321664
+          },
+          "gids": [
+            20999,
+            20999,
+            20999,
+            20999
+          ],
+          "groups": [],
+          "installation_manifest_sha256": "618251af135ac3f49764301f73c6ed1d176a64fbd9cbe1f3e7dc984b3091ed53",
+          "namespaces": {
+            "mnt": "mnt:[4026532646]",
+            "user": "user:[4026531837]"
+          },
+          "native_runtime_sha256": "75f136be0e614515577b7b6386a03b3ff9ad9acec3c43496179beb91e13dbc8b",
+          "no_new_privileges": 1,
+          "uids": [
+            20999,
+            20999,
+            20999,
+            20999
+          ]
+        },
+        "root_network_namespace": "net:[4026533952]",
+        "route_archive_sha256": "8d1250acc1fadb6844f325bb86491d70c49b1be2819b4f11a4e6bc3a19daf091",
+        "route_bundles_sha256": "3642996799810714df35f9b6e1418267cf1e5c63decd2840f177279690833c65",
+        "route_completed": {
+          "monotonic_ns": 35135113494393,
+          "utc_ns": 1790090368565542433
+        },
+        "route_selection_sha256": "5130772f083a4a602b445449d061d09804cc1471df5323277531c2e2e0b0b214",
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "tls_trust_sha256": "50186c65096859d0fba2cf27a44bb5a86c8489ac408d83cea613d23cad38603f"
+      },
+      "terminal": {
+        "concurrent_ws": {
+          "network_admitted": false,
+          "status": "concurrent_ws_completed"
+        },
+        "network_admitted": false,
+        "status": "sequence_completed"
+      }
+    },
+    "routes_ws_two_hops": {
+      "controller_descriptor_counts": [
+        802,
+        804,
+        814,
+        816,
+        823,
+        825,
+        832,
+        834,
+        841,
+        843,
+        850,
+        852,
+        813,
+        815
+      ],
+      "peer": {
+        "both_upgrades_before_ping": true,
+        "closes": 2,
+        "connections": 2,
+        "errors": [],
+        "market_events_sent": 4,
+        "pongs": 2,
+        "requests": {
+          "account": "e0993e0a1d872307449f303c4baed8f896774fcfe2769bc5b60f63cce02e7ace",
+          "market": "1d86abb5d1199ae215e70b56a1bc1a544188d29a158eb726222dbb1ffcf1d543"
+        },
+        "subscription_signature_verified": true,
+        "upgrades": 2
+      },
+      "replay": {
+        "account_subscription_authenticated": false,
+        "actual_usage_upper_bound": null,
+        "archive_sha256": "9603d530ab214f5d4e24024ea7e11b7c9b59c98c3335e67424f3f7c9136fcc53",
+        "both_channels_live_before_close": true,
+        "channels": {
+          "account": {
+            "header_receipt": {
+              "monotonic_ns": 35153231699231,
+              "utc_ns": 1790090386683747751
+            },
+            "received_bytes": 365,
+            "stage": "peer_closed"
+          },
+          "market": {
+            "header_receipt": {
+              "monotonic_ns": 35153175337633,
+              "utc_ns": 1790090386627385673
+            },
+            "received_bytes": 885,
+            "stage": "peer_closed"
+          }
+        },
+        "documented_account_connect_weight": 2,
+        "documented_subscription_weight": 2,
+        "fixture_subscription_acknowledged": true,
+        "last_record": "completed",
+        "market_connection_charge": null,
+        "market_events_recorded": 4,
+        "market_native_acknowledged": true,
+        "native_events_delivered": true,
+        "native_result": {
+          "account": {
+            "account_uid": null,
+            "balances": [
+              {
+                "currency": "BTC",
+                "free": "0.01000000",
+                "locked": "0.00100000",
+                "precision": 8,
+                "total": "0.01100000"
+              }
+            ],
+            "event_receipt": {
+              "monotonic_ns": 35153422267011,
+              "utc_ns": 1790090386874316011
+            },
+            "event_time_ms": 1790090386807,
+            "full_account_snapshot": false,
+            "last_account_update_ms": 1790090386807,
+            "native_version": "1.226.0",
+            "omitted_assets_unchanged_or_unknown": true,
+            "partial_update": true,
+            "payload_sha256": "11c442eb15afa7b6d63b17720f19b99e75366223f06b1e2bf91e2c482ee7ff26",
+            "profile": "portfolio.native_partial_account_ws.v1",
+            "qualified_for_execution": false,
+            "request_sha256": "73482963617475ad6aedc3d36a1eeca9f1e5b886f4dc4efc9585c507eef81c54",
+            "stream_fence_verified": false,
+            "subscription_id": 0
+          },
+          "definitions": [
+            {
+              "price_precision": 8,
+              "size_precision": 8,
+              "symbol": "BNBBTC"
+            },
+            {
+              "price_precision": 8,
+              "size_precision": 8,
+              "symbol": "BTCUSDT"
+            }
+          ],
+          "market": [
+            {
+              "deltas": [
+                {
+                  "action": "UPDATE",
+                  "flags": 0,
+                  "instrument_id": "BNBBTC.BINANCE",
+                  "order": {
+                    "order_id": 0,
+                    "price": "100.00000000",
+                    "side": "BUY",
+                    "size": "1.10000000"
+                  },
+                  "sequence": 101,
+                  "ts_event": 1790090386683000000,
+                  "ts_init": 1790090386814424156,
+                  "type": "OrderBookDelta"
+                },
+                {
+                  "action": "UPDATE",
+                  "flags": 128,
+                  "instrument_id": "BNBBTC.BINANCE",
+                  "order": {
+                    "order_id": 0,
+                    "price": "101.00000000",
+                    "side": "SELL",
+                    "size": "2.00000000"
+                  },
+                  "sequence": 101,
+                  "ts_event": 1790090386683000000,
+                  "ts_init": 1790090386814424156,
+                  "type": "OrderBookDelta"
+                }
+              ],
+              "first_update_id": 100,
+              "last_update_id": 101,
+              "original_sha256": "35be43af94ee8f2212ce4e4f9a904821fe7470968c3c7f81b35bf95bec1b01c4",
+              "receipt": {
+                "monotonic_ns": 35153362375636,
+                "utc_ns": 1790090386814424156
+              },
+              "symbol": "BNBBTC"
+            },
+            {
+              "deltas": [
+                {
+                  "action": "UPDATE",
+                  "flags": 0,
+                  "instrument_id": "BTCUSDT.BINANCE",
+                  "order": {
+                    "order_id": 0,
+                    "price": "100.00000000",
+                    "side": "BUY",
+                    "size": "1.10000000"
+                  },
+                  "sequence": 101,
+                  "ts_event": 1790090386683000000,
+                  "ts_init": 1790090386814424156,
+                  "type": "OrderBookDelta"
+                },
+                {
+                  "action": "UPDATE",
+                  "flags": 128,
+                  "instrument_id": "BTCUSDT.BINANCE",
+                  "order": {
+                    "order_id": 0,
+                    "price": "101.00000000",
+                    "side": "SELL",
+                    "size": "2.00000000"
+                  },
+                  "sequence": 101,
+                  "ts_event": 1790090386683000000,
+                  "ts_init": 1790090386814424156,
+                  "type": "OrderBookDelta"
+                }
+              ],
+              "first_update_id": 100,
+              "last_update_id": 101,
+              "original_sha256": "0dec175b5120d31bf0502d29dfeb2e02c6798680e774bfc7e5f76490542a2d92",
+              "receipt": {
+                "monotonic_ns": 35153362375636,
+                "utc_ns": 1790090386814424156
+              },
+              "symbol": "BTCUSDT"
+            },
+            {
+              "deltas": [
+                {
+                  "action": "DELETE",
+                  "flags": 0,
+                  "instrument_id": "BNBBTC.BINANCE",
+                  "order": {
+                    "order_id": 0,
+                    "price": "100.00000000",
+                    "side": "BUY",
+                    "size": "0.00000000"
+                  },
+                  "sequence": 103,
+                  "ts_event": 1790090386683000000,
+                  "ts_init": 1790090386814424156,
+                  "type": "OrderBookDelta"
+                },
+                {
+                  "action": "UPDATE",
+                  "flags": 128,
+                  "instrument_id": "BNBBTC.BINANCE",
+                  "order": {
+                    "order_id": 0,
+                    "price": "101.00000000",
+                    "side": "SELL",
+                    "size": "2.00000000"
+                  },
+                  "sequence": 103,
+                  "ts_event": 1790090386683000000,
+                  "ts_init": 1790090386814424156,
+                  "type": "OrderBookDelta"
+                }
+              ],
+              "first_update_id": 102,
+              "last_update_id": 103,
+              "original_sha256": "6dff942e6d27aa59eef6616c0747f4bf0a7df9a4f4d6cffeb2bfe4be0107da64",
+              "receipt": {
+                "monotonic_ns": 35153362375636,
+                "utc_ns": 1790090386814424156
+              },
+              "symbol": "BNBBTC"
+            },
+            {
+              "deltas": [
+                {
+                  "action": "DELETE",
+                  "flags": 0,
+                  "instrument_id": "BTCUSDT.BINANCE",
+                  "order": {
+                    "order_id": 0,
+                    "price": "100.00000000",
+                    "side": "BUY",
+                    "size": "0.00000000"
+                  },
+                  "sequence": 103,
+                  "ts_event": 1790090386683000000,
+                  "ts_init": 1790090386814424156,
+                  "type": "OrderBookDelta"
+                },
+                {
+                  "action": "UPDATE",
+                  "flags": 128,
+                  "instrument_id": "BTCUSDT.BINANCE",
+                  "order": {
+                    "order_id": 0,
+                    "price": "101.00000000",
+                    "side": "SELL",
+                    "size": "2.00000000"
+                  },
+                  "sequence": 103,
+                  "ts_event": 1790090386683000000,
+                  "ts_init": 1790090386814424156,
+                  "type": "OrderBookDelta"
+                }
+              ],
+              "first_update_id": 102,
+              "last_update_id": 103,
+              "original_sha256": "6fe00dbf14360b33f802b106ff57f4e4be379e8823e450eea1495d5b5eb71e35",
+              "receipt": {
+                "monotonic_ns": 35153362375636,
+                "utc_ns": 1790090386814424156
+              },
+              "symbol": "BTCUSDT"
+            }
+          ],
+          "metadata_tls_sha256": "bb0dbcf12c03b7df62639b58895800ce33ec7b49d2537a745831857dfa780cbc",
+          "native_version": "1.226.0",
+          "order_book_synchronized": false,
+          "payload_sha256": "5e67b36a4339150c36152ddcf61489a97d56d5bc053557761505549772aa2385",
+          "profile": "portfolio.native_account_market_ws.v1",
+          "qualified_for_execution": false,
+          "quote_ticks_created": false,
+          "snapshot_linked": false,
+          "stream_fence_verified": false,
+          "tick_size_validated": false,
+          "unanchored_depth_segment": true
+        },
+        "network_admitted": false,
+        "order_book_synchronized": false,
+        "prepared_connections": 2,
+        "quote_ticks_created": false,
+        "real_account_authenticated": false,
+        "restart_allowed": false,
+        "revocation_recorded": true,
+        "schema_version": "portfolio.installed_market_ws.v1",
+        "snapshot_linked": false,
+        "sockets_closed_recorded": true,
+        "status": "complete",
+        "stream_fence_verified": false,
+        "symbols": [
+          "BNBBTC",
+          "BTCUSDT"
+        ],
+        "trading_admitted": false
+      },
+      "selection": {
+        "base_manifest_sha256": "618251af135ac3f49764301f73c6ed1d176a64fbd9cbe1f3e7dc984b3091ed53",
+        "environment_sha256": "1c6c9220c0e4ceaabda9f646040a0af822fcbe18e994e7bdcc2d9bb0a745510f",
+        "gateway_manifest_sha256": "1cfd05ed6b6a5aeb5d1b26f6aa538cbf36a6b6a8d48ba7979d53e4ff150dfa43",
+        "market_definitions": [
+          {
+            "price_precision": 8,
+            "size_precision": 8,
+            "symbol": "BNBBTC"
+          },
+          {
+            "price_precision": 8,
+            "size_precision": 8,
+            "symbol": "BTCUSDT"
+          }
+        ],
+        "market_metadata_tls_sha256": "bb0dbcf12c03b7df62639b58895800ce33ec7b49d2537a745831857dfa780cbc",
+        "native_signer_constraints": {
+          "capabilities": {
+            "CapAmb": 0,
+            "CapBnd": 0,
+            "CapEff": 0,
+            "CapInh": 0,
+            "CapPrm": 0
+          },
+          "cgroup_sha256": "c43a0d2accce0609f29c1f8d673415a5b949fc0a6bfe35a7ebb2e482e43977be",
+          "executable": {
+            "device": 122,
+            "inode": 3,
+            "mtime_ns": 1790090373343481608,
+            "size": 23321664
+          },
+          "gids": [
+            20999,
+            20999,
+            20999,
+            20999
+          ],
+          "groups": [],
+          "installation_manifest_sha256": "618251af135ac3f49764301f73c6ed1d176a64fbd9cbe1f3e7dc984b3091ed53",
+          "namespaces": {
+            "mnt": "mnt:[4026532646]",
+            "user": "user:[4026531837]"
+          },
+          "native_runtime_sha256": "75f136be0e614515577b7b6386a03b3ff9ad9acec3c43496179beb91e13dbc8b",
+          "no_new_privileges": 1,
+          "uids": [
+            20999,
+            20999,
+            20999,
+            20999
+          ]
+        },
+        "root_network_namespace": "net:[4026534019]",
+        "route_archive_sha256": "e633e139b83954fe5990d418581b35f47da0701b4aa19bac39b276b118c881fc",
+        "route_bundles_sha256": "833a93c6c5ebe4dfd58f550b6e8817285a619243ffbaf19fb0ce7664b1b4f97c",
+        "route_completed": {
+          "monotonic_ns": 35152059732328,
+          "utc_ns": 1790090385511780368
+        },
+        "route_selection_sha256": "1a3879b5c9854ea3ca3b397985a4598b16dfaac20d5789e41f83c239e133d94f",
+        "symbols": [
+          "BNBBTC",
+          "BTCUSDT"
+        ],
+        "tls_trust_sha256": "4898f2deffb470f87732bf12a0fe2f0d5206e11ab61c2f11929d69180167a1ab"
+      },
+      "terminal": {
+        "concurrent_ws": {
+          "network_admitted": false,
+          "status": "concurrent_ws_completed"
+        },
+        "network_admitted": false,
+        "status": "sequence_completed"
+      }
+    },
+    "routes_ws_wrong_stream": {
+      "controller_descriptor_counts": [
+        802,
+        804,
+        814,
+        816,
+        823,
+        825,
+        832,
+        834,
+        841,
+        843,
+        850,
+        852,
+        813,
+        815
+      ],
+      "peer": {
+        "both_upgrades_before_ping": true,
+        "closes": 0,
+        "connections": 2,
+        "errors": [
+          "ValueError:eof",
+          "ValueError:eof"
+        ],
+        "market_events_sent": 4,
+        "pongs": 2,
+        "requests": {
+          "account": "998bfb8459247be3cc3bfa054ba63a2408f67cab9b594ff81776b13445a17f63",
+          "market": "533e0de7f92076deccffb313683d178f5deaa918d5b933f1a821255a8eb36493"
+        },
+        "subscription_signature_verified": true,
+        "upgrades": 2
+      },
+      "replay": {
+        "account_subscription_authenticated": false,
+        "actual_usage_upper_bound": null,
+        "archive_sha256": "1c6a007ebb7ac891f2bb4e463009ae8eb1a178ef9291db75c740f64776ac245b",
+        "both_channels_live_before_close": false,
+        "channels": {
+          "account": {
+            "header_receipt": {
+              "monotonic_ns": 35221164702905,
+              "utc_ns": 1790090454616751265
+            },
+            "received_bytes": 146,
+            "stage": "pong"
+          },
+          "market": {
+            "header_receipt": {
+              "monotonic_ns": 35221217118883,
+              "utc_ns": 1790090454669167443
+            },
+            "received_bytes": 885,
+            "stage": "pong"
+          }
+        },
+        "documented_account_connect_weight": 2,
+        "documented_subscription_weight": 2,
+        "fixture_subscription_acknowledged": false,
+        "last_record": "active",
+        "market_connection_charge": null,
+        "market_events_recorded": 0,
+        "market_native_acknowledged": false,
+        "native_events_delivered": false,
+        "native_result": null,
+        "network_admitted": false,
+        "order_book_synchronized": false,
+        "prepared_connections": 2,
+        "quote_ticks_created": false,
+        "real_account_authenticated": false,
+        "restart_allowed": false,
+        "revocation_recorded": false,
+        "schema_version": "portfolio.installed_market_ws.v1",
+        "snapshot_linked": false,
+        "sockets_closed_recorded": false,
+        "status": "incomplete_no_resume",
+        "stream_fence_verified": false,
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "trading_admitted": false
+      },
+      "selection": {
+        "base_manifest_sha256": "618251af135ac3f49764301f73c6ed1d176a64fbd9cbe1f3e7dc984b3091ed53",
+        "environment_sha256": "4cb5d279fbc48bc0888ac67607316046679aacd60efa94540dd95d2cbcd3e9b4",
+        "gateway_manifest_sha256": "1cfd05ed6b6a5aeb5d1b26f6aa538cbf36a6b6a8d48ba7979d53e4ff150dfa43",
+        "market_definitions": [
+          {
+            "price_precision": 8,
+            "size_precision": 8,
+            "symbol": "BNBUSDT"
+          },
+          {
+            "price_precision": 8,
+            "size_precision": 8,
+            "symbol": "BTCUSDT"
+          }
+        ],
+        "market_metadata_tls_sha256": "e1e01c258710b6b5fb0ff7d003375dcff363d3a10da7ff554e0e1767e7d9f2b8",
+        "native_signer_constraints": {
+          "capabilities": {
+            "CapAmb": 0,
+            "CapBnd": 0,
+            "CapEff": 0,
+            "CapInh": 0,
+            "CapPrm": 0
+          },
+          "cgroup_sha256": "c43a0d2accce0609f29c1f8d673415a5b949fc0a6bfe35a7ebb2e482e43977be",
+          "executable": {
+            "device": 122,
+            "inode": 3,
+            "mtime_ns": 1790090441210816477,
+            "size": 23321664
+          },
+          "gids": [
+            20999,
+            20999,
+            20999,
+            20999
+          ],
+          "groups": [],
+          "installation_manifest_sha256": "618251af135ac3f49764301f73c6ed1d176a64fbd9cbe1f3e7dc984b3091ed53",
+          "namespaces": {
+            "mnt": "mnt:[4026532646]",
+            "user": "user:[4026531837]"
+          },
+          "native_runtime_sha256": "75f136be0e614515577b7b6386a03b3ff9ad9acec3c43496179beb91e13dbc8b",
+          "no_new_privileges": 1,
+          "uids": [
+            20999,
+            20999,
+            20999,
+            20999
+          ]
+        },
+        "root_network_namespace": "net:[4026533952]",
+        "route_archive_sha256": "4ee6296b988f18e51554c81c8505b7f0541aa0d26f8c204eed2a01eec54f87c6",
+        "route_bundles_sha256": "4164f530fe643a69f92ce003d37f422766f130a2cd45a4b2f50b827f0a4750d5",
+        "route_completed": {
+          "monotonic_ns": 35220109329857,
+          "utc_ns": 1790090453561378137
+        },
+        "route_selection_sha256": "57cf37f10308dd8088d844b1689de1edac3c6a1817085eedaa8d2035929c31fe",
+        "symbols": [
+          "BNBUSDT",
+          "BTCUSDT"
+        ],
+        "tls_trust_sha256": "9403b6355fd795d13db770804ccc23a5850f2329dde55ffdc26e93d408a68888"
+      },
+      "terminal": {
+        "concurrent_ws": {
+          "network_admitted": false,
+          "reason": "ValueError",
+          "status": "concurrent_ws_refused"
+        },
+        "network_admitted": false,
+        "status": "sequence_completed"
+      }
+    }
+  },
+  "market_ws_scenarios": 12,
+  "maximum_observed_controller_descriptors": 852,
+  "minimum_observed_spare_descriptors": 172,
+  "minimum_required_spare_at_samples": 64,
+  "namespace_scenarios_passed": 51,
+  "native_account_and_market_increment_receipts_integrated": true,
+  "native_joint_collector_integrated": false,
+  "native_market_original_acknowledgements": 3,
+  "native_market_replayed_batches": 20,
+  "native_market_replayed_results": 5,
+  "native_regenerated_requests": 217,
+  "native_replayed_scenario_sets": 46,
+  "native_runtime": {
+    "bytes": 213365841,
+    "files": 701,
+    "manifest_sha256": "75f136be0e614515577b7b6386a03b3ff9ad9acec3c43496179beb91e13dbc8b"
+  },
+  "native_signed_fixture_subscription_integrated": true,
+  "native_version": "1.226.0",
+  "network_admitted": false,
+  "next_step": "Integrate concurrent per-symbol REST depth snapshots and revision linkage before native books/quotes; preserve original clocks, resource limits and per-operation consumption. Real authority, stream fences and live admission remain blocked.",
+  "order_book_synchronized": false,
+  "original_evidence_modified": false,
+  "prior_evidence_check": {
+    "scenario_originals": 39,
+    "source_copies": 19,
+    "status": "unchanged",
+    "tracked_artifact_pins": 54
+  },
+  "prior_evidence_check_output": {
+    "path": "data/installed-market-ws-2026-09-22/prior-evidence.json",
+    "sha256": "301f80bf8640d78f7f17f30a4279db12d6869c3afcec3037b798b502ec6a4159"
+  },
+  "protected_source_sha256": {
+    "gateway_account_ws.py": "2d5ceaa1869c294ad82fa668394492ede63f17e4c2d4f240b85fa839abd81ca5",
+    "gateway_book_routes.py": "1bc3a5285be7b8c615fdfe00c442055cd335b0597de403061ecc1ddfa228efd2",
+    "gateway_concurrent_ws.py": "4cbb2cd32adb8af7a3b23ce6829fc3581fb912d907e99aa7446be52ebed492c6",
+    "gateway_joint_ipc.py": "e814ddfdd67b7f43fd031a13a68a6bd87cf992e6de0a92b476751e4f9e3cb6ae",
+    "gateway_market_ws.py": "8279027e2f42e5db5af2fe1f60ee68ac308b3da178c6cd53bfe4fdeb892c91a0",
+    "gateway_native_account.py": "0242c144987b2da47c97ac2e5ac239aa14ec63164756bc85a23c943d58a9d511",
+    "gateway_native_orders.py": "775d474cede83cb54926052f4514cb4716a08104aa00ae88edbcc951997aeb08",
+    "gateway_native_receipt.py": "6c6526bf6976c3e809c3537fb86ce6c7672f3cbb08aca111ba48eac46025a0b7",
+    "gateway_native_requests.py": "2cbea5e7d162f40ffcadf41673757eeefa29d95603937ef23de43c7309f28163",
+    "gateway_native_runtime.py": "3d319536524fe7f8ee0bbc1f9eca719e748dc24e262e47e9a210b058cafca8a8",
+    "gateway_read_sequence.py": "eb7bc9f729b4ce0c8a02b69cf44c3946be0a81384c96f46fa57adce0da9e665f",
+    "gateway_tls.py": "c3f56e7089d9ad3ea1e246e59e4d69e899974045da67004e6058386fce71b8c8",
+    "gateway_tls_receipt.py": "bc3f69ad3e6e68e79381cadc54f47133454f4218a96cc7be74e60189a6be9322",
+    "installed_gateway.py": "c00cf6c4daf125b9e3404016ba585a9a0f12dea6261a14ea933283186ea75e94",
+    "ledger_gateway.py": "6e6d589dbd424ffb42237f0c226319c10443cdd5db0a3106a2fd1b763b6aaed4",
+    "portfolio_egress_ledger.py": "3cd1ad63037ce5c138b77bd486f1326f022e4aac682d0316cc4be54c60eaedc5",
+    "portfolio_rate_evidence.py": "18aa5bdbf1954cebc4802b38daeded07cd60e2ab1b9e508d6686ac89a07abb35",
+    "portfolio_tls_provenance.py": "def476571e9ec56e989eee02b8623b1a657337956ecd88faeabaf9f2efc70044",
+    "portfolio_ws_frames.py": "c5b72731a63be3edcdf8ea98f582058cb611ab330b4c2b6edcede51620cb3ef3",
+    "selftest.py": "75ba8a36ca075f4236f20e68524117bf1abc1431226271bb0df35912c4ebff5f"
+  },
+  "python_tests": {
+    "files": [
+      {
+        "path": "tests/ops/test_egress_route_sequence.py",
+        "sha256": "36bd7a58f75e9397181e40dd0e56d88fe370a170de11f52eb3ba11425be34244"
+      },
+      {
+        "path": "tests/ops/test_egress_order_sequence.py",
+        "sha256": "6a971f7bc07e44f6006bc05c25d10e55e5f55e203d00994b23b764c3c864825a"
+      },
+      {
+        "path": "tests/ops/test_egress_read_sequence.py",
+        "sha256": "9fbeb54565a3ff7fc50b51624e4f3dbaced3be3efee7f2d7113828648a6f8603"
+      },
+      {
+        "path": "tests/ops/test_egress_signed_account.py",
+        "sha256": "6d23f369ec3c3981c50f5f495d5940591b672b3a64d8940d7c2b35c0a04a12e9"
+      },
+      {
+        "path": "tests/ops/test_egress_native_requests.py",
+        "sha256": "9ade2336a92bd1cfd50f181a676b4c86254edfa47770db1d8d453919d9e81d62"
+      },
+      {
+        "path": "tests/ops/test_egress_native_receipt.py",
+        "sha256": "cc3b406799a82623e2b986e128b195806035bb3d0eb6e6786a75ed3d65e706f4"
+      },
+      {
+        "path": "tests/ops/test_egress_tls_receipt.py",
+        "sha256": "230189fda6301eca7f7e7029790e9de8db165933e794187331c50f6d8081875b"
+      },
+      {
+        "path": "tests/ops/test_egress_joint_ipc.py",
+        "sha256": "e546fc2bbf479a81ce19c341726a3868c545a6640e73c39a3fdd3062c11d1812"
+      },
+      {
+        "path": "tests/ops/test_egress_gateway_tls.py",
+        "sha256": "6eeb048531f6872712c155c83315242fc84accdc654483436f0e481ba5d63daa"
+      },
+      {
+        "path": "tests/ops/test_egress_installed_gateway.py",
+        "sha256": "a7f65e960c9ce1cd05503c8e1f5a881cb82ad9fb837734a3e1e305ce2aaf62d6"
+      },
+      {
+        "path": "tests/ops/test_egress_installation_selftest.py",
+        "sha256": "b23c06780d60a5e09bf751cfb6d2564a4704dfa3c430721a7e67c04dbe9328ef"
+      },
+      {
+        "path": "tests/ops/test_egress_installation.py",
+        "sha256": "01eb78b8bb46c5cc208384674928340e4253a865653275405531e4e0ceec79ab"
+      },
+      {
+        "path": "tests/ops/test_egress_package.py",
+        "sha256": "96b216e5d4f1c5b153d8889650103bb93c65b0debc95c87199ab6fb7ff0bac8b"
+      },
+      {
+        "path": "tests/ops/test_egress_ledger_gateway.py",
+        "sha256": "6cfe8c9c94ab56caa4294f64c85beffa092f18a476f3c0a434e9091940750f26"
+      },
+      {
+        "path": "tests/ops/test_egress_guard_selftest.py",
+        "sha256": "dfe1c8e795e820ab13c9a010d53092aca8c1016330dcff25f16398b606b12efa"
+      },
+      {
+        "path": "tests/ops/test_egress_collector_launcher.py",
+        "sha256": "9e5020262a12cbd4aa606b05b6974437054fb73a6664da4d821f447418976d79"
+      },
+      {
+        "path": "tests/ops/test_egress_authority_binding.py",
+        "sha256": "0a12fececd80168c31aa04e29d4f7f99faef7c0d3ba7b0f0348c596ca0a8dcf6"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_egress_ledger.py",
+        "sha256": "d13ce6c3646dfd5b52664b5aa940d9b1efa192e7392764869cfead7982d2b12a"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_joint_egress.py",
+        "sha256": "af7b4ace53f87f263a68dd761dce8dbe6ea6f6ebe3ab2d3119b190b418471484"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_tls_provenance.py",
+        "sha256": "c4d1c96b8a44bdcb6af96242ec6cd176392f4ca5e733768c2d63b4e54805c5da"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_rate_evidence.py",
+        "sha256": "2f4ae82940cdc346a3ada4f3bd2ca1b5cd049286fd0818446909b54b7aa4567b"
+      },
+      {
+        "path": "tests/ops/test_egress_concurrent_ws.py",
+        "sha256": "8aea0ba0c28a78b3845521084041b76cedf2c94bfb2f26f54c2c5968f4895ba1"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_ws_frames.py",
+        "sha256": "a5a70a2f224aa0165a48d226b94449bf32ef7399fa6e4d7c46d11434bc2a6f63"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_market_depth.py",
+        "sha256": "589b09e907a08ec230595288e95a5ad7997fa7016c51589e76877bb9128b7062"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_market_depth_v2.py",
+        "sha256": "965fd3967eaa6c6cb6878bff8955de6c890859a46a64bace633e526de261cf25"
+      },
+      {
+        "path": "tests/ops/test_portfolio_market_depth.py",
+        "sha256": "12e3db16610a755c3bbb1cf5cd1febe2a1bb64e9fc4d2e25de01a5d3ddfefbb5"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_joint_tls_evidence.py",
+        "sha256": "16f4e46629e029b54c11cb2941ac89293b2ddd1270e26fe5e32670980aebf350"
+      },
+      {
+        "path": "tests/strategies_nautilus/test_portfolio_joint_transport.py",
+        "sha256": "476806be3c82ada891ddf018a972c4a99249b7dd57cfcca16cae2ae6561772b3"
+      },
+      {
+        "path": "tests/ops/test_egress_account_ws.py",
+        "sha256": "1274047db3c0ab72f6e3269a650f4ed73c0f44bed18b20b6b41c5eda03e9b16e"
+      },
+      {
+        "path": "tests/ops/test_egress_market_ws.py",
+        "sha256": "a410825371b3f8280786578767dcb8876864b8f7508b6cd5f4cf6df0d0ece556"
+      }
+    ],
+    "new": 32,
+    "output": {
+      "path": "data/installed-market-ws-2026-09-22/pytest-final.txt",
+      "sha256": "7457ee60a2a104ceceb25fd106a71bc789eea4038256f943ef2e2751bb03a3dc"
+    },
+    "passed": 1216,
+    "seconds": 185.39,
+    "warnings": false
+  },
+  "quote_ticks_created": false,
+  "real_account_authenticated": false,
+  "replayed_original_scenario_sets": 51,
+  "reports": {
+    "account-regression": {
+      "path": "data/installed-market-ws-2026-09-22/account-regression.json",
+      "sha256": "5802b6869416565e5db0cc10199d6609bb602b429c1fbcd47c26be23c6a0230f"
+    },
+    "controls-regression": {
+      "path": "data/installed-market-ws-2026-09-22/controls-regression.json",
+      "sha256": "caf648a582aae89b6e8d827c4fa86c2c15a49d97995febbe68ec8d018ea65059"
+    },
+    "echo-regression": {
+      "path": "data/installed-market-ws-2026-09-22/echo-regression.json",
+      "sha256": "fcdbcccfbb5c14b4f4e4b946c85ce4d7a35fae500cdda67f0d37ca613c49fab4"
+    },
+    "market-final": {
+      "path": "data/installed-market-ws-2026-09-22/market-final.json",
+      "sha256": "e141d8f1e92515a4d40c9747523fe486333e2ad04a4c90d23d22d10f02f92c10"
+    },
+    "routes-regression": {
+      "path": "data/installed-market-ws-2026-09-22/routes-regression.json",
+      "sha256": "7c117fc3fb29a1aaccf61545936a0dc6385cba088a46b96463c046180d183033"
+    },
+    "signed-regression": {
+      "path": "data/installed-market-ws-2026-09-22/signed-regression.json",
+      "sha256": "3f95b056e0348708b1458cc1284fe9e5dec3f5b4a0bfc9d0034adae8acfe53f1"
+    }
+  },
+  "resource_limit_increased": false,
+  "retained_drivers": {
+    "acceptance.py": {
+      "path": "data/installed-market-ws-2026-09-22/acceptance.py",
+      "sha256": "c8f603cbe34641288141bcebabda64e604c83b9613c7427eb13e31451e749316"
+    },
+    "extract-runtime.py": {
+      "path": "data/installed-market-ws-2026-09-22/extract-runtime.py",
+      "sha256": "dd1abcbf53066a6f401cdebb7e0d5d3f12bab26fdbc22ebb8dc9076c0d82d0a7"
+    },
+    "final-tests.py": {
+      "path": "data/installed-market-ws-2026-09-22/final-tests.py",
+      "sha256": "279ada333ff949ba531905bcb97b61b54924a1cb7dcf2a706872f5416ff851d0"
+    },
+    "native-replay.py": {
+      "path": "data/installed-market-ws-2026-09-22/native-replay.py",
+      "sha256": "6add238e34fa17133d16dc1a764d36a99a95b15ea98ff4eeec1ec513cbd29caf"
+    },
+    "record-progress.py": {
+      "path": "data/installed-market-ws-2026-09-22/record-progress.py",
+      "sha256": "29eb374ac6ca30117da21ca56b035c4f4f81633c1891f3a864876ae682699c09"
+    },
+    "replay.py": {
+      "path": "data/installed-market-ws-2026-09-22/replay.py",
+      "sha256": "53d01f8b15c0845d21a570accce5fe6c8d4699609431c1693d9c77d83b78a23f"
+    },
+    "select-evidence.py": {
+      "path": "data/installed-market-ws-2026-09-22/select-evidence.py",
+      "sha256": "e3e2ad3f40af76e6c9c2c52a76eafb4ba36bd68083a6db07dc2eeb01b16e5035"
+    },
+    "verify-current.py": {
+      "path": "data/installed-market-ws-2026-09-22/verify-current.py",
+      "sha256": "9b36bee91eec6883c28b100e64e67f8300662685b630dac9481e15e962305301"
+    },
+    "verify-prior.py": {
+      "path": "data/installed-market-ws-2026-09-22/verify-prior.py",
+      "sha256": "2c4a3222c122e855b96ddba9195ef4e80411b81d0ccaf26af09296ffc1786608"
+    }
+  },
+  "retained_selection": {
+    "path": "data/installed-market-ws-2026-09-22/selection.json",
+    "sha256": "1f9a3f81dba093d9b6a8ef2897387b0f616994c5cbe3eee0b97ea9ba18bc36bb"
+  },
+  "retained_sources": {
+    "collector_launcher.py": {
+      "path": "data/installed-market-ws-2026-09-22/collector_launcher.py",
+      "sha256": "d1d94a8edd0730244b6dbc7c0e24746157985e7b36b82f865397402ce0433579"
+    },
+    "gateway_account_ws.py": {
+      "path": "data/installed-market-ws-2026-09-22/gateway_account_ws.py",
+      "sha256": "2d5ceaa1869c294ad82fa668394492ede63f17e4c2d4f240b85fa839abd81ca5"
+    },
+    "gateway_book_routes.py": {
+      "path": "data/installed-market-ws-2026-09-22/gateway_book_routes.py",
+      "sha256": "1bc3a5285be7b8c615fdfe00c442055cd335b0597de403061ecc1ddfa228efd2"
+    },
+    "gateway_concurrent_ws.py": {
+      "path": "data/installed-market-ws-2026-09-22/gateway_concurrent_ws.py",
+      "sha256": "4cbb2cd32adb8af7a3b23ce6829fc3581fb912d907e99aa7446be52ebed492c6"
+    },
+    "gateway_joint_ipc.py": {
+      "path": "data/installed-market-ws-2026-09-22/gateway_joint_ipc.py",
+      "sha256": "e814ddfdd67b7f43fd031a13a68a6bd87cf992e6de0a92b476751e4f9e3cb6ae"
+    },
+    "gateway_market_ws.py": {
+      "path": "data/installed-market-ws-2026-09-22/gateway_market_ws.py",
+      "sha256": "8279027e2f42e5db5af2fe1f60ee68ac308b3da178c6cd53bfe4fdeb892c91a0"
+    },
+    "gateway_native_account.py": {
+      "path": "data/installed-market-ws-2026-09-22/gateway_native_account.py",
+      "sha256": "0242c144987b2da47c97ac2e5ac239aa14ec63164756bc85a23c943d58a9d511"
+    },
+    "gateway_native_orders.py": {
+      "path": "data/installed-market-ws-2026-09-22/gateway_native_orders.py",
+      "sha256": "775d474cede83cb54926052f4514cb4716a08104aa00ae88edbcc951997aeb08"
+    },
+    "gateway_native_receipt.py": {
+      "path": "data/installed-market-ws-2026-09-22/gateway_native_receipt.py",
+      "sha256": "6c6526bf6976c3e809c3537fb86ce6c7672f3cbb08aca111ba48eac46025a0b7"
+    },
+    "gateway_native_requests.py": {
+      "path": "data/installed-market-ws-2026-09-22/gateway_native_requests.py",
+      "sha256": "2cbea5e7d162f40ffcadf41673757eeefa29d95603937ef23de43c7309f28163"
+    },
+    "gateway_native_runtime.py": {
+      "path": "data/installed-market-ws-2026-09-22/gateway_native_runtime.py",
+      "sha256": "3d319536524fe7f8ee0bbc1f9eca719e748dc24e262e47e9a210b058cafca8a8"
+    },
+    "gateway_read_sequence.py": {
+      "path": "data/installed-market-ws-2026-09-22/gateway_read_sequence.py",
+      "sha256": "eb7bc9f729b4ce0c8a02b69cf44c3946be0a81384c96f46fa57adce0da9e665f"
+    },
+    "gateway_tls.py": {
+      "path": "data/installed-market-ws-2026-09-22/gateway_tls.py",
+      "sha256": "c3f56e7089d9ad3ea1e246e59e4d69e899974045da67004e6058386fce71b8c8"
+    },
+    "gateway_tls_receipt.py": {
+      "path": "data/installed-market-ws-2026-09-22/gateway_tls_receipt.py",
+      "sha256": "bc3f69ad3e6e68e79381cadc54f47133454f4218a96cc7be74e60189a6be9322"
+    },
+    "helper_entry.py": {
+      "path": "data/installed-market-ws-2026-09-22/helper_entry.py",
+      "sha256": "2a91437ed9080ae481eae7496e43cfe35d29888e1e3a5a12b10605b6dc320c9b"
+    },
+    "inspect_binding.py": {
+      "path": "data/installed-market-ws-2026-09-22/inspect_binding.py",
+      "sha256": "27c3302222bc819767ba874d7000f2b038662fa72004cb56da25a1003c38e322"
+    },
+    "installation.py": {
+      "path": "data/installed-market-ws-2026-09-22/installation.py",
+      "sha256": "9ab4118c4e13b431171e07dd26099f629a96a5138cdf2437e750fca3cb09e468"
+    },
+    "installation_selftest.py": {
+      "path": "data/installed-market-ws-2026-09-22/installation_selftest.py",
+      "sha256": "e2b0e9a59cd3805ebfac2fb4b4b2c1992e8e9d2865862cf70c3876c06e42346e"
+    },
+    "installed_gateway.py": {
+      "path": "data/installed-market-ws-2026-09-22/installed_gateway.py",
+      "sha256": "c00cf6c4daf125b9e3404016ba585a9a0f12dea6261a14ea933283186ea75e94"
+    },
+    "installed_gateway_selftest.py": {
+      "path": "data/installed-market-ws-2026-09-22/installed_gateway_selftest.py",
+      "sha256": "44988335ef2eb274e4b8da2e439cf6fc48b416b1b91f1ffe1b9a222e0bcf1f57"
+    },
+    "ledger_gateway.py": {
+      "path": "data/installed-market-ws-2026-09-22/ledger_gateway.py",
+      "sha256": "6e6d589dbd424ffb42237f0c226319c10443cdd5db0a3106a2fd1b763b6aaed4"
+    },
+    "package.py": {
+      "path": "data/installed-market-ws-2026-09-22/package.py",
+      "sha256": "7f519e26c0f85951e8d60f8cf8eaa6e774fb002c74647ee4892b491cef8b549d"
+    },
+    "portfolio_egress_ledger.py": {
+      "path": "data/installed-market-ws-2026-09-22/portfolio_egress_ledger.py",
+      "sha256": "3cd1ad63037ce5c138b77bd486f1326f022e4aac682d0316cc4be54c60eaedc5"
+    },
+    "portfolio_rate_evidence.py": {
+      "path": "data/installed-market-ws-2026-09-22/portfolio_rate_evidence.py",
+      "sha256": "18aa5bdbf1954cebc4802b38daeded07cd60e2ab1b9e508d6686ac89a07abb35"
+    },
+    "portfolio_tls_provenance.py": {
+      "path": "data/installed-market-ws-2026-09-22/portfolio_tls_provenance.py",
+      "sha256": "def476571e9ec56e989eee02b8623b1a657337956ecd88faeabaf9f2efc70044"
+    },
+    "portfolio_ws_frames.py": {
+      "path": "data/installed-market-ws-2026-09-22/portfolio_ws_frames.py",
+      "sha256": "c5b72731a63be3edcdf8ea98f582058cb611ab330b4c2b6edcede51620cb3ef3"
+    },
+    "selftest.py": {
+      "path": "data/installed-market-ws-2026-09-22/selftest.py",
+      "sha256": "75ba8a36ca075f4236f20e68524117bf1abc1431226271bb0df35912c4ebff5f"
+    }
+  },
+  "root_native_modules_loaded": false,
+  "runtime_bundles": [
+    {
+      "path": "data/installed-market-ws-2026-09-22/account-regression.runtime.tar.gz",
+      "sha256": "340cd6c52f7a8d82f07481d7f0ce72c29521d8262c41c3790c5c028574128a45"
+    },
+    {
+      "path": "data/installed-market-ws-2026-09-22/controls-regression.runtime.tar.gz",
+      "sha256": "4c2ff49c11dff20b3c1a1aa884f2455f6484706fd3f6228c41f379db236e2f53"
+    },
+    {
+      "path": "data/installed-market-ws-2026-09-22/market-final.runtime.tar.gz",
+      "sha256": "132d3f4c56b1b172f4036365c4130dc224caec6da39a558fa12c7619032c3ccd"
+    },
+    {
+      "path": "data/installed-market-ws-2026-09-22/routes-regression.runtime.tar.gz",
+      "sha256": "66a37198da09d9c2f081e7fe6e86e7cb81dfaacb3dcfab1c33aac7764a32d9dd"
+    },
+    {
+      "path": "data/installed-market-ws-2026-09-22/signed-regression.runtime.tar.gz",
+      "sha256": "137494e42159c6a482bd8f13b34f004945677e69a1d10bb24716cd64f22cc003"
+    }
+  ],
+  "schema_version": "portfolio.installed_market_ws_acceptance.v1",
+  "snapshot_linked": false,
+  "trading_admitted": false,
+  "unselected_diagnostics": [
+    {
+      "artifact": {
+        "path": "data/installed-market-ws-2026-09-22/first.json",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "reason": "Empty diagnostic batch: new profile flag propagation to the shared controller was corrected."
+    },
+    {
+      "artifact": {
+        "path": "data/installed-market-ws-2026-09-22/second.json",
+        "sha256": "e141d8f1e92515a4d40c9747523fe486333e2ad04a4c90d23d22d10f02f92c10"
+      },
+      "reason": "Passing twelve-scenario final-source original, copied byte-for-byte to market-final for selection; source pins match."
+    }
+  ],
+  "upstream_touched": false,
+  "venue_requests": 0
+}

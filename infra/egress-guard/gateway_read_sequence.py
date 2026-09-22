@@ -629,8 +629,18 @@ class Sequence:
 
 
 def run_installed(
-    entry, authority, sources, *, orders=False, routes=False, concurrent=False, signed=False
+    entry,
+    authority,
+    sources,
+    *,
+    orders=False,
+    routes=False,
+    concurrent=False,
+    signed=False,
+    market=False,
 ):
+    if market and not signed:
+        raise ValueError("market_ws_requires_signed")
     if signed and not concurrent:
         raise ValueError("signed_ws_requires_concurrent")
     if concurrent and not routes:
@@ -682,7 +692,7 @@ def run_installed(
             if concurrent:
                 code = entry["load"](sources.source("gateway_concurrent_ws.py"))
                 transport = code["run_installed"](
-                    entry, authority, sources, sequence, signed=signed
+                    entry, authority, sources, sequence, signed=signed, market=market
                 )
             print(
                 json.dumps(

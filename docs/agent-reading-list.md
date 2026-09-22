@@ -22,6 +22,15 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For installed concurrent market depth increments and joint native account/delta receipts,
+read `docs/progress/portfolio-installed-market-ws-2026-09-22.md` and its JSON.
+Manifest v13 pins twenty sources. Original route metadata selects bounded symbols;
+account and market events are received concurrently, then native AccountBalance and
+OrderBookDelta batches acknowledge exact originals after socket closure/revocation.
+Each symbol has two unanchored updates, not a snapshot-backed book or QuoteTick.
+Next integrate concurrent per-symbol REST depth snapshots and revision linkage;
+full joint collection, stream fences, real authority and trading stay blocked.
+
 For installed native signed account WebSocket subscription and partial event receipt,
 read `docs/progress/portfolio-installed-signed-ws-2026-09-22.md` and its JSON.
 Manifest v12 pins nineteen sources. One isolated native child signs the fixed
@@ -29,8 +38,8 @@ fixture selector, then acknowledges exact partial AccountBalance mappings after
 both root-owned sockets close and kernel permission is revoked. Replay binds the
 signer/runtime to prior route originals and preserves raw frames and receive clocks.
 This accepts one partial update, not a full account snapshot or stream fence.
-Next integrate market/depth events and the remaining concurrent REST/depth flow;
-real authority, coverage, qualified equity and live admission remain blocked.
+The market increment/native delta successor above is now integrated; concurrent
+REST depth snapshots, real authority and live admission remain blocked.
 
 For concurrent installed gateway TLS/WebSocket upgrade/control acceptance, read
 `docs/progress/portfolio-installed-concurrent-ws-2026-09-19.md` and its JSON.
