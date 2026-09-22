@@ -111,6 +111,8 @@ def client_control(raw, opcode, payload):
 class State:
     """Replay only original events; incomplete prefixes never authorize resume."""
 
+    PROFILE = PROFILE
+
     def __init__(self, selected, provenance, frames):
         self.selected, self.provenance, self.frames = selected, provenance, frames
         self.stage = None
@@ -120,13 +122,13 @@ class State:
         self.overlap = False
 
     def __deepcopy__(self, memo):
-        result = State(self.selected, self.provenance, self.frames)
+        result = type(self)(self.selected, self.provenance, self.frames)
         for key, value in self.__dict__.items():
             if key not in {"selected", "provenance", "frames"}:
                 setattr(result, key, copy.deepcopy(value, memo))
         return result
 
-    def feed(self, kind, payload, now, mono):
+    def clock(self, payload, now, mono):
         if self.complete or self.aborted:
             raise ValueError("ws_terminal")
         if not isinstance(payload, dict) or any(type(v) is not int or v <= 0 for v in (now, mono)):
@@ -138,6 +140,9 @@ class State:
         ):
             raise ValueError("ws_clock_discontinuity")
         self.last = (now, mono)
+
+    def feed(self, kind, payload, now, mono):
+        self.clock(payload, now, mono)
         if self.stage is None:
             if kind != "started" or payload != self.selected:
                 raise ValueError("ws_selected_originals")
@@ -318,7 +323,7 @@ class State:
 
     def report(self):
         return {
-            "schema_version": PROFILE,
+            "schema_version": self.PROFILE,
             "status": "complete" if self.complete else "incomplete_no_resume",
             "last_record": self.stage,
             "prepared_connections": len(self.wires),
@@ -354,17 +359,17 @@ class State:
         }
 
 
-def replay(raw, *, expected_sha256, selected, provenance, frames):
+def replay(raw, *, expected_sha256, selected, provenance, frames, state_type=State):
     if not isinstance(raw, bytes) or not 0 < len(raw) <= LIMIT or digest(raw) != expected_sha256:
         raise ValueError("ws_selected_archive")
-    state, previous = State(selected, provenance, frames), None
+    state, previous = state_type(selected, provenance, frames), None
     for index, line in enumerate(raw.splitlines(keepends=True)):
         row = json.loads(line)
         if (
             not isinstance(row, dict)
             or set(row)
             != {"seq", "previous_sha256", "kind", "utc_ns", "monotonic_ns", "profile", "payload"}
-            or row["profile"] != PROFILE
+            or row["profile"] != state.PROFILE
             or type(row["seq"]) is not int
             or row["seq"] != index
             or row["previous_sha256"] != previous
@@ -377,11 +382,11 @@ def replay(raw, *, expected_sha256, selected, provenance, frames):
 
 
 class Journal:
-    def __init__(self, path, selected, provenance, frames, check):
+    def __init__(self, path, selected, provenance, frames, check, *, state_type=State):
         self.path, self.check = path, check
         self.owner, self.failed, self.expected = os.getpid(), False, b""
         self.closed = False
-        self.state = State(selected, provenance, frames)
+        self.state = state_type(selected, provenance, frames)
         self.reader = None
         check()
         self.journal = provenance._Journal(path, limit=LIMIT, reserve=4096)
@@ -418,7 +423,7 @@ class Journal:
                 "kind": kind,
                 "utc_ns": now,
                 "monotonic_ns": mono,
-                "profile": PROFILE,
+                "profile": self.state.PROFILE,
                 "payload": payload,
             }
             self.journal.append(
@@ -444,7 +449,7 @@ class Journal:
             os.close(self.journal.fd)
 
 
-async def capture(journal, trust, frames, check, grant, revoke, notify):
+async def capture(journal, trust, frames, check, grant, revoke, notify, session=None):
     """One event-loop owner; two fixed marked sockets, one unrenewable kernel window."""
     writers, sockets, tasks = [], [], []
     failure = None
@@ -473,6 +478,7 @@ async def capture(journal, trust, frames, check, grant, revoke, notify):
         journal.append("activated", {})
         notify("ws_activated")
         ready = {role: asyncio.Event() for role in ROLES}
+        subscription_done = asyncio.Event()
         loop = asyncio.get_running_loop()
 
         def before_wire():
@@ -550,6 +556,10 @@ async def capture(journal, trust, frames, check, grant, revoke, notify):
             await ready[ROLES[1 - ROLES.index(role)]].wait()
             if role == "account":
                 notify("ws_both_live")
+                if session is not None:
+                    await session.exchange(journal, writer, chunk, before_wire, deadline)
+                subscription_done.set()
+            await subscription_done.wait()
             await send("close_prepared", frames["client_frame"](b"\x03\xe8", 8))
             while len(journal.state.events(role)) < 2:
                 await chunk()
@@ -590,6 +600,8 @@ async def capture(journal, trust, frames, check, grant, revoke, notify):
         try:
             revoke()
             journal.append("revoked", {})
+            if failure is None and session is not None:
+                session.deliver(journal, notify)
             journal.append(
                 "completed" if failure is None else "aborted",
                 {} if failure is None else {"reason": type(failure).__name__},
@@ -612,7 +624,7 @@ def capture_result(*args):
     return {"status": "concurrent_ws_completed", "network_admitted": False}
 
 
-def run_installed(entry, authority, sources, sequence):
+def run_installed(entry, authority, sources, sequence, *, signed=False):
     code = entry["load"](sources.source("gateway_read_sequence.py"))
     frames = entry["load"](sources.source("portfolio_ws_frames.py"))
     guards = entry["load"](sources.source("selftest.py"))
@@ -659,18 +671,42 @@ def run_installed(entry, authority, sources, sequence):
             raise ValueError("fixture_parent_release_required")
 
     check()
-    path = sequence.path / SCOPE
-    os.mkdir(SCOPE, 0o700, dir_fd=sequence.directory)
+    extension = entry["load"](sources.source("gateway_account_ws.py")) if signed else None
+    if signed:
+        selected = extension["selection"](selected, sequence.bundles)
+    scope = extension["SCOPE"] if signed else SCOPE
+    path = sequence.path / scope
+    os.mkdir(scope, 0o700, dir_fd=sequence.directory)
     os.fsync(sequence.directory)
     sequence.hold(path, directory=True)
     sequence.write(
         path / "README.md",
-        b"Two fixed concurrent fixture TLS/WebSocket upgrades and control exchanges. Consumed on creation. No signing, account subscription, native events or live admission. Next: offline original replay, then signed/native integration.\n",
+        (
+            b"Fixture signed subscription and partial native event receipt. Phase: disposable acceptance. Consumed on creation; no live admission. Next: offline original replay and full collector integration.\n"
+            if signed
+            else b"Two fixed concurrent fixture TLS/WebSocket upgrades and control exchanges. Consumed on creation. No signing, account subscription, native events or live admission. Next: offline original replay, then signed/native integration.\n"
+        ),
     )
     fd = authority.open_file("/etc/trader/egress-gateway-fixture-ca.pem", 0o444)
     trust = os.pread(fd, 65537, 0)
-    journal = Journal(path / "ws.jsonl", selected, sequence.modules["provenance"], frames, check)
+    session = journal = None
     try:
-        return capture_result(journal, trust, frames, check, grant, revoke, notify)
+        if signed:
+            session = extension["Session"](entry, authority, sources)
+        state_type = extension["state_type"](globals(), session.requests) if signed else State
+        journal = Journal(
+            path / "ws.jsonl",
+            selected,
+            sequence.modules["provenance"],
+            frames,
+            check,
+            state_type=state_type,
+        )
+        if signed:
+            journal.append("signer_prepared", session.collector.selected)
+        return capture_result(journal, trust, frames, check, grant, revoke, notify, session)
     finally:
-        journal.close()
+        if journal is not None:
+            journal.close()
+        if session is not None:
+            session.close()

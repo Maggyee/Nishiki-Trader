@@ -89,6 +89,17 @@ WS_SCENARIOS = (
     "routes_ws_code_drift",
     "routes_ws_controller_crash",
 )
+SIGNED_WS_SCENARIOS = (
+    "routes_ws_success",
+    "routes_ws_two_hops",
+    "routes_ws_bad_response",
+    "routes_ws_wrong_subscription",
+    "routes_ws_precision",
+    "routes_ws_extra_event",
+    "routes_ws_child_stopped",
+    "routes_ws_controller_crash",
+    "routes_ws_code_drift",
+)
 FIXTURE_BOOKS = [
     {"symbol": asset + "USDT", "bidPrice": price, "askPrice": ask, "bidQty": "10", "askQty": "10"}
     for asset, price, ask in (
@@ -160,7 +171,7 @@ if runtime.exists():
     denied('native_runtime_write',lambda:os.open(runtime/'bin/python3.12',os.O_WRONLY))
     denied('native_runtime_replace',lambda:os.unlink(runtime/'bin/python3.12'))
 code=Path('/usr/local/lib/trader-egress')
-for name in ('installed_gateway.py','gateway_tls.py','gateway_joint_ipc.py','gateway_tls_receipt.py','gateway_native_runtime.py','gateway_native_receipt.py','gateway_native_requests.py','gateway_native_account.py','gateway_native_orders.py','gateway_book_routes.py','gateway_read_sequence.py','gateway_concurrent_ws.py','portfolio_ws_frames.py','ledger_gateway.py','selftest.py','portfolio_rate_evidence.py','portfolio_tls_provenance.py','portfolio_egress_ledger.py'):
+for name in ('installed_gateway.py','gateway_tls.py','gateway_joint_ipc.py','gateway_tls_receipt.py','gateway_native_runtime.py','gateway_native_receipt.py','gateway_native_requests.py','gateway_native_account.py','gateway_native_orders.py','gateway_book_routes.py','gateway_read_sequence.py','gateway_concurrent_ws.py','gateway_account_ws.py','portfolio_ws_frames.py','ledger_gateway.py','selftest.py','portfolio_rate_evidence.py','portfolio_tls_provenance.py','portfolio_egress_ledger.py'):
     path=code/name
     assert path.read_bytes()
     denied('write:'+name,lambda:os.open(path,os.O_WRONLY))
@@ -298,7 +309,7 @@ context.set_servername_callback(lambda connection,name,ctx:names.update({id(conn
 barrier=threading.Barrier(2,timeout=2.5)
 lock=threading.Lock()
 report={'connections':0,'upgrades':0,'pongs':0,'closes':0,'both_upgrades_before_ping':False,'requests':{},'errors':[]}
-def frame(op,data):return bytes([0x80|op,len(data)])+data
+def frame(op,data):return bytes([0x80|op])+(bytes([len(data)]) if len(data)<126 else b"\x7e"+len(data).to_bytes(2,"big"))+data
 def exact(connection,n):
     raw=b''
     while len(raw)<n:
@@ -347,6 +358,33 @@ def serve(raw):
             connection.sendall(ping[:3]);connection.sendall(ping[3:])
             control(connection,10,b'fixture:'+role.encode())
             with lock:report['pongs']+=1
+            if sys.argv[2]=='signed' and role=='account':
+                head=exact(connection,2)
+                if head[0]!=0x81 or not head[1]&0x80:raise ValueError('signed_text_required')
+                size=head[1]&127
+                if size==126:size=int.from_bytes(exact(connection,2),'big')
+                if size>850:raise ValueError('signed_text_limit')
+                mask=exact(connection,4);encoded=exact(connection,size)
+                payload=bytes(v^mask[i%4] for i,v in enumerate(encoded));request=json.loads(payload)
+                scope={'__name__':'fixture_verifier'}
+                exec(compile(open('/usr/local/lib/trader-egress/gateway_native_requests.py').read(),'<fixture-verifier>','exec'),scope)
+                params=request['params'];signature=params.pop('signature')
+                if set(request)!={'id','method','params'} or request['id']!='fixture-2' or request['method']!='userDataStream.subscribe.signature':raise ValueError('subscription_selector')
+                if set(params)!={'apiKey','recvWindow','timestamp'} or params['apiKey']!=scope['API_KEY'] or params['recvWindow']!=5000 or not 0<=time.time_ns()//1000000-params['timestamp']<5000:raise ValueError('subscription_parameters')
+                scope['verify_signature']('&'.join(str(k)+'='+str(v) for k,v in sorted(params.items())),signature)
+                with lock:report['subscription_signature_verified']=True
+                reply={'id':'fixture-2','status':200,'result':{'subscriptionId':0}}
+                if scenario=='routes_ws_bad_response':reply['id']='foreign'
+                now=time.time_ns()//1000000
+                update={'subscriptionId':0,'event':{'e':'outboundAccountPosition','E':now,'u':now,'B':[{'a':'BTC','f':'0.01000000','l':'0.00100000'}]}}
+                if scenario=='routes_ws_wrong_subscription':update['subscriptionId']=1
+                if scenario=='routes_ws_precision':update['event']['B'][0]['f']='0.010000001'
+                reply_raw=json.dumps(reply,separators=(',',':')).encode();event_raw=json.dumps(update,separators=(',',':')).encode()
+                connection.sendall(frame(1,reply_raw))
+                # Fragment the original event across continuation frames and TLS writes.
+                first=frame(1,event_raw[:50]);first=bytes([1])+first[1:]
+                connection.sendall(first[:7]);connection.sendall(first[7:]+frame(0,event_raw[50:]))
+                if scenario=='routes_ws_extra_event':connection.sendall(frame(1,event_raw))
             control(connection,8,b'\x03\xe8')
             with lock:report['closes']+=1
             connection.sendall(frame(8,b'\x03\xe8'))
@@ -373,7 +411,8 @@ def worker(payload):
     base = load(payload["base_source"])
     base["require_isolation"](payload["original"])
     requests = payload.get("native_requests_profile", False)
-    concurrent = payload.get("concurrent_ws_profile", False)
+    signed_ws = payload.get("signed_ws_profile", False)
+    concurrent = payload.get("concurrent_ws_profile", False) or signed_ws
     routes = payload.get("route_sequence_profile", False) or concurrent
     orders = payload.get("order_sequence_profile", False) or routes
     sequence = payload.get("read_sequence_profile", False) or orders
@@ -396,7 +435,9 @@ def worker(payload):
         or (tls and ipc)
         or payload["scenario"]
         not in (
-            WS_SCENARIOS
+            SIGNED_WS_SCENARIOS
+            if signed_ws
+            else WS_SCENARIOS
             if concurrent
             else ROUTE_SCENARIOS
             if routes
@@ -994,7 +1035,8 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
     """Drive fixed barriers only; parent is namespace PID 1 and has no host network."""
     code = load(payload["sources"]["gateway_read_sequence.py"])
     modules = code["load_sources"](payload["sources"])
-    concurrent = payload.get("concurrent_ws_profile", False)
+    signed_ws = payload.get("signed_ws_profile", False)
+    concurrent = payload.get("concurrent_ws_profile", False) or signed_ws
     routes = payload.get("route_sequence_profile", False) or concurrent
     orders = payload.get("order_sequence_profile", False) or routes
     steps = code["ROUTE_STEPS"] if routes else code["ORDER_STEPS"] if orders else code["STEPS"]
@@ -1004,7 +1046,9 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
         "/usr/bin/python3",
         "-I",
         entry["CODE"] + "/installed_gateway.py",
-        "--concurrent-ws-fixture"
+        "--signed-ws-fixture"
+        if signed_ws
+        else "--concurrent-ws-fixture"
         if concurrent
         else "--route-sequence-fixture"
         if routes
@@ -1163,6 +1207,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                         "-c",
                         WS_PEER,
                         scenario,
+                        "signed" if signed_ws else "controls",
                     ],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
@@ -1187,6 +1232,20 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                     original = target.read_bytes()
                     target.write_bytes(original + b"\n# fixture drift\n")
                     restore = target, original
+                release()
+            elif stage == "ws_native_receipt_prepared":
+                revoked()
+                checks.append("ws_kernel_revoked_before_native_event_delivery")
+                if scenario == "routes_ws_child_stopped":
+                    ws_rows = list(
+                        map(
+                            json.loads,
+                            (root / "signed-account-ws-v1" / "ws.jsonl").read_bytes().splitlines(),
+                        )
+                    )
+                    signer = next(r["payload"] for r in ws_rows if r["kind"] == "signer_prepared")
+                    stopped = os.pidfd_open(signer["process"]["pid"])
+                    signal.pidfd_send_signal(stopped, signal.SIGSTOP)
                 release()
             elif stage == "tls_headers_persisted":
                 pass
@@ -1293,7 +1352,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
             routes=routes,
         )
         expected = {
-            **{name: (6, 6) for name in WS_SCENARIOS},
+            **{name: (6, 6) for name in (*WS_SCENARIOS, *SIGNED_WS_SCENARIOS)},
             **{
                 name: (5, 5)
                 if name in {"routes_controller_crash", "routes_code_drift"}
@@ -1323,7 +1382,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
             (report["prepared_steps"], report["accepted_steps"]) != expected
             or (report["status"] == "complete")
             != (
-                scenario in WS_SCENARIOS
+                scenario in (*WS_SCENARIOS, *SIGNED_WS_SCENARIOS)
                 or scenario
                 in {
                     "sequence_success",
@@ -1343,13 +1402,26 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
             ws_code = load(payload["sources"]["gateway_concurrent_ws.py"])
             frames = load(payload["sources"]["portfolio_ws_frames.py"])
             selected = ws_code["selection"](raw, bundles, code, modules)
-            ws_raw = (root / ws_code["SCOPE"] / "ws.jsonl").read_bytes()
+            extension = load(payload["sources"]["gateway_account_ws.py"]) if signed_ws else None
+            state_type = (
+                extension["state_type"](
+                    ws_code, load(payload["sources"]["gateway_native_requests.py"])
+                )
+                if signed_ws
+                else ws_code["State"]
+            )
+            if signed_ws:
+                selected = extension["selection"](selected, bundles)
+            ws_raw = (
+                root / (extension["SCOPE"] if signed_ws else ws_code["SCOPE"]) / "ws.jsonl"
+            ).read_bytes()
             ws_report = ws_code["replay"](
                 ws_raw,
                 expected_sha256=ws_code["digest"](ws_raw),
                 selected=selected,
                 provenance=modules["provenance"],
                 frames=frames,
+                state_type=state_type,
             )
             success = scenario in {"routes_ws_success", "routes_ws_two_hops"}
             if (ws_report["status"] == "complete") != success or ws_report[
@@ -1375,7 +1447,9 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                     "two_ws_attempts_consumed_before_kernel_grant",
                     "ws_original_route_symbols_and_tls_controls_replay",
                     "ws_terminal_marked_socket_denied",
-                    "no_signed_ws_subscription_or_native_event_claim",
+                    "signed_ws_partial_native_event_only"
+                    if signed_ws
+                    else "no_signed_ws_subscription_or_native_event_claim",
                 ]
             )
             if success:
@@ -1732,6 +1806,7 @@ def main(argv=None):
     profiles.add_argument("--order-sequence-profile", action="store_true")
     profiles.add_argument("--route-sequence-profile", action="store_true")
     profiles.add_argument("--concurrent-ws-profile", action="store_true")
+    profiles.add_argument("--signed-ws-profile", action="store_true")
     profiles.add_argument("--joint-ipc-profile", action="store_true")
     args = parser.parse_args(argv)
     if os.geteuid() == 0:
@@ -1769,6 +1844,7 @@ def main(argv=None):
             or args.order_sequence_profile
             or args.route_sequence_profile
             or args.concurrent_ws_profile
+            or args.signed_ws_profile
         ):
             built = subprocess.run(
                 [
@@ -1805,6 +1881,7 @@ def main(argv=None):
             "order_sequence_profile": args.order_sequence_profile,
             "route_sequence_profile": args.route_sequence_profile,
             "concurrent_ws_profile": args.concurrent_ws_profile,
+            "signed_ws_profile": args.signed_ws_profile,
             "joint_ipc_profile": args.joint_ipc_profile,
             "base_source": base_source,
             "installer": installer.decode(),
@@ -1817,7 +1894,9 @@ def main(argv=None):
         reports = []
         bootstrap = "import json,sys\np=json.load(sys.stdin)\ns={'__name__':'isolated_installed_gateway'}\nexec(compile(p['source'],'<fixture>','exec'),s)\nprint(json.dumps(s['worker'](p),sort_keys=True))\n"
         for scenario in (
-            WS_SCENARIOS
+            SIGNED_WS_SCENARIOS
+            if args.signed_ws_profile
+            else WS_SCENARIOS
             if args.concurrent_ws_profile
             else ROUTE_SCENARIOS
             if args.route_sequence_profile
@@ -1903,6 +1982,7 @@ def main(argv=None):
             "order_sequence_profile": args.order_sequence_profile,
             "route_sequence_profile": args.route_sequence_profile,
             "concurrent_ws_profile": args.concurrent_ws_profile,
+            "signed_ws_profile": args.signed_ws_profile,
             "joint_ipc_profile": args.joint_ipc_profile,
             "scenarios": reports,
             "source_sha256": payload["source_sha256"],

@@ -27,6 +27,7 @@ FILES = (
     "gateway_book_routes.py",
     "gateway_read_sequence.py",
     "gateway_concurrent_ws.py",
+    "gateway_account_ws.py",
     "portfolio_ws_frames.py",
     "ledger_gateway.py",
     "selftest.py",
@@ -34,7 +35,7 @@ FILES = (
     "portfolio_tls_provenance.py",
     "portfolio_egress_ledger.py",
 )
-PROFILE = "portfolio.installed_gateway_fixture.v11"
+PROFILE = "portfolio.installed_gateway_fixture.v12"
 
 
 def digest(raw):
@@ -419,6 +420,7 @@ def main():
             ["--order-sequence-fixture"],
             ["--route-sequence-fixture"],
             ["--concurrent-ws-fixture"],
+            ["--signed-ws-fixture"],
         )
         or not sys.flags.isolated
         or os.path.abspath(__file__) != CODE + "/installed_gateway.py"
@@ -445,6 +447,7 @@ def main():
         ["--order-sequence-fixture"],
         ["--route-sequence-fixture"],
         ["--concurrent-ws-fixture"],
+        ["--signed-ws-fixture"],
     ):
         authority = installation()
         try:
@@ -456,8 +459,14 @@ def main():
                 authority,
                 sources,
                 orders=sys.argv[1:] == ["--order-sequence-fixture"],
-                routes=sys.argv[1:] in (["--route-sequence-fixture"], ["--concurrent-ws-fixture"]),
-                concurrent=sys.argv[1:] == ["--concurrent-ws-fixture"],
+                routes=sys.argv[1:]
+                in (
+                    ["--route-sequence-fixture"],
+                    ["--concurrent-ws-fixture"],
+                    ["--signed-ws-fixture"],
+                ),
+                concurrent=sys.argv[1:] in (["--concurrent-ws-fixture"], ["--signed-ws-fixture"]),
+                signed=sys.argv[1:] == ["--signed-ws-fixture"],
             )
         finally:
             authority.close()
