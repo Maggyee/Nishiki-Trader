@@ -29,6 +29,7 @@ FILES = (
     "gateway_concurrent_ws.py",
     "gateway_account_ws.py",
     "gateway_market_ws.py",
+    "gateway_snapshot_ws.py",
     "portfolio_ws_frames.py",
     "ledger_gateway.py",
     "selftest.py",
@@ -36,7 +37,7 @@ FILES = (
     "portfolio_tls_provenance.py",
     "portfolio_egress_ledger.py",
 )
-PROFILE = "portfolio.installed_gateway_fixture.v13"
+PROFILE = "portfolio.installed_gateway_fixture.v14"
 
 
 def digest(raw):
@@ -423,6 +424,7 @@ def main():
             ["--concurrent-ws-fixture"],
             ["--signed-ws-fixture"],
             ["--market-ws-fixture"],
+            ["--snapshot-ws-fixture"],
         )
         or not sys.flags.isolated
         or os.path.abspath(__file__) != CODE + "/installed_gateway.py"
@@ -451,6 +453,7 @@ def main():
         ["--concurrent-ws-fixture"],
         ["--signed-ws-fixture"],
         ["--market-ws-fixture"],
+        ["--snapshot-ws-fixture"],
     ):
         authority = installation()
         try:
@@ -468,11 +471,19 @@ def main():
                     ["--concurrent-ws-fixture"],
                     ["--signed-ws-fixture"],
                     ["--market-ws-fixture"],
+                    ["--snapshot-ws-fixture"],
                 ),
                 concurrent=sys.argv[1:]
-                in (["--concurrent-ws-fixture"], ["--signed-ws-fixture"], ["--market-ws-fixture"]),
-                signed=sys.argv[1:] in (["--signed-ws-fixture"], ["--market-ws-fixture"]),
-                market=sys.argv[1:] == ["--market-ws-fixture"],
+                in (
+                    ["--concurrent-ws-fixture"],
+                    ["--signed-ws-fixture"],
+                    ["--market-ws-fixture"],
+                    ["--snapshot-ws-fixture"],
+                ),
+                signed=sys.argv[1:]
+                in (["--signed-ws-fixture"], ["--market-ws-fixture"], ["--snapshot-ws-fixture"]),
+                market=sys.argv[1:] in (["--market-ws-fixture"], ["--snapshot-ws-fixture"]),
+                snapshot=sys.argv[1:] == ["--snapshot-ws-fixture"],
             )
         finally:
             authority.close()

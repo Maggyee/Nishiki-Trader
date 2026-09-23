@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-09-22
+- **Last updated**: 2026-09-23
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: The installed fixture now receives native-signed account events and original-derived market depth increments concurrently, then acknowledges exact native AccountBalance/OrderBookDelta batches after socket closure and kernel revocation. These are bounded unanchored segments. Next integrate per-symbol REST depth snapshots and revision linkage before synchronized books/quotes. Full joint collection, stream fences, real authority/coverage, provider limits/clocks, host rollout, qualified equity and trading remain blocked.
+- **Current objective**: The separate installed fixture now consumes fixed per-symbol REST depth attempts, retains original HTTPS snapshots alongside concurrent signed-account/market WebSockets and binds `lastUpdateId` to eligible native depth-delta receipts after closure/revocation. This proves bounded local revision linkage only. Next connect the complete native joint collector and qualify synchronized books/quotes independently. Stream fences, real authority/coverage, provider limits/clocks, host rollout, qualified equity and trading remain blocked.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -340,8 +340,12 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
    native acknowledgement only after socket closure and kernel revocation.
    [Market depth increment receipts](progress/portfolio-installed-market-ws-2026-09-22.md)
    now receive both channels concurrently and acknowledge exact native delta batches.
-   Next integrate REST depth snapshots and revision linkage; no synchronized book
-   or QuoteTick follows from the unanchored segments. Sampling never proves coverage.
+   [Distinct snapshot linkage](progress/portfolio-installed-snapshot-ws-2026-09-23.md)
+   now consumes each original-derived REST attempt before grant, captures one
+   verified HTTPS snapshot per symbol while both WS channels remain live and
+   binds first eligible increments to `lastUpdateId + 1`. The old unanchored
+   profile stays intact. Next connect the full native joint collector and separately
+   qualify synchronized books/quotes; sampling never proves coverage.
    Actual authority policy, fresh rate/clock consumption and provider-charge
    resolution must precede any separately reviewed real joint dispatch.
    Preserve the consumed scope; no retry, second IPv4 or extended interruption
@@ -386,6 +390,15 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
 
 ## Latest Verification
 
+- Installed fixture snapshot linkage: **151 focused Python tests / four disposable
+  scenarios pass** (direct,
+  two-hop, missing revision coverage, invalid snapshot); the latter two stay
+  incomplete and nonresumable. Two accepted symbols per success; original HTTPS
+  bytes and per-symbol revision anchors bind the native account/delta receipt.
+  Maximum sampled descriptors **854/1,024**, leaving 170. See
+  [snapshot linkage acceptance](progress/portfolio-installed-snapshot-ws-2026-09-23.md).
+  Existing market-only entry also passes all twelve disposable regression scenarios.
+  No synchronized book, QuoteTick, real venue request or live admission follows.
 - Installed concurrent account/market increments: **32 new / 1,216 tests pass**,
   no warnings; **51 current-source disposable scenarios pass** (twelve market WS, nine signed WS,
   eight controls, ten route, seven account, five echo). Two original replays match
@@ -395,8 +408,9 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
   Manifest v13 pins twenty sources; the base bundle is unchanged. Maximum sampled
   descriptors are **852**, leaving **172** under the unchanged 1,024 limit.
   See [market increment acceptance](progress/portfolio-installed-market-ws-2026-09-22.md).
-  Prior originals are immutable. REST depth snapshots/revision linkage, full joint
-  collection, stream fences, event-time freshness and real admission remain pending.
+  Prior v13 originals are immutable. The distinct v14 scope adds fixture snapshot
+  linkage; full joint collection, stream fences, event-time freshness and real
+  admission remain pending.
 - The complete ordinary-process native joint collector retains its prior 20-operation /
   16-GET / 448-weight acceptance and original receipt clocks. Connecting that collector
   to installed gateway-owned sockets remains pending. Earlier details are archived in

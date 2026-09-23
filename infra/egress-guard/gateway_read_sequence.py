@@ -638,7 +638,10 @@ def run_installed(
     concurrent=False,
     signed=False,
     market=False,
+    snapshot=False,
 ):
+    if snapshot and not market:
+        raise ValueError("snapshot_requires_market")
     if market and not signed:
         raise ValueError("market_ws_requires_signed")
     if signed and not concurrent:
@@ -692,7 +695,13 @@ def run_installed(
             if concurrent:
                 code = entry["load"](sources.source("gateway_concurrent_ws.py"))
                 transport = code["run_installed"](
-                    entry, authority, sources, sequence, signed=signed, market=market
+                    entry,
+                    authority,
+                    sources,
+                    sequence,
+                    signed=signed,
+                    market=market,
+                    snapshot=snapshot,
                 )
             print(
                 json.dumps(

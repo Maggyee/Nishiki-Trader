@@ -12,6 +12,7 @@ import os
 import re
 import socket
 import time
+import zlib
 from decimal import Decimal
 
 PROFILE = "portfolio.installed_account_ws.v1"
@@ -504,7 +505,7 @@ def child_loop(fd, parent):
 class Session:
     result = staticmethod(expected_result)
 
-    def __init__(self, entry, authority, sources, *, market=False):
+    def __init__(self, entry, authority, sources, *, market=False, snapshot=False):
         self.runtime = self.collector = None
         try:
             self.requests = entry["load"](sources.source("gateway_native_requests.py"))
@@ -538,10 +539,26 @@ class Session:
                 source += f"exec(compile({raw!r},'<held-source>','exec'))\n"
             if market:
                 raw = sources.source("gateway_market_ws.py")
-                source += f"market_scope={{'__name__':'held_market_ws'}}\nexec(compile({raw!r},'<held-market>','exec'),market_scope)\naccount_native=validate_native\nvalidate_native=lambda payload:market_scope['validate_native'](payload,account_native)\n"
+                if snapshot:
+                    encoded = base64.b64encode(zlib.compress(raw, 9))
+                    market_source = f"__import__('zlib').decompress(base64.b64decode({encoded!r}))"
+                else:
+                    market_source = repr(raw)
+                source += f"market_scope={{'__name__':'held_market_ws'}}\nexec(compile({market_source},'<held-market>','exec'),market_scope)\naccount_native=validate_native\nvalidate_native=lambda payload:market_scope['validate_native'](payload,account_native)\n"
                 market_code = entry["load"](raw)
                 self.result = lambda payload: market_code["expected_result"](
                     payload, expected_result
+                )
+            if snapshot:
+                if not market:
+                    raise ValueError("snapshot_requires_market")
+                raw = sources.source("gateway_snapshot_ws.py")
+                encoded = base64.b64encode(zlib.compress(raw, 9))
+                source += f"snapshot_scope={{'__name__':'held_snapshot_ws'}}\nexec(compile(__import__('zlib').decompress(base64.b64decode({encoded!r})),'<held-snapshot>','exec'),snapshot_scope)\nmarket_native=validate_native\nvalidate_native=lambda payload:snapshot_scope['validate_native'](payload,market_native,market_scope)\n"
+                snapshot_code = entry["load"](raw)
+                market_result = self.result
+                self.result = lambda payload: snapshot_code["expected_result"](
+                    payload, market_result, market_code
                 )
             launcher["FixtureCollector"].__init__.__globals__["PYTHON"] = (
                 "/run/trader-native-runtime/bin/python3.12"

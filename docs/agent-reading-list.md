@@ -22,14 +22,23 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For installed per-symbol REST depth anchors and linked original market increments,
+read `docs/progress/portfolio-installed-snapshot-ws-2026-09-23.md` and its JSON.
+Manifest v14 pins twenty-one sources. The distinct disposable scope consumes
+each fixed snapshot attempt before kernel grant, receives original HTTPS chunks
+while both WebSockets remain live, and checks the first eligible update against
+`lastUpdateId + 1`. Native account/delta receipts bind the linked revisions only
+after closure and revocation. This is bounded snapshot linkage, not a synchronized
+OrderBook, QuoteTick, account stream fence, complete collector or real admission.
+
 For installed concurrent market depth increments and joint native account/delta receipts,
 read `docs/progress/portfolio-installed-market-ws-2026-09-22.md` and its JSON.
 Manifest v13 pins twenty sources. Original route metadata selects bounded symbols;
 account and market events are received concurrently, then native AccountBalance and
 OrderBookDelta batches acknowledge exact originals after socket closure/revocation.
 Each symbol has two unanchored updates, not a snapshot-backed book or QuoteTick.
-Next integrate concurrent per-symbol REST depth snapshots and revision linkage;
-full joint collection, stream fences, real authority and trading stay blocked.
+The distinct snapshot successor above now links original revisions; full joint
+collection, stream fences, real authority and trading stay blocked.
 
 For installed native signed account WebSocket subscription and partial event receipt,
 read `docs/progress/portfolio-installed-signed-ws-2026-09-22.md` and its JSON.

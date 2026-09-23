@@ -6,6 +6,23 @@ offline disk tests, and retain read-only host deployment-input snapshots.
 Current phase: Phase 5 entry, offline infrastructure acceptance only. This is not
 a production guard, gateway audit service, quota authority or collection permit.
 
+The separate snapshot successor is `gateway_snapshot_ws.py`:
+
+```bash
+/usr/bin/python3 -I infra/egress-guard/installed_gateway_selftest.py --snapshot-ws-profile --report data/NEW-SNAPSHOT-WS.json
+```
+
+Its distinct consumed scope pins one fixed HTTPS depth GET per selected symbol
+before the shared grant. The two existing WebSockets stay live while original
+snapshot chunks arrive; the first nonobsolete market update must cover
+`lastUpdateId + 1`, and later updates must continue without a gap. Native
+account/delta acknowledgement binds the original snapshot revisions only after
+socket closure and kernel revocation. Manifest v14 pins twenty-one sources;
+the base installation bundle, old v13 scope and all real scopes are unchanged.
+This does not construct a synchronized book or QuoteTick, verify an account
+stream fence, attach the full joint collector or authorize real admission.
+See [snapshot linkage acceptance](../../docs/progress/portfolio-installed-snapshot-ws-2026-09-23.md).
+
 The market increment successor is `gateway_market_ws.py`:
 
 ```bash
@@ -19,7 +36,7 @@ native receipt then binds partial AccountBalance updates and exact OrderBookDelt
 batches, including zero-size DELETEs and original E/U/u/receipt clocks. These are
 unanchored increments: no REST snapshot, synchronized book or QuoteTick is inferred.
 Manifest v13 pins twenty sources; the base bundle and resource limits are unchanged.
-Next integrate per-symbol REST depth snapshots and original revision linkage.
+The separate fixture snapshot successor above now links original revisions.
 See [market increment acceptance](../../docs/progress/portfolio-installed-market-ws-2026-09-22.md).
 
 The preceding signed account profile is `gateway_account_ws.py`:
@@ -36,7 +53,8 @@ close handshakes and kernel revocation. Only then does native AccountBalance
 construction acknowledge the exact payload. Missing/late acknowledgements remain
 incomplete and cannot resume. Partial updates do not imply a full snapshot or fence.
 Manifest v13 pins twenty sources; the base v2 bundle and 1,024 descriptor limit
-are unchanged. The successor above adds depth increment delivery; concurrent REST snapshots remain pending.
+are unchanged. The successors above add bounded market increments and a separate
+fixture REST snapshot linkage profile.
 See [signed WS acceptance](../../docs/progress/portfolio-installed-signed-ws-2026-09-22.md).
 
 The preceding control-only profile is `gateway_concurrent_ws.py`:
@@ -58,8 +76,8 @@ This preceding profile performs no signing or account event delivery.
 
 The frame parser is now importable using stdlib alone; native depth mapping keeps
 the same shared exception/limit. Explicit byte order and compatible asyncio APIs
-support the system Python 3.10 used by the root fixture controller. The current manifest v13
-pins twenty sources; the base installation bundle remains unchanged.
+support the system Python 3.10 used by the root fixture controller. Its accepted
+v13 manifest pinned twenty sources; the base installation bundle remains unchanged.
 See [concurrent upgrade/control acceptance](../../docs/progress/portfolio-installed-concurrent-ws-2026-09-19.md).
 The signed account successor above extends these channels; complete concurrent
 REST/depth collection remains pending.
@@ -101,8 +119,8 @@ use exact rational arithmetic. The selected symbol union is capped at three.
 
 The four fixture assets, eight-place precision, sixteen metadata/book rows and
 60-second same-UTC-day input interval are fixed. Original clocks remain original;
-book age, stream continuity, equity and dispatch remain unqualified. The current manifest v13
-pins twenty sources; the old three/five-read profiles stay distinct. See
+book age, stream continuity, equity and dispatch remain unqualified. Its accepted
+v13 manifest pinned twenty sources; the old three/five-read profiles stay distinct. See
 [route acceptance](../../docs/progress/portfolio-installed-route-sequence-2026-09-19.md).
 The concurrent upgrade/control successor above consumes these selected symbols; the signed/partial native event successor is described above.
 
@@ -181,12 +199,13 @@ request hashes before acknowledgements. The fixture budget stays 16 GET selector
 request dispatch follows. Fixed BTC/ETH/BNB routes and subscription ID zero are
 synthetic selections, not values derived from actual same-run responses.
 
-The current manifest v13 pins twenty protected sources. The separate request ledger/scope and
+Its accepted v13 manifest pinned twenty protected sources. The separate request ledger/scope and
 `requests.jsonl` preserve incomplete attempts after drift, consumer death or root
 crash. Detached replay verifies signatures and receipt ordering with original times;
 it never refreshes expiry or repairs missing acknowledgements. The successors above
 connect account/routes, concurrent Upgrade/control and signed partial WS delivery;
-REST depth snapshot integration and full joint collection remain pending. See [request acceptance](../../docs/progress/portfolio-installed-native-requests-2026-09-17.md).
+Bounded fixture REST snapshot linkage is now separate; full joint collection
+remains pending. See [request acceptance](../../docs/progress/portfolio-installed-native-requests-2026-09-17.md).
 
 The native metadata successor adds `gateway_native_runtime.py` and
 `gateway_native_receipt.py`. Run the existing disposable wrapper as an ordinary user:

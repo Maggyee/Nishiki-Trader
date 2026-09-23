@@ -470,6 +470,17 @@ async def capture(journal, trust, frames, check, grant, revoke, notify, session=
                     "peer": list(PEER),
                 },
             )
+        snapshot_code = getattr(session, "snapshot_code", None)
+        if snapshot_code is not None:
+            for symbol in journal.state.selected["symbols"]:
+                journal.append(
+                    "snapshot_connection_prepared",
+                    {
+                        "symbol": symbol,
+                        "endpoint": f"https://rest.fixture.invalid:23456/api/v3/depth?symbol={symbol}&limit=100",
+                        "peer": list(PEER),
+                    },
+                )
         notify("ws_prepared")
         journal.append("grant_prepared", {"mark": MARK, "ttl_ms": 5000})
         deadline = journal.state.grant_clock / 1e9 + 4
@@ -479,6 +490,9 @@ async def capture(journal, trust, frames, check, grant, revoke, notify, session=
         notify("ws_activated")
         ready = {role: asyncio.Event() for role in ROLES}
         exchanges_done = {role: asyncio.Event() for role in ROLES}
+        snapshots_done = asyncio.Event()
+        if snapshot_code is None:
+            snapshots_done.set()
         loop = asyncio.get_running_loop()
 
         def before_wire():
@@ -562,6 +576,7 @@ async def capture(journal, trust, frames, check, grant, revoke, notify, session=
                 await session.exchange_market(journal, chunk)
             exchanges_done[role].set()
             await exchanges_done[ROLES[1 - ROLES.index(role)]].wait()
+            await snapshots_done.wait()
             await send("close_prepared", frames["client_frame"](b"\x03\xe8", 8))
             while len(journal.state.events(role)) < 2:
                 await chunk()
@@ -571,7 +586,73 @@ async def capture(journal, trust, frames, check, grant, revoke, notify, session=
                 {"role": role, "opcode": opcode, **journal.state.provenance.raw_fields(data)},
             )
 
+        async def snapshots():
+            await asyncio.gather(*(event.wait() for event in ready.values()))
+
+            async def one_snapshot(symbol):
+                before_wire()
+                raw = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sockets.append(raw)
+                raw.setsockopt(socket.SOL_SOCKET, socket.SO_MARK, MARK)
+                raw.setblocking(False)
+                await loop.sock_connect(raw, PEER)
+                before_wire()
+                reader, writer = await asyncio.open_connection(
+                    sock=raw,
+                    ssl=context,
+                    server_hostname="rest.fixture.invalid",
+                    ssl_handshake_timeout=max(0.001, deadline - time.monotonic()),
+                )
+                writers.append(writer)
+                tls = writer.get_extra_info("ssl_object")
+                certificate = tls.getpeercert(binary_form=True)
+                if not certificate:
+                    raise ValueError("snapshot_certificate_missing")
+                journal.append(
+                    "snapshot_tls_connected",
+                    {
+                        "symbol": symbol,
+                        "peer": list(writer.get_extra_info("peername")),
+                        "server_hostname": tls.server_hostname,
+                        "peer_certificate_sha256": digest(certificate),
+                        "tls_version": tls.version(),
+                        "cipher": list(tls.cipher()),
+                        "check_hostname": context.check_hostname,
+                        "verify_mode": "CERT_REQUIRED"
+                        if context.verify_mode == ssl.CERT_REQUIRED
+                        else "invalid",
+                        "tls_minimum_version": "TLSv1.2",
+                    },
+                )
+                request_bytes = snapshot_code["request"](symbol)
+                journal.append(
+                    "snapshot_request_prepared",
+                    {"symbol": symbol, **journal.state.provenance.raw_fields(request_bytes)},
+                )
+                before_wire()
+                writer.write(request_bytes)
+                await writer.drain()
+                while True:
+                    before_wire()
+                    chunk = await reader.read(4096)
+                    clocks = time.time_ns(), time.monotonic_ns()
+                    if not chunk:
+                        break
+                    journal.append(
+                        "snapshot_chunk",
+                        {"symbol": symbol, **journal.state.provenance.raw_fields(chunk)},
+                        clocks,
+                    )
+                journal.append("snapshot_accepted", {"symbol": symbol})
+
+            await asyncio.gather(
+                *(one_snapshot(symbol) for symbol in journal.state.selected["symbols"])
+            )
+            snapshots_done.set()
+
         tasks = [asyncio.create_task(one(role)) for role in ROLES]
+        if snapshot_code is not None:
+            tasks.append(asyncio.create_task(snapshots()))
         await asyncio.wait_for(asyncio.gather(*tasks), timeout=max(0, deadline - time.monotonic()))
     except BaseException as exc:
         failure = exc
@@ -626,9 +707,13 @@ def capture_result(*args):
     return {"status": "concurrent_ws_completed", "network_admitted": False}
 
 
-def run_installed(entry, authority, sources, sequence, *, signed=False, market=False):
+def run_installed(
+    entry, authority, sources, sequence, *, signed=False, market=False, snapshot=False
+):
     if market and not signed:
         raise ValueError("market_ws_requires_signed_account")
+    if snapshot and not market:
+        raise ValueError("snapshot_requires_market")
     code = entry["load"](sources.source("gateway_read_sequence.py"))
     frames = entry["load"](sources.source("portfolio_ws_frames.py"))
     guards = entry["load"](sources.source("selftest.py"))
@@ -681,7 +766,16 @@ def run_installed(entry, authority, sources, sequence, *, signed=False, market=F
     market_code = entry["load"](sources.source("gateway_market_ws.py")) if market else None
     if market:
         selected = market_code["selection"](selected, sequence.bundles)
-    scope = market_code["SCOPE"] if market else extension["SCOPE"] if signed else SCOPE
+    snapshot_code = entry["load"](sources.source("gateway_snapshot_ws.py")) if snapshot else None
+    scope = (
+        snapshot_code["SCOPE"]
+        if snapshot
+        else market_code["SCOPE"]
+        if market
+        else extension["SCOPE"]
+        if signed
+        else SCOPE
+    )
     path = sequence.path / scope
     os.mkdir(scope, 0o700, dir_fd=sequence.directory)
     os.fsync(sequence.directory)
@@ -689,7 +783,9 @@ def run_installed(entry, authority, sources, sequence, *, signed=False, market=F
     sequence.write(
         path / "README.md",
         (
-            b"Fixture account and market increment native receipts. Phase: disposable acceptance. Consumed on creation, no synchronized book or live admission. Next: original replay and REST depth snapshot integration.\n"
+            b"Fixture REST depth anchors and concurrent native account/market receipts. Phase: disposable acceptance. Consumed on creation; no synchronized book, stream fence or live admission. Next: full joint collector integration.\n"
+            if snapshot
+            else b"Fixture account and market increment native receipts. Phase: disposable acceptance. Consumed on creation, no synchronized book or live admission. Next: original replay and REST depth snapshot integration.\n"
             if market
             else b"Fixture signed subscription and partial native event receipt. Phase: disposable acceptance. Consumed on creation; no live admission. Next: offline original replay and full collector integration.\n"
             if signed
@@ -701,14 +797,22 @@ def run_installed(entry, authority, sources, sequence, *, signed=False, market=F
     session = journal = None
     try:
         if signed:
-            session = extension["Session"](entry, authority, sources, market=market)
+            session = extension["Session"](
+                entry, authority, sources, market=market, snapshot=snapshot
+            )
             if market:
                 session.exchange_market = lambda journal, chunk: market_code["exchange"](
                     journal, chunk
                 )
+            if snapshot:
+                session.snapshot_code = snapshot_code
         state_type = extension["state_type"](globals(), session.requests) if signed else State
         if market:
             state_type = market_code["state_type"](globals(), extension, session.requests)
+        if snapshot:
+            state_type = snapshot_code["state_type"](
+                globals(), extension, session.requests, market_code
+            )
         journal = Journal(
             path / "ws.jsonl",
             selected,
