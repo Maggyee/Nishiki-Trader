@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-24
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: A distinct disposable v22/v1 parent accepts 11/19 ordered joint operations: clock, held account WS, signed subscription, the first four-GET account pass, same-run route fixation, market WS Upgrade and the first route-bound `BNBUSDT` depth-100 GET. A crossed book consumes the eleventh attempt after ten accepted steps. Next preserve both channels while joining the second `BTCUSDT` anchor, original market increments and linked time, then the second four-GET account pass, final clock and unsubscribe under a fresh parent. The first depth anchor has no linked increment and the second is absent; no complete before/after account interval exists and older independent fixtures cannot be combined. Stream fences, real authority/coverage, provider clocks/usage, host rollout, qualified equity and trading remain blocked.
+- **Current objective**: The last verified disposable parent accepts 11/19 ordered joint operations through the first `BNBUSDT` depth anchor (v22). A separate v23 candidate buffers two original increments per symbol and links both `BNBUSDT` and `BTCUSDT` depth snapshots through 12 steps, but its final isolation acceptance is pending: the sandbox denied the dedicated-UID fixture and the elevated retry was rejected. Do not promote the preliminary v22-source report to v23 evidence. Next verify that candidate in an authorized disposable fixture, then join linked time, the second four-GET account pass, final clock and unsubscribe under a fresh parent. No complete before/after account interval exists and older independent fixtures cannot be combined. Stream fences, real authority/coverage, provider clocks/usage, host rollout, qualified equity and trading remain blocked.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -411,6 +411,13 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
 
 ## Latest Verification
 
+- Two-symbol linked-depth v23 candidate: **114 direct relevant tests pass**
+  (9 new, 35 installed-gateway and 70 joint-depth/read/WS); lint, formatting,
+  compilation and diff checks pass. Full isolated acceptance is pending after
+  sandbox `no_new_privileges` blocked the dedicated-UID setup. A broader run
+  passed 159 tests and had 99 sandbox `SO_PASSCRED` setup errors. The verified
+  joint milestone remains **11/19**; see
+  [candidate status](progress/portfolio-installed-joint-linked-candidate-2026-09-24.md).
 - Installed same-parent first depth anchor: **451 related tests and two
   disposable scenarios pass**. Success accepts 11 steps with both WebSockets
   open through the `BNBUSDT` depth GET; a crossed book consumes index 10 without

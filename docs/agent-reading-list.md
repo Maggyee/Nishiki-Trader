@@ -22,6 +22,13 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the pending two-symbol snapshot linkage candidate, read
+`docs/progress/portfolio-installed-joint-linked-candidate-2026-09-24.md`.
+Manifest v23 pins 26 sources and implements bounded original increments before
+the two route-bound depth attempts. The final v23 isolation report could not
+be generated in the current sandbox; the verified milestone remains 11/19.
+The ignored preliminary report has v22 source bytes and does not certify v23.
+
 For the first same-parent route-bound REST depth anchor, read
 `docs/progress/portfolio-installed-joint-first-depth-2026-09-24.md` and its JSON.
 Manifest v22 pins 26 sources and a distinct v1 parent. The root rederives the

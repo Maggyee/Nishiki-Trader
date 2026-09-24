@@ -334,11 +334,16 @@ def launch(
     depth=False,
     depth_symbols=None,
     depth_route_sha=None,
+    depth_index=10,
     request_index=None,
 ):
     if sum((orders, books, clock, metadata, depth)) > 1:
         raise ValueError("signed_read_type_conflict")
-    if depth and (not isinstance(depth_symbols, list) or not isinstance(depth_route_sha, str)):
+    if depth and (
+        not isinstance(depth_symbols, list)
+        or not isinstance(depth_route_sha, str)
+        or depth_index not in {10, 11}
+    ):
         raise ValueError("joint_depth_route_required")
     reader = launcher["load_source"](authority.source("inspect_binding.py").decode())[
         "process_identity"
@@ -373,7 +378,7 @@ def launch(
     requests = "REQUESTS" if depth else "REQUESTS.__dict__"
     source += f"account_scope={{'__name__':'held_account','ControlChannel':ControlChannel,'REQUESTS':{requests},'PROVENANCE':PROVENANCE,'RECEIVE':receive_payload}}\nexec(compile({raw!r},'<held-account>','exec'),account_scope)\nchild_loop=account_scope['child_loop']\n"
     if depth:
-        source += f"SYMBOL={depth_symbols[0]!r}\n"
+        source += f"SYMBOL={depth_symbols[depth_index - 10]!r}\nINDEX={depth_index!r}\n"
     if orders or books or clock or metadata or depth:
         raw = sources.source(
             "gateway_native_time.py"
@@ -388,7 +393,7 @@ def launch(
         )
         extra = ",'RATES':RATES" if metadata else ""
         if depth:
-            extra = ",'SYMBOL':SYMBOL"
+            extra = ",'SYMBOL':SYMBOL,'INDEX':INDEX"
         source += f"orders_scope={{'__name__':'held_orders','ACCOUNT':account_scope{extra}}}\nexec(compile({raw!r},'<held-orders>','exec'),orders_scope)\nchild_loop=orders_scope['child_loop']\n"
     if request_index is not None:
         if request_index not in ({4, 5} if orders else {3, 6} if not (books or clock) else set()):

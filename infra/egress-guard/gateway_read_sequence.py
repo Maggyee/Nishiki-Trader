@@ -46,6 +46,9 @@ JOINT_READ_STEPS = (
 JOINT_DEPTH_PROFILE = "portfolio.installed_joint_account_depth.v1"
 JOINT_DEPTH_SCOPE = "fixture-joint-account-depth-v1"
 JOINT_DEPTH_STEPS = (*JOINT_READ_STEPS, "depth_first")
+JOINT_LINKED_PROFILE = "portfolio.installed_joint_linked_depth.v1"
+JOINT_LINKED_SCOPE = "fixture-joint-linked-depth-v1"
+JOINT_LINKED_STEPS = (*JOINT_DEPTH_STEPS, "depth_second")
 LIMIT = 65536
 FILES = {
     "binding": "binding.json",
@@ -115,12 +118,19 @@ def review_bundle(
     joint_ws=False,
     joint_reads=False,
     joint_depth=False,
+    joint_linked=False,
     previous=None,
 ):
     """Verify originals before considering a step complete; never trust a saved report."""
     if (joint_ws or joint_reads) and index in ({1, 2, 9} if joint_reads else {1, 2}):
         return modules["joint_ws"]["review_step"](
-            bundle, index, context, selected, modules, previous
+            bundle,
+            index,
+            context,
+            selected,
+            modules,
+            previous,
+            market_events=joint_linked and index == 9,
         )
     allowed = set(FILES) - ({"selection"} if index == 0 and not clock else set())
     if (
@@ -149,8 +159,8 @@ def review_bundle(
             raise ValueError("sequence_attempts_required")
         return result
     account = (
-        joint_depth_view(previous, selected, modules)
-        if joint_depth and index == 10
+        joint_depth_view(previous, selected, modules, index=index)
+        if joint_depth and index in {10, 11}
         else modules["clock"]
         if clock
         else modules["orders_second"]
@@ -186,8 +196,7 @@ def review_bundle(
     rates = account["rates_view"]() if index or clock else modules["rates"]
     if (index or clock) and "selection" in bundle:
         contract = account["AccountContract"](
-            joint_depth_view(previous, selected, modules)["requests"]
-            if joint_depth and index == 10 else modules["requests"],
+            account["requests"] if joint_depth and index in {10, 11} else modules["requests"],
             json.loads(bundle["selection"]),
         )
         if contract.raw.decode() != bundle["selection"]:
@@ -367,17 +376,58 @@ def joint_route_selection(bundles, selected, modules):
     return joint_route_result(results, bundles, modules)
 
 
-def joint_depth_view(bundles, selected, modules):
+def joint_depth_view(bundles, selected, modules, *, index=10):
     route = joint_route_selection(bundles[:9], selected, modules)
     requests = {
         "view": modules["joint_requests"]["view"],
         "base": modules["requests"],
     }
     view = modules["depth"]["view"](
-        modules["account"], route["symbols"], digest(canonical(route)), requests,
+        modules["account"],
+        route["symbols"],
+        digest(canonical(route)),
+        requests,
+        index=index,
     )
-    view["requests"] = requests["view"](requests["base"], route["symbols"], digest(canonical(route)))
+    view["requests"] = requests["view"](
+        requests["base"], route["symbols"], digest(canonical(route))
+    )
     return view
+
+
+def joint_snapshot_link(result, market_events):
+    symbol, revision = result["symbol"], result["last_update_id"]
+    events = [event for event in market_events if event["symbol"] == symbol]
+    if len(events) != 2 or result["snapshot_linked"] or result["order_book_synchronized"]:
+        raise ValueError("joint_snapshot_market_originals_required")
+    header = result["header_receipt"]
+    if any(
+        event["receipt"][key] > header[key]
+        for event in events
+        for key in ("utc_ns", "monotonic_ns")
+    ):
+        raise ValueError("joint_snapshot_events_not_buffered")
+    if revision < events[0]["first_update_id"]:
+        raise ValueError("joint_snapshot_behind_buffer")
+    active = [event for event in events if event["last_update_id"] > revision]
+    if (
+        not active
+        or not active[0]["first_update_id"] <= revision + 1 <= active[0]["last_update_id"]
+    ):
+        raise ValueError("joint_snapshot_bootstrap_gap")
+    previous = revision
+    for event in active:
+        if not event["first_update_id"] <= previous + 1 <= event["last_update_id"]:
+            raise ValueError("joint_snapshot_increment_gap")
+        previous = event["last_update_id"]
+    return {
+        "symbol": symbol,
+        "snapshot_last_update_id": revision,
+        "linked_last_update_id": previous,
+        "obsolete_events": len(events) - len(active),
+        "linked_event_sha256": [event["original_sha256"] for event in active],
+        "snapshot_tls_sha256": result["tls_sha256"],
+    }
 
 
 def route_result(results, bundles, modules):
@@ -412,9 +462,11 @@ def replay(
     joint_ws=False,
     joint_reads=False,
     joint_depth=False,
+    joint_linked=False,
 ):
     if (
-        (joint_depth and not joint_reads)
+        (joint_linked and not joint_depth)
+        or (joint_depth and not joint_reads)
         or ((joint_ws or joint_reads) and any((orders, routes, quotes, unsubscribe, clock)))
         or (joint_ws and joint_reads)
     ):
@@ -427,7 +479,9 @@ def replay(
         raise ValueError("quote_route_required")
     orders = orders or routes
     profile = (
-        JOINT_DEPTH_PROFILE
+        JOINT_LINKED_PROFILE
+        if joint_linked
+        else JOINT_DEPTH_PROFILE
         if joint_depth
         else JOINT_READ_PROFILE
         if joint_reads
@@ -446,7 +500,9 @@ def replay(
         else PROFILE
     )
     steps = (
-        JOINT_DEPTH_STEPS
+        JOINT_LINKED_STEPS
+        if joint_linked
+        else JOINT_DEPTH_STEPS
         if joint_depth
         else JOINT_READ_STEPS
         if joint_reads
@@ -532,6 +588,7 @@ def replay(
                 joint_ws=joint_ws,
                 joint_reads=joint_reads,
                 joint_depth=joint_depth,
+                joint_linked=joint_linked,
                 previous=bundles[:pending],
             )
             # Every child archive follows preparation, and each whole step ends
@@ -564,6 +621,10 @@ def replay(
                     raise ValueError("joint_route_metadata_precision_mismatch")
                 if pending == 8:
                     joint_route_result(results, bundles, modules)
+                if joint_linked and pending in {10, 11}:
+                    results[pending]["snapshot_linkage"] = joint_snapshot_link(
+                        results[pending]["native_result"], results[9]["market_events"]
+                    )
                 if pending >= 3:
                     anchor = json.loads(bundles[0]["binding"])
                     current = json.loads(bundles[pending]["binding"])
@@ -660,6 +721,14 @@ def replay(
         **({"first_depth_snapshot_accepted": accepted >= 11} if joint_depth else {}),
         **(
             {
+                "both_snapshots_linked": accepted >= 12,
+                "buffered_market_events": len(results[9]["market_events"]) if accepted >= 10 else 0,
+            }
+            if joint_linked
+            else {}
+        ),
+        **(
+            {
                 "routes_derived_from_same_run": accepted >= 9,
                 "route_selection": joint_route_result(results, bundles, modules)
                 if accepted >= 9
@@ -709,9 +778,11 @@ class Sequence:
         joint_ws=False,
         joint_reads=False,
         joint_depth=False,
+        joint_linked=False,
     ):
         if (
-            (joint_depth and not joint_reads)
+            (joint_linked and not joint_depth)
+            or (joint_depth and not joint_reads)
             or ((joint_ws or joint_reads) and any((orders, routes, quotes, unsubscribe, clock)))
             or (joint_ws and joint_reads)
         ):
@@ -732,6 +803,7 @@ class Sequence:
             self.joint_ws,
             self.joint_reads,
             self.joint_depth,
+            self.joint_linked,
         ) = (
             orders,
             routes,
@@ -741,9 +813,12 @@ class Sequence:
             joint_ws,
             joint_reads,
             joint_depth,
+            joint_linked,
         )
         self.profile = (
-            JOINT_DEPTH_PROFILE
+            JOINT_LINKED_PROFILE
+            if joint_linked
+            else JOINT_DEPTH_PROFILE
             if joint_depth
             else JOINT_READ_PROFILE
             if joint_reads
@@ -762,7 +837,9 @@ class Sequence:
             else PROFILE
         )
         self.scope = (
-            JOINT_DEPTH_SCOPE
+            JOINT_LINKED_SCOPE
+            if joint_linked
+            else JOINT_DEPTH_SCOPE
             if joint_depth
             else JOINT_READ_SCOPE
             if joint_reads
@@ -781,7 +858,9 @@ class Sequence:
             else SCOPE
         )
         self.steps = (
-            JOINT_DEPTH_STEPS
+            JOINT_LINKED_STEPS
+            if joint_linked
+            else JOINT_DEPTH_STEPS
             if joint_depth
             else JOINT_READ_STEPS
             if joint_reads
@@ -944,6 +1023,7 @@ class Sequence:
             joint_ws=self.joint_ws,
             joint_reads=self.joint_reads,
             joint_depth=self.joint_depth,
+            joint_linked=self.joint_linked,
         )
         self.journal.append(
             kind, **{k: v for k, v in row.items() if k not in {"seq", "previous_sha256", "kind"}}
@@ -998,7 +1078,7 @@ class Sequence:
             else "books"
             if self.joint_reads and self.index == 8
             else "depth"
-            if self.joint_depth and self.index == 10
+            if self.joint_depth and self.index in {10, 11}
             else "books"
             if self.routes and self.index == 5
             else "orders"
@@ -1012,8 +1092,12 @@ class Sequence:
                 self.modules["metadata"]["view"](self.modules["account"], self.modules["rates"])
                 if self.joint_reads and self.index == 7
                 else joint_depth_view(
-                    self.bundles[:9], json.loads(self.expected.splitlines()[0])["payload"], self.modules
-                ) if self.joint_depth and self.index == 10
+                    self.bundles[:9],
+                    json.loads(self.expected.splitlines()[0])["payload"],
+                    self.modules,
+                    index=self.index,
+                )
+                if self.joint_depth and self.index in {10, 11}
                 else self.modules[kind]
             )["ledger_view"](self.modules["ledger"])
             if self.index or self.clock or self.joint_ws or self.joint_reads
@@ -1058,10 +1142,17 @@ def run_installed(
     joint_ws=False,
     joint_reads=False,
     joint_depth=False,
+    joint_linked=False,
 ):
     if (
-        (joint_depth and not joint_reads)
-        or ((joint_ws or joint_reads) and any((orders, routes, concurrent, signed, market, snapshot, quotes, unsubscribe, clock)))
+        (joint_linked and not joint_depth)
+        or (joint_depth and not joint_reads)
+        or (
+            (joint_ws or joint_reads)
+            and any(
+                (orders, routes, concurrent, signed, market, snapshot, quotes, unsubscribe, clock)
+            )
+        )
         or (joint_ws and joint_reads)
     ):
         raise ValueError("joint_ws_sequence_conflict")
@@ -1096,6 +1187,7 @@ def run_installed(
             joint_ws=joint_ws,
             joint_reads=joint_reads,
             joint_depth=joint_depth,
+            joint_linked=joint_linked,
         )
         try:
             for index in range(len(sequence.steps)):

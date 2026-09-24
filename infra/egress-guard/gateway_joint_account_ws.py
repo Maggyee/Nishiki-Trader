@@ -38,7 +38,7 @@ def original(fields):
     return raw
 
 
-def review_step(bundle, index, context, selected, modules, previous):
+def review_step(bundle, index, context, selected, modules, previous, *, market_events=False):
     if not isinstance(bundle, dict) or set(bundle) - {"binding", "ws"}:
         raise ValueError("joint_ws_bundle_fields")
     if not bundle:
@@ -268,6 +268,52 @@ def review_step(bundle, index, context, selected, modules, previous):
                 raise ValueError("joint_ws_subscription_frame")
             modules["account_ws"]["response"](frames[0][1])
         end += 1
+    increments = None
+    if market_events:
+        if index != 9:
+            raise ValueError("joint_market_fixed_step")
+        chunks = []
+        while stages[end : end + 1] == ["market_chunk"]:
+            chunk = rows[end]
+            if set(chunk["payload"]) != {"raw_b64", "raw_sha256"}:
+                raise ValueError("joint_market_chunk_fields")
+            chunks.append(chunk)
+            if len(chunks) > 16 or sum(len(original(c["payload"])) for c in chunks) > 8192:
+                raise ValueError("joint_market_chunk_limit")
+            end += 1
+        if stages[end : end + 1] == ["market_accepted"]:
+            if conclusion not in stages[:end]:
+                raise ValueError("joint_market_before_upgrade")
+            selected_market = modules["market"]["selection"](route, [previous[7]])[
+                "market_definitions"
+            ]
+            parser = modules["frames"]["ServerFrames"]()
+            items = []
+            for chunk in chunks:
+                receipt = {key: chunk[key] for key in ("utc_ns", "monotonic_ns")}
+                for opcode, payload in parser.feed(original(chunk["payload"])):
+                    if opcode != 1:
+                        raise ValueError("joint_market_text_required")
+                    items.append(
+                        {
+                            **modules["provenance"].raw_fields(payload),
+                            "receipt": receipt,
+                        }
+                    )
+            if parser.retained_bytes or parser.fragment is not None:
+                raise ValueError("joint_market_incomplete_frame")
+            increments = modules["market"]["increments"](items, selected_market, complete=True)
+            if rows[end]["payload"] != {
+                "event_sha256": [item["original_sha256"] for item in increments]
+            }:
+                raise ValueError("joint_market_event_receipt_changed")
+            end += 1
+        elif stages[end : end + 1] == ["revoked"]:
+            if conclusion not in stages[:end] or rows[end]["payload"] != {}:
+                raise ValueError("joint_market_revocation_order")
+            if end + 1 != len(rows):
+                raise ValueError("joint_market_incomplete_acceptance")
+            return {"complete": False, "native_result": None, "ws_archive_sha256": digest(raw)}
     if stages[end : end + 1] == ["revoked"]:
         if rows[end]["payload"] != {} or "activated" not in stages[:end]:
             raise ValueError("joint_ws_revoked_without_response")
@@ -277,6 +323,8 @@ def review_step(bundle, index, context, selected, modules, previous):
             rows[end]["payload"] != {}
             or stages[end - 1] != "revoked"
             or conclusion not in stages[:end]
+            or market_events
+            and increments is None
         ):
             raise ValueError("joint_ws_acceptance_before_revocation")
         end += 1
@@ -297,6 +345,7 @@ def review_step(bundle, index, context, selected, modules, previous):
         "subscription_acknowledged": complete if index == 2 else False,
         "native_signer_verified": index == 2 and complete,
         "account_interval_complete": False,
+        **({"market_events": increments or []} if market_events else {}),
     }
 
 
@@ -525,6 +574,47 @@ class Channel:
                     status, pairs = self.provenance.response_headers(bytes(response))
                     self.provenance._validate_response(role, status, pairs, nonce)
                     append("upgrade_accepted", {})
+                    if index == 9 and sequence.joint_linked:
+                        market_code = sequence.modules["market"]
+                        selected_market = market_code["selection"](route, [sequence.bundles[7]])[
+                            "market_definitions"
+                        ]
+                        parser = sequence.modules["frames"]["ServerFrames"]()
+                        events = []
+                        chunk_bytes = chunk_count = 0
+                        while len(events) < 4:
+                            bounded()
+                            chunk = self.market_connection.recv(4096)
+                            clocks = (time.time_ns(), time.monotonic_ns())
+                            if not chunk:
+                                raise ValueError("joint_market_increment_eof")
+                            append("market_chunk", self.provenance.raw_fields(chunk), clocks)
+                            chunk_bytes += len(chunk)
+                            chunk_count += 1
+                            if chunk_bytes > 8192 or chunk_count > 16:
+                                raise ValueError("joint_market_increment_limit")
+                            for opcode, payload in parser.feed(chunk):
+                                if opcode != 1:
+                                    raise ValueError("joint_market_text_required")
+                                events.append(
+                                    {
+                                        **self.provenance.raw_fields(payload),
+                                        "receipt": dict(
+                                            zip(("utc_ns", "monotonic_ns"), clocks, strict=True)
+                                        ),
+                                    }
+                                )
+                            if len(events) > 4 or parser.retained_bytes > 8192:
+                                raise ValueError("joint_market_increment_limit")
+                        if parser.retained_bytes or parser.fragment is not None:
+                            raise ValueError("joint_market_incomplete_frame")
+                        increments = market_code["increments"](
+                            events, selected_market, complete=True
+                        )
+                        append(
+                            "market_accepted",
+                            {"event_sha256": [event["original_sha256"] for event in increments]},
+                        )
                 else:
                     signer.verify()
                     if signer.used:

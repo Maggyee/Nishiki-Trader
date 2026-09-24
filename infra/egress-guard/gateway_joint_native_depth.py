@@ -1,4 +1,4 @@
-"""First original-route-bound REST depth anchor in a disposable joint parent."""
+"""Original-route-bound REST depth anchors in a disposable joint parent."""
 
 from __future__ import annotations
 
@@ -23,14 +23,21 @@ def market_view():
         return value
 
     def amount(value, *, positive=False):
-        if not isinstance(value, str) or re.fullmatch(r"[0-9]{1,9}(?:\.[0-9]{1,16})?", value) is None:
+        if (
+            not isinstance(value, str)
+            or re.fullmatch(r"[0-9]{1,9}(?:\.[0-9]{1,16})?", value) is None
+        ):
             raise ValueError("market_ws_decimal")
         number = Decimal(value)
         if (positive and number <= 0) or number != number.quantize(Decimal("0.00000001")):
             raise ValueError("market_ws_precision_or_price")
         return number
 
-    return {"decode": lambda raw: json.loads(raw, object_pairs_hook=pairs), "amount": amount, "MAX_U64": 2**64 - 1}
+    return {
+        "decode": lambda raw: json.loads(raw, object_pairs_hook=pairs),
+        "amount": amount,
+        "MAX_U64": 2**64 - 1,
+    }
 
 
 def response(raw):
@@ -119,17 +126,18 @@ def validate_native(payload):
     result = expected_result(payload, globals()["SYMBOL"])
     for side in ("bids", "asks"):
         for price, quantity in result["levels"][side]:
-            if (
-                native.Price(Decimal(price), 8).as_decimal() != Decimal(price)
-                or native.Quantity(Decimal(quantity), 8).as_decimal() != Decimal(quantity)
-            ):
+            if native.Price(Decimal(price), 8).as_decimal() != Decimal(price) or native.Quantity(
+                Decimal(quantity), 8
+            ).as_decimal() != Decimal(quantity):
                 raise ValueError("joint_depth_native_rounding_refused")
     return result
 
 
-def view(account, symbols, route_sha256, requests):
+def view(account, symbols, route_sha256, requests, *, index=10):
+    if index not in {10, 11}:
+        raise ValueError("joint_depth_fixed_index")
     selected = requests["view"](requests["base"], symbols, route_sha256)
-    symbol = symbols[0]
+    symbol = symbols[index - 10]
     endpoint = f"https://rest.fixture.invalid:23456/api/v3/depth?symbol={symbol}&limit=100"
 
     class DepthContract(account["AccountContract"]):
@@ -137,29 +145,42 @@ def view(account, symbols, route_sha256, requests):
         TLS_PROFILE = TLS_PROFILE
         ENDPOINT = endpoint
         LEDGER_PROFILE = "portfolio.fixture_joint_depth_tls_ledger.v1"
-        CHALLENGE_INDEX = 10
+        CHALLENGE_INDEX = index
         CHALLENGE_FIELDS = {"route_sha256": route_sha256}
         PATH = "/api/v3/depth"
         SELECTION_FILE = "depth-request.json"
 
         def __init__(self, request_view, selection):
             super().__init__(request_view, selection)
-            if self.request != (
-                f"GET /api/v3/depth?symbol={symbol}&limit=100 HTTP/1.1\r\n"
-                "Host: rest.fixture.invalid:23456\r\nConnection: close\r\n\r\n"
-            ).encode():
+            if (
+                self.request
+                != (
+                    f"GET /api/v3/depth?symbol={symbol}&limit=100 HTTP/1.1\r\n"
+                    "Host: rest.fixture.invalid:23456\r\nConnection: close\r\n\r\n"
+                ).encode()
+            ):
                 raise ValueError("joint_depth_wire_request_changed")
 
     def ledger_view(module):
-        return account["ledger_view"](module, profile=module.DEPTH_PROFILE, scope=module.DEPTH_SCOPE)
+        return account["ledger_view"](
+            module, profile=module.DEPTH_PROFILE, scope=module.DEPTH_SCOPE
+        )
 
     def authorize(collector, ledger, authority, unused):
-        return account["authorize"](collector, ledger, authority, selected, contract_type=DepthContract)
+        return account["authorize"](
+            collector, ledger, authority, selected, contract_type=DepthContract
+        )
 
     def launch(authority, sources, launcher, runtime):
         return account["launch"](
-            authority, sources, launcher, runtime,
-            depth=True, depth_symbols=symbols, depth_route_sha=route_sha256,
+            authority,
+            sources,
+            launcher,
+            runtime,
+            depth=True,
+            depth_symbols=symbols,
+            depth_route_sha=route_sha256,
+            depth_index=index,
         )
 
     return {
@@ -176,4 +197,4 @@ def view(account, symbols, route_sha256, requests):
 
 
 def child_loop(fd, parent):
-    globals()["ACCOUNT"]["child_loop"](fd, parent, index=10, native=validate_native)
+    globals()["ACCOUNT"]["child_loop"](fd, parent, index=globals()["INDEX"], native=validate_native)
