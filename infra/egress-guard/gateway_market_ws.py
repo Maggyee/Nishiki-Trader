@@ -289,8 +289,8 @@ def validate_native(payload, account_native):
     return result
 
 
-def state_type(base, account, requests):
-    Parent = account["state_type"](base, requests)
+def state_type(base, account, requests, *, unsubscribe=False):
+    Parent = account["state_type"](base, requests, unsubscribe=unsubscribe)
 
     class MarketState(Parent):
         PROFILE = PROFILE

@@ -6,7 +6,22 @@ offline disk tests, and retain read-only host deployment-input snapshots.
 Current phase: Phase 5 entry, offline infrastructure acceptance only. This is not
 a production guard, gateway audit service, quota authority or collection permit.
 
-The separate native L2/QuoteTick successor is `gateway_native_quote.py`:
+The separate native account unsubscribe successor is `gateway_account_ws.py`:
+
+```bash
+/usr/bin/python3 -I infra/egress-guard/installed_gateway_selftest.py --unsub-ws-profile --report data/NEW-UNSUB-WS.json
+```
+
+Manifest v16 pins 22 sources. Its own consumed route and WS scopes use a
+dedicated-UID-selected unsubscribe request after partial account data and
+accepted depth snapshots. Root verifies and persists the masked request before
+send, records the original acknowledgement and closes both sockets before
+revocation/native account and quote acknowledgement. A bad response fails
+closed. Seven REST GETs, complete account intervals, an ordered joint collector,
+stream fences and all real admission remain missing. See
+[unsubscribe acceptance](../../docs/progress/portfolio-installed-unsubscribe-2026-09-24.md).
+
+The separate native L2/QuoteTick predecessor is `gateway_native_quote.py`:
 
 ```bash
 /usr/bin/python3 -I infra/egress-guard/installed_gateway_selftest.py --quote-ws-profile --report data/NEW-QUOTE-WS.json

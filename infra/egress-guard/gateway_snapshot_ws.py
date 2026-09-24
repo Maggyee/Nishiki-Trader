@@ -11,6 +11,8 @@ RECEIPT = "portfolio.native_account_market_snapshot.v1"
 QUOTE_PROFILE = "portfolio.installed_quote_ws.v1"
 QUOTE_SCOPE = "account-market-quote-v1"
 QUOTE_RECEIPT = "portfolio.native_account_market_quote.v1"
+UNSUB_PROFILE = "portfolio.installed_unsubscribe_ws.v1"
+UNSUB_SCOPE = "account-market-unsubscribe-v1"
 BODY_LIMIT = 4096
 MAX_PAYLOAD = 8192
 
@@ -171,9 +173,13 @@ def validate_native(payload, market_native, market, *, quotes=False):
     return expected_result(payload, market_native, market, quotes=quotes)
 
 
-def state_type(base, account, requests, market, quote_code=None):
-    Parent = market["state_type"](base, account, requests)
-    selected_profile = QUOTE_PROFILE if quote_code is not None else PROFILE
+def state_type(base, account, requests, market, quote_code=None, *, unsubscribe=False):
+    if unsubscribe and quote_code is None:
+        raise ValueError("unsubscribe_requires_quote")
+    Parent = market["state_type"](base, account, requests, unsubscribe=unsubscribe)
+    selected_profile = (
+        UNSUB_PROFILE if unsubscribe else QUOTE_PROFILE if quote_code is not None else PROFILE
+    )
     selected_receipt = QUOTE_RECEIPT if quote_code is not None else RECEIPT
 
     class SnapshotState(Parent):
@@ -194,7 +200,10 @@ def state_type(base, account, requests, market, quote_code=None):
 
         def native_result(self):
             def market_result(raw):
-                return market["expected_result"](raw, account["expected_result"])
+                def account_result(data):
+                    return account["expected_result"](data, unsubscribe=unsubscribe)
+
+                return market["expected_result"](raw, account_result)
 
             if quote_code is not None:
                 return quote_code["expected_result"](
@@ -206,6 +215,15 @@ def state_type(base, account, requests, market, quote_code=None):
             return expected_result(self.payload(), market_result, market)
 
         def feed(self, kind, payload, now, mono):
+            if (
+                kind == "unsubscribe_prepared"
+                and unsubscribe
+                and (
+                    set(self.snapshots) != set(self.selected["symbols"])
+                    or any(row["stage"] != "accepted" for row in self.snapshots.values())
+                )
+            ):
+                raise ValueError("unsubscribe_after_all_snapshots_required")
             if kind == "close_prepared":
                 if set(self.snapshots) != set(self.selected["symbols"]) or any(
                     row["stage"] != "accepted" for row in self.snapshots.values()

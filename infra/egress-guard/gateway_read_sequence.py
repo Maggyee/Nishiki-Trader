@@ -23,6 +23,8 @@ ROUTE_SCOPE = "fixture-route-sequence-v1"
 ROUTE_STEPS = (*ORDER_STEPS, "books")
 QUOTE_ROUTE_PROFILE = "portfolio.installed_quote_route_sequence.v1"
 QUOTE_ROUTE_SCOPE = "fixture-quote-route-sequence-v1"
+UNSUB_ROUTE_PROFILE = "portfolio.installed_unsubscribe_route_sequence.v1"
+UNSUB_ROUTE_SCOPE = "fixture-unsubscribe-route-sequence-v1"
 LIMIT = 65536
 FILES = {
     "binding": "binding.json",
@@ -252,12 +254,24 @@ def route_result(results, bundles, modules):
     )
 
 
-def replay(raw, *, expected_sha256, bundles, modules, orders=False, routes=False, quotes=False):
-    if quotes and not routes:
+def replay(
+    raw,
+    *,
+    expected_sha256,
+    bundles,
+    modules,
+    orders=False,
+    routes=False,
+    quotes=False,
+    unsubscribe=False,
+):
+    if (quotes and not routes) or (unsubscribe and not quotes):
         raise ValueError("quote_route_required")
     orders = orders or routes
     profile = (
-        QUOTE_ROUTE_PROFILE
+        UNSUB_ROUTE_PROFILE
+        if unsubscribe
+        else QUOTE_ROUTE_PROFILE
         if quotes
         else ROUTE_PROFILE
         if routes
@@ -425,14 +439,30 @@ def replay(raw, *, expected_sha256, bundles, modules, orders=False, routes=False
 
 class Sequence:
     def __init__(
-        self, entry, authority, sources, modules, *, orders=False, routes=False, quotes=False
+        self,
+        entry,
+        authority,
+        sources,
+        modules,
+        *,
+        orders=False,
+        routes=False,
+        quotes=False,
+        unsubscribe=False,
     ):
-        if quotes and not routes:
+        if (quotes and not routes) or (unsubscribe and not quotes):
             raise ValueError("quote_route_required")
         orders = orders or routes
-        self.orders, self.routes, self.quotes = orders, routes, quotes
+        self.orders, self.routes, self.quotes, self.unsubscribe = (
+            orders,
+            routes,
+            quotes,
+            unsubscribe,
+        )
         self.profile = (
-            QUOTE_ROUTE_PROFILE
+            UNSUB_ROUTE_PROFILE
+            if unsubscribe
+            else QUOTE_ROUTE_PROFILE
             if quotes
             else ROUTE_PROFILE
             if routes
@@ -441,7 +471,9 @@ class Sequence:
             else PROFILE
         )
         self.scope = (
-            QUOTE_ROUTE_SCOPE
+            UNSUB_ROUTE_SCOPE
+            if unsubscribe
+            else QUOTE_ROUTE_SCOPE
             if quotes
             else ROUTE_SCOPE
             if routes
@@ -594,6 +626,7 @@ class Sequence:
             orders=self.orders,
             routes=self.routes,
             quotes=self.quotes,
+            unsubscribe=self.unsubscribe,
         )
         self.journal.append(
             kind, **{k: v for k, v in row.items() if k not in {"seq", "previous_sha256", "kind"}}
@@ -673,8 +706,9 @@ def run_installed(
     market=False,
     snapshot=False,
     quotes=False,
+    unsubscribe=False,
 ):
-    if quotes and not snapshot:
+    if (quotes and not snapshot) or (unsubscribe and not quotes):
         raise ValueError("quote_requires_snapshot")
     if snapshot and not market:
         raise ValueError("snapshot_requires_market")
@@ -690,7 +724,14 @@ def run_installed(
         authority.verify()
         modules = load_sources({name: sources.source(name).decode() for name in entry["FILES"]})
         sequence = Sequence(
-            entry, authority, sources, modules, orders=orders, routes=routes, quotes=quotes
+            entry,
+            authority,
+            sources,
+            modules,
+            orders=orders,
+            routes=routes,
+            quotes=quotes,
+            unsubscribe=unsubscribe,
         )
         try:
             for index in range(len(sequence.steps)):
@@ -741,6 +782,7 @@ def run_installed(
                     market=market,
                     snapshot=snapshot,
                     quotes=quotes,
+                    unsubscribe=unsubscribe,
                 )
             print(
                 json.dumps(

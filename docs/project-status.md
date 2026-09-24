@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-24
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: A separate disposable v15 fixture now acknowledges two native L2/QuoteTick receipts after closure and revocation; empty/crossed books refuse. The unchanged v14 originals still have empty bids and no QuoteTicks. Eight installed REST GETs lack seven GETs and account unsubscribe against the full joint plan; zero ordered joint operations or complete account intervals are accepted. Next implement the missing fixed operations and a complete ordered native collector. Stream fences, real authority/coverage, provider limits/clocks, host rollout, qualified equity and trading remain blocked.
+- **Current objective**: A separate disposable v16 fixture now acknowledges dedicated-UID-selected account unsubscribe plus two native L2/QuoteTicks after closure/revocation; bad unsubscribe acknowledgement refuses. The unchanged v14 originals still lack two-sided books. Eight installed REST GETs still lack seven GETs against the full 19-operation plan; the separate fixture's operations are not yet a joint sequence. Zero ordered joint operations or complete account intervals are accepted. Next implement the two full account reads and three time samples within one ordered installed native collector. Stream fences, real authority/coverage, provider limits/clocks, host rollout, qualified equity and trading remain blocked.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -354,8 +354,12 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
    A synthetic two-sided case constructs a native quote. The
    [separate v15 fixture](progress/portfolio-installed-native-quote-2026-09-24.md)
    now accepts two native L2/QuoteTick receipts after closure and revocation;
-   empty/crossed books fail closed. Next connect the complete ordered native
-   joint collector; sampling never proves coverage.
+   empty/crossed books fail closed. The
+   [v16 unsubscribe fixture](progress/portfolio-installed-unsubscribe-2026-09-24.md)
+   now acknowledges an exact dedicated-UID-selected cancellation on the same
+   local account socket before closure; invalid acknowledgement fails closed.
+   Seven GETs and one complete ordered native joint collector remain missing;
+   sampling never proves coverage.
    Actual authority policy, fresh rate/clock consumption and provider-charge
    resolution must precede any separately reviewed real joint dispatch.
    Preserve the consumed scope; no retry, second IPv4 or extended interruption
@@ -400,6 +404,13 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
 
 ## Latest Verification
 
+- Installed fixture account unsubscribe: **109 related Python tests and two
+  disposable scenarios pass**. Success records exact unsubscribe and two
+  native quotes after revocation; wrong acknowledgement is nonresumable with
+  no native receipt. All three prior quote scenarios and nine prior signed-WS
+  scenarios pass under v16. Manifest
+  pins 22 sources; maximum sampled descriptors **856/1,024**. See
+  [unsubscribe acceptance](progress/portfolio-installed-unsubscribe-2026-09-24.md).
 - Installed fixture native quotes: **36 focused tests and three disposable
   scenarios pass** (one success, empty-buy and crossed-book refusals). The
   successful two-symbol receipt creates two QuoteTicks with bid 99 / ask 101;

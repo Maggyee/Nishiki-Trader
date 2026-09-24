@@ -22,6 +22,13 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For installed native account WS unsubscribe acknowledgement in a separate
+disposable quote fixture, read `docs/progress/portfolio-installed-unsubscribe-2026-09-24.md`
+and its JSON. Manifest v16 pins 22 sources; the dedicated UID selects the fixed
+unsubscribe after original partial account/market/depth observations. A bad
+acknowledgement fails closed. Seven GETs and the full ordered joint collector
+remain missing; no complete account interval or stream fence is accepted.
+
 For installed bounded native L2/QuoteTick receipts in a new disposable scope,
 read `docs/progress/portfolio-installed-native-quote-2026-09-24.md` and its JSON.
 Manifest v15 pins 22 sources; a two-level buy snapshot retains a second buy

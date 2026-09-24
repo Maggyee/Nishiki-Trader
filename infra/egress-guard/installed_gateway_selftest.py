@@ -125,6 +125,7 @@ QUOTE_WS_SCENARIOS = (
     "quote_empty_bid",
     "quote_crossed",
 )
+UNSUB_WS_SCENARIOS = ("unsub_success", "unsub_bad_ack")
 FIXTURE_BOOKS = [
     {"symbol": asset + "USDT", "bidPrice": price, "askPrice": ask, "bidQty": "10", "askQty": "10"}
     for asset, price, ask in (
@@ -230,7 +231,7 @@ TLS_PEER = (
     + r"""
 import hashlib,json,os,socket,ssl,sys,time
 scenario=sys.argv[1]
-if scenario.startswith('routes_ws_') or scenario.startswith('snapshot_') or scenario.startswith('quote_'):scenario='routes_two_hops' if scenario in {'routes_ws_two_hops','snapshot_two_hops'} else 'routes_success'
+if scenario.startswith(('routes_ws_','snapshot_','quote_','unsub_')):scenario='routes_two_hops' if scenario in {'routes_ws_two_hops','snapshot_two_hops'} else 'routes_success'
 body=json.dumps({'rateLimits':[
  {'rateLimitType':'REQUEST_WEIGHT','interval':'MINUTE','intervalNum':1,'limit':6000},
  {'rateLimitType':'RAW_REQUESTS','interval':'MINUTE','intervalNum':5,'limit':61000},
@@ -365,7 +366,7 @@ def serve(raw):
                 if symbol is None:raise ValueError('snapshot_fixed_request')
                 with lock:report['snapshot_requests'].append(symbol)
                 bids=[['100.00000000','1.00000000']]
-                if sys.argv[2]=='quote' and scenario!='quote_empty_bid':bids.append(['99.00000000','3.00000000'])
+                if sys.argv[2] in {'quote','unsub'} and scenario!='quote_empty_bid':bids.append(['99.00000000','3.00000000'])
                 body=json.dumps({'lastUpdateId':104 if scenario=='snapshot_gap' else 'bad' if scenario=='snapshot_bad_http' else 101,'bids':bids,'asks':[['101.00000000','2.00000000']]},separators=(',',':')).encode()
                 response=b'HTTP/1.1 200 OK\r\nContent-Length: '+str(len(body)).encode()+b'\r\nX-MBX-USED-WEIGHT-1M: 25\r\nConnection: close\r\n\r\n'+body
                 connection.sendall(response[:45]);connection.sendall(response[45:]);return
@@ -393,7 +394,7 @@ def serve(raw):
             connection.sendall(ping[:3]);connection.sendall(ping[3:])
             control(connection,10,b'fixture:'+role.encode())
             with lock:report['pongs']+=1
-            if sys.argv[2] in {'signed','market','snapshot','quote'} and role=='account':
+            if sys.argv[2] in {'signed','market','snapshot','quote','unsub'} and role=='account':
                 head=exact(connection,2)
                 if head[0]!=0x81 or not head[1]&0x80:raise ValueError('signed_text_required')
                 size=head[1]&127
@@ -420,7 +421,19 @@ def serve(raw):
                 first=frame(1,event_raw[:50]);first=bytes([1])+first[1:]
                 connection.sendall(first[:7]);connection.sendall(first[7:]+frame(0,event_raw[50:]))
                 if scenario=='routes_ws_extra_event':connection.sendall(frame(1,event_raw))
-            if sys.argv[2] in {'market','snapshot','quote'} and role=='market':
+                if sys.argv[2]=='unsub':
+                    head=exact(connection,2)
+                    if head[0]!=0x81 or not head[1]&0x80:raise ValueError('unsubscribe_masked_text_required')
+                    size=head[1]&127
+                    if size==126:size=int.from_bytes(exact(connection,2),'big')
+                    if size>850:raise ValueError('unsubscribe_text_limit')
+                    mask=exact(connection,4);encoded=exact(connection,size)
+                    request=bytes(v^mask[i%4] for i,v in enumerate(encoded))
+                    if request!=b'{"id":"fixture-19","method":"userDataStream.unsubscribe","params":{"subscriptionId":0}}':raise ValueError('unsubscribe_selector_changed')
+                    with lock:report['unsubscribe_request_sha256']=hashlib.sha256(request).hexdigest()
+                    reply={'id':'fixture-19' if scenario=='unsub_success' else 'foreign','status':200,'result':{}}
+                    connection.sendall(frame(1,json.dumps(reply,separators=(',',':')).encode()))
+            if sys.argv[2] in {'market','snapshot','quote','unsub'} and role=='market':
                 sent=0
                 for index in range(2):
                     for symbol in symbols:
@@ -439,7 +452,7 @@ def serve(raw):
                         sent+=1
                 if scenario=='routes_ws_extra_market':connection.sendall(frame(1,raw));sent+=1
                 with lock:report['market_events_sent']=sent
-            if sys.argv[2] in {'market','snapshot','quote'}:barrier.wait()
+            if sys.argv[2] in {'market','snapshot','quote','unsub'}:barrier.wait()
             control(connection,8,b'\x03\xe8')
             with lock:report['closes']+=1
             connection.sendall(frame(8,b'\x03\xe8'))
@@ -452,7 +465,7 @@ with socket.socket() as listener:
     listener.bind(('198.51.100.2',23456));listener.listen(4);listener.settimeout(5)
     print('ready',flush=True)
     try:
-        for _ in range(4 if sys.argv[2] in {'snapshot','quote'} else 2):
+        for _ in range(4 if sys.argv[2] in {'snapshot','quote','unsub'} else 2):
             raw,_=listener.accept();report['connections']+=1
             thread=threading.Thread(target=serve,args=(raw,));thread.start();threads.append(thread)
     except Exception as exc:report['errors'].append(type(exc).__name__)
@@ -466,7 +479,8 @@ def worker(payload):
     base = load(payload["base_source"])
     base["require_isolation"](payload["original"])
     requests = payload.get("native_requests_profile", False)
-    quote_ws = payload.get("quote_ws_profile", False)
+    unsub_ws = payload.get("unsub_ws_profile", False)
+    quote_ws = payload.get("quote_ws_profile", False) or unsub_ws
     snapshot_ws = payload.get("snapshot_ws_profile", False) or quote_ws
     market_ws = payload.get("market_ws_profile", False) or snapshot_ws
     signed_ws = payload.get("signed_ws_profile", False) or market_ws
@@ -480,7 +494,8 @@ def worker(payload):
     tls = payload.get("tls_profile", False) or receipt
     ipc = payload.get("joint_ipc_profile", False) or requests
     if (
-        type(quote_ws) is not bool
+        type(unsub_ws) is not bool
+        or type(quote_ws) is not bool
         or type(concurrent) is not bool
         or type(routes) is not bool
         or type(orders) is not bool
@@ -494,7 +509,9 @@ def worker(payload):
         or (tls and ipc)
         or payload["scenario"]
         not in (
-            QUOTE_WS_SCENARIOS
+            UNSUB_WS_SCENARIOS
+            if unsub_ws
+            else QUOTE_WS_SCENARIOS
             if quote_ws
             else SNAPSHOT_WS_SCENARIOS
             if snapshot_ws
@@ -1100,7 +1117,8 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
     """Drive fixed barriers only; parent is namespace PID 1 and has no host network."""
     code = load(payload["sources"]["gateway_read_sequence.py"])
     modules = code["load_sources"](payload["sources"])
-    quote_ws = payload.get("quote_ws_profile", False)
+    unsub_ws = payload.get("unsub_ws_profile", False)
+    quote_ws = payload.get("quote_ws_profile", False) or unsub_ws
     snapshot_ws = payload.get("snapshot_ws_profile", False) or quote_ws
     market_ws = payload.get("market_ws_profile", False) or snapshot_ws
     signed_ws = payload.get("signed_ws_profile", False) or market_ws
@@ -1109,7 +1127,9 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
     orders = payload.get("order_sequence_profile", False) or routes
     steps = code["ROUTE_STEPS"] if routes else code["ORDER_STEPS"] if orders else code["STEPS"]
     scope_name = (
-        code["QUOTE_ROUTE_SCOPE" if quote_ws else "ROUTE_SCOPE"]
+        code[
+            "UNSUB_ROUTE_SCOPE" if unsub_ws else "QUOTE_ROUTE_SCOPE" if quote_ws else "ROUTE_SCOPE"
+        ]
         if routes
         else code["ORDER_SCOPE"]
         if orders
@@ -1120,7 +1140,9 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
         "/usr/bin/python3",
         "-I",
         entry["CODE"] + "/installed_gateway.py",
-        "--quote-ws-fixture"
+        "--unsub-ws-fixture"
+        if unsub_ws
+        else "--quote-ws-fixture"
         if quote_ws
         else "--snapshot-ws-fixture"
         if snapshot_ws
@@ -1287,7 +1309,9 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                         "-c",
                         WS_PEER,
                         scenario,
-                        "quote"
+                        "unsub"
+                        if unsub_ws
+                        else "quote"
                         if quote_ws
                         else "snapshot"
                         if snapshot_ws
@@ -1451,6 +1475,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
             orders=orders,
             routes=routes,
             quotes=quote_ws,
+            unsubscribe=unsub_ws,
         )
         expected = {
             **{
@@ -1461,6 +1486,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                     *MARKET_WS_SCENARIOS,
                     *SNAPSHOT_WS_SCENARIOS,
                     *QUOTE_WS_SCENARIOS,
+                    *UNSUB_WS_SCENARIOS,
                 )
             },
             **{
@@ -1499,6 +1525,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                     *MARKET_WS_SCENARIOS,
                     *SNAPSHOT_WS_SCENARIOS,
                     *QUOTE_WS_SCENARIOS,
+                    *UNSUB_WS_SCENARIOS,
                 )
                 or scenario
                 in {
@@ -1518,7 +1545,9 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
         if concurrent:
             ws_code = load(payload["sources"]["gateway_concurrent_ws.py"])
             frames = load(payload["sources"]["portfolio_ws_frames.py"])
-            selected = ws_code["selection"](raw, bundles, code, modules, quotes=quote_ws)
+            selected = ws_code["selection"](
+                raw, bundles, code, modules, quotes=quote_ws, unsubscribe=unsub_ws
+            )
             extension = load(payload["sources"]["gateway_account_ws.py"]) if signed_ws else None
             state_type = (
                 extension["state_type"](
@@ -1546,9 +1575,10 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                     load(payload["sources"]["gateway_native_requests.py"]),
                     market_code,
                     quote_code=quote_code,
+                    unsubscribe=unsub_ws,
                 )
             ws_scope = (
-                snapshot_code["QUOTE_SCOPE" if quote_ws else "SCOPE"]
+                snapshot_code["UNSUB_SCOPE" if unsub_ws else "QUOTE_SCOPE" if quote_ws else "SCOPE"]
                 if snapshot_ws
                 else market_code["SCOPE"]
                 if market_ws
@@ -1572,6 +1602,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                 "snapshot_success",
                 "snapshot_two_hops",
                 "quote_success",
+                "unsub_success",
             }
             if (ws_report["status"] == "complete") != success or ws_report[
                 "prepared_connections"
@@ -1636,6 +1667,16 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                     checks.append(
                         "bounded_two_sided_native_l2_and_quotes_acknowledged_after_revocation"
                     )
+                if unsub_ws:
+                    account_result = ws_report["native_result"]["account"]
+                    if (
+                        not account_result["unsubscribe_acknowledged"]
+                        or not ws_report["fixture_unsubscribe_acknowledged"]
+                        or not peer_report.get("unsubscribe_request_sha256")
+                        or ws_report["documented_unsubscribe_weight"] != 2
+                    ):
+                        raise RuntimeError("native_unsubscribe_receipt_required")
+                    checks.append("native_unsubscribe_original_acknowledged_before_close")
             if (
                 quote_ws
                 and not success
@@ -2001,6 +2042,7 @@ def main(argv=None):
     profiles.add_argument("--market-ws-profile", action="store_true")
     profiles.add_argument("--snapshot-ws-profile", action="store_true")
     profiles.add_argument("--quote-ws-profile", action="store_true")
+    profiles.add_argument("--unsub-ws-profile", action="store_true")
     profiles.add_argument("--joint-ipc-profile", action="store_true")
     args = parser.parse_args(argv)
     if os.geteuid() == 0:
@@ -2042,6 +2084,7 @@ def main(argv=None):
             or args.market_ws_profile
             or args.snapshot_ws_profile
             or args.quote_ws_profile
+            or args.unsub_ws_profile
         ):
             built = subprocess.run(
                 [
@@ -2082,6 +2125,7 @@ def main(argv=None):
             "market_ws_profile": args.market_ws_profile,
             "snapshot_ws_profile": args.snapshot_ws_profile,
             "quote_ws_profile": args.quote_ws_profile,
+            "unsub_ws_profile": args.unsub_ws_profile,
             "joint_ipc_profile": args.joint_ipc_profile,
             "base_source": base_source,
             "installer": installer.decode(),
@@ -2094,7 +2138,9 @@ def main(argv=None):
         reports = []
         bootstrap = "import json,sys\np=json.load(sys.stdin)\ns={'__name__':'isolated_installed_gateway'}\nexec(compile(p['source'],'<fixture>','exec'),s)\nprint(json.dumps(s['worker'](p),sort_keys=True))\n"
         for scenario in (
-            QUOTE_WS_SCENARIOS
+            UNSUB_WS_SCENARIOS
+            if args.unsub_ws_profile
+            else QUOTE_WS_SCENARIOS
             if args.quote_ws_profile
             else SNAPSHOT_WS_SCENARIOS
             if args.snapshot_ws_profile
@@ -2192,6 +2238,7 @@ def main(argv=None):
             "market_ws_profile": args.market_ws_profile,
             "snapshot_ws_profile": args.snapshot_ws_profile,
             "quote_ws_profile": args.quote_ws_profile,
+            "unsub_ws_profile": args.unsub_ws_profile,
             "joint_ipc_profile": args.joint_ipc_profile,
             "scenarios": reports,
             "source_sha256": payload["source_sha256"],

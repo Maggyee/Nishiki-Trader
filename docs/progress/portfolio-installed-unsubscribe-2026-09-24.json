@@ -1,0 +1,47 @@
+{
+  "schema_version": "portfolio.installed_unsubscribe_acceptance.v1",
+  "date": "2026-09-24",
+  "phase": "disposable_local_fixture_acceptance",
+  "fixture_manifest_profile": "portfolio.installed_gateway_fixture.v16",
+  "sources_pinned": 22,
+  "ignored_report": "data/installed-unsub-ws-2026-09-24-attempt3.json",
+  "ignored_report_sha256": "d3923d6522d6e9e1f955c014e4397c266ed300b9b96355bf8fa76627a4778cb0",
+  "ignored_native_runtime": "data/installed-unsub-ws-2026-09-24-attempt3.runtime.tar.gz",
+  "ignored_native_runtime_sha256": "eac136edf3085fc4213ca11ba4fe30a3c35e125c3250c2cd92d2ae11e923092d",
+  "account_source_sha256": "5703ab55819d824b0f8c26077e403b36827f75061b120fee3f86d2755cd88143",
+  "scenarios": {
+    "unsub_success": {
+      "ws_status": "complete",
+      "native_quote_ticks": 2,
+      "unsubscribe_acknowledged": true,
+      "checks": 103,
+      "ws_archive_sha256": "3898db562867c39dfb7fb97ef052a94b4e28b3c76b6951e9603becb5c9b25429"
+    },
+    "unsub_bad_ack": {
+      "ws_status": "incomplete_no_resume",
+      "native_quote_ticks": 0,
+      "unsubscribe_acknowledged": false,
+      "checks": 97,
+      "ws_archive_sha256": "53bba0e4065ff02bcb1a8e4b19d0b0570b5e2b22e25bfa12c7bc25b817013a00"
+    }
+  },
+  "focused_python_tests_passed": 109,
+  "quote_regression_report": "data/installed-quote-ws-v16-regression-2026-09-24.json",
+  "quote_regression_sha256": "2fc59a9032512c7a50d7d573aabc8771a803ab92baf02dddfd4494629c1005d3",
+  "quote_regression_scenarios": 3,
+  "signed_ws_regression_report": "data/installed-signed-ws-v16-regression-2026-09-24.json",
+  "signed_ws_regression_sha256": "e6a1af2779dc0b2a4070c2225f3bb3e04e96245b8c8d760756b13044657291bd",
+  "signed_ws_regression_scenarios": 9,
+  "maximum_sampled_descriptors": 856,
+  "descriptor_limit": 1024,
+  "v14_original_sha256": "7b0e035ddaddd907bb46678a4e55012c94b7c2de9c56df562738ca94a6b68547",
+  "remaining_joint_rest_gets": 7,
+  "complete_account_intervals": 0,
+  "ordered_joint_operations_accepted": 0,
+  "stream_fence_verified": false,
+  "real_joint_collector_integrated": false,
+  "venue_requests": 0,
+  "network_admitted": false,
+  "trading_admitted": false,
+  "upstream_touched": false
+}

@@ -38,7 +38,7 @@ def digest(raw):
     return hashlib.sha256(raw).hexdigest()
 
 
-def selection(raw, bundles, sequence_code, modules, *, quotes=False):
+def selection(raw, bundles, sequence_code, modules, *, quotes=False, unsubscribe=False):
     report = sequence_code["replay"](
         raw,
         expected_sha256=digest(raw),
@@ -46,6 +46,7 @@ def selection(raw, bundles, sequence_code, modules, *, quotes=False):
         modules=modules,
         routes=True,
         quotes=quotes,
+        unsubscribe=unsubscribe,
     )
     if report["status"] != "complete":
         raise ValueError("ws_completed_original_routes_required")
@@ -576,7 +577,9 @@ async def capture(journal, trust, frames, check, grant, revoke, notify, session=
             if role == "account":
                 notify("ws_both_live")
                 if session is not None:
-                    await session.exchange(journal, writer, chunk, before_wire, deadline)
+                    await session.exchange(
+                        journal, writer, chunk, before_wire, deadline, snapshots_done
+                    )
             elif session is not None:
                 await session.exchange_market(journal, chunk)
             exchanges_done[role].set()
@@ -713,8 +716,19 @@ def capture_result(*args):
 
 
 def run_installed(
-    entry, authority, sources, sequence, *, signed=False, market=False, snapshot=False, quotes=False
+    entry,
+    authority,
+    sources,
+    sequence,
+    *,
+    signed=False,
+    market=False,
+    snapshot=False,
+    quotes=False,
+    unsubscribe=False,
 ):
+    if unsubscribe and not quotes:
+        raise ValueError("unsubscribe_requires_quote_scope")
     if market and not signed:
         raise ValueError("market_ws_requires_signed_account")
     if snapshot and not market:
@@ -724,7 +738,14 @@ def run_installed(
     code = entry["load"](sources.source("gateway_read_sequence.py"))
     frames = entry["load"](sources.source("portfolio_ws_frames.py"))
     guards = entry["load"](sources.source("selftest.py"))
-    selected = selection(sequence.expected, sequence.bundles, code, sequence.modules, quotes=quotes)
+    selected = selection(
+        sequence.expected,
+        sequence.bundles,
+        code,
+        sequence.modules,
+        quotes=quotes,
+        unsubscribe=unsubscribe,
+    )
     last_binding = json.loads(sequence.bundles[-1]["binding"])
     run, nft = guards["run"], guards["NFT"]
 
@@ -776,7 +797,7 @@ def run_installed(
     snapshot_code = entry["load"](sources.source("gateway_snapshot_ws.py")) if snapshot else None
     quote_code = entry["load"](sources.source("gateway_native_quote.py")) if quotes else None
     scope = (
-        snapshot_code["QUOTE_SCOPE" if quotes else "SCOPE"]
+        snapshot_code["UNSUB_SCOPE" if unsubscribe else "QUOTE_SCOPE" if quotes else "SCOPE"]
         if snapshot
         else market_code["SCOPE"]
         if market
@@ -791,7 +812,9 @@ def run_installed(
     sequence.write(
         path / "README.md",
         (
-            b"Fixture bounded native L2/QuoteTick receipt after closed sockets and revocation. Consumed on creation. Historical local evidence only; no live admission or stream fence. Next: ordered full joint collector.\n"
+            b"Fixture native unsubscribe plus bounded L2/QuoteTick receipt after socket closure and revocation. Consumed on creation. No full account interval, stream fence or live admission. Next: ordered full joint collector.\n"
+            if unsubscribe
+            else b"Fixture bounded native L2/QuoteTick receipt after closed sockets and revocation. Consumed on creation. Historical local evidence only; no live admission or stream fence. Next: ordered full joint collector.\n"
             if quotes
             else b"Fixture REST depth anchors and concurrent native account/market receipts. Phase: disposable acceptance. Consumed on creation; no synchronized book, stream fence or live admission. Next: full joint collector integration.\n"
             if snapshot
@@ -808,7 +831,13 @@ def run_installed(
     try:
         if signed:
             session = extension["Session"](
-                entry, authority, sources, market=market, snapshot=snapshot, quotes=quotes
+                entry,
+                authority,
+                sources,
+                market=market,
+                snapshot=snapshot,
+                quotes=quotes,
+                unsubscribe=unsubscribe,
             )
             if market:
                 session.exchange_market = lambda journal, chunk: market_code["exchange"](
@@ -821,7 +850,12 @@ def run_installed(
             state_type = market_code["state_type"](globals(), extension, session.requests)
         if snapshot:
             state_type = snapshot_code["state_type"](
-                globals(), extension, session.requests, market_code, quote_code=quote_code
+                globals(),
+                extension,
+                session.requests,
+                market_code,
+                quote_code=quote_code,
+                unsubscribe=unsubscribe,
             )
         journal = Journal(
             path / "ws.jsonl",

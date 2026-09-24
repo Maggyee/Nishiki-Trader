@@ -18,6 +18,7 @@ from decimal import Decimal
 PROFILE = "portfolio.installed_account_ws.v1"
 SCOPE = "signed-account-ws-v1"
 RECEIPT = "portfolio.native_partial_account_ws.v1"
+UNSUB_RECEIPT = "portfolio.native_partial_account_unsubscribe.v1"
 MAX_PAYLOAD = 8192
 CHUNK = 512
 
@@ -56,6 +57,20 @@ def response(raw):
         or type(value["result"]["subscriptionId"]) is not int
     ):
         raise ValueError("account_ws_subscription_response")
+    return value
+
+
+def unsubscribe_response(raw):
+    value = decode(raw)
+    if (
+        not isinstance(value, dict)
+        or set(value) != {"id", "status", "result"}
+        or value["id"] != "fixture-19"
+        or type(value["status"]) is not int
+        or value["status"] != 200
+        or value["result"] != {}
+    ):
+        raise ValueError("account_ws_unsubscribe_response")
     return value
 
 
@@ -109,22 +124,29 @@ def event(raw):
     return row, sorted(balances, key=lambda r: r["currency"])
 
 
-def expected_result(payload):
+def expected_result(payload, *, unsubscribe=False):
     if not isinstance(payload, bytes) or not 0 < len(payload) <= MAX_PAYLOAD:
         raise ValueError("account_ws_receipt_size")
     value = decode(payload)
     if (
         canonical(value) != payload
         or set(value)
-        != {
-            "profile",
-            "request_sha256",
-            "response_b64",
-            "event_b64",
-            "response_receipt",
-            "event_receipt",
-        }
-        or value["profile"] != RECEIPT
+        != (
+            {
+                "profile",
+                "request_sha256",
+                "response_b64",
+                "event_b64",
+                "response_receipt",
+                "event_receipt",
+            }
+            | (
+                {"unsubscribe_request_sha256", "unsubscribe_b64", "unsubscribe_receipt"}
+                if unsubscribe
+                else set()
+            )
+        )
+        or value["profile"] != (UNSUB_RECEIPT if unsubscribe else RECEIPT)
         or not isinstance(value["request_sha256"], str)
         or re.fullmatch("[0-9a-f]{64}", value["request_sha256"]) is None
     ):
@@ -149,8 +171,28 @@ def expected_result(payload):
             raise ValueError("account_ws_receipt_encoding")
     response(originals["response_b64"])
     row, balances = event(originals["event_b64"])
+    if unsubscribe:
+        stamp = value["unsubscribe_receipt"]
+        if (
+            not isinstance(stamp, dict)
+            or set(stamp) != {"utc_ns", "monotonic_ns"}
+            or any(type(n) is not int or n <= 0 for n in stamp.values())
+            or any(stamp[k] < value["event_receipt"][k] for k in stamp)
+            or abs(
+                (stamp["utc_ns"] - value["event_receipt"]["utc_ns"])
+                - (stamp["monotonic_ns"] - value["event_receipt"]["monotonic_ns"])
+            )
+            > 50_000_000
+            or not isinstance(value["unsubscribe_request_sha256"], str)
+            or re.fullmatch("[0-9a-f]{64}", value["unsubscribe_request_sha256"]) is None
+        ):
+            raise ValueError("account_ws_unsubscribe_receipt")
+        original = base64.b64decode(value["unsubscribe_b64"], validate=True)
+        if base64.b64encode(original).decode() != value["unsubscribe_b64"]:
+            raise ValueError("account_ws_unsubscribe_encoding")
+        unsubscribe_response(original)
     return {
-        "profile": RECEIPT,
+        "profile": UNSUB_RECEIPT if unsubscribe else RECEIPT,
         "native_version": "1.226.0",
         "subscription_id": 0,
         "request_sha256": value["request_sha256"],
@@ -158,6 +200,15 @@ def expected_result(payload):
         "event_time_ms": row["E"],
         "last_account_update_ms": row["u"],
         "event_receipt": value["event_receipt"],
+        **(
+            {
+                "unsubscribe_request_sha256": value["unsubscribe_request_sha256"],
+                "unsubscribe_receipt": value["unsubscribe_receipt"],
+                "unsubscribe_acknowledged": True,
+            }
+            if unsubscribe
+            else {}
+        ),
         "balances": balances,
         "partial_update": True,
         "omitted_assets_unchanged_or_unknown": True,
@@ -168,7 +219,7 @@ def expected_result(payload):
     }
 
 
-def validate_native(payload):
+def validate_native(payload, *, unsubscribe=False):
     if os.geteuid() == 0:
         raise ValueError("native_import_as_root_refused")
     from nautilus_trader.core.nautilus_pyo3 import (
@@ -181,7 +232,7 @@ def validate_native(payload):
 
     if NAUTILUS_VERSION != "1.226.0":
         raise ValueError("native_version_changed")
-    result = expected_result(payload)
+    result = expected_result(payload, unsubscribe=unsubscribe)
     for row in result["balances"]:
         currency = Currency(row["currency"], 8, 0, row["currency"], CurrencyType.CRYPTO)
         amounts = {k: Money(Decimal(row[k]), currency) for k in ("total", "locked", "free")}
@@ -239,7 +290,7 @@ def selection(selected, bundles):
     }
 
 
-def state_type(base, requests):
+def state_type(base, requests, *, unsubscribe=False):
     class AccountState(base["State"]):
         PROFILE = PROFILE
 
@@ -248,6 +299,7 @@ def state_type(base, requests):
             self.signer = self.subscription = self.accepted = self.update = None
             self.receipt_started = self.acknowledged = None
             self.subscription_clock = None
+            self.unsubscribe_request = self.unsubscribe_ack = None
 
         def all_events(self, role):
             return super().events(role)
@@ -280,17 +332,30 @@ def state_type(base, requests):
                 raise ValueError("account_ws_originals_required")
             return canonical(
                 {
-                    "profile": RECEIPT,
+                    "profile": UNSUB_RECEIPT if unsubscribe else RECEIPT,
                     "request_sha256": digest(canonical(self.subscription["request"])),
                     "response_b64": self.accepted["raw_b64"],
                     "event_b64": self.update["raw_b64"],
                     "response_receipt": self.accepted["receipt"],
                     "event_receipt": self.update["receipt"],
+                    **(
+                        {
+                            "unsubscribe_request_sha256": digest(
+                                canonical(self.unsubscribe_request["request"])
+                            ),
+                            "unsubscribe_b64": self.unsubscribe_ack["raw_b64"],
+                            "unsubscribe_receipt": self.unsubscribe_ack["receipt"],
+                        }
+                        if unsubscribe
+                        and self.unsubscribe_request is not None
+                        and self.unsubscribe_ack is not None
+                        else {}
+                    ),
                 }
             )
 
         def native_result(self):
-            return expected_result(self.payload())
+            return expected_result(self.payload(), unsubscribe=unsubscribe)
 
         def feed(self, kind, payload, now, mono):
             custom = {
@@ -298,13 +363,16 @@ def state_type(base, requests):
                 "subscription_prepared",
                 "subscription_accepted",
                 "account_event",
+                *(("unsubscribe_prepared", "unsubscribe_accepted") if unsubscribe else ()),
                 "native_receipt_prepared",
                 "native_acknowledged",
             }
             if kind not in custom:
                 if kind == "grant_prepared" and self.signer is None:
                     raise ValueError("account_ws_signer_required")
-                if kind == "close_prepared" and self.update is None:
+                if kind == "close_prepared" and (
+                    self.update is None or (unsubscribe and self.unsubscribe_ack is None)
+                ):
                     raise ValueError("account_ws_event_before_close")
                 if kind == "completed" and self.acknowledged is None:
                     raise ValueError("account_ws_native_ack_required")
@@ -315,7 +383,9 @@ def state_type(base, requests):
                     and payload["role"] == "account"
                 ):
                     values = self.all_events("account")
-                    if [op for op, _ in values] != [9, 1, 1, 8]:
+                    if [op for op, _ in values] != (
+                        [9, 1, 1, 1, 8] if unsubscribe else [9, 1, 1, 8]
+                    ):
                         raise ValueError("account_ws_exact_message_sequence")
                 return
             self.clock(payload, now, mono)
@@ -415,11 +485,43 @@ def state_type(base, requests):
                 self.subscription = payload
                 self.subscription_clock = (now, mono)
                 return
-            index = 1 if kind == "subscription_accepted" else 2
+            if kind == "unsubscribe_prepared":
+                if (
+                    self.update is None
+                    or self.unsubscribe_request is not None
+                    or set(payload) != {"challenge", "request", "received", "raw_b64", "raw_sha256"}
+                ):
+                    raise ValueError("account_ws_unsubscribe_order")
+                challenge = payload["challenge"]
+                requests["validate_challenge"](challenge, 19)
+                if (
+                    not isinstance(payload["received"], list)
+                    or len(payload["received"]) != 2
+                    or any(type(n) is not int for n in payload["received"])
+                ):
+                    raise ValueError("account_ws_unsubscribe_received")
+                requests["validate_request"](
+                    canonical(payload["request"]), challenge, received=tuple(payload["received"])
+                )
+                signing_window(challenge, now, mono)
+                if (
+                    any(payload["received"][i] > clock for i, clock in enumerate((now, mono)))
+                    or any(
+                        clock < self.update["receipt"][k]
+                        for k, clock in zip(("utc_ns", "monotonic_ns"), (now, mono), strict=True)
+                    )
+                    or unmask(base["original"](payload)) != wire_request(payload["request"])
+                ):
+                    raise ValueError("account_ws_unsubscribe_wire")
+                self.unsubscribe_request = payload
+                return
+            index = 1 if kind == "subscription_accepted" else 2 if kind == "account_event" else 3
             if self.subscription is None or (
                 self.accepted is not None
                 if index == 1
                 else self.accepted is None or self.update is not None
+                if index == 2
+                else self.unsubscribe_request is None or self.unsubscribe_ack is not None
             ):
                 raise ValueError("account_ws_message_order")
             opcode, raw, stamp = self.message(index)
@@ -435,9 +537,17 @@ def state_type(base, requests):
             if index == 1:
                 response(raw)
                 self.accepted = payload
-            else:
+            elif index == 2:
                 event(raw)
                 self.update = payload
+            else:
+                unsubscribe_response(raw)
+                if any(
+                    stamp[k] < self.unsubscribe_request["received"][i]
+                    for i, k in enumerate(("utc_ns", "monotonic_ns"))
+                ):
+                    raise ValueError("account_ws_unsubscribe_clock_order")
+                self.unsubscribe_ack = payload
 
         def report(self):
             return {
@@ -446,6 +556,14 @@ def state_type(base, requests):
                 "native_events_delivered": self.acknowledged is not None,
                 "native_result": self.acknowledged,
                 "documented_subscription_weight": 2 if self.subscription else 0,
+                **(
+                    {
+                        "documented_unsubscribe_weight": 2 if self.unsubscribe_request else 0,
+                        "fixture_unsubscribe_acknowledged": self.unsubscribe_ack is not None,
+                    }
+                    if unsubscribe
+                    else {}
+                ),
                 "real_account_authenticated": False,
             }
 
@@ -464,9 +582,18 @@ def child_loop(fd, parent):
         if canonical(challenge) != raw:
             raise ValueError("account_ws_canonical_challenge")
         channel.send(requests["native_request"](challenge).decode(), 1)
+        unsubscribe = globals().get("UNSUBSCRIBE", False)
+        if unsubscribe:
+            raw = channel.receive(requests["JsonToken"](), 2).encode()
+            challenge = json.loads(raw)
+            requests["validate_challenge"](challenge, 19)
+            if canonical(challenge) != raw:
+                raise ValueError("account_ws_unsubscribe_canonical_challenge")
+            channel.send(requests["native_request"](challenge).decode(), 2)
         # Wait for root to close sockets and revoke before starting the transfer clock.
-        channel.receive({"deliver"}, 2)
-        channel.send("ready", 2)
+        transfer = 3 if unsubscribe else 2
+        channel.receive({"deliver"}, transfer)
+        channel.send("ready", transfer)
         deadline, payload = time.monotonic() + 5, bytearray()
 
         def bounded():
@@ -475,7 +602,7 @@ def child_loop(fd, parent):
                 raise TimeoutError("account_ws_transfer_deadline")
             channel.connection.settimeout(remaining)
 
-        for seq in range(3, 3 + MAX_PAYLOAD // CHUNK + 1):
+        for seq in range(transfer + 1, transfer + 1 + MAX_PAYLOAD // CHUNK + 1):
             bounded()
 
             class Allowed:
@@ -505,7 +632,20 @@ def child_loop(fd, parent):
 class Session:
     result = staticmethod(expected_result)
 
-    def __init__(self, entry, authority, sources, *, market=False, snapshot=False, quotes=False):
+    def __init__(
+        self,
+        entry,
+        authority,
+        sources,
+        *,
+        market=False,
+        snapshot=False,
+        quotes=False,
+        unsubscribe=False,
+    ):
+        if unsubscribe and not quotes:
+            raise ValueError("unsubscribe_requires_quote_scope")
+        self.unsubscribe = unsubscribe
         self.runtime = self.collector = None
         try:
             self.requests = entry["load"](sources.source("gateway_native_requests.py"))
@@ -530,13 +670,18 @@ class Session:
                 ("REQUESTS", sources.source("gateway_native_requests.py")),
                 ("ACCOUNT", sources.source("gateway_native_account.py")),
             ):
-                source += f"{name}={{'__name__':{name!r}}}\nexec(compile({raw!r},'<held-source>','exec'),{name})\n"
+                encoded = base64.b64encode(zlib.compress(raw, 9))
+                source += f"{name}={{'__name__':{name!r}}}\nexec(compile(__import__('zlib').decompress(__import__('base64').b64decode({encoded!r})),'<held-source>','exec'),{name})\n"
             for raw in (
                 authority.source("collector_launcher.py"),
                 sources.source("gateway_tls_receipt.py"),
                 sources.source("gateway_account_ws.py"),
             ):
-                source += f"exec(compile({raw!r},'<held-source>','exec'))\n"
+                encoded = base64.b64encode(zlib.compress(raw, 9))
+                source += f"exec(compile(__import__('zlib').decompress(__import__('base64').b64decode({encoded!r})),'<held-source>','exec'))\n"
+            if unsubscribe:
+                source += "UNSUBSCRIBE=True\naccount_validate_native=validate_native\nvalidate_native=lambda payload:account_validate_native(payload,unsubscribe=True)\n"
+                self.result = lambda payload: expected_result(payload, unsubscribe=True)
             if market:
                 raw = sources.source("gateway_market_ws.py")
                 if snapshot:
@@ -546,8 +691,9 @@ class Session:
                     market_source = repr(raw)
                 source += f"market_scope={{'__name__':'held_market_ws'}}\nexec(compile({market_source},'<held-market>','exec'),market_scope)\naccount_native=validate_native\nvalidate_native=lambda payload:market_scope['validate_native'](payload,account_native)\n"
                 market_code = entry["load"](raw)
+                account_result = self.result
                 self.result = lambda payload: market_code["expected_result"](
-                    payload, expected_result
+                    payload, account_result
                 )
             if snapshot:
                 if not market:
@@ -599,7 +745,7 @@ class Session:
         if time.monotonic() >= deadline:
             raise TimeoutError("account_ws_total_deadline")
 
-    async def exchange(self, journal, writer, chunk, before_wire, deadline):
+    async def exchange(self, journal, writer, chunk, before_wire, deadline, snapshots_done=None):
         collector = self.collector
         collector.verify()
         if collector.used:
@@ -643,6 +789,47 @@ class Session:
                 await chunk()
             _, raw, stamp = journal.state.message(index)
             journal.append(kind, {**journal.state.provenance.raw_fields(raw), "receipt": stamp})
+        if self.unsubscribe:
+            await snapshots_done.wait()
+            challenge = {
+                "index": 19,
+                "nonce": os.urandom(16).hex(),
+                "utc_ns": time.time_ns(),
+                "monotonic_ns": time.monotonic_ns(),
+            }
+            bounded()
+            collector.channel.send(canonical(challenge).decode(), 2)
+            bounded()
+            raw = collector.channel.receive(self.requests["JsonToken"](), 2).encode()
+            received = [time.time_ns(), time.monotonic_ns()]
+            request = decode(raw)
+            if canonical(request) != raw:
+                raise ValueError("account_ws_unsubscribe_canonical_request")
+            wire = journal.state.frames["client_frame"](wire_request(request))
+            journal.append(
+                "unsubscribe_prepared",
+                {
+                    "challenge": challenge,
+                    "request": request,
+                    "received": received,
+                    **journal.state.provenance.raw_fields(wire),
+                },
+            )
+            before_wire()
+            self.requests["validate_request"](raw, challenge, received=tuple(received))
+            signing_window(challenge, time.time_ns(), time.monotonic_ns())
+            writer.write(wire)
+            await writer.drain()
+            while len(journal.state.all_events("account")) <= 3:
+                await chunk()
+            _, original, stamp = journal.state.message(3)
+            journal.append(
+                "unsubscribe_accepted",
+                {
+                    **journal.state.provenance.raw_fields(original),
+                    "receipt": stamp,
+                },
+            )
 
     async def exchange_market(self, journal, chunk):
         return
@@ -664,10 +851,11 @@ class Session:
 
         channel = self.collector.channel
         bounded()
-        channel.send("deliver", 2)
+        transfer = 3 if self.unsubscribe else 2
+        channel.send("deliver", transfer)
         bounded()
-        channel.receive({"ready"}, 2)
-        for seq, start in enumerate(range(0, len(payload), CHUNK), 3):
+        channel.receive({"ready"}, transfer)
+        for seq, start in enumerate(range(0, len(payload), CHUNK), transfer + 1):
             bounded()
             channel.send("data:" + base64.b64encode(payload[start : start + CHUNK]).decode(), seq)
             bounded()
