@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-24
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: A disposable v19 parent accepts 7/19 ordered joint operations: native clock GET, root-owned account WS Upgrade, signed subscription and the first fixed account/orders/orders/account GET pass. Changed orders stop after five accepted steps; changed balances after six. No complete before/after account interval exists. Next join same-run route metadata/bookTicker, market/depth/time observations and then the second four-GET account pass and unsubscribe under this parent. Earlier separate fixtures cannot be combined. Stream fences, real authority/coverage, provider limits/clocks, host rollout, qualified equity and trading remain blocked.
+- **Current objective**: A distinct disposable v20/v2 parent accepts 9/19 ordered joint operations: clock, held account WS, signed subscription, the first four-GET account pass and same-run metadata/bookTicker route fixation. Changed orders stop at five accepted steps, changed balances at six, and insufficient top-book capacity at eight. Next join market/depth/linked time, the second four-GET account pass, final clock and unsubscribe under this parent. No complete before/after account interval exists; older independent fixtures cannot be combined. Stream fences, real authority/coverage, provider clocks/usage, host rollout, qualified equity and trading remain blocked.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -411,13 +411,14 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
 
 ## Latest Verification
 
-- Installed first ordered account pass: **394 related tests and three disposable
-  scenarios pass**. Success accepts seven steps and reconciles account/orders/
-  orders/account; changed orders accept five, changed balances six. Manifest v19
-  pins 24 sources; descriptors peak at **863/1,024**. Three v18 WS, two v17
-  clock and two v16 unsubscribe scenarios also pass against final v19 sources.
-  No complete before/after interval exists. See
-  [first account-pass acceptance](progress/portfolio-installed-joint-first-account-2026-09-24.md).
+- Installed same-parent route fixation: **1,032 related tests and four disposable
+  scenarios pass**. Success accepts nine steps, reconciles the first four-GET
+  account pass and derives `BNBUSDT`/`BTCUSDT` from same-run native originals;
+  insufficient book capacity stops after eight. Manifest v20 pins 24 sources;
+  descriptors peak at **881/1,024**. Three old WS, two clock and two
+  unsubscribe scenarios pass against v20 sources. No complete before/after
+  interval exists. See
+  [same-parent route acceptance](progress/portfolio-installed-joint-routes-2026-09-24.md).
 - Installed fixture account unsubscribe: **109 related Python tests and two
   disposable scenarios pass**. Success records exact unsubscribe and two
   native quotes after revocation; wrong acknowledgement is nonresumable with

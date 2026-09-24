@@ -70,3 +70,45 @@ def validate_native(payload):
     if [{"code": c.code, "precision": c.precision} for c in objects] != result["currencies"]:
         raise ValueError("native_currency_mapping_changed")
     return result
+
+
+def view(account, rates):
+    class MetadataContract(account["AccountContract"]):
+        SELECTION_PROFILE = "portfolio.installed_metadata_request.v1"
+        TLS_PROFILE = "portfolio.installed_metadata_tls.v1"
+        ENDPOINT = "https://rest.fixture.invalid:23456/api/v3/exchangeInfo"
+        LEDGER_PROFILE = "portfolio.fixture_metadata_tls_ledger.v1"
+        CHALLENGE_INDEX = 7
+        PATH = "/api/v3/exchangeInfo"
+        SELECTION_FILE = "metadata-request.json"
+
+    def ledger_view(module):
+        return account["ledger_view"](
+            module, profile=module.METADATA_PROFILE, scope=module.METADATA_SCOPE
+        )
+
+    def authorize(collector, ledger, authority, requests):
+        return account["authorize"](
+            collector, ledger, authority, requests, contract_type=MetadataContract
+        )
+
+    def launch(authority, sources, launcher, runtime):
+        return account["launch"](authority, sources, launcher, runtime, metadata=True)
+
+    return {
+        "PROFILE": PROFILE,
+        "SELECTION_PROFILE": MetadataContract.SELECTION_PROFILE,
+        "AccountContract": MetadataContract,
+        "ledger_view": ledger_view,
+        "rates_view": lambda: rates,
+        "transport_view": account["transport_view"],
+        "authorize": authorize,
+        "launch": launch,
+        "expected_result": expected_result,
+    }
+
+
+def child_loop(fd, parent):
+    globals()["ACCOUNT"]["child_loop"](
+        fd, parent, index=7, native=validate_native, rates=globals()["RATES"]
+    )

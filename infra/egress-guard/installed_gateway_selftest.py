@@ -132,6 +132,7 @@ JOINT_READ_SCENARIOS = (
     "joint_reads_success",
     "joint_reads_orders_changed",
     "joint_reads_balance_drift",
+    "joint_reads_bad_books",
 )
 FIXTURE_BOOKS = [
     {"symbol": asset + "USDT", "bidPrice": price, "askPrice": ask, "bidQty": "10", "askQty": "10"}
@@ -489,6 +490,8 @@ with open('/run/gateway-ws-peer.json','w') as out:
 JOINT_WS_PEER = (
     "FIXTURE_ORDERS="
     + repr(FIXTURE_ORDERS)
+    + "\nFIXTURE_BOOKS="
+    + repr(FIXTURE_BOOKS)
     + "\n"
     + r"""
 import base64,hashlib,json,socket,ssl,sys,time
@@ -552,7 +555,7 @@ with socket.socket() as listener:
         if scenario.startswith('joint_reads_'):
             from urllib.parse import parse_qsl,urlencode
             report['rest_requests']=[]
-            positions=(3,4,5) if scenario=='joint_reads_orders_changed' else (3,4,5,6)
+            positions=(3,4,5) if scenario=='joint_reads_orders_changed' else (3,4,5,6) if scenario=='joint_reads_balance_drift' else tuple(range(3,9))
             for position in positions:
                 listener.settimeout(20)
                 raw,_=listener.accept()
@@ -564,15 +567,18 @@ with socket.socket() as listener:
                         part=rest.recv(4096)
                         if not part or len(request)+len(part)>4096:raise ValueError('joint_read_request_limit')
                         request+=part
-                    path='/api/v3/account' if position in {3,6} else '/api/v3/openOrders'
-                    prefix=('GET '+path+'?').encode()
-                    if not request.startswith(prefix):raise ValueError('joint_read_path')
-                    query=request[len(prefix):].split(b' HTTP/1.1\r\n',1)[0].decode('ascii')
-                    params=parse_qsl(query,strict_parsing=True)
-                    if [key for key,value in params]!=['timestamp','recvWindow','signature'] or params[1][1]!='5000' or urlencode(params)!=query:raise ValueError('joint_read_params')
-                    if not params[0][1].isdigit() or not 0<=time.time_ns()//1000000-int(params[0][1])<5000:raise ValueError('joint_read_expired')
-                    scope['verify_signature'](urlencode(params[:-1]),params[-1][1])
-                    expected=(f'GET {path}?{query} HTTP/1.1\r\nHost: rest.fixture.invalid:23456\r\nX-MBX-APIKEY: '+scope['API_KEY']+'\r\nConnection: close\r\n\r\n').encode()
+                    path=('/api/v3/account' if position in {3,6} else '/api/v3/openOrders' if position in {4,5} else '/api/v3/exchangeInfo' if position==7 else '/api/v3/ticker/bookTicker')
+                    if position in {7,8}:
+                        expected=(f'GET {path} HTTP/1.1\r\nHost: rest.fixture.invalid:23456\r\nConnection: close\r\n\r\n').encode()
+                    else:
+                        prefix=('GET '+path+'?').encode()
+                        if not request.startswith(prefix):raise ValueError('joint_read_path')
+                        query=request[len(prefix):].split(b' HTTP/1.1\r\n',1)[0].decode('ascii')
+                        params=parse_qsl(query,strict_parsing=True)
+                        if [key for key,value in params]!=['timestamp','recvWindow','signature'] or params[1][1]!='5000' or urlencode(params)!=query:raise ValueError('joint_read_params')
+                        if not params[0][1].isdigit() or not 0<=time.time_ns()//1000000-int(params[0][1])<5000:raise ValueError('joint_read_expired')
+                        scope['verify_signature'](urlencode(params[:-1]),params[-1][1])
+                        expected=(f'GET {path}?{query} HTTP/1.1\r\nHost: rest.fixture.invalid:23456\r\nX-MBX-APIKEY: '+scope['API_KEY']+'\r\nConnection: close\r\n\r\n').encode()
                     if request!=expected:raise ValueError('joint_read_request_changed')
                     if position in {3,6}:
                         balances=[{'asset':asset,'free':free,'locked':locked} for asset,free,locked in (
@@ -580,10 +586,17 @@ with socket.socket() as listener:
                             ('BNB','1.00000000','0.10000000'),('USDT','500.00000000','12.50000000'))]
                         if position==6 and scenario=='joint_reads_balance_drift':balances[0]['free']='0.02000000'
                         body=json.dumps({'uid':41001,'accountType':'SPOT','balances':balances},separators=(',',':')).encode()
-                    else:
+                    elif position in {4,5}:
                         orders=json.loads(json.dumps(FIXTURE_ORDERS))
                         if position==5 and scenario=='joint_reads_orders_changed':orders[0]['orderId']=104
                         body=json.dumps(orders,separators=(',',':')).encode()
+                    elif position==7:
+                        metadata={'rateLimits':[{'rateLimitType':'REQUEST_WEIGHT','interval':'MINUTE','intervalNum':1,'limit':6000},{'rateLimitType':'RAW_REQUESTS','interval':'MINUTE','intervalNum':5,'limit':61000},{'rateLimitType':'CONNECTIONS','interval':'MINUTE','intervalNum':5,'limit':300}], 'symbols':[{'symbol':asset+'USDT','baseAsset':asset,'baseAssetPrecision':8,'quoteAsset':'USDT','quoteAssetPrecision':8,'status':'TRADING','isSpotTradingAllowed':True} for asset in ('BTC','ETH','BNB')]}
+                        body=json.dumps(metadata,separators=(',',':')).encode()
+                    else:
+                        books=json.loads(json.dumps(FIXTURE_BOOKS))
+                        if scenario=='joint_reads_bad_books':books[0]['bidQty']='0.01099999'
+                        body=json.dumps(books,separators=(',',':')).encode()
                     headers=b'HTTP/1.1 200 OK\r\nContent-Length: '+str(len(body)).encode()+b'\r\nX-MBX-USED-WEIGHT-1M: 20\r\nConnection: close\r\n\r\n'
                     report['rest_requests'].append({'index':position,'path':path,'request_sha256':hashlib.sha256(request).hexdigest(),'ws_socket_open':connection.fileno()>=0});save()
                     rest.sendall(headers+body)
@@ -1684,8 +1697,10 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
             scope = directory / (
                 modules["ledger"].CLOCK_SCOPE
                 if clock or joint_ws and i == 0
+                else modules["ledger"].METADATA_SCOPE
+                if joint_reads and i == 7
                 else modules["ledger"].BOOKS_SCOPE
-                if routes and i == 5
+                if routes and i == 5 or joint_reads and i == 8
                 else modules["ledger"].ORDERS_SCOPE
                 if orders and i in {2, 3} or joint_reads and i in {4, 5}
                 else modules["ledger"].ACCOUNT_SCOPE
@@ -1698,6 +1713,8 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                     name = "time-request.json"
                 if key == "selection" and joint_reads and i in {4, 5}:
                     name = "orders-request.json"
+                if key == "selection" and joint_reads and i in {7, 8}:
+                    name = "metadata-request.json" if i == 7 else "books-request.json"
                 if key == "selection" and routes and i == 5:
                     name = "books-request.json"
                 if key == "selection" and orders and i in {2, 3}:
@@ -1720,9 +1737,10 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
             joint_reads=joint_reads,
         )
         expected = {
-            "joint_reads_success": (7, 7),
+            "joint_reads_success": (9, 9),
             "joint_reads_orders_changed": (6, 5),
             "joint_reads_balance_drift": (7, 6),
+            "joint_reads_bad_books": (9, 8),
             "joint_success": (3, 3),
             "joint_bad_ack": (3, 2),
             "joint_bad_time": (1, 0),
@@ -1969,12 +1987,14 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
             if (
                 report["ordered_joint_prefix_length"]
                 != (
-                    7
+                    9
                     if scenario == "joint_reads_success"
                     else 5
                     if scenario == "joint_reads_orders_changed"
                     else 6
                     if scenario == "joint_reads_balance_drift"
+                    else 8
+                    if scenario == "joint_reads_bad_books"
                     else 3
                     if scenario == "joint_success"
                     else 2
@@ -2007,7 +2027,13 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                 ] != (scenario in {"joint_success", *JOINT_READ_SCENARIOS}):
                     raise RuntimeError("joint_ws_original_receipt_mismatch")
                 if joint_reads:
-                    expected_rest = 3 if scenario == "joint_reads_orders_changed" else 4
+                    expected_rest = (
+                        3
+                        if scenario == "joint_reads_orders_changed"
+                        else 4
+                        if scenario == "joint_reads_balance_drift"
+                        else 6
+                    )
                     requests = peer_report.get("rest_requests", [])
                     if (
                         len(requests) != expected_rest
@@ -2015,9 +2041,15 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                         or any(not row["ws_socket_open"] for row in requests)
                         or not peer_report.get("held_after_ack")
                         or report["account_before_four_gets_reconciled"]
+                        != (scenario in {"joint_reads_success", "joint_reads_bad_books"})
+                        or report["routes_derived_from_same_run"]
                         != (scenario == "joint_reads_success")
                     ):
                         raise RuntimeError("joint_reads_original_receipt_mismatch")
+                    if scenario == "joint_reads_success" and report["route_selection"][
+                        "symbols"
+                    ] != ["BNBUSDT", "BTCUSDT"]:
+                        raise RuntimeError("joint_reads_route_selection_mismatch")
                     checks.append("fixed_signed_rest_attempts_on_one_held_account_ws")
                 checks.append("one_original_upgrade_and_native_signed_subscription_in_order")
             else:

@@ -6,6 +6,7 @@ import time
 
 import pytest
 
+from apps.strategies_nautilus import portfolio_rate_evidence
 from tests.ops.test_egress_installed_gateway import load
 
 
@@ -49,6 +50,29 @@ def test_each_account_pass_selector_uses_its_fixed_native_index(index, path):
     assert path == contract.PATH
     assert contract.request.startswith(("GET " + path + "?timestamp=").encode())
     selection["challenge"]["index"] = 6 if index != 6 else 5
+    with pytest.raises(ValueError):
+        module["AccountContract"](requests, selection)
+
+
+@pytest.mark.parametrize(
+    "index,path", [(7, "/api/v3/exchangeInfo"), (8, "/api/v3/ticker/bookTicker")]
+)
+def test_same_parent_route_selectors_are_exact_unsigned_requests(index, path):
+    account = vars(load("gateway_native_account"))
+    module = (
+        load("gateway_native_receipt").view(account, portfolio_rate_evidence)
+        if index == 7
+        else load("gateway_book_routes").view(account)
+    )
+    requests, selection = _selected(module, index)
+    contract = module["AccountContract"](requests, selection)
+    assert (
+        contract.request
+        == (
+            f"GET {path} HTTP/1.1\r\nHost: rest.fixture.invalid:23456\r\nConnection: close\r\n\r\n"
+        ).encode()
+    )
+    selection["challenge"]["index"] = 8 if index == 7 else 7
     with pytest.raises(ValueError):
         module["AccountContract"](requests, selection)
 

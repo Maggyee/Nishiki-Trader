@@ -38,6 +38,7 @@ def ledger_view(module, *, profile=None, scope=None):
         (module.ACCOUNT_PROFILE, module.ACCOUNT_SCOPE),
         (module.ORDERS_PROFILE, module.ORDERS_SCOPE),
         (module.BOOKS_PROFILE, module.BOOKS_SCOPE),
+        (module.METADATA_PROFILE, module.METADATA_SCOPE),
         (module.CLOCK_PROFILE, module.CLOCK_SCOPE),
     }:
         raise ValueError("signed_read_profile_required")
@@ -299,7 +300,7 @@ def authorize(collector, ledger, authority, requests, *, contract_type=AccountCo
     return contract
 
 
-def child_loop(fd, parent, *, index=3, native=validate_native):
+def child_loop(fd, parent, *, index=3, native=validate_native, rates=None):
     prepare_native()
     channel = globals()["ControlChannel"](socket.socket(fileno=fd), parent, timeout=5)
     try:
@@ -310,7 +311,7 @@ def child_loop(fd, parent, *, index=3, native=validate_native):
         if canonical(challenge) != raw:
             raise ValueError("signed_account_challenge_canonical")
         channel.send(globals()["REQUESTS"]["native_request"](challenge).decode(), 1)
-        globals()["RECEIVE"](channel, globals()["PROVENANCE"], rates_view(), native=native)
+        globals()["RECEIVE"](channel, globals()["PROVENANCE"], rates or rates_view(), native=native)
         channel.receive({"close"}, 1000)
         channel.send("closed", 1000)
     finally:
@@ -326,9 +327,10 @@ def launch(
     orders=False,
     books=False,
     clock=False,
+    metadata=False,
     request_index=None,
 ):
-    if sum((orders, books, clock)) > 1:
+    if sum((orders, books, clock, metadata)) > 1:
         raise ValueError("signed_read_type_conflict")
     reader = launcher["load_source"](authority.source("inspect_binding.py").decode())[
         "process_identity"
@@ -347,6 +349,7 @@ def launch(
     for name, filename in (
         ("PROVENANCE", "portfolio_tls_provenance.py"),
         ("REQUESTS", "gateway_native_requests.py"),
+        *((("RATES", "portfolio_rate_evidence.py"),) if metadata else ()),
     ):
         raw = sources.source(filename)
         source += f"{name}=types.ModuleType({name!r})\nexec(compile({raw!r},'<held-source>','exec'),{name}.__dict__)\n"
@@ -357,15 +360,18 @@ def launch(
         source += f"exec(compile({raw!r},'<held-source>','exec'))\n"
     raw = sources.source("gateway_native_account.py")
     source += f"account_scope={{'__name__':'held_account','ControlChannel':ControlChannel,'REQUESTS':REQUESTS.__dict__,'PROVENANCE':PROVENANCE,'RECEIVE':receive_payload}}\nexec(compile({raw!r},'<held-account>','exec'),account_scope)\nchild_loop=account_scope['child_loop']\n"
-    if orders or books or clock:
+    if orders or books or clock or metadata:
         raw = sources.source(
             "gateway_native_time.py"
             if clock
             else "gateway_book_routes.py"
             if books
+            else "gateway_native_receipt.py"
+            if metadata
             else "gateway_native_orders.py"
         )
-        source += f"orders_scope={{'__name__':'held_orders','ACCOUNT':account_scope}}\nexec(compile({raw!r},'<held-orders>','exec'),orders_scope)\nchild_loop=orders_scope['child_loop']\n"
+        extra = ",'RATES':RATES" if metadata else ""
+        source += f"orders_scope={{'__name__':'held_orders','ACCOUNT':account_scope{extra}}}\nexec(compile({raw!r},'<held-orders>','exec'),orders_scope)\nchild_loop=orders_scope['child_loop']\n"
     if request_index is not None:
         if request_index not in ({4, 5} if orders else {3, 6} if not (books or clock) else set()):
             raise ValueError("signed_read_fixed_index")

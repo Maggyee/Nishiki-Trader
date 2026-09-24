@@ -1,0 +1,31 @@
+{
+  "schema_version": "portfolio.installed_joint_routes_progress.v1",
+  "date": "2026-09-24",
+  "phase": "disposable_fixture_only",
+  "manifest_version": 20,
+  "pinned_project_sources": 24,
+  "parent_profile": "portfolio.installed_joint_account_reads.v2",
+  "report": "data/installed-joint-routes-v20-pinned.json",
+  "report_sha256": "58c3a4831e0c44fa0a4f963ec95669e78d19249d547200c457a03e419b126522",
+  "scenarios": {
+    "joint_reads_success": {"prepared_steps": 9, "accepted_steps": 9, "route_symbols": ["BNBUSDT", "BTCUSDT"], "controller_max_descriptors": 881},
+    "joint_reads_orders_changed": {"prepared_steps": 6, "accepted_steps": 5, "controller_max_descriptors": 854},
+    "joint_reads_balance_drift": {"prepared_steps": 7, "accepted_steps": 6, "controller_max_descriptors": 863},
+    "joint_reads_bad_books": {"prepared_steps": 9, "accepted_steps": 8, "controller_max_descriptors": 881}
+  },
+  "regressions": {
+    "joint_ws": {"report": "data/installed-joint-account-v20-pinned-regression.json", "report_sha256": "77799f182795198fde3bce4bc4cc9d524cab4a943e243c671f369071d2a36739", "scenarios_passed": 3},
+    "clock": {"report": "data/installed-joint-clock-v20-pinned-regression.json", "report_sha256": "9688d9a6f50766b01526870ee701aa5c7e69273e54afc54bfb8aaeadad50b9a8", "scenarios_passed": 2},
+    "unsubscribe": {"report": "data/installed-unsub-v20-pinned-regression.json", "report_sha256": "207680272c918649861598a26376d72f953cf7ce4e4900d540fd424a1788ab9e", "scenarios_passed": 2}
+  },
+  "related_python_tests_passed": 1032,
+  "ordered_joint_prefix_length": 9,
+  "planned_joint_operations": 19,
+  "first_fixture_account_pass_reconciled": true,
+  "same_parent_route_fixed": true,
+  "complete_before_after_intervals": 0,
+  "stream_fence_verified": false,
+  "real_network_admitted": false,
+  "trading_admitted": false,
+  "upstream_touched": false
+}

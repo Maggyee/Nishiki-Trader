@@ -40,7 +40,7 @@ FILES = (
     "portfolio_tls_provenance.py",
     "portfolio_egress_ledger.py",
 )
-PROFILE = "portfolio.installed_gateway_fixture.v19"
+PROFILE = "portfolio.installed_gateway_fixture.v20"
 
 
 def digest(raw):
@@ -203,9 +203,10 @@ def run_controller(
     account = account or orders or books or clock
     joint_index = sequence.index if sequence is not None and sequence.joint_reads else None
     if joint_index is not None and joint_index >= 3:
-        if joint_index not in {3, 4, 5, 6} or clock or books:
+        if joint_index not in {3, 4, 5, 6, 7, 8} or clock or (books and joint_index != 8):
             raise ValueError("joint_read_fixed_index")
         orders = joint_index in {4, 5}
+        books = joint_index == 8
         account = True
     authority = installation()
     collector = ledger = lifecycle = gateway = runtime = None
@@ -233,6 +234,11 @@ def run_controller(
         elif joint_index in {4, 5}:
             account_code = load(sources.source("gateway_native_orders.py"))["view"](
                 load(sources.source("gateway_native_account.py")), index=joint_index
+            )
+        elif joint_index == 7:
+            account_code = load(sources.source("gateway_native_receipt.py"))["view"](
+                load(sources.source("gateway_native_account.py")),
+                sys.modules["apps.strategies_nautilus.portfolio_rate_evidence"],
             )
         if account:
             module = account_code["ledger_view"](module)

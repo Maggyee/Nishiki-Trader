@@ -22,6 +22,15 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the same-parent installed route fixation, read
+`docs/progress/portfolio-installed-joint-routes-2026-09-24.md` and its JSON.
+Manifest v20 pins 24 sources and a distinct v2 parent; one account WS survives
+the first four-GET pass and fixed exchangeInfo/bookTicker receipts. Exact native
+metadata/books select bounded BTCUSDT and BNBUSDT fixture routes. Insufficient
+top-book capacity stops before accepting the ninth operation. The success is
+only 9/19: market/depth/time, second account pass, unsubscribe, complete account
+interval and stream fence are absent. Real admission and trading stay blocked.
+
 For the first ordered installed four-GET account pass, read
 `docs/progress/portfolio-installed-joint-first-account-2026-09-24.md` and its JSON.
 Manifest v19 pins 24 sources; the same disposable parent holds one account WS

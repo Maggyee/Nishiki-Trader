@@ -31,14 +31,16 @@ CLOCK_STEPS = ("clock_initial",)
 JOINT_WS_PROFILE = "portfolio.installed_joint_account_prefix.v1"
 JOINT_WS_SCOPE = "fixture-joint-account-prefix-v1"
 JOINT_WS_STEPS = (*CLOCK_STEPS, "account_connect", "account_subscribe")
-JOINT_READ_PROFILE = "portfolio.installed_joint_account_reads.v1"
-JOINT_READ_SCOPE = "fixture-joint-account-reads-v1"
+JOINT_READ_PROFILE = "portfolio.installed_joint_account_reads.v2"
+JOINT_READ_SCOPE = "fixture-joint-account-reads-v2"
 JOINT_READ_STEPS = (
     *JOINT_WS_STEPS,
     "account_before_first",
     "orders_before_first",
     "orders_before_second",
     "account_before_second",
+    "metadata",
+    "books",
 )
 LIMIT = 65536
 FILES = {
@@ -145,6 +147,10 @@ def review_bundle(
         if joint_reads and index == 4
         else modules["account"]["view_for_index"](index)
         if joint_reads and index in {3, 6}
+        else modules["books"]
+        if joint_reads and index == 8
+        else modules["metadata"]["view"](modules["account"], modules["rates"])
+        if joint_reads and index == 7
         else modules["books"]
         if routes and index == 5
         else modules["orders"]
@@ -307,6 +313,22 @@ def reconcile_joint_before(results):
 
         if first["account_uid"] != last["account_uid"] or balances(first) != balances(last):
             raise ValueError("joint_read_balances_changed")
+
+
+def joint_route_result(results, bundles, modules):
+    first = results[7]["native_result"]["header_receipt"]
+    last = results[8]["native_result"]["body_receipt"]
+    if (
+        any(not 0 <= last[key] - first[key] <= 60_000_000_000 for key in ("utc_ns", "monotonic_ns"))
+        or abs((last["utc_ns"] - first["utc_ns"]) - (last["monotonic_ns"] - first["monotonic_ns"]))
+        > 50_000_000
+        or first["utc_ns"] // 86_400_000_000_000 != last["utc_ns"] // 86_400_000_000_000
+    ):
+        raise ValueError("joint_route_input_interval_invalid")
+    metadata = modules["receipt"]["payload_from_tls"](bundles[7]["tls"].encode(), results[7]["tls"])
+    return modules["books"]["derive"](
+        metadata, results[3]["native_result"], results[8]["native_result"]
+    )
 
 
 def route_result(results, bundles, modules):
@@ -482,6 +504,12 @@ def replay(
                     raise ValueError("sequence_acceptance_precedes_child")
             if joint_reads:
                 reconcile_joint_before(results)
+                if pending == 7 and results[7]["native_result"]["currencies"] != [
+                    {"code": asset, "precision": 8} for asset in ("BNB", "BTC", "ETH", "USDT")
+                ]:
+                    raise ValueError("joint_route_metadata_precision_mismatch")
+                if pending == 8:
+                    joint_route_result(results, bundles, modules)
                 if pending >= 3:
                     anchor = json.loads(bundles[0]["binding"])
                     current = json.loads(bundles[pending]["binding"])
@@ -574,6 +602,16 @@ def replay(
             else {}
         ),
         **({"account_before_four_gets_reconciled": accepted >= 7} if joint_reads else {}),
+        **(
+            {
+                "routes_derived_from_same_run": accepted >= 9,
+                "route_selection": joint_route_result(results, bundles, modules)
+                if accepted >= 9
+                else None,
+            }
+            if joint_reads
+            else {}
+        ),
         **(
             {
                 "routes_derived_from_same_run": accepted == total,
@@ -888,6 +926,10 @@ class Sequence:
             if self.joint_reads and self.index in {4, 5}
             else "account"
             if self.joint_reads and self.index in {3, 6}
+            else "metadata"
+            if self.joint_reads and self.index == 7
+            else "books"
+            if self.joint_reads and self.index == 8
             else "books"
             if self.routes and self.index == 5
             else "orders"
@@ -897,14 +939,18 @@ class Sequence:
             else "metadata"
         )
         ledger = (
-            self.modules[kind]["ledger_view"](self.modules["ledger"])
+            (
+                self.modules["metadata"]["view"](self.modules["account"], self.modules["rates"])
+                if self.joint_reads and self.index == 7
+                else self.modules[kind]
+            )["ledger_view"](self.modules["ledger"])
             if self.index or self.clock or self.joint_ws or self.joint_reads
             else self.modules["ledger"]
         )
         scope = self.storage / ledger.SCOPE
         bundle = {}
         for key, name in FILES.items():
-            if key == "selection" and kind in {"orders", "books", "clock"}:
+            if key == "selection" and kind in {"orders", "books", "clock", "metadata"}:
                 name = ("time" if kind == "clock" else kind) + "-request.json"
             path = self.storage / name if key == "binding" else scope / name
             if path.exists():
@@ -995,7 +1041,7 @@ def run_installed(
                         account=index != 0,
                         clock=clock or (joint_ws or joint_reads) and index == 0,
                         orders=orders and index in {2, 3} or joint_reads and index in {4, 5},
-                        books=routes and index == 5,
+                        books=routes and index == 5 or joint_reads and index == 8,
                         sequence=sequence,
                     )
                 bundle = sequence.read_bundle()

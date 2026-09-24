@@ -288,6 +288,7 @@ class FixtureLedgerGateway:
                     "portfolio.fixture_signed_account_tls_ledger.v1",
                     "portfolio.fixture_signed_orders_tls_ledger.v1",
                     "portfolio.fixture_books_tls_ledger.v1",
+                    "portfolio.fixture_metadata_tls_ledger.v1",
                     "portfolio.fixture_joint_clock_tls_ledger.v1",
                 }
                 links = {}
@@ -306,6 +307,8 @@ class FixtureLedgerGateway:
                     operation=(
                         "book_ticker"
                         if self.ledger.state.profile == "portfolio.fixture_books_tls_ledger.v1"
+                        else "exchange_info"
+                        if self.ledger.state.profile == "portfolio.fixture_metadata_tls_ledger.v1"
                         else "time"
                         if self.ledger.state.profile
                         == "portfolio.fixture_joint_clock_tls_ledger.v1"
