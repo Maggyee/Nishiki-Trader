@@ -167,15 +167,17 @@ def validate_native(payload):
     return result
 
 
-def view(account):
+def view(account, *, index=4):
     """Closed internal specialization; no caller-selected URL, method or operation."""
+    if index not in {4, 5}:
+        raise ValueError("signed_orders_fixed_index")
 
     class OrdersContract(account["AccountContract"]):
         SELECTION_PROFILE = SELECTION_PROFILE
         TLS_PROFILE = TLS_PROFILE
         ENDPOINT = ENDPOINT
         LEDGER_PROFILE = "portfolio.fixture_signed_orders_tls_ledger.v1"
-        CHALLENGE_INDEX = 4
+        CHALLENGE_INDEX = index
         PATH = "/api/v3/openOrders"
         SELECTION_FILE = "orders-request.json"
 
@@ -190,7 +192,14 @@ def view(account):
         )
 
     def launch(authority, sources, launcher, runtime):
-        return account["launch"](authority, sources, launcher, runtime, orders=True)
+        return account["launch"](
+            authority,
+            sources,
+            launcher,
+            runtime,
+            orders=True,
+            **({"request_index": index} if index == 5 else {}),
+        )
 
     return {
         "PROFILE": PROFILE,

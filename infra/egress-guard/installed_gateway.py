@@ -40,7 +40,7 @@ FILES = (
     "portfolio_tls_provenance.py",
     "portfolio_egress_ledger.py",
 )
-PROFILE = "portfolio.installed_gateway_fixture.v18"
+PROFILE = "portfolio.installed_gateway_fixture.v19"
 
 
 def digest(raw):
@@ -201,6 +201,12 @@ def run_controller(
     sequence=None,
 ):
     account = account or orders or books or clock
+    joint_index = sequence.index if sequence is not None and sequence.joint_reads else None
+    if joint_index is not None and joint_index >= 3:
+        if joint_index not in {3, 4, 5, 6} or clock or books:
+            raise ValueError("joint_read_fixed_index")
+        orders = joint_index in {4, 5}
+        account = True
     authority = installation()
     collector = ledger = lifecycle = gateway = runtime = None
     try:
@@ -222,6 +228,12 @@ def run_controller(
                     else "gateway_native_orders.py"
                 )
             )["view"](account_code)
+        if joint_index in {3, 6}:
+            account_code = account_code["view_for_index"](joint_index)
+        elif joint_index in {4, 5}:
+            account_code = load(sources.source("gateway_native_orders.py"))["view"](
+                load(sources.source("gateway_native_account.py")), index=joint_index
+            )
         if account:
             module = account_code["ledger_view"](module)
         rates = (
@@ -439,6 +451,7 @@ def main():
             ["--unsub-ws-fixture"],
             ["--joint-clock-fixture"],
             ["--joint-account-prefix-fixture"],
+            ["--joint-account-reads-fixture"],
             ["--joint-clock-step-fixture"],
         )
         or not sys.flags.isolated
@@ -473,6 +486,7 @@ def main():
         ["--unsub-ws-fixture"],
         ["--joint-clock-fixture"],
         ["--joint-account-prefix-fixture"],
+        ["--joint-account-reads-fixture"],
     ):
         authority = installation()
         try:
@@ -486,6 +500,7 @@ def main():
                 orders=sys.argv[1:] == ["--order-sequence-fixture"],
                 clock=sys.argv[1:] == ["--joint-clock-fixture"],
                 joint_ws=sys.argv[1:] == ["--joint-account-prefix-fixture"],
+                joint_reads=sys.argv[1:] == ["--joint-account-reads-fixture"],
                 routes=sys.argv[1:]
                 in (
                     ["--route-sequence-fixture"],

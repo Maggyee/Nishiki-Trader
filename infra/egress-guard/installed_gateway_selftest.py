@@ -128,6 +128,11 @@ QUOTE_WS_SCENARIOS = (
 UNSUB_WS_SCENARIOS = ("unsub_success", "unsub_bad_ack")
 CLOCK_SCENARIOS = ("clock_success", "clock_bad_time")
 JOINT_ACCOUNT_SCENARIOS = ("joint_success", "joint_bad_ack", "joint_bad_time")
+JOINT_READ_SCENARIOS = (
+    "joint_reads_success",
+    "joint_reads_orders_changed",
+    "joint_reads_balance_drift",
+)
 FIXTURE_BOOKS = [
     {"symbol": asset + "USDT", "bidPrice": price, "askPrice": ask, "bidQty": "10", "askQty": "10"}
     for asset, price, ask in (
@@ -481,7 +486,11 @@ with open('/run/gateway-ws-peer.json','w') as out:
 """
 
 
-JOINT_WS_PEER = r"""
+JOINT_WS_PEER = (
+    "FIXTURE_ORDERS="
+    + repr(FIXTURE_ORDERS)
+    + "\n"
+    + r"""
 import base64,hashlib,json,socket,ssl,sys,time
 scenario=sys.argv[1]
 context=ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
@@ -535,16 +544,61 @@ with socket.socket() as listener:
         if set(params)!={'apiKey','recvWindow','timestamp'} or params['apiKey']!=scope['API_KEY'] or params['recvWindow']!=5000 or not 0<=time.time_ns()//1000000-params['timestamp']<5000:raise ValueError('joint_ws_expired_selector')
         scope['verify_signature']('&'.join(str(k)+'='+str(v) for k,v in sorted(params.items())),signature)
         report['subscription_requests']=1;report['signature_verified']=True;save()
-        reply={'id':'fixture-2' if scenario=='joint_success' else 'foreign','status':200,'result':{'subscriptionId':0}}
+        reply={'id':'fixture-2' if scenario=='joint_success' or scenario.startswith('joint_reads_') else 'foreign','status':200,'result':{'subscriptionId':0}}
         body=json.dumps(reply,separators=(',',':')).encode()
         response=bytes([0x81,len(body)])+body
         connection.sendall(response[:3]);connection.sendall(response[3:])
         report['acknowledgements']=1;save()
-        connection.settimeout(2)
-        try:connection.recv(4096)
-        except socket.timeout:report['held_after_ack']=True
+        if scenario.startswith('joint_reads_'):
+            from urllib.parse import parse_qsl,urlencode
+            report['rest_requests']=[]
+            positions=(3,4,5) if scenario=='joint_reads_orders_changed' else (3,4,5,6)
+            for position in positions:
+                listener.settimeout(20)
+                raw,_=listener.accept()
+                with context.wrap_socket(raw,server_side=True) as rest:
+                    rest.settimeout(5)
+                    if names[id(rest)]!='rest.fixture.invalid':raise ValueError('joint_read_rest_sni')
+                    request=b''
+                    while b'\r\n\r\n' not in request:
+                        part=rest.recv(4096)
+                        if not part or len(request)+len(part)>4096:raise ValueError('joint_read_request_limit')
+                        request+=part
+                    path='/api/v3/account' if position in {3,6} else '/api/v3/openOrders'
+                    prefix=('GET '+path+'?').encode()
+                    if not request.startswith(prefix):raise ValueError('joint_read_path')
+                    query=request[len(prefix):].split(b' HTTP/1.1\r\n',1)[0].decode('ascii')
+                    params=parse_qsl(query,strict_parsing=True)
+                    if [key for key,value in params]!=['timestamp','recvWindow','signature'] or params[1][1]!='5000' or urlencode(params)!=query:raise ValueError('joint_read_params')
+                    if not params[0][1].isdigit() or not 0<=time.time_ns()//1000000-int(params[0][1])<5000:raise ValueError('joint_read_expired')
+                    scope['verify_signature'](urlencode(params[:-1]),params[-1][1])
+                    expected=(f'GET {path}?{query} HTTP/1.1\r\nHost: rest.fixture.invalid:23456\r\nX-MBX-APIKEY: '+scope['API_KEY']+'\r\nConnection: close\r\n\r\n').encode()
+                    if request!=expected:raise ValueError('joint_read_request_changed')
+                    if position in {3,6}:
+                        balances=[{'asset':asset,'free':free,'locked':locked} for asset,free,locked in (
+                            ('BTC','0.01000000','0.00100000'),('ETH','0.00000000','0.00000000'),
+                            ('BNB','1.00000000','0.10000000'),('USDT','500.00000000','12.50000000'))]
+                        if position==6 and scenario=='joint_reads_balance_drift':balances[0]['free']='0.02000000'
+                        body=json.dumps({'uid':41001,'accountType':'SPOT','balances':balances},separators=(',',':')).encode()
+                    else:
+                        orders=json.loads(json.dumps(FIXTURE_ORDERS))
+                        if position==5 and scenario=='joint_reads_orders_changed':orders[0]['orderId']=104
+                        body=json.dumps(orders,separators=(',',':')).encode()
+                    headers=b'HTTP/1.1 200 OK\r\nContent-Length: '+str(len(body)).encode()+b'\r\nX-MBX-USED-WEIGHT-1M: 20\r\nConnection: close\r\n\r\n'
+                    report['rest_requests'].append({'index':position,'path':path,'request_sha256':hashlib.sha256(request).hexdigest(),'ws_socket_open':connection.fileno()>=0});save()
+                    rest.sendall(headers+body)
+            connection.settimeout(2)
+            try:
+                if connection.recv(4096):raise ValueError('joint_read_unexpected_ws_frame')
+            except socket.timeout:pass
+            report['held_after_ack']=True
+        else:
+            connection.settimeout(2)
+            try:connection.recv(4096)
+            except socket.timeout:report['held_after_ack']=True
 save()
 """
+)
 
 
 def worker(payload):
@@ -553,7 +607,8 @@ def worker(payload):
     requests = payload.get("native_requests_profile", False)
     unsub_ws = payload.get("unsub_ws_profile", False)
     clock = payload.get("joint_clock_profile", False)
-    joint_ws = payload.get("joint_account_profile", False)
+    joint_reads = payload.get("joint_reads_profile", False)
+    joint_ws = payload.get("joint_account_profile", False) or joint_reads
     quote_ws = payload.get("quote_ws_profile", False) or unsub_ws
     snapshot_ws = payload.get("snapshot_ws_profile", False) or quote_ws
     market_ws = payload.get("market_ws_profile", False) or snapshot_ws
@@ -571,6 +626,7 @@ def worker(payload):
         type(unsub_ws) is not bool
         or type(clock) is not bool
         or type(joint_ws) is not bool
+        or type(joint_reads) is not bool
         or type(quote_ws) is not bool
         or type(concurrent) is not bool
         or type(routes) is not bool
@@ -585,7 +641,9 @@ def worker(payload):
         or (tls and ipc)
         or payload["scenario"]
         not in (
-            JOINT_ACCOUNT_SCENARIOS
+            JOINT_READ_SCENARIOS
+            if joint_reads
+            else JOINT_ACCOUNT_SCENARIOS
             if joint_ws
             else CLOCK_SCENARIOS
             if clock
@@ -1200,7 +1258,8 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
     code = load(payload["sources"]["gateway_read_sequence.py"])
     modules = code["load_sources"](payload["sources"])
     clock = payload.get("joint_clock_profile", False)
-    joint_ws = payload.get("joint_account_profile", False)
+    joint_reads = payload.get("joint_reads_profile", False)
+    joint_ws = payload.get("joint_account_profile", False) or joint_reads
     unsub_ws = payload.get("unsub_ws_profile", False)
     quote_ws = payload.get("quote_ws_profile", False) or unsub_ws
     snapshot_ws = payload.get("snapshot_ws_profile", False) or quote_ws
@@ -1210,7 +1269,9 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
     routes = payload.get("route_sequence_profile", False) or concurrent
     orders = payload.get("order_sequence_profile", False) or routes
     steps = (
-        code["JOINT_WS_STEPS"]
+        code["JOINT_READ_STEPS"]
+        if joint_reads
+        else code["JOINT_WS_STEPS"]
         if joint_ws
         else code["CLOCK_STEPS"]
         if clock
@@ -1225,6 +1286,8 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
             "UNSUB_ROUTE_SCOPE" if unsub_ws else "QUOTE_ROUTE_SCOPE" if quote_ws else "ROUTE_SCOPE"
         ]
         if routes
+        else code["JOINT_READ_SCOPE"]
+        if joint_reads
         else code["JOINT_WS_SCOPE"]
         if joint_ws
         else code["CLOCK_SCOPE"]
@@ -1238,7 +1301,9 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
         "/usr/bin/python3",
         "-I",
         entry["CODE"] + "/installed_gateway.py",
-        "--joint-account-prefix-fixture"
+        "--joint-account-reads-fixture"
+        if joint_reads
+        else "--joint-account-prefix-fixture"
         if joint_ws
         else "--joint-clock-fixture"
         if clock
@@ -1291,6 +1356,11 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
         controller.stdin.flush()
 
     def finish_peer():
+        if joint_reads and index > 0:
+            rows = json.loads(Path("/run/gateway-joint-ws-peer.json").read_bytes())
+            if len(rows.get("rest_requests", [])) < index - 2:
+                raise RuntimeError("joint_read_rest_peer_missing")
+            return
         tls_peer.wait(timeout=5)
         value = json.loads(Path("/run/gateway-tls-peer.json").read_bytes())
         if value["http_requests"] != 1 or (
@@ -1312,7 +1382,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
             stage = message.get("stage")
             if stage == "activated":
                 index = message["binding"]["read_sequence"]["index"]
-                if index != len(bindings):
+                if index != len(bindings) + (2 if joint_reads and index >= 3 else 0):
                     raise RuntimeError("sequence_step_order")
                 bindings.append(message["binding"])
                 identity = message["binding"]["collector"]["process"]
@@ -1364,7 +1434,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                         )
                     if routes:
                         selected_scenario = scenario
-                    if clock or joint_ws:
+                    if clock or joint_ws and index == 0:
                         selected_scenario = (
                             "clock_bad_time"
                             if scenario == "joint_bad_time"
@@ -1372,6 +1442,9 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                             if joint_ws
                             else scenario
                         )
+                    if joint_reads and index > 0:
+                        release()
+                        continue
                     tls_peer = subprocess.Popen(
                         [
                             "/usr/bin/nsenter",
@@ -1525,7 +1598,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                     signal.pidfd_send_signal(stopped, signal.SIGSTOP)
                 release()
             elif stage == "sequence_step_accepted":
-                if joint_ws and message["index"] > 0:
+                if joint_ws and message["index"] in {1, 2}:
                     if message["index"] != index + 1:
                         raise RuntimeError("joint_ws_step_order")
                     index = message["index"]
@@ -1599,7 +1672,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
         bundles = []
         for i in range(len(prepared)):
             directory = root / steps[i]
-            if joint_ws and i:
+            if joint_ws and i in {1, 2}:
                 bundles.append(
                     {
                         key: (directory / name).read_text()
@@ -1610,19 +1683,21 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                 continue
             scope = directory / (
                 modules["ledger"].CLOCK_SCOPE
-                if clock or joint_ws
+                if clock or joint_ws and i == 0
                 else modules["ledger"].BOOKS_SCOPE
                 if routes and i == 5
                 else modules["ledger"].ORDERS_SCOPE
-                if orders and i in {2, 3}
+                if orders and i in {2, 3} or joint_reads and i in {4, 5}
                 else modules["ledger"].ACCOUNT_SCOPE
                 if i
                 else modules["ledger"].SCOPE
             )
             bundle = {}
             for key, name in code["FILES"].items():
-                if key == "selection" and (clock or joint_ws):
+                if key == "selection" and (clock or joint_ws and i == 0):
                     name = "time-request.json"
+                if key == "selection" and joint_reads and i in {4, 5}:
+                    name = "orders-request.json"
                 if key == "selection" and routes and i == 5:
                     name = "books-request.json"
                 if key == "selection" and orders and i in {2, 3}:
@@ -1641,9 +1716,13 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
             quotes=quote_ws,
             unsubscribe=unsub_ws,
             clock=clock,
-            joint_ws=joint_ws,
+            joint_ws=joint_ws and not joint_reads,
+            joint_reads=joint_reads,
         )
         expected = {
+            "joint_reads_success": (7, 7),
+            "joint_reads_orders_changed": (6, 5),
+            "joint_reads_balance_drift": (7, 6),
             "joint_success": (3, 3),
             "joint_bad_ack": (3, 2),
             "joint_bad_time": (1, 0),
@@ -1693,6 +1772,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                 in (
                     "clock_success",
                     "joint_success",
+                    "joint_reads_success",
                     *WS_SCENARIOS,
                     *SIGNED_WS_SCENARIOS,
                     *MARKET_WS_SCENARIOS,
@@ -1888,12 +1968,30 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
         if joint_ws:
             if (
                 report["ordered_joint_prefix_length"]
-                != (3 if scenario == "joint_success" else 2 if scenario == "joint_bad_ack" else 0)
+                != (
+                    7
+                    if scenario == "joint_reads_success"
+                    else 5
+                    if scenario == "joint_reads_orders_changed"
+                    else 6
+                    if scenario == "joint_reads_balance_drift"
+                    else 3
+                    if scenario == "joint_success"
+                    else 2
+                    if scenario == "joint_bad_ack"
+                    else 0
+                )
                 or report["full_account_interval"]
             ):
                 raise RuntimeError("joint_account_prefix_or_interval_mismatch")
             if scenario != "joint_bad_time":
-                joint_peer.wait(timeout=8)
+                try:
+                    joint_peer.wait(timeout=8)
+                except subprocess.TimeoutExpired as exc:
+                    raise RuntimeError(
+                        "joint_ws_peer_stalled:"
+                        + Path("/run/gateway-joint-ws-peer.json").read_text()[-1600:]
+                    ) from exc
                 if joint_peer.returncode:
                     raise RuntimeError("joint_ws_peer_failure:" + joint_peer.stderr.read()[-2000:])
                 peer_report = json.loads(Path("/run/gateway-joint-ws-peer.json").read_bytes())
@@ -1906,8 +2004,21 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                     raise RuntimeError("joint_ws_original_peer_mismatch")
                 if not report["steps"][1]["account_connection_upgraded"] or report["steps"][2][
                     "complete"
-                ] != (scenario == "joint_success"):
+                ] != (scenario in {"joint_success", *JOINT_READ_SCENARIOS}):
                     raise RuntimeError("joint_ws_original_receipt_mismatch")
+                if joint_reads:
+                    expected_rest = 3 if scenario == "joint_reads_orders_changed" else 4
+                    requests = peer_report.get("rest_requests", [])
+                    if (
+                        len(requests) != expected_rest
+                        or [row["index"] for row in requests] != list(range(3, 3 + expected_rest))
+                        or any(not row["ws_socket_open"] for row in requests)
+                        or not peer_report.get("held_after_ack")
+                        or report["account_before_four_gets_reconciled"]
+                        != (scenario == "joint_reads_success")
+                    ):
+                        raise RuntimeError("joint_reads_original_receipt_mismatch")
+                    checks.append("fixed_signed_rest_attempts_on_one_held_account_ws")
                 checks.append("one_original_upgrade_and_native_signed_subscription_in_order")
             else:
                 if joint_peer is not None or report["account_ws_upgraded"]:
@@ -2265,6 +2376,7 @@ def main(argv=None):
     profiles.add_argument("--unsub-ws-profile", action="store_true")
     profiles.add_argument("--joint-clock-profile", action="store_true")
     profiles.add_argument("--joint-account-profile", action="store_true")
+    profiles.add_argument("--joint-reads-profile", action="store_true")
     profiles.add_argument("--joint-ipc-profile", action="store_true")
     args = parser.parse_args(argv)
     if os.geteuid() == 0:
@@ -2309,6 +2421,7 @@ def main(argv=None):
             or args.unsub_ws_profile
             or args.joint_clock_profile
             or args.joint_account_profile
+            or args.joint_reads_profile
         ):
             built = subprocess.run(
                 [
@@ -2352,6 +2465,7 @@ def main(argv=None):
             "unsub_ws_profile": args.unsub_ws_profile,
             "joint_clock_profile": args.joint_clock_profile,
             "joint_account_profile": args.joint_account_profile,
+            "joint_reads_profile": args.joint_reads_profile,
             "joint_ipc_profile": args.joint_ipc_profile,
             "base_source": base_source,
             "installer": installer.decode(),
@@ -2364,8 +2478,10 @@ def main(argv=None):
         reports = []
         bootstrap = "import json,sys\np=json.load(sys.stdin)\ns={'__name__':'isolated_installed_gateway'}\nexec(compile(p['source'],'<fixture>','exec'),s)\nprint(json.dumps(s['worker'](p),sort_keys=True))\n"
         for scenario in (
-            JOINT_ACCOUNT_SCENARIOS
-            if args.joint_account_profile
+            JOINT_READ_SCENARIOS
+            if args.joint_reads_profile
+            else JOINT_ACCOUNT_SCENARIOS
+            if args.joint_account_profile or args.joint_reads_profile
             else CLOCK_SCENARIOS
             if args.joint_clock_profile
             else UNSUB_WS_SCENARIOS
@@ -2471,6 +2587,7 @@ def main(argv=None):
             "unsub_ws_profile": args.unsub_ws_profile,
             "joint_clock_profile": args.joint_clock_profile,
             "joint_account_profile": args.joint_account_profile,
+            "joint_reads_profile": args.joint_reads_profile,
             "joint_ipc_profile": args.joint_ipc_profile,
             "scenarios": reports,
             "source_sha256": payload["source_sha256"],

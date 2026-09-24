@@ -6,7 +6,24 @@ offline disk tests, and retain read-only host deployment-input snapshots.
 Current phase: Phase 5 entry, offline infrastructure acceptance only. This is not
 a production guard, gateway audit service, quota authority or collection permit.
 
-The ordered joint parent now continues through `gateway_joint_account_ws.py`:
+The ordered joint parent now includes its first four-GET fixture account pass:
+
+```bash
+/usr/bin/python3 -I infra/egress-guard/installed_gateway_selftest.py --joint-reads-profile --report data/NEW-JOINT-READS.json
+```
+
+Manifest v19 pins 24 sources. One parent accepts clock, account Upgrade and
+signed subscription, then fixed native account/orders/orders/account HTTPS
+receipts while the root-owned account WS stays open. Each signed GET consumes
+its own preparation and kernel grant; root persists original TLS clocks and
+revokes before native acknowledgement. Repeated orders, exact locks, UID and
+the two fixed four-asset balances must reconcile. Changed orders stop after
+five accepted steps, changed balances after six. Success is **7/19 planned
+operations**, with no second account pass, complete before/after interval,
+stream fence or real admission. See
+[first account-pass acceptance](../../docs/progress/portfolio-installed-joint-first-account-2026-09-24.md).
+
+The preceding ordered WebSocket-only parent uses `gateway_joint_account_ws.py`:
 
 ```bash
 /usr/bin/python3 -I infra/egress-guard/installed_gateway_selftest.py --joint-account-profile --report data/NEW-JOINT-ACCOUNT.json

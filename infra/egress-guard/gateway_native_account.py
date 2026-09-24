@@ -317,7 +317,17 @@ def child_loop(fd, parent, *, index=3, native=validate_native):
         channel.close()
 
 
-def launch(authority, sources, launcher, runtime, *, orders=False, books=False, clock=False):
+def launch(
+    authority,
+    sources,
+    launcher,
+    runtime,
+    *,
+    orders=False,
+    books=False,
+    clock=False,
+    request_index=None,
+):
     if sum((orders, books, clock)) > 1:
         raise ValueError("signed_read_type_conflict")
     reader = launcher["load_source"](authority.source("inspect_binding.py").decode())[
@@ -356,6 +366,12 @@ def launch(authority, sources, launcher, runtime, *, orders=False, books=False, 
             else "gateway_native_orders.py"
         )
         source += f"orders_scope={{'__name__':'held_orders','ACCOUNT':account_scope}}\nexec(compile({raw!r},'<held-orders>','exec'),orders_scope)\nchild_loop=orders_scope['child_loop']\n"
+    if request_index is not None:
+        if request_index not in ({4, 5} if orders else {3, 6} if not (books or clock) else set()):
+            raise ValueError("signed_read_fixed_index")
+        scope = "orders_scope" if orders else "account_scope"
+        native = f",native={scope}['validate_native']" if orders else ""
+        source += f"child_loop=lambda fd,parent:account_scope['child_loop'](fd,parent,index={request_index}{native})\n"
     runtime.verify()
     launcher["FixtureCollector"].__init__.__globals__["PYTHON"] = (
         "/run/trader-native-runtime/bin/python3.12"
@@ -366,3 +382,30 @@ def launch(authority, sources, launcher, runtime, *, orders=False, books=False, 
         collector_uid=authority.account["uid"],
         collector_gid=authority.account["gid"],
     )
+
+
+def view_for_index(index):
+    if index not in {3, 6}:
+        raise ValueError("signed_account_fixed_index")
+
+    class FixedAccountContract(AccountContract):
+        CHALLENGE_INDEX = index
+
+    def fixed_authorize(collector, ledger, authority, requests):
+        return authorize(collector, ledger, authority, requests, contract_type=FixedAccountContract)
+
+    def fixed_launch(authority, sources, launcher, runtime):
+        return launch(authority, sources, launcher, runtime, request_index=index)
+
+    return {
+        "PROFILE": PROFILE,
+        "SELECTION_PROFILE": SELECTION_PROFILE,
+        "AccountContract": FixedAccountContract,
+        "ledger_view": ledger_view,
+        "rates_view": rates_view,
+        "transport_view": transport_view,
+        "authorize": fixed_authorize,
+        "launch": fixed_launch,
+        "expected_result": expected_result,
+        "validate_native": validate_native,
+    }

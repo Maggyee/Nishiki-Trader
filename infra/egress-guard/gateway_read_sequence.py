@@ -31,6 +31,15 @@ CLOCK_STEPS = ("clock_initial",)
 JOINT_WS_PROFILE = "portfolio.installed_joint_account_prefix.v1"
 JOINT_WS_SCOPE = "fixture-joint-account-prefix-v1"
 JOINT_WS_STEPS = (*CLOCK_STEPS, "account_connect", "account_subscribe")
+JOINT_READ_PROFILE = "portfolio.installed_joint_account_reads.v1"
+JOINT_READ_SCOPE = "fixture-joint-account-reads-v1"
+JOINT_READ_STEPS = (
+    *JOINT_WS_STEPS,
+    "account_before_first",
+    "orders_before_first",
+    "orders_before_second",
+    "account_before_second",
+)
 LIMIT = 65536
 FILES = {
     "binding": "binding.json",
@@ -68,6 +77,7 @@ def load_sources(sources):
         "receipt": load("gateway_tls_receipt.py"),
         "account": account,
         "orders": load("gateway_native_orders.py")["view"](account),
+        "orders_second": load("gateway_native_orders.py")["view"](account, index=5),
         "books": load("gateway_book_routes.py")["view"](account),
         "clock": load("gateway_native_time.py")["view"](account),
         "joint_ws": load("gateway_joint_account_ws.py"),
@@ -92,10 +102,11 @@ def review_bundle(
     routes=False,
     clock=False,
     joint_ws=False,
+    joint_reads=False,
     previous=None,
 ):
     """Verify originals before considering a step complete; never trust a saved report."""
-    if joint_ws and index:
+    if (joint_ws or joint_reads) and index in {1, 2}:
         return modules["joint_ws"]["review_step"](
             bundle, index, context, selected, modules, previous
         )
@@ -128,6 +139,12 @@ def review_bundle(
     account = (
         modules["clock"]
         if clock
+        else modules["orders_second"]
+        if joint_reads and index == 5
+        else modules["orders"]
+        if joint_reads and index == 4
+        else modules["account"]["view_for_index"](index)
+        if joint_reads and index in {3, 6}
         else modules["books"]
         if routes and index == 5
         else modules["orders"]
@@ -265,6 +282,33 @@ def reconcile_orders(results):
             raise ValueError("sequence_order_locks_mismatch")
 
 
+def reconcile_joint_before(results):
+    if len(results) < 5:
+        return
+    first = results[3]["native_result"]
+    orders = results[4]["native_result"]
+    if first["account_uid"] != orders["account_uid"]:
+        raise ValueError("joint_read_account_uid_changed")
+    reconcile_orders([None, results[3], results[4], *([results[5]] if len(results) >= 6 else [])])
+    if len(results) >= 6 and results[5]["native_result"]["account_uid"] != first["account_uid"]:
+        raise ValueError("joint_read_account_uid_changed")
+    if len(results) >= 7:
+        last = results[6]["native_result"]
+
+        def balances(value):
+            return [
+                (
+                    row["currency"],
+                    row["precision"],
+                    *(Decimal(row[k]) for k in ("total", "locked", "free")),
+                )
+                for row in value["balances"]
+            ]
+
+        if first["account_uid"] != last["account_uid"] or balances(first) != balances(last):
+            raise ValueError("joint_read_balances_changed")
+
+
 def route_result(results, bundles, modules):
     first, last = (
         results[0]["native_result"]["header_receipt"],
@@ -295,8 +339,14 @@ def replay(
     unsubscribe=False,
     clock=False,
     joint_ws=False,
+    joint_reads=False,
 ):
-    if joint_ws and any((orders, routes, quotes, unsubscribe, clock)):
+    if (
+        (joint_ws or joint_reads)
+        and any((orders, routes, quotes, unsubscribe, clock))
+        or joint_ws
+        and joint_reads
+    ):
         raise ValueError("joint_ws_sequence_conflict")
     if (
         (quotes and not routes)
@@ -306,8 +356,10 @@ def replay(
         raise ValueError("quote_route_required")
     orders = orders or routes
     profile = (
-        JOINT_WS_PROFILE
-        if joint_ws
+        JOINT_READ_PROFILE
+        if joint_reads
+        else JOINT_WS_PROFILE
+        if joint_ws or joint_reads
         else CLOCK_PROFILE
         if clock
         else UNSUB_ROUTE_PROFILE
@@ -321,8 +373,10 @@ def replay(
         else PROFILE
     )
     steps = (
-        JOINT_WS_STEPS
-        if joint_ws
+        JOINT_READ_STEPS
+        if joint_reads
+        else JOINT_WS_STEPS
+        if joint_ws or joint_reads
         else CLOCK_STEPS
         if clock
         else ROUTE_STEPS
@@ -399,8 +453,9 @@ def replay(
                 modules,
                 orders=orders,
                 routes=routes,
-                clock=clock or joint_ws and pending == 0,
+                clock=clock or (joint_ws or joint_reads) and pending == 0,
                 joint_ws=joint_ws,
+                joint_reads=joint_reads,
                 previous=bundles[:pending],
             )
             # Every child archive follows preparation, and each whole step ends
@@ -425,13 +480,40 @@ def replay(
                 child = json.loads(content.splitlines()[-1])
                 if any(child[k] > row[k] for k in ("utc_ns", "monotonic_ns")):
                     raise ValueError("sequence_acceptance_precedes_child")
-            if not (clock or joint_ws):
+            if joint_reads:
+                reconcile_joint_before(results)
+                if pending >= 3:
+                    anchor = json.loads(bundles[0]["binding"])
+                    current = json.loads(bundles[pending]["binding"])
+                    first = anchor["collector"]["process"]
+                    process = current["collector"]["process"]
+                    if (
+                        any(
+                            current[key] != anchor[key]
+                            for key in ("rules", "route", "net", "tls_trust_sha256")
+                        )
+                        or set(process) != set(first)
+                        or any(
+                            process[key] != first[key]
+                            for key in first
+                            if key not in {"pid", "start_ticks", "namespaces"}
+                        )
+                        or set(process["namespaces"]) != set(first["namespaces"])
+                        or any(
+                            process["namespaces"][key] != first["namespaces"][key]
+                            for key in first["namespaces"]
+                            if key != "net"
+                        )
+                        or process["namespaces"]["net"] == current["net"]
+                    ):
+                        raise ValueError("joint_read_environment_changed")
+            elif not (clock or joint_ws):
                 reconcile(results, orders=orders)
             if routes and pending == 5:
                 route_result(results, bundles, modules)
             # Same trust/install/rules/route/network/runtime throughout, distinct
             # child PIDs are expected. No caller-supplied run identity suffices.
-            if pending and not joint_ws:
+            if pending and not (joint_ws or joint_reads):
                 old, new = (json.loads(bundles[i]["binding"]) for i in (0, pending))
                 for key in ("rules", "route", "net"):
                     if old[key] != new[key]:
@@ -463,6 +545,10 @@ def replay(
     if len(bundles) != len(results):
         raise ValueError("sequence_extra_originals")
     complete = rows[-1]["kind"] == "completed"
+    if joint_reads and any(
+        rows[-1][key] - rows[0][key] > 120_000_000_000 for key in ("utc_ns", "monotonic_ns")
+    ):
+        raise ValueError("joint_read_parent_window_expired")
     return {
         "schema_version": profile,
         "archive_sha256": expected_sha256,
@@ -471,11 +557,12 @@ def replay(
         "accepted_steps": accepted,
         "pending_step": pending,
         "steps": results,
-        "metadata_precision_matched": accepted > 0 and not (clock or joint_ws),
-        "repeated_balances_equal": not (clock or joint_ws) and accepted >= (5 if orders else 3),
+        "metadata_precision_matched": accepted > 0 and not (clock or joint_ws or joint_reads),
+        "repeated_balances_equal": not (clock or joint_ws or joint_reads)
+        and accepted >= (5 if orders else 3),
         **(
             {"ordered_joint_prefix_length": accepted, "full_account_interval": False}
-            if clock or joint_ws
+            if clock or joint_ws or joint_reads
             else {}
         ),
         **(
@@ -483,9 +570,10 @@ def replay(
                 "account_ws_upgraded": accepted >= 2,
                 "signed_subscription_acknowledged": accepted >= 3,
             }
-            if joint_ws
+            if joint_ws or joint_reads
             else {}
         ),
+        **({"account_before_four_gets_reconciled": accepted >= 7} if joint_reads else {}),
         **(
             {
                 "routes_derived_from_same_run": accepted == total,
@@ -525,8 +613,14 @@ class Sequence:
         unsubscribe=False,
         clock=False,
         joint_ws=False,
+        joint_reads=False,
     ):
-        if joint_ws and any((orders, routes, quotes, unsubscribe, clock)):
+        if (
+            (joint_ws or joint_reads)
+            and any((orders, routes, quotes, unsubscribe, clock))
+            or joint_ws
+            and joint_reads
+        ):
             raise ValueError("joint_ws_sequence_conflict")
         if (
             (quotes and not routes)
@@ -535,17 +629,28 @@ class Sequence:
         ):
             raise ValueError("quote_route_required")
         orders = orders or routes
-        self.orders, self.routes, self.quotes, self.unsubscribe, self.clock, self.joint_ws = (
+        (
+            self.orders,
+            self.routes,
+            self.quotes,
+            self.unsubscribe,
+            self.clock,
+            self.joint_ws,
+            self.joint_reads,
+        ) = (
             orders,
             routes,
             quotes,
             unsubscribe,
             clock,
             joint_ws,
+            joint_reads,
         )
         self.profile = (
-            JOINT_WS_PROFILE
-            if joint_ws
+            JOINT_READ_PROFILE
+            if joint_reads
+            else JOINT_WS_PROFILE
+            if joint_ws or joint_reads
             else CLOCK_PROFILE
             if clock
             else UNSUB_ROUTE_PROFILE
@@ -559,8 +664,10 @@ class Sequence:
             else PROFILE
         )
         self.scope = (
-            JOINT_WS_SCOPE
-            if joint_ws
+            JOINT_READ_SCOPE
+            if joint_reads
+            else JOINT_WS_SCOPE
+            if joint_ws or joint_reads
             else CLOCK_SCOPE
             if clock
             else UNSUB_ROUTE_SCOPE
@@ -574,8 +681,10 @@ class Sequence:
             else SCOPE
         )
         self.steps = (
-            JOINT_WS_STEPS
-            if joint_ws
+            JOINT_READ_STEPS
+            if joint_reads
+            else JOINT_WS_STEPS
+            if joint_ws or joint_reads
             else CLOCK_STEPS
             if clock
             else ROUTE_STEPS
@@ -731,6 +840,7 @@ class Sequence:
             unsubscribe=self.unsubscribe,
             clock=self.clock,
             joint_ws=self.joint_ws,
+            joint_reads=self.joint_reads,
         )
         self.journal.append(
             kind, **{k: v for k, v in row.items() if k not in {"seq", "previous_sha256", "kind"}}
@@ -762,7 +872,7 @@ class Sequence:
         self.write(self.storage / "binding.json", canonical(binding))
 
     def read_bundle(self):
-        if self.joint_ws and self.index:
+        if (self.joint_ws or self.joint_reads) and self.index in {1, 2}:
             bundle = {}
             for key, name in (("binding", "binding.json"), ("ws", "ws.jsonl")):
                 path = self.storage / name
@@ -773,18 +883,22 @@ class Sequence:
             return bundle
         kind = (
             "clock"
-            if self.clock or self.joint_ws
+            if self.clock or (self.joint_ws or self.joint_reads) and self.index == 0
+            else "orders"
+            if self.joint_reads and self.index in {4, 5}
+            else "account"
+            if self.joint_reads and self.index in {3, 6}
             else "books"
             if self.routes and self.index == 5
             else "orders"
             if self.orders and self.index in {2, 3}
             else "account"
-            if self.index or self.clock or self.joint_ws
+            if self.index or self.clock or self.joint_ws or self.joint_reads
             else "metadata"
         )
         ledger = (
             self.modules[kind]["ledger_view"](self.modules["ledger"])
-            if self.index or self.clock or self.joint_ws
+            if self.index or self.clock or self.joint_ws or self.joint_reads
             else self.modules["ledger"]
         )
         scope = self.storage / ledger.SCOPE
@@ -824,9 +938,13 @@ def run_installed(
     unsubscribe=False,
     clock=False,
     joint_ws=False,
+    joint_reads=False,
 ):
-    if joint_ws and any(
-        (orders, routes, concurrent, signed, market, snapshot, quotes, unsubscribe, clock)
+    if (
+        (joint_ws or joint_reads)
+        and any((orders, routes, concurrent, signed, market, snapshot, quotes, unsubscribe, clock))
+        or joint_ws
+        and joint_reads
     ):
         raise ValueError("joint_ws_sequence_conflict")
     if clock and any((orders, routes, concurrent, signed, market, snapshot, quotes, unsubscribe)):
@@ -858,11 +976,12 @@ def run_installed(
             unsubscribe=unsubscribe,
             clock=clock,
             joint_ws=joint_ws,
+            joint_reads=joint_reads,
         )
         try:
             for index in range(len(sequence.steps)):
                 sequence.prepare(index)
-                if joint_ws and index:
+                if (joint_ws or joint_reads) and index in {1, 2}:
                     if channel is None:
                         channel = modules["joint_ws"]["Channel"](
                             entry, authority, sources, sequence
@@ -874,8 +993,8 @@ def run_installed(
                         receipt=True,
                         native=True,
                         account=index != 0,
-                        clock=clock or joint_ws,
-                        orders=orders and index in {2, 3},
+                        clock=clock or (joint_ws or joint_reads) and index == 0,
+                        orders=orders and index in {2, 3} or joint_reads and index in {4, 5},
                         books=routes and index == 5,
                         sequence=sequence,
                     )

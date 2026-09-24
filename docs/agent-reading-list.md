@@ -22,6 +22,15 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the first ordered installed four-GET account pass, read
+`docs/progress/portfolio-installed-joint-first-account-2026-09-24.md` and its JSON.
+Manifest v19 pins 24 sources; the same disposable parent holds one account WS
+while it accepts clock, Upgrade, signed subscription, then native account,
+orders, orders and account receipts. Changed orders stop at five accepted steps;
+changed balances stop at six. Success is 7/19 planned operations, with only the
+first four-asset fixture account pass reconciled. The later market/time segment,
+second four-GET pass, complete before/after interval and real admission are absent.
+
 For the ordered installed native account WebSocket prefix, read
 `docs/progress/portfolio-installed-joint-account-ws-2026-09-24.md` and its JSON.
 Manifest v18 pins 24 sources; the same disposable parent accepts a clock GET,

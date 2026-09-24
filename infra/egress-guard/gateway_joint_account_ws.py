@@ -506,6 +506,9 @@ class Channel:
                 self.revoke()
                 append("revoked", {})
             append("accepted", {})
+            if index == 2:
+                self.session.close()
+                self.session = None
             return {"status": "fixture_receipt_succeeded", "revoked": True}
         finally:
             os.close(journal.fd)

@@ -1,0 +1,28 @@
+{
+  "schema_version": "portfolio.installed_joint_first_account_progress.v1",
+  "date": "2026-09-24",
+  "phase": "disposable_fixture_only",
+  "manifest_version": 19,
+  "pinned_project_sources": 24,
+  "report": "data/installed-joint-reads-v19-final.json",
+  "report_sha256": "2c90e9840d96dd7983d6856b2a870f647ab4fa0726e27afa6b8d45fba7cb6b95",
+  "scenarios": {
+    "joint_reads_success": {"prepared_steps": 7, "accepted_steps": 7, "first_four_get_pass_reconciled": true, "controller_max_descriptors": 863},
+    "joint_reads_orders_changed": {"prepared_steps": 6, "accepted_steps": 5, "first_four_get_pass_reconciled": false, "controller_max_descriptors": 854},
+    "joint_reads_balance_drift": {"prepared_steps": 7, "accepted_steps": 6, "first_four_get_pass_reconciled": false, "controller_max_descriptors": 863}
+  },
+  "regressions": {
+    "joint_ws": {"report": "data/installed-joint-account-v19-final-regression.json", "report_sha256": "7438336f8f1a55319c98aa988d4179c89cd9c0eaac1c4209ff514ae199e2428d", "scenarios_passed": 3},
+    "clock": {"report": "data/installed-joint-clock-v19-final-regression.json", "report_sha256": "20ff0ed704007cbbae8feda29857b72c8dedf929bf4357f021612f808d5be9ec", "scenarios_passed": 2},
+    "unsubscribe": {"report": "data/installed-unsub-v19-final-regression.json", "report_sha256": "0b78aa658ad581b169fd31fff09acec27ec4c960f54f34bf39a5864401916ade", "scenarios_passed": 2}
+  },
+  "related_python_tests_passed": 394,
+  "ordered_joint_prefix_length": 7,
+  "planned_joint_operations": 19,
+  "first_fixture_account_pass_reconciled": true,
+  "complete_before_after_intervals": 0,
+  "stream_fence_verified": false,
+  "real_network_admitted": false,
+  "trading_admitted": false,
+  "upstream_touched": false
+}
