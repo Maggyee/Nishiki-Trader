@@ -25,6 +25,7 @@ FILES = (
     "gateway_native_account.py",
     "gateway_native_orders.py",
     "gateway_book_routes.py",
+    "gateway_native_time.py",
     "gateway_read_sequence.py",
     "gateway_concurrent_ws.py",
     "gateway_account_ws.py",
@@ -38,7 +39,7 @@ FILES = (
     "portfolio_tls_provenance.py",
     "portfolio_egress_ledger.py",
 )
-PROFILE = "portfolio.installed_gateway_fixture.v16"
+PROFILE = "portfolio.installed_gateway_fixture.v17"
 
 
 def digest(raw):
@@ -195,9 +196,10 @@ def run_controller(
     account=False,
     orders=False,
     books=False,
+    clock=False,
     sequence=None,
 ):
-    account = account or orders or books
+    account = account or orders or books or clock
     authority = installation()
     collector = ledger = lifecycle = gateway = runtime = None
     try:
@@ -209,9 +211,15 @@ def run_controller(
             {name: sources.source(name).decode() for name in FILES}
         )
         account_code = load(sources.source("gateway_native_account.py")) if account else None
-        if orders or books:
+        if orders or books or clock:
             account_code = load(
-                sources.source("gateway_book_routes.py" if books else "gateway_native_orders.py")
+                sources.source(
+                    "gateway_native_time.py"
+                    if clock
+                    else "gateway_book_routes.py"
+                    if books
+                    else "gateway_native_orders.py"
+                )
             )["view"](account_code)
         if account:
             module = account_code["ledger_view"](module)
@@ -371,7 +379,7 @@ def run_controller(
         try:
             gateway.dispatch()
         except (OSError, ValueError, RuntimeError) as exc:
-            outcome = {"status": "refused", "reason": type(exc).__name__}
+            outcome = {"status": "refused", "reason": type(exc).__name__, "detail": str(exc)[:160]}
         else:
             outcome = {
                 "status": "fixture_receipt_succeeded"
@@ -428,6 +436,8 @@ def main():
             ["--snapshot-ws-fixture"],
             ["--quote-ws-fixture"],
             ["--unsub-ws-fixture"],
+            ["--joint-clock-fixture"],
+            ["--joint-clock-step-fixture"],
         )
         or not sys.flags.isolated
         or os.path.abspath(__file__) != CODE + "/installed_gateway.py"
@@ -459,6 +469,7 @@ def main():
         ["--snapshot-ws-fixture"],
         ["--quote-ws-fixture"],
         ["--unsub-ws-fixture"],
+        ["--joint-clock-fixture"],
     ):
         authority = installation()
         try:
@@ -470,6 +481,7 @@ def main():
                 authority,
                 sources,
                 orders=sys.argv[1:] == ["--order-sequence-fixture"],
+                clock=sys.argv[1:] == ["--joint-clock-fixture"],
                 routes=sys.argv[1:]
                 in (
                     ["--route-sequence-fixture"],
@@ -519,15 +531,23 @@ def main():
                 ["--tls-receipt-fixture"],
                 ["--native-receipt-fixture"],
                 ["--signed-account-fixture"],
+                ["--joint-clock-step-fixture"],
             ),
             receipt=sys.argv[1:]
             in (
                 ["--tls-receipt-fixture"],
                 ["--native-receipt-fixture"],
                 ["--signed-account-fixture"],
+                ["--joint-clock-step-fixture"],
             ),
-            native=sys.argv[1:] in (["--native-receipt-fixture"], ["--signed-account-fixture"]),
+            native=sys.argv[1:]
+            in (
+                ["--native-receipt-fixture"],
+                ["--signed-account-fixture"],
+                ["--joint-clock-step-fixture"],
+            ),
             account=sys.argv[1:] == ["--signed-account-fixture"],
+            clock=sys.argv[1:] == ["--joint-clock-step-fixture"],
         )
     return 0
 

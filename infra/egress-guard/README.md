@@ -6,6 +6,20 @@ offline disk tests, and retain read-only host deployment-input snapshots.
 Current phase: Phase 5 entry, offline infrastructure acceptance only. This is not
 a production guard, gateway audit service, quota authority or collection permit.
 
+The new ordered joint parent begins with `gateway_native_time.py`:
+
+```bash
+/usr/bin/python3 -I infra/egress-guard/installed_gateway_selftest.py --joint-clock-profile --report data/NEW-JOINT-CLOCK.json
+```
+
+Manifest v17 pins 23 sources. One dedicated-UID-selected `/api/v3/time` request
+receives an original HTTPS response and native clock acknowledgement after
+revocation. A bad server time consumes the attempt without acknowledgement or
+restart. This accepts exactly the first operation in a separate ordered parent;
+the remaining account/market steps, complete account intervals, stream fences,
+provider clock qualification and real admission are still missing. See
+[clock acceptance](../../docs/progress/portfolio-installed-joint-clock-2026-09-24.md).
+
 The separate native account unsubscribe successor is `gateway_account_ws.py`:
 
 ```bash

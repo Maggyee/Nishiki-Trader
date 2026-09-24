@@ -22,6 +22,14 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the first ordered installed native joint-clock operation, read
+`docs/progress/portfolio-installed-joint-clock-2026-09-24.md` and its JSON.
+Manifest v17 pins 23 sources; a separate parent accepts exactly one fixed
+`/api/v3/time` GET with original TLS receive clocks and a dedicated-UID native
+receipt. A bad server time consumes the scope without acknowledgement. This
+is only the first operation of a new ordered parent; no complete account
+interval, provider clock qualification, stream fence or real admission follows.
+
 For installed native account WS unsubscribe acknowledgement in a separate
 disposable quote fixture, read `docs/progress/portfolio-installed-unsubscribe-2026-09-24.md`
 and its JSON. Manifest v16 pins 22 sources; the dedicated UID selects the fixed

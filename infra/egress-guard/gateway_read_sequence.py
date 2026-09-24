@@ -25,6 +25,9 @@ QUOTE_ROUTE_PROFILE = "portfolio.installed_quote_route_sequence.v1"
 QUOTE_ROUTE_SCOPE = "fixture-quote-route-sequence-v1"
 UNSUB_ROUTE_PROFILE = "portfolio.installed_unsubscribe_route_sequence.v1"
 UNSUB_ROUTE_SCOPE = "fixture-unsubscribe-route-sequence-v1"
+CLOCK_PROFILE = "portfolio.installed_joint_clock_sequence.v1"
+CLOCK_SCOPE = "fixture-joint-clock-sequence-v1"
+CLOCK_STEPS = ("clock_initial",)
 LIMIT = 65536
 FILES = {
     "binding": "binding.json",
@@ -63,6 +66,7 @@ def load_sources(sources):
         "account": account,
         "orders": load("gateway_native_orders.py")["view"](account),
         "books": load("gateway_book_routes.py")["view"](account),
+        "clock": load("gateway_native_time.py")["view"](account),
         "metadata": load("gateway_native_receipt.py"),
         "requests": load("gateway_native_requests.py"),
         "provenance": sys.modules["apps.strategies_nautilus.portfolio_tls_provenance"],
@@ -70,9 +74,11 @@ def load_sources(sources):
     }
 
 
-def review_bundle(bundle, index, context, selected, modules, *, orders=False, routes=False):
+def review_bundle(
+    bundle, index, context, selected, modules, *, orders=False, routes=False, clock=False
+):
     """Verify originals before considering a step complete; never trust a saved report."""
-    allowed = set(FILES) - ({"selection"} if index == 0 else set())
+    allowed = set(FILES) - ({"selection"} if index == 0 and not clock else set())
     if (
         not isinstance(bundle, dict)
         or set(bundle) - allowed
@@ -99,13 +105,15 @@ def review_bundle(bundle, index, context, selected, modules, *, orders=False, ro
             raise ValueError("sequence_attempts_required")
         return result
     account = (
-        modules["books"]
+        modules["clock"]
+        if clock
+        else modules["books"]
         if routes and index == 5
         else modules["orders"]
         if orders and index in {2, 3}
         else modules["account"]
     )
-    ledger = account["ledger_view"](modules["ledger"]) if index else modules["ledger"]
+    ledger = account["ledger_view"](modules["ledger"]) if index or clock else modules["ledger"]
     attempts = bundle["attempts"].encode()
     result["attempts"] = ledger.replay(
         attempts, expected_sha256=digest(attempts), binding_sha256=pin
@@ -119,13 +127,13 @@ def review_bundle(bundle, index, context, selected, modules, *, orders=False, ro
         ledger, lifecycle, expected_sha256=digest(lifecycle), attempts=attempts, binding_sha256=pin
     )
     transport = modules["tls"]
-    rates = account["rates_view"]() if index else modules["rates"]
-    if index and "selection" in bundle:
+    rates = account["rates_view"]() if index or clock else modules["rates"]
+    if (index or clock) and "selection" in bundle:
         contract = account["AccountContract"](modules["requests"], json.loads(bundle["selection"]))
         if contract.raw.decode() != bundle["selection"]:
             raise ValueError("sequence_canonical_selection")
         transport = account["transport_view"](transport, contract)
-    elif index and "tls" in bundle:
+    elif (index or clock) and "tls" in bundle:
         raise ValueError("sequence_selected_request_required")
     if "tls" not in bundle:
         if "receipt" in bundle:
@@ -151,7 +159,7 @@ def review_bundle(bundle, index, context, selected, modules, *, orders=False, ro
         expected_sha256=digest(raw),
         tls_raw=tls,
         transport=transport,
-        native=account if index else modules["metadata"],
+        native=account if index or clock else modules["metadata"],
         **kwargs,
     )
     result["receipt"] = receipt
@@ -264,12 +272,19 @@ def replay(
     routes=False,
     quotes=False,
     unsubscribe=False,
+    clock=False,
 ):
-    if (quotes and not routes) or (unsubscribe and not quotes):
+    if (
+        (quotes and not routes)
+        or (unsubscribe and not quotes)
+        or (clock and (orders or routes or quotes or unsubscribe))
+    ):
         raise ValueError("quote_route_required")
     orders = orders or routes
     profile = (
-        UNSUB_ROUTE_PROFILE
+        CLOCK_PROFILE
+        if clock
+        else UNSUB_ROUTE_PROFILE
         if unsubscribe
         else QUOTE_ROUTE_PROFILE
         if quotes
@@ -279,7 +294,7 @@ def replay(
         if orders
         else PROFILE
     )
-    steps = ROUTE_STEPS if routes else ORDER_STEPS if orders else STEPS
+    steps = CLOCK_STEPS if clock else ROUTE_STEPS if routes else ORDER_STEPS if orders else STEPS
     total = len(steps)
     if not isinstance(raw, bytes) or not 0 < len(raw) <= LIMIT or digest(raw) != expected_sha256:
         raise ValueError("sequence_original_required")
@@ -341,7 +356,14 @@ def replay(
                 raise ValueError("sequence_pending_original_required")
             bundle = bundles[pending]
             report = review_bundle(
-                bundle, pending, context, selected, modules, orders=orders, routes=routes
+                bundle,
+                pending,
+                context,
+                selected,
+                modules,
+                orders=orders,
+                routes=routes,
+                clock=clock,
             )
             # Every child archive follows preparation, and each whole step ends
             # before its acceptance. Original clocks never come from replay time.
@@ -365,7 +387,8 @@ def replay(
                 child = json.loads(content.splitlines()[-1])
                 if any(child[k] > row[k] for k in ("utc_ns", "monotonic_ns")):
                     raise ValueError("sequence_acceptance_precedes_child")
-            reconcile(results, orders=orders)
+            if not clock:
+                reconcile(results, orders=orders)
             if routes and pending == 5:
                 route_result(results, bundles, modules)
             # Same trust/install/rules/route/network/runtime throughout, distinct
@@ -410,8 +433,13 @@ def replay(
         "accepted_steps": accepted,
         "pending_step": pending,
         "steps": results,
-        "metadata_precision_matched": accepted > 0,
-        "repeated_balances_equal": accepted >= (5 if orders else 3),
+        "metadata_precision_matched": accepted > 0 and not clock,
+        "repeated_balances_equal": not clock and accepted >= (5 if orders else 3),
+        **(
+            {"ordered_joint_prefix_length": accepted, "full_account_interval": False}
+            if clock
+            else {}
+        ),
         **(
             {
                 "routes_derived_from_same_run": accepted == total,
@@ -449,18 +477,26 @@ class Sequence:
         routes=False,
         quotes=False,
         unsubscribe=False,
+        clock=False,
     ):
-        if (quotes and not routes) or (unsubscribe and not quotes):
+        if (
+            (quotes and not routes)
+            or (unsubscribe and not quotes)
+            or (clock and (orders or routes or quotes or unsubscribe))
+        ):
             raise ValueError("quote_route_required")
         orders = orders or routes
-        self.orders, self.routes, self.quotes, self.unsubscribe = (
+        self.orders, self.routes, self.quotes, self.unsubscribe, self.clock = (
             orders,
             routes,
             quotes,
             unsubscribe,
+            clock,
         )
         self.profile = (
-            UNSUB_ROUTE_PROFILE
+            CLOCK_PROFILE
+            if clock
+            else UNSUB_ROUTE_PROFILE
             if unsubscribe
             else QUOTE_ROUTE_PROFILE
             if quotes
@@ -471,7 +507,9 @@ class Sequence:
             else PROFILE
         )
         self.scope = (
-            UNSUB_ROUTE_SCOPE
+            CLOCK_SCOPE
+            if clock
+            else UNSUB_ROUTE_SCOPE
             if unsubscribe
             else QUOTE_ROUTE_SCOPE
             if quotes
@@ -481,7 +519,9 @@ class Sequence:
             if orders
             else SCOPE
         )
-        self.steps = ROUTE_STEPS if routes else ORDER_STEPS if orders else STEPS
+        self.steps = (
+            CLOCK_STEPS if clock else ROUTE_STEPS if routes else ORDER_STEPS if orders else STEPS
+        )
         self.authority, self.modules = authority, modules
         self.owner = os.getpid()
         self.expected, self.bundles, self.index = b"", [], None
@@ -627,6 +667,7 @@ class Sequence:
             routes=self.routes,
             quotes=self.quotes,
             unsubscribe=self.unsubscribe,
+            clock=self.clock,
         )
         self.journal.append(
             kind, **{k: v for k, v in row.items() if k not in {"seq", "previous_sha256", "kind"}}
@@ -659,24 +700,26 @@ class Sequence:
 
     def read_bundle(self):
         kind = (
-            "books"
+            "clock"
+            if self.clock
+            else "books"
             if self.routes and self.index == 5
             else "orders"
             if self.orders and self.index in {2, 3}
             else "account"
-            if self.index
+            if self.index or self.clock
             else "metadata"
         )
         ledger = (
             self.modules[kind]["ledger_view"](self.modules["ledger"])
-            if self.index
+            if self.index or self.clock
             else self.modules["ledger"]
         )
         scope = self.storage / ledger.SCOPE
         bundle = {}
         for key, name in FILES.items():
-            if key == "selection" and kind in {"orders", "books"}:
-                name = kind + "-request.json"
+            if key == "selection" and kind in {"orders", "books", "clock"}:
+                name = ("time" if kind == "clock" else kind) + "-request.json"
             path = self.storage / name if key == "binding" else scope / name
             if path.exists():
                 self.hold(path.parent, directory=True)
@@ -707,7 +750,10 @@ def run_installed(
     snapshot=False,
     quotes=False,
     unsubscribe=False,
+    clock=False,
 ):
+    if clock and any((orders, routes, concurrent, signed, market, snapshot, quotes, unsubscribe)):
+        raise ValueError("clock_sequence_conflict")
     if (quotes and not snapshot) or (unsubscribe and not quotes):
         raise ValueError("quote_requires_snapshot")
     if snapshot and not market:
@@ -732,6 +778,7 @@ def run_installed(
             routes=routes,
             quotes=quotes,
             unsubscribe=unsubscribe,
+            clock=clock,
         )
         try:
             for index in range(len(sequence.steps)):
@@ -741,6 +788,7 @@ def run_installed(
                     receipt=True,
                     native=True,
                     account=index != 0,
+                    clock=clock,
                     orders=orders and index in {2, 3},
                     books=routes and index == 5,
                     sequence=sequence,

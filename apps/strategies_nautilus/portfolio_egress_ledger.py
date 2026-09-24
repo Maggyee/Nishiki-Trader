@@ -79,6 +79,8 @@ ORDERS_PROFILE = "portfolio.fixture_signed_orders_tls_ledger.v1"
 ORDERS_SCOPE = "fixture-signed-orders-tls-v1"
 BOOKS_PROFILE = "portfolio.fixture_books_tls_ledger.v1"
 BOOKS_SCOPE = "fixture-books-tls-v1"
+CLOCK_PROFILE = "portfolio.fixture_joint_clock_tls_ledger.v1"
+CLOCK_SCOPE = "fixture-joint-clock-tls-v1"
 # Fixed maximum local pilot classification. Tokens contain no endpoint/payload/signature.
 IPC_STEPS = (
     ("clock_initial", "time"),
@@ -124,6 +126,7 @@ class State:
             ACCOUNT_PROFILE,
             ORDERS_PROFILE,
             BOOKS_PROFILE,
+            CLOCK_PROFILE,
         }:
             raise ValueError("unknown_ledger_profile")
         self.profile = profile
@@ -187,7 +190,7 @@ class State:
                 )
             ):
                 raise ValueError("ipc_fixed_operation_required")
-            if self.profile in {ACCOUNT_PROFILE, ORDERS_PROFILE, BOOKS_PROFILE} and (
+            if self.profile in {ACCOUNT_PROFILE, ORDERS_PROFILE, BOOKS_PROFILE, CLOCK_PROFILE} and (
                 self.attempts
                 or payload["caller"] != "collector"
                 or payload["operation"]
@@ -195,6 +198,7 @@ class State:
                     ACCOUNT_PROFILE: "account_read",
                     ORDERS_PROFILE: "open_orders",
                     BOOKS_PROFILE: "book_ticker",
+                    CLOCK_PROFILE: "time",
                 }[self.profile]
             ):
                 raise ValueError("single_signed_account_attempt_required")
@@ -213,7 +217,14 @@ class State:
             self.validate_link(payload)
             if (
                 self.profile
-                in {IPC_PROFILE, REQUEST_PROFILE, ACCOUNT_PROFILE, ORDERS_PROFILE, BOOKS_PROFILE}
+                in {
+                    IPC_PROFILE,
+                    REQUEST_PROFILE,
+                    ACCOUNT_PROFILE,
+                    ORDERS_PROFILE,
+                    BOOKS_PROFILE,
+                    CLOCK_PROFILE,
+                }
                 and payload["request_sha256"] != self.attempts[self.pending]["request_sha256"]
             ):
                 raise ValueError("ipc_outcome_request_changed")
@@ -244,6 +255,7 @@ class State:
             ACCOUNT_PROFILE,
             ORDERS_PROFILE,
             BOOKS_PROFILE,
+            CLOCK_PROFILE,
         }:
             return {"request_sha256"}
         return {"joint_prefix_sha256"} if self.profile == JOINT_PROFILE else set()
@@ -343,6 +355,7 @@ class AttemptLedger:
             ACCOUNT_PROFILE: ACCOUNT_SCOPE,
             ORDERS_PROFILE: ORDERS_SCOPE,
             BOOKS_PROFILE: BOOKS_SCOPE,
+            CLOCK_PROFILE: CLOCK_SCOPE,
         }[profile]
         self.owner = os.getpid()
         self.lock = threading.Lock()
@@ -464,6 +477,7 @@ class AttemptLedger:
                                 ACCOUNT_PROFILE,
                                 ORDERS_PROFILE,
                                 BOOKS_PROFILE,
+                                CLOCK_PROFILE,
                             }
                             or request_sha256 is not None
                             else {}
@@ -503,6 +517,7 @@ class AttemptLedger:
                                 ACCOUNT_PROFILE,
                                 ORDERS_PROFILE,
                                 BOOKS_PROFILE,
+                                CLOCK_PROFILE,
                             }
                             or request_sha256 is not None
                             else {}

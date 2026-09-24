@@ -1,0 +1,24 @@
+{
+  "schema_version": "portfolio.installed_joint_clock_progress.v1",
+  "date": "2026-09-24",
+  "phase": "disposable_fixture_only",
+  "manifest_version": 17,
+  "pinned_project_sources": 23,
+  "report": "data/installed-joint-clock-v17-formatted.json",
+  "report_sha256": "0f53bbcd35741770b2235144c2267c0bbcb4b5ac1677b71e3f049656b6f6e647",
+  "scenarios": {
+    "clock_success": {"prepared_steps": 1, "accepted_steps": 1, "native_clock_acknowledged": true, "controller_max_descriptors": 814},
+    "clock_bad_time": {"prepared_steps": 1, "accepted_steps": 0, "native_clock_acknowledged": false, "controller_max_descriptors": 812}
+  },
+  "previous_profile_regression": {
+    "report": "data/installed-unsub-v17-formatted.json",
+    "report_sha256": "bc26d9139c228bd874a66f58a38fa284e84c586a0941f7f321a4f1272f306ba9",
+    "scenarios_passed": 2
+  },
+  "focused_python_tests_passed": 84,
+  "ordered_joint_prefix_length": 1,
+  "complete_account_intervals": 0,
+  "provider_clock_qualified": false,
+  "real_network_admitted": false,
+  "trading_admitted": false
+}

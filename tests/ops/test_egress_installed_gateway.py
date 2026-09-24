@@ -1,5 +1,6 @@
 """Installed gateway custody, fixed scope and disposable-wrapper refusal boundaries."""
 
+import base64
 import importlib.util
 import json
 import os
@@ -19,6 +20,28 @@ def load(name):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def test_joint_clock_receipt_requires_original_time_and_clocks():
+    clock = load("gateway_native_time")
+    now = 1_790_000_000_000_000_000
+    response = b'HTTP/1.1 200 OK\r\nContent-Length: 28\r\n\r\n{"serverTime":1790000000000}'
+    receipt = {
+        "profile": "portfolio.installed_tls_receipt.v1",
+        "tls_sha256": "a" * 64,
+        "response_b64": base64.b64encode(response).decode(),
+        "header_receipt": {"seq": 2, "utc_ns": now, "monotonic_ns": now},
+        "body_receipt": {"seq": 3, "utc_ns": now + 1_000_000, "monotonic_ns": now + 1_000_000},
+    }
+    assert clock.expected_result(json.dumps(receipt))["server_time_ms"] == 1_790_000_000_000
+    receipt["response_b64"] = base64.b64encode(
+        response.replace(b"1790000000000", b"1790000006000")
+    ).decode()
+    with pytest.raises(ValueError, match="joint_clock_fixture_time_drift"):
+        clock.expected_result(json.dumps(receipt))
+    receipt["response_b64"] = base64.b64encode(response.replace(b"1790000000000", b"true")).decode()
+    with pytest.raises(ValueError, match="joint_clock_server_time"):
+        clock.expected_result(json.dumps(receipt))
 
 
 @pytest.fixture

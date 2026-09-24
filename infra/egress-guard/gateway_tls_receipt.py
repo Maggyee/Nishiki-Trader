@@ -25,6 +25,7 @@ NATIVE_PROFILES = {
     "portfolio.installed_native_account_receipt.v1",
     "portfolio.installed_native_orders_receipt.v1",
     "portfolio.installed_native_books_receipt.v1",
+    "portfolio.installed_native_joint_clock.v1",
 }
 
 
@@ -455,6 +456,7 @@ def replay(
         "portfolio.fixture_signed_account_tls_ledger.v1",
         "portfolio.fixture_signed_orders_tls_ledger.v1",
         "portfolio.fixture_books_tls_ledger.v1",
+        "portfolio.fixture_joint_clock_tls_ledger.v1",
     }:
         prepared_row = next(r for r in attempt_rows if r["kind"] == "prepared")
         outcome["request_sha256"] = prepared_row["payload"]["request_sha256"]
@@ -472,6 +474,8 @@ def replay(
                 (
                     "native_books_acknowledged"
                     if native_result["profile"] == "portfolio.installed_native_books_receipt.v1"
+                    else "native_clock_acknowledged"
+                    if native_result["profile"] == "portfolio.installed_native_joint_clock.v1"
                     else "native_orders_acknowledged"
                     if native_result["profile"] == "portfolio.installed_native_orders_receipt.v1"
                     else "native_account_acknowledged"

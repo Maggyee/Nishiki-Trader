@@ -38,6 +38,7 @@ def ledger_view(module, *, profile=None, scope=None):
         (module.ACCOUNT_PROFILE, module.ACCOUNT_SCOPE),
         (module.ORDERS_PROFILE, module.ORDERS_SCOPE),
         (module.BOOKS_PROFILE, module.BOOKS_SCOPE),
+        (module.CLOCK_PROFILE, module.CLOCK_SCOPE),
     }:
         raise ValueError("signed_read_profile_required")
     values = dict(vars(module))
@@ -316,7 +317,9 @@ def child_loop(fd, parent, *, index=3, native=validate_native):
         channel.close()
 
 
-def launch(authority, sources, launcher, runtime, *, orders=False, books=False):
+def launch(authority, sources, launcher, runtime, *, orders=False, books=False, clock=False):
+    if sum((orders, books, clock)) > 1:
+        raise ValueError("signed_read_type_conflict")
     reader = launcher["load_source"](authority.source("inspect_binding.py").decode())[
         "process_identity"
     ]
@@ -344,8 +347,14 @@ def launch(authority, sources, launcher, runtime, *, orders=False, books=False):
         source += f"exec(compile({raw!r},'<held-source>','exec'))\n"
     raw = sources.source("gateway_native_account.py")
     source += f"account_scope={{'__name__':'held_account','ControlChannel':ControlChannel,'REQUESTS':REQUESTS.__dict__,'PROVENANCE':PROVENANCE,'RECEIVE':receive_payload}}\nexec(compile({raw!r},'<held-account>','exec'),account_scope)\nchild_loop=account_scope['child_loop']\n"
-    if orders or books:
-        raw = sources.source("gateway_book_routes.py" if books else "gateway_native_orders.py")
+    if orders or books or clock:
+        raw = sources.source(
+            "gateway_native_time.py"
+            if clock
+            else "gateway_book_routes.py"
+            if books
+            else "gateway_native_orders.py"
+        )
         source += f"orders_scope={{'__name__':'held_orders','ACCOUNT':account_scope}}\nexec(compile({raw!r},'<held-orders>','exec'),orders_scope)\nchild_loop=orders_scope['child_loop']\n"
     runtime.verify()
     launcher["FixtureCollector"].__init__.__globals__["PYTHON"] = (

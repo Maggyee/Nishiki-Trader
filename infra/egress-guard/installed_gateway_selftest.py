@@ -126,6 +126,7 @@ QUOTE_WS_SCENARIOS = (
     "quote_crossed",
 )
 UNSUB_WS_SCENARIOS = ("unsub_success", "unsub_bad_ack")
+CLOCK_SCENARIOS = ("clock_success", "clock_bad_time")
 FIXTURE_BOOKS = [
     {"symbol": asset + "USDT", "bidPrice": price, "askPrice": ask, "bidQty": "10", "askQty": "10"}
     for asset, price, ask in (
@@ -197,7 +198,7 @@ if runtime.exists():
     denied('native_runtime_write',lambda:os.open(runtime/'bin/python3.12',os.O_WRONLY))
     denied('native_runtime_replace',lambda:os.unlink(runtime/'bin/python3.12'))
 code=Path('/usr/local/lib/trader-egress')
-for name in ('installed_gateway.py','gateway_tls.py','gateway_joint_ipc.py','gateway_tls_receipt.py','gateway_native_runtime.py','gateway_native_receipt.py','gateway_native_requests.py','gateway_native_account.py','gateway_native_orders.py','gateway_book_routes.py','gateway_read_sequence.py','gateway_concurrent_ws.py','gateway_account_ws.py','gateway_market_ws.py','gateway_snapshot_ws.py','gateway_native_quote.py','portfolio_ws_frames.py','ledger_gateway.py','selftest.py','portfolio_rate_evidence.py','portfolio_tls_provenance.py','portfolio_egress_ledger.py'):
+for name in ('installed_gateway.py','gateway_tls.py','gateway_joint_ipc.py','gateway_tls_receipt.py','gateway_native_runtime.py','gateway_native_receipt.py','gateway_native_requests.py','gateway_native_account.py','gateway_native_orders.py','gateway_book_routes.py','gateway_native_time.py','gateway_read_sequence.py','gateway_concurrent_ws.py','gateway_account_ws.py','gateway_market_ws.py','gateway_snapshot_ws.py','gateway_native_quote.py','portfolio_ws_frames.py','ledger_gateway.py','selftest.py','portfolio_rate_evidence.py','portfolio_tls_provenance.py','portfolio_egress_ledger.py'):
     path=code/name
     assert path.read_bytes()
     denied('write:'+name,lambda:os.open(path,os.O_WRONLY))
@@ -297,6 +298,7 @@ with socket.socket() as listener:
                 if len(request)>4096: raise ValueError('request_limit')
             expected=b'GET /api/v3/exchangeInfo HTTP/1.1\r\nHost: rest.fixture.invalid:23456\r\nConnection: close\r\n\r\n'
             if sys.argv[2]=='books':expected=b'GET /api/v3/ticker/bookTicker HTTP/1.1\r\nHost: rest.fixture.invalid:23456\r\nConnection: close\r\n\r\n'
+            if sys.argv[2]=='clock':expected=b'GET /api/v3/time HTTP/1.1\r\nHost: rest.fixture.invalid:23456\r\nConnection: close\r\n\r\n'
             if sys.argv[2] in {'account','orders'}:
                 from urllib.parse import parse_qsl,urlencode
                 path='/api/v3/openOrders' if sys.argv[2]=='orders' else '/api/v3/account'
@@ -316,6 +318,9 @@ with socket.socket() as listener:
                 report['native_signature_verified']=True
             if request!=expected: raise ValueError('unexpected_request')
             report['http_requests']=1;report['request_sha256']=hashlib.sha256(request).hexdigest();save()
+            if sys.argv[2]=='clock':
+                body=json.dumps({'serverTime':time.time_ns()//1000000 if scenario=='clock_success' else 1},separators=(',',':')).encode()
+                headers=b'HTTP/1.1 200 OK\r\nContent-Length: '+str(len(body)).encode()+b'\r\nX-MBX-USED-WEIGHT-1M: 20\r\nConnection: close\r\n\r\n'
             connection.sendall(headers)
             if scenario in {'tls_slow_body','tls_crash'}: time.sleep(1.2 if scenario=='tls_slow_body' else 2)
             connection.sendall(body[:5] if scenario=='tls_truncated' else body)
@@ -480,6 +485,7 @@ def worker(payload):
     base["require_isolation"](payload["original"])
     requests = payload.get("native_requests_profile", False)
     unsub_ws = payload.get("unsub_ws_profile", False)
+    clock = payload.get("joint_clock_profile", False)
     quote_ws = payload.get("quote_ws_profile", False) or unsub_ws
     snapshot_ws = payload.get("snapshot_ws_profile", False) or quote_ws
     market_ws = payload.get("market_ws_profile", False) or snapshot_ws
@@ -487,7 +493,7 @@ def worker(payload):
     concurrent = payload.get("concurrent_ws_profile", False) or signed_ws
     routes = payload.get("route_sequence_profile", False) or concurrent
     orders = payload.get("order_sequence_profile", False) or routes
-    sequence = payload.get("read_sequence_profile", False) or orders
+    sequence = payload.get("read_sequence_profile", False) or orders or clock
     signed = payload.get("signed_account_profile", False)
     native = payload.get("native_receipt_profile", False) or signed or sequence
     receipt = payload.get("tls_receipt_profile", False) or native
@@ -495,6 +501,7 @@ def worker(payload):
     ipc = payload.get("joint_ipc_profile", False) or requests
     if (
         type(unsub_ws) is not bool
+        or type(clock) is not bool
         or type(quote_ws) is not bool
         or type(concurrent) is not bool
         or type(routes) is not bool
@@ -509,7 +516,9 @@ def worker(payload):
         or (tls and ipc)
         or payload["scenario"]
         not in (
-            UNSUB_WS_SCENARIOS
+            CLOCK_SCENARIOS
+            if clock
+            else UNSUB_WS_SCENARIOS
             if unsub_ws
             else QUOTE_WS_SCENARIOS
             if quote_ws
@@ -638,29 +647,30 @@ def worker(payload):
             )
             Path("/etc/trader/egress-gateway-fixture-ca.pem").chmod(0o444)
             Path("/run/gateway-tls-key.pem").chmod(0o600)
-            tls_peer = subprocess.Popen(
-                [
-                    "/usr/bin/nsenter",
-                    f"--net=/proc/{peer.process.pid}/ns/net",
-                    "/usr/bin/setpriv",
-                    "--bounding-set=-all",
-                    "--inh-caps=-all",
-                    "--ambient-caps=-all",
-                    "--no-new-privs",
-                    "/usr/bin/python3",
-                    "-I",
-                    "-c",
-                    TLS_PEER,
-                    payload["scenario"],
-                    "account" if signed else "native" if native else "stdlib",
-                ],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                env=ENV,
-                cwd="/",
-            )
-            if tls_peer.stdout.readline().strip() != "ready":
+            if not clock:
+                tls_peer = subprocess.Popen(
+                    [
+                        "/usr/bin/nsenter",
+                        f"--net=/proc/{peer.process.pid}/ns/net",
+                        "/usr/bin/setpriv",
+                        "--bounding-set=-all",
+                        "--inh-caps=-all",
+                        "--ambient-caps=-all",
+                        "--no-new-privs",
+                        "/usr/bin/python3",
+                        "-I",
+                        "-c",
+                        TLS_PEER,
+                        payload["scenario"],
+                        "account" if signed else "native" if native else "stdlib",
+                    ],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    env=ENV,
+                    cwd="/",
+                )
+            if tls_peer is not None and tls_peer.stdout.readline().strip() != "ready":
                 raise RuntimeError("tls_peer_failed:" + tls_peer.stderr.read()[-2000:])
         elif peer.request({"action": "serve"}) != {"ok": True}:
             raise RuntimeError("fixture_peer_not_ready")
@@ -1117,6 +1127,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
     """Drive fixed barriers only; parent is namespace PID 1 and has no host network."""
     code = load(payload["sources"]["gateway_read_sequence.py"])
     modules = code["load_sources"](payload["sources"])
+    clock = payload.get("joint_clock_profile", False)
     unsub_ws = payload.get("unsub_ws_profile", False)
     quote_ws = payload.get("quote_ws_profile", False) or unsub_ws
     snapshot_ws = payload.get("snapshot_ws_profile", False) or quote_ws
@@ -1125,12 +1136,22 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
     concurrent = payload.get("concurrent_ws_profile", False) or signed_ws
     routes = payload.get("route_sequence_profile", False) or concurrent
     orders = payload.get("order_sequence_profile", False) or routes
-    steps = code["ROUTE_STEPS"] if routes else code["ORDER_STEPS"] if orders else code["STEPS"]
+    steps = (
+        code["CLOCK_STEPS"]
+        if clock
+        else code["ROUTE_STEPS"]
+        if routes
+        else code["ORDER_STEPS"]
+        if orders
+        else code["STEPS"]
+    )
     scope_name = (
         code[
             "UNSUB_ROUTE_SCOPE" if unsub_ws else "QUOTE_ROUTE_SCOPE" if quote_ws else "ROUTE_SCOPE"
         ]
         if routes
+        else code["CLOCK_SCOPE"]
+        if clock
         else code["ORDER_SCOPE"]
         if orders
         else code["SCOPE"]
@@ -1140,7 +1161,9 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
         "/usr/bin/python3",
         "-I",
         entry["CODE"] + "/installed_gateway.py",
-        "--unsub-ws-fixture"
+        "--joint-clock-fixture"
+        if clock
+        else "--unsub-ws-fixture"
         if unsub_ws
         else "--quote-ws-fixture"
         if quote_ws
@@ -1220,7 +1243,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                     or identity["groups"]
                 ):
                     raise RuntimeError("sequence_child_identity")
-                if index == 0:
+                if index == 0 and not clock:
                     probe = json.loads(
                         guards["run"](
                             "/usr/bin/setpriv",
@@ -1262,6 +1285,8 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                         )
                     if routes:
                         selected_scenario = scenario
+                    if clock:
+                        selected_scenario = scenario
                     tls_peer = subprocess.Popen(
                         [
                             "/usr/bin/nsenter",
@@ -1276,7 +1301,9 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                             "-c",
                             TLS_PEER,
                             selected_scenario,
-                            "books"
+                            "clock"
+                            if clock
+                            else "books"
                             if routes and index == 5
                             else "orders"
                             if orders and index in {2, 3}
@@ -1409,6 +1436,13 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                     restore = (target, original)
                 release()
             elif message.get("status") in {"fixture_receipt_succeeded", "refused"}:
+                if clock and message["status"] == "refused":
+                    if (
+                        scenario != "clock_bad_time"
+                        or message.get("detail") != "joint_clock_fixture_time_drift"
+                    ):
+                        raise RuntimeError("unexpected_clock_refusal:" + json.dumps(message))
+                    checks.append("invalid_server_time_refused_before_native_acknowledgement")
                 finish_peer()
             elif message.get("status") in {"sequence_completed", "sequence_refused"}:
                 terminal = message
@@ -1449,7 +1483,9 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
         for i in range(len(prepared)):
             directory = root / steps[i]
             scope = directory / (
-                modules["ledger"].BOOKS_SCOPE
+                modules["ledger"].CLOCK_SCOPE
+                if clock
+                else modules["ledger"].BOOKS_SCOPE
                 if routes and i == 5
                 else modules["ledger"].ORDERS_SCOPE
                 if orders and i in {2, 3}
@@ -1459,6 +1495,8 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
             )
             bundle = {}
             for key, name in code["FILES"].items():
+                if key == "selection" and clock:
+                    name = "time-request.json"
                 if key == "selection" and routes and i == 5:
                     name = "books-request.json"
                 if key == "selection" and orders and i in {2, 3}:
@@ -1476,8 +1514,11 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
             routes=routes,
             quotes=quote_ws,
             unsubscribe=unsub_ws,
+            clock=clock,
         )
         expected = {
+            "clock_success": (1, 1),
+            "clock_bad_time": (1, 0),
             **{
                 name: (6, 6)
                 for name in (
@@ -1520,6 +1561,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
             != (
                 scenario
                 in (
+                    "clock_success",
                     *WS_SCENARIOS,
                     *SIGNED_WS_SCENARIOS,
                     *MARKET_WS_SCENARIOS,
@@ -1696,6 +1738,22 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
             raise RuntimeError("sequence_descriptor_budget_exceeded")
         checks.append("controller_descriptors_preserve_64_spare_under_1024_without_limit_change")
         checks.append("selected_parent_and_all_child_originals_replay")
+        if clock:
+            if (
+                report["ordered_joint_prefix_length"] != (1 if scenario == "clock_success" else 0)
+                or report["full_account_interval"]
+            ):
+                raise RuntimeError("clock_prefix_or_account_interval_mismatch")
+            receipt = report["steps"][0].get("receipt", {})
+            if scenario == "clock_success":
+                if (
+                    not receipt.get("native_clock_acknowledged")
+                    or receipt["native_result"]["provider_clock_qualified"]
+                ):
+                    raise RuntimeError("original_clock_native_receipt_required")
+            elif receipt or report["steps"][0]["native_result"] is not None:
+                raise RuntimeError("invalid_clock_native_receipt")
+            checks.append("first_joint_clock_operation_only_no_account_interval")
         originals = {
             str(p.relative_to(root)): p.read_bytes() for p in root.rglob("*") if p.is_file()
         }
@@ -2043,6 +2101,7 @@ def main(argv=None):
     profiles.add_argument("--snapshot-ws-profile", action="store_true")
     profiles.add_argument("--quote-ws-profile", action="store_true")
     profiles.add_argument("--unsub-ws-profile", action="store_true")
+    profiles.add_argument("--joint-clock-profile", action="store_true")
     profiles.add_argument("--joint-ipc-profile", action="store_true")
     args = parser.parse_args(argv)
     if os.geteuid() == 0:
@@ -2085,6 +2144,7 @@ def main(argv=None):
             or args.snapshot_ws_profile
             or args.quote_ws_profile
             or args.unsub_ws_profile
+            or args.joint_clock_profile
         ):
             built = subprocess.run(
                 [
@@ -2126,6 +2186,7 @@ def main(argv=None):
             "snapshot_ws_profile": args.snapshot_ws_profile,
             "quote_ws_profile": args.quote_ws_profile,
             "unsub_ws_profile": args.unsub_ws_profile,
+            "joint_clock_profile": args.joint_clock_profile,
             "joint_ipc_profile": args.joint_ipc_profile,
             "base_source": base_source,
             "installer": installer.decode(),
@@ -2138,7 +2199,9 @@ def main(argv=None):
         reports = []
         bootstrap = "import json,sys\np=json.load(sys.stdin)\ns={'__name__':'isolated_installed_gateway'}\nexec(compile(p['source'],'<fixture>','exec'),s)\nprint(json.dumps(s['worker'](p),sort_keys=True))\n"
         for scenario in (
-            UNSUB_WS_SCENARIOS
+            CLOCK_SCENARIOS
+            if args.joint_clock_profile
+            else UNSUB_WS_SCENARIOS
             if args.unsub_ws_profile
             else QUOTE_WS_SCENARIOS
             if args.quote_ws_profile
@@ -2239,6 +2302,7 @@ def main(argv=None):
             "snapshot_ws_profile": args.snapshot_ws_profile,
             "quote_ws_profile": args.quote_ws_profile,
             "unsub_ws_profile": args.unsub_ws_profile,
+            "joint_clock_profile": args.joint_clock_profile,
             "joint_ipc_profile": args.joint_ipc_profile,
             "scenarios": reports,
             "source_sha256": payload["source_sha256"],
