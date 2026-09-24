@@ -22,6 +22,15 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the same-parent installed market WebSocket Upgrade, read
+`docs/progress/portfolio-installed-joint-market-connect-2026-09-24.md` and its
+JSON. Manifest v21 pins 24 sources and a distinct v3 parent. The root derives
+the market URL from the first account pass and route originals, keeps the
+account channel alive, then accepts an exact TLS/Upgrade after kernel revocation.
+A malformed Upgrade stops at nine accepted operations. Success is only 10/19:
+no market increment, REST depth anchor, linked time, second account pass or
+unsubscribe has joined this parent; real admission and trading stay blocked.
+
 For the same-parent installed route fixation, read
 `docs/progress/portfolio-installed-joint-routes-2026-09-24.md` and its JSON.
 Manifest v20 pins 24 sources and a distinct v2 parent; one account WS survives

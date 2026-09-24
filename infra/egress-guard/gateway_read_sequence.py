@@ -31,8 +31,8 @@ CLOCK_STEPS = ("clock_initial",)
 JOINT_WS_PROFILE = "portfolio.installed_joint_account_prefix.v1"
 JOINT_WS_SCOPE = "fixture-joint-account-prefix-v1"
 JOINT_WS_STEPS = (*CLOCK_STEPS, "account_connect", "account_subscribe")
-JOINT_READ_PROFILE = "portfolio.installed_joint_account_reads.v2"
-JOINT_READ_SCOPE = "fixture-joint-account-reads-v2"
+JOINT_READ_PROFILE = "portfolio.installed_joint_account_reads.v3"
+JOINT_READ_SCOPE = "fixture-joint-account-reads-v3"
 JOINT_READ_STEPS = (
     *JOINT_WS_STEPS,
     "account_before_first",
@@ -41,6 +41,7 @@ JOINT_READ_STEPS = (
     "account_before_second",
     "metadata",
     "books",
+    "market_connect",
 )
 LIMIT = 65536
 FILES = {
@@ -87,6 +88,7 @@ def load_sources(sources):
         "ws": load("gateway_concurrent_ws.py"),
         "frames": load("portfolio_ws_frames.py"),
         "metadata": load("gateway_native_receipt.py"),
+        "joint_route_selection": joint_route_selection,
         "requests": load("gateway_native_requests.py"),
         "provenance": sys.modules["apps.strategies_nautilus.portfolio_tls_provenance"],
         "rates": sys.modules["apps.strategies_nautilus.portfolio_rate_evidence"],
@@ -108,7 +110,7 @@ def review_bundle(
     previous=None,
 ):
     """Verify originals before considering a step complete; never trust a saved report."""
-    if (joint_ws or joint_reads) and index in {1, 2}:
+    if (joint_ws or joint_reads) and index in ({1, 2, 9} if joint_reads else {1, 2}):
         return modules["joint_ws"]["review_step"](
             bundle, index, context, selected, modules, previous
         )
@@ -329,6 +331,26 @@ def joint_route_result(results, bundles, modules):
     return modules["books"]["derive"](
         metadata, results[3]["native_result"], results[8]["native_result"]
     )
+
+
+def joint_route_selection(bundles, selected, modules):
+    if len(bundles) != 9:
+        raise ValueError("joint_market_route_originals_required")
+    results = [None] * 9
+    for index in (3, 7, 8):
+        context = json.loads(bundles[index]["binding"])["read_sequence"]
+        results[index] = review_bundle(
+            bundles[index],
+            index,
+            context,
+            selected,
+            modules,
+            joint_reads=True,
+            previous=bundles[:index],
+        )
+        if not results[index]["complete"]:
+            raise ValueError("joint_market_route_receipt_required")
+    return joint_route_result(results, bundles, modules)
 
 
 def route_result(results, bundles, modules):
@@ -602,6 +624,7 @@ def replay(
             else {}
         ),
         **({"account_before_four_gets_reconciled": accepted >= 7} if joint_reads else {}),
+        **({"market_ws_upgraded": accepted >= 10} if joint_reads else {}),
         **(
             {
                 "routes_derived_from_same_run": accepted >= 9,
@@ -910,7 +933,9 @@ class Sequence:
         self.write(self.storage / "binding.json", canonical(binding))
 
     def read_bundle(self):
-        if (self.joint_ws or self.joint_reads) and self.index in {1, 2}:
+        if (self.joint_ws or self.joint_reads) and self.index in (
+            {1, 2, 9} if self.joint_reads else {1, 2}
+        ):
             bundle = {}
             for key, name in (("binding", "binding.json"), ("ws", "ws.jsonl")):
                 path = self.storage / name
@@ -1027,7 +1052,7 @@ def run_installed(
         try:
             for index in range(len(sequence.steps)):
                 sequence.prepare(index)
-                if (joint_ws or joint_reads) and index in {1, 2}:
+                if (joint_ws or joint_reads) and index in ({1, 2, 9} if joint_reads else {1, 2}):
                     if channel is None:
                         channel = modules["joint_ws"]["Channel"](
                             entry, authority, sources, sequence

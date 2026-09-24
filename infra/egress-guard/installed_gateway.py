@@ -40,7 +40,7 @@ FILES = (
     "portfolio_tls_provenance.py",
     "portfolio_egress_ledger.py",
 )
-PROFILE = "portfolio.installed_gateway_fixture.v20"
+PROFILE = "portfolio.installed_gateway_fixture.v21"
 
 
 def digest(raw):

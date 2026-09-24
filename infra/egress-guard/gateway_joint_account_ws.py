@@ -94,21 +94,34 @@ def review_step(bundle, index, context, selected, modules, previous):
     stages = [r["kind"] for r in rows]
     if not stages or stages[0] != "intent":
         raise ValueError("joint_ws_preparation_order")
-    if index == 1:
+    if index in {1, 9}:
         expected = ["intent", "grant_prepared", "activated", "tls_connected", "request_prepared"]
         chunks = "response_chunk"
         conclusion = "upgrade_accepted"
         intent = rows[0]["payload"]
         ws = modules["ws"]
+        role = "account" if index == 1 else "market"
+        route = (
+            modules["joint_route_selection"](previous, selected, modules) if index == 9 else None
+        )
+        route_fields = (
+            {
+                "route_selection_sha256": digest(canonical(route)),
+                "route_bundles_sha256": digest(canonical(previous)),
+            }
+            if route is not None
+            else {"clock_bundle_sha256": digest(canonical(previous[0]))}
+        )
+        symbols = {"symbols": route["symbols"]} if route is not None else {}
         if (
-            set(intent) != {"endpoint", "peer", "nonce", "clock_bundle_sha256"}
-            or intent["endpoint"] != ws["endpoint"]("account", {})[0]
+            set(intent) != {"endpoint", "peer", "nonce"} | set(route_fields)
+            or intent["endpoint"] != ws["endpoint"](role, symbols)[0]
             or intent["peer"] != list(PEER)
-            or intent["clock_bundle_sha256"] != digest(canonical(previous[0]))
+            or any(intent[key] != value for key, value in route_fields.items())
         ):
             raise ValueError("joint_ws_fixed_connection")
         nonce = intent["nonce"]
-        expected_request = ws["request"]("account", {}, nonce)
+        expected_request = ws["request"](role, symbols, nonce)
         if len(rows) >= 4 and stages[3] == "tls_connected":
             tls = rows[3]["payload"]
             if (
@@ -123,7 +136,7 @@ def review_step(bundle, index, context, selected, modules, previous):
                     "verify_mode",
                 }
                 or tls["peer"] != list(PEER)
-                or tls["server_hostname"] != "account.fixture.invalid"
+                or tls["server_hostname"] != role + ".fixture.invalid"
                 or tls["check_hostname"] is not True
                 or tls["verify_mode"] != "CERT_REQUIRED"
                 or tls["tls_version"] not in {"TLSv1.2", "TLSv1.3"}
@@ -212,7 +225,7 @@ def review_step(bundle, index, context, selected, modules, previous):
             raise ValueError("joint_ws_write_fields")
     else:
         raise ValueError("joint_ws_step_index")
-    grant_index = 1 if index == 1 else 2
+    grant_index = 1 if index in {1, 9} else 2
     if len(rows) > grant_index and rows[grant_index]["payload"] != {"mark": MARK, "ttl_ms": 5000}:
         raise ValueError("joint_ws_grant_intent")
     early_revoked = (
@@ -239,14 +252,16 @@ def review_step(bundle, index, context, selected, modules, previous):
     if stages[end : end + 1] == [conclusion]:
         if not response or rows[end]["payload"] != {}:
             raise ValueError("joint_ws_response_required")
-        if index == 1:
+        if index in {1, 9}:
             if b"\r\n\r\n" not in response:
                 raise ValueError("joint_ws_upgrade_incomplete")
             headers = bytes(response)
             if headers.index(b"\r\n\r\n") + 4 != len(headers):
                 raise ValueError("joint_ws_unexpected_upgrade_data")
             status, pairs = modules["provenance"].response_headers(headers)
-            modules["provenance"]._validate_response("account", status, pairs, nonce)
+            modules["provenance"]._validate_response(
+                "account" if index == 1 else "market", status, pairs, nonce
+            )
         else:
             frames = modules["frames"]["ServerFrames"]().feed(bytes(response))
             if len(frames) != 1 or frames[0][0] != 1:
@@ -278,6 +293,7 @@ def review_step(bundle, index, context, selected, modules, previous):
         "native_result": None,
         "ws_archive_sha256": digest(raw),
         "account_connection_upgraded": complete if index == 1 else True,
+        "market_connection_upgraded": index == 9 and complete,
         "subscription_acknowledged": complete if index == 2 else False,
         "native_signer_verified": index == 2 and complete,
         "account_interval_complete": False,
@@ -292,7 +308,7 @@ class Channel:
             sources,
             sequence,
         )
-        self.connection = self.session = None
+        self.connection = self.market_connection = self.session = None
         self.guards = entry["load"](sources.source("selftest.py"))
         self.ws = entry["load"](sources.source("gateway_concurrent_ws.py"))
         self.account = entry["load"](sources.source("gateway_account_ws.py"))
@@ -365,19 +381,47 @@ class Channel:
                     kind, profile=PROFILE, utc_ns=now, monotonic_ns=mono, payload=payload
                 )
 
-            if index == 1:
+            if index in {1, 9}:
+                if index == 9 and (self.connection is None or self.market_connection is not None):
+                    raise ValueError("joint_market_account_connection_required")
                 nonce = base64.b64encode(os.urandom(16)).decode()
-                request = self.ws["request"]("account", {}, nonce)
+                role = "account" if index == 1 else "market"
+                route = (
+                    sequence.modules["joint_route_selection"](
+                        sequence.bundles[:9],
+                        json.loads(sequence.expected.splitlines()[0])["payload"],
+                        sequence.modules,
+                    )
+                    if index == 9
+                    else None
+                )
+                symbols = {"symbols": route["symbols"]} if route is not None else {}
+                request = self.ws["request"](role, symbols, nonce)
                 append(
                     "intent",
                     {
-                        "endpoint": self.ws["endpoint"]("account", {})[0],
+                        "endpoint": self.ws["endpoint"](role, symbols)[0],
                         "peer": list(PEER),
                         "nonce": nonce,
-                        "clock_bundle_sha256": digest(canonical(sequence.bundles[0])),
+                        **(
+                            {
+                                "route_selection_sha256": digest(canonical(route)),
+                                "route_bundles_sha256": digest(canonical(sequence.bundles[:9])),
+                            }
+                            if route is not None
+                            else {"clock_bundle_sha256": digest(canonical(sequence.bundles[0]))}
+                        ),
                     },
                 )
-                print(json.dumps({"stage": "joint_ws_prepared"}), flush=True)
+                print(
+                    json.dumps(
+                        {
+                            "stage": "joint_ws_prepared" if index == 1 else "joint_market_prepared",
+                            "index": index,
+                        }
+                    ),
+                    flush=True,
+                )
                 if sys.stdin.readline() != "continue\n":
                     raise ValueError("fixture_parent_release_required")
             elif index == 2:
@@ -432,9 +476,9 @@ class Channel:
                     left = deadline - time.monotonic()
                     if left <= 0:
                         raise TimeoutError("joint_ws_total_deadline")
-                    self.connection.settimeout(left)
+                    (self.market_connection if index == 9 else self.connection).settimeout(left)
 
-                if index == 1:
+                if index in {1, 9}:
                     context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
                     context.minimum_version = ssl.TLSVersion.TLSv1_2
                     context.load_verify_locations(cadata=self.trust.decode("ascii"))
@@ -443,39 +487,43 @@ class Channel:
                         sock.setsockopt(socket.SOL_SOCKET, socket.SO_MARK, MARK)
                         sock.settimeout(4)
                         sock.connect(PEER)
-                        self.connection = context.wrap_socket(
-                            sock, server_hostname="account.fixture.invalid"
+                        connection = context.wrap_socket(
+                            sock, server_hostname=role + ".fixture.invalid"
                         )
+                        if index == 1:
+                            self.connection = connection
+                        else:
+                            self.market_connection = connection
                     finally:
-                        if self.connection is None:
+                        if (self.market_connection if index == 9 else self.connection) is None:
                             sock.close()
-                    certificate = self.connection.getpeercert(binary_form=True)
+                    certificate = connection.getpeercert(binary_form=True)
                     append(
                         "tls_connected",
                         {
-                            "peer": list(self.connection.getpeername()),
-                            "server_hostname": "account.fixture.invalid",
+                            "peer": list(connection.getpeername()),
+                            "server_hostname": role + ".fixture.invalid",
                             "peer_certificate_sha256": digest(certificate),
-                            "tls_version": self.connection.version(),
-                            "cipher": list(self.connection.cipher()),
+                            "tls_version": connection.version(),
+                            "cipher": list(connection.cipher()),
                             "check_hostname": context.check_hostname,
                             "verify_mode": "CERT_REQUIRED",
                         },
                     )
                     append("request_prepared", self.provenance.raw_fields(request))
                     bounded()
-                    self.connection.sendall(request)
+                    connection.sendall(request)
                     response = bytearray()
                     while b"\r\n\r\n" not in response:
                         bounded()
-                        chunk = self.connection.recv(4096)
+                        chunk = connection.recv(4096)
                         clocks = (time.time_ns(), time.monotonic_ns())
                         if not chunk:
                             raise ValueError("joint_ws_upgrade_eof")
                         append("response_chunk", self.provenance.raw_fields(chunk), clocks)
                         response.extend(chunk)
                     status, pairs = self.provenance.response_headers(bytes(response))
-                    self.provenance._validate_response("account", status, pairs, nonce)
+                    self.provenance._validate_response(role, status, pairs, nonce)
                     append("upgrade_accepted", {})
                 else:
                     signer.verify()
@@ -515,6 +563,8 @@ class Channel:
 
     def close(self):
         try:
+            if self.market_connection is not None:
+                self.market_connection.close()
             if self.connection is not None:
                 self.connection.close()
         finally:

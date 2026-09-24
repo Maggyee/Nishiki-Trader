@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-24
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: A distinct disposable v20/v2 parent accepts 9/19 ordered joint operations: clock, held account WS, signed subscription, the first four-GET account pass and same-run metadata/bookTicker route fixation. Changed orders stop at five accepted steps, changed balances at six, and insufficient top-book capacity at eight. Next join market/depth/linked time, the second four-GET account pass, final clock and unsubscribe under this parent. No complete before/after account interval exists; older independent fixtures cannot be combined. Stream fences, real authority/coverage, provider clocks/usage, host rollout, qualified equity and trading remain blocked.
+- **Current objective**: A distinct disposable v21/v3 parent accepts 10/19 ordered joint operations: clock, held account WS, signed subscription, the first four-GET account pass, same-run route fixation and original-derived market WS Upgrade. A malformed market Upgrade stops at nine accepted steps. Next keep both channels alive while joining market increments, REST depth anchors and linked time, then the second four-GET pass, final clock and unsubscribe under a fresh parent. No complete before/after account interval exists; older independent fixtures cannot be combined. Stream fences, real authority/coverage, provider clocks/usage, host rollout, qualified equity and trading remain blocked.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -411,14 +411,14 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
 
 ## Latest Verification
 
-- Installed same-parent route fixation: **1,032 related tests and four disposable
-  scenarios pass**. Success accepts nine steps, reconciles the first four-GET
-  account pass and derives `BNBUSDT`/`BTCUSDT` from same-run native originals;
-  insufficient book capacity stops after eight. Manifest v20 pins 24 sources;
-  descriptors peak at **881/1,024**. Three old WS, two clock and two
-  unsubscribe scenarios pass against v20 sources. No complete before/after
-  interval exists. See
-  [same-parent route acceptance](progress/portfolio-installed-joint-routes-2026-09-24.md).
+- Installed same-parent market Upgrade: **1,039 related tests and five disposable
+  scenarios pass**. Success accepts ten steps, derives `BNBUSDT`/`BTCUSDT` from
+  same-run originals and upgrades the selected market WS while account WS stays
+  open; malformed Upgrade accepts nine. Manifest v21 pins 24 sources; sampled
+  descriptors peak at **881/1,024**. Three old WS, two clock and two unsubscribe
+  scenarios pass against v21 sources. No market events, complete before/after
+  interval or stream fence exists. See
+  [same-parent market acceptance](progress/portfolio-installed-joint-market-connect-2026-09-24.md).
 - Installed fixture account unsubscribe: **109 related Python tests and two
   disposable scenarios pass**. Success records exact unsubscribe and two
   native quotes after revocation; wrong acknowledgement is nonresumable with

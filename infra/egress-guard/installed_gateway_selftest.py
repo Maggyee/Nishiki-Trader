@@ -133,6 +133,7 @@ JOINT_READ_SCENARIOS = (
     "joint_reads_orders_changed",
     "joint_reads_balance_drift",
     "joint_reads_bad_books",
+    "joint_reads_bad_market_upgrade",
 )
 FIXTURE_BOOKS = [
     {"symbol": asset + "USDT", "bidPrice": price, "askPrice": ask, "bidQty": "10", "askQty": "10"}
@@ -600,6 +601,33 @@ with socket.socket() as listener:
                     headers=b'HTTP/1.1 200 OK\r\nContent-Length: '+str(len(body)).encode()+b'\r\nX-MBX-USED-WEIGHT-1M: 20\r\nConnection: close\r\n\r\n'
                     report['rest_requests'].append({'index':position,'path':path,'request_sha256':hashlib.sha256(request).hexdigest(),'ws_socket_open':connection.fileno()>=0});save()
                     rest.sendall(headers+body)
+            if scenario in {'joint_reads_success','joint_reads_bad_market_upgrade'}:
+                listener.settimeout(20)
+                raw,_=listener.accept();report['connections']=2;save()
+                with context.wrap_socket(raw,server_side=True) as market:
+                    market.settimeout(5)
+                    if names[id(market)]!='market.fixture.invalid':raise ValueError('joint_market_sni')
+                    request=b''
+                    while b'\r\n\r\n' not in request:
+                        part=market.recv(4096)
+                        if not part or len(request)+len(part)>4096:raise ValueError('joint_market_request_limit')
+                        request+=part
+                    lines=request.decode().split('\r\n')
+                    nonce=next(line.split(': ',1)[1] for line in lines if line.startswith('Sec-WebSocket-Key: '))
+                    if len(base64.b64decode(nonce,validate=True))!=16:raise ValueError('joint_market_nonce')
+                    expected=(f'GET /stream?streams=bnbusdt@depth@100ms/btcusdt@depth@100ms HTTP/1.1\r\nHost: market.fixture.invalid:23456\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: {nonce}\r\nSec-WebSocket-Version: 13\r\n\r\n').encode()
+                    if request!=expected or connection.fileno()<0:raise ValueError('joint_market_route_request')
+                    report['market_upgrade_requests']=1
+                    report['market_request_sha256']=hashlib.sha256(request).hexdigest();save()
+                    accept=base64.b64encode(hashlib.sha1(nonce.encode()+b'258EAFA5-E914-47DA-95CA-C5AB0DC85B11').digest())
+                    if scenario=='joint_reads_bad_market_upgrade':accept=b'invalid'
+                    headers=b'HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: '+accept+b'\r\n\r\n'
+                    market.sendall(headers[:27]);market.sendall(headers[27:])
+                    report['market_held_after_upgrade']=market.fileno()>=0 and connection.fileno()>=0;save()
+                    market.settimeout(2)
+                    try:
+                        if market.recv(4096):raise ValueError('joint_market_unexpected_frame')
+                    except socket.timeout:pass
             connection.settimeout(2)
             try:
                 if connection.recv(4096):raise ValueError('joint_read_unexpected_ws_frame')
@@ -1371,7 +1399,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
     def finish_peer():
         if joint_reads and index > 0:
             rows = json.loads(Path("/run/gateway-joint-ws-peer.json").read_bytes())
-            if len(rows.get("rest_requests", [])) < index - 2:
+            if len(rows.get("rest_requests", [])) < min(index - 2, 6):
                 raise RuntimeError("joint_read_rest_peer_missing")
             return
         tls_peer.wait(timeout=5)
@@ -1556,6 +1584,11 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                         "joint_ws_peer_not_ready:" + joint_peer.stderr.read()[-2000:]
                     )
                 release()
+            elif stage == "joint_market_prepared":
+                revoked()
+                if message.get("index") != 9 or joint_peer is None:
+                    raise RuntimeError("joint_market_without_held_account_ws")
+                release()
             elif stage in {"ws_activated", "ws_both_live"}:
                 descriptor_counts.append(len(list(Path(f"/proc/{controller.pid}/fd").iterdir())))
                 if stage == "ws_both_live" and scenario == "routes_ws_controller_crash":
@@ -1611,7 +1644,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                     signal.pidfd_send_signal(stopped, signal.SIGSTOP)
                 release()
             elif stage == "sequence_step_accepted":
-                if joint_ws and message["index"] in {1, 2}:
+                if joint_ws and message["index"] in {1, 2, 9}:
                     if message["index"] != index + 1:
                         raise RuntimeError("joint_ws_step_order")
                     index = message["index"]
@@ -1685,7 +1718,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
         bundles = []
         for i in range(len(prepared)):
             directory = root / steps[i]
-            if joint_ws and i in {1, 2}:
+            if joint_ws and i in ({1, 2, 9} if joint_reads else {1, 2}):
                 bundles.append(
                     {
                         key: (directory / name).read_text()
@@ -1737,10 +1770,11 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
             joint_reads=joint_reads,
         )
         expected = {
-            "joint_reads_success": (9, 9),
+            "joint_reads_success": (10, 10),
             "joint_reads_orders_changed": (6, 5),
             "joint_reads_balance_drift": (7, 6),
             "joint_reads_bad_books": (9, 8),
+            "joint_reads_bad_market_upgrade": (10, 9),
             "joint_success": (3, 3),
             "joint_bad_ack": (3, 2),
             "joint_bad_time": (1, 0),
@@ -1987,7 +2021,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
             if (
                 report["ordered_joint_prefix_length"]
                 != (
-                    9
+                    10
                     if scenario == "joint_reads_success"
                     else 5
                     if scenario == "joint_reads_orders_changed"
@@ -1995,6 +2029,8 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                     if scenario == "joint_reads_balance_drift"
                     else 8
                     if scenario == "joint_reads_bad_books"
+                    else 9
+                    if scenario == "joint_reads_bad_market_upgrade"
                     else 3
                     if scenario == "joint_success"
                     else 2
@@ -2016,7 +2052,12 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                     raise RuntimeError("joint_ws_peer_failure:" + joint_peer.stderr.read()[-2000:])
                 peer_report = json.loads(Path("/run/gateway-joint-ws-peer.json").read_bytes())
                 if (
-                    peer_report["connections"] != 1
+                    peer_report["connections"]
+                    != (
+                        2
+                        if scenario in {"joint_reads_success", "joint_reads_bad_market_upgrade"}
+                        else 1
+                    )
                     or peer_report["upgrade_requests"] != 1
                     or peer_report["subscription_requests"] != 1
                     or not peer_report["signature_verified"]
@@ -2041,11 +2082,26 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                         or any(not row["ws_socket_open"] for row in requests)
                         or not peer_report.get("held_after_ack")
                         or report["account_before_four_gets_reconciled"]
-                        != (scenario in {"joint_reads_success", "joint_reads_bad_books"})
+                        != (
+                            scenario
+                            in {
+                                "joint_reads_success",
+                                "joint_reads_bad_books",
+                                "joint_reads_bad_market_upgrade",
+                            }
+                        )
                         or report["routes_derived_from_same_run"]
-                        != (scenario == "joint_reads_success")
+                        != (scenario in {"joint_reads_success", "joint_reads_bad_market_upgrade"})
+                        or report["market_ws_upgraded"] != (scenario == "joint_reads_success")
                     ):
                         raise RuntimeError("joint_reads_original_receipt_mismatch")
+                    if scenario in {"joint_reads_success", "joint_reads_bad_market_upgrade"} and (
+                        peer_report.get("market_upgrade_requests") != 1
+                        or not peer_report.get("market_held_after_upgrade")
+                        or report["steps"][9]["market_connection_upgraded"]
+                        != (scenario == "joint_reads_success")
+                    ):
+                        raise RuntimeError("joint_market_original_upgrade_mismatch")
                     if scenario == "joint_reads_success" and report["route_selection"][
                         "symbols"
                     ] != ["BNBUSDT", "BTCUSDT"]:

@@ -249,3 +249,82 @@ def test_fully_rehashed_original_tampering_refused(originals, damage):
             module.review_step(bundles[1], 1, contexts[0], selected, modules, bundles[:1])
         else:
             module.review_step(bundles[2], 2, contexts[1], selected, modules, bundles[:2])
+
+
+@pytest.mark.parametrize(
+    "damage", [None, "route", "bundles", "request", "sni", "upgrade", "revoke"]
+)
+def test_market_upgrade_requires_original_route_request_and_revocation(originals, damage):
+    module, modules, selected, initial, _, _, clocks = originals
+    previous = list(initial) + [{"binding": initial[0]["binding"]} for _ in range(6)]
+    route = {"symbols": ["BNBUSDT", "BTCUSDT"]}
+    modules["joint_route_selection"] = lambda bundles, selected, modules: route
+    ws = modules["ws"]
+    nonce = base64.b64encode(b"m" * 16).decode()
+    context = {"profile": "joint", "index": 9, "prefix_sha256": "e" * 64}
+    binding = {
+        **json.loads(initial[0]["binding"]),
+        "read_sequence": context,
+        "clock_anchor_sha256": module.digest(initial[0]["binding"].encode()),
+    }
+    accept = base64.b64encode(
+        hashlib.sha1(nonce.encode() + b"258EAFA5-E914-47DA-95CA-C5AB0DC85B11").digest()
+    )
+    response = (
+        b"HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n"
+        b"Sec-WebSocket-Accept: " + accept + b"\r\n\r\n"
+    )
+    events = [
+        (
+            "intent",
+            {
+                "endpoint": ws["endpoint"]("market", route)[0],
+                "peer": list(module.PEER),
+                "nonce": nonce,
+                "route_selection_sha256": module.digest(module.canonical(route)),
+                "route_bundles_sha256": module.digest(module.canonical(previous)),
+            },
+        ),
+        ("grant_prepared", {"mark": module.MARK, "ttl_ms": 5000}),
+        ("activated", {}),
+        (
+            "tls_connected",
+            {
+                "peer": list(module.PEER),
+                "server_hostname": "market.fixture.invalid",
+                "peer_certificate_sha256": "f" * 64,
+                "tls_version": "TLSv1.3",
+                "cipher": ["TLS_AES_256_GCM_SHA384", "TLSv1.3", 256],
+                "check_hostname": True,
+                "verify_mode": "CERT_REQUIRED",
+            },
+        ),
+        ("request_prepared", provenance.raw_fields(ws["request"]("market", route, nonce))),
+        ("response_chunk", provenance.raw_fields(response)),
+        ("upgrade_accepted", {}),
+        ("revoked", {}),
+        ("accepted", {}),
+    ]
+    if damage == "route":
+        route["symbols"] = ["BTCUSDT"]
+    elif damage == "bundles":
+        previous[8]["binding"] = "changed"
+    elif damage == "request":
+        events[4] = ("request_prepared", provenance.raw_fields(b"GET /foreign HTTP/1.1\r\n\r\n"))
+    elif damage == "sni":
+        events[3][1]["server_hostname"] = "account.fixture.invalid"
+    elif damage == "upgrade":
+        events[5] = ("response_chunk", provenance.raw_fields(response.replace(accept, b"invalid")))
+    elif damage == "revoke":
+        events.pop(7)
+    bundle = {
+        "binding": module.canonical(binding).decode(),
+        "ws": rows(module, events, clocks[0] + 35_000_000, clocks[1] + 35_000_000),
+    }
+    if damage:
+        with pytest.raises(ValueError):
+            module.review_step(bundle, 9, context, selected, modules, previous)
+    else:
+        result = module.review_step(bundle, 9, context, selected, modules, previous)
+        assert result["complete"] and result["market_connection_upgraded"]
+        assert result["account_interval_complete"] is False
