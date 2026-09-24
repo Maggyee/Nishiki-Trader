@@ -26,6 +26,7 @@ FILES = (
     "gateway_native_orders.py",
     "gateway_book_routes.py",
     "gateway_native_time.py",
+    "gateway_joint_account_ws.py",
     "gateway_read_sequence.py",
     "gateway_concurrent_ws.py",
     "gateway_account_ws.py",
@@ -39,7 +40,7 @@ FILES = (
     "portfolio_tls_provenance.py",
     "portfolio_egress_ledger.py",
 )
-PROFILE = "portfolio.installed_gateway_fixture.v17"
+PROFILE = "portfolio.installed_gateway_fixture.v18"
 
 
 def digest(raw):
@@ -437,6 +438,7 @@ def main():
             ["--quote-ws-fixture"],
             ["--unsub-ws-fixture"],
             ["--joint-clock-fixture"],
+            ["--joint-account-prefix-fixture"],
             ["--joint-clock-step-fixture"],
         )
         or not sys.flags.isolated
@@ -470,6 +472,7 @@ def main():
         ["--quote-ws-fixture"],
         ["--unsub-ws-fixture"],
         ["--joint-clock-fixture"],
+        ["--joint-account-prefix-fixture"],
     ):
         authority = installation()
         try:
@@ -482,6 +485,7 @@ def main():
                 sources,
                 orders=sys.argv[1:] == ["--order-sequence-fixture"],
                 clock=sys.argv[1:] == ["--joint-clock-fixture"],
+                joint_ws=sys.argv[1:] == ["--joint-account-prefix-fixture"],
                 routes=sys.argv[1:]
                 in (
                     ["--route-sequence-fixture"],

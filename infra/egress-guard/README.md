@@ -6,7 +6,23 @@ offline disk tests, and retain read-only host deployment-input snapshots.
 Current phase: Phase 5 entry, offline infrastructure acceptance only. This is not
 a production guard, gateway audit service, quota authority or collection permit.
 
-The new ordered joint parent begins with `gateway_native_time.py`:
+The ordered joint parent now continues through `gateway_joint_account_ws.py`:
+
+```bash
+/usr/bin/python3 -I infra/egress-guard/installed_gateway_selftest.py --joint-account-profile --report data/NEW-JOINT-ACCOUNT.json
+```
+
+Manifest v18 pins 24 sources. One parent accepts the initial native clock GET,
+then one account TLS/WebSocket Upgrade and a dedicated-UID-signed subscription
+on the same root-owned socket. Raw chunks and receive clocks precede acceptance;
+each step revokes the mark before the parent advances. Bad subscription replies
+stop after two accepted steps; bad server time stops before account WS starts.
+The success prefix is only 3/19 planned operations, with no account event or
+complete account interval. Both four-GET account reads, remaining market/time
+steps, unsubscribe, stream fences and real admission remain pending. See
+[joint account WS acceptance](../../docs/progress/portfolio-installed-joint-account-ws-2026-09-24.md).
+
+The preceding standalone first-step profile uses `gateway_native_time.py`:
 
 ```bash
 /usr/bin/python3 -I infra/egress-guard/installed_gateway_selftest.py --joint-clock-profile --report data/NEW-JOINT-CLOCK.json

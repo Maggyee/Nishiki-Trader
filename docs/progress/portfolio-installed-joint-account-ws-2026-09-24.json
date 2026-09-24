@@ -1,0 +1,33 @@
+{
+  "schema_version": "portfolio.installed_joint_account_ws_progress.v1",
+  "date": "2026-09-24",
+  "phase": "disposable_fixture_only",
+  "manifest_version": 18,
+  "pinned_project_sources": 24,
+  "report": "data/installed-joint-account-v18-accepted.json",
+  "report_sha256": "2e843709e5a456dcb28e87c2979f2a94c2679367cd3212e742132b7794b52e80",
+  "scenarios": {
+    "joint_success": {"prepared_steps": 3, "accepted_steps": 3, "account_ws_upgraded": true, "signed_subscription_acknowledged": true, "controller_max_descriptors": 816},
+    "joint_bad_ack": {"prepared_steps": 3, "accepted_steps": 2, "account_ws_upgraded": true, "signed_subscription_acknowledged": false, "controller_max_descriptors": 816},
+    "joint_bad_time": {"prepared_steps": 1, "accepted_steps": 0, "account_ws_upgraded": false, "signed_subscription_acknowledged": false, "controller_max_descriptors": 814}
+  },
+  "clock_regression": {
+    "report": "data/installed-joint-clock-v18-accepted-regression.json",
+    "report_sha256": "3ff1a5e20680b82799df946b62273a490815ec5d0ad6052ef3f071ea7468b9be",
+    "scenarios_passed": 2
+  },
+  "unsubscribe_regression": {
+    "report": "data/installed-unsub-v18-accepted-regression.json",
+    "report_sha256": "b32fd660ab7a402ecfbc56e79e500d6d0ec1391bed169db93803c1149b3a3d34",
+    "scenarios_passed": 2
+  },
+  "related_python_tests_passed": 302,
+  "ordered_joint_prefix_length": 3,
+  "planned_joint_operations": 19,
+  "complete_account_intervals": 0,
+  "stream_fence_verified": false,
+  "provider_clock_qualified": false,
+  "real_network_admitted": false,
+  "trading_admitted": false,
+  "upstream_touched": false
+}

@@ -28,6 +28,9 @@ UNSUB_ROUTE_SCOPE = "fixture-unsubscribe-route-sequence-v1"
 CLOCK_PROFILE = "portfolio.installed_joint_clock_sequence.v1"
 CLOCK_SCOPE = "fixture-joint-clock-sequence-v1"
 CLOCK_STEPS = ("clock_initial",)
+JOINT_WS_PROFILE = "portfolio.installed_joint_account_prefix.v1"
+JOINT_WS_SCOPE = "fixture-joint-account-prefix-v1"
+JOINT_WS_STEPS = (*CLOCK_STEPS, "account_connect", "account_subscribe")
 LIMIT = 65536
 FILES = {
     "binding": "binding.json",
@@ -67,6 +70,10 @@ def load_sources(sources):
         "orders": load("gateway_native_orders.py")["view"](account),
         "books": load("gateway_book_routes.py")["view"](account),
         "clock": load("gateway_native_time.py")["view"](account),
+        "joint_ws": load("gateway_joint_account_ws.py"),
+        "account_ws": load("gateway_account_ws.py"),
+        "ws": load("gateway_concurrent_ws.py"),
+        "frames": load("portfolio_ws_frames.py"),
         "metadata": load("gateway_native_receipt.py"),
         "requests": load("gateway_native_requests.py"),
         "provenance": sys.modules["apps.strategies_nautilus.portfolio_tls_provenance"],
@@ -75,9 +82,23 @@ def load_sources(sources):
 
 
 def review_bundle(
-    bundle, index, context, selected, modules, *, orders=False, routes=False, clock=False
+    bundle,
+    index,
+    context,
+    selected,
+    modules,
+    *,
+    orders=False,
+    routes=False,
+    clock=False,
+    joint_ws=False,
+    previous=None,
 ):
     """Verify originals before considering a step complete; never trust a saved report."""
+    if joint_ws and index:
+        return modules["joint_ws"]["review_step"](
+            bundle, index, context, selected, modules, previous
+        )
     allowed = set(FILES) - ({"selection"} if index == 0 and not clock else set())
     if (
         not isinstance(bundle, dict)
@@ -273,7 +294,10 @@ def replay(
     quotes=False,
     unsubscribe=False,
     clock=False,
+    joint_ws=False,
 ):
+    if joint_ws and any((orders, routes, quotes, unsubscribe, clock)):
+        raise ValueError("joint_ws_sequence_conflict")
     if (
         (quotes and not routes)
         or (unsubscribe and not quotes)
@@ -282,7 +306,9 @@ def replay(
         raise ValueError("quote_route_required")
     orders = orders or routes
     profile = (
-        CLOCK_PROFILE
+        JOINT_WS_PROFILE
+        if joint_ws
+        else CLOCK_PROFILE
         if clock
         else UNSUB_ROUTE_PROFILE
         if unsubscribe
@@ -294,7 +320,17 @@ def replay(
         if orders
         else PROFILE
     )
-    steps = CLOCK_STEPS if clock else ROUTE_STEPS if routes else ORDER_STEPS if orders else STEPS
+    steps = (
+        JOINT_WS_STEPS
+        if joint_ws
+        else CLOCK_STEPS
+        if clock
+        else ROUTE_STEPS
+        if routes
+        else ORDER_STEPS
+        if orders
+        else STEPS
+    )
     total = len(steps)
     if not isinstance(raw, bytes) or not 0 < len(raw) <= LIMIT or digest(raw) != expected_sha256:
         raise ValueError("sequence_original_required")
@@ -363,7 +399,9 @@ def replay(
                 modules,
                 orders=orders,
                 routes=routes,
-                clock=clock,
+                clock=clock or joint_ws and pending == 0,
+                joint_ws=joint_ws,
+                previous=bundles[:pending],
             )
             # Every child archive follows preparation, and each whole step ends
             # before its acceptance. Original clocks never come from replay time.
@@ -387,13 +425,13 @@ def replay(
                 child = json.loads(content.splitlines()[-1])
                 if any(child[k] > row[k] for k in ("utc_ns", "monotonic_ns")):
                     raise ValueError("sequence_acceptance_precedes_child")
-            if not clock:
+            if not (clock or joint_ws):
                 reconcile(results, orders=orders)
             if routes and pending == 5:
                 route_result(results, bundles, modules)
             # Same trust/install/rules/route/network/runtime throughout, distinct
             # child PIDs are expected. No caller-supplied run identity suffices.
-            if pending:
+            if pending and not joint_ws:
                 old, new = (json.loads(bundles[i]["binding"]) for i in (0, pending))
                 for key in ("rules", "route", "net"):
                     if old[key] != new[key]:
@@ -433,11 +471,19 @@ def replay(
         "accepted_steps": accepted,
         "pending_step": pending,
         "steps": results,
-        "metadata_precision_matched": accepted > 0 and not clock,
-        "repeated_balances_equal": not clock and accepted >= (5 if orders else 3),
+        "metadata_precision_matched": accepted > 0 and not (clock or joint_ws),
+        "repeated_balances_equal": not (clock or joint_ws) and accepted >= (5 if orders else 3),
         **(
             {"ordered_joint_prefix_length": accepted, "full_account_interval": False}
-            if clock
+            if clock or joint_ws
+            else {}
+        ),
+        **(
+            {
+                "account_ws_upgraded": accepted >= 2,
+                "signed_subscription_acknowledged": accepted >= 3,
+            }
+            if joint_ws
             else {}
         ),
         **(
@@ -478,7 +524,10 @@ class Sequence:
         quotes=False,
         unsubscribe=False,
         clock=False,
+        joint_ws=False,
     ):
+        if joint_ws and any((orders, routes, quotes, unsubscribe, clock)):
+            raise ValueError("joint_ws_sequence_conflict")
         if (
             (quotes and not routes)
             or (unsubscribe and not quotes)
@@ -486,15 +535,18 @@ class Sequence:
         ):
             raise ValueError("quote_route_required")
         orders = orders or routes
-        self.orders, self.routes, self.quotes, self.unsubscribe, self.clock = (
+        self.orders, self.routes, self.quotes, self.unsubscribe, self.clock, self.joint_ws = (
             orders,
             routes,
             quotes,
             unsubscribe,
             clock,
+            joint_ws,
         )
         self.profile = (
-            CLOCK_PROFILE
+            JOINT_WS_PROFILE
+            if joint_ws
+            else CLOCK_PROFILE
             if clock
             else UNSUB_ROUTE_PROFILE
             if unsubscribe
@@ -507,7 +559,9 @@ class Sequence:
             else PROFILE
         )
         self.scope = (
-            CLOCK_SCOPE
+            JOINT_WS_SCOPE
+            if joint_ws
+            else CLOCK_SCOPE
             if clock
             else UNSUB_ROUTE_SCOPE
             if unsubscribe
@@ -520,7 +574,15 @@ class Sequence:
             else SCOPE
         )
         self.steps = (
-            CLOCK_STEPS if clock else ROUTE_STEPS if routes else ORDER_STEPS if orders else STEPS
+            JOINT_WS_STEPS
+            if joint_ws
+            else CLOCK_STEPS
+            if clock
+            else ROUTE_STEPS
+            if routes
+            else ORDER_STEPS
+            if orders
+            else STEPS
         )
         self.authority, self.modules = authority, modules
         self.owner = os.getpid()
@@ -668,6 +730,7 @@ class Sequence:
             quotes=self.quotes,
             unsubscribe=self.unsubscribe,
             clock=self.clock,
+            joint_ws=self.joint_ws,
         )
         self.journal.append(
             kind, **{k: v for k, v in row.items() if k not in {"seq", "previous_sha256", "kind"}}
@@ -699,20 +762,29 @@ class Sequence:
         self.write(self.storage / "binding.json", canonical(binding))
 
     def read_bundle(self):
+        if self.joint_ws and self.index:
+            bundle = {}
+            for key, name in (("binding", "binding.json"), ("ws", "ws.jsonl")):
+                path = self.storage / name
+                if path.exists():
+                    fd = self.hold(path)
+                    bundle[key] = os.pread(fd, 1024 * 1024 + 1, 0).decode()
+            self.bundles[self.index] = bundle
+            return bundle
         kind = (
             "clock"
-            if self.clock
+            if self.clock or self.joint_ws
             else "books"
             if self.routes and self.index == 5
             else "orders"
             if self.orders and self.index in {2, 3}
             else "account"
-            if self.index or self.clock
+            if self.index or self.clock or self.joint_ws
             else "metadata"
         )
         ledger = (
             self.modules[kind]["ledger_view"](self.modules["ledger"])
-            if self.index or self.clock
+            if self.index or self.clock or self.joint_ws
             else self.modules["ledger"]
         )
         scope = self.storage / ledger.SCOPE
@@ -751,7 +823,12 @@ def run_installed(
     quotes=False,
     unsubscribe=False,
     clock=False,
+    joint_ws=False,
 ):
+    if joint_ws and any(
+        (orders, routes, concurrent, signed, market, snapshot, quotes, unsubscribe, clock)
+    ):
+        raise ValueError("joint_ws_sequence_conflict")
     if clock and any((orders, routes, concurrent, signed, market, snapshot, quotes, unsubscribe)):
         raise ValueError("clock_sequence_conflict")
     if (quotes and not snapshot) or (unsubscribe and not quotes):
@@ -766,6 +843,7 @@ def run_installed(
         raise ValueError("concurrent_ws_requires_routes")
     orders = orders or routes
     sequence = None
+    channel = None
     try:
         authority.verify()
         modules = load_sources({name: sources.source(name).decode() for name in entry["FILES"]})
@@ -779,20 +857,28 @@ def run_installed(
             quotes=quotes,
             unsubscribe=unsubscribe,
             clock=clock,
+            joint_ws=joint_ws,
         )
         try:
             for index in range(len(sequence.steps)):
                 sequence.prepare(index)
-                outcome = entry["run_controller"](
-                    tls=True,
-                    receipt=True,
-                    native=True,
-                    account=index != 0,
-                    clock=clock,
-                    orders=orders and index in {2, 3},
-                    books=routes and index == 5,
-                    sequence=sequence,
-                )
+                if joint_ws and index:
+                    if channel is None:
+                        channel = modules["joint_ws"]["Channel"](
+                            entry, authority, sources, sequence
+                        )
+                    outcome = channel.run_step(index)
+                else:
+                    outcome = entry["run_controller"](
+                        tls=True,
+                        receipt=True,
+                        native=True,
+                        account=index != 0,
+                        clock=clock or joint_ws,
+                        orders=orders and index in {2, 3},
+                        books=routes and index == 5,
+                        sequence=sequence,
+                    )
                 bundle = sequence.read_bundle()
                 if outcome["status"] != "fixture_receipt_succeeded" or not outcome["revoked"]:
                     raise ValueError("sequence_child_step_refused")
@@ -843,6 +929,8 @@ def run_installed(
                 flush=True,
             )
     finally:
+        if channel is not None:
+            channel.close()
         if sequence is not None:
             sequence.close()
         authority.close()

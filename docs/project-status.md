@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-24
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: A separate disposable v17 parent accepts the first ordered joint operation: one dedicated-UID-selected `/api/v3/time` GET with original HTTPS clocks and native receipt; bad time consumes the scope without acknowledgement. The earlier v16 unsubscribe/quote and v14 route originals remain separate. The new parent has one accepted operation of the 19-operation dual-symbol plan and zero complete account intervals. Next add the account WS connection and signed subscription under this same parent, then both four-GET account reads and the remaining market/time/unsubscribe steps. Stream fences, real authority/coverage, provider limits/clocks, host rollout, qualified equity and trading remain blocked.
+- **Current objective**: A disposable v18 parent accepts the first three ordered joint operations: native clock GET, root-owned account WS Upgrade and dedicated-UID-signed subscription. Bad acknowledgement stops at two accepted steps; bad clock stops at zero. The earlier v16 unsubscribe/quote and v14 route originals remain separate. This is 3/19 dual-symbol operations and zero complete account intervals. Next add both four-GET account reads under this parent, then remaining market/time/unsubscribe steps. Stream fences, real authority/coverage, provider limits/clocks, host rollout, qualified equity and trading remain blocked.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -359,9 +359,10 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
    now acknowledges an exact dedicated-UID-selected cancellation on the same
    local account socket before closure; invalid acknowledgement fails closed.
    The [v17 first joint clock fixture](progress/portfolio-installed-joint-clock-2026-09-24.md)
-   starts a new ordered parent with one native-acknowledged HTTPS time GET;
-   a bad server time fails without native acknowledgement. Eighteen planned
-   dual-symbol operations still need to join this same parent. The old route
+   started a new ordered parent with one native-acknowledged HTTPS time GET;
+   the [v18 account WS prefix](progress/portfolio-installed-joint-account-ws-2026-09-24.md)
+   adds an Upgrade and signed subscription on one root-owned socket. Sixteen
+   planned dual-symbol operations still need to join this same parent. The old route
    fixture remains separate and still lacks seven GETs against the joint plan;
    sampling never proves coverage.
    Actual authority policy, fresh rate/clock consumption and provider-charge
@@ -408,12 +409,12 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
 
 ## Latest Verification
 
-- Installed first joint clock: **84 focused tests and two disposable scenarios
-  pass**. Success accepts one native-acknowledged ordered GET; bad time accepts
-  zero and cannot resume. Both make one local request. Manifest v17 pins 23
-  sources; sampled descriptors peak at **814/1,024**. The two prior unsubscribe
-  scenarios also pass with v17 source pins. See
-  [clock acceptance](progress/portfolio-installed-joint-clock-2026-09-24.md).
+- Installed joint account WS prefix: **302 related tests and three disposable
+  scenarios pass**. Success accepts clock, Upgrade and signed subscription;
+  bad acknowledgement accepts two, bad clock zero. Manifest v18 pins 24 sources;
+  descriptors peak at **816/1,024**. Two v17 clock and two v16 unsubscribe
+  scenarios pass against final v18 sources. No account interval is complete. See
+  [joint account acceptance](progress/portfolio-installed-joint-account-ws-2026-09-24.md).
 - Installed fixture account unsubscribe: **109 related Python tests and two
   disposable scenarios pass**. Success records exact unsubscribe and two
   native quotes after revocation; wrong acknowledgement is nonresumable with

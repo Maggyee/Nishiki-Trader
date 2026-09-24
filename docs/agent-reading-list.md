@@ -22,6 +22,15 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the ordered installed native account WebSocket prefix, read
+`docs/progress/portfolio-installed-joint-account-ws-2026-09-24.md` and its JSON.
+Manifest v18 pins 24 sources; the same disposable parent accepts a clock GET,
+account WS Upgrade and dedicated-UID-signed subscription, each with original
+receipts and revocation. A bad acknowledgement stops at two accepted operations;
+a bad clock stops at zero. This is only 3/19 planned operations, with no account
+event, complete account interval, stream fence or real admission. Next join both
+four-GET account reads under this parent without reopening consumed scopes.
+
 For the first ordered installed native joint-clock operation, read
 `docs/progress/portfolio-installed-joint-clock-2026-09-24.md` and its JSON.
 Manifest v17 pins 23 sources; a separate parent accepts exactly one fixed
