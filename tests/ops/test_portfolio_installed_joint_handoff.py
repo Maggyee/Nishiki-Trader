@@ -12,24 +12,30 @@ from apps.ops import portfolio_installed_joint_handoff as handoff
 def source_report():
     namespace = {"__name__": "test_installed_inventory"}
     path = handoff.GATEWAY / "installed_gateway.py"
-    exec(compile(path.read_bytes(), str(path), "exec"), namespace)
-    pins = {
-        name: handoff.digest(
-            (
-                handoff.ROOT / "apps/strategies_nautilus" / name
-                if name.startswith("portfolio_")
-                else handoff.GATEWAY / name
-            ).read_bytes()
+    from subprocess import PIPE, run
+
+    def frozen(name):
+        path = (
+            "apps/strategies_nautilus/" + name
+            if name.startswith("portfolio_")
+            else "infra/egress-guard/" + name
         )
-        for name in namespace["FILES"]
-    }
+        return run(
+            ["git", "show", handoff.V14_SOURCE_COMMIT + ":" + path],
+            cwd=handoff.ROOT,
+            stdout=PIPE,
+            check=True,
+        ).stdout
+
+    exec(compile(frozen("installed_gateway.py"), str(path), "exec"), namespace)
+    pins = {name: handoff.digest(frozen(name)) for name in namespace["FILES"]}
     return {
         "source_sha256": pins,
         "gateway_manifest": {"schema_version": namespace["PROFILE"], "files": pins.copy()},
     }
 
 
-def test_current_inventory_matches_pinned_sources(source_report):
+def test_frozen_inventory_matches_pinned_sources(source_report):
     _, sources = handoff.selected_sources(source_report)
     assert len(sources) == len(source_report["source_sha256"])
     assert all(

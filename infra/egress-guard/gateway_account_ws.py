@@ -505,7 +505,7 @@ def child_loop(fd, parent):
 class Session:
     result = staticmethod(expected_result)
 
-    def __init__(self, entry, authority, sources, *, market=False, snapshot=False):
+    def __init__(self, entry, authority, sources, *, market=False, snapshot=False, quotes=False):
         self.runtime = self.collector = None
         try:
             self.requests = entry["load"](sources.source("gateway_native_requests.py"))
@@ -559,6 +559,21 @@ class Session:
                 market_result = self.result
                 self.result = lambda payload: snapshot_code["expected_result"](
                     payload, market_result, market_code
+                )
+            if quotes:
+                if not snapshot:
+                    raise ValueError("quote_requires_snapshot")
+                raw = sources.source("gateway_native_quote.py")
+                encoded = base64.b64encode(zlib.compress(raw, 9))
+                source += f"quote_scope={{'__name__':'held_native_quote'}}\nexec(compile(__import__('zlib').decompress(base64.b64decode({encoded!r})),'<held-quote>','exec'),quote_scope)\nvalidate_native=lambda payload:quote_scope['validate_native'](payload,lambda data:snapshot_scope['validate_native'](data,market_native,market_scope,quotes=True),market_scope,snapshot_scope)\n"
+                quote_code = entry["load"](raw)
+                self.result = lambda payload: quote_code["expected_result"](
+                    payload,
+                    lambda data: snapshot_code["expected_result"](
+                        data, market_result, market_code, quotes=True
+                    ),
+                    market_code,
+                    snapshot_code,
                 )
             launcher["FixtureCollector"].__init__.__globals__["PYTHON"] = (
                 "/run/trader-native-runtime/bin/python3.12"

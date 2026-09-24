@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import subprocess
 from collections import Counter
 from pathlib import Path
 
@@ -21,6 +22,7 @@ from apps.strategies_nautilus.portfolio_observation_plan import request_budget
 ROOT = Path(__file__).resolve().parents[2]
 GATEWAY = ROOT / "infra/egress-guard"
 PROFILE = "portfolio.installed_joint_handoff_review.v1"
+V14_SOURCE_COMMIT = "17d046f3d4aa5d9ac87af83cd376df09bb6d8011"
 MAX_REPORT = 8 * 1024 * 1024
 STEPS = ("metadata", "account_first", "orders_first", "orders_second", "account_second", "books")
 SELECTORS = (
@@ -58,10 +60,24 @@ def unique_json(raw):
 
 
 def selected_sources(report):
-    """Bind offline replay to exactly the checked-in installed fixture inventory."""
+    """Bind the old acceptance to its pinned Git source blobs and report hashes."""
+
+    def frozen(name):
+        path = (
+            "apps/strategies_nautilus/" + name
+            if name.startswith("portfolio_")
+            else "infra/egress-guard/" + name
+        )
+        return subprocess.run(
+            ["git", "show", V14_SOURCE_COMMIT + ":" + path],
+            cwd=ROOT,
+            capture_output=True,
+            check=True,
+        ).stdout
+
     path = GATEWAY / "installed_gateway.py"
     namespace = {"__name__": "installed_handoff_sources"}
-    exec(compile(path.read_bytes(), str(path), "exec"), namespace)
+    exec(compile(frozen("installed_gateway.py"), str(path), "exec"), namespace)
     files = namespace["FILES"]
     manifest = report["gateway_manifest"]
     if (
@@ -72,11 +88,7 @@ def selected_sources(report):
         raise ValueError("handoff_protected_inventory")
     sources = {}
     for name in files:
-        source = (
-            ROOT / "apps/strategies_nautilus" / name
-            if name.startswith("portfolio_")
-            else GATEWAY / name
-        ).read_bytes()
+        source = frozen(name)
         if digest(source) != manifest["files"][name]:
             raise ValueError("handoff_source_changed")
         sources[name] = source

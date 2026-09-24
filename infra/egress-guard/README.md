@@ -6,7 +6,21 @@ offline disk tests, and retain read-only host deployment-input snapshots.
 Current phase: Phase 5 entry, offline infrastructure acceptance only. This is not
 a production guard, gateway audit service, quota authority or collection permit.
 
-The separate snapshot successor is `gateway_snapshot_ws.py`:
+The separate native L2/QuoteTick successor is `gateway_native_quote.py`:
+
+```bash
+/usr/bin/python3 -I infra/egress-guard/installed_gateway_selftest.py --quote-ws-profile --report data/NEW-QUOTE-WS.json
+```
+
+Manifest v15 pins 22 sources. Its independent disposable route and WS scopes
+retain two-sided snapshot depth after the best buy is deleted by an eligible
+increment. Only after closure and revocation does the dedicated UID apply
+native L2 deltas and acknowledge two QuoteTicks. Empty/crossed books refuse
+acknowledgement. This is bounded fixture reconstruction, without a stream
+fence, full joint collection or real admission. See
+[native quote acceptance](../../docs/progress/portfolio-installed-native-quote-2026-09-24.md).
+
+The separate snapshot predecessor is `gateway_snapshot_ws.py`:
 
 ```bash
 /usr/bin/python3 -I infra/egress-guard/installed_gateway_selftest.py --snapshot-ws-profile --report data/NEW-SNAPSHOT-WS.json

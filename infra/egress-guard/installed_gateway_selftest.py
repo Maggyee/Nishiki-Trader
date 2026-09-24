@@ -120,6 +120,11 @@ SNAPSHOT_WS_SCENARIOS = (
     "snapshot_gap",
     "snapshot_bad_http",
 )
+QUOTE_WS_SCENARIOS = (
+    "quote_success",
+    "quote_empty_bid",
+    "quote_crossed",
+)
 FIXTURE_BOOKS = [
     {"symbol": asset + "USDT", "bidPrice": price, "askPrice": ask, "bidQty": "10", "askQty": "10"}
     for asset, price, ask in (
@@ -191,7 +196,7 @@ if runtime.exists():
     denied('native_runtime_write',lambda:os.open(runtime/'bin/python3.12',os.O_WRONLY))
     denied('native_runtime_replace',lambda:os.unlink(runtime/'bin/python3.12'))
 code=Path('/usr/local/lib/trader-egress')
-for name in ('installed_gateway.py','gateway_tls.py','gateway_joint_ipc.py','gateway_tls_receipt.py','gateway_native_runtime.py','gateway_native_receipt.py','gateway_native_requests.py','gateway_native_account.py','gateway_native_orders.py','gateway_book_routes.py','gateway_read_sequence.py','gateway_concurrent_ws.py','gateway_account_ws.py','gateway_market_ws.py','gateway_snapshot_ws.py','portfolio_ws_frames.py','ledger_gateway.py','selftest.py','portfolio_rate_evidence.py','portfolio_tls_provenance.py','portfolio_egress_ledger.py'):
+for name in ('installed_gateway.py','gateway_tls.py','gateway_joint_ipc.py','gateway_tls_receipt.py','gateway_native_runtime.py','gateway_native_receipt.py','gateway_native_requests.py','gateway_native_account.py','gateway_native_orders.py','gateway_book_routes.py','gateway_read_sequence.py','gateway_concurrent_ws.py','gateway_account_ws.py','gateway_market_ws.py','gateway_snapshot_ws.py','gateway_native_quote.py','portfolio_ws_frames.py','ledger_gateway.py','selftest.py','portfolio_rate_evidence.py','portfolio_tls_provenance.py','portfolio_egress_ledger.py'):
     path=code/name
     assert path.read_bytes()
     denied('write:'+name,lambda:os.open(path,os.O_WRONLY))
@@ -225,7 +230,7 @@ TLS_PEER = (
     + r"""
 import hashlib,json,os,socket,ssl,sys,time
 scenario=sys.argv[1]
-if scenario.startswith('routes_ws_') or scenario.startswith('snapshot_'):scenario='routes_two_hops' if scenario in {'routes_ws_two_hops','snapshot_two_hops'} else 'routes_success'
+if scenario.startswith('routes_ws_') or scenario.startswith('snapshot_') or scenario.startswith('quote_'):scenario='routes_two_hops' if scenario in {'routes_ws_two_hops','snapshot_two_hops'} else 'routes_success'
 body=json.dumps({'rateLimits':[
  {'rateLimitType':'REQUEST_WEIGHT','interval':'MINUTE','intervalNum':1,'limit':6000},
  {'rateLimitType':'RAW_REQUESTS','interval':'MINUTE','intervalNum':5,'limit':61000},
@@ -359,7 +364,9 @@ def serve(raw):
                 symbol=next((s for s in symbols if request==f'GET /api/v3/depth?symbol={s}&limit=100 HTTP/1.1\r\nHost: rest.fixture.invalid:23456\r\nConnection: close\r\n\r\n'.encode()),None)
                 if symbol is None:raise ValueError('snapshot_fixed_request')
                 with lock:report['snapshot_requests'].append(symbol)
-                body=json.dumps({'lastUpdateId':104 if scenario=='snapshot_gap' else 'bad' if scenario=='snapshot_bad_http' else 101,'bids':[['100.00000000','1.00000000']],'asks':[['101.00000000','2.00000000']]},separators=(',',':')).encode()
+                bids=[['100.00000000','1.00000000']]
+                if sys.argv[2]=='quote' and scenario!='quote_empty_bid':bids.append(['99.00000000','3.00000000'])
+                body=json.dumps({'lastUpdateId':104 if scenario=='snapshot_gap' else 'bad' if scenario=='snapshot_bad_http' else 101,'bids':bids,'asks':[['101.00000000','2.00000000']]},separators=(',',':')).encode()
                 response=b'HTTP/1.1 200 OK\r\nContent-Length: '+str(len(body)).encode()+b'\r\nX-MBX-USED-WEIGHT-1M: 25\r\nConnection: close\r\n\r\n'+body
                 connection.sendall(response[:45]);connection.sendall(response[45:]);return
             lines=request.decode().split('\r\n')
@@ -386,7 +393,7 @@ def serve(raw):
             connection.sendall(ping[:3]);connection.sendall(ping[3:])
             control(connection,10,b'fixture:'+role.encode())
             with lock:report['pongs']+=1
-            if sys.argv[2] in {'signed','market','snapshot'} and role=='account':
+            if sys.argv[2] in {'signed','market','snapshot','quote'} and role=='account':
                 head=exact(connection,2)
                 if head[0]!=0x81 or not head[1]&0x80:raise ValueError('signed_text_required')
                 size=head[1]&127
@@ -413,13 +420,14 @@ def serve(raw):
                 first=frame(1,event_raw[:50]);first=bytes([1])+first[1:]
                 connection.sendall(first[:7]);connection.sendall(first[7:]+frame(0,event_raw[50:]))
                 if scenario=='routes_ws_extra_event':connection.sendall(frame(1,event_raw))
-            if sys.argv[2] in {'market','snapshot'} and role=='market':
+            if sys.argv[2] in {'market','snapshot','quote'} and role=='market':
                 sent=0
                 for index in range(2):
                     for symbol in symbols:
                         if scenario=='routes_ws_missing_symbol' and symbol==symbols[-1]:continue
                         now=time.time_ns()//1000000
                         event={'stream':symbol.lower()+'@depth@100ms','data':{'e':'depthUpdate','E':now,'s':symbol,'U':100+index*2,'u':101+index*2,'b':[['100.00000000','1.10000000' if index==0 else '0.00000000']],'a':[['101.00000000','2.00000000']]}}
+                        if scenario=='quote_crossed' and index==1:event['data']['b'].append(['102.00000000','1.00000000'])
                         if index==1 and scenario=='routes_ws_overlap':event['data']['U']=101
                         if index==1 and scenario=='routes_ws_gap':event['data']['U']=104;event['data']['u']=105
                         if index==1 and scenario=='routes_ws_duplicate_update':event['data']['U']=100;event['data']['u']=101
@@ -431,7 +439,7 @@ def serve(raw):
                         sent+=1
                 if scenario=='routes_ws_extra_market':connection.sendall(frame(1,raw));sent+=1
                 with lock:report['market_events_sent']=sent
-            if sys.argv[2] in {'market','snapshot'}:barrier.wait()
+            if sys.argv[2] in {'market','snapshot','quote'}:barrier.wait()
             control(connection,8,b'\x03\xe8')
             with lock:report['closes']+=1
             connection.sendall(frame(8,b'\x03\xe8'))
@@ -444,7 +452,7 @@ with socket.socket() as listener:
     listener.bind(('198.51.100.2',23456));listener.listen(4);listener.settimeout(5)
     print('ready',flush=True)
     try:
-        for _ in range(4 if sys.argv[2]=='snapshot' else 2):
+        for _ in range(4 if sys.argv[2] in {'snapshot','quote'} else 2):
             raw,_=listener.accept();report['connections']+=1
             thread=threading.Thread(target=serve,args=(raw,));thread.start();threads.append(thread)
     except Exception as exc:report['errors'].append(type(exc).__name__)
@@ -458,7 +466,8 @@ def worker(payload):
     base = load(payload["base_source"])
     base["require_isolation"](payload["original"])
     requests = payload.get("native_requests_profile", False)
-    snapshot_ws = payload.get("snapshot_ws_profile", False)
+    quote_ws = payload.get("quote_ws_profile", False)
+    snapshot_ws = payload.get("snapshot_ws_profile", False) or quote_ws
     market_ws = payload.get("market_ws_profile", False) or snapshot_ws
     signed_ws = payload.get("signed_ws_profile", False) or market_ws
     concurrent = payload.get("concurrent_ws_profile", False) or signed_ws
@@ -471,7 +480,8 @@ def worker(payload):
     tls = payload.get("tls_profile", False) or receipt
     ipc = payload.get("joint_ipc_profile", False) or requests
     if (
-        type(concurrent) is not bool
+        type(quote_ws) is not bool
+        or type(concurrent) is not bool
         or type(routes) is not bool
         or type(orders) is not bool
         or type(sequence) is not bool
@@ -484,7 +494,9 @@ def worker(payload):
         or (tls and ipc)
         or payload["scenario"]
         not in (
-            SNAPSHOT_WS_SCENARIOS
+            QUOTE_WS_SCENARIOS
+            if quote_ws
+            else SNAPSHOT_WS_SCENARIOS
             if snapshot_ws
             else MARKET_WS_SCENARIOS
             if market_ws
@@ -1088,20 +1100,29 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
     """Drive fixed barriers only; parent is namespace PID 1 and has no host network."""
     code = load(payload["sources"]["gateway_read_sequence.py"])
     modules = code["load_sources"](payload["sources"])
-    snapshot_ws = payload.get("snapshot_ws_profile", False)
+    quote_ws = payload.get("quote_ws_profile", False)
+    snapshot_ws = payload.get("snapshot_ws_profile", False) or quote_ws
     market_ws = payload.get("market_ws_profile", False) or snapshot_ws
     signed_ws = payload.get("signed_ws_profile", False) or market_ws
     concurrent = payload.get("concurrent_ws_profile", False) or signed_ws
     routes = payload.get("route_sequence_profile", False) or concurrent
     orders = payload.get("order_sequence_profile", False) or routes
     steps = code["ROUTE_STEPS"] if routes else code["ORDER_STEPS"] if orders else code["STEPS"]
-    scope_name = code["ROUTE_SCOPE"] if routes else code["ORDER_SCOPE"] if orders else code["SCOPE"]
+    scope_name = (
+        code["QUOTE_ROUTE_SCOPE" if quote_ws else "ROUTE_SCOPE"]
+        if routes
+        else code["ORDER_SCOPE"]
+        if orders
+        else code["SCOPE"]
+    )
     root = Path(entry["STORAGE"]) / scope_name
     command = [
         "/usr/bin/python3",
         "-I",
         entry["CODE"] + "/installed_gateway.py",
-        "--snapshot-ws-fixture"
+        "--quote-ws-fixture"
+        if quote_ws
+        else "--snapshot-ws-fixture"
         if snapshot_ws
         else "--market-ws-fixture"
         if market_ws
@@ -1266,7 +1287,9 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                         "-c",
                         WS_PEER,
                         scenario,
-                        "snapshot"
+                        "quote"
+                        if quote_ws
+                        else "snapshot"
                         if snapshot_ws
                         else "market"
                         if market_ws
@@ -1427,6 +1450,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
             modules=modules,
             orders=orders,
             routes=routes,
+            quotes=quote_ws,
         )
         expected = {
             **{
@@ -1436,6 +1460,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                     *SIGNED_WS_SCENARIOS,
                     *MARKET_WS_SCENARIOS,
                     *SNAPSHOT_WS_SCENARIOS,
+                    *QUOTE_WS_SCENARIOS,
                 )
             },
             **{
@@ -1473,6 +1498,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                     *SIGNED_WS_SCENARIOS,
                     *MARKET_WS_SCENARIOS,
                     *SNAPSHOT_WS_SCENARIOS,
+                    *QUOTE_WS_SCENARIOS,
                 )
                 or scenario
                 in {
@@ -1492,7 +1518,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
         if concurrent:
             ws_code = load(payload["sources"]["gateway_concurrent_ws.py"])
             frames = load(payload["sources"]["portfolio_ws_frames.py"])
-            selected = ws_code["selection"](raw, bundles, code, modules)
+            selected = ws_code["selection"](raw, bundles, code, modules, quotes=quote_ws)
             extension = load(payload["sources"]["gateway_account_ws.py"]) if signed_ws else None
             state_type = (
                 extension["state_type"](
@@ -1512,15 +1538,17 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
             snapshot_code = (
                 load(payload["sources"]["gateway_snapshot_ws.py"]) if snapshot_ws else None
             )
+            quote_code = load(payload["sources"]["gateway_native_quote.py"]) if quote_ws else None
             if snapshot_ws:
                 state_type = snapshot_code["state_type"](
                     ws_code,
                     extension,
                     load(payload["sources"]["gateway_native_requests.py"]),
                     market_code,
+                    quote_code=quote_code,
                 )
             ws_scope = (
-                snapshot_code["SCOPE"]
+                snapshot_code["QUOTE_SCOPE" if quote_ws else "SCOPE"]
                 if snapshot_ws
                 else market_code["SCOPE"]
                 if market_ws
@@ -1543,6 +1571,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                 "routes_ws_overlap",
                 "snapshot_success",
                 "snapshot_two_hops",
+                "quote_success",
             }
             if (ws_report["status"] == "complete") != success or ws_report[
                 "prepared_connections"
@@ -1591,10 +1620,31 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                         or sorted(peer_report["snapshot_requests"]) != selected["symbols"]
                         or not ws_report["snapshot_linked"]
                         or not ws_report["native_result"]["snapshot_linked"]
-                        or ws_report["native_result"]["quote_ticks_created"]
+                        or ws_report["native_result"]["quote_ticks_created"] != quote_ws
                     ):
                         raise RuntimeError("snapshot_original_linkage_required")
                     checks.append("snapshot_originals_linked_to_per_symbol_native_delta_receipts")
+                if quote_ws:
+                    quotes = ws_report["native_result"]["quotes"]
+                    if (
+                        not ws_report["quote_ticks_created"]
+                        or not ws_report["native_result"]["bounded_order_book_reconstructed"]
+                        or len(quotes) != len(selected["symbols"])
+                        or any(row["bid_price"] != "99.00000000" for row in quotes)
+                    ):
+                        raise RuntimeError("native_quote_receipt_required")
+                    checks.append(
+                        "bounded_two_sided_native_l2_and_quotes_acknowledged_after_revocation"
+                    )
+            if (
+                quote_ws
+                and not success
+                and (
+                    ws_report.get("quote_ticks_created")
+                    or ws_report.get("native_result") is not None
+                )
+            ):
+                raise RuntimeError("invalid_quote_must_not_be_acknowledged")
             ws_result = {
                 "ws_archive": ws_raw.decode(),
                 "ws_replay": ws_report,
@@ -1950,6 +2000,7 @@ def main(argv=None):
     profiles.add_argument("--signed-ws-profile", action="store_true")
     profiles.add_argument("--market-ws-profile", action="store_true")
     profiles.add_argument("--snapshot-ws-profile", action="store_true")
+    profiles.add_argument("--quote-ws-profile", action="store_true")
     profiles.add_argument("--joint-ipc-profile", action="store_true")
     args = parser.parse_args(argv)
     if os.geteuid() == 0:
@@ -1990,6 +2041,7 @@ def main(argv=None):
             or args.signed_ws_profile
             or args.market_ws_profile
             or args.snapshot_ws_profile
+            or args.quote_ws_profile
         ):
             built = subprocess.run(
                 [
@@ -2029,6 +2081,7 @@ def main(argv=None):
             "signed_ws_profile": args.signed_ws_profile,
             "market_ws_profile": args.market_ws_profile,
             "snapshot_ws_profile": args.snapshot_ws_profile,
+            "quote_ws_profile": args.quote_ws_profile,
             "joint_ipc_profile": args.joint_ipc_profile,
             "base_source": base_source,
             "installer": installer.decode(),
@@ -2041,7 +2094,9 @@ def main(argv=None):
         reports = []
         bootstrap = "import json,sys\np=json.load(sys.stdin)\ns={'__name__':'isolated_installed_gateway'}\nexec(compile(p['source'],'<fixture>','exec'),s)\nprint(json.dumps(s['worker'](p),sort_keys=True))\n"
         for scenario in (
-            SNAPSHOT_WS_SCENARIOS
+            QUOTE_WS_SCENARIOS
+            if args.quote_ws_profile
+            else SNAPSHOT_WS_SCENARIOS
             if args.snapshot_ws_profile
             else MARKET_WS_SCENARIOS
             if args.market_ws_profile
@@ -2136,6 +2191,7 @@ def main(argv=None):
             "signed_ws_profile": args.signed_ws_profile,
             "market_ws_profile": args.market_ws_profile,
             "snapshot_ws_profile": args.snapshot_ws_profile,
+            "quote_ws_profile": args.quote_ws_profile,
             "joint_ipc_profile": args.joint_ipc_profile,
             "scenarios": reports,
             "source_sha256": payload["source_sha256"],

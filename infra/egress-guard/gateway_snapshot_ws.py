@@ -8,6 +8,9 @@ import re
 PROFILE = "portfolio.installed_snapshot_ws.v1"
 SCOPE = "account-market-snapshot-v1"
 RECEIPT = "portfolio.native_account_market_snapshot.v1"
+QUOTE_PROFILE = "portfolio.installed_quote_ws.v1"
+QUOTE_SCOPE = "account-market-quote-v1"
+QUOTE_RECEIPT = "portfolio.native_account_market_quote.v1"
 BODY_LIMIT = 4096
 MAX_PAYLOAD = 8192
 
@@ -69,14 +72,14 @@ def response(raw, market):
     return value
 
 
-def linked(payload, market_result, market):
+def linked(payload, market_result, market, *, quotes=False):
     value = market["decode"](payload)
     if (
         not isinstance(value, dict)
         or market["canonical"](value) != payload
         or set(value)
         != {"profile", "account_b64", "definitions", "metadata_tls_sha256", "events", "snapshots"}
-        or value["profile"] != RECEIPT
+        or value["profile"] != (QUOTE_RECEIPT if quotes else RECEIPT)
         or not isinstance(value["snapshots"], list)
     ):
         raise ValueError("snapshot_receipt_schema")
@@ -144,7 +147,7 @@ def linked(payload, market_result, market):
         )
     return {
         **result,
-        "profile": RECEIPT,
+        "profile": QUOTE_RECEIPT if quotes else RECEIPT,
         "payload_sha256": market["digest"](payload),
         "anchors": anchors,
         "unanchored_depth_segment": False,
@@ -156,23 +159,25 @@ def linked(payload, market_result, market):
     }
 
 
-def expected_result(payload, market_result, market):
+def expected_result(payload, market_result, market, *, quotes=False):
     if not isinstance(payload, bytes) or not 0 < len(payload) <= MAX_PAYLOAD:
         raise ValueError("snapshot_receipt_size")
-    return linked(payload, market_result, market)
+    return linked(payload, market_result, market, quotes=quotes)
 
 
-def validate_native(payload, market_native, market):
+def validate_native(payload, market_native, market, *, quotes=False):
     if market["os"].geteuid() == 0:
         raise ValueError("native_import_as_root_refused")
-    return expected_result(payload, market_native, market)
+    return expected_result(payload, market_native, market, quotes=quotes)
 
 
-def state_type(base, account, requests, market):
+def state_type(base, account, requests, market, quote_code=None):
     Parent = market["state_type"](base, account, requests)
+    selected_profile = QUOTE_PROFILE if quote_code is not None else PROFILE
+    selected_receipt = QUOTE_RECEIPT if quote_code is not None else RECEIPT
 
     class SnapshotState(Parent):
-        PROFILE = PROFILE
+        PROFILE = selected_profile
 
         def __init__(self, *args):
             super().__init__(*args)
@@ -180,7 +185,7 @@ def state_type(base, account, requests, market):
 
         def payload(self):
             value = market["decode"](super().payload())
-            value["profile"] = RECEIPT
+            value["profile"] = selected_receipt
             value["snapshots"] = [
                 {"symbol": symbol, "request_sha256": row["request_sha256"], "chunks": row["chunks"]}
                 for symbol, row in self.snapshots.items()
@@ -188,11 +193,17 @@ def state_type(base, account, requests, market):
             return market["canonical"](value)
 
         def native_result(self):
-            return expected_result(
-                self.payload(),
-                lambda raw: market["expected_result"](raw, account["expected_result"]),
-                market,
-            )
+            def market_result(raw):
+                return market["expected_result"](raw, account["expected_result"])
+
+            if quote_code is not None:
+                return quote_code["expected_result"](
+                    self.payload(),
+                    lambda raw: expected_result(raw, market_result, market, quotes=True),
+                    market,
+                    globals(),
+                )
+            return expected_result(self.payload(), market_result, market)
 
         def feed(self, kind, payload, now, mono):
             if kind == "close_prepared":
@@ -303,7 +314,7 @@ def state_type(base, account, requests, market):
                 ),
                 "snapshot_linked": self.acknowledged is not None,
                 "order_book_synchronized": False,
-                "quote_ticks_created": False,
+                "quote_ticks_created": quote_code is not None and self.acknowledged is not None,
             }
 
     return SnapshotState

@@ -22,6 +22,13 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For installed bounded native L2/QuoteTick receipts in a new disposable scope,
+read `docs/progress/portfolio-installed-native-quote-2026-09-24.md` and its JSON.
+Manifest v15 pins 22 sources; a two-level buy snapshot retains a second buy
+after the first is deleted. One success acknowledges two exact native quotes;
+empty/crossed books refuse. This is fixture-only, without a stream fence or
+full ordered joint collector. The v14 original reports remain unchanged.
+
 For historical Nautilus L2 reconstruction of installed snapshot originals,
 read `docs/progress/portfolio-installed-snapshot-book-2026-09-24.md` and its
 JSON. The original v14 direct/two-hop updates delete each fixture book's only

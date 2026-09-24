@@ -38,9 +38,14 @@ def digest(raw):
     return hashlib.sha256(raw).hexdigest()
 
 
-def selection(raw, bundles, sequence_code, modules):
+def selection(raw, bundles, sequence_code, modules, *, quotes=False):
     report = sequence_code["replay"](
-        raw, expected_sha256=digest(raw), bundles=bundles, modules=modules, routes=True
+        raw,
+        expected_sha256=digest(raw),
+        bundles=bundles,
+        modules=modules,
+        routes=True,
+        quotes=quotes,
     )
     if report["status"] != "complete":
         raise ValueError("ws_completed_original_routes_required")
@@ -708,16 +713,18 @@ def capture_result(*args):
 
 
 def run_installed(
-    entry, authority, sources, sequence, *, signed=False, market=False, snapshot=False
+    entry, authority, sources, sequence, *, signed=False, market=False, snapshot=False, quotes=False
 ):
     if market and not signed:
         raise ValueError("market_ws_requires_signed_account")
     if snapshot and not market:
         raise ValueError("snapshot_requires_market")
+    if quotes and not snapshot:
+        raise ValueError("quote_requires_snapshot")
     code = entry["load"](sources.source("gateway_read_sequence.py"))
     frames = entry["load"](sources.source("portfolio_ws_frames.py"))
     guards = entry["load"](sources.source("selftest.py"))
-    selected = selection(sequence.expected, sequence.bundles, code, sequence.modules)
+    selected = selection(sequence.expected, sequence.bundles, code, sequence.modules, quotes=quotes)
     last_binding = json.loads(sequence.bundles[-1]["binding"])
     run, nft = guards["run"], guards["NFT"]
 
@@ -767,8 +774,9 @@ def run_installed(
     if market:
         selected = market_code["selection"](selected, sequence.bundles)
     snapshot_code = entry["load"](sources.source("gateway_snapshot_ws.py")) if snapshot else None
+    quote_code = entry["load"](sources.source("gateway_native_quote.py")) if quotes else None
     scope = (
-        snapshot_code["SCOPE"]
+        snapshot_code["QUOTE_SCOPE" if quotes else "SCOPE"]
         if snapshot
         else market_code["SCOPE"]
         if market
@@ -783,7 +791,9 @@ def run_installed(
     sequence.write(
         path / "README.md",
         (
-            b"Fixture REST depth anchors and concurrent native account/market receipts. Phase: disposable acceptance. Consumed on creation; no synchronized book, stream fence or live admission. Next: full joint collector integration.\n"
+            b"Fixture bounded native L2/QuoteTick receipt after closed sockets and revocation. Consumed on creation. Historical local evidence only; no live admission or stream fence. Next: ordered full joint collector.\n"
+            if quotes
+            else b"Fixture REST depth anchors and concurrent native account/market receipts. Phase: disposable acceptance. Consumed on creation; no synchronized book, stream fence or live admission. Next: full joint collector integration.\n"
             if snapshot
             else b"Fixture account and market increment native receipts. Phase: disposable acceptance. Consumed on creation, no synchronized book or live admission. Next: original replay and REST depth snapshot integration.\n"
             if market
@@ -798,7 +808,7 @@ def run_installed(
     try:
         if signed:
             session = extension["Session"](
-                entry, authority, sources, market=market, snapshot=snapshot
+                entry, authority, sources, market=market, snapshot=snapshot, quotes=quotes
             )
             if market:
                 session.exchange_market = lambda journal, chunk: market_code["exchange"](
@@ -811,7 +821,7 @@ def run_installed(
             state_type = market_code["state_type"](globals(), extension, session.requests)
         if snapshot:
             state_type = snapshot_code["state_type"](
-                globals(), extension, session.requests, market_code
+                globals(), extension, session.requests, market_code, quote_code=quote_code
             )
         journal = Journal(
             path / "ws.jsonl",

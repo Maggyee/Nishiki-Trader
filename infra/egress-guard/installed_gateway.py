@@ -30,6 +30,7 @@ FILES = (
     "gateway_account_ws.py",
     "gateway_market_ws.py",
     "gateway_snapshot_ws.py",
+    "gateway_native_quote.py",
     "portfolio_ws_frames.py",
     "ledger_gateway.py",
     "selftest.py",
@@ -37,7 +38,7 @@ FILES = (
     "portfolio_tls_provenance.py",
     "portfolio_egress_ledger.py",
 )
-PROFILE = "portfolio.installed_gateway_fixture.v14"
+PROFILE = "portfolio.installed_gateway_fixture.v15"
 
 
 def digest(raw):
@@ -425,6 +426,7 @@ def main():
             ["--signed-ws-fixture"],
             ["--market-ws-fixture"],
             ["--snapshot-ws-fixture"],
+            ["--quote-ws-fixture"],
         )
         or not sys.flags.isolated
         or os.path.abspath(__file__) != CODE + "/installed_gateway.py"
@@ -454,6 +456,7 @@ def main():
         ["--signed-ws-fixture"],
         ["--market-ws-fixture"],
         ["--snapshot-ws-fixture"],
+        ["--quote-ws-fixture"],
     ):
         authority = installation()
         try:
@@ -472,6 +475,7 @@ def main():
                     ["--signed-ws-fixture"],
                     ["--market-ws-fixture"],
                     ["--snapshot-ws-fixture"],
+                    ["--quote-ws-fixture"],
                 ),
                 concurrent=sys.argv[1:]
                 in (
@@ -479,11 +483,19 @@ def main():
                     ["--signed-ws-fixture"],
                     ["--market-ws-fixture"],
                     ["--snapshot-ws-fixture"],
+                    ["--quote-ws-fixture"],
                 ),
                 signed=sys.argv[1:]
-                in (["--signed-ws-fixture"], ["--market-ws-fixture"], ["--snapshot-ws-fixture"]),
-                market=sys.argv[1:] in (["--market-ws-fixture"], ["--snapshot-ws-fixture"]),
-                snapshot=sys.argv[1:] == ["--snapshot-ws-fixture"],
+                in (
+                    ["--signed-ws-fixture"],
+                    ["--market-ws-fixture"],
+                    ["--snapshot-ws-fixture"],
+                    ["--quote-ws-fixture"],
+                ),
+                market=sys.argv[1:]
+                in (["--market-ws-fixture"], ["--snapshot-ws-fixture"], ["--quote-ws-fixture"]),
+                snapshot=sys.argv[1:] in (["--snapshot-ws-fixture"], ["--quote-ws-fixture"]),
+                quotes=sys.argv[1:] == ["--quote-ws-fixture"],
             )
         finally:
             authority.close()
