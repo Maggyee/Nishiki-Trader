@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-24
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: The installed snapshot fixture's two successes now pass a read-only original-byte handoff audit against the full joint collector plan. Eight installed REST GETs leave three time, two account and two open-order GETs plus account WS unsubscribe missing; zero ordered joint operations or complete account intervals are accepted. Next implement the missing fixed operations and bind the complete native collector to a separate installed disposable scope; then qualify synchronized books/quotes independently. Stream fences, real authority/coverage, provider limits/clocks, host rollout, qualified equity and trading remain blocked.
+- **Current objective**: The installed snapshot fixture's two successes pass original-byte handoff and offline native L2 reconstruction review. Their first eligible updates delete the only buy level in each book, so no historical native QuoteTick is produced despite subsecond event ages. Eight installed REST GETs still lack seven GETs and account unsubscribe against the full joint plan; zero ordered joint operations or complete account intervals are accepted. Next accept nonempty two-sided native book receipts in a separate disposable fixture scope and implement the missing fixed operations for a complete ordered native collector. Stream fences, real authority/coverage, provider limits/clocks, host rollout, qualified equity and trading remain blocked.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -348,8 +348,12 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
    replays both original success cases and finds seven missing REST GETs and
    account unsubscribe against the full 19-operation dual-symbol plan. None of
    the old operations forms an accepted ordered joint prefix or full account
-   interval. Next connect the full native joint collector and separately
-   qualify synchronized books/quotes; sampling never proves coverage.
+   interval. [Historical native L2 review](progress/portfolio-installed-snapshot-book-2026-09-24.md)
+   finds each original book loses its only buy level on the first eligible
+   increment; zero QuoteTicks result even though event ages are below one second.
+   A synthetic two-sided case constructs a native quote, without an installed
+   native quote receipt. Next connect the full native joint collector and accept
+   a separate sufficient-depth fixture; sampling never proves coverage.
    Actual authority policy, fresh rate/clock consumption and provider-charge
    resolution must precede any separately reviewed real joint dispatch.
    Preserve the consumed scope; no retry, second IPv4 or extended interruption
@@ -394,6 +398,11 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
 
 ## Latest Verification
 
+- Installed snapshot historical L2: **12 focused tests pass**; exact native
+  QuoteTick construction succeeds for synthetic two-sided books. Direct and
+  two-hop v14 originals each return `blocked_snapshot_book` with `empty_bid`
+  for both selected symbols, zero QuoteTicks and 298–421 ms event ages. See
+  [book review](progress/portfolio-installed-snapshot-book-2026-09-24.md).
 - Installed joint handoff: **9 focused tests pass**; direct and two-hop
   installed originals each replay identically in two fresh processes, with the
   pinned report hash unchanged. Both remain `blocked_incomplete_joint_collector`:

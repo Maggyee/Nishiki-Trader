@@ -7,6 +7,12 @@ dashboard snapshot support + Phase 6 passive readiness gate support。
 
 ## 当前入口
 
+`portfolio_installed_snapshot_book` 先回放受保护 v14 原始证据，再于普通
+项目进程重建 Nautilus 原生 L2 盘口。只有所有标的双侧盘口、修订顺序、深度
+覆盖及时间年龄都通过才输出历史 QuoteTick；当前安装夹具有效增量删除了
+唯一买档，因此无报价。无凭证、网络或执行入口。见
+[历史盘口重建](../../docs/progress/portfolio-installed-snapshot-book-2026-09-24.md)。
+
 `portfolio_installed_joint_handoff` 按显式 SHA256 只读回放已安装 v14
 快照夹具的原始六次读取及并发账户/市场/深度归档，对照完整联合采集预算输出
 缺项和阻断结论。既不执行采集，也不授予真实网络或交易权限。见

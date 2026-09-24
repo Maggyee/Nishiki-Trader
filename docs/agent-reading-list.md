@@ -22,6 +22,13 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For historical Nautilus L2 reconstruction of installed snapshot originals,
+read `docs/progress/portfolio-installed-snapshot-book-2026-09-24.md` and its
+JSON. The original v14 direct/two-hop updates delete each fixture book's only
+buy level. Both scenarios fail closed without QuoteTicks despite subsecond
+event ages; a separate synthetic two-sided test exercises native quote creation.
+No installed native quote receipt, stream fence or full collector is implied.
+
 For the offline handoff from installed snapshots to the full native joint
 collector, read `docs/progress/portfolio-installed-joint-handoff-2026-09-24.md`
 and its JSON. Both v14 success originals replay against pinned sources. The

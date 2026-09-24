@@ -1,0 +1,32 @@
+{
+  "schema_version": "portfolio.installed_snapshot_book_review.v1",
+  "date": "2026-09-24",
+  "status": "blocked_snapshot_book",
+  "evidence_basis": "offline_native_l2_rebuild_after_installed_original_byte_replay",
+  "ignored_report": "data/installed-snapshot-ws-2026-09-23/final.json",
+  "ignored_report_sha256": "7b0e035ddaddd907bb46678a4e55012c94b7c2de9c56df562738ca94a6b68547",
+  "scenarios": {
+    "snapshot_success": {
+      "snapshot_ws_archive_sha256": "972d617b688367bf07110a3f23e9518234fd2f9d002cad094ac6526c66e33160",
+      "symbols": {
+        "BNBUSDT": {"blockers": ["empty_bid"], "event_age_at_availability_ns": 420608803},
+        "BTCUSDT": {"blockers": ["empty_bid"], "event_age_at_availability_ns": 382077172}
+      }
+    },
+    "snapshot_two_hops": {
+      "snapshot_ws_archive_sha256": "dfb875895d2c4f9d1bcfde0b3b4e8865046fc5ddcf5809f0373355c73c044d85",
+      "symbols": {
+        "BNBBTC": {"blockers": ["empty_bid"], "event_age_at_availability_ns": 298413272},
+        "BTCUSDT": {"blockers": ["empty_bid"], "event_age_at_availability_ns": 330718832}
+      }
+    }
+  },
+  "historical_native_quote_ticks": 0,
+  "synthetic_fresh_two_sided_quote_test": "passed",
+  "installed_native_quote_receipt": false,
+  "stream_fence_verified": false,
+  "full_joint_collector_integrated": false,
+  "network_admitted": false,
+  "trading_admitted": false,
+  "upstream_touched": false
+}
