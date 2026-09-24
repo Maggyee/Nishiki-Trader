@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-24
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: The last verified disposable parent accepts 11/19 ordered joint operations through the first `BNBUSDT` depth anchor (v22). A separate v23 candidate buffers two original increments per symbol and links both `BNBUSDT` and `BTCUSDT` depth snapshots through 12 steps, but its final isolation acceptance is pending: the sandbox denied the dedicated-UID fixture and the elevated retry was rejected. Do not promote the preliminary v22-source report to v23 evidence. Next verify that candidate in an authorized disposable fixture, then join linked time, the second four-GET account pass, final clock and unsubscribe under a fresh parent. No complete before/after account interval exists and older independent fixtures cannot be combined. Stream fences, real authority/coverage, provider clocks/usage, host rollout, qualified equity and trading remain blocked.
+- **Current objective**: The last verified disposable parent accepts 11/19 ordered joint operations through the first `BNBUSDT` depth anchor (v22). Separate v23/v24 candidates add original increments, the second route-bound snapshot and a second `/api/v3/time` GET after both anchors. Direct tests pass, but final dedicated-UID isolation remains unverified: the sandbox denied the fixture and the elevated retry was rejected. Do not promote either candidate or the preliminary v22-source report to accepted evidence. Next verify v24 and regressions in an explicitly authorized disposable fixture, then join the second four-GET account pass, final clock and unsubscribe under a fresh parent. No complete before/after account interval exists. Stream fences, real authority/coverage, provider clocks/usage, host rollout, qualified equity and trading remain blocked.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -411,6 +411,11 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
 
 ## Latest Verification
 
+- Second ordered time v24 candidate: **122 direct related tests pass**,
+  including eight new request/interval/fixture checks. The embedded peer
+  compiles; Ruff, compilation and diff checks pass. The privileged isolation
+  scenarios are pending. The verified prefix remains **11/19**; see
+  [second-clock candidate](progress/portfolio-installed-joint-time-candidate-2026-09-24.md).
 - Two-symbol linked-depth v23 candidate: **114 direct relevant tests pass**
   (9 new, 35 installed-gateway and 70 joint-depth/read/WS); lint, formatting,
   compilation and diff checks pass. Full isolated acceptance is pending after

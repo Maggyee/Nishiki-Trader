@@ -22,6 +22,12 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the pending second ordered joint time GET, read
+`docs/progress/portfolio-installed-joint-time-candidate-2026-09-24.md`.
+Manifest v24 adds index 12 after both linked depth anchors in a distinct
+parent. Direct tests pass, but dedicated-UID isolation has not run; the
+verified joint prefix remains 11/19.
+
 For the pending two-symbol snapshot linkage candidate, read
 `docs/progress/portfolio-installed-joint-linked-candidate-2026-09-24.md`.
 Manifest v23 pins 26 sources and implements bounded original increments before

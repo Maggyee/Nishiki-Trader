@@ -335,6 +335,9 @@ def launch(
     depth_symbols=None,
     depth_route_sha=None,
     depth_index=10,
+    clock_index=0,
+    clock_symbols=None,
+    clock_route_sha=None,
     request_index=None,
 ):
     if sum((orders, books, clock, metadata, depth)) > 1:
@@ -345,6 +348,17 @@ def launch(
         or depth_index not in {10, 11}
     ):
         raise ValueError("joint_depth_route_required")
+    if (
+        clock_index not in {0, 12}
+        or (clock_index == 12 and not clock)
+        or (clock_index == 0 and (clock_symbols is not None or clock_route_sha is not None))
+        or (
+            clock
+            and clock_index == 12
+            and (not isinstance(clock_symbols, list) or not isinstance(clock_route_sha, str))
+        )
+    ):
+        raise ValueError("joint_clock_route_required")
     reader = launcher["load_source"](authority.source("inspect_binding.py").decode())[
         "process_identity"
     ]
@@ -366,19 +380,23 @@ def launch(
     ):
         raw = sources.source(filename)
         source += f"{name}=types.ModuleType({name!r})\nexec(compile({raw!r},'<held-source>','exec'),{name}.__dict__)\n"
-    if depth:
+    if depth or (clock and clock_index == 12):
         raw = sources.source("gateway_joint_native_requests.py")
-        source += f"joint_request_scope={{'__name__':'held_joint_requests'}}\nexec(compile({raw!r},'<held-joint-requests>','exec'),joint_request_scope)\nREQUESTS=joint_request_scope['view'](REQUESTS.__dict__,{depth_symbols!r},{depth_route_sha!r})\n"
+        symbols = depth_symbols if depth else clock_symbols
+        route_sha = depth_route_sha if depth else clock_route_sha
+        source += f"joint_request_scope={{'__name__':'held_joint_requests'}}\nexec(compile({raw!r},'<held-joint-requests>','exec'),joint_request_scope)\nREQUESTS=joint_request_scope['view'](REQUESTS.__dict__,{symbols!r},{route_sha!r})\n"
     for raw in (
         authority.source("collector_launcher.py"),
         sources.source("gateway_tls_receipt.py"),
     ):
         source += f"exec(compile({raw!r},'<held-source>','exec'))\n"
     raw = sources.source("gateway_native_account.py")
-    requests = "REQUESTS" if depth else "REQUESTS.__dict__"
+    requests = "REQUESTS" if depth or (clock and clock_index == 12) else "REQUESTS.__dict__"
     source += f"account_scope={{'__name__':'held_account','ControlChannel':ControlChannel,'REQUESTS':{requests},'PROVENANCE':PROVENANCE,'RECEIVE':receive_payload}}\nexec(compile({raw!r},'<held-account>','exec'),account_scope)\nchild_loop=account_scope['child_loop']\n"
     if depth:
         source += f"SYMBOL={depth_symbols[depth_index - 10]!r}\nINDEX={depth_index!r}\n"
+    elif clock and clock_index == 12:
+        source += "INDEX=12\n"
     if orders or books or clock or metadata or depth:
         raw = sources.source(
             "gateway_native_time.py"
@@ -394,6 +412,8 @@ def launch(
         extra = ",'RATES':RATES" if metadata else ""
         if depth:
             extra = ",'SYMBOL':SYMBOL,'INDEX':INDEX"
+        elif clock and clock_index == 12:
+            extra = ",'INDEX':INDEX"
         source += f"orders_scope={{'__name__':'held_orders','ACCOUNT':account_scope{extra}}}\nexec(compile({raw!r},'<held-orders>','exec'),orders_scope)\nchild_loop=orders_scope['child_loop']\n"
     if request_index is not None:
         if request_index not in ({4, 5} if orders else {3, 6} if not (books or clock) else set()):

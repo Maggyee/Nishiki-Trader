@@ -42,7 +42,7 @@ FILES = (
     "portfolio_tls_provenance.py",
     "portfolio_egress_ledger.py",
 )
-PROFILE = "portfolio.installed_gateway_fixture.v23"
+PROFILE = "portfolio.installed_gateway_fixture.v24"
 
 
 def digest(raw):
@@ -212,11 +212,13 @@ def run_controller(
     joint_index = sequence.index if sequence is not None and sequence.joint_reads else None
     if joint_index is not None and joint_index >= 3:
         fixed = (
-            {3, 4, 5, 6, 7, 8, 10, 11}
+            {3, 4, 5, 6, 7, 8, 10, 11, 12}
+            if sequence.joint_time
+            else {3, 4, 5, 6, 7, 8, 10, 11}
             if sequence.joint_linked
             else ({3, 4, 5, 6, 7, 8, 10} if sequence.joint_depth else {3, 4, 5, 6, 7, 8})
         )
-        if joint_index not in fixed or clock or (books and joint_index != 8):
+        if joint_index not in fixed or clock != (joint_index == 12) or (books and joint_index != 8):
             raise ValueError("joint_read_fixed_index")
         orders = joint_index in {4, 5}
         books = joint_index == 8
@@ -270,6 +272,24 @@ def run_controller(
                     "base": request_base,
                 },
                 index=joint_index,
+            )
+        elif joint_index == 12:
+            route = sequence.modules["joint_route_selection"](
+                sequence.bundles[:9],
+                json.loads(sequence.expected.splitlines()[0])["payload"],
+                sequence.modules,
+            )
+            route_sha = digest(json.dumps(route, sort_keys=True, separators=(",", ":")).encode())
+            request_base = load(sources.source("gateway_native_requests.py"))
+            account_code = load(sources.source("gateway_native_time.py"))["view"](
+                load(sources.source("gateway_native_account.py")),
+                index=12,
+                symbols=route["symbols"],
+                route_sha256=route_sha,
+                requests={
+                    "view": load(sources.source("gateway_joint_native_requests.py"))["view"],
+                    "base": request_base,
+                },
             )
         if account:
             module = account_code["ledger_view"](module)
@@ -491,6 +511,7 @@ def main():
             ["--joint-account-reads-fixture"],
             ["--joint-depth-fixture"],
             ["--joint-linked-fixture"],
+            ["--joint-time-fixture"],
             ["--joint-clock-step-fixture"],
         )
         or not sys.flags.isolated
@@ -528,6 +549,7 @@ def main():
         ["--joint-account-reads-fixture"],
         ["--joint-depth-fixture"],
         ["--joint-linked-fixture"],
+        ["--joint-time-fixture"],
     ):
         authority = installation()
         try:
@@ -546,9 +568,16 @@ def main():
                     ["--joint-account-reads-fixture"],
                     ["--joint-depth-fixture"],
                     ["--joint-linked-fixture"],
+                    ["--joint-time-fixture"],
                 ),
-                joint_depth=sys.argv[1:] in (["--joint-depth-fixture"], ["--joint-linked-fixture"]),
-                joint_linked=sys.argv[1:] == ["--joint-linked-fixture"],
+                joint_depth=sys.argv[1:]
+                in (
+                    ["--joint-depth-fixture"],
+                    ["--joint-linked-fixture"],
+                    ["--joint-time-fixture"],
+                ),
+                joint_linked=sys.argv[1:] in (["--joint-linked-fixture"], ["--joint-time-fixture"]),
+                joint_time=sys.argv[1:] == ["--joint-time-fixture"],
                 routes=sys.argv[1:]
                 in (
                     ["--route-sequence-fixture"],

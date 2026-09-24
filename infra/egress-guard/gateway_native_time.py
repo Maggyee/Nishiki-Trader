@@ -91,15 +91,25 @@ def validate_native(payload):
     return expected_result(payload)
 
 
-def view(account):
+def view(account, *, index=0, symbols=None, route_sha256=None, requests=None):
     """Specialize the held single-use selector and its signed-request channel."""
+    if index not in {0, 12} or (
+        index == 0 and any(v is not None for v in (symbols, route_sha256, requests))
+    ):
+        raise ValueError("joint_clock_fixed_index")
+    selected = None
+    if index == 12:
+        if not isinstance(requests, dict) or set(requests) != {"view", "base"}:
+            raise ValueError("joint_clock_route_required")
+        selected = requests["view"](requests["base"], symbols, route_sha256)
 
     class ClockContract(account["AccountContract"]):
         SELECTION_PROFILE = SELECTION_PROFILE
         TLS_PROFILE = TLS_PROFILE
         ENDPOINT = ENDPOINT
         LEDGER_PROFILE = "portfolio.fixture_joint_clock_tls_ledger.v1"
-        CHALLENGE_INDEX = 0
+        CHALLENGE_INDEX = index
+        CHALLENGE_FIELDS = {"route_sha256": route_sha256} if index == 12 else {}
         PATH = "/api/v3/time"
         SELECTION_FILE = "time-request.json"
 
@@ -110,11 +120,24 @@ def view(account):
 
     def authorize(collector, ledger, authority, requests):
         return account["authorize"](
-            collector, ledger, authority, requests, contract_type=ClockContract
+            collector,
+            ledger,
+            authority,
+            selected if index == 12 else requests,
+            contract_type=ClockContract,
         )
 
     def launch(authority, sources, launcher, runtime):
-        return account["launch"](authority, sources, launcher, runtime, clock=True)
+        return account["launch"](
+            authority,
+            sources,
+            launcher,
+            runtime,
+            clock=True,
+            clock_index=index,
+            clock_symbols=symbols,
+            clock_route_sha=route_sha256,
+        )
 
     return {
         "PROFILE": PROFILE,
@@ -131,4 +154,6 @@ def view(account):
 
 
 def child_loop(fd, parent):
-    globals()["ACCOUNT"]["child_loop"](fd, parent, index=0, native=validate_native)
+    globals()["ACCOUNT"]["child_loop"](
+        fd, parent, index=globals().get("INDEX", 0), native=validate_native
+    )

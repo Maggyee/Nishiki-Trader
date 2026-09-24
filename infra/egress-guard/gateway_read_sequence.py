@@ -49,6 +49,9 @@ JOINT_DEPTH_STEPS = (*JOINT_READ_STEPS, "depth_first")
 JOINT_LINKED_PROFILE = "portfolio.installed_joint_linked_depth.v1"
 JOINT_LINKED_SCOPE = "fixture-joint-linked-depth-v1"
 JOINT_LINKED_STEPS = (*JOINT_DEPTH_STEPS, "depth_second")
+JOINT_TIME_PROFILE = "portfolio.installed_joint_linked_time.v1"
+JOINT_TIME_SCOPE = "fixture-joint-linked-time-v1"
+JOINT_TIME_STEPS = (*JOINT_LINKED_STEPS, "clock_linked")
 LIMIT = 65536
 FILES = {
     "binding": "binding.json",
@@ -89,6 +92,7 @@ def load_sources(sources):
         "orders_second": load("gateway_native_orders.py")["view"](account, index=5),
         "books": load("gateway_book_routes.py")["view"](account),
         "clock": load("gateway_native_time.py")["view"](account),
+        "clock_source": load("gateway_native_time.py"),
         "joint_ws": load("gateway_joint_account_ws.py"),
         "account_ws": load("gateway_account_ws.py"),
         "ws": load("gateway_concurrent_ws.py"),
@@ -119,6 +123,7 @@ def review_bundle(
     joint_reads=False,
     joint_depth=False,
     joint_linked=False,
+    joint_time=False,
     previous=None,
 ):
     """Verify originals before considering a step complete; never trust a saved report."""
@@ -159,7 +164,9 @@ def review_bundle(
             raise ValueError("sequence_attempts_required")
         return result
     account = (
-        joint_depth_view(previous, selected, modules, index=index)
+        joint_time_view(previous, selected, modules)
+        if joint_time and index == 12
+        else joint_depth_view(previous, selected, modules, index=index)
         if joint_depth and index in {10, 11}
         else modules["clock"]
         if clock
@@ -196,7 +203,9 @@ def review_bundle(
     rates = account["rates_view"]() if index or clock else modules["rates"]
     if (index or clock) and "selection" in bundle:
         contract = account["AccountContract"](
-            account["requests"] if joint_depth and index in {10, 11} else modules["requests"],
+            account["requests"]
+            if (joint_depth and index in {10, 11}) or (joint_time and index == 12)
+            else modules["requests"],
             json.loads(bundle["selection"]),
         )
         if contract.raw.decode() != bundle["selection"]:
@@ -395,6 +404,25 @@ def joint_depth_view(bundles, selected, modules, *, index=10):
     return view
 
 
+def joint_time_view(bundles, selected, modules):
+    route = joint_route_selection(bundles[:9], selected, modules)
+    requests = {
+        "view": modules["joint_requests"]["view"],
+        "base": modules["requests"],
+    }
+    view = modules["clock_source"]["view"](
+        modules["account"],
+        index=12,
+        symbols=route["symbols"],
+        route_sha256=digest(canonical(route)),
+        requests=requests,
+    )
+    view["requests"] = requests["view"](
+        requests["base"], route["symbols"], digest(canonical(route))
+    )
+    return view
+
+
 def joint_snapshot_link(result, market_events):
     symbol, revision = result["symbol"], result["last_update_id"]
     events = [event for event in market_events if event["symbol"] == symbol]
@@ -427,6 +455,36 @@ def joint_snapshot_link(result, market_events):
         "obsolete_events": len(events) - len(active),
         "linked_event_sha256": [event["original_sha256"] for event in active],
         "snapshot_tls_sha256": result["tls_sha256"],
+    }
+
+
+def joint_time_link(results):
+    clock = results[12]["native_result"]
+    first = results[9]["market_events"][0]["receipt"]
+    latest = results[11]["native_result"]["body_receipt"]
+    header = clock["header_receipt"]
+    if (
+        any(
+            not 0 <= header[key] - latest[key] <= 60_000_000_000
+            or not 0 <= header[key] - first[key] <= 60_000_000_000
+            for key in ("utc_ns", "monotonic_ns")
+        )
+        or abs(
+            (header["utc_ns"] - first["utc_ns"]) - (header["monotonic_ns"] - first["monotonic_ns"])
+        )
+        > 50_000_000
+        or first["utc_ns"] // 86_400_000_000_000 != header["utc_ns"] // 86_400_000_000_000
+    ):
+        raise ValueError("joint_linked_time_original_interval")
+    if any(results[index].get("snapshot_linkage") is None for index in (10, 11)):
+        raise ValueError("joint_linked_time_snapshots_required")
+    return {
+        "server_time_ms": clock["server_time_ms"],
+        "clock_tls_sha256": clock["tls_sha256"],
+        "snapshot_tls_sha256": [
+            results[index]["snapshot_linkage"]["snapshot_tls_sha256"] for index in (10, 11)
+        ],
+        "provider_clock_qualified": False,
     }
 
 
@@ -463,9 +521,11 @@ def replay(
     joint_reads=False,
     joint_depth=False,
     joint_linked=False,
+    joint_time=False,
 ):
     if (
-        (joint_linked and not joint_depth)
+        (joint_time and not joint_linked)
+        or (joint_linked and not joint_depth)
         or (joint_depth and not joint_reads)
         or ((joint_ws or joint_reads) and any((orders, routes, quotes, unsubscribe, clock)))
         or (joint_ws and joint_reads)
@@ -479,7 +539,9 @@ def replay(
         raise ValueError("quote_route_required")
     orders = orders or routes
     profile = (
-        JOINT_LINKED_PROFILE
+        JOINT_TIME_PROFILE
+        if joint_time
+        else JOINT_LINKED_PROFILE
         if joint_linked
         else JOINT_DEPTH_PROFILE
         if joint_depth
@@ -500,7 +562,9 @@ def replay(
         else PROFILE
     )
     steps = (
-        JOINT_LINKED_STEPS
+        JOINT_TIME_STEPS
+        if joint_time
+        else JOINT_LINKED_STEPS
         if joint_linked
         else JOINT_DEPTH_STEPS
         if joint_depth
@@ -584,11 +648,14 @@ def replay(
                 modules,
                 orders=orders,
                 routes=routes,
-                clock=clock or (joint_ws or joint_reads) and pending == 0,
+                clock=clock
+                or ((joint_ws or joint_reads) and pending == 0)
+                or (joint_time and pending == 12),
                 joint_ws=joint_ws,
                 joint_reads=joint_reads,
                 joint_depth=joint_depth,
                 joint_linked=joint_linked,
+                joint_time=joint_time,
                 previous=bundles[:pending],
             )
             # Every child archive follows preparation, and each whole step ends
@@ -625,6 +692,8 @@ def replay(
                     results[pending]["snapshot_linkage"] = joint_snapshot_link(
                         results[pending]["native_result"], results[9]["market_events"]
                     )
+                if joint_time and pending == 12:
+                    results[12]["time_linkage"] = joint_time_link(results)
                 if pending >= 3:
                     anchor = json.loads(bundles[0]["binding"])
                     current = json.loads(bundles[pending]["binding"])
@@ -727,6 +796,7 @@ def replay(
             if joint_linked
             else {}
         ),
+        **({"linked_time_accepted": accepted >= 13} if joint_time else {}),
         **(
             {
                 "routes_derived_from_same_run": accepted >= 9,
@@ -779,9 +849,11 @@ class Sequence:
         joint_reads=False,
         joint_depth=False,
         joint_linked=False,
+        joint_time=False,
     ):
         if (
-            (joint_linked and not joint_depth)
+            (joint_time and not joint_linked)
+            or (joint_linked and not joint_depth)
             or (joint_depth and not joint_reads)
             or ((joint_ws or joint_reads) and any((orders, routes, quotes, unsubscribe, clock)))
             or (joint_ws and joint_reads)
@@ -804,6 +876,7 @@ class Sequence:
             self.joint_reads,
             self.joint_depth,
             self.joint_linked,
+            self.joint_time,
         ) = (
             orders,
             routes,
@@ -814,9 +887,12 @@ class Sequence:
             joint_reads,
             joint_depth,
             joint_linked,
+            joint_time,
         )
         self.profile = (
-            JOINT_LINKED_PROFILE
+            JOINT_TIME_PROFILE
+            if joint_time
+            else JOINT_LINKED_PROFILE
             if joint_linked
             else JOINT_DEPTH_PROFILE
             if joint_depth
@@ -837,7 +913,9 @@ class Sequence:
             else PROFILE
         )
         self.scope = (
-            JOINT_LINKED_SCOPE
+            JOINT_TIME_SCOPE
+            if joint_time
+            else JOINT_LINKED_SCOPE
             if joint_linked
             else JOINT_DEPTH_SCOPE
             if joint_depth
@@ -858,7 +936,9 @@ class Sequence:
             else SCOPE
         )
         self.steps = (
-            JOINT_LINKED_STEPS
+            JOINT_TIME_STEPS
+            if joint_time
+            else JOINT_LINKED_STEPS
             if joint_linked
             else JOINT_DEPTH_STEPS
             if joint_depth
@@ -1024,6 +1104,7 @@ class Sequence:
             joint_reads=self.joint_reads,
             joint_depth=self.joint_depth,
             joint_linked=self.joint_linked,
+            joint_time=self.joint_time,
         )
         self.journal.append(
             kind, **{k: v for k, v in row.items() if k not in {"seq", "previous_sha256", "kind"}}
@@ -1068,7 +1149,9 @@ class Sequence:
             return bundle
         kind = (
             "clock"
-            if self.clock or (self.joint_ws or self.joint_reads) and self.index == 0
+            if self.clock
+            or ((self.joint_ws or self.joint_reads) and self.index == 0)
+            or (self.joint_time and self.index == 12)
             else "orders"
             if self.joint_reads and self.index in {4, 5}
             else "account"
@@ -1091,6 +1174,12 @@ class Sequence:
             (
                 self.modules["metadata"]["view"](self.modules["account"], self.modules["rates"])
                 if self.joint_reads and self.index == 7
+                else joint_time_view(
+                    self.bundles[:9],
+                    json.loads(self.expected.splitlines()[0])["payload"],
+                    self.modules,
+                )
+                if self.joint_time and self.index == 12
                 else joint_depth_view(
                     self.bundles[:9],
                     json.loads(self.expected.splitlines()[0])["payload"],
@@ -1143,9 +1232,11 @@ def run_installed(
     joint_reads=False,
     joint_depth=False,
     joint_linked=False,
+    joint_time=False,
 ):
     if (
-        (joint_linked and not joint_depth)
+        (joint_time and not joint_linked)
+        or (joint_linked and not joint_depth)
         or (joint_depth and not joint_reads)
         or (
             (joint_ws or joint_reads)
@@ -1188,6 +1279,7 @@ def run_installed(
             joint_reads=joint_reads,
             joint_depth=joint_depth,
             joint_linked=joint_linked,
+            joint_time=joint_time,
         )
         try:
             for index in range(len(sequence.steps)):
@@ -1204,7 +1296,9 @@ def run_installed(
                         receipt=True,
                         native=True,
                         account=index != 0,
-                        clock=clock or (joint_ws or joint_reads) and index == 0,
+                        clock=clock
+                        or ((joint_ws or joint_reads) and index == 0)
+                        or (joint_time and index == 12),
                         orders=orders and index in {2, 3} or joint_reads and index in {4, 5},
                         books=routes and index == 5 or joint_reads and index == 8,
                         sequence=sequence,
