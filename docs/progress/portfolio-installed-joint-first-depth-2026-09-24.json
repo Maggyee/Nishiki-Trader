@@ -1,0 +1,46 @@
+{
+  "schema_version": "portfolio.installed_joint_first_depth_evidence.v1",
+  "date": "2026-09-24",
+  "scope": "disposable_local_fixture_only",
+  "manifest_profile": "portfolio.installed_gateway_fixture.v22",
+  "protected_source_count": 26,
+  "parent_profile": "portfolio.installed_joint_account_depth.v1",
+  "parent_scope": "fixture-joint-account-depth-v1",
+  "selected_symbols": ["BNBUSDT", "BTCUSDT"],
+  "new_operation": {"index": 10, "type": "depth_100", "symbol": "BNBUSDT"},
+  "planned_operations": 19,
+  "accepted_operations": 11,
+  "observed_gets": 8,
+  "planned_gets": 15,
+  "reports": {
+    "depth": {
+      "path": "data/joint-depth-v22-acceptance-20260924-final.json",
+      "sha256": "1f9d6624e8840acb30cabf48e7d36a581ce7d8f2d63c814e4f4422d6d490a9b4",
+      "scenarios": {
+        "joint_depth_success": {"prepared": 11, "accepted": 11, "snapshot_revision": 100},
+        "joint_depth_crossed": {"prepared": 11, "accepted": 10, "pending": 10, "native_acknowledged": false}
+      },
+      "peak_sampled_descriptors": 899
+    },
+    "previous_joint_reads": {
+      "path": "data/joint-reads-v22-regression-20260924-final.json",
+      "sha256": "48d4780f53ffc684baf5d7ad91b251bcbcb3cf56a38fc928c1801b390deabe5f",
+      "scenarios_passed": 5
+    },
+    "clock": {"path": "data/joint-clock-v22-regression-20260924-final.json", "sha256": "a15d563b3c9dfa0e47a6fd09caefa9405873803b2265650e61b656a535a1eb7c", "scenarios_passed": 2},
+    "account_ws": {"path": "data/joint-account-v22-regression-20260924-final.json", "sha256": "79bc7ef7be1721524cec57ef37123635b788df665010f8a29e9727f9f474d681", "scenarios_passed": 3},
+    "unsubscribe": {"path": "data/unsubscribe-v22-regression-20260924-final.json", "sha256": "90306e1b80dea71e126964f05ee56d13f9728d6dfe16406e51fd02caf8bf1b22", "scenarios_passed": 2}
+  },
+  "focused_pytest_passed": 199,
+  "shared_regression_pytest_passed": 232,
+  "separate_snapshot_pytest_passed": 20,
+  "both_websockets_open_during_depth": true,
+  "snapshot_linked_to_market_increment": false,
+  "second_symbol_snapshot_accepted": false,
+  "full_account_interval": false,
+  "stream_fence_verified": false,
+  "host_installation_performed": false,
+  "venue_requests": 0,
+  "network_admitted": false,
+  "trading_admitted": false
+}

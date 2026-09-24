@@ -39,6 +39,7 @@ def ledger_view(module, *, profile=None, scope=None):
         (module.ORDERS_PROFILE, module.ORDERS_SCOPE),
         (module.BOOKS_PROFILE, module.BOOKS_SCOPE),
         (module.METADATA_PROFILE, module.METADATA_SCOPE),
+        (module.DEPTH_PROFILE, module.DEPTH_SCOPE),
         (module.CLOCK_PROFILE, module.CLOCK_SCOPE),
     }:
         raise ValueError("signed_read_profile_required")
@@ -163,6 +164,7 @@ class AccountContract:
     CHALLENGE_INDEX = 3
     PATH = "/api/v3/account"
     SELECTION_FILE = "account-request.json"
+    CHALLENGE_FIELDS = {}
 
     def __init__(self, requests, selection):
         if (
@@ -267,6 +269,7 @@ def authorize(collector, ledger, authority, requests, *, contract_type=AccountCo
         "nonce": os.urandom(16).hex(),
         "utc_ns": time.time_ns(),
         "monotonic_ns": time.monotonic_ns(),
+        **contract_type.CHALLENGE_FIELDS,
     }
     collector.channel.connection.settimeout(5)
     collector.channel.send(canonical(challenge).decode(), 1)
@@ -328,10 +331,15 @@ def launch(
     books=False,
     clock=False,
     metadata=False,
+    depth=False,
+    depth_symbols=None,
+    depth_route_sha=None,
     request_index=None,
 ):
-    if sum((orders, books, clock, metadata)) > 1:
+    if sum((orders, books, clock, metadata, depth)) > 1:
         raise ValueError("signed_read_type_conflict")
+    if depth and (not isinstance(depth_symbols, list) or not isinstance(depth_route_sha, str)):
+        raise ValueError("joint_depth_route_required")
     reader = launcher["load_source"](authority.source("inspect_binding.py").decode())[
         "process_identity"
     ]
@@ -353,14 +361,20 @@ def launch(
     ):
         raw = sources.source(filename)
         source += f"{name}=types.ModuleType({name!r})\nexec(compile({raw!r},'<held-source>','exec'),{name}.__dict__)\n"
+    if depth:
+        raw = sources.source("gateway_joint_native_requests.py")
+        source += f"joint_request_scope={{'__name__':'held_joint_requests'}}\nexec(compile({raw!r},'<held-joint-requests>','exec'),joint_request_scope)\nREQUESTS=joint_request_scope['view'](REQUESTS.__dict__,{depth_symbols!r},{depth_route_sha!r})\n"
     for raw in (
         authority.source("collector_launcher.py"),
         sources.source("gateway_tls_receipt.py"),
     ):
         source += f"exec(compile({raw!r},'<held-source>','exec'))\n"
     raw = sources.source("gateway_native_account.py")
-    source += f"account_scope={{'__name__':'held_account','ControlChannel':ControlChannel,'REQUESTS':REQUESTS.__dict__,'PROVENANCE':PROVENANCE,'RECEIVE':receive_payload}}\nexec(compile({raw!r},'<held-account>','exec'),account_scope)\nchild_loop=account_scope['child_loop']\n"
-    if orders or books or clock or metadata:
+    requests = "REQUESTS" if depth else "REQUESTS.__dict__"
+    source += f"account_scope={{'__name__':'held_account','ControlChannel':ControlChannel,'REQUESTS':{requests},'PROVENANCE':PROVENANCE,'RECEIVE':receive_payload}}\nexec(compile({raw!r},'<held-account>','exec'),account_scope)\nchild_loop=account_scope['child_loop']\n"
+    if depth:
+        source += f"SYMBOL={depth_symbols[0]!r}\n"
+    if orders or books or clock or metadata or depth:
         raw = sources.source(
             "gateway_native_time.py"
             if clock
@@ -368,9 +382,13 @@ def launch(
             if books
             else "gateway_native_receipt.py"
             if metadata
+            else "gateway_joint_native_depth.py"
+            if depth
             else "gateway_native_orders.py"
         )
         extra = ",'RATES':RATES" if metadata else ""
+        if depth:
+            extra = ",'SYMBOL':SYMBOL"
         source += f"orders_scope={{'__name__':'held_orders','ACCOUNT':account_scope{extra}}}\nexec(compile({raw!r},'<held-orders>','exec'),orders_scope)\nchild_loop=orders_scope['child_loop']\n"
     if request_index is not None:
         if request_index not in ({4, 5} if orders else {3, 6} if not (books or clock) else set()):

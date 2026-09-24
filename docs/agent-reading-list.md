@@ -22,6 +22,15 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the first same-parent route-bound REST depth anchor, read
+`docs/progress/portfolio-installed-joint-first-depth-2026-09-24.md` and its JSON.
+Manifest v22 pins 26 sources and a distinct v1 parent. The root rederives the
+two-symbol route before the dedicated UID selects `BNBUSDT` depth 100, preserving
+the original HTTPS bytes and clocks while both WebSockets stay open. A crossed
+book consumes the eleventh attempt without native acknowledgement. Success is
+only 11/19: the second depth, original increments, linked time, second account
+pass, final clock and unsubscribe are absent; no real admission follows.
+
 For the same-parent installed market WebSocket Upgrade, read
 `docs/progress/portfolio-installed-joint-market-connect-2026-09-24.md` and its
 JSON. Manifest v21 pins 24 sources and a distinct v3 parent. The root derives

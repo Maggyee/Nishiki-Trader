@@ -81,6 +81,8 @@ BOOKS_PROFILE = "portfolio.fixture_books_tls_ledger.v1"
 BOOKS_SCOPE = "fixture-books-tls-v1"
 METADATA_PROFILE = "portfolio.fixture_metadata_tls_ledger.v1"
 METADATA_SCOPE = "fixture-metadata-tls-v1"
+DEPTH_PROFILE = "portfolio.fixture_joint_depth_tls_ledger.v1"
+DEPTH_SCOPE = "fixture-joint-depth-tls-v1"
 CLOCK_PROFILE = "portfolio.fixture_joint_clock_tls_ledger.v1"
 CLOCK_SCOPE = "fixture-joint-clock-tls-v1"
 # Fixed maximum local pilot classification. Tokens contain no endpoint/payload/signature.
@@ -129,6 +131,7 @@ class State:
             ORDERS_PROFILE,
             BOOKS_PROFILE,
             METADATA_PROFILE,
+            DEPTH_PROFILE,
             CLOCK_PROFILE,
         }:
             raise ValueError("unknown_ledger_profile")
@@ -198,6 +201,7 @@ class State:
                 ORDERS_PROFILE,
                 BOOKS_PROFILE,
                 METADATA_PROFILE,
+                DEPTH_PROFILE,
                 CLOCK_PROFILE,
             } and (
                 self.attempts
@@ -208,6 +212,7 @@ class State:
                     ORDERS_PROFILE: "open_orders",
                     BOOKS_PROFILE: "book_ticker",
                     METADATA_PROFILE: "exchange_info",
+                    DEPTH_PROFILE: "depth_100",
                     CLOCK_PROFILE: "time",
                 }[self.profile]
             ):
@@ -234,6 +239,7 @@ class State:
                     ORDERS_PROFILE,
                     BOOKS_PROFILE,
                     METADATA_PROFILE,
+                    DEPTH_PROFILE,
                     CLOCK_PROFILE,
                 }
                 and payload["request_sha256"] != self.attempts[self.pending]["request_sha256"]
@@ -267,6 +273,7 @@ class State:
             ORDERS_PROFILE,
             BOOKS_PROFILE,
             METADATA_PROFILE,
+            DEPTH_PROFILE,
             CLOCK_PROFILE,
         }:
             return {"request_sha256"}
@@ -368,6 +375,7 @@ class AttemptLedger:
             ORDERS_PROFILE: ORDERS_SCOPE,
             BOOKS_PROFILE: BOOKS_SCOPE,
             METADATA_PROFILE: METADATA_SCOPE,
+            DEPTH_PROFILE: DEPTH_SCOPE,
             CLOCK_PROFILE: CLOCK_SCOPE,
         }[profile]
         self.owner = os.getpid()
@@ -491,6 +499,7 @@ class AttemptLedger:
                                 ORDERS_PROFILE,
                                 BOOKS_PROFILE,
                                 METADATA_PROFILE,
+                                DEPTH_PROFILE,
                                 CLOCK_PROFILE,
                             }
                             or request_sha256 is not None
@@ -532,6 +541,7 @@ class AttemptLedger:
                                 ORDERS_PROFILE,
                                 BOOKS_PROFILE,
                                 METADATA_PROFILE,
+                                DEPTH_PROFILE,
                                 CLOCK_PROFILE,
                             }
                             or request_sha256 is not None

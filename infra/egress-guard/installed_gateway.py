@@ -22,6 +22,8 @@ FILES = (
     "gateway_native_runtime.py",
     "gateway_native_receipt.py",
     "gateway_native_requests.py",
+    "gateway_joint_native_requests.py",
+    "gateway_joint_native_depth.py",
     "gateway_native_account.py",
     "gateway_native_orders.py",
     "gateway_book_routes.py",
@@ -40,7 +42,7 @@ FILES = (
     "portfolio_tls_provenance.py",
     "portfolio_egress_ledger.py",
 )
-PROFILE = "portfolio.installed_gateway_fixture.v21"
+PROFILE = "portfolio.installed_gateway_fixture.v22"
 
 
 def digest(raw):
@@ -200,10 +202,10 @@ def run_controller(
     clock=False,
     sequence=None,
 ):
-    account = account or orders or books or clock
+    account = account or orders or books or clock or (sequence is not None and sequence.joint_depth and sequence.index == 10)
     joint_index = sequence.index if sequence is not None and sequence.joint_reads else None
     if joint_index is not None and joint_index >= 3:
-        if joint_index not in {3, 4, 5, 6, 7, 8} or clock or (books and joint_index != 8):
+        if joint_index not in ({3, 4, 5, 6, 7, 8, 10} if sequence.joint_depth else {3, 4, 5, 6, 7, 8}) or clock or (books and joint_index != 8):
             raise ValueError("joint_read_fixed_index")
         orders = joint_index in {4, 5}
         books = joint_index == 8
@@ -239,6 +241,16 @@ def run_controller(
             account_code = load(sources.source("gateway_native_receipt.py"))["view"](
                 load(sources.source("gateway_native_account.py")),
                 sys.modules["apps.strategies_nautilus.portfolio_rate_evidence"],
+            )
+        elif joint_index == 10:
+            route = sequence.modules["joint_route_selection"](
+                sequence.bundles[:9], json.loads(sequence.expected.splitlines()[0])["payload"], sequence.modules
+            )
+            route_sha = digest(json.dumps(route, sort_keys=True, separators=(",", ":")).encode())
+            request_base = load(sources.source("gateway_native_requests.py"))
+            account_code = load(sources.source("gateway_joint_native_depth.py"))["view"](
+                load(sources.source("gateway_native_account.py")), route["symbols"], route_sha,
+                {"view": load(sources.source("gateway_joint_native_requests.py"))["view"], "base": request_base},
             )
         if account:
             module = account_code["ledger_view"](module)
@@ -458,6 +470,7 @@ def main():
             ["--joint-clock-fixture"],
             ["--joint-account-prefix-fixture"],
             ["--joint-account-reads-fixture"],
+            ["--joint-depth-fixture"],
             ["--joint-clock-step-fixture"],
         )
         or not sys.flags.isolated
@@ -493,6 +506,7 @@ def main():
         ["--joint-clock-fixture"],
         ["--joint-account-prefix-fixture"],
         ["--joint-account-reads-fixture"],
+        ["--joint-depth-fixture"],
     ):
         authority = installation()
         try:
@@ -506,7 +520,8 @@ def main():
                 orders=sys.argv[1:] == ["--order-sequence-fixture"],
                 clock=sys.argv[1:] == ["--joint-clock-fixture"],
                 joint_ws=sys.argv[1:] == ["--joint-account-prefix-fixture"],
-                joint_reads=sys.argv[1:] == ["--joint-account-reads-fixture"],
+                joint_reads=sys.argv[1:] in (["--joint-account-reads-fixture"], ["--joint-depth-fixture"]),
+                joint_depth=sys.argv[1:] == ["--joint-depth-fixture"],
                 routes=sys.argv[1:]
                 in (
                     ["--route-sequence-fixture"],

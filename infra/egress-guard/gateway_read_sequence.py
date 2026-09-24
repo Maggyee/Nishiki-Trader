@@ -43,6 +43,9 @@ JOINT_READ_STEPS = (
     "books",
     "market_connect",
 )
+JOINT_DEPTH_PROFILE = "portfolio.installed_joint_account_depth.v1"
+JOINT_DEPTH_SCOPE = "fixture-joint-account-depth-v1"
+JOINT_DEPTH_STEPS = (*JOINT_READ_STEPS, "depth_first")
 LIMIT = 65536
 FILES = {
     "binding": "binding.json",
@@ -90,6 +93,10 @@ def load_sources(sources):
         "metadata": load("gateway_native_receipt.py"),
         "joint_route_selection": joint_route_selection,
         "requests": load("gateway_native_requests.py"),
+        "joint_requests": load("gateway_joint_native_requests.py"),
+        "depth": load("gateway_joint_native_depth.py"),
+        "snapshot": load("gateway_snapshot_ws.py"),
+        "market": load("gateway_market_ws.py"),
         "provenance": sys.modules["apps.strategies_nautilus.portfolio_tls_provenance"],
         "rates": sys.modules["apps.strategies_nautilus.portfolio_rate_evidence"],
     }
@@ -107,6 +114,7 @@ def review_bundle(
     clock=False,
     joint_ws=False,
     joint_reads=False,
+    joint_depth=False,
     previous=None,
 ):
     """Verify originals before considering a step complete; never trust a saved report."""
@@ -141,7 +149,9 @@ def review_bundle(
             raise ValueError("sequence_attempts_required")
         return result
     account = (
-        modules["clock"]
+        joint_depth_view(previous, selected, modules)
+        if joint_depth and index == 10
+        else modules["clock"]
         if clock
         else modules["orders_second"]
         if joint_reads and index == 5
@@ -175,7 +185,11 @@ def review_bundle(
     transport = modules["tls"]
     rates = account["rates_view"]() if index or clock else modules["rates"]
     if (index or clock) and "selection" in bundle:
-        contract = account["AccountContract"](modules["requests"], json.loads(bundle["selection"]))
+        contract = account["AccountContract"](
+            joint_depth_view(previous, selected, modules)["requests"]
+            if joint_depth and index == 10 else modules["requests"],
+            json.loads(bundle["selection"]),
+        )
         if contract.raw.decode() != bundle["selection"]:
             raise ValueError("sequence_canonical_selection")
         transport = account["transport_view"](transport, contract)
@@ -353,6 +367,19 @@ def joint_route_selection(bundles, selected, modules):
     return joint_route_result(results, bundles, modules)
 
 
+def joint_depth_view(bundles, selected, modules):
+    route = joint_route_selection(bundles[:9], selected, modules)
+    requests = {
+        "view": modules["joint_requests"]["view"],
+        "base": modules["requests"],
+    }
+    view = modules["depth"]["view"](
+        modules["account"], route["symbols"], digest(canonical(route)), requests,
+    )
+    view["requests"] = requests["view"](requests["base"], route["symbols"], digest(canonical(route)))
+    return view
+
+
 def route_result(results, bundles, modules):
     first, last = (
         results[0]["native_result"]["header_receipt"],
@@ -384,12 +411,12 @@ def replay(
     clock=False,
     joint_ws=False,
     joint_reads=False,
+    joint_depth=False,
 ):
     if (
-        (joint_ws or joint_reads)
-        and any((orders, routes, quotes, unsubscribe, clock))
-        or joint_ws
-        and joint_reads
+        (joint_depth and not joint_reads)
+        or ((joint_ws or joint_reads) and any((orders, routes, quotes, unsubscribe, clock)))
+        or (joint_ws and joint_reads)
     ):
         raise ValueError("joint_ws_sequence_conflict")
     if (
@@ -400,7 +427,9 @@ def replay(
         raise ValueError("quote_route_required")
     orders = orders or routes
     profile = (
-        JOINT_READ_PROFILE
+        JOINT_DEPTH_PROFILE
+        if joint_depth
+        else JOINT_READ_PROFILE
         if joint_reads
         else JOINT_WS_PROFILE
         if joint_ws or joint_reads
@@ -417,7 +446,9 @@ def replay(
         else PROFILE
     )
     steps = (
-        JOINT_READ_STEPS
+        JOINT_DEPTH_STEPS
+        if joint_depth
+        else JOINT_READ_STEPS
         if joint_reads
         else JOINT_WS_STEPS
         if joint_ws or joint_reads
@@ -500,6 +531,7 @@ def replay(
                 clock=clock or (joint_ws or joint_reads) and pending == 0,
                 joint_ws=joint_ws,
                 joint_reads=joint_reads,
+                joint_depth=joint_depth,
                 previous=bundles[:pending],
             )
             # Every child archive follows preparation, and each whole step ends
@@ -625,6 +657,7 @@ def replay(
         ),
         **({"account_before_four_gets_reconciled": accepted >= 7} if joint_reads else {}),
         **({"market_ws_upgraded": accepted >= 10} if joint_reads else {}),
+        **({"first_depth_snapshot_accepted": accepted >= 11} if joint_depth else {}),
         **(
             {
                 "routes_derived_from_same_run": accepted >= 9,
@@ -675,12 +708,12 @@ class Sequence:
         clock=False,
         joint_ws=False,
         joint_reads=False,
+        joint_depth=False,
     ):
         if (
-            (joint_ws or joint_reads)
-            and any((orders, routes, quotes, unsubscribe, clock))
-            or joint_ws
-            and joint_reads
+            (joint_depth and not joint_reads)
+            or ((joint_ws or joint_reads) and any((orders, routes, quotes, unsubscribe, clock)))
+            or (joint_ws and joint_reads)
         ):
             raise ValueError("joint_ws_sequence_conflict")
         if (
@@ -698,6 +731,7 @@ class Sequence:
             self.clock,
             self.joint_ws,
             self.joint_reads,
+            self.joint_depth,
         ) = (
             orders,
             routes,
@@ -706,9 +740,12 @@ class Sequence:
             clock,
             joint_ws,
             joint_reads,
+            joint_depth,
         )
         self.profile = (
-            JOINT_READ_PROFILE
+            JOINT_DEPTH_PROFILE
+            if joint_depth
+            else JOINT_READ_PROFILE
             if joint_reads
             else JOINT_WS_PROFILE
             if joint_ws or joint_reads
@@ -725,7 +762,9 @@ class Sequence:
             else PROFILE
         )
         self.scope = (
-            JOINT_READ_SCOPE
+            JOINT_DEPTH_SCOPE
+            if joint_depth
+            else JOINT_READ_SCOPE
             if joint_reads
             else JOINT_WS_SCOPE
             if joint_ws or joint_reads
@@ -742,7 +781,9 @@ class Sequence:
             else SCOPE
         )
         self.steps = (
-            JOINT_READ_STEPS
+            JOINT_DEPTH_STEPS
+            if joint_depth
+            else JOINT_READ_STEPS
             if joint_reads
             else JOINT_WS_STEPS
             if joint_ws or joint_reads
@@ -902,6 +943,7 @@ class Sequence:
             clock=self.clock,
             joint_ws=self.joint_ws,
             joint_reads=self.joint_reads,
+            joint_depth=self.joint_depth,
         )
         self.journal.append(
             kind, **{k: v for k, v in row.items() if k not in {"seq", "previous_sha256", "kind"}}
@@ -955,6 +997,8 @@ class Sequence:
             if self.joint_reads and self.index == 7
             else "books"
             if self.joint_reads and self.index == 8
+            else "depth"
+            if self.joint_depth and self.index == 10
             else "books"
             if self.routes and self.index == 5
             else "orders"
@@ -967,6 +1011,9 @@ class Sequence:
             (
                 self.modules["metadata"]["view"](self.modules["account"], self.modules["rates"])
                 if self.joint_reads and self.index == 7
+                else joint_depth_view(
+                    self.bundles[:9], json.loads(self.expected.splitlines()[0])["payload"], self.modules
+                ) if self.joint_depth and self.index == 10
                 else self.modules[kind]
             )["ledger_view"](self.modules["ledger"])
             if self.index or self.clock or self.joint_ws or self.joint_reads
@@ -975,7 +1022,7 @@ class Sequence:
         scope = self.storage / ledger.SCOPE
         bundle = {}
         for key, name in FILES.items():
-            if key == "selection" and kind in {"orders", "books", "clock", "metadata"}:
+            if key == "selection" and kind in {"orders", "books", "clock", "metadata", "depth"}:
                 name = ("time" if kind == "clock" else kind) + "-request.json"
             path = self.storage / name if key == "binding" else scope / name
             if path.exists():
@@ -1010,12 +1057,12 @@ def run_installed(
     clock=False,
     joint_ws=False,
     joint_reads=False,
+    joint_depth=False,
 ):
     if (
-        (joint_ws or joint_reads)
-        and any((orders, routes, concurrent, signed, market, snapshot, quotes, unsubscribe, clock))
-        or joint_ws
-        and joint_reads
+        (joint_depth and not joint_reads)
+        or ((joint_ws or joint_reads) and any((orders, routes, concurrent, signed, market, snapshot, quotes, unsubscribe, clock)))
+        or (joint_ws and joint_reads)
     ):
         raise ValueError("joint_ws_sequence_conflict")
     if clock and any((orders, routes, concurrent, signed, market, snapshot, quotes, unsubscribe)):
@@ -1048,6 +1095,7 @@ def run_installed(
             clock=clock,
             joint_ws=joint_ws,
             joint_reads=joint_reads,
+            joint_depth=joint_depth,
         )
         try:
             for index in range(len(sequence.steps)):
