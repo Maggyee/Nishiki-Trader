@@ -1,0 +1,39 @@
+{
+  "schema_version": "portfolio.installed_joint_handoff_review.v1",
+  "date": "2026-09-24",
+  "status": "blocked_incomplete_joint_collector",
+  "evidence_basis": "offline_original_byte_replay_of_installed_snapshot_fixture",
+  "ignored_report": "data/installed-snapshot-ws-2026-09-23/final.json",
+  "ignored_report_sha256": "7b0e035ddaddd907bb46678a4e55012c94b7c2de9c56df562738ca94a6b68547",
+  "scenarios": {
+    "snapshot_success": {
+      "symbols": ["BNBUSDT", "BTCUSDT"],
+      "sequence_archive_sha256": "e5abb89c5bbb5c9be023f3bd2d797909a40b3fcc38ed7dc7d50f01c388624c2c",
+      "snapshot_ws_archive_sha256": "972d617b688367bf07110a3f23e9518234fd2f9d002cad094ac6526c66e33160"
+    },
+    "snapshot_two_hops": {
+      "symbols": ["BNBBTC", "BTCUSDT"],
+      "sequence_archive_sha256": "7d4ce898d63cbb9d1ed261a72c3e93c19feec9362043caa9693dc726e306009c",
+      "snapshot_ws_archive_sha256": "dfb875895d2c4f9d1bcfde0b3b4e8865046fc5ddcf5809f0373355c73c044d85"
+    }
+  },
+  "installed_rest_get_count": 8,
+  "planned_joint_rest_get_count": 15,
+  "planned_joint_operation_count": 19,
+  "missing_rest_selector_counts": {
+    "time": 3,
+    "account_read": 2,
+    "open_orders": 2
+  },
+  "missing_account_ws_operations": ["account_unsubscribe"],
+  "ordered_joint_operations_accepted": 0,
+  "complete_account_intervals": 0,
+  "snapshot_revision_linked": true,
+  "fixture_subscription_acknowledged": true,
+  "real_account_authenticated": false,
+  "quote_ticks_created": false,
+  "installed_gateway_joint_collector_integrated": false,
+  "network_admitted": false,
+  "trading_admitted": false,
+  "upstream_touched": false
+}

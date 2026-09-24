@@ -22,6 +22,13 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the offline handoff from installed snapshots to the full native joint
+collector, read `docs/progress/portfolio-installed-joint-handoff-2026-09-24.md`
+and its JSON. Both v14 success originals replay against pinned sources. The
+fixture has eight GETs and lacks seven GETs plus account WS unsubscribe relative
+to the 19-operation dual-symbol joint plan; no ordered joint operation or full
+account interval is accepted. This is a blocked audit, not gateway integration.
+
 For installed per-symbol REST depth anchors and linked original market increments,
 read `docs/progress/portfolio-installed-snapshot-ws-2026-09-23.md` and its JSON.
 Manifest v14 pins twenty-one sources. The distinct disposable scope consumes

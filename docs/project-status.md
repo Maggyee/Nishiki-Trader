@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-09-23
+- **Last updated**: 2026-09-24
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: The separate installed fixture now consumes fixed per-symbol REST depth attempts, retains original HTTPS snapshots alongside concurrent signed-account/market WebSockets and binds `lastUpdateId` to eligible native depth-delta receipts after closure/revocation. This proves bounded local revision linkage only. Next connect the complete native joint collector and qualify synchronized books/quotes independently. Stream fences, real authority/coverage, provider limits/clocks, host rollout, qualified equity and trading remain blocked.
+- **Current objective**: The installed snapshot fixture's two successes now pass a read-only original-byte handoff audit against the full joint collector plan. Eight installed REST GETs leave three time, two account and two open-order GETs plus account WS unsubscribe missing; zero ordered joint operations or complete account intervals are accepted. Next implement the missing fixed operations and bind the complete native collector to a separate installed disposable scope; then qualify synchronized books/quotes independently. Stream fences, real authority/coverage, provider limits/clocks, host rollout, qualified equity and trading remain blocked.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -344,7 +344,11 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
    now consumes each original-derived REST attempt before grant, captures one
    verified HTTPS snapshot per symbol while both WS channels remain live and
    binds first eligible increments to `lastUpdateId + 1`. The old unanchored
-   profile stays intact. Next connect the full native joint collector and separately
+   profile stays intact. [Offline handoff audit](progress/portfolio-installed-joint-handoff-2026-09-24.md)
+   replays both original success cases and finds seven missing REST GETs and
+   account unsubscribe against the full 19-operation dual-symbol plan. None of
+   the old operations forms an accepted ordered joint prefix or full account
+   interval. Next connect the full native joint collector and separately
    qualify synchronized books/quotes; sampling never proves coverage.
    Actual authority policy, fresh rate/clock consumption and provider-charge
    resolution must precede any separately reviewed real joint dispatch.
@@ -390,6 +394,12 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
 
 ## Latest Verification
 
+- Installed joint handoff: **9 focused tests pass**; direct and two-hop
+  installed originals each replay identically in two fresh processes, with the
+  pinned report hash unchanged. Both remain `blocked_incomplete_joint_collector`:
+  eight installed versus 15 planned GETs, zero complete account intervals and
+  no real account authentication or network admission. See
+  [handoff audit](progress/portfolio-installed-joint-handoff-2026-09-24.md).
 - Installed fixture snapshot linkage: **151 focused Python tests / four disposable
   scenarios pass** (direct,
   two-hop, missing revision coverage, invalid snapshot); the latter two stay

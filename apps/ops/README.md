@@ -7,6 +7,11 @@ dashboard snapshot support + Phase 6 passive readiness gate support。
 
 ## 当前入口
 
+`portfolio_installed_joint_handoff` 按显式 SHA256 只读回放已安装 v14
+快照夹具的原始六次读取及并发账户/市场/深度归档，对照完整联合采集预算输出
+缺项和阻断结论。既不执行采集，也不授予真实网络或交易权限。见
+[安装夹具交接审查](../../docs/progress/portfolio-installed-joint-handoff-2026-09-24.md)。
+
 `portfolio_egress_ledger --ipc-profile` 仅重放安装隔离验收中的多操作 IPC 账本。
 准备/确认记录不代表交易所请求、内核放行或真实额度，退出码仍为 2。
 见 [专用 UID IPC 验收](../../docs/progress/portfolio-installed-joint-ipc-2026-09-17.md)。
