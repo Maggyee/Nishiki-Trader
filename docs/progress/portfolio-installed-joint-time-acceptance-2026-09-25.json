@@ -1,0 +1,48 @@
+{
+  "schema_version": "portfolio.installed_joint_time_evidence.v1",
+  "date": "2026-09-25",
+  "scope": "disposable_local_fixture_only",
+  "manifest_profile": "portfolio.installed_gateway_fixture.v24",
+  "protected_source_count": 26,
+  "parent_profile": "portfolio.installed_joint_linked_time.v1",
+  "planned_operations": 19,
+  "accepted_operations": 13,
+  "new_operation": {"index": 12, "type": "time_get", "path": "/api/v3/time"},
+  "reports": {
+    "joint_time": {
+      "path": "data/joint-time-v24-acceptance-20260925-a.json",
+      "sha256": "5bd17612fbf5fb599087cbb7e4fe2805208b25e2b29b939815d7395a0f3d1103",
+      "scenarios": {
+        "joint_time_success": {"prepared": 13, "accepted": 13, "original_market_increments": 4, "both_snapshots_linked": true, "linked_time_accepted": true, "native_clock_acknowledged": true},
+        "joint_time_bad_clock": {"prepared": 13, "accepted": 12, "pending": 12, "native_clock_acknowledged": false}
+      },
+      "peak_sampled_descriptors": {"success": 917, "bad_clock": 915, "limit": 1024}
+    },
+    "joint_linked": {
+      "path": "data/joint-linked-v24-regression-20260925-a.json",
+      "sha256": "e60f91d0112fd912d83aa145640e25dde28e7549da7fe2c845d6553863c23334",
+      "scenarios": {
+        "joint_linked_success": {"prepared": 12, "accepted": 12},
+        "joint_linked_gap": {"prepared": 10, "accepted": 9, "pending": 9},
+        "joint_linked_crossed": {"prepared": 12, "accepted": 11, "pending": 11}
+      }
+    },
+    "joint_depth": {"path": "data/joint-depth-v24-regression-20260925-a.json", "sha256": "925a331b7490b3f867fb8732eccc80961cd0524514eca7ec21ad855d34ef77a0", "scenarios_passed": 2},
+    "joint_reads": {"path": "data/joint-reads-v24-regression-20260925-a.json", "sha256": "9f6d55e259a690d16ceb8f27d962611609a93c5a0149915ae44c4a416da3c3ad", "scenarios_passed": 5},
+    "joint_clock": {"path": "data/joint-clock-v24-regression-20260925-a.json", "sha256": "d6487096af09a97123a7f46c4e0dfde80e682ee4dec188280eecc6753cb7b740", "scenarios_passed": 2},
+    "joint_account": {"path": "data/joint-account-v24-regression-20260925-a.json", "sha256": "7bef0c097a934a6e3ce75e58e1120b7f74123f3d7699ac0a7dc7e587d490002a", "scenarios_passed": 3},
+    "unsubscribe": {"path": "data/unsubscribe-v24-regression-20260925-a.json", "sha256": "70bb786530e9802eb87ca36578b0cd781809c68e34b9d1791b5ca971b696e02c", "scenarios_passed": 2},
+    "market_ws": {"path": "data/market-ws-v24-regression-20260925-a.json", "sha256": "05d638db33831a236def57830bc6f4deebe59ab2aa0b37c411f55af83824eb79", "scenarios_passed": 12}
+  },
+  "isolated_scenarios_passed": 31,
+  "related_pytest_passed": 122,
+  "both_snapshots_linked": true,
+  "provider_clock_qualified": false,
+  "full_account_interval": false,
+  "stream_fence_verified": false,
+  "complete_caller_coverage_verified": false,
+  "host_installation_performed": false,
+  "venue_requests": 0,
+  "network_admitted": false,
+  "trading_admitted": false
+}

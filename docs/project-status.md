@@ -1,9 +1,9 @@
 # Project Status
 
 - **Status file**: Active
-- **Last updated**: 2026-09-24
+- **Last updated**: 2026-09-25
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: The last verified disposable parent accepts 11/19 ordered joint operations through the first `BNBUSDT` depth anchor (v22). Separate v23/v24 candidates add original increments, the second route-bound snapshot and a second `/api/v3/time` GET after both anchors. Direct tests pass, but final dedicated-UID isolation remains unverified: the sandbox denied the fixture and the elevated retry was rejected. Do not promote either candidate or the preliminary v22-source report to accepted evidence. Next verify v24 and regressions in an explicitly authorized disposable fixture, then join the second four-GET account pass, final clock and unsubscribe under a fresh parent. No complete before/after account interval exists. Stream fences, real authority/coverage, provider clocks/usage, host rollout, qualified equity and trading remain blocked.
+- **Current objective**: The verified v24 disposable parent accepts **13/19** ordered joint operations: four bounded original market increments link both route-bound depth snapshots, followed by the second `/api/v3/time` GET. All 31 current-source isolated scenarios pass. Next join the second four-GET account pass, final clock and unsubscribe under a fresh parent. No complete before/after account interval exists. Stream fences, real authority/coverage, provider clocks/usage, host rollout, qualified equity and trading remain blocked. See the [v24 acceptance](progress/portfolio-installed-joint-time-acceptance-2026-09-25.md).
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -364,9 +364,12 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
    adds an Upgrade and signed subscription on one root-owned socket. The
    [v19 first account pass](progress/portfolio-installed-joint-first-account-2026-09-24.md)
    accepts four fixed native account/order receipts while that socket remains open.
-   Twelve planned dual-symbol operations still need to join this same parent. The old route
-   fixture remains separate and still lacks seven GETs against the joint plan;
-   sampling never proves coverage.
+   The [v24 linked second-clock acceptance](progress/portfolio-installed-joint-time-acceptance-2026-09-25.md)
+   now joins four original increments, both route-bound depth anchors and a
+   second time GET under a fresh parent: 13/19 operations accepted. Six planned
+   operations remain: a second four-GET account pass, final clock and account WS
+   unsubscribe. The old route fixture remains separate; sampling never proves
+   coverage or a complete account interval.
    Actual authority policy, fresh rate/clock consumption and provider-charge
    resolution must precede any separately reviewed real joint dispatch.
    Preserve the consumed scope; no retry, second IPv4 or extended interruption
@@ -411,25 +414,21 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
 
 ## Latest Verification
 
-- Second ordered time v24 candidate: **122 direct related tests pass**,
-  including eight new request/interval/fixture checks. The embedded peer
-  compiles; Ruff, compilation and diff checks pass. The privileged isolation
-  scenarios are pending. The verified prefix remains **11/19**; see
-  [second-clock candidate](progress/portfolio-installed-joint-time-candidate-2026-09-24.md).
-- Two-symbol linked-depth v23 candidate: **114 direct relevant tests pass**
-  (9 new, 35 installed-gateway and 70 joint-depth/read/WS); lint, formatting,
-  compilation and diff checks pass. Full isolated acceptance is pending after
-  sandbox `no_new_privileges` blocked the dedicated-UID setup. A broader run
-  passed 159 tests and had 99 sandbox `SO_PASSCRED` setup errors. The verified
-  joint milestone remains **11/19**; see
-  [candidate status](progress/portfolio-installed-joint-linked-candidate-2026-09-24.md).
+- Installed linked second-clock v24 acceptance: **122 direct related tests**,
+  Ruff and **31 current-source isolated scenarios pass** across eight pinned
+  reports. The successful dedicated-UID parent accepts **13/19** operations;
+  bad clock prepares index 12 without native acknowledgement and accepts 12.
+  The linked-depth regression accepts 12/19 on success; gap and crossed-book
+  cases stop at 9 and 11. Manifest v24 pins 26 matching sources; sampled
+  descriptors peak at **917/1,024**. No complete account interval or provider
+  clock qualification follows. See the [acceptance record](progress/portfolio-installed-joint-time-acceptance-2026-09-25.md).
 - Installed same-parent first depth anchor: **451 related tests and two
   disposable scenarios pass**. Success accepts 11 steps with both WebSockets
   open through the `BNBUSDT` depth GET; a crossed book consumes index 10 without
   native acknowledgement. Manifest v22 pins 26 sources; sampled descriptors
   peak at **899/1,024**. Five old joint-read, two clock, three account-WS and two
-  unsubscribe scenarios pass. No increment linkage, second depth or complete
-  account interval exists. See
+  unsubscribe scenarios pass. That v22 parent has no increment linkage, second
+  depth or complete account interval. See
   [first depth acceptance](progress/portfolio-installed-joint-first-depth-2026-09-24.md).
 - Installed fixture account unsubscribe: **109 related Python tests and two
   disposable scenarios pass**. Success records exact unsubscribe and two

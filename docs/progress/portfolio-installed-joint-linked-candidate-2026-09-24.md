@@ -31,3 +31,14 @@ v19 read, clock, account-WS and unsubscribe regressions. After that, remaining
 steps are linked time, a second four-GET account pass, final clock and
 unsubscribe. Complete before/after account coverage, real gateway authority,
 provider clocks/usage and all trading admission remain blocked.
+
+## Acceptance update (2026-09-25)
+
+The final v23 candidate did not receive an isolation report. Its successor,
+the v24 source inventory, passes all three linked-depth regressions: success
+accepts 12/19; a market increment gap stops at 9 and a crossed second book
+stops at 11. The same inventory passes the later second-clock acceptance at
+13/19; see the [v24 acceptance record](portfolio-installed-joint-time-acceptance-2026-09-25.md).
+These results do not retroactively certify the preliminary v22-source report
+or a v23 isolated run. The incomplete account interval and real-admission
+blockers above still apply.

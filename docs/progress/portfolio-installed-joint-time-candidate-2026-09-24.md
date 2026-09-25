@@ -33,3 +33,13 @@ prefix be advanced. The remaining planned operations are a second four-GET
 account pass, a final clock and account WebSocket unsubscribe. Real gateway
 authority, provider usage and clock evidence, complete account coverage and
 all trading admission are separate blockers.
+
+## Acceptance update (2026-09-25)
+
+The requested v24 isolated acceptance and same-source regressions are now
+complete. The distinct linked-time parent accepts 13/19 steps on success;
+the bad clock consumes index 12 without native acknowledgement. The formal
+[acceptance record](portfolio-installed-joint-time-acceptance-2026-09-25.md)
+and its JSON pin all eight ignored reports and 31 passing scenarios. The
+pre-acceptance assessment above is retained as the 2026-09-24 history; the
+remaining six operations and real-admission blockers still apply.

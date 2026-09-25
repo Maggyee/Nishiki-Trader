@@ -22,18 +22,21 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
-For the pending second ordered joint time GET, read
-`docs/progress/portfolio-installed-joint-time-candidate-2026-09-24.md`.
-Manifest v24 adds index 12 after both linked depth anchors in a distinct
-parent. Direct tests pass, but dedicated-UID isolation has not run; the
-verified joint prefix remains 11/19.
+For the accepted linked second-clock fixture and the next ordered account pass,
+read `docs/progress/portfolio-installed-joint-time-acceptance-2026-09-25.md`
+and its JSON. Manifest v24 pins 26 sources. Eight current-source reports pass
+31 dedicated-UID scenarios; success accepts 13/19, while a bad second clock
+leaves index 12 unacknowledged. The second four-GET account pass, final clock
+and unsubscribe remain; no full account interval or real admission follows.
+The [v24 candidate](progress/portfolio-installed-joint-time-candidate-2026-09-24.md)
+records the historical pre-acceptance state.
 
-For the pending two-symbol snapshot linkage candidate, read
+For the historical two-symbol snapshot linkage candidate, read
 `docs/progress/portfolio-installed-joint-linked-candidate-2026-09-24.md`.
 Manifest v23 pins 26 sources and implements bounded original increments before
-the two route-bound depth attempts. The final v23 isolation report could not
-be generated in the current sandbox; the verified milestone remains 11/19.
-The ignored preliminary report has v22 source bytes and does not certify v23.
+the two route-bound depth attempts. Its final v23 isolation report was not
+generated. The later v24 linked regression accepts 12/19 and the linked-time
+parent accepts 13/19; the preliminary v22-source report certifies neither.
 
 For the first same-parent route-bound REST depth anchor, read
 `docs/progress/portfolio-installed-joint-first-depth-2026-09-24.md` and its JSON.
