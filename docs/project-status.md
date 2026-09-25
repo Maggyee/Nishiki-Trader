@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-25
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: The verified v27 disposable parent accepts **19/19** fixed ordered joint operations, including a fresh dedicated-UID-selected account WS unsubscribe. A foreign acknowledgement leaves index 18 pending after 18 accepted; both isolated scenarios pass. Successful sampled descriptors peak at 945/1,024, leaving 79 under the unchanged 64-spare rule. Next review authority and capacity against actual all-asset inputs before any separately gated testnet collection. Only four fixture assets reconcile; full real account coverage, stream fences, provider clocks/usage, host rollout, qualified equity and trading remain blocked. See the [v27 acceptance](progress/portfolio-installed-joint-complete-acceptance-2026-09-25.md).
+- **Current objective**: The verified v27 disposable parent accepts **19/19** fixed ordered joint operations, including a native account WS unsubscribe, with 79 sampled descriptors spare. The [post-v27 authority/capacity review](progress/portfolio-post-v27-authority-capacity-review-2026-09-25.md) confirms real collection remains blocked before its first request: only four fixture assets reconcile; the historical three-route pilot leaves 496 assets outside, two unpriced and 65 over top-book capacity. The consumed bootstrap counter is stale before body completion and supplies no complete shared-egress history. Next specify a prospective authenticated source/egress evidence adapter and fresh provider bounds before any separately gated testnet collection. Full real account coverage, stream fences, provider clocks/usage, qualified equity and trading remain blocked.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -375,6 +375,10 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
    accepts 19/19, including a native-selected account WS unsubscribe, with 79
    sampled descriptors spare. The old route fixture remains
    separate; sampling never proves full account coverage.
+   The [post-v27 offline review](progress/portfolio-post-v27-authority-capacity-review-2026-09-25.md)
+   pins the historical 502-asset coverage and consumed bootstrap inputs and
+   keeps first-request joint admission blocked. Specify authenticated source and
+   complete all-caller egress evidence before adding a real dispatch profile.
    Actual authority policy, fresh rate/clock consumption and provider-charge
    resolution must precede any separately reviewed real joint dispatch.
    Preserve the consumed scope; no retry, second IPv4 or extended interruption

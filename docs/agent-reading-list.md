@@ -22,6 +22,14 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the offline authority/capacity decision after the 19-step fixture, read
+`docs/progress/portfolio-post-v27-authority-capacity-review-2026-09-25.md`.
+Pinned historical full-account planning still leaves 496 assets outside the
+three-route pilot, two unpriced and 65 above a top-book leg; the bootstrap
+counter and egress records cannot authorize a fresh joint request. The next
+entrypoint is a prospective authenticated source/egress evidence adapter and
+fresh provider bounds, not another fixture scope or real capture.
+
 For the completed ordered 19-step disposable fixture and the next authority
 and capacity review, read
 `docs/progress/portfolio-installed-joint-complete-acceptance-2026-09-25.md`
