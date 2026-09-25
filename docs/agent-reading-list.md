@@ -22,12 +22,20 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
-For the accepted linked second-clock fixture and the next ordered account pass,
+For the accepted second four-GET account fixture and the remaining joint steps,
+read `docs/progress/portfolio-installed-joint-after-acceptance-2026-09-25.md`
+and its JSON. Manifest v25 pins 26 sources; three isolated scenarios pass.
+Success accepts 17/19, while changed orders or balances leave indexes 15 or
+16 pending without parent acceptance. The final clock and account WS unsubscribe
+remain, with 71 sampled descriptors spare and no real all-asset interval or
+trading admission. Earlier v25 old-profile isolation regressions are unrun.
+
+For the previously accepted linked second-clock fixture,
 read `docs/progress/portfolio-installed-joint-time-acceptance-2026-09-25.md`
-and its JSON. Manifest v24 pins 26 sources. Eight current-source reports pass
+and its JSON. Manifest v24 pins 26 then-current sources. Eight reports pass
 31 dedicated-UID scenarios; success accepts 13/19, while a bad second clock
-leaves index 12 unacknowledged. The second four-GET account pass, final clock
-and unsubscribe remain; no full account interval or real admission follows.
+leaves index 12 unacknowledged. The later v25 parent adds the second account
+pass; v24 reports do not certify the current source inventory.
 The [v24 candidate](progress/portfolio-installed-joint-time-candidate-2026-09-24.md)
 records the historical pre-acceptance state.
 

@@ -119,5 +119,5 @@ def test_joint_time_fixture_peer_is_valid_python():
     compile(harness.JOINT_WS_PEER, "<joint-time-peer>", "exec")
     assert harness.JOINT_TIME_SCENARIOS == ("joint_time_success", "joint_time_bad_clock")
     entry = load("installed_gateway")
-    assert entry.PROFILE == "portfolio.installed_gateway_fixture.v24"
+    assert entry.PROFILE == "portfolio.installed_gateway_fixture.v25"
     assert len(entry.FILES) == 26

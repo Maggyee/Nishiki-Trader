@@ -6,7 +6,21 @@ offline disk tests, and retain read-only host deployment-input snapshots.
 Current phase: Phase 5 entry, offline infrastructure acceptance only. This is not
 a production guard, gateway audit service, quota authority or collection permit.
 
-The ordered joint parent now includes its first four-GET fixture account pass:
+The current disposable joint fixture joins both four-GET account passes:
+
+```bash
+/usr/bin/python3 -I infra/egress-guard/installed_gateway_selftest.py --joint-after-profile --report data/NEW-JOINT-AFTER.json
+```
+
+Manifest v25 pins 26 sources. The distinct parent accepts 17/19 ordered
+operations under one held account WebSocket and market WebSocket. Only four
+fixture assets reconcile across the two account passes. Changed orders or
+balances leave their steps pending; final clock and unsubscribe, complete real
+account coverage, stream fence and all live admission remain unverified. The
+successful sampled peak is 953/1,024 descriptors, leaving 71 against the
+64-spare requirement. See the [v25 acceptance](../../docs/progress/portfolio-installed-joint-after-acceptance-2026-09-25.md).
+
+The historical v19 parent includes its first four-GET fixture account pass:
 
 ```bash
 /usr/bin/python3 -I infra/egress-guard/installed_gateway_selftest.py --joint-reads-profile --report data/NEW-JOINT-READS.json

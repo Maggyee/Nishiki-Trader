@@ -138,6 +138,11 @@ JOINT_READ_SCENARIOS = (
 JOINT_DEPTH_SCENARIOS = ("joint_depth_success", "joint_depth_crossed")
 JOINT_LINKED_SCENARIOS = ("joint_linked_success", "joint_linked_gap", "joint_linked_crossed")
 JOINT_TIME_SCENARIOS = ("joint_time_success", "joint_time_bad_clock")
+JOINT_AFTER_SCENARIOS = (
+    "joint_after_success",
+    "joint_after_orders_changed",
+    "joint_after_balance_drift",
+)
 FIXTURE_BOOKS = [
     {"symbol": asset + "USDT", "bidPrice": price, "askPrice": ask, "bidQty": "10", "askQty": "10"}
     for asset, price, ask in (
@@ -551,12 +556,12 @@ with socket.socket() as listener:
         if set(params)!={'apiKey','recvWindow','timestamp'} or params['apiKey']!=scope['API_KEY'] or params['recvWindow']!=5000 or not 0<=time.time_ns()//1000000-params['timestamp']<5000:raise ValueError('joint_ws_expired_selector')
         scope['verify_signature']('&'.join(str(k)+'='+str(v) for k,v in sorted(params.items())),signature)
         report['subscription_requests']=1;report['signature_verified']=True;save()
-        reply={'id':'fixture-2' if scenario=='joint_success' or scenario.startswith(('joint_reads_', 'joint_depth_', 'joint_linked_', 'joint_time_')) else 'foreign','status':200,'result':{'subscriptionId':0}}
+        reply={'id':'fixture-2' if scenario=='joint_success' or scenario.startswith(('joint_reads_', 'joint_depth_', 'joint_linked_', 'joint_time_', 'joint_after_')) else 'foreign','status':200,'result':{'subscriptionId':0}}
         body=json.dumps(reply,separators=(',',':')).encode()
         response=bytes([0x81,len(body)])+body
         connection.sendall(response[:3]);connection.sendall(response[3:])
         report['acknowledgements']=1;save()
-        if scenario.startswith(('joint_reads_', 'joint_depth_', 'joint_linked_', 'joint_time_')):
+        if scenario.startswith(('joint_reads_', 'joint_depth_', 'joint_linked_', 'joint_time_', 'joint_after_')):
             from urllib.parse import parse_qsl,urlencode
             report['rest_requests']=[]
             positions=(3,4,5) if scenario=='joint_reads_orders_changed' else (3,4,5,6) if scenario=='joint_reads_balance_drift' else tuple(range(3,9))
@@ -604,7 +609,7 @@ with socket.socket() as listener:
                     headers=b'HTTP/1.1 200 OK\r\nContent-Length: '+str(len(body)).encode()+b'\r\nX-MBX-USED-WEIGHT-1M: 20\r\nConnection: close\r\n\r\n'
                     report['rest_requests'].append({'index':position,'path':path,'request_sha256':hashlib.sha256(request).hexdigest(),'ws_socket_open':connection.fileno()>=0});save()
                     rest.sendall(headers+body)
-            if scenario in {'joint_reads_success','joint_reads_bad_market_upgrade', 'joint_depth_success', 'joint_depth_crossed', 'joint_linked_success', 'joint_linked_gap', 'joint_linked_crossed', 'joint_time_success', 'joint_time_bad_clock'}:
+            if scenario in {'joint_reads_success','joint_reads_bad_market_upgrade', 'joint_depth_success', 'joint_depth_crossed', 'joint_linked_success', 'joint_linked_gap', 'joint_linked_crossed', 'joint_time_success', 'joint_time_bad_clock', 'joint_after_success', 'joint_after_orders_changed', 'joint_after_balance_drift'}:
                 listener.settimeout(20)
                 raw,_=listener.accept();report['connections']=2;save()
                 with context.wrap_socket(raw,server_side=True) as market:
@@ -627,7 +632,7 @@ with socket.socket() as listener:
                     headers=b'HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: '+accept+b'\r\n\r\n'
                     market.sendall(headers[:27]);market.sendall(headers[27:])
                     report['market_held_after_upgrade']=market.fileno()>=0 and connection.fileno()>=0;save()
-                    if scenario.startswith(('joint_linked_', 'joint_time_')):
+                    if scenario.startswith(('joint_linked_', 'joint_time_', 'joint_after_')):
                         report['market_events_sent']=0;save()
                         for symbol in ('BNBUSDT','BTCUSDT'):
                             for ordinal in (0,1):
@@ -638,7 +643,7 @@ with socket.socket() as listener:
                                 frame=b'\x81\x7e'+len(body).to_bytes(2,'big')+body
                                 market.sendall(frame[:3]);market.sendall(frame[3:])
                                 report['market_events_sent']+=1;save()
-                    for position,symbol in ((10,'BNBUSDT'),(11,'BTCUSDT'))[:(0 if scenario=='joint_linked_gap' else 2 if scenario.startswith(('joint_linked_', 'joint_time_')) else 1 if scenario.startswith('joint_depth_') else 0)]:
+                    for position,symbol in ((10,'BNBUSDT'),(11,'BTCUSDT'))[:(0 if scenario=='joint_linked_gap' else 2 if scenario.startswith(('joint_linked_', 'joint_time_', 'joint_after_')) else 1 if scenario.startswith('joint_depth_') else 0)]:
                         listener.settimeout(20)
                         raw,_=listener.accept();report['connections']=position-7;save()
                         with context.wrap_socket(raw,server_side=True) as rest:
@@ -654,12 +659,12 @@ with socket.socket() as listener:
                             report['rest_requests'].append({'index':position,'path':'/api/v3/depth','request_sha256':hashlib.sha256(request).hexdigest(),'ws_socket_open':connection.fileno()>=0 and market.fileno()>=0});save()
                             price='250' if symbol=='BNBUSDT' else '60000'
                             ask='251' if symbol=='BNBUSDT' else '60001'
-                            book={'lastUpdateId':101 if scenario.startswith(('joint_linked_', 'joint_time_')) else 100,'bids':[[price+'.00000000','2.00000000']],'asks':[[ask+'.00000000','3.00000000']]}
+                            book={'lastUpdateId':101 if scenario.startswith(('joint_linked_', 'joint_time_', 'joint_after_')) else 100,'bids':[[price+'.00000000','2.00000000']],'asks':[[ask+'.00000000','3.00000000']]}
                             if scenario=='joint_depth_crossed' or scenario=='joint_linked_crossed' and position==11:book['asks'][0][0]='249.00000000'
                             body=json.dumps(book,separators=(',',':')).encode()
                             headers=b'HTTP/1.1 200 OK\r\nContent-Length: '+str(len(body)).encode()+b'\r\nX-MBX-USED-WEIGHT-1M: 25\r\nConnection: close\r\n\r\n'
                             rest.sendall(headers+body)
-                    if scenario.startswith('joint_time_'):
+                    if scenario.startswith(('joint_time_', 'joint_after_')):
                         listener.settimeout(20)
                         raw,_=listener.accept();report['connections']=5;save()
                         with context.wrap_socket(raw,server_side=True) as rest:
@@ -677,6 +682,42 @@ with socket.socket() as listener:
                             body=json.dumps({'serverTime':stamp},separators=(',',':')).encode()
                             headers=b'HTTP/1.1 200 OK\r\nContent-Length: '+str(len(body)).encode()+b'\r\nX-MBX-USED-WEIGHT-1M: 26\r\nConnection: close\r\n\r\n'
                             rest.sendall(headers+body)
+                    if scenario.startswith('joint_after_'):
+                        positions=(13,14,15) if scenario=='joint_after_orders_changed' else (13,14,15,16)
+                        for position in positions:
+                            listener.settimeout(20)
+                            raw,_=listener.accept();report['connections']=position-7;save()
+                            with context.wrap_socket(raw,server_side=True) as rest:
+                                rest.settimeout(5)
+                                if names[id(rest)]!='rest.fixture.invalid':raise ValueError('joint_after_sni')
+                                request=b''
+                                while b'\r\n\r\n' not in request:
+                                    part=rest.recv(4096)
+                                    if not part or len(request)+len(part)>4096:raise ValueError('joint_after_request_limit')
+                                    request+=part
+                                path='/api/v3/account' if position in {13,16} else '/api/v3/openOrders'
+                                prefix=('GET '+path+'?').encode()
+                                if not request.startswith(prefix):raise ValueError('joint_after_path')
+                                query=request[len(prefix):].split(b' HTTP/1.1\r\n',1)[0].decode('ascii')
+                                params=parse_qsl(query,strict_parsing=True)
+                                if [key for key,value in params]!=['timestamp','recvWindow','signature'] or params[1][1]!='5000' or urlencode(params)!=query:raise ValueError('joint_after_params')
+                                if not params[0][1].isdigit() or not 0<=time.time_ns()//1000000-int(params[0][1])<5000:raise ValueError('joint_after_expired')
+                                scope['verify_signature'](urlencode(params[:-1]),params[-1][1])
+                                expected=(f'GET {path}?{query} HTTP/1.1\r\nHost: rest.fixture.invalid:23456\r\nX-MBX-APIKEY: '+scope['API_KEY']+'\r\nConnection: close\r\n\r\n').encode()
+                                if request!=expected:raise ValueError('joint_after_request_changed')
+                                if position in {13,16}:
+                                    balances=[{'asset':asset,'free':free,'locked':locked} for asset,free,locked in (
+                                        ('BTC','0.01000000','0.00100000'),('ETH','0.00000000','0.00000000'),
+                                        ('BNB','1.00000000','0.10000000'),('USDT','500.00000000','12.50000000'))]
+                                    if position==16 and scenario=='joint_after_balance_drift':balances[0]['free']='0.02000000'
+                                    body=json.dumps({'uid':41001,'accountType':'SPOT','balances':balances},separators=(',',':')).encode()
+                                else:
+                                    orders=json.loads(json.dumps(FIXTURE_ORDERS))
+                                    if position==15 and scenario=='joint_after_orders_changed':orders[0]['orderId']=104
+                                    body=json.dumps(orders,separators=(',',':')).encode()
+                                headers=b'HTTP/1.1 200 OK\r\nContent-Length: '+str(len(body)).encode()+b'\r\nX-MBX-USED-WEIGHT-1M: 30\r\nConnection: close\r\n\r\n'
+                                report['rest_requests'].append({'index':position,'path':path,'request_sha256':hashlib.sha256(request).hexdigest(),'ws_socket_open':connection.fileno()>=0 and market.fileno()>=0});save()
+                                rest.sendall(headers+body)
                     market.settimeout(2)
                     try:
                         if market.recv(4096):raise ValueError('joint_market_unexpected_frame')
@@ -701,7 +742,8 @@ def worker(payload):
     requests = payload.get("native_requests_profile", False)
     unsub_ws = payload.get("unsub_ws_profile", False)
     clock = payload.get("joint_clock_profile", False)
-    joint_time = payload.get("joint_time_profile", False)
+    joint_after = payload.get("joint_after_profile", False)
+    joint_time = payload.get("joint_time_profile", False) or joint_after
     joint_linked = payload.get("joint_linked_profile", False) or joint_time
     joint_depth = payload.get("joint_depth_profile", False) or joint_linked
     joint_reads = payload.get("joint_reads_profile", False) or joint_depth
@@ -727,6 +769,7 @@ def worker(payload):
         or type(joint_depth) is not bool
         or type(joint_linked) is not bool
         or type(joint_time) is not bool
+        or type(joint_after) is not bool
         or type(quote_ws) is not bool
         or type(concurrent) is not bool
         or type(routes) is not bool
@@ -741,7 +784,9 @@ def worker(payload):
         or (tls and ipc)
         or payload["scenario"]
         not in (
-            JOINT_TIME_SCENARIOS
+            JOINT_AFTER_SCENARIOS
+            if joint_after
+            else JOINT_TIME_SCENARIOS
             if joint_time
             else JOINT_LINKED_SCENARIOS
             if joint_linked
@@ -1364,7 +1409,8 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
     code = load(payload["sources"]["gateway_read_sequence.py"])
     modules = code["load_sources"](payload["sources"])
     clock = payload.get("joint_clock_profile", False)
-    joint_time = payload.get("joint_time_profile", False)
+    joint_after = payload.get("joint_after_profile", False)
+    joint_time = payload.get("joint_time_profile", False) or joint_after
     joint_linked = payload.get("joint_linked_profile", False) or joint_time
     joint_depth = payload.get("joint_depth_profile", False) or joint_linked
     joint_reads = payload.get("joint_reads_profile", False) or joint_depth
@@ -1378,7 +1424,9 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
     routes = payload.get("route_sequence_profile", False) or concurrent
     orders = payload.get("order_sequence_profile", False) or routes
     steps = (
-        code["JOINT_TIME_STEPS"]
+        code["JOINT_AFTER_STEPS"]
+        if joint_after
+        else code["JOINT_TIME_STEPS"]
         if joint_time
         else code["JOINT_LINKED_STEPS"]
         if joint_linked
@@ -1401,6 +1449,8 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
             "UNSUB_ROUTE_SCOPE" if unsub_ws else "QUOTE_ROUTE_SCOPE" if quote_ws else "ROUTE_SCOPE"
         ]
         if routes
+        else code["JOINT_AFTER_SCOPE"]
+        if joint_after
         else code["JOINT_TIME_SCOPE"]
         if joint_time
         else code["JOINT_LINKED_SCOPE"]
@@ -1422,7 +1472,9 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
         "/usr/bin/python3",
         "-I",
         entry["CODE"] + "/installed_gateway.py",
-        "--joint-time-fixture"
+        "--joint-after-fixture"
+        if joint_after
+        else "--joint-time-fixture"
         if joint_time
         else "--joint-linked-fixture"
         if joint_linked
@@ -1832,7 +1884,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                 else modules["ledger"].BOOKS_SCOPE
                 if routes and i == 5 or joint_reads and i == 8
                 else modules["ledger"].ORDERS_SCOPE
-                if orders and i in {2, 3} or joint_reads and i in {4, 5}
+                if orders and i in {2, 3} or joint_reads and i in {4, 5, 14, 15}
                 else modules["ledger"].ACCOUNT_SCOPE
                 if i
                 else modules["ledger"].SCOPE
@@ -1843,7 +1895,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                     clock or (joint_ws and i == 0) or (joint_time and i == 12)
                 ):
                     name = "time-request.json"
-                if key == "selection" and joint_reads and i in {4, 5}:
+                if key == "selection" and joint_reads and i in {4, 5, 14, 15}:
                     name = "orders-request.json"
                 if key == "selection" and joint_reads and i in {7, 8, 10, 11}:
                     name = (
@@ -1876,8 +1928,12 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
             joint_depth=joint_depth,
             joint_linked=joint_linked,
             joint_time=joint_time,
+            joint_after=joint_after,
         )
         expected = {
+            "joint_after_success": (17, 17),
+            "joint_after_orders_changed": (16, 15),
+            "joint_after_balance_drift": (17, 16),
             "joint_time_success": (13, 13),
             "joint_time_bad_clock": (13, 12),
             "joint_linked_success": (12, 12),
@@ -1943,6 +1999,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                     "joint_depth_success",
                     "joint_linked_success",
                     "joint_time_success",
+                    "joint_after_success",
                     *WS_SCENARIOS,
                     *SIGNED_WS_SCENARIOS,
                     *MARKET_WS_SCENARIOS,
@@ -2139,7 +2196,13 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
             if (
                 report["ordered_joint_prefix_length"]
                 != (
-                    13
+                    17
+                    if scenario == "joint_after_success"
+                    else 16
+                    if scenario == "joint_after_balance_drift"
+                    else 15
+                    if scenario == "joint_after_orders_changed"
+                    else 13
                     if scenario == "joint_time_success"
                     else 12
                     if scenario in {"joint_linked_success", "joint_time_bad_clock"}
@@ -2180,7 +2243,11 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                 if (
                     peer_report["connections"]
                     != (
-                        5
+                        9
+                        if joint_after and scenario != "joint_after_orders_changed"
+                        else 8
+                        if joint_after
+                        else 5
                         if joint_time
                         else 4
                         if joint_linked and scenario != "joint_linked_gap"
@@ -2207,12 +2274,17 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                         *JOINT_DEPTH_SCENARIOS,
                         *JOINT_LINKED_SCENARIOS,
                         *JOINT_TIME_SCENARIOS,
+                        *JOINT_AFTER_SCENARIOS,
                     }
                 ):
                     raise RuntimeError("joint_ws_original_receipt_mismatch")
                 if joint_reads:
                     expected_rest = (
-                        3
+                        13
+                        if joint_after and scenario != "joint_after_orders_changed"
+                        else 12
+                        if joint_after
+                        else 3
                         if scenario == "joint_reads_orders_changed"
                         else 4
                         if scenario == "joint_reads_balance_drift"
@@ -2235,6 +2307,15 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                             + (
                                 []
                                 if scenario == "joint_linked_gap"
+                                else [
+                                    10,
+                                    11,
+                                    12,
+                                    *range(
+                                        13, 16 if scenario == "joint_after_orders_changed" else 17
+                                    ),
+                                ]
+                                if joint_after
                                 else [10, 11, 12]
                                 if joint_time
                                 else [10, 11]
@@ -2254,6 +2335,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                                 *JOINT_DEPTH_SCENARIOS,
                                 *JOINT_LINKED_SCENARIOS,
                                 *JOINT_TIME_SCENARIOS,
+                                *JOINT_AFTER_SCENARIOS,
                                 "joint_reads_bad_books",
                                 "joint_reads_bad_market_upgrade",
                             }
@@ -2267,6 +2349,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                                 *JOINT_DEPTH_SCENARIOS,
                                 *JOINT_LINKED_SCENARIOS,
                                 *JOINT_TIME_SCENARIOS,
+                                *JOINT_AFTER_SCENARIOS,
                             }
                         )
                         or report["market_ws_upgraded"]
@@ -2278,6 +2361,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                                 "joint_linked_success",
                                 "joint_linked_crossed",
                                 *JOINT_TIME_SCENARIOS,
+                                *JOINT_AFTER_SCENARIOS,
                             }
                         )
                     ):
@@ -2288,6 +2372,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                         *JOINT_DEPTH_SCENARIOS,
                         *JOINT_LINKED_SCENARIOS,
                         *JOINT_TIME_SCENARIOS,
+                        *JOINT_AFTER_SCENARIOS,
                     } and (
                         peer_report.get("market_upgrade_requests") != 1
                         or not peer_report.get("market_held_after_upgrade")
@@ -2300,6 +2385,7 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                                 "joint_linked_success",
                                 "joint_linked_crossed",
                                 *JOINT_TIME_SCENARIOS,
+                                *JOINT_AFTER_SCENARIOS,
                             }
                         )
                     ):
@@ -2336,7 +2422,14 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                             or report["buffered_market_events"]
                             != (0 if scenario == "joint_linked_gap" else 4)
                             or report["both_snapshots_linked"]
-                            != (scenario in {"joint_linked_success", *JOINT_TIME_SCENARIOS})
+                            != (
+                                scenario
+                                in {
+                                    "joint_linked_success",
+                                    *JOINT_TIME_SCENARIOS,
+                                    *JOINT_AFTER_SCENARIOS,
+                                }
+                            )
                         ):
                             raise RuntimeError("joint_linked_market_original_mismatch")
                         if scenario != "joint_linked_gap":
@@ -2347,7 +2440,11 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                                 first["linked_last_update_id"],
                             ) != ("BNBUSDT", 101, 102):
                                 raise RuntimeError("joint_linked_first_anchor_mismatch")
-                            if scenario in {"joint_linked_success", *JOINT_TIME_SCENARIOS}:
+                            if scenario in {
+                                "joint_linked_success",
+                                *JOINT_TIME_SCENARIOS,
+                                *JOINT_AFTER_SCENARIOS,
+                            }:
                                 second = report["steps"][11]["snapshot_linkage"]
                                 if (
                                     second["symbol"],
@@ -2361,10 +2458,11 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                     if joint_time:
                         last = report["steps"][12]
                         if (
-                            report["linked_time_accepted"] != (scenario == "joint_time_success")
+                            report["linked_time_accepted"]
+                            != (scenario in {"joint_time_success", *JOINT_AFTER_SCENARIOS})
                             or (last.get("native_result") is not None)
-                            != (scenario == "joint_time_success")
-                            or scenario == "joint_time_success"
+                            != (scenario in {"joint_time_success", *JOINT_AFTER_SCENARIOS})
+                            or scenario in {"joint_time_success", *JOINT_AFTER_SCENARIOS}
                             and (
                                 last["time_linkage"]["provider_clock_qualified"]
                                 or last["time_linkage"]["snapshot_tls_sha256"]
@@ -2378,6 +2476,21 @@ def worker_sequence(payload, installed, entry, guards, manifest, native_runtime,
                         ):
                             raise RuntimeError("joint_time_original_receipt_mismatch")
                         checks.append("original_time_after_two_linked_depth_snapshots")
+                    if joint_after:
+                        if (
+                            report["account_after_four_gets_reconciled"]
+                            != (scenario == "joint_after_success")
+                            or any(
+                                report["steps"][i].get("native_result") is None
+                                for i in range(13, 15)
+                            )
+                            or scenario == "joint_after_orders_changed"
+                            and report["pending_step"] != 15
+                            or scenario == "joint_after_balance_drift"
+                            and report["pending_step"] != 16
+                        ):
+                            raise RuntimeError("joint_after_original_receipt_mismatch")
+                        checks.append("second_four_signed_gets_on_held_account_and_market_sockets")
                     checks.append("fixed_signed_rest_attempts_on_one_held_account_ws")
                 checks.append("one_original_upgrade_and_native_signed_subscription_in_order")
             else:
@@ -2740,6 +2853,7 @@ def main(argv=None):
     profiles.add_argument("--joint-depth-profile", action="store_true")
     profiles.add_argument("--joint-linked-profile", action="store_true")
     profiles.add_argument("--joint-time-profile", action="store_true")
+    profiles.add_argument("--joint-after-profile", action="store_true")
     profiles.add_argument("--joint-ipc-profile", action="store_true")
     args = parser.parse_args(argv)
     if os.geteuid() == 0:
@@ -2788,6 +2902,7 @@ def main(argv=None):
             or args.joint_depth_profile
             or args.joint_linked_profile
             or args.joint_time_profile
+            or args.joint_after_profile
         ):
             built = subprocess.run(
                 [
@@ -2835,6 +2950,7 @@ def main(argv=None):
             "joint_depth_profile": args.joint_depth_profile,
             "joint_linked_profile": args.joint_linked_profile,
             "joint_time_profile": args.joint_time_profile,
+            "joint_after_profile": args.joint_after_profile,
             "joint_ipc_profile": args.joint_ipc_profile,
             "base_source": base_source,
             "installer": installer.decode(),
@@ -2847,7 +2963,9 @@ def main(argv=None):
         reports = []
         bootstrap = "import json,sys\np=json.load(sys.stdin)\ns={'__name__':'isolated_installed_gateway'}\nexec(compile(p['source'],'<fixture>','exec'),s)\nprint(json.dumps(s['worker'](p),sort_keys=True))\n"
         for scenario in (
-            JOINT_TIME_SCENARIOS
+            JOINT_AFTER_SCENARIOS
+            if args.joint_after_profile
+            else JOINT_TIME_SCENARIOS
             if args.joint_time_profile
             else JOINT_LINKED_SCENARIOS
             if args.joint_linked_profile
@@ -2966,6 +3084,7 @@ def main(argv=None):
             "joint_depth_profile": args.joint_depth_profile,
             "joint_linked_profile": args.joint_linked_profile,
             "joint_time_profile": args.joint_time_profile,
+            "joint_after_profile": args.joint_after_profile,
             "joint_ipc_profile": args.joint_ipc_profile,
             "scenarios": reports,
             "source_sha256": payload["source_sha256"],

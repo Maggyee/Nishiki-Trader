@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-25
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: The verified v24 disposable parent accepts **13/19** ordered joint operations: four bounded original market increments link both route-bound depth snapshots, followed by the second `/api/v3/time` GET. All 31 current-source isolated scenarios pass. Next join the second four-GET account pass, final clock and unsubscribe under a fresh parent. No complete before/after account interval exists. Stream fences, real authority/coverage, provider clocks/usage, host rollout, qualified equity and trading remain blocked. See the [v24 acceptance](progress/portfolio-installed-joint-time-acceptance-2026-09-25.md).
+- **Current objective**: The verified v25 disposable parent accepts **17/19** ordered joint operations, including both four-GET passes around the two-symbol market/depth segment. Three new isolated scenarios pass; old-profile v25 isolation regressions remain unrun. Next join final clock and account WS unsubscribe under a fresh parent, respecting the 64-spare descriptor rule (v25 peaks at 953/1,024). Only four fixture assets reconcile; full real account coverage, stream fences, authority, provider clocks/usage, host rollout, qualified equity and trading remain blocked. See the [v25 acceptance](progress/portfolio-installed-joint-after-acceptance-2026-09-25.md).
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -365,11 +365,13 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
    [v19 first account pass](progress/portfolio-installed-joint-first-account-2026-09-24.md)
    accepts four fixed native account/order receipts while that socket remains open.
    The [v24 linked second-clock acceptance](progress/portfolio-installed-joint-time-acceptance-2026-09-25.md)
-   now joins four original increments, both route-bound depth anchors and a
-   second time GET under a fresh parent: 13/19 operations accepted. Six planned
-   operations remain: a second four-GET account pass, final clock and account WS
-   unsubscribe. The old route fixture remains separate; sampling never proves
-   coverage or a complete account interval.
+   joins four original increments, both route-bound depth anchors and a
+   second time GET under its own parent: 13/19 operations accepted. The
+   [v25 second account pass](progress/portfolio-installed-joint-after-acceptance-2026-09-25.md)
+   now accepts 17/19, reconciling both four-asset fixture passes. Final clock
+   and account WS unsubscribe still require a fresh parent, with only 71
+   sampled descriptors spare at v25's peak. The old route fixture remains
+   separate; sampling never proves full account coverage.
    Actual authority policy, fresh rate/clock consumption and provider-charge
    resolution must precede any separately reviewed real joint dispatch.
    Preserve the consumed scope; no retry, second IPv4 or extended interruption
@@ -414,12 +416,21 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
 
 ## Latest Verification
 
+- Installed second four-GET v25 acceptance: **96 focused tests, Ruff and three
+  isolated scenarios pass**. Success accepts **17/19**; changed second-pass
+  orders leave index 15 pending after 15 accepted, changed final balances leave
+  index 16 pending after 16 accepted. Each failing step retains its native
+  receipt but never gains parent acceptance. Manifest v25 pins 26 matching
+  sources; sampled descriptors peak at **953/1,024**. Broad v25 old-profile
+  isolation regressions remain unrun after sandbox `SO_PASSCRED` denial and
+  automatic approval rejection of the broader elevated test suite. See the
+  [v25 acceptance record](progress/portfolio-installed-joint-after-acceptance-2026-09-25.md).
 - Installed linked second-clock v24 acceptance: **122 direct related tests**,
-  Ruff and **31 current-source isolated scenarios pass** across eight pinned
+  Ruff and **31 then-current-source isolated scenarios pass** across eight pinned
   reports. The successful dedicated-UID parent accepts **13/19** operations;
   bad clock prepares index 12 without native acknowledgement and accepts 12.
   The linked-depth regression accepts 12/19 on success; gap and crossed-book
-  cases stop at 9 and 11. Manifest v24 pins 26 matching sources; sampled
+  cases stop at 9 and 11. Manifest v24 pinned 26 then-matching sources; sampled
   descriptors peak at **917/1,024**. No complete account interval or provider
   clock qualification follows. See the [acceptance record](progress/portfolio-installed-joint-time-acceptance-2026-09-25.md).
 - Installed same-parent first depth anchor: **451 related tests and two

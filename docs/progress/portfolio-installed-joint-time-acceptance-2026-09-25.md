@@ -8,7 +8,7 @@ was used.
 
 Manifest `portfolio.installed_gateway_fixture.v24` pins 26 project-owned
 sources. All eight reports use the same source hashes; each pinned source hash
-matches the checkout. Under one distinct `portfolio.installed_joint_linked_time.v1`
+matched the checkout at acceptance. Under one distinct `portfolio.installed_joint_linked_time.v1`
 parent, the dedicated UID accepts 13/19 ordered operations. The account and
 market WebSockets stay open while the root captures four bounded original
 market increments (two per selected symbol), then two route-bound depth-100

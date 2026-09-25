@@ -167,9 +167,9 @@ def validate_native(payload):
     return result
 
 
-def view(account, *, index=4):
+def view(account, *, index=4, symbols=None, route_sha256=None, requests=None):
     """Closed internal specialization; no caller-selected URL, method or operation."""
-    if index not in {4, 5}:
+    if index not in {4, 5, 14, 15} or (index >= 14) != (requests is not None):
         raise ValueError("signed_orders_fixed_index")
 
     class OrdersContract(account["AccountContract"]):
@@ -180,6 +180,7 @@ def view(account, *, index=4):
         CHALLENGE_INDEX = index
         PATH = "/api/v3/openOrders"
         SELECTION_FILE = "orders-request.json"
+        CHALLENGE_FIELDS = {"route_sha256": route_sha256} if requests is not None else {}
 
     def ledger_view(module):
         return account["ledger_view"](
@@ -198,7 +199,9 @@ def view(account, *, index=4):
             launcher,
             runtime,
             orders=True,
-            **({"request_index": index} if index == 5 else {}),
+            **({"request_index": index} if index != 4 else {}),
+            route_symbols=symbols,
+            route_sha256=route_sha256,
         )
 
     return {
@@ -212,6 +215,7 @@ def view(account, *, index=4):
         "launch": launch,
         "expected_result": expected_result,
         "validate_native": validate_native,
+        **({"requests": requests} if requests is not None else {}),
     }
 
 

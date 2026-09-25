@@ -339,6 +339,8 @@ def launch(
     clock_symbols=None,
     clock_route_sha=None,
     request_index=None,
+    route_symbols=None,
+    route_sha256=None,
 ):
     if sum((orders, books, clock, metadata, depth)) > 1:
         raise ValueError("signed_read_type_conflict")
@@ -359,6 +361,11 @@ def launch(
         )
     ):
         raise ValueError("joint_clock_route_required")
+    if (route_symbols is None) != (route_sha256 is None) or (
+        route_symbols is not None
+        and (request_index not in {13, 14, 15, 16} or not isinstance(route_symbols, list))
+    ):
+        raise ValueError("joint_after_route_required")
     reader = launcher["load_source"](authority.source("inspect_binding.py").decode())[
         "process_identity"
     ]
@@ -380,10 +387,10 @@ def launch(
     ):
         raw = sources.source(filename)
         source += f"{name}=types.ModuleType({name!r})\nexec(compile({raw!r},'<held-source>','exec'),{name}.__dict__)\n"
-    if depth or (clock and clock_index == 12):
+    if depth or (clock and clock_index == 12) or route_symbols is not None:
         raw = sources.source("gateway_joint_native_requests.py")
-        symbols = depth_symbols if depth else clock_symbols
-        route_sha = depth_route_sha if depth else clock_route_sha
+        symbols = depth_symbols if depth else clock_symbols if clock else route_symbols
+        route_sha = depth_route_sha if depth else clock_route_sha if clock else route_sha256
         source += f"joint_request_scope={{'__name__':'held_joint_requests'}}\nexec(compile({raw!r},'<held-joint-requests>','exec'),joint_request_scope)\nREQUESTS=joint_request_scope['view'](REQUESTS.__dict__,{symbols!r},{route_sha!r})\n"
     for raw in (
         authority.source("collector_launcher.py"),
@@ -391,7 +398,11 @@ def launch(
     ):
         source += f"exec(compile({raw!r},'<held-source>','exec'))\n"
     raw = sources.source("gateway_native_account.py")
-    requests = "REQUESTS" if depth or (clock and clock_index == 12) else "REQUESTS.__dict__"
+    requests = (
+        "REQUESTS"
+        if depth or (clock and clock_index == 12) or route_symbols is not None
+        else "REQUESTS.__dict__"
+    )
     source += f"account_scope={{'__name__':'held_account','ControlChannel':ControlChannel,'REQUESTS':{requests},'PROVENANCE':PROVENANCE,'RECEIVE':receive_payload}}\nexec(compile({raw!r},'<held-account>','exec'),account_scope)\nchild_loop=account_scope['child_loop']\n"
     if depth:
         source += f"SYMBOL={depth_symbols[depth_index - 10]!r}\nINDEX={depth_index!r}\n"
@@ -416,7 +427,9 @@ def launch(
             extra = ",'INDEX':INDEX"
         source += f"orders_scope={{'__name__':'held_orders','ACCOUNT':account_scope{extra}}}\nexec(compile({raw!r},'<held-orders>','exec'),orders_scope)\nchild_loop=orders_scope['child_loop']\n"
     if request_index is not None:
-        if request_index not in ({4, 5} if orders else {3, 6} if not (books or clock) else set()):
+        if request_index not in (
+            {4, 5, 14, 15} if orders else {3, 6, 13, 16} if not (books or clock) else set()
+        ) or (request_index >= 13) != (route_symbols is not None):
             raise ValueError("signed_read_fixed_index")
         scope = "orders_scope" if orders else "account_scope"
         native = f",native={scope}['validate_native']" if orders else ""
@@ -433,18 +446,27 @@ def launch(
     )
 
 
-def view_for_index(index):
-    if index not in {3, 6}:
+def view_for_index(index, *, symbols=None, route_sha256=None, requests=None):
+    if index not in {3, 6, 13, 16} or (index >= 13) != (requests is not None):
         raise ValueError("signed_account_fixed_index")
 
     class FixedAccountContract(AccountContract):
         CHALLENGE_INDEX = index
+        CHALLENGE_FIELDS = {"route_sha256": route_sha256} if requests is not None else {}
 
     def fixed_authorize(collector, ledger, authority, requests):
         return authorize(collector, ledger, authority, requests, contract_type=FixedAccountContract)
 
     def fixed_launch(authority, sources, launcher, runtime):
-        return launch(authority, sources, launcher, runtime, request_index=index)
+        return launch(
+            authority,
+            sources,
+            launcher,
+            runtime,
+            request_index=index,
+            route_symbols=symbols,
+            route_sha256=route_sha256,
+        )
 
     return {
         "PROFILE": PROFILE,
@@ -457,4 +479,5 @@ def view_for_index(index):
         "launch": fixed_launch,
         "expected_result": expected_result,
         "validate_native": validate_native,
+        **({"requests": requests} if requests is not None else {}),
     }
