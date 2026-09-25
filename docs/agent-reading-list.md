@@ -22,6 +22,13 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the current-v27 regression of historical installed joint profiles, read
+`docs/progress/portfolio-installed-v27-joint-regression-2026-09-25.md`.
+Eight disposable profile reports cover 22 joint scenarios against the same 26
+protected sources as v27; 167 related Python tests pass with `SO_PASSCRED`.
+Earlier non-joint isolation profiles and real source/egress authority remain
+separate. Fixture regression does not admit a venue request.
+
 For the offline authority/capacity decision after the 19-step fixture, read
 `docs/progress/portfolio-post-v27-authority-capacity-review-2026-09-25.md`.
 Pinned historical full-account planning still leaves 496 assets outside the

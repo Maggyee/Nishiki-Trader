@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-25
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: The verified v27 disposable parent accepts **19/19** fixed ordered joint operations, including a native account WS unsubscribe, with 79 sampled descriptors spare. The [post-v27 authority/capacity review](progress/portfolio-post-v27-authority-capacity-review-2026-09-25.md) confirms real collection remains blocked before its first request: only four fixture assets reconcile; the historical three-route pilot leaves 496 assets outside, two unpriced and 65 over top-book capacity. The consumed bootstrap counter is stale before body completion and supplies no complete shared-egress history. Next specify a prospective authenticated source/egress evidence adapter and fresh provider bounds before any separately gated testnet collection. Full real account coverage, stream fences, provider clocks/usage, qualified equity and trading remain blocked.
+- **Current objective**: The verified v27 disposable parent accepts **19/19** fixed ordered joint operations; [eight historical joint profiles now pass 22 fresh isolated v27 scenarios](progress/portfolio-installed-v27-joint-regression-2026-09-25.md) under the same 26 protected sources. The [post-v27 authority/capacity review](progress/portfolio-post-v27-authority-capacity-review-2026-09-25.md) keeps real collection blocked before its first request: only four fixture assets reconcile; the historical three-route pilot leaves 496 assets outside, two unpriced and 65 over top-book capacity. The consumed bootstrap counter is stale before body completion and supplies no complete shared-egress history. Next implement a prospective authenticated source/egress evidence boundary and fresh provider bounds before any separately gated testnet collection. Full real account coverage, stream fences, provider clocks/usage, qualified equity and trading remain blocked.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -426,10 +426,12 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
 - Installed ordered v27 fixture acceptance: **48 direct tests, Ruff and two
   isolated scenarios pass**. Success accepts **19/19**; a foreign unsubscribe
   response leaves index 18 pending after 18 accepted. Manifest v27 pins 26
-  matching sources; sampled descriptors peak at **945/1,024**. Broad v27
-  old-profile isolation regressions remain unrun; an expanded sandbox run had
-  86 passes and 47 `SO_PASSCRED` setup errors. See the
-  [v27 acceptance record](progress/portfolio-installed-joint-complete-acceptance-2026-09-25.md).
+  matching sources; sampled descriptors peak at **945/1,024**. Under v27,
+  eight historical joint profiles pass 22 fresh isolated scenarios against
+  the same 26 protected sources; 167 related Python tests pass outside the
+  restricted sandbox. Older non-joint profiles remain unrun under v27.
+  See the [joint regression](progress/portfolio-installed-v27-joint-regression-2026-09-25.md)
+  and [v27 acceptance record](progress/portfolio-installed-joint-complete-acceptance-2026-09-25.md).
 - Installed final-clock v26 acceptance: **21 direct tests, Ruff and two isolated
   scenarios pass**. Success accepts **18/19**; a bad final clock leaves index 17
   pending after 17 accepted. Manifest v26 pins 26 matching sources; sampled
