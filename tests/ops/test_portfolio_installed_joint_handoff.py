@@ -107,3 +107,65 @@ def test_report_hash_duplicate_key_and_scenario_refused_before_replay():
     good = json.dumps({"scenarios": []}).encode()
     with pytest.raises(ValueError, match="handoff_selected_complete_report_required"):
         handoff.review(good, expected_sha256=handoff.digest(good), scenario="snapshot_gap")
+
+
+@pytest.fixture(scope="module")
+def joint_raw():
+    return (handoff.ROOT / "data/portfolio-installed-joint-complete-2026-09-25-b.json").read_bytes()
+
+
+def test_joint_complete_originals_replay_against_frozen_real_contract(joint_raw):
+    report = handoff.review_joint_complete(joint_raw, expected_sha256=handoff.V27_REPORT_SHA256)
+    assert report["protected_source_count"] == 26
+    assert [
+        (s["scenario"], s["prepared_steps"], s["accepted_steps"], s["pending_step"])
+        for s in report["scenarios"]
+    ] == [
+        ("joint_complete_bad_ack", 19, 18, 18),
+        ("joint_complete_success", 19, 19, None),
+    ]
+    assert (report["fixture_rest_get_count"], report["fixture_documented_weight"]) == (15, 443)
+    assert (report["draft_rest_get_count"], report["draft_documented_weight"]) == (17, 468)
+    assert report["missing_depth_routes"] == ["ETHUSDT"]
+    assert report["missing_early_metadata_get"] == 1
+    assert report["draft_durable_preparations"] == 21
+    assert not any(
+        report[key]
+        for key in (
+            "real_full_account_coverage_verified",
+            "source_authority_qualified",
+            "shared_egress_verified",
+            "provider_clock_and_usage_qualified",
+            "network_admitted",
+            "trading_admitted",
+        )
+    )
+
+
+def test_joint_complete_refuses_changed_original_or_unselected_hash(joint_raw):
+    with pytest.raises(ValueError, match="joint_handoff_selected_report_required"):
+        handoff.review_joint_complete(joint_raw + b" ", expected_sha256=handoff.V27_REPORT_SHA256)
+    with pytest.raises(ValueError, match="joint_handoff_selected_report_required"):
+        handoff.review_joint_complete(joint_raw, expected_sha256=handoff.digest(joint_raw + b" "))
+
+
+def test_joint_complete_pins_v27_protected_inventory(joint_raw):
+    report = handoff.unique_json(joint_raw)
+    selected = {**report["scenarios"][0], "source_sha256": report["source_sha256"].copy()}
+    selected["source_sha256"]["gateway_read_sequence.py"] = "0" * 64
+    with pytest.raises(ValueError, match="handoff_protected_inventory"):
+        handoff.selected_sources(selected, source_commit=handoff.V27_SOURCE_COMMIT)
+
+
+def test_joint_complete_refuses_draft_operation_drift(monkeypatch, joint_raw):
+    original = handoff.request_budget
+
+    def changed(symbols):
+        result = copy.deepcopy(original(symbols))
+        if len(symbols) == 3:
+            result["rest_requests"][0]["path"] = "/api/v3/unknown"
+        return result
+
+    monkeypatch.setattr(handoff, "request_budget", changed)
+    with pytest.raises(ValueError, match="joint_handoff_frozen_budget_changed"):
+        handoff.review_joint_complete(joint_raw, expected_sha256=handoff.V27_REPORT_SHA256)

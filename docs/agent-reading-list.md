@@ -22,6 +22,14 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the v27 original-byte handoff to the separate frozen real capture contract,
+read `docs/progress/portfolio-v27-joint-contract-handoff-2026-09-25.md`.
+Both retained scenarios replay under pinned protected sources: 19/19 succeeds,
+18/19 refuses the final acknowledgement. The two-route fixture has 15 GETs /
+443 documented weight; the real draft has 17 GETs / 468 weight and 21 durable
+preparations. This is a blocked offline audit, not source authentication,
+shared-egress coverage or network permission.
+
 For the current-v27 regression of historical installed joint profiles, read
 `docs/progress/portfolio-installed-v27-joint-regression-2026-09-25.md`.
 Eight disposable profile reports cover 22 joint scenarios against the same 26
