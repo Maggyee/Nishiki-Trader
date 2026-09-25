@@ -6,7 +6,20 @@ offline disk tests, and retain read-only host deployment-input snapshots.
 Current phase: Phase 5 entry, offline infrastructure acceptance only. This is not
 a production guard, gateway audit service, quota authority or collection permit.
 
-The current disposable joint fixture joins both four-GET account passes:
+The current disposable joint fixture adds the final route-bound clock:
+
+```bash
+/usr/bin/python3 -I infra/egress-guard/installed_gateway_selftest.py --joint-final-profile --report data/NEW-JOINT-FINAL.json
+```
+
+Manifest v26 pins 26 sources. A distinct parent accepts 18/19 ordered
+operations, with a bad final clock stopping at 17 accepted. Only four fixture
+assets reconcile; the remaining account WS unsubscribe, complete real account
+coverage, stream fence and all live admission remain blocked. The successful
+sampled peak is 945/1,024 descriptors, leaving 79 against the 64-spare
+requirement. See the [v26 acceptance](../../docs/progress/portfolio-installed-joint-final-clock-acceptance-2026-09-25.md).
+
+The historical v25 fixture joins both four-GET account passes:
 
 ```bash
 /usr/bin/python3 -I infra/egress-guard/installed_gateway_selftest.py --joint-after-profile --report data/NEW-JOINT-AFTER.json

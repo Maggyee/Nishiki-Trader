@@ -1,0 +1,33 @@
+{
+  "schema_version": "portfolio.installed_joint_final_clock_evidence.v1",
+  "date": "2026-09-25",
+  "scope": "disposable_local_fixture_only",
+  "manifest_profile": "portfolio.installed_gateway_fixture.v26",
+  "protected_source_count": 26,
+  "parent_profile": "portfolio.installed_joint_final_clock.v1",
+  "planned_operations": 19,
+  "accepted_operations": 18,
+  "new_operations": [{"index": 17, "type": "time_get"}],
+  "report": {
+    "path": "data/portfolio-installed-joint-final-2026-09-25-v6.json",
+    "sha256": "9362263e4953b8b4ce0c091b0cd50de519f6131e07587509ccceac317cac6f64",
+    "scenarios": {
+      "joint_final_success": {"prepared": 18, "accepted": 18, "final_clock_accepted": true},
+      "joint_final_bad_clock": {"prepared": 18, "accepted": 17, "pending": 17, "final_clock_accepted": false}
+    },
+    "peak_sampled_descriptors": 945,
+    "descriptor_limit": 1024
+  },
+  "isolated_scenarios_passed": 2,
+  "direct_pytest_passed": 21,
+  "prior_profile_v26_isolation_regressions_run": false,
+  "fixture_four_asset_before_after_reconciled": true,
+  "full_account_interval": false,
+  "provider_clock_qualified": false,
+  "stream_fence_verified": false,
+  "complete_caller_coverage_verified": false,
+  "host_installation_performed": false,
+  "venue_requests": 0,
+  "network_admitted": false,
+  "trading_admitted": false
+}

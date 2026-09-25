@@ -61,6 +61,9 @@ JOINT_AFTER_STEPS = (
     "orders_after_second",
     "account_after_second",
 )
+JOINT_FINAL_PROFILE = "portfolio.installed_joint_final_clock.v1"
+JOINT_FINAL_SCOPE = "fixture-joint-final-clock-v1"
+JOINT_FINAL_STEPS = (*JOINT_AFTER_STEPS, "clock_final")
 LIMIT = 65536
 FILES = {
     "binding": "binding.json",
@@ -135,6 +138,7 @@ def review_bundle(
     joint_linked=False,
     joint_time=False,
     joint_after=False,
+    joint_final=False,
     previous=None,
 ):
     """Verify originals before considering a step complete; never trust a saved report."""
@@ -177,8 +181,8 @@ def review_bundle(
     account = (
         joint_after_view(previous, selected, modules, index)
         if joint_after and index in {13, 14, 15, 16}
-        else joint_time_view(previous, selected, modules)
-        if joint_time and index == 12
+        else joint_time_view(previous, selected, modules, index=index)
+        if joint_time and index == 12 or joint_final and index == 17
         else joint_depth_view(previous, selected, modules, index=index)
         if joint_depth and index in {10, 11}
         else modules["clock"]
@@ -219,6 +223,7 @@ def review_bundle(
             account["requests"]
             if (joint_depth and index in {10, 11})
             or (joint_time and index == 12)
+            or (joint_final and index == 17)
             or (joint_after and index in {13, 14, 15, 16})
             else modules["requests"],
             json.loads(bundle["selection"]),
@@ -451,7 +456,7 @@ def joint_depth_view(bundles, selected, modules, *, index=10):
     return view
 
 
-def joint_time_view(bundles, selected, modules):
+def joint_time_view(bundles, selected, modules, *, index=12):
     route = joint_route_selection(bundles[:9], selected, modules)
     requests = {
         "view": modules["joint_requests"]["view"],
@@ -459,7 +464,7 @@ def joint_time_view(bundles, selected, modules):
     }
     view = modules["clock_source"]["view"](
         modules["account"],
-        index=12,
+        index=index,
         symbols=route["symbols"],
         route_sha256=digest(canonical(route)),
         requests=requests,
@@ -553,6 +558,31 @@ def joint_time_link(results):
     }
 
 
+def joint_final_link(results):
+    first = results[9]["market_events"][0]["receipt"]
+    account_end = results[16]["native_result"]["body_receipt"]
+    clock = results[17]["native_result"]
+    header = clock["header_receipt"]
+    if (
+        any(
+            not 0 <= header[key] - account_end[key] <= 60_000_000_000
+            or not 0 <= header[key] - first[key] <= 60_000_000_000
+            for key in ("utc_ns", "monotonic_ns")
+        )
+        or abs(
+            (header["utc_ns"] - first["utc_ns"]) - (header["monotonic_ns"] - first["monotonic_ns"])
+        )
+        > 50_000_000
+        or first["utc_ns"] // 86_400_000_000_000 != header["utc_ns"] // 86_400_000_000_000
+    ):
+        raise ValueError("joint_final_clock_original_interval")
+    return {
+        "account_tls_sha256": results[16]["native_result"]["tls_sha256"],
+        "clock_tls_sha256": clock["tls_sha256"],
+        "provider_clock_qualified": False,
+    }
+
+
 def route_result(results, bundles, modules):
     first, last = (
         results[0]["native_result"]["header_receipt"],
@@ -588,9 +618,11 @@ def replay(
     joint_linked=False,
     joint_time=False,
     joint_after=False,
+    joint_final=False,
 ):
     if (
-        (joint_after and not joint_time)
+        (joint_final and not joint_after)
+        or (joint_after and not joint_time)
         or (joint_time and not joint_linked)
         or (joint_linked and not joint_depth)
         or (joint_depth and not joint_reads)
@@ -606,7 +638,9 @@ def replay(
         raise ValueError("quote_route_required")
     orders = orders or routes
     profile = (
-        JOINT_AFTER_PROFILE
+        JOINT_FINAL_PROFILE
+        if joint_final
+        else JOINT_AFTER_PROFILE
         if joint_after
         else JOINT_TIME_PROFILE
         if joint_time
@@ -631,7 +665,9 @@ def replay(
         else PROFILE
     )
     steps = (
-        JOINT_AFTER_STEPS
+        JOINT_FINAL_STEPS
+        if joint_final
+        else JOINT_AFTER_STEPS
         if joint_after
         else JOINT_TIME_STEPS
         if joint_time
@@ -721,13 +757,15 @@ def replay(
                 routes=routes,
                 clock=clock
                 or ((joint_ws or joint_reads) and pending == 0)
-                or (joint_time and pending == 12),
+                or (joint_time and pending == 12)
+                or (joint_final and pending == 17),
                 joint_ws=joint_ws,
                 joint_reads=joint_reads,
                 joint_depth=joint_depth,
                 joint_linked=joint_linked,
                 joint_time=joint_time,
                 joint_after=joint_after,
+                joint_final=joint_final,
                 previous=bundles[:pending],
             )
             # Every child archive follows preparation, and each whole step ends
@@ -768,6 +806,8 @@ def replay(
                     )
                 if joint_time and pending == 12:
                     results[12]["time_linkage"] = joint_time_link(results)
+                if joint_final and pending == 17:
+                    results[17]["final_linkage"] = joint_final_link(results)
                 if pending >= 3:
                     anchor = json.loads(bundles[0]["binding"])
                     current = json.loads(bundles[pending]["binding"])
@@ -872,6 +912,7 @@ def replay(
         ),
         **({"linked_time_accepted": accepted >= 13} if joint_time else {}),
         **({"account_after_four_gets_reconciled": accepted >= 17} if joint_after else {}),
+        **({"final_clock_accepted": accepted >= 18} if joint_final else {}),
         **(
             {
                 "routes_derived_from_same_run": accepted >= 9,
@@ -926,9 +967,11 @@ class Sequence:
         joint_linked=False,
         joint_time=False,
         joint_after=False,
+        joint_final=False,
     ):
         if (
-            (joint_after and not joint_time)
+            (joint_final and not joint_after)
+            or (joint_after and not joint_time)
             or (joint_time and not joint_linked)
             or (joint_linked and not joint_depth)
             or (joint_depth and not joint_reads)
@@ -955,6 +998,7 @@ class Sequence:
             self.joint_linked,
             self.joint_time,
             self.joint_after,
+            self.joint_final,
         ) = (
             orders,
             routes,
@@ -967,9 +1011,12 @@ class Sequence:
             joint_linked,
             joint_time,
             joint_after,
+            joint_final,
         )
         self.profile = (
-            JOINT_AFTER_PROFILE
+            JOINT_FINAL_PROFILE
+            if joint_final
+            else JOINT_AFTER_PROFILE
             if joint_after
             else JOINT_TIME_PROFILE
             if joint_time
@@ -994,7 +1041,9 @@ class Sequence:
             else PROFILE
         )
         self.scope = (
-            JOINT_AFTER_SCOPE
+            JOINT_FINAL_SCOPE
+            if joint_final
+            else JOINT_AFTER_SCOPE
             if joint_after
             else JOINT_TIME_SCOPE
             if joint_time
@@ -1019,7 +1068,9 @@ class Sequence:
             else SCOPE
         )
         self.steps = (
-            JOINT_AFTER_STEPS
+            JOINT_FINAL_STEPS
+            if joint_final
+            else JOINT_AFTER_STEPS
             if joint_after
             else JOINT_TIME_STEPS
             if joint_time
@@ -1126,6 +1177,16 @@ class Sequence:
         self.held[path] = (fd, self.identity(info), raw)
         return fd
 
+    def release_step_readme(self):
+        if not self.joint_final:
+            return
+        path = self.storage / "README.md"
+        self.verify()
+        fd, identity, raw = self.held[path]
+        os.close(fd)
+        self.fds.remove(fd)
+        self.held[path] = (None, identity, raw)
+
     def verify(self):
         if self.failed:
             raise ValueError("sequence_authority_ended")
@@ -1142,12 +1203,17 @@ class Sequence:
             raise ValueError("sequence_foreign_owner")
         self.authority.verify()
         for path, (fd, identity, raw) in self.held.items():
-            if (
-                self.identity(os.fstat(fd)) != identity
-                or self.identity(path.stat(follow_symlinks=False)) != identity
-                or (raw is not None and os.pread(fd, 2 * 1024 * 1024 + 1, 0) != raw)
-            ):
-                raise ValueError("sequence_held_original_changed")
+            check = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC) if fd is None else fd
+            try:
+                if (
+                    self.identity(os.fstat(check)) != identity
+                    or self.identity(path.stat(follow_symlinks=False)) != identity
+                    or (raw is not None and os.pread(check, 2 * 1024 * 1024 + 1, 0) != raw)
+                ):
+                    raise ValueError("sequence_held_original_changed")
+            finally:
+                if fd is None:
+                    os.close(check)
         info = (self.path / "sequence.jsonl").stat(follow_symlinks=False)
         if (
             not stat.S_ISREG(info.st_mode)
@@ -1191,6 +1257,7 @@ class Sequence:
             joint_linked=self.joint_linked,
             joint_time=self.joint_time,
             joint_after=self.joint_after,
+            joint_final=self.joint_final,
         )
         self.journal.append(
             kind, **{k: v for k, v in row.items() if k not in {"seq", "previous_sha256", "kind"}}
@@ -1238,6 +1305,7 @@ class Sequence:
             if self.clock
             or ((self.joint_ws or self.joint_reads) and self.index == 0)
             or (self.joint_time and self.index == 12)
+            or (self.joint_final and self.index == 17)
             else "orders"
             if self.joint_reads and self.index in {4, 5, 14, 15}
             else "account"
@@ -1264,8 +1332,9 @@ class Sequence:
                     self.bundles[:9],
                     json.loads(self.expected.splitlines()[0])["payload"],
                     self.modules,
+                    index=self.index,
                 )
-                if self.joint_time and self.index == 12
+                if self.joint_time and self.index == 12 or self.joint_final and self.index == 17
                 else joint_after_view(
                     self.bundles[:9],
                     json.loads(self.expected.splitlines()[0])["payload"],
@@ -1327,9 +1396,11 @@ def run_installed(
     joint_linked=False,
     joint_time=False,
     joint_after=False,
+    joint_final=False,
 ):
     if (
-        (joint_after and not joint_time)
+        (joint_final and not joint_after)
+        or (joint_after and not joint_time)
         or (joint_time and not joint_linked)
         or (joint_linked and not joint_depth)
         or (joint_depth and not joint_reads)
@@ -1376,6 +1447,7 @@ def run_installed(
             joint_linked=joint_linked,
             joint_time=joint_time,
             joint_after=joint_after,
+            joint_final=joint_final,
         )
         try:
             for index in range(len(sequence.steps)):
@@ -1394,7 +1466,8 @@ def run_installed(
                         account=index != 0,
                         clock=clock
                         or ((joint_ws or joint_reads) and index == 0)
-                        or (joint_time and index == 12),
+                        or (joint_time and index == 12)
+                        or (joint_final and index == 17),
                         orders=orders
                         and index in {2, 3}
                         or joint_reads
@@ -1408,6 +1481,7 @@ def run_installed(
                 sequence.append(
                     "accepted", {"index": index, "bundle_sha256": digest(canonical(bundle))}
                 )
+                sequence.release_step_readme()
                 print(json.dumps({"stage": "sequence_step_accepted", "index": index}), flush=True)
                 if sys.stdin.readline() != "continue\n":
                     raise ValueError("fixture_parent_release_required")

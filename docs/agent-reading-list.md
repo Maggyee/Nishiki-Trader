@@ -22,13 +22,22 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the accepted final joint-clock fixture and remaining account WS unsubscribe,
+read `docs/progress/portfolio-installed-joint-final-clock-acceptance-2026-09-25.md`
+and its JSON. Manifest v26 pins 26 sources; two isolated scenarios pass. Success
+accepts 18/19; a displaced final clock leaves index 17 pending. Step README
+custody preserves 79 sampled descriptors spare at the success peak. Only the
+four-asset fixture interval is reconciled; provider clocks, stream fence and
+trading remain blocked. Earlier v26 old-profile isolation regressions are unrun.
+
 For the accepted second four-GET account fixture and the remaining joint steps,
 read `docs/progress/portfolio-installed-joint-after-acceptance-2026-09-25.md`
 and its JSON. Manifest v25 pins 26 sources; three isolated scenarios pass.
 Success accepts 17/19, while changed orders or balances leave indexes 15 or
-16 pending without parent acceptance. The final clock and account WS unsubscribe
-remain, with 71 sampled descriptors spare and no real all-asset interval or
-trading admission. Earlier v25 old-profile isolation regressions are unrun.
+16 pending without parent acceptance. The later v26 parent adds the final clock;
+this v25 report retains 71 sampled descriptors spare and no real all-asset
+interval or trading admission. Earlier v25 old-profile isolation regressions
+are unrun.
 
 For the previously accepted linked second-clock fixture,
 read `docs/progress/portfolio-installed-joint-time-acceptance-2026-09-25.md`

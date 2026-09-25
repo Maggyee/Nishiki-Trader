@@ -93,12 +93,12 @@ def validate_native(payload):
 
 def view(account, *, index=0, symbols=None, route_sha256=None, requests=None):
     """Specialize the held single-use selector and its signed-request channel."""
-    if index not in {0, 12} or (
+    if index not in {0, 12, 17} or (
         index == 0 and any(v is not None for v in (symbols, route_sha256, requests))
     ):
         raise ValueError("joint_clock_fixed_index")
     selected = None
-    if index == 12:
+    if index in {12, 17}:
         if not isinstance(requests, dict) or set(requests) != {"view", "base"}:
             raise ValueError("joint_clock_route_required")
         selected = requests["view"](requests["base"], symbols, route_sha256)
@@ -109,7 +109,7 @@ def view(account, *, index=0, symbols=None, route_sha256=None, requests=None):
         ENDPOINT = ENDPOINT
         LEDGER_PROFILE = "portfolio.fixture_joint_clock_tls_ledger.v1"
         CHALLENGE_INDEX = index
-        CHALLENGE_FIELDS = {"route_sha256": route_sha256} if index == 12 else {}
+        CHALLENGE_FIELDS = {"route_sha256": route_sha256} if index in {12, 17} else {}
         PATH = "/api/v3/time"
         SELECTION_FILE = "time-request.json"
 
@@ -123,7 +123,7 @@ def view(account, *, index=0, symbols=None, route_sha256=None, requests=None):
             collector,
             ledger,
             authority,
-            selected if index == 12 else requests,
+            selected if index in {12, 17} else requests,
             contract_type=ClockContract,
         )
 
