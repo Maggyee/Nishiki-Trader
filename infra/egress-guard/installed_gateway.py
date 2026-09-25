@@ -42,7 +42,7 @@ FILES = (
     "portfolio_tls_provenance.py",
     "portfolio_egress_ledger.py",
 )
-PROFILE = "portfolio.installed_gateway_fixture.v26"
+PROFILE = "portfolio.installed_gateway_fixture.v27"
 
 
 def digest(raw):
@@ -549,6 +549,7 @@ def main():
             ["--joint-time-fixture"],
             ["--joint-after-fixture"],
             ["--joint-final-fixture"],
+            ["--joint-complete-fixture"],
             ["--joint-clock-step-fixture"],
         )
         or not sys.flags.isolated
@@ -589,6 +590,7 @@ def main():
         ["--joint-time-fixture"],
         ["--joint-after-fixture"],
         ["--joint-final-fixture"],
+        ["--joint-complete-fixture"],
     ):
         authority = installation()
         try:
@@ -610,6 +612,7 @@ def main():
                     ["--joint-time-fixture"],
                     ["--joint-after-fixture"],
                     ["--joint-final-fixture"],
+                    ["--joint-complete-fixture"],
                 ),
                 joint_depth=sys.argv[1:]
                 in (
@@ -618,6 +621,7 @@ def main():
                     ["--joint-time-fixture"],
                     ["--joint-after-fixture"],
                     ["--joint-final-fixture"],
+                    ["--joint-complete-fixture"],
                 ),
                 joint_linked=sys.argv[1:]
                 in (
@@ -625,11 +629,24 @@ def main():
                     ["--joint-time-fixture"],
                     ["--joint-after-fixture"],
                     ["--joint-final-fixture"],
+                    ["--joint-complete-fixture"],
                 ),
                 joint_time=sys.argv[1:]
-                in (["--joint-time-fixture"], ["--joint-after-fixture"], ["--joint-final-fixture"]),
-                joint_after=sys.argv[1:] in (["--joint-after-fixture"], ["--joint-final-fixture"]),
-                joint_final=sys.argv[1:] == ["--joint-final-fixture"],
+                in (
+                    ["--joint-time-fixture"],
+                    ["--joint-after-fixture"],
+                    ["--joint-final-fixture"],
+                    ["--joint-complete-fixture"],
+                ),
+                joint_after=sys.argv[1:]
+                in (
+                    ["--joint-after-fixture"],
+                    ["--joint-final-fixture"],
+                    ["--joint-complete-fixture"],
+                ),
+                joint_final=sys.argv[1:]
+                in (["--joint-final-fixture"], ["--joint-complete-fixture"]),
+                joint_complete=sys.argv[1:] == ["--joint-complete-fixture"],
                 routes=sys.argv[1:]
                 in (
                     ["--route-sequence-fixture"],

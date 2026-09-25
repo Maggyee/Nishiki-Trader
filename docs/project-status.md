@@ -3,7 +3,7 @@
 - **Status file**: Active
 - **Last updated**: 2026-09-25
 - **Current phase**: Phase 5 entry — read-only monitoring; live trading blocked.
-- **Current objective**: The verified v26 disposable parent accepts **18/19** ordered joint operations through the final native clock after both four-GET account passes. Two isolated scenarios pass; a bad final clock stops at index 17. Next join account WS unsubscribe under a fresh parent. Successful sampled descriptors peak at 945/1,024, leaving 79 under the unchanged 64-spare rule. Only four fixture assets reconcile; full real account coverage, stream fences, authority, provider clocks/usage, host rollout, qualified equity and trading remain blocked. See the [v26 acceptance](progress/portfolio-installed-joint-final-clock-acceptance-2026-09-25.md).
+- **Current objective**: The verified v27 disposable parent accepts **19/19** fixed ordered joint operations, including a fresh dedicated-UID-selected account WS unsubscribe. A foreign acknowledgement leaves index 18 pending after 18 accepted; both isolated scenarios pass. Successful sampled descriptors peak at 945/1,024, leaving 79 under the unchanged 64-spare rule. Next review authority and capacity against actual all-asset inputs before any separately gated testnet collection. Only four fixture assets reconcile; full real account coverage, stream fences, provider clocks/usage, host rollout, qualified equity and trading remain blocked. See the [v27 acceptance](progress/portfolio-installed-joint-complete-acceptance-2026-09-25.md).
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.
 
 ## Current Focus
@@ -370,8 +370,10 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
    [v25 second account pass](progress/portfolio-installed-joint-after-acceptance-2026-09-25.md)
    accepts 17/19, reconciling both four-asset fixture passes. The distinct
    [v26 final-clock parent](progress/portfolio-installed-joint-final-clock-acceptance-2026-09-25.md)
-   accepts 18/19, with 79 sampled descriptors spare. Account WS unsubscribe
-   still requires a fresh parent. The old route fixture remains
+   accepts 18/19. The distinct
+   [v27 complete fixture](progress/portfolio-installed-joint-complete-acceptance-2026-09-25.md)
+   accepts 19/19, including a native-selected account WS unsubscribe, with 79
+   sampled descriptors spare. The old route fixture remains
    separate; sampling never proves full account coverage.
    Actual authority policy, fresh rate/clock consumption and provider-charge
    resolution must precede any separately reviewed real joint dispatch.
@@ -417,6 +419,13 @@ and [installed HTTPS response delivery](progress/portfolio-installed-tls-receipt
 
 ## Latest Verification
 
+- Installed ordered v27 fixture acceptance: **48 direct tests, Ruff and two
+  isolated scenarios pass**. Success accepts **19/19**; a foreign unsubscribe
+  response leaves index 18 pending after 18 accepted. Manifest v27 pins 26
+  matching sources; sampled descriptors peak at **945/1,024**. Broad v27
+  old-profile isolation regressions remain unrun; an expanded sandbox run had
+  86 passes and 47 `SO_PASSCRED` setup errors. See the
+  [v27 acceptance record](progress/portfolio-installed-joint-complete-acceptance-2026-09-25.md).
 - Installed final-clock v26 acceptance: **21 direct tests, Ruff and two isolated
   scenarios pass**. Success accepts **18/19**; a bad final clock leaves index 17
   pending after 17 accepted. Manifest v26 pins 26 matching sources; sampled

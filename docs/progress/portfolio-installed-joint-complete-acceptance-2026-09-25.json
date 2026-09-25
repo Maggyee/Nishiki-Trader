@@ -1,0 +1,35 @@
+{
+  "schema_version": "portfolio.installed_joint_complete_evidence.v1",
+  "date": "2026-09-25",
+  "scope": "disposable_local_fixture_only",
+  "manifest_profile": "portfolio.installed_gateway_fixture.v27",
+  "protected_source_count": 26,
+  "parent_profile": "portfolio.installed_joint_complete.v1",
+  "planned_operations": 19,
+  "accepted_operations": 19,
+  "new_operations": [{"index": 18, "type": "account_ws_unsubscribe"}],
+  "report": {
+    "path": "data/portfolio-installed-joint-complete-2026-09-25-b.json",
+    "sha256": "39dc52b389c5812f1bb83bfcf8593bb81567850f2863b469a0a450ba2c57cbdf",
+    "scenarios": {
+      "joint_complete_success": {"prepared": 19, "accepted": 19, "account_unsubscribe_accepted": true},
+      "joint_complete_bad_ack": {"prepared": 19, "accepted": 18, "pending": 18, "account_unsubscribe_accepted": false}
+    },
+    "peak_sampled_descriptors": 945,
+    "descriptor_limit": 1024
+  },
+  "isolated_scenarios_passed": 2,
+  "direct_pytest_passed": 48,
+  "expanded_sandbox_pytest_passed": 86,
+  "expanded_sandbox_setup_errors_so_passcred": 47,
+  "prior_profile_v27_isolation_regressions_run": false,
+  "fixture_four_asset_before_after_reconciled": true,
+  "real_full_account_interval": false,
+  "provider_clock_qualified": false,
+  "stream_fence_verified": false,
+  "complete_caller_coverage_verified": false,
+  "host_installation_performed": false,
+  "venue_requests": 0,
+  "network_admitted": false,
+  "trading_admitted": false
+}

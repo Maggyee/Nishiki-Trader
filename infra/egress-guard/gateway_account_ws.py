@@ -60,12 +60,12 @@ def response(raw):
     return value
 
 
-def unsubscribe_response(raw):
+def unsubscribe_response(raw, *, request_id="fixture-19"):
     value = decode(raw)
     if (
         not isinstance(value, dict)
         or set(value) != {"id", "status", "result"}
-        or value["id"] != "fixture-19"
+        or value["id"] != request_id
         or type(value["status"]) is not int
         or value["status"] != 200
         or value["result"] != {}
@@ -629,6 +629,25 @@ def child_loop(fd, parent):
         channel.close()
 
 
+def joint_unsubscribe_child_loop(fd, parent):
+    if os.geteuid() == 0:
+        raise ValueError("joint_unsubscribe_native_root_refused")
+    channel = globals()["ControlChannel"](socket.socket(fileno=fd), parent, timeout=5)
+    requests = globals()["REQUESTS"]
+    try:
+        channel.send("ready", 0)
+        raw = channel.receive(requests["JsonToken"](), 1).encode()
+        challenge = decode(raw)
+        requests["validate_challenge"](challenge, 18)
+        if canonical(challenge) != raw:
+            raise ValueError("joint_unsubscribe_canonical_challenge")
+        channel.send(requests["native_request"](challenge).decode(), 1)
+        channel.receive({"close"}, 2)
+        channel.send("closed", 2)
+    finally:
+        channel.close()
+
+
 class Session:
     result = staticmethod(expected_result)
 
@@ -642,13 +661,21 @@ class Session:
         snapshot=False,
         quotes=False,
         unsubscribe=False,
+        joint_route=None,
     ):
         if unsubscribe and not quotes:
             raise ValueError("unsubscribe_requires_quote_scope")
+        if joint_route is not None and any((market, snapshot, quotes, unsubscribe)):
+            raise ValueError("joint_unsubscribe_scope_conflict")
         self.unsubscribe = unsubscribe
         self.runtime = self.collector = None
         try:
             self.requests = entry["load"](sources.source("gateway_native_requests.py"))
+            if joint_route is not None:
+                joint = entry["load"](sources.source("gateway_joint_native_requests.py"))
+                self.requests = joint["view"](
+                    self.requests, joint_route["symbols"], joint_route["route_sha256"]
+                )
             self.receipts = entry["load"](sources.source("gateway_tls_receipt.py"))
             launcher = entry["load"](authority.source("collector_launcher.py"))
             self.runtime = entry["load"](sources.source("gateway_native_runtime.py"))[
@@ -679,6 +706,11 @@ class Session:
             ):
                 encoded = base64.b64encode(zlib.compress(raw, 9))
                 source += f"exec(compile(__import__('zlib').decompress(__import__('base64').b64decode({encoded!r})),'<held-source>','exec'))\n"
+            if joint_route is not None:
+                raw = sources.source("gateway_joint_native_requests.py")
+                encoded = base64.b64encode(zlib.compress(raw, 9))
+                source += f"JOINT={{'__name__':'held_joint_requests'}}\nexec(compile(__import__('zlib').decompress(__import__('base64').b64decode({encoded!r})),'<held-joint-requests>','exec'),JOINT)\n"
+                source += f"REQUESTS=JOINT['view'](REQUESTS,{joint_route['symbols']!r},{joint_route['route_sha256']!r})\nchild_loop=joint_unsubscribe_child_loop\n"
             if unsubscribe:
                 source += "UNSUBSCRIBE=True\naccount_validate_native=validate_native\nvalidate_native=lambda payload:account_validate_native(payload,unsubscribe=True)\n"
                 self.result = lambda payload: expected_result(payload, unsubscribe=True)

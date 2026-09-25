@@ -64,6 +64,9 @@ JOINT_AFTER_STEPS = (
 JOINT_FINAL_PROFILE = "portfolio.installed_joint_final_clock.v1"
 JOINT_FINAL_SCOPE = "fixture-joint-final-clock-v1"
 JOINT_FINAL_STEPS = (*JOINT_AFTER_STEPS, "clock_final")
+JOINT_COMPLETE_PROFILE = "portfolio.installed_joint_complete.v1"
+JOINT_COMPLETE_SCOPE = "fixture-joint-complete-v1"
+JOINT_COMPLETE_STEPS = (*JOINT_FINAL_STEPS, "account_unsubscribe")
 LIMIT = 65536
 FILES = {
     "binding": "binding.json",
@@ -139,10 +142,13 @@ def review_bundle(
     joint_time=False,
     joint_after=False,
     joint_final=False,
+    joint_complete=False,
     previous=None,
 ):
     """Verify originals before considering a step complete; never trust a saved report."""
-    if (joint_ws or joint_reads) and index in ({1, 2, 9} if joint_reads else {1, 2}):
+    if (joint_ws or joint_reads) and index in (
+        {1, 2, 9, 18} if joint_complete else {1, 2, 9} if joint_reads else {1, 2}
+    ):
         return modules["joint_ws"]["review_step"](
             bundle,
             index,
@@ -619,9 +625,11 @@ def replay(
     joint_time=False,
     joint_after=False,
     joint_final=False,
+    joint_complete=False,
 ):
     if (
-        (joint_final and not joint_after)
+        (joint_complete and not joint_final)
+        or (joint_final and not joint_after)
         or (joint_after and not joint_time)
         or (joint_time and not joint_linked)
         or (joint_linked and not joint_depth)
@@ -638,7 +646,9 @@ def replay(
         raise ValueError("quote_route_required")
     orders = orders or routes
     profile = (
-        JOINT_FINAL_PROFILE
+        JOINT_COMPLETE_PROFILE
+        if joint_complete
+        else JOINT_FINAL_PROFILE
         if joint_final
         else JOINT_AFTER_PROFILE
         if joint_after
@@ -665,7 +675,9 @@ def replay(
         else PROFILE
     )
     steps = (
-        JOINT_FINAL_STEPS
+        JOINT_COMPLETE_STEPS
+        if joint_complete
+        else JOINT_FINAL_STEPS
         if joint_final
         else JOINT_AFTER_STEPS
         if joint_after
@@ -766,6 +778,7 @@ def replay(
                 joint_time=joint_time,
                 joint_after=joint_after,
                 joint_final=joint_final,
+                joint_complete=joint_complete,
                 previous=bundles[:pending],
             )
             # Every child archive follows preparation, and each whole step ends
@@ -913,6 +926,7 @@ def replay(
         **({"linked_time_accepted": accepted >= 13} if joint_time else {}),
         **({"account_after_four_gets_reconciled": accepted >= 17} if joint_after else {}),
         **({"final_clock_accepted": accepted >= 18} if joint_final else {}),
+        **({"account_unsubscribe_accepted": accepted >= 19} if joint_complete else {}),
         **(
             {
                 "routes_derived_from_same_run": accepted >= 9,
@@ -968,9 +982,11 @@ class Sequence:
         joint_time=False,
         joint_after=False,
         joint_final=False,
+        joint_complete=False,
     ):
         if (
-            (joint_final and not joint_after)
+            (joint_complete and not joint_final)
+            or (joint_final and not joint_after)
             or (joint_after and not joint_time)
             or (joint_time and not joint_linked)
             or (joint_linked and not joint_depth)
@@ -999,6 +1015,7 @@ class Sequence:
             self.joint_time,
             self.joint_after,
             self.joint_final,
+            self.joint_complete,
         ) = (
             orders,
             routes,
@@ -1012,9 +1029,12 @@ class Sequence:
             joint_time,
             joint_after,
             joint_final,
+            joint_complete,
         )
         self.profile = (
-            JOINT_FINAL_PROFILE
+            JOINT_COMPLETE_PROFILE
+            if joint_complete
+            else JOINT_FINAL_PROFILE
             if joint_final
             else JOINT_AFTER_PROFILE
             if joint_after
@@ -1041,7 +1061,9 @@ class Sequence:
             else PROFILE
         )
         self.scope = (
-            JOINT_FINAL_SCOPE
+            JOINT_COMPLETE_SCOPE
+            if joint_complete
+            else JOINT_FINAL_SCOPE
             if joint_final
             else JOINT_AFTER_SCOPE
             if joint_after
@@ -1068,7 +1090,9 @@ class Sequence:
             else SCOPE
         )
         self.steps = (
-            JOINT_FINAL_STEPS
+            JOINT_COMPLETE_STEPS
+            if joint_complete
+            else JOINT_FINAL_STEPS
             if joint_final
             else JOINT_AFTER_STEPS
             if joint_after
@@ -1258,6 +1282,7 @@ class Sequence:
             joint_time=self.joint_time,
             joint_after=self.joint_after,
             joint_final=self.joint_final,
+            joint_complete=self.joint_complete,
         )
         self.journal.append(
             kind, **{k: v for k, v in row.items() if k not in {"seq", "previous_sha256", "kind"}}
@@ -1290,7 +1315,7 @@ class Sequence:
 
     def read_bundle(self):
         if (self.joint_ws or self.joint_reads) and self.index in (
-            {1, 2, 9} if self.joint_reads else {1, 2}
+            {1, 2, 9, 18} if self.joint_complete else {1, 2, 9} if self.joint_reads else {1, 2}
         ):
             bundle = {}
             for key, name in (("binding", "binding.json"), ("ws", "ws.jsonl")):
@@ -1397,9 +1422,11 @@ def run_installed(
     joint_time=False,
     joint_after=False,
     joint_final=False,
+    joint_complete=False,
 ):
     if (
-        (joint_final and not joint_after)
+        (joint_complete and not joint_final)
+        or (joint_final and not joint_after)
         or (joint_after and not joint_time)
         or (joint_time and not joint_linked)
         or (joint_linked and not joint_depth)
@@ -1448,11 +1475,14 @@ def run_installed(
             joint_time=joint_time,
             joint_after=joint_after,
             joint_final=joint_final,
+            joint_complete=joint_complete,
         )
         try:
             for index in range(len(sequence.steps)):
                 sequence.prepare(index)
-                if (joint_ws or joint_reads) and index in ({1, 2, 9} if joint_reads else {1, 2}):
+                if (joint_ws or joint_reads) and index in (
+                    {1, 2, 9, 18} if joint_complete else {1, 2, 9} if joint_reads else {1, 2}
+                ):
                     if channel is None:
                         channel = modules["joint_ws"]["Channel"](
                             entry, authority, sources, sequence

@@ -22,11 +22,22 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the completed ordered 19-step disposable fixture and the next authority
+and capacity review, read
+`docs/progress/portfolio-installed-joint-complete-acceptance-2026-09-25.md`
+and its JSON. Manifest v27 pins 26 sources; two isolated scenarios pass. A
+fresh dedicated-UID unsubscribe accepts 19/19 with exact original WS bytes;
+a foreign acknowledgement leaves index 18 pending. The successful sampled
+peak leaves 79 descriptors spare. This closes the fixed fixture plan, not real
+all-asset account coverage, an account-stream fence, provider clocks/usage or
+trading admission. Earlier v27 old-profile isolation regressions are unrun.
+
 For the accepted final joint-clock fixture and remaining account WS unsubscribe,
 read `docs/progress/portfolio-installed-joint-final-clock-acceptance-2026-09-25.md`
 and its JSON. Manifest v26 pins 26 sources; two isolated scenarios pass. Success
-accepts 18/19; a displaced final clock leaves index 17 pending. Step README
-custody preserves 79 sampled descriptors spare at the success peak. Only the
+accepts 18/19; a displaced final clock leaves index 17 pending. The later v27
+parent adds account WS unsubscribe. Step README custody preserves 79 sampled
+descriptors spare at the v26 success peak. Only the
 four-asset fixture interval is reconciled; provider clocks, stream fence and
 trading remain blocked. Earlier v26 old-profile isolation regressions are unrun.
 

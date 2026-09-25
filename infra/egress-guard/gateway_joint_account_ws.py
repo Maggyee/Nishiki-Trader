@@ -153,18 +153,37 @@ def review_step(bundle, index, context, selected, modules, previous, *, market_e
             )
         ):
             raise ValueError("joint_ws_upgrade_request")
-    elif index == 2:
+    elif index in {2, 18}:
         expected = ["intent", "signature_prepared", "grant_prepared", "activated", "write_prepared"]
         chunks = "response_chunk"
-        conclusion = "subscription_accepted"
+        conclusion = "subscription_accepted" if index == 2 else "unsubscribe_accepted"
         intent = rows[0]["payload"]
-        if set(intent) != {"connection_bundle_sha256", "signer"} or intent[
-            "connection_bundle_sha256"
-        ] != digest(canonical(previous[1])):
+        route = (
+            modules["joint_route_selection"](previous[:9], selected, modules)
+            if index == 18
+            else None
+        )
+        predecessor = (
+            {
+                "final_clock_bundle_sha256": digest(canonical(previous[17])),
+                "subscription_bundle_sha256": digest(canonical(previous[2])),
+                "route_selection_sha256": digest(canonical(route)),
+            }
+            if index == 18
+            else {"connection_bundle_sha256": digest(canonical(previous[1]))}
+        )
+        if set(intent) != {*predecessor, "signer"} or any(
+            intent[key] != value for key, value in predecessor.items()
+        ):
             raise ValueError("joint_ws_preceding_connection")
         signer = intent["signer"]
         clock_process = anchor["collector"]["process"]
         process = signer.get("process") if isinstance(signer, dict) else None
+        subscription_signer = (
+            json.loads(previous[2]["ws"].splitlines()[0])["payload"]["signer"]
+            if index == 18
+            else None
+        )
         if (
             not isinstance(process, dict)
             or set(signer) != {"process", "launcher_source_sha256"}
@@ -177,6 +196,12 @@ def review_step(bundle, index, context, selected, modules, previous, *, market_e
             or process["start_ticks"] <= 0
             or (process["pid"], process["start_ticks"])
             == (clock_process["pid"], clock_process["start_ticks"])
+            or index == 18
+            and (process["pid"], process["start_ticks"])
+            == (
+                subscription_signer["process"]["pid"],
+                subscription_signer["process"]["start_ticks"],
+            )
             or any(
                 process[k] != clock_process[k]
                 for k in clock_process
@@ -195,8 +220,14 @@ def review_step(bundle, index, context, selected, modules, previous, *, market_e
             signed = rows[1]["payload"]
             if set(signed) != {"challenge", "request", "received", "raw_b64", "raw_sha256"}:
                 raise ValueError("joint_ws_signature_fields")
-            requests = modules["requests"]
-            requests["validate_challenge"](signed["challenge"], 2)
+            requests = (
+                modules["joint_requests"]["view"](
+                    modules["requests"], route["symbols"], digest(canonical(route))
+                )
+                if index == 18
+                else modules["requests"]
+            )
+            requests["validate_challenge"](signed["challenge"], index)
             if not isinstance(signed["received"], list) or len(signed["received"]) != 2:
                 raise ValueError("joint_ws_signature_receipt")
             requests["validate_request"](
@@ -265,8 +296,14 @@ def review_step(bundle, index, context, selected, modules, previous, *, market_e
         else:
             frames = modules["frames"]["ServerFrames"]().feed(bytes(response))
             if len(frames) != 1 or frames[0][0] != 1:
-                raise ValueError("joint_ws_subscription_frame")
-            modules["account_ws"]["response"](frames[0][1])
+                raise ValueError("joint_ws_response_frame")
+            if index == 18:
+                modules["account_ws"]["unsubscribe_response"](frames[0][1], request_id="fixture-18")
+                last = json.loads(previous[17]["receipt"].splitlines()[-1])
+                if any(rows[offset][key] < last[key] for key in ("utc_ns", "monotonic_ns")):
+                    raise ValueError("joint_ws_unsubscribe_precedes_clock")
+            else:
+                modules["account_ws"]["response"](frames[0][1])
         end += 1
     increments = None
     if market_events:
@@ -344,6 +381,7 @@ def review_step(bundle, index, context, selected, modules, previous, *, market_e
         "market_connection_upgraded": index == 9 and complete,
         "subscription_acknowledged": complete if index == 2 else False,
         "native_signer_verified": index == 2 and complete,
+        "unsubscribe_acknowledged": index == 18 and complete,
         "account_interval_complete": False,
         **({"market_events": increments or []} if market_events else {}),
     }
@@ -473,32 +511,67 @@ class Channel:
                 )
                 if sys.stdin.readline() != "continue\n":
                     raise ValueError("fixture_parent_release_required")
-            elif index == 2:
-                if self.connection is None:
+            elif index in {2, 18}:
+                if self.connection is None or index == 18 and self.market_connection is None:
                     raise ValueError("joint_ws_account_connection_required")
-                self.session = self.account["Session"](self.entry, self.authority, self.sources)
+                route = (
+                    sequence.modules["joint_route_selection"](
+                        sequence.bundles[:9],
+                        json.loads(sequence.expected.splitlines()[0])["payload"],
+                        sequence.modules,
+                    )
+                    if index == 18
+                    else None
+                )
+                self.session = self.account["Session"](
+                    self.entry,
+                    self.authority,
+                    self.sources,
+                    joint_route={
+                        "symbols": route["symbols"],
+                        "route_sha256": digest(canonical(route)),
+                    }
+                    if route is not None
+                    else None,
+                )
                 signer = self.session.collector
                 signer.verify()
                 append(
                     "intent",
                     {
-                        "connection_bundle_sha256": digest(canonical(sequence.bundles[1])),
+                        **(
+                            {
+                                "final_clock_bundle_sha256": digest(
+                                    canonical(sequence.bundles[17])
+                                ),
+                                "subscription_bundle_sha256": digest(
+                                    canonical(sequence.bundles[2])
+                                ),
+                                "route_selection_sha256": digest(canonical(route)),
+                            }
+                            if index == 18
+                            else {
+                                "connection_bundle_sha256": digest(canonical(sequence.bundles[1]))
+                            }
+                        ),
                         "signer": signer.selected,
                     },
                 )
                 challenge = {
-                    "index": 2,
+                    "index": index,
                     "nonce": os.urandom(16).hex(),
                     "utc_ns": time.time_ns(),
                     "monotonic_ns": time.monotonic_ns(),
+                    **({"route_sha256": digest(canonical(route))} if index == 18 else {}),
                 }
                 signer.channel.send(canonical(challenge).decode(), 1)
-                raw = signer.channel.receive(self.requests["JsonToken"](), 1).encode()
+                requests = self.session.requests
+                raw = signer.channel.receive(requests["JsonToken"](), 1).encode()
                 received = [time.time_ns(), time.monotonic_ns()]
                 envelope = self.account["decode"](raw)
                 if canonical(envelope) != raw:
                     raise ValueError("joint_ws_signed_request_canonical")
-                self.requests["validate_request"](raw, challenge, received=tuple(received))
+                requests["validate_request"](raw, challenge, received=tuple(received))
                 wire = sequence.modules["frames"]["client_frame"](
                     self.account["wire_request"](envelope)
                 )
@@ -620,7 +693,7 @@ class Channel:
                     if signer.used:
                         raise ValueError("joint_ws_native_signer_consumed")
                     signer.used = True
-                    self.requests["validate_request"](
+                    requests["validate_request"](
                         raw, challenge, received=(time.time_ns(), time.monotonic_ns())
                     )
                     append("write_prepared", {})
@@ -632,19 +705,24 @@ class Channel:
                         chunk = self.connection.recv(4096)
                         clocks = (time.time_ns(), time.monotonic_ns())
                         if not chunk:
-                            raise ValueError("joint_ws_subscription_eof")
+                            raise ValueError("joint_ws_response_eof")
                         append("response_chunk", self.provenance.raw_fields(chunk), clocks)
                         response.extend(chunk)
                     messages = sequence.modules["frames"]["ServerFrames"]().feed(bytes(response))
                     if len(messages) != 1 or messages[0][0] != 1:
-                        raise ValueError("joint_ws_subscription_frame")
-                    self.account["response"](messages[0][1])
-                    append("subscription_accepted", {})
+                        raise ValueError("joint_ws_response_frame")
+                    if index == 18:
+                        self.account["unsubscribe_response"](
+                            messages[0][1], request_id="fixture-18"
+                        )
+                    else:
+                        self.account["response"](messages[0][1])
+                    append("unsubscribe_accepted" if index == 18 else "subscription_accepted", {})
             finally:
                 self.revoke()
                 append("revoked", {})
             append("accepted", {})
-            if index == 2:
+            if index in {2, 18}:
                 self.session.close()
                 self.session = None
             return {"status": "fixture_receipt_succeeded", "revoked": True}

@@ -98,4 +98,4 @@ def test_final_fixture_peer_compiles_and_has_two_scenarios():
     harness = load("installed_gateway_selftest")
     compile(harness.JOINT_WS_PEER, "<joint-final-peer>", "exec")
     assert harness.JOINT_FINAL_SCENARIOS == ("joint_final_success", "joint_final_bad_clock")
-    assert load("installed_gateway").PROFILE == "portfolio.installed_gateway_fixture.v26"
+    assert load("installed_gateway").PROFILE == "portfolio.installed_gateway_fixture.v27"

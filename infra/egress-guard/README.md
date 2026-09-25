@@ -6,7 +6,20 @@ offline disk tests, and retain read-only host deployment-input snapshots.
 Current phase: Phase 5 entry, offline infrastructure acceptance only. This is not
 a production guard, gateway audit service, quota authority or collection permit.
 
-The current disposable joint fixture adds the final route-bound clock:
+The current disposable joint fixture completes the fixed ordered plan:
+
+```bash
+/usr/bin/python3 -I infra/egress-guard/installed_gateway_selftest.py --joint-complete-profile --report data/NEW-JOINT-COMPLETE.json
+```
+
+Manifest v27 pins 26 sources. The distinct parent accepts 19/19 fixed fixture
+operations after the dedicated-UID-selected account WS unsubscribe. A bad
+acknowledgement stops after 18 accepted. The sampled peak is 945/1,024
+descriptors, leaving 79 against the 64-spare rule. Only four fixture assets
+reconcile; real all-asset coverage, stream fence, source authority and live
+admission remain blocked. See the [v27 acceptance](../../docs/progress/portfolio-installed-joint-complete-acceptance-2026-09-25.md).
+
+The historical v26 fixture adds the final route-bound clock:
 
 ```bash
 /usr/bin/python3 -I infra/egress-guard/installed_gateway_selftest.py --joint-final-profile --report data/NEW-JOINT-FINAL.json

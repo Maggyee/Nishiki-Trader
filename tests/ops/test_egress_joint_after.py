@@ -126,4 +126,4 @@ def test_second_pass_peer_and_manifest_are_consistent():
         "joint_after_orders_changed",
         "joint_after_balance_drift",
     )
-    assert load("installed_gateway").PROFILE == "portfolio.installed_gateway_fixture.v26"
+    assert load("installed_gateway").PROFILE == "portfolio.installed_gateway_fixture.v27"
