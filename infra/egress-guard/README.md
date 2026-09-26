@@ -6,6 +6,13 @@ offline disk tests, and retain read-only host deployment-input snapshots.
 Current phase: Phase 5 entry, offline infrastructure acceptance only. This is not
 a production guard, gateway audit service, quota authority or collection permit.
 
+The prospective [joint first-operation window](../../docs/progress/portfolio-prospective-joint-window-2026-09-26.md)
+checks a held guard's fixed boot/manifest/binding and elapsed exclusion window
+against the existing consumed local attempt ledger. It persists at most the first
+`time` preparation after at least 300 seconds of prior exclusion and 125 seconds
+of future exclusion. The root-owned kernel/source observer is not implemented or
+installed; synthetic guard reports never qualify actual egress or admission.
+
 The current disposable joint fixture completes the fixed ordered plan:
 
 ```bash

@@ -22,6 +22,13 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the prospective first-operation exclusion barrier and its missing installed
+trust boundary, read `docs/progress/portfolio-prospective-joint-window-2026-09-26.md`.
+It joins a held guard interface to the consumed attempt ledger and checks a
+300-second minimum history plus 125-second future horizon. Tests use a synthetic
+guard; the host kernel observer, authenticated source, provider intervals and
+complete shared-egress coverage still do not exist. No network permission follows.
+
 For the v27 original-byte handoff to the separate frozen real capture contract,
 read `docs/progress/portfolio-v27-joint-contract-handoff-2026-09-25.md`.
 Both retained scenarios replay under pinned protected sources: 19/19 succeeds,
