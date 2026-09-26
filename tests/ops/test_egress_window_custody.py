@@ -27,6 +27,20 @@ def load(path, name):
     return module
 
 
+def custody_identity(info):
+    return (
+        info.st_dev,
+        info.st_ino,
+        info.st_uid,
+        info.st_gid,
+        info.st_mode,
+        info.st_nlink,
+        info.st_size,
+        info.st_mtime_ns,
+        info.st_ctime_ns,
+    )
+
+
 class HeldFiles:
     """Test-only descriptor custody; production requires TrustedInstallation."""
 
@@ -42,8 +56,8 @@ class HeldFiles:
             raise ValueError("held_files_closed")
         for path, (fd, info, raw) in self.selected.items():
             if (
-                os.fstat(fd) != info
-                or os.stat(path, follow_symlinks=False) != info
+                custody_identity(os.fstat(fd)) != custody_identity(info)
+                or custody_identity(os.stat(path, follow_symlinks=False)) != custody_identity(info)
                 or os.pread(fd, len(raw) + 1, 0) != raw
             ):
                 raise ValueError("held_files_changed")
@@ -139,6 +153,7 @@ def test_held_selection_can_be_journaled_without_activation(selection, tmp_path,
     try:
         witness = module.WindowWitness(root, held)
         try:
+            witness.observe()
             report = witness.observe()
             assert report["observations"] == 2
             assert report["first_selection_sha256"] == hashlib.sha256(held.plan_raw).hexdigest()
@@ -147,6 +162,29 @@ def test_held_selection_can_be_journaled_without_activation(selection, tmp_path,
             assert witness.expected == (root / module.SCOPE / "events.jsonl").read_bytes()
         finally:
             witness.close()
+    finally:
+        held.close()
+
+
+def test_held_selection_checks_inactive_tables_before_activation(selection):
+    custody, authority, _, _ = selection
+    fixture = load(KERNEL_TEST, "joint_window_inactive_nft_fixture")
+    tables = {family: fixture.table(family) for family in ("inet", "netdev")}
+    for value in tables.values():
+        value["nftables"][2]["set"].pop("elem")
+    held = custody.RootSelectedWindowSnapshot(authority)
+    held.read_kernel_table = lambda family: tables[family]
+    held.read_kernel_chain = lambda: fixture.CHAIN
+    try:
+        report = held.inspect_inactive()
+        assert report["selection_sha256"] == hashlib.sha256(held.plan_raw).hexdigest()
+        assert report["network_admitted"] is False
+        tables["inet"]["nftables"][2]["set"]["elem"] = [
+            {"elem": {"val": "ipv4", "timeout": 426, "expires": 425}}
+        ]
+        with pytest.raises(ValueError, match="kernel_window_not_inactive"):
+            held.inspect_inactive()
+        assert held.closed and authority.closed
     finally:
         held.close()
 

@@ -39,6 +39,20 @@ def _pairs(items):
     return value
 
 
+def _file_identity(info):
+    return (
+        info.st_dev,
+        info.st_ino,
+        info.st_uid,
+        info.st_gid,
+        info.st_mode,
+        info.st_nlink,
+        info.st_size,
+        info.st_mtime_ns,
+        info.st_ctime_ns,
+    )
+
+
 def _read(authority, path, mode, limit):
     authority.verify()
     fd = authority.open_file(path, mode)
@@ -46,7 +60,7 @@ def _read(authority, path, mode, limit):
     if before.st_size > limit:
         raise ValueError("joint_window_selected_file_oversized")
     raw = os.pread(fd, limit + 1, 0)
-    if len(raw) != before.st_size or os.fstat(fd) != before:
+    if len(raw) != before.st_size or _file_identity(os.fstat(fd)) != _file_identity(before):
         raise ValueError("joint_window_selected_file_changed")
     authority.verify()
     return raw
@@ -104,7 +118,46 @@ class RootSelectedWindowSnapshot:
             scope = {"__name__": "root_selected_joint_window_observer"}
             exec(compile(self.source, OBSERVER, "exec"), scope)
             self.observe_kernel = scope["observe"]
+            self.inspect_kernel_table = scope["inspect_table"]
+            self.read_kernel_table = scope["read_table"]
+            self.read_kernel_chain = scope["read_netdev_chain"]
             scope["_selected_collector"](plan["collector"], plan["wan_interface"])
+        except BaseException:
+            self.close()
+            raise
+
+    def _held(self):
+        if self.closed or os.getpid() != self.owner:
+            raise ValueError("joint_window_selection_closed_or_foreign_owner")
+        if (
+            _read(self.authority, PLAN, 0o600, MAX_PLAN) != self.plan_raw
+            or _read(self.authority, OBSERVER, 0o444, MAX_CODE) != self.source
+            or any(self.plan[key] != value for key, value in _identity().items())
+        ):
+            raise ValueError("joint_window_protected_selection_drift")
+
+    def inspect_inactive(self):
+        """Validate selected empty tables before a separate, one-shot nft write."""
+        try:
+            self._held()
+            for family in ("inet", "netdev"):
+                self.inspect_kernel_table(
+                    self.read_kernel_table(family),
+                    family,
+                    expected_static_sha256=self.plan["static_rules_sha256"][family],
+                    wan_interface=self.plan["wan_interface"],
+                    collector=self.plan["collector"],
+                    chain_text=self.read_kernel_chain() if family == "netdev" else None,
+                    expect_inactive=True,
+                )
+            self._held()
+            return {
+                "schema_version": "portfolio.root_selected_joint_window_inactive.v1",
+                "status": "selected_empty_blackout_and_permits_unqualified",
+                "selection_sha256": _sha(self.plan_raw),
+                "static_rules_sha256": self.plan["static_rules_sha256"],
+                "network_admitted": False,
+            }
         except BaseException:
             self.close()
             raise
@@ -113,12 +166,7 @@ class RootSelectedWindowSnapshot:
         if self.closed or os.getpid() != self.owner:
             raise ValueError("joint_window_selection_closed_or_foreign_owner")
         try:
-            if (
-                _read(self.authority, PLAN, 0o600, MAX_PLAN) != self.plan_raw
-                or _read(self.authority, OBSERVER, 0o444, MAX_CODE) != self.source
-                or any(self.plan[key] != value for key, value in _identity().items())
-            ):
-                raise ValueError("joint_window_protected_selection_drift")
+            self._held()
             snapshot = self.observe_kernel(
                 expected_static_sha256=self.plan["static_rules_sha256"],
                 wan_interface=self.plan["wan_interface"],
@@ -138,12 +186,7 @@ class RootSelectedWindowSnapshot:
                 )
             ):
                 raise ValueError("joint_window_kernel_snapshot_invalid")
-            if (
-                _read(self.authority, PLAN, 0o600, MAX_PLAN) != self.plan_raw
-                or _read(self.authority, OBSERVER, 0o444, MAX_CODE) != self.source
-                or any(self.plan[key] != value for key, value in _identity().items())
-            ):
-                raise ValueError("joint_window_protected_selection_drift")
+            self._held()
             return {
                 "schema_version": "portfolio.root_selected_joint_window_snapshot.v1",
                 "status": "root_selected_kernel_snapshot_unqualified",

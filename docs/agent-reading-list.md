@@ -22,6 +22,12 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the staged atomic joint blackout transaction in a disposable nft namespace,
+read `docs/progress/portfolio-joint-blackout-activation-2026-09-26.md`.
+The controller checks selected empty rules, consumes an intent before writing
+all four timers, and observes the result with no permits. It is uninstalled and
+cannot prove uninterrupted host exclusion or authorize network access.
+
 For the one-shot local joint-window snapshot journal and its remaining
 continuous-activation boundary, read
 `docs/progress/portfolio-joint-window-witness-2026-09-26.md`.

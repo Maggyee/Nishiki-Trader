@@ -132,6 +132,36 @@ def test_two_tables_report_timer_lower_bound_but_no_coverage_promotion(observer,
     assert result["network_admitted"] is False
 
 
+def test_inactive_tables_keep_exact_rules_and_empty_sets(observer, pinned):
+    rows, pins = copy.deepcopy(pinned)
+    for family in ("inet", "netdev"):
+        rows[family]["nftables"][2]["set"].pop("elem")
+        assert (
+            observer.inspect_table(
+                rows[family],
+                family,
+                expected_static_sha256=pins[family],
+                wan_interface="wan",
+                chain_text=CHAIN,
+                expect_inactive=True,
+            )
+            == {}
+        )
+    with pytest.raises(ValueError, match="kernel_window_not_inactive"):
+        observer.inspect_table(
+            pinned[0]["inet"],
+            "inet",
+            expected_static_sha256=pins["inet"],
+            expect_inactive=True,
+        )
+    rows["inet"]["nftables"][-1]["rule"]["expr"] = [{"accept": None}]
+    pin = observer.digest(observer._static(rows["inet"]["nftables"]))
+    with pytest.raises(ValueError, match="kernel_window_blackout_drop_or_bypass"):
+        observer.inspect_table(
+            rows["inet"], "inet", expected_static_sha256=pin, expect_inactive=True
+        )
+
+
 @pytest.mark.parametrize(
     "damage",
     ["missing_v6", "no_expiry", "permit", "device", "priority", "rule", "extra_row", "wrong_table"],

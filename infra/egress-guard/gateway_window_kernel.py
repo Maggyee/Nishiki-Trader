@@ -261,7 +261,14 @@ def _check_blackout_rules(rows, family, *, collector, wan_interface):
 
 
 def inspect_table(
-    value, family, *, expected_static_sha256, wan_interface=None, chain_text=None, collector=None
+    value,
+    family,
+    *,
+    expected_static_sha256,
+    wan_interface=None,
+    chain_text=None,
+    collector=None,
+    expect_inactive=False,
 ):
     """Check one owned table and retain all four original timer expiries."""
     if (
@@ -334,6 +341,10 @@ def inspect_table(
     _check_blackout_rules(rows, family, collector=collector, wan_interface=wan_interface)
     if digest(_static(rows)) != expected_static_sha256:
         raise ValueError("kernel_window_static_rules_changed")
+    if expect_inactive:
+        if blackout.get("elem"):
+            raise ValueError("kernel_window_not_inactive")
+        return {}
     return _elements(blackout, family)
 
 

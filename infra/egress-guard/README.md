@@ -1018,9 +1018,18 @@ source, caller-coverage and network admission. See the
 [held-selection review](../../docs/progress/portfolio-joint-window-held-selection-2026-09-26.md).
 
 `gateway_window_witness.py` consumes a private one-shot directory before
-recording held snapshots. Its fsynced claim and chained samples pin selection,
+recording held snapshots. Its fsynced claim, optional activation intent and
+chained samples pin selection,
 rule digests and nonincreasing expiry; drift or an uncertain write halts the
 object and a second creation fails. No root installation or kernel activation
 is attached. Intermittent sampling cannot prove uninterrupted exclusion,
 regardless of elapsed lookback; it cannot supply `guard.verify()` or authorize
 network access. See the [witness review](../../docs/progress/portfolio-joint-window-witness-2026-09-26.md).
+
+`gateway_window_activation.py` stages an atomic, fixed nft blackout transaction.
+It requires exact selected empty rules, fsyncs one activation intent and writes
+only timed IPv4/IPv6 blackout elements. It verifies the post-write selected
+snapshot and keeps every admission field false. The five-second real nft probe
+runs only in a disposable user/network namespace; this is not installed on the
+host and is not a continuous-exclusion controller. See the
+[activation probe](../../docs/progress/portfolio-joint-blackout-activation-2026-09-26.md).

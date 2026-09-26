@@ -18,9 +18,11 @@ SCOPE = "joint-window-witness-v1"
 PROFILE = "portfolio.joint_window_witness.v1"
 LIMIT = 1024 * 1024
 SECOND = 1_000_000_000
+MAX_DURATION_MS = 3_725_000
 README = (
     b"Purpose: one-shot local joint-window snapshot witness. Phase: offline custody. "
-    b"Boundary: no kernel activation, uninterrupted coverage or network admission. "
+    b"Boundary: an external controller may attempt one isolated blackout; "
+    b"no uninterrupted coverage or network admission follows. "
     b"Next: protected root controller and full caller/source verification. "
     b"Do not remove or reopen this consumed scope.\n"
 )
@@ -114,10 +116,14 @@ def replay(raw, *, expected_sha256):
     ):
         raise ValueError("joint_witness_archive_incomplete")
     previous, last_time, selection, pins, expiry, observations = None, 0, None, None, None, 0
+    prepared = None
     for seq, line in enumerate(raw.splitlines()):
         row = json.loads(line, object_pairs_hook=_pairs)
         fields = {"seq", "previous_sha256", "kind", "monotonic_ns"}
-        observed = seq > 0
+        activation = row.get("kind") == "activation_prepared" and seq == 1
+        observed = seq > 0 and not activation
+        if activation:
+            fields |= {"selection_sha256", "static_rules_sha256", "duration_ms"}
         if observed:
             fields |= {"selection_sha256", "static_rules_sha256", "expiry_ns"}
         if (
@@ -126,13 +132,22 @@ def replay(raw, *, expected_sha256):
             or type(row["seq"]) is not int
             or row["seq"] != seq
             or row["previous_sha256"] != previous
-            or row["kind"] != ("observed" if observed else "claimed")
+            or row["kind"]
+            != ("activation_prepared" if activation else "observed" if observed else "claimed")
             or type(row["monotonic_ns"]) is not int
             or row["monotonic_ns"] <= last_time
             or canonical(row) != line
         ):
             raise ValueError("joint_witness_archive_sequence_invalid")
         last_time = row["monotonic_ns"]
+        if activation:
+            if (
+                not _pinned(row["selection_sha256"], row["static_rules_sha256"])
+                or type(row["duration_ms"]) is not int
+                or not 1000 <= row["duration_ms"] <= MAX_DURATION_MS
+            ):
+                raise ValueError("joint_witness_archive_activation_invalid")
+            prepared = (row["selection_sha256"], row["static_rules_sha256"])
         if observed:
             selected, static, current_expiry = (
                 row["selection_sha256"],
@@ -145,8 +160,10 @@ def replay(raw, *, expected_sha256):
                 or current_expiry <= last_time
             ):
                 raise ValueError("joint_witness_archive_sample_invalid")
-            if (selection is not None and selected != selection) or (
-                pins is not None and static != pins
+            if (
+                (selection is not None and selected != selection)
+                or (pins is not None and static != pins)
+                or (prepared is not None and (selected, static) != prepared)
             ):
                 raise ValueError("joint_witness_archive_selection_changed")
             if expiry is not None and current_expiry > expiry + SECOND:
@@ -161,6 +178,7 @@ def replay(raw, *, expected_sha256):
         "observations": observations,
         "first_selection_sha256": selection,
         "minimum_observed_expiry_ns": expiry,
+        "activation_prepared": prepared is not None,
         "activation_history_verified": False,
         "source_authenticated": False,
         "complete_caller_coverage_verified": False,
@@ -179,6 +197,7 @@ class WindowWitness:
         self.expected = b""
         self.seq, self.previous = 0, None
         self.selection = self.pins = self.expiry = None
+        self.prepared = None
         self.last_time = 0
         try:
             root_fd = os.open(self.root, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
@@ -209,7 +228,6 @@ class WindowWitness:
             self.file_id = (info.st_dev, info.st_ino)
             os.fsync(scope_fd)
             self._append("claimed", self.clock())
-            self.observe()
         except BaseException:
             self.failed = True
             self._release()
@@ -278,6 +296,29 @@ class WindowWitness:
         self.previous = digest(raw)
         self.last_time = now
 
+    def prepare_activation(self, *, selection_sha256, static_rules_sha256, duration_ms):
+        """Persist a single fixed-intent record before any kernel write."""
+        try:
+            if (
+                self.seq != 1
+                or self.prepared is not None
+                or not _pinned(selection_sha256, static_rules_sha256)
+                or type(duration_ms) is not int
+                or not 1000 <= duration_ms <= MAX_DURATION_MS
+            ):
+                raise ValueError("joint_witness_fixed_activation_preparation_required")
+            self._append(
+                "activation_prepared",
+                self.clock(),
+                selection_sha256=selection_sha256,
+                static_rules_sha256=static_rules_sha256,
+                duration_ms=duration_ms,
+            )
+            self.prepared = (selection_sha256, static_rules_sha256)
+        except BaseException:
+            self.failed = True
+            raise
+
     def observe(self):
         """Persist one sample; never attest the gaps between samples."""
         try:
@@ -292,8 +333,10 @@ class WindowWitness:
                 or now > finished + SECOND
             ):
                 raise ValueError("joint_witness_observation_clock_invalid")
-            if (self.selection is not None and selected != self.selection) or (
-                self.pins is not None and pins != self.pins
+            if (
+                (self.selection is not None and selected != self.selection)
+                or (self.pins is not None and pins != self.pins)
+                or (self.prepared is not None and (selected, pins) != self.prepared)
             ):
                 raise ValueError("joint_witness_selection_changed")
             if self.expiry is not None and expiry > self.expiry + SECOND:

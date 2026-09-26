@@ -73,6 +73,7 @@ def scope(module, tmp_path):
     clock = Clock()
     snapshotter = Snapshotter(clock)
     witness = module.WindowWitness(root, snapshotter, clock=clock)
+    witness.observe()
     try:
         yield module, witness, snapshotter, clock, root
     finally:
@@ -95,6 +96,7 @@ def test_claim_precedes_snapshot_and_scope_never_reopens(module, tmp_path):
     snapshotter.observe = verify_claim_first
     witness = module.WindowWitness(root, snapshotter, clock=clock)
     try:
+        witness.observe()
         result = witness.observe()
         assert counts == [0, 1]
         assert result["observations"] == 2
@@ -212,8 +214,12 @@ def test_snapshot_failure_keeps_claimed_scope(module, tmp_path):
         def observe(self):
             raise RuntimeError("unavailable")
 
-    with pytest.raises(RuntimeError, match="unavailable"):
-        module.WindowWitness(root, Broken(), clock=Clock())
+    witness = module.WindowWitness(root, Broken(), clock=Clock())
+    try:
+        with pytest.raises(RuntimeError, match="unavailable"):
+            witness.observe()
+    finally:
+        witness.close()
     raw = (root / module.SCOPE / "events.jsonl").read_bytes()
     report = module.replay(raw, expected_sha256=module.digest(raw))
     assert report["observations"] == 0 and report["network_admitted"] is False
@@ -230,7 +236,7 @@ spec=importlib.util.spec_from_file_location('joint_window_crash_probe',sys.argv[
 module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
 class Crash:
  def observe(self): os._exit(23)
-module.WindowWitness(sys.argv[2],Crash())
+module.WindowWitness(sys.argv[2],Crash()).observe()
 """
     result = subprocess.run(
         [sys.executable, "-I", "-c", child, str(SOURCE), str(root)],
