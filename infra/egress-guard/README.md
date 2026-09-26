@@ -998,3 +998,12 @@ guard interface, supply its start time or activate any real window. Every report
 keeps source authentication, complete caller coverage and network admission false.
 The [isolated verification](../../docs/progress/portfolio-joint-kernel-observer-2026-09-26.md)
 uses disposable nft tables and does not change host egress.
+
+`gateway_window_custody.py` adds a fixed-path selection adapter for a future
+isolated root invocation using the existing `TrustedInstallation` descriptors.
+Its protected plan pins the observer's bytes, two rule digests, host boot and
+network/user namespaces and WAN device; all are rechecked around the snapshot.
+This adapter is neither installed nor an activation journal, does not attest its
+own running code or qualify historical exclusion. Its output always denies
+source, caller-coverage and network admission. See the
+[held-selection review](../../docs/progress/portfolio-joint-window-held-selection-2026-09-26.md).

@@ -22,6 +22,13 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For fixed root-held selection of the joint observer without installation or
+activation, read `docs/progress/portfolio-joint-window-held-selection-2026-09-26.md`.
+The adapter loads fixed policy and code through the existing installed verifier,
+checks boot/network/user namespaces and repeats descriptor checks around a local
+kernel snapshot. Staged tests use fake custody. The host lacks a joint nft table;
+no continuous exclusion or network permission follows.
+
 For the disposable, read-only joint nft observer and its unresolved authority
 boundary, read `docs/progress/portfolio-joint-kernel-observer-2026-09-26.md`.
 Real isolated nft JSON confirms second-granularity timers and omits netdev hook
