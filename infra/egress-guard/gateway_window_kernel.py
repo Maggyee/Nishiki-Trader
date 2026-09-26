@@ -8,6 +8,7 @@ policy's completeness nor uninterrupted coverage since activation.
 from __future__ import annotations
 
 import hashlib
+import ipaddress
 import json
 import os
 import re
@@ -20,6 +21,7 @@ ENV = {"PATH": "/usr/sbin:/usr/bin:/sbin:/bin", "LC_ALL": "C"}
 LIMIT = 1024 * 1024
 SECOND = 1_000_000_000
 KINDS = {"inet": {"ipv4", "ipv6"}, "netdev": {"ip", "ip6"}}
+COLLECTOR_MARK = 0x6F720002
 
 
 def canonical(value):
@@ -132,35 +134,135 @@ def _elements(row, family):
     return result
 
 
-def _check_blackout_rules(rows, family):
+def _selected_collector(collector, wan_interface):
+    if collector is None:
+        return None
+    if (
+        not isinstance(collector, dict)
+        or set(collector) != {"host_link", "child_ipv4", "source_ipv4"}
+        or not isinstance(collector["host_link"], str)
+        or re.fullmatch(r"[a-zA-Z0-9_.-]{1,15}", collector["host_link"]) is None
+        or collector["host_link"] in {"lo", wan_interface}
+    ):
+        raise ValueError("kernel_window_fixed_collector_selection_required")
+    for key in ("child_ipv4", "source_ipv4"):
+        value = collector[key]
+        if not isinstance(value, str):
+            raise ValueError("kernel_window_fixed_collector_ipv4_required")
+        try:
+            address = ipaddress.IPv4Address(value)
+        except ipaddress.AddressValueError as exc:
+            raise ValueError("kernel_window_fixed_collector_ipv4_required") from exc
+        if (
+            str(address) != value
+            or address.is_multicast
+            or address.is_loopback
+            or address.is_unspecified
+        ):
+            raise ValueError("kernel_window_fixed_collector_ipv4_required")
+    if collector["child_ipv4"] == collector["source_ipv4"]:
+        raise ValueError("kernel_window_distinct_collector_source_required")
+    return collector
+
+
+def _check_blackout_rules(rows, family, *, collector, wan_interface):
     rules = [row["rule"] for row in _static(rows) if "rule" in row]
-    expected_chains = ("output", "forward") if family == "inet" else ("egress",)
-    blackout_match = (
-        {"match": {"op": "==", "left": {"meta": {"key": "nfproto"}}, "right": "@blackout"}}
-        if family == "inet"
-        else {
-            "match": {
-                "op": "==",
-                "left": {"payload": {"protocol": "ether", "field": "type"}},
-                "right": "@blackout",
-            }
-        }
+    expected_chains = (
+        ("output", "input", "forward")
+        if collector and family == "inet"
+        else (("output", "forward") if family == "inet" else ("egress",))
     )
-    drop = [blackout_match, {"counter": {}}, {"drop": None}]
-    loopback = [
-        {"match": {"op": "==", "left": {"meta": {"key": "oifname"}}, "right": "lo"}},
-        {"accept": None},
-    ]
-    if len(rules) not in {len(expected_chains), len(expected_chains) + (family == "inet")}:
+
+    def match(left, right, op="=="):
+        return {"match": {"op": op, "left": left, "right": right}}
+
+    def meta(key, right):
+        return match({"meta": {"key": key}}, right)
+
+    def ip(field, right):
+        return match({"payload": {"protocol": "ip", "field": field}}, right)
+
+    def tcp(field, right):
+        return match({"payload": {"protocol": "tcp", "field": field}}, right)
+
+    counted_drop = [{"counter": {}}, {"drop": None}]
+    blackout_match = (
+        meta("nfproto", "@blackout")
+        if family == "inet"
+        else match({"payload": {"protocol": "ether", "field": "type"}}, "@blackout")
+    )
+    drop = [blackout_match, *counted_drop]
+    loopback = [meta("oifname", "lo"), {"accept": None}]
+    if collector is None:
+        expected = (
+            {"output": ([loopback, drop], [drop]), "forward": (drop,)}
+            if family == "inet"
+            else {"egress": (drop,)}
+        )
+    elif family == "inet":
+        link, child = collector["host_link"], collector["child_ipv4"]
+        expected = {
+            "output": ([meta("mark", COLLECTOR_MARK), *counted_drop], loopback, drop),
+            "input": ([meta("iifname", link), *counted_drop],),
+            "forward": (
+                [
+                    meta("iifname", link),
+                    meta("oifname", wan_interface),
+                    ip("saddr", child),
+                    ip("daddr", "@permits"),
+                    tcp("dport", 443),
+                    {"mangle": {"key": {"meta": {"key": "mark"}}, "value": COLLECTOR_MARK}},
+                    {"accept": None},
+                ],
+                [
+                    meta("oifname", link),
+                    meta("iifname", wan_interface),
+                    ip("saddr", "@permits"),
+                    ip("daddr", child),
+                    tcp("sport", 443),
+                    match({"ct": {"key": "state"}}, "established", op="in"),
+                    {"accept": None},
+                ],
+                [meta("iifname", link), *counted_drop],
+                [meta("oifname", link), *counted_drop],
+                drop,
+            ),
+        }
+    else:
+        expected = {
+            "egress": (
+                [
+                    meta("mark", COLLECTOR_MARK),
+                    ip("saddr", collector["source_ipv4"]),
+                    ip("daddr", "@permits"),
+                    tcp("dport", 443),
+                    {"accept": None},
+                ],
+                [meta("mark", COLLECTOR_MARK), *counted_drop],
+                drop,
+            )
+        }
+    allowed_lengths = (
+        {len(expected_chains), len(expected_chains) + (family == "inet")}
+        if collector is None
+        else {sum(len(expressions) for expressions in expected.values())}
+    )
+    if len(rules) not in allowed_lengths:
         raise ValueError("kernel_window_blackout_rule_count")
     for name in expected_chains:
         expressions = [rule.get("expr") for rule in rules if rule.get("chain") == name]
-        allowed = ([loopback, drop], [drop]) if name == "output" else ([drop],)
-        if expressions not in allowed:
+        allowed = expected[name]
+        if (
+            expressions not in allowed
+            if name == "output" and collector is None
+            else expressions != list(allowed)
+        ):
             raise ValueError("kernel_window_blackout_drop_or_bypass")
 
 
-def inspect_table(value, family, *, expected_static_sha256, wan_interface=None, chain_text=None):
+def inspect_table(
+    value, family, *, expected_static_sha256, wan_interface=None, chain_text=None, collector=None
+):
     """Check one owned table and retain all four original timer expiries."""
     if (
         family not in KINDS
@@ -187,8 +289,13 @@ def inspect_table(value, family, *, expected_static_sha256, wan_interface=None, 
     chain_rows = [row["chain"] for row in rows if "chain" in row]
     rule_rows = [row["rule"] for row in rows if "rule" in row]
     chains = {row["name"]: row for row in chain_rows}
+    collector = _selected_collector(collector, wan_interface)
     expected_chains = (
-        {"output": ("output", -310), "forward": ("forward", -310)}
+        {
+            name: (name, -310)
+            for name in ("output", "input", "forward")
+            if name != "input" or collector
+        }
         if family == "inet"
         else {"egress": ("egress", 0)}
     )
@@ -224,7 +331,7 @@ def inspect_table(value, family, *, expected_static_sha256, wan_interface=None, 
         or permits.get("elem")
     ):
         raise ValueError("kernel_window_set_type_or_early_permission")
-    _check_blackout_rules(rows, family)
+    _check_blackout_rules(rows, family, collector=collector, wan_interface=wan_interface)
     if digest(_static(rows)) != expected_static_sha256:
         raise ValueError("kernel_window_static_rules_changed")
     return _elements(blackout, family)
@@ -234,6 +341,7 @@ def observe(
     *,
     expected_static_sha256,
     wan_interface,
+    collector=None,
     reader=read_table,
     chain_reader=read_netdev_chain,
     clock=time.monotonic_ns,
@@ -246,6 +354,7 @@ def observe(
         or set(expected_static_sha256) != set(KINDS)
     ):
         raise ValueError("kernel_window_fixed_selection_required")
+    _selected_collector(collector, wan_interface)
     started = clock()
     originals = {}
     for family in KINDS:
@@ -257,6 +366,7 @@ def observe(
                 family,
                 expected_static_sha256=expected_static_sha256[family],
                 wan_interface=wan_interface,
+                collector=collector,
                 chain_text=chain_reader() if family == "netdev" else None,
             ),
         )

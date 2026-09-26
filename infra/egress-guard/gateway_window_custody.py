@@ -23,6 +23,7 @@ PLAN_FIELDS = {
     "host_net_namespace",
     "host_user_namespace",
     "wan_interface",
+    "collector",
     "static_rules_sha256",
 }
 MAX_PLAN = 65536
@@ -103,6 +104,7 @@ class RootSelectedWindowSnapshot:
             scope = {"__name__": "root_selected_joint_window_observer"}
             exec(compile(self.source, OBSERVER, "exec"), scope)
             self.observe_kernel = scope["observe"]
+            scope["_selected_collector"](plan["collector"], plan["wan_interface"])
         except BaseException:
             self.close()
             raise
@@ -120,6 +122,7 @@ class RootSelectedWindowSnapshot:
             snapshot = self.observe_kernel(
                 expected_static_sha256=self.plan["static_rules_sha256"],
                 wan_interface=self.plan["wan_interface"],
+                collector=self.plan["collector"],
             )
             if (
                 not isinstance(snapshot, dict)

@@ -273,6 +273,25 @@ def test_duplicate_json_and_missing_root_refuse_read_before_claim(observer, monk
         json.loads('{"elem":1,"elem":2}', object_pairs_hook=observer._pairs)
 
 
+@pytest.mark.parametrize(
+    "collector",
+    [
+        {},
+        {"host_link": "wan", "child_ipv4": "169.254.254.2", "source_ipv4": "10.0.0.136"},
+        {"host_link": "gw-jc1", "child_ipv4": "169.254.254.2/32", "source_ipv4": "10.0.0.136"},
+        {"host_link": "gw-jc1", "child_ipv4": "169.254.254.2", "source_ipv4": "169.254.254.2"},
+    ],
+)
+def test_invalid_collector_selection_fails_before_kernel_read(observer, collector):
+    with pytest.raises(ValueError, match="kernel_window"):
+        observer.observe(
+            expected_static_sha256={"inet": "0" * 64, "netdev": "0" * 64},
+            wan_interface="wan",
+            collector=collector,
+            reader=lambda _: pytest.fail("invalid selection reached kernel read"),
+        )
+
+
 def test_real_nft_json_in_disposable_user_and_network_namespace(observer):
     """No host table is created; unshare grants CAP_NET_ADMIN only inside its namespace."""
     child = r"""
@@ -320,3 +339,79 @@ except Exception:
     report = json.loads(result.stdout)
     assert report["status"] == "local_kernel_timers_observed_unqualified"
     assert 0 < report["remaining_ns_lower_bound"] < 5_000_000_000
+
+
+def test_real_nft_collector_rule_json_probe():
+    child = r"""
+import copy,importlib.util,json,subprocess,sys
+from pathlib import Path
+source=Path(sys.argv[1]); spec=importlib.util.spec_from_file_location('joint_collector_observer',source)
+module=importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+name='trader_joint_window_v1'
+rules=f'''table inet {name} {{
+ set blackout {{ type nf_proto; flags timeout; }}
+ set permits {{ type ipv4_addr; flags timeout; }}
+ chain output {{ type filter hook output priority -310; policy accept; meta mark 0x6f720002 counter drop; oifname "lo" accept; meta nfproto @blackout counter drop; }}
+ chain input {{ type filter hook input priority -310; policy accept; iifname "gw-jc1" counter drop; }}
+ chain forward {{ type filter hook forward priority -310; policy accept;
+  iifname "gw-jc1" oifname "lo" ip saddr 169.254.254.2 ip daddr @permits tcp dport 443 meta mark set 0x6f720002 accept;
+  oifname "gw-jc1" iifname "lo" ip saddr @permits ip daddr 169.254.254.2 tcp sport 443 ct state established accept;
+  iifname "gw-jc1" counter drop;
+  oifname "gw-jc1" counter drop;
+  meta nfproto @blackout counter drop;
+ }}
+}}
+table netdev {name} {{
+ set blackout {{ type ether_type; flags timeout; }}
+ set permits {{ type ipv4_addr; flags timeout; }}
+ chain egress {{ type filter hook egress device "lo" priority 0; policy accept;
+  meta mark 0x6f720002 ip saddr 10.0.0.136 ip daddr @permits tcp dport 443 accept;
+  meta mark 0x6f720002 counter drop;
+  ether type @blackout counter drop;
+ }}
+}}'''
+setup=subprocess.run(['/usr/sbin/nft','-f','-'],input=rules.encode(),capture_output=True)
+if setup.returncode: raise RuntimeError(setup.stderr.decode())
+elements=f'''add element inet {name} blackout {{ ipv4 timeout 5000ms, ipv6 timeout 5000ms }}
+add element netdev {name} blackout {{ 0x0800 timeout 5000ms, 0x86dd timeout 5000ms }}'''
+added=subprocess.run(['/usr/sbin/nft','-f','-'],input=elements.encode(),capture_output=True)
+if added.returncode: raise RuntimeError(added.stderr.decode())
+collector={'host_link':'gw-jc1','child_ipv4':'169.254.254.2','source_ipv4':'10.0.0.136'}
+rows={family:module.read_table(family) for family in module.KINDS}
+pins={family:module.digest(module._static(value['nftables'])) for family,value in rows.items()}
+observed=module.observe(expected_static_sha256=pins,wan_interface='lo',collector=collector)
+rejected=[]
+for damage in ('host_mark','forward_permit','wan_mark','wan_early_accept','return_source'):
+ changed=copy.deepcopy(rows)
+ family='netdev' if damage in ('wan_mark','wan_early_accept') else 'inet'
+ rules=[item['rule'] for item in changed[family]['nftables'] if 'rule' in item]
+ if damage=='host_mark': rules[0]['expr']=[{'accept':None}]
+ if damage=='forward_permit': rules[4]['expr'].pop(3)
+ if damage=='wan_mark': rules[0]['expr'][0]['match']['right']=0
+ if damage=='wan_early_accept': changed[family]['nftables'].insert(-3,{'rule':{'family':family,'table':name,'chain':'egress','expr':[{'accept':None}]}})
+ if damage=='return_source': rules[5]['expr'][3]['match']['right']='169.254.254.3'
+ pin=module.digest(module._static(changed[family]['nftables']))
+ try:
+  module.inspect_table(changed[family],family,expected_static_sha256=pin,wan_interface='lo',collector=collector,chain_text=module.read_netdev_chain() if family=='netdev' else None)
+ except ValueError: rejected.append(damage)
+print(json.dumps({'status':observed['status'],'remaining_ns_lower_bound':observed['remaining_ns_lower_bound'],'network_admitted':observed['network_admitted'],'rejected':rejected}))
+"""
+    result = subprocess.run(
+        ["/usr/bin/unshare", "-Urn", sys.executable, "-I", "-c", child, str(SOURCE)],
+        capture_output=True,
+        text=True,
+        timeout=15,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    report = json.loads(result.stdout)
+    assert report["status"] == "local_kernel_timers_observed_unqualified"
+    assert 0 < report["remaining_ns_lower_bound"] < 5_000_000_000
+    assert report["network_admitted"] is False
+    assert report["rejected"] == [
+        "host_mark",
+        "forward_permit",
+        "wan_mark",
+        "wan_early_accept",
+        "return_source",
+    ]

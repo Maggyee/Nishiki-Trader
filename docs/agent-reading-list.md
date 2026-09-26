@@ -22,6 +22,13 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For isolated collector-conditional nft rules and their unresolved host authority,
+read `docs/progress/portfolio-joint-collector-rule-probe-2026-09-26.md`.
+Real disposable nft JSON confirms the exact INPUT/FORWARD/OUTPUT/WAN expressions,
+empty permits and self-pinned mutation refusals. Mark ownership, NAT/source,
+all-caller coverage and continuous activation are still unproved; no network
+admission follows.
+
 For fixed root-held selection of the joint observer without installation or
 activation, read `docs/progress/portfolio-joint-window-held-selection-2026-09-26.md`.
 The adapter loads fixed policy and code through the existing installed verifier,

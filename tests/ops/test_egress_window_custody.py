@@ -82,6 +82,7 @@ def selection(tmp_path, monkeypatch):
         "host_net_namespace": custody._identity()["host_net_namespace"],
         "host_user_namespace": custody._identity()["host_user_namespace"],
         "wan_interface": "wan",
+        "collector": None,
         "static_rules_sha256": pins,
     }
     plan_path = tmp_path / "policy.json"
@@ -118,6 +119,46 @@ def test_protected_selection_observes_but_never_admits(selection):
     assert report["complete_caller_coverage_verified"] is False
     assert report["network_admitted"] is False
     held.close()
+    assert authority.closed
+
+
+def test_protected_collector_selection_is_forwarded_without_admission(selection):
+    custody, authority, plan_path, _ = selection
+    collector = {"host_link": "gw-jc1", "child_ipv4": "169.254.254.2", "source_ipv4": "10.0.0.136"}
+    plan = json.loads(plan_path.read_text())
+    plan["collector"] = collector
+    plan_path.write_text(json.dumps(plan))
+    held = custody.RootSelectedWindowSnapshot(authority)
+    seen = []
+
+    def observe_kernel(**kwargs):
+        seen.append(kwargs)
+        return {
+            "status": "local_kernel_timers_observed_unqualified",
+            "static_rules_sha256": plan["static_rules_sha256"],
+            "source_authenticated": False,
+            "complete_caller_coverage_verified": False,
+            "network_admitted": False,
+        }
+
+    held.observe_kernel = observe_kernel
+    report = held.observe()
+    assert seen[0]["collector"] == collector
+    assert report["network_admitted"] is False
+    held.close()
+
+
+def test_invalid_protected_collector_selection_is_refused(selection):
+    custody, authority, plan_path, _ = selection
+    plan = json.loads(plan_path.read_text())
+    plan["collector"] = {
+        "host_link": "wan",
+        "child_ipv4": "169.254.254.2",
+        "source_ipv4": "10.0.0.136",
+    }
+    plan_path.write_text(json.dumps(plan))
+    with pytest.raises(ValueError, match="kernel_window_fixed_collector_selection_required"):
+        custody.RootSelectedWindowSnapshot(authority)
     assert authority.closed
 
 
