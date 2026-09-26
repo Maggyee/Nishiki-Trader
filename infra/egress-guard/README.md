@@ -996,6 +996,10 @@ does not establish continuous coverage, and cannot verify host/container/proxy
 routes or the public source. It does not satisfy `gateway_joint_window.py`'s
 guard interface, supply its start time or activate any real window. Every report
 keeps source authentication, complete caller coverage and network admission false.
+The observer also requires exact OUTPUT/FORWARD/WAN drop expressions and permits
+only an exact `lo` exception before the OUTPUT drop. A matching digest of an
+empty or early-accept chain is rejected. This is a blackout-only policy: it has
+no reviewed collector dispatch exception, activation history or route proof.
 The [isolated verification](../../docs/progress/portfolio-joint-kernel-observer-2026-09-26.md)
 uses disposable nft tables and does not change host egress.
 

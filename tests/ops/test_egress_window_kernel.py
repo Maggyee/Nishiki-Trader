@@ -73,7 +73,21 @@ def table(family):
                         "table": "trader_joint_window_v1",
                         "chain": name,
                         "handle": 8 + index,
-                        "expr": [{"counter": {"packets": 0, "bytes": 0}}, {"drop": None}],
+                        "expr": [
+                            {
+                                "match": {
+                                    "op": "==",
+                                    "left": (
+                                        {"meta": {"key": "nfproto"}}
+                                        if family == "inet"
+                                        else {"payload": {"protocol": "ether", "field": "type"}}
+                                    ),
+                                    "right": "@blackout",
+                                }
+                            },
+                            {"counter": {"packets": 0, "bytes": 0}},
+                            {"drop": None},
+                        ],
                     }
                 }
                 for index, name in enumerate(chains)
@@ -170,6 +184,87 @@ def test_netdev_text_device_is_required_even_when_json_digest_matches(observer, 
             )
 
 
+def test_exact_loopback_exception_precedes_blackout_without_external_bypass(observer, pinned):
+    rows, _ = copy.deepcopy(pinned)
+    rules = rows["inet"]["nftables"]
+    rules.insert(
+        -2,
+        {
+            "rule": {
+                "family": "inet",
+                "table": observer.TABLE,
+                "chain": "output",
+                "expr": [
+                    {"match": {"op": "==", "left": {"meta": {"key": "oifname"}}, "right": "lo"}},
+                    {"accept": None},
+                ],
+            }
+        },
+    )
+    pin = observer.digest(observer._static(rules))
+    assert set(observer.inspect_table(rows["inet"], "inet", expected_static_sha256=pin)) == {
+        "ipv4",
+        "ipv6",
+    }
+
+
+@pytest.mark.parametrize(
+    "damage", ["no_drop", "early_accept", "wrong_match", "forward_bypass", "netdev_bypass"]
+)
+def test_self_pinned_rules_cannot_turn_empty_or_bypassed_blackout_into_evidence(
+    observer, pinned, damage
+):
+    rows, _ = copy.deepcopy(pinned)
+    if damage == "no_drop":
+        rows["inet"]["nftables"][-1]["rule"]["expr"] = [{"accept": None}]
+    elif damage == "early_accept":
+        rows["inet"]["nftables"].insert(
+            -2,
+            {
+                "rule": {
+                    "family": "inet",
+                    "table": observer.TABLE,
+                    "chain": "output",
+                    "expr": [{"accept": None}],
+                }
+            },
+        )
+    elif damage == "wrong_match":
+        rows["inet"]["nftables"][-1]["rule"]["expr"][0]["match"]["right"] = "ipv4"
+    elif damage == "forward_bypass":
+        rows["inet"]["nftables"].insert(
+            -1,
+            {
+                "rule": {
+                    "family": "inet",
+                    "table": observer.TABLE,
+                    "chain": "forward",
+                    "expr": [{"accept": None}],
+                }
+            },
+        )
+    else:
+        rows["netdev"]["nftables"].insert(
+            -1,
+            {
+                "rule": {
+                    "family": "netdev",
+                    "table": observer.TABLE,
+                    "chain": "egress",
+                    "expr": [{"accept": None}],
+                }
+            },
+        )
+    family = "netdev" if damage == "netdev_bypass" else "inet"
+    # The attacker controls the plan digest too; exact semantics must reject it.
+    selected = rows[family]
+    pin = observer.digest(observer._static(selected["nftables"]))
+    with pytest.raises(ValueError, match="kernel_window_blackout"):
+        observer.inspect_table(
+            selected, family, expected_static_sha256=pin, wan_interface="wan", chain_text=CHAIN
+        )
+
+
 def test_duplicate_json_and_missing_root_refuse_read_before_claim(observer, monkeypatch):
     monkeypatch.setattr(observer.os, "geteuid", lambda: 1000)
     with pytest.raises(ValueError, match="kernel_window_root_and_fixed_family_required"):
@@ -189,7 +284,7 @@ table=module.TABLE
 rules=f'''table inet {table} {{
  set blackout {{ type nf_proto; flags timeout; }}
  set permits {{ type ipv4_addr; flags timeout; }}
- chain output {{ type filter hook output priority -310; policy accept; meta nfproto @blackout counter drop; }}
+ chain output {{ type filter hook output priority -310; policy accept; oifname "lo" accept; meta nfproto @blackout counter drop; }}
  chain forward {{ type filter hook forward priority -310; policy accept; meta nfproto @blackout counter drop; }}
 }}
 table netdev {table} {{

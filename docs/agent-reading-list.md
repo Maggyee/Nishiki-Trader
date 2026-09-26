@@ -32,8 +32,9 @@ no continuous exclusion or network permission follows.
 For the disposable, read-only joint nft observer and its unresolved authority
 boundary, read `docs/progress/portfolio-joint-kernel-observer-2026-09-26.md`.
 Real isolated nft JSON confirms second-granularity timers and omits netdev hook
-device; a separate fixed text read checks the device. Caller-selected rule pins,
-no installed activation journal and missing shared-egress/source coverage keep
+device; a separate fixed text read checks the device. Exact drop-rule semantics
+now reject empty or bypassed blackout even with a self-selected static digest.
+The absent installed activation journal and shared-egress/source coverage keep
 all admission flags false. No venue request or host rule change follows.
 
 For the prospective first-operation exclusion barrier and its missing installed

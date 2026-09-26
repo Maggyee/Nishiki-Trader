@@ -30,3 +30,14 @@ testnet collection. Consumed scopes remain closed.
 
 Verification: 12 focused tests pass, including one real nft run in a disposable
 user/network namespace; the adjacent first-operation tests pass separately.
+
+Follow-up on the same date: a caller-selected digest could previously bless a
+table with no effective drop or an early accept. The observer now requires
+exact `meta nfproto @blackout` drops in inet OUTPUT/FORWARD and an exact
+`ether type @blackout` drop in WAN netdev egress. The only permitted rule before
+an OUTPUT drop is an exact `oifname "lo" accept`; the permit set must be typed
+and empty. Five self-pinned empty/bypass variants are rejected. The real isolated
+nft run now includes the loopback exception and passes. This protects the local
+blackout expression, not all host routes or earlier/later policy hooks. There is
+still no collector dispatch rule, durable activation or continuous-history proof;
+network admission remains false. The focused suite is now 18/18.

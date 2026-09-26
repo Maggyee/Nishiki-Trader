@@ -132,6 +132,34 @@ def _elements(row, family):
     return result
 
 
+def _check_blackout_rules(rows, family):
+    rules = [row["rule"] for row in _static(rows) if "rule" in row]
+    expected_chains = ("output", "forward") if family == "inet" else ("egress",)
+    blackout_match = (
+        {"match": {"op": "==", "left": {"meta": {"key": "nfproto"}}, "right": "@blackout"}}
+        if family == "inet"
+        else {
+            "match": {
+                "op": "==",
+                "left": {"payload": {"protocol": "ether", "field": "type"}},
+                "right": "@blackout",
+            }
+        }
+    )
+    drop = [blackout_match, {"counter": {}}, {"drop": None}]
+    loopback = [
+        {"match": {"op": "==", "left": {"meta": {"key": "oifname"}}, "right": "lo"}},
+        {"accept": None},
+    ]
+    if len(rules) not in {len(expected_chains), len(expected_chains) + (family == "inet")}:
+        raise ValueError("kernel_window_blackout_rule_count")
+    for name in expected_chains:
+        expressions = [rule.get("expr") for rule in rules if rule.get("chain") == name]
+        allowed = ([loopback, drop], [drop]) if name == "output" else ([drop],)
+        if expressions not in allowed:
+            raise ValueError("kernel_window_blackout_drop_or_bypass")
+
+
 def inspect_table(value, family, *, expected_static_sha256, wan_interface=None, chain_text=None):
     """Check one owned table and retain all four original timer expiries."""
     if (
@@ -157,6 +185,7 @@ def inspect_table(value, family, *, expected_static_sha256, wan_interface=None, 
     tables = [row["table"] for row in rows if "table" in row]
     sets = [row["set"] for row in rows if "set" in row]
     chain_rows = [row["chain"] for row in rows if "chain" in row]
+    rule_rows = [row["rule"] for row in rows if "rule" in row]
     chains = {row["name"]: row for row in chain_rows}
     expected_chains = (
         {"output": ("output", -310), "forward": ("forward", -310)}
@@ -166,6 +195,7 @@ def inspect_table(value, family, *, expected_static_sha256, wan_interface=None, 
     if (
         len(tables) != 1
         or len(sets) != 2
+        or len(rows) != len(tables) + len(sets) + len(chain_rows) + len(rule_rows)
         or len(chains) != len(chain_rows)
         or set(chains) != set(expected_chains)
     ):
@@ -189,9 +219,12 @@ def inspect_table(value, family, *, expected_static_sha256, wan_interface=None, 
     if (
         blackout.get("type") != ("nf_proto" if family == "inet" else "ether_type")
         or set(blackout.get("flags", [])) != {"timeout"}
+        or permits.get("type") != "ipv4_addr"
+        or set(permits.get("flags", [])) != {"timeout"}
         or permits.get("elem")
     ):
         raise ValueError("kernel_window_set_type_or_early_permission")
+    _check_blackout_rules(rows, family)
     if digest(_static(rows)) != expected_static_sha256:
         raise ValueError("kernel_window_static_rules_changed")
     return _elements(blackout, family)
