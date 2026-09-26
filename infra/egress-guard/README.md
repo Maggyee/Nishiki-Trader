@@ -983,3 +983,18 @@ wrong expected binding refused. See the
 Current local custody does not qualify provider/gateway authority, continuous
 coverage or future enforcement. Next entrypoint: prospective all-caller accounting
 and dispatch checks bound to protected local state; no new maintenance is activated.
+
+## Prospective joint window kernel observation
+
+`gateway_window_kernel.py` reads fixed `inet` and `netdev` nft tables without
+changing rules. It verifies pinned static JSON structure, empty permit sets and
+IPv4/IPv6 blackout timers, returning a conservative monotonic expiry bound.
+On nft 1.0.2 the netdev device is missing from JSON, so a separate fixed read
+of the same chain's text must confirm the expected device. The static digest and
+WAN name are caller-selected; the prototype is not installed as root-owned code,
+does not establish continuous coverage, and cannot verify host/container/proxy
+routes or the public source. It does not satisfy `gateway_joint_window.py`'s
+guard interface, supply its start time or activate any real window. Every report
+keeps source authentication, complete caller coverage and network admission false.
+The [isolated verification](../../docs/progress/portfolio-joint-kernel-observer-2026-09-26.md)
+uses disposable nft tables and does not change host egress.
