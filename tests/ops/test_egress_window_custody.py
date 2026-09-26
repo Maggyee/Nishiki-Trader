@@ -16,6 +16,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "infra/egress-guard/gateway_window_custody.py"
 KERNEL = ROOT / "infra/egress-guard/gateway_window_kernel.py"
+WITNESS = ROOT / "infra/egress-guard/gateway_window_witness.py"
 KERNEL_TEST = Path(__file__).with_name("test_egress_window_kernel.py")
 
 
@@ -120,6 +121,34 @@ def test_protected_selection_observes_but_never_admits(selection):
     assert report["network_admitted"] is False
     held.close()
     assert authority.closed
+
+
+def test_held_selection_can_be_journaled_without_activation(selection, tmp_path, monkeypatch):
+    custody, authority, _, _ = selection
+    module = load(WITNESS, "joint_window_witness_custody_test")
+    root = tmp_path / "witness-root"
+    root.mkdir(mode=0o700)
+    held = custody.RootSelectedWindowSnapshot(authority)
+    fixture = load(KERNEL_TEST, "joint_window_witness_nft_fixture")
+    tables = {family: fixture.table(family) for family in ("inet", "netdev")}
+    observer = held.observe_kernel
+    held.observe_kernel = lambda **kwargs: observer(
+        **kwargs, reader=lambda family: tables[family], chain_reader=lambda: fixture.CHAIN
+    )
+    monkeypatch.setattr(custody.os, "geteuid", lambda: root.stat().st_uid)
+    try:
+        witness = module.WindowWitness(root, held)
+        try:
+            report = witness.observe()
+            assert report["observations"] == 2
+            assert report["first_selection_sha256"] == hashlib.sha256(held.plan_raw).hexdigest()
+            assert report["activation_history_verified"] is False
+            assert report["network_admitted"] is False
+            assert witness.expected == (root / module.SCOPE / "events.jsonl").read_bytes()
+        finally:
+            witness.close()
+    finally:
+        held.close()
 
 
 def test_protected_collector_selection_is_forwarded_without_admission(selection):

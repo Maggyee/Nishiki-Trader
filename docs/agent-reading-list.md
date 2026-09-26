@@ -22,6 +22,13 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the one-shot local joint-window snapshot journal and its remaining
+continuous-activation boundary, read
+`docs/progress/portfolio-joint-window-witness-2026-09-26.md`.
+It consumes an exclusive private scope before the first held observation and
+refuses drift, extension or reopen. Samples and elapsed time cannot establish
+uninterrupted host exclusion; all admission flags remain false.
+
 For isolated collector-conditional nft rules and their unresolved host authority,
 read `docs/progress/portfolio-joint-collector-rule-probe-2026-09-26.md`.
 Real disposable nft JSON confirms the exact INPUT/FORWARD/OUTPUT/WAN expressions,

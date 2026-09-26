@@ -1016,3 +1016,11 @@ This adapter is neither installed nor an activation journal, does not attest its
 own running code or qualify historical exclusion. Its output always denies
 source, caller-coverage and network admission. See the
 [held-selection review](../../docs/progress/portfolio-joint-window-held-selection-2026-09-26.md).
+
+`gateway_window_witness.py` consumes a private one-shot directory before
+recording held snapshots. Its fsynced claim and chained samples pin selection,
+rule digests and nonincreasing expiry; drift or an uncertain write halts the
+object and a second creation fails. No root installation or kernel activation
+is attached. Intermittent sampling cannot prove uninterrupted exclusion,
+regardless of elapsed lookback; it cannot supply `guard.verify()` or authorize
+network access. See the [witness review](../../docs/progress/portfolio-joint-window-witness-2026-09-26.md).
