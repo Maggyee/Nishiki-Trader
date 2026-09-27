@@ -21,7 +21,9 @@
   host startup attestation and the joint manifest is not installed on the host.
   The current read-only host base hash is recorded
   in the extension review; it must be selected independently and rechecked at
-  any later installation. The [disposable veth/FORWARD-mark/SNAT/WAN test](progress/portfolio-joint-packet-path-acceptance-2026-09-27.md)
+  any later installation. The [read-only host installation runbook](runbook-joint-window-read-only-install.md)
+  is prepared but unexecuted; both selected hashes and a protected host staging
+  decision remain outstanding. The [disposable veth/FORWARD-mark/SNAT/WAN test](progress/portfolio-joint-packet-path-acceptance-2026-09-27.md)
   now checks the selected local packet path alongside CONNMARK rules and nine
   denials, including IPv6 host OUTPUT. It does not prove continuous host
   exclusion or all-caller/source authority. A [read-only host topology audit](progress/portfolio-host-egress-topology-2026-09-27.md)
@@ -33,9 +35,10 @@
   cover future containers, proxy forwarding or continuous exclusion. The
   [authority/capacity review](progress/portfolio-post-v27-authority-capacity-review-2026-09-25.md)
   still blocks real collection: the historical pilot leaves 496 assets outside,
-  two unpriced and 65 over top-book capacity. Next separately review the fixed
-  archive and protected staging before any host installation, establish source
-  and mark ownership across Docker/Tailscale and both IP families, complete
+  two unpriced and 65 over top-book capacity. Next independently select both
+  SHA256 inputs and review protected staging before any host installation;
+  establish source and mark ownership across Docker/Tailscale and both IP
+  families, complete
   host/container/proxy coverage and obtain fresh provider bounds
   before a separately gated testnet collection. Full real
   account coverage, stream fences, qualified equity and trading remain blocked.

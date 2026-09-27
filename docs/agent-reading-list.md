@@ -22,6 +22,11 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the concrete, still-unexecuted protected host installation procedure and
+the two independently selected SHA256 inputs, read
+`docs/runbook-joint-window-read-only-install.md`. It stops on partial writes and
+cannot authorize a blackout, collector, venue request or trading.
+
 For the read-only cross-namespace Docker/PID and dual-stack route census, read
 `docs/progress/portfolio-host-namespace-inventory-2026-09-27.md`.
 It maps 16 currently routed Docker namespaces to running containers, but

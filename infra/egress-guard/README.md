@@ -1086,6 +1086,9 @@ does not authorize an install. The bundle hash is an operator-selected pin,
 not publisher authentication or continuous attestation of a future running
 entry. No host extension has been installed.
 See the [extension review](../../docs/progress/portfolio-joint-window-extension-bundle-2026-09-27.md).
+The [host first-install runbook](../../docs/runbook-joint-window-read-only-install.md)
+records independently selected SHA256 inputs, protected staging, one-time
+apply and read-only verification; it has not been executed on the host.
 
 The disposable `gateway_window_installation_selftest.py` reuses the pinned base
 installation acceptance inside fresh private mount/network/PID namespaces, then
