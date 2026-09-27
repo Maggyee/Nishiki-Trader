@@ -1040,10 +1040,12 @@ records the remaining host authority boundary.
 `gateway_window_package.py` builds and inspects a deterministic, SHA256-selected
 archive of the six source files, its first-install-only `install.py`, an
 inventory and a README. `apply` requires a root-owned protected copy of the
-reviewed installer running under isolated system Python. It verifies the
-existing base installation, refuses any present joint file or manifest before
-writing, fsyncs each new 0444 source and publishes the root-owned 0600 manifest
-last. A partial write blocks retry for manual inspection. The installer does
+reviewed installer running under isolated system Python. `apply` requires an
+independently selected lowercase 64-hex `--base-sha256` for the existing base
+manifest and compares it with the held base verifier before any writes. It
+refuses any present joint file or manifest before writing, fsyncs each new
+0444 source and publishes the root-owned 0600 manifest last. A partial write
+blocks retry for manual inspection. The installer does
 not change nft rules, network permissions, account state or the existing base
 manifest. Build and inspect without elevation:
 
@@ -1055,9 +1057,15 @@ manifest. Build and inspect without elevation:
 The checkout's `apply` fails. After separate review and authorization, the
 selected `install.py` must be staged as root-owned, single-link 0444 under
 protected root-owned ancestors outside the checkout; only that protected
-file may run `apply --bundle BUNDLE --sha256 SELECTED_SHA256`. The bundle hash
-is an operator-selected pin, not publisher authentication or continuous
-attestation of a future running entry. No host extension has been installed.
+file may run `apply --bundle BUNDLE --sha256 SELECTED_BUNDLE_SHA256 --base-sha256 SELECTED_BASE_MANIFEST_SHA256`.
+The base hash must be independently selected before installation and any drift
+must fail closed. The September 27 read-only host observation of
+`/etc/trader/egress-install.json` was
+`3f53ffb0bf93444a22a8aca569887338c8639c95c052c19713a1efcf06ed2882`;
+the disposable fixture uses a different base hash. Observing the host hash
+does not authorize an install. The bundle hash is an operator-selected pin,
+not publisher authentication or continuous attestation of a future running
+entry. No host extension has been installed.
 See the [extension review](../../docs/progress/portfolio-joint-window-extension-bundle-2026-09-27.md).
 
 The disposable `gateway_window_installation_selftest.py` reuses the pinned base
@@ -1068,7 +1076,8 @@ applies the separately pinned joint extension in that filesystem only:
 /usr/bin/python3 -I infra/egress-guard/gateway_window_installation_selftest.py --report data/NEW-JOINT-WINDOW-ISOLATED.json
 ```
 
-It rejects a wrong bundle selection or installer mode before mutation, runs
+It rejects a wrong bundle selection, base manifest selection or installer mode
+before mutation, runs
 the fixed `--check` from a fresh system-Python process, refuses a repeat
 install, then verifies wrong manifest pins and changed source modes fail
 closed. Its report is

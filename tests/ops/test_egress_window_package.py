@@ -119,7 +119,23 @@ def test_cli_build_inspect_and_checkout_apply_refused(package, tmp_path, capsys)
     raw = path.read_bytes()
     assert package.main(["inspect", "--bundle", str(path), "--sha256", package.digest(raw)]) == 0
     capsys.readouterr()
-    assert package.main(["apply", "--bundle", str(path), "--sha256", package.digest(raw)]) == 1
+    with pytest.raises(SystemExit) as missing:
+        package.main(["apply", "--bundle", str(path), "--sha256", package.digest(raw)])
+    assert missing.value.code == 2
+    assert (
+        package.main(
+            [
+                "apply",
+                "--bundle",
+                str(path),
+                "--sha256",
+                package.digest(raw),
+                "--base-sha256",
+                FakeAuthority.manifest_sha256,
+            ]
+        )
+        == 1
+    )
     assert json.loads(capsys.readouterr().out)["status"] == "joint_window_bundle_operation_failed"
     assert path.read_bytes() == raw
 
@@ -194,7 +210,7 @@ def test_first_install_publishes_manifest_last_and_rejects_second(staged, monkey
         original(parent, name, raw, mode)
 
     monkeypatch.setattr(package, "write", traced)
-    package.apply(staged.contents)
+    package.apply(staged.contents, FakeAuthority.manifest_sha256)
     assert calls == [*package.FILES, Path(package.MANIFEST).name]
     assert staged.published == [staged.contents["gateway_window_sources.py"]]
     assert all(authority.closed for authority in staged.authorities)
@@ -211,8 +227,19 @@ def test_first_install_publishes_manifest_last_and_rejects_second(staged, monkey
     )
     before = local(staged, package.MANIFEST).read_bytes()
     with pytest.raises(ValueError, match="joint_existing_or_partial"):
-        package.apply(staged.contents)
+        package.apply(staged.contents, FakeAuthority.manifest_sha256)
     assert local(staged, package.MANIFEST).read_bytes() == before
+    assert all(authority.closed for authority in staged.authorities)
+
+
+@pytest.mark.parametrize("base_pin", ["0" * 64, "A" * 64, "a" * 63, "g" * 64])
+def test_base_manifest_selection_refused_before_write(staged, monkeypatch, base_pin):
+    package = staged.package
+    monkeypatch.setattr(package, "write", lambda *args: pytest.fail("write before base pin"))
+    with pytest.raises(ValueError, match="joint_base_manifest_sha256"):
+        package.apply(staged.contents, base_pin)
+    assert not local(staged, package.MANIFEST).exists()
+    assert not local(staged, package.CODE + "/" + package.FILES[0]).exists()
     assert all(authority.closed for authority in staged.authorities)
 
 
@@ -228,7 +255,7 @@ def test_preflight_refuses_existing_or_partial_state_before_write(staged, monkey
         target.write_bytes(b"preexisting")
     monkeypatch.setattr(package, "write", lambda *args: pytest.fail("write before preflight"))
     with pytest.raises(ValueError, match="joint_existing_or_partial"):
-        package.apply(staged.contents)
+        package.apply(staged.contents, FakeAuthority.manifest_sha256)
     assert all(authority.closed for authority in staged.authorities)
 
 
@@ -251,8 +278,8 @@ def test_partial_failure_blocks_retry_without_clobbering_base(staged, monkeypatc
     else:
         monkeypatch.setattr(package, "write", failed_write)
     with pytest.raises((OSError, ValueError)):
-        package.apply(staged.contents)
+        package.apply(staged.contents, FakeAuthority.manifest_sha256)
     assert local(staged, package.CODE + "/" + package.FILES[0]).exists()
     assert all(authority.closed for authority in staged.authorities)
     with pytest.raises(ValueError, match="joint_existing_or_partial"):
-        package.apply(staged.contents)
+        package.apply(staged.contents, FakeAuthority.manifest_sha256)

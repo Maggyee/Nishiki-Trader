@@ -13,7 +13,7 @@ from pathlib import Path
 BASE_HARNESS_PIN = "e2b0e9a59cd3805ebfac2fb4b4b2c1992e8e9d2865862cf70c3876c06e42346e"
 ENTRY_PIN = "db9bacd6778111afdc4a163f305361bef6da8fecab56d5ec724b0d1cb66cdc7a"
 SOURCES_PIN = "2c923d4b546fd0dbcbcf57fbfc4bafdb80e103611f0f38dcd9358cb6b6dea27f"
-WINDOW_INSTALLER_PIN = "6bc0a7a4bbe6915a0c3d84dfb9b4dabeea0747915a08209a5781ee0b8b028d23"
+WINDOW_INSTALLER_PIN = "0431bae683253fd4a3c993e4e15b04fafca9229c782992493520217f042b6d46"
 SOURCES = (
     "gateway_window_entry.py",
     "gateway_window_sources.py",
@@ -69,6 +69,7 @@ def worker(payload):
     base_report = base["worker"](payload)
     if base_report["status"] != "passed" or base_report["network_admitted"] is not False:
         raise RuntimeError("base_fixture_not_inactive")
+    base_manifest_sha256 = sha(Path("/etc/trader/egress-install.json").read_bytes())
 
     installer = payload["window_installer"].encode()
     bundle = base64.b64decode(payload["window_bundle"], validate=True)
@@ -94,8 +95,10 @@ def worker(payload):
         str(bundle_path),
         "--sha256",
         payload["window_bundle_sha256"],
+        "--base-sha256",
+        base_manifest_sha256,
     )
-    wrong_pin_command = (*install_command[:-1], "0" * 64)
+    wrong_pin_command = (*install_command[:-3], "0" * 64, *install_command[-2:])
     refused_pin = json.loads(base["run"](*wrong_pin_command, expected=1))
     if (
         refused_pin["status"] != "joint_window_bundle_operation_failed"
@@ -103,6 +106,14 @@ def worker(payload):
         or (CODE / SOURCES[0]).exists()
     ):
         raise RuntimeError("unselected_joint_bundle_wrote_files")
+    wrong_base_command = (*install_command[:-1], "0" * 64)
+    refused_base = json.loads(base["run"](*wrong_base_command, expected=1))
+    if (
+        refused_base["status"] != "joint_window_bundle_operation_failed"
+        or MANIFEST.exists()
+        or (CODE / SOURCES[0]).exists()
+    ):
+        raise RuntimeError("unselected_base_manifest_wrote_files")
     wrong_mode_path = staging / "window-install-mode.py"
     base["write"](wrong_mode_path, installer, 0o600)
     wrong_mode_command = (
@@ -139,6 +150,8 @@ def worker(payload):
     ):
         raise RuntimeError("joint_window_repeat_install_not_refused")
     document = json.loads(original_manifest)
+    if document["base_manifest_sha256"] != base_manifest_sha256:
+        raise RuntimeError("joint_window_base_manifest_selection_changed")
     document["files"][SOURCES[-1]] = "0" * 64
     with MANIFEST.open("w") as stream:
         json.dump(document, stream, sort_keys=True)
@@ -159,6 +172,7 @@ def worker(payload):
         "base_checks": len(base_report["checks"]),
         "checks": [
             "wrong_bundle_selection_refused_before_mutation",
+            "wrong_base_manifest_selection_refused_before_mutation",
             "unprotected_installer_refused_before_mutation",
             "reviewed_first_install_into_existing_base",
             "fresh_process_fixed_root_entry_remains_unqualified",

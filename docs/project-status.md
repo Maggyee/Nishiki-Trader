@@ -12,10 +12,13 @@
   remain uninstalled. A [six-source inventory](progress/portfolio-joint-window-source-inventory-2026-09-27.md)
   and [read-only `--check` entry](progress/portfolio-joint-window-entry-2026-09-27.md)
   now have a [first-install-only extension candidate](progress/portfolio-joint-window-extension-bundle-2026-09-27.md)
-  with fixed source/installer pins and [isolated installed checks](progress/portfolio-joint-window-isolated-installation-2026-09-27.md).
+  with fixed source/installer pins, a required independently selected base
+  manifest SHA256 before writes, and [isolated installed checks](progress/portfolio-joint-window-isolated-installation-2026-09-27.md).
   Its actual installer and read-only entry pass in private namespaces, but
   there is no independent host startup attestation and the joint manifest is
-  not installed on the host. The [disposable veth/FORWARD-mark/SNAT/WAN test](progress/portfolio-joint-packet-path-acceptance-2026-09-27.md)
+  not installed on the host. The current read-only host base hash is recorded
+  in the extension review; it must be selected independently and rechecked at
+  any later installation. The [disposable veth/FORWARD-mark/SNAT/WAN test](progress/portfolio-joint-packet-path-acceptance-2026-09-27.md)
   now checks the selected local packet path alongside CONNMARK rules and nine
   denials, including IPv6 host OUTPUT. It does not prove continuous host
   exclusion or all-caller/source authority. A [read-only host topology audit](progress/portfolio-host-egress-topology-2026-09-27.md)

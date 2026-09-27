@@ -30,8 +30,10 @@ default route; it is not a continuous firewall or provider-source witness.
 For the reviewed first-install-only joint-window extension candidate and its
 isolated actual installation, read
 `docs/progress/portfolio-joint-window-extension-bundle-2026-09-27.md`.
-The local archive pins six sources and its installer, and publishes a manifest
-only in a disposable namespace. The real host extension is not installed.
+The local archive pins six sources and its installer; `apply` now also requires
+an independently selected base manifest hash before any writes. The isolated
+fixture publishes a manifest only in a disposable namespace. The real host
+extension is not installed.
 
 For the real isolated-root joint-window entry check, read
 `docs/progress/portfolio-joint-window-isolated-installation-2026-09-27.md`.

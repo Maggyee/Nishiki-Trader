@@ -39,9 +39,10 @@ Next entrypoint after separately reviewed first installation:
 /usr/bin/python3 -I /usr/local/lib/trader-egress/gateway_window_entry.py --check
 The check always exits 2 and keeps every admission field false.
 
-Inspect and pin the complete archive. Stage its install.py at a protected
-root-owned 0444 path outside the checkout. Apply only with the reviewed SHA256;
-partial files block a second attempt and require manual inspection.
+Inspect and pin the complete archive and the existing base manifest independently.
+Stage its install.py at a protected root-owned 0444 path outside the checkout.
+Apply only with both reviewed SHA256 values; partial files block a second
+attempt and require manual inspection.
 """
 
 
@@ -236,13 +237,18 @@ def verify_published(authority, raw):
         held.close()
 
 
-def apply(contents):
+def apply(contents, base_sha256):
+    if len(base_sha256) != 64 or any(char not in "0123456789abcdef" for char in base_sha256):
+        raise ValueError("joint_base_manifest_sha256_format")
     if os.getuid() != 0 or os.geteuid() != 0 or not sys.flags.isolated:
         raise ValueError("joint_root_isolated_installer_required")
     if protected_bytes(__file__) != contents["install.py"]:
         raise ValueError("joint_installer_source_changed")
     authority = held_base()
     try:
+        authority.verify()
+        if authority.manifest_sha256 != base_sha256:
+            raise ValueError("joint_base_manifest_sha256_mismatch")
         code_fd = authority.open_directory(CODE)
         manifest_fd = authority.open_directory(str(Path(MANIFEST).parent))
         authority.verify()
@@ -279,6 +285,8 @@ def main(argv=None):
         selected = commands.add_parser(action)
         selected.add_argument("--bundle", type=Path, required=True)
         selected.add_argument("--sha256", required=True)
+        if action == "apply":
+            selected.add_argument("--base-sha256", required=True)
     args = parser.parse_args(argv)
     try:
         if args.action == "build":
@@ -294,7 +302,7 @@ def main(argv=None):
             raw = read_file(args.bundle, BUNDLE_LIMIT)
             contents = inspect(raw, args.sha256)
             if args.action == "apply":
-                apply(contents)
+                apply(contents, args.base_sha256)
                 status = "joint_window_installed_inactive"
             else:
                 status = "joint_window_bundle_verified_inactive"
