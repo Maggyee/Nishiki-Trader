@@ -1017,11 +1017,17 @@ own running code or qualify historical exclusion. Its output always denies
 source, caller-coverage and network admission. See the
 [held-selection review](../../docs/progress/portfolio-joint-window-held-selection-2026-09-26.md).
 
-`gateway_window_sources.py` stages a fixed five-source manifest bound to the
+`gateway_window_sources.py` stages a fixed six-source manifest bound to the
 base installation verifier. It rechecks held bytes and root identity without
-executing code. The adapter itself lacks an independently protected entrypoint
-and is not installed. See the
+executing code. The new `gateway_window_entry.py` accepts only isolated root
+`--check`, pins the base helper and inventory adapter, and checks the held entry
+bytes through that inventory. It always exits unqualified with every admission
+flag false; there is no activation, installation or permission interface.
+The running entry itself has no independent protected pin, and no joint-window
+manifest or entry is installed on the host. See the
 [source-inventory review](../../docs/progress/portfolio-joint-window-source-inventory-2026-09-27.md).
+The [entry review](../../docs/progress/portfolio-joint-window-entry-2026-09-27.md)
+records the remaining host authority boundary.
 
 `gateway_window_witness.py` consumes a private one-shot directory before
 recording held snapshots. Its fsynced claim, optional activation intent and

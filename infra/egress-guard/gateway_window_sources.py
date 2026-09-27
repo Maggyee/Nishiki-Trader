@@ -17,6 +17,7 @@ CODE = "/usr/local/lib/trader-egress"
 MANIFEST = "/etc/trader/joint-window-sources-v1.json"
 PROFILE = "portfolio.joint_window_sources.v1"
 FILES = (
+    "gateway_window_entry.py",
     "gateway_window_sources.py",
     "gateway_window_kernel.py",
     "gateway_window_custody.py",

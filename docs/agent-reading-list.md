@@ -22,11 +22,18 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
-For the staged fixed joint-window source inventory and missing independently
-pinned root entry, read
+For the staged read-only joint-window `--check` entry and its missing installed
+trust anchor, read `docs/progress/portfolio-joint-window-entry-2026-09-27.md`.
+It pins the base helper and six-source inventory in checkout code, but has no
+protected host installation or independently pinned running entry. Every
+admission field remains false.
+
+For the earlier five-file joint-window source inventory and its uninstalled
+root trust boundary, read
 `docs/progress/portfolio-joint-window-source-inventory-2026-09-27.md`.
-The base verifier holds five fixed source bytes in tests; nothing is installed
-or authorized on the host.
+That review records the original five-file staged test; the read-only entry
+above now extends the inventory to six. Nothing is installed or authorized
+on the host.
 
 For the isolated veth/FORWARD-mark/SNAT/WAN packet acceptance and its host
 boundary, read `docs/progress/portfolio-joint-packet-path-acceptance-2026-09-27.md`.
