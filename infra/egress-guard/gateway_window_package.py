@@ -45,6 +45,8 @@ Apply only with both reviewed SHA256 values; partial files block a second
 attempt and require manual inspection.
 The read-only audit compares installed sources with that selected archive;
 it cannot attest the process that started the joint entry.
+The check-entry operation executes selected entry bytes in this protected
+process after and before source audits. It cannot attest other entry processes.
 """
 
 
@@ -278,6 +280,20 @@ def audit(contents, base_sha256):
         authority.close()
 
 
+def check_entry(contents, base_sha256):
+    audit(contents, base_sha256)
+    scope = {"__name__": "joint_window_selected_entry"}
+    exec(
+        compile(contents["gateway_window_entry.py"], CODE + "/gateway_window_entry.py", "exec"),
+        scope,
+    )
+    try:
+        if scope["_check"]() != "fixed_joint_window_sources_observed_unqualified":
+            raise ValueError("joint_window_selected_entry_unexpected_status")
+    finally:
+        audit(contents, base_sha256)
+
+
 def apply(contents, base_sha256):
     authority = selected_base(contents, base_sha256)
     try:
@@ -313,11 +329,11 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="action", required=True)
     commands.add_parser("build").add_argument("--output", type=Path, required=True)
-    for action in ("inspect", "apply", "audit"):
+    for action in ("inspect", "apply", "audit", "check-entry"):
         selected = commands.add_parser(action)
         selected.add_argument("--bundle", type=Path, required=True)
         selected.add_argument("--sha256", required=True)
-        if action in ("apply", "audit"):
+        if action in ("apply", "audit", "check-entry"):
             selected.add_argument("--base-sha256", required=True)
     args = parser.parse_args(argv)
     try:
@@ -339,6 +355,9 @@ def main(argv=None):
             elif args.action == "audit":
                 audit(contents, args.base_sha256)
                 status = "joint_window_installed_sources_observed_inactive"
+            elif args.action == "check-entry":
+                check_entry(contents, args.base_sha256)
+                status = "joint_window_selected_entry_executed_unqualified"
             else:
                 status = "joint_window_bundle_verified_inactive"
         print(
@@ -353,7 +372,7 @@ def main(argv=None):
                 sort_keys=True,
             )
         )
-        return 0
+        return 2 if args.action == "check-entry" else 0
     except (OSError, ValueError, KeyError, TypeError, tarfile.TarError):
         print(
             json.dumps(

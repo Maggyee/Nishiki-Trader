@@ -13,7 +13,7 @@ from pathlib import Path
 BASE_HARNESS_PIN = "e2b0e9a59cd3805ebfac2fb4b4b2c1992e8e9d2865862cf70c3876c06e42346e"
 ENTRY_PIN = "db9bacd6778111afdc4a163f305361bef6da8fecab56d5ec724b0d1cb66cdc7a"
 SOURCES_PIN = "2c923d4b546fd0dbcbcf57fbfc4bafdb80e103611f0f38dcd9358cb6b6dea27f"
-WINDOW_INSTALLER_PIN = "99a322383d32e6248fb0ecf930243a111b4f07483ca18670a108eeaa6fe9f52c"
+WINDOW_INSTALLER_PIN = "4ee75b36a3c902b571727a6383944861f13903ff251dbfb3442fcb6277614ce3"
 SOURCES = (
     "gateway_window_entry.py",
     "gateway_window_sources.py",
@@ -130,6 +130,7 @@ def worker(payload):
     ):
         raise RuntimeError("unprotected_joint_installer_wrote_files")
     audit_command = (*install_command[:3], "audit", *install_command[4:])
+    selected_command = (*install_command[:3], "check-entry", *install_command[4:])
     absent_audit = json.loads(base["run"](*audit_command, expected=1))
     if (
         absent_audit["status"] != "joint_window_bundle_operation_failed"
@@ -146,6 +147,14 @@ def worker(payload):
         or audited["network_admitted"]
     ):
         raise RuntimeError("joint_window_installed_source_audit_failed")
+    selected = json.loads(base["run"](*selected_command, expected=2))
+    if (
+        selected["status"] != "joint_window_selected_entry_executed_unqualified"
+        or selected["network_admitted"] is not False
+        or selected["host_deployment_qualified"] is not False
+        or selected["activation_history_verified"] is not False
+    ):
+        raise RuntimeError("joint_window_selected_entry_unexpected_admission")
     command = ("/usr/bin/python3", "-I", str(CODE / SOURCES[0]), "--check")
 
     def checked(expected):
@@ -178,6 +187,11 @@ def worker(payload):
         != "joint_window_bundle_operation_failed"
     ):
         raise RuntimeError("joint_window_audit_accepted_reinventoried_source")
+    if (
+        json.loads(base["run"](*selected_command, expected=1))["status"]
+        != "joint_window_bundle_operation_failed"
+    ):
+        raise RuntimeError("joint_window_selected_entry_accepted_reinventoried_source")
     target.chmod(0o600)
     target.write_bytes(sources[SOURCES[-1]])
     target.chmod(0o444)
@@ -217,9 +231,11 @@ def worker(payload):
             "audit_refuses_absent_installation_without_mutation",
             "reviewed_first_install_into_existing_base",
             "independent_installed_source_audit_observed_inactive",
+            "selected_entry_executed_from_protected_installer_unqualified",
             "fresh_process_fixed_root_entry_remains_unqualified",
             "repeat_install_refused_without_state_change",
             "self_consistent_source_drift_refused_by_selected_bundle_audit",
+            "self_consistent_source_drift_refused_before_selected_entry_execution",
             "manifest_pin_drift_refused",
             "manifest_pin_drift_refused_by_audit",
             "source_mode_drift_refused",

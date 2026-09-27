@@ -1064,6 +1064,11 @@ after installation. It compares all six installed bytes against the selected
 archive via the held base verifier, even if the joint manifest and source were
 both changed consistently. A passing audit does not attest the running entry
 process or qualify deployment.
+The protected `check-entry` uses the same bundle and base selection arguments
+as `audit`, verifies sources before and after executing selected entry bytes
+in its own isolated root process, and returns exit 2 with all admission flags
+false on success. It does not establish how any other process starts, nor does
+it attest continuous host exclusion.
 The base hash must be independently selected before installation and any drift
 must fail closed. The September 27 read-only host observation of
 `/etc/trader/egress-install.json` was
@@ -1083,7 +1088,8 @@ applies the separately pinned joint extension in that filesystem only:
 ```
 
 It rejects a wrong bundle selection, base manifest selection or installer mode
-before mutation, runs the fixed `--check` from a fresh system-Python process,
+before mutation, runs the fixed `--check` from a fresh system-Python process
+and the selected `check-entry` from the protected installer,
 refuses a repeat install, and verifies selected-bundle audit refusal for an
 absent installation, self-consistent source/manifest drift, wrong manifest pins
 and changed source modes. Its report is

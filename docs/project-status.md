@@ -16,9 +16,10 @@
   manifest SHA256 before writes, and [isolated installed checks](progress/portfolio-joint-window-isolated-installation-2026-09-27.md).
   Its actual installer and read-only entry pass in private namespaces. A
   protected read-only selected-bundle audit now rejects self-consistent joint
-  source/manifest drift in isolation, but there is no independent host startup
-  attestation and the joint manifest is
-  not installed on the host. The current read-only host base hash is recorded
+  source/manifest drift in isolation. Protected `check-entry` also executes
+  selected entry bytes in its own isolated process, but there is no independent
+  host startup attestation and the joint manifest is not installed on the host.
+  The current read-only host base hash is recorded
   in the extension review; it must be selected independently and rechecked at
   any later installation. The [disposable veth/FORWARD-mark/SNAT/WAN test](progress/portfolio-joint-packet-path-acceptance-2026-09-27.md)
   now checks the selected local packet path alongside CONNMARK rules and nine
