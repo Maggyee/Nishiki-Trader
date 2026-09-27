@@ -10,8 +10,8 @@ The prospective [joint first-operation window](../../docs/progress/portfolio-pro
 checks a held guard's fixed boot/manifest/binding and elapsed exclusion window
 against the existing consumed local attempt ledger. It persists at most the first
 `time` preparation after at least 300 seconds of prior exclusion and 125 seconds
-of future exclusion. The root-owned kernel/source observer is not implemented or
-installed; synthetic guard reports never qualify actual egress or admission.
+of future exclusion. The kernel observer and fixed source inventory are staged
+but uninstalled; synthetic guard reports never qualify actual egress or admission.
 
 The current disposable joint fixture completes the fixed ordered plan:
 
@@ -1016,6 +1016,12 @@ This adapter is neither installed nor an activation journal, does not attest its
 own running code or qualify historical exclusion. Its output always denies
 source, caller-coverage and network admission. See the
 [held-selection review](../../docs/progress/portfolio-joint-window-held-selection-2026-09-26.md).
+
+`gateway_window_sources.py` stages a fixed five-source manifest bound to the
+base installation verifier. It rechecks held bytes and root identity without
+executing code. The adapter itself lacks an independently protected entrypoint
+and is not installed. See the
+[source-inventory review](../../docs/progress/portfolio-joint-window-source-inventory-2026-09-27.md).
 
 `gateway_window_witness.py` consumes a private one-shot directory before
 recording held snapshots. Its fsynced claim, optional activation intent and

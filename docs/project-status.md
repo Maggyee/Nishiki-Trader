@@ -9,14 +9,16 @@
   [selected kernel observer](progress/portfolio-joint-window-held-selection-2026-09-26.md),
   [one-shot witness](progress/portfolio-joint-window-witness-2026-09-26.md) and
   [isolated blackout activation](progress/portfolio-joint-blackout-activation-2026-09-26.md)
-  remain uninstalled. The [disposable veth/FORWARD-mark/SNAT/WAN test](progress/portfolio-joint-packet-path-acceptance-2026-09-27.md)
+  remain uninstalled. A [fixed five-source inventory](progress/portfolio-joint-window-source-inventory-2026-09-27.md)
+  now checks held code bytes offline, but has no independently pinned root entry
+  or installed manifest. The [disposable veth/FORWARD-mark/SNAT/WAN test](progress/portfolio-joint-packet-path-acceptance-2026-09-27.md)
   now proves the selected local packet path and eight denials, not continuous
   host exclusion or all-caller/source authority. The host has no joint nft
   table or protected activation controller. The
   [authority/capacity review](progress/portfolio-post-v27-authority-capacity-review-2026-09-25.md)
   still blocks real collection: the historical pilot leaves 496 assets outside,
-  two unpriced and 65 over top-book capacity. Next establish protected host
-  controller and source ownership, complete host/container/proxy coverage and
+  two unpriced and 65 over top-book capacity. Next protect and install the root
+  entry and manifest, establish source ownership and complete host/container/proxy coverage and
   fresh provider bounds before a separately gated testnet collection. Full real
   account coverage, stream fences, qualified equity and trading remain blocked.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.

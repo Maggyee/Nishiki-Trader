@@ -22,6 +22,12 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the staged fixed joint-window source inventory and missing independently
+pinned root entry, read
+`docs/progress/portfolio-joint-window-source-inventory-2026-09-27.md`.
+The base verifier holds five fixed source bytes in tests; nothing is installed
+or authorized on the host.
+
 For the isolated veth/FORWARD-mark/SNAT/WAN packet acceptance and its host
 boundary, read `docs/progress/portfolio-joint-packet-path-acceptance-2026-09-27.md`.
 Real disposable packet and denial counters passed, but no host installation,
