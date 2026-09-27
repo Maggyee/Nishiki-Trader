@@ -11,8 +11,10 @@
   [isolated blackout activation](progress/portfolio-joint-blackout-activation-2026-09-26.md)
   remain uninstalled. A [six-source inventory](progress/portfolio-joint-window-source-inventory-2026-09-27.md)
   and [read-only `--check` entry](progress/portfolio-joint-window-entry-2026-09-27.md)
-  check staged fixed bytes offline, but the running entry has no independent
-  protected pin and the manifest is not installed. The [disposable veth/FORWARD-mark/SNAT/WAN test](progress/portfolio-joint-packet-path-acceptance-2026-09-27.md)
+  now also pass [isolated installed checks](progress/portfolio-joint-window-isolated-installation-2026-09-27.md)
+  using root-owned fixed bytes in private namespaces. The running entry still
+  has no independent protected pin and the joint manifest is not installed
+  on the host. The [disposable veth/FORWARD-mark/SNAT/WAN test](progress/portfolio-joint-packet-path-acceptance-2026-09-27.md)
   now proves the selected local packet path and eight denials, not continuous
   host exclusion or all-caller/source authority. The host has no joint nft
   table or protected activation controller. The

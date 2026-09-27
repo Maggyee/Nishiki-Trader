@@ -22,6 +22,12 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the real isolated-root joint-window entry check, read
+`docs/progress/portfolio-joint-window-isolated-installation-2026-09-27.md`.
+The base installation and six fixed joint sources pass fresh-process checks
+in private namespaces; no host joint installation or independent startup
+authority follows.
+
 For the staged read-only joint-window `--check` entry and its missing installed
 trust anchor, read `docs/progress/portfolio-joint-window-entry-2026-09-27.md`.
 It pins the base helper and six-source inventory in checkout code, but has no

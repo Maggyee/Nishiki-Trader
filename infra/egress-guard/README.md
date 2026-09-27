@@ -1029,6 +1029,21 @@ manifest or entry is installed on the host. See the
 The [entry review](../../docs/progress/portfolio-joint-window-entry-2026-09-27.md)
 records the remaining host authority boundary.
 
+The disposable `gateway_window_installation_selftest.py` reuses the pinned base
+installation acceptance inside fresh private mount/network/PID namespaces, then
+stages six root-owned sources and the joint manifest in that filesystem only:
+
+```bash
+/usr/bin/python3 -I infra/egress-guard/gateway_window_installation_selftest.py --report data/NEW-JOINT-WINDOW-ISOLATED.json
+```
+
+It runs the fixed `--check` from a fresh system-Python process, then verifies
+wrong manifest pins and changed source modes fail closed. Its report is
+write-once under ignored `data/`; the parent checks that host installation
+paths, account databases and caller namespaces match before and after. This is
+not a first-install-only host installer or an independent pin for the running
+entry. See the [isolated installation review](../../docs/progress/portfolio-joint-window-isolated-installation-2026-09-27.md).
+
 `gateway_window_witness.py` consumes a private one-shot directory before
 recording held snapshots. Its fsynced claim, optional activation intent and
 chained samples pin selection,
