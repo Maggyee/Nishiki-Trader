@@ -27,7 +27,10 @@
   exclusion or all-caller/source authority. A [read-only host topology audit](progress/portfolio-host-egress-topology-2026-09-27.md)
   observes 16 currently routed non-host network namespaces, an IPv6 default
   route and Docker/Tailscale mark/NAT interactions; the host has no joint nft
-  table or protected activation controller. The
+  table or protected activation controller. A [read-only namespace census](progress/portfolio-host-namespace-inventory-2026-09-27.md)
+  now maps all 16 currently routed Docker namespaces to container PIDs and
+  finds only the host IPv6 default route, with no read failures. It does not
+  cover future containers, proxy forwarding or continuous exclusion. The
   [authority/capacity review](progress/portfolio-post-v27-authority-capacity-review-2026-09-25.md)
   still blocks real collection: the historical pilot leaves 496 assets outside,
   two unpriced and 65 over top-book capacity. Next separately review the fixed

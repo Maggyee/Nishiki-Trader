@@ -22,6 +22,11 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the read-only cross-namespace Docker/PID and dual-stack route census, read
+`docs/progress/portfolio-host-namespace-inventory-2026-09-27.md`.
+It maps 16 currently routed Docker namespaces to running containers, but
+cannot prove future caller coverage or a provider-visible source.
+
 For the read-only host egress topology and the still-missing all-caller/source
 proof, read `docs/progress/portfolio-host-egress-topology-2026-09-27.md`.
 The live snapshot includes Docker namespaces, Tailscale marks and an IPv6

@@ -6,6 +6,14 @@ offline disk tests, and retain read-only host deployment-input snapshots.
 Current phase: Phase 5 entry, offline infrastructure acceptance only. This is not
 a production guard, gateway audit service, quota authority or collection permit.
 
+`host_namespace_inventory.py` takes a one-shot read-only host namespace/Docker
+route census using fixed sudo commands. Run as an ordinary user with
+`--report data/NEW-PRIVATE-NAMESPACE-INVENTORY.json`; it writes a private
+write-once ignored report and prints only counts and a SHA256. This snapshot
+cannot prove future callers, proxy forwarding, complete policy routing or
+provider-visible source. See the
+[host namespace inventory](../../docs/progress/portfolio-host-namespace-inventory-2026-09-27.md).
+
 The prospective [joint first-operation window](../../docs/progress/portfolio-prospective-joint-window-2026-09-26.md)
 checks a held guard's fixed boot/manifest/binding and elapsed exclusion window
 against the existing consumed local attempt ledger. It persists at most the first
