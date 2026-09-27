@@ -16,14 +16,18 @@
   Its actual installer and read-only entry pass in private namespaces, but
   there is no independent host startup attestation and the joint manifest is
   not installed on the host. The [disposable veth/FORWARD-mark/SNAT/WAN test](progress/portfolio-joint-packet-path-acceptance-2026-09-27.md)
-  now proves the selected local packet path and eight denials, not continuous
-  host exclusion or all-caller/source authority. The host has no joint nft
+  now checks the selected local packet path alongside CONNMARK rules and nine
+  denials, including IPv6 host OUTPUT. It does not prove continuous host
+  exclusion or all-caller/source authority. A [read-only host topology audit](progress/portfolio-host-egress-topology-2026-09-27.md)
+  observes 16 currently routed non-host network namespaces, an IPv6 default
+  route and Docker/Tailscale mark/NAT interactions; the host has no joint nft
   table or protected activation controller. The
   [authority/capacity review](progress/portfolio-post-v27-authority-capacity-review-2026-09-25.md)
   still blocks real collection: the historical pilot leaves 496 assets outside,
   two unpriced and 65 over top-book capacity. Next separately review the fixed
-  archive and protected staging before any host installation, establish source ownership,
-  complete host/container/proxy coverage and obtain fresh provider bounds
+  archive and protected staging before any host installation, establish source
+  and mark ownership across Docker/Tailscale and both IP families, complete
+  host/container/proxy coverage and obtain fresh provider bounds
   before a separately gated testnet collection. Full real
   account coverage, stream fences, qualified equity and trading remain blocked.
 - **Source of truth**: Runtime status under `data/`; immutable research evidence and ADRs under `docs/`.

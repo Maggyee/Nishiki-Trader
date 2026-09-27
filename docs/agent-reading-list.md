@@ -22,6 +22,11 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the read-only host egress topology and the still-missing all-caller/source
+proof, read `docs/progress/portfolio-host-egress-topology-2026-09-27.md`.
+The live snapshot includes Docker namespaces, Tailscale marks and an IPv6
+default route; it is not a continuous firewall or provider-source witness.
+
 For the reviewed first-install-only joint-window extension candidate and its
 isolated actual installation, read
 `docs/progress/portfolio-joint-window-extension-bundle-2026-09-27.md`.

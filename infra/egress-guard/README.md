@@ -1006,6 +1006,14 @@ complete host/container/proxy paths, activation history or route priority.
 See the [collector probe](../../docs/progress/portfolio-joint-collector-rule-probe-2026-09-26.md).
 The [isolated verification](../../docs/progress/portfolio-joint-kernel-observer-2026-09-26.md)
 uses disposable nft tables and does not change host egress.
+The [read-only host topology review](../../docs/progress/portfolio-host-egress-topology-2026-09-27.md)
+observes a dual-stack default route, 16 currently routed non-host namespaces,
+Docker NAT and Tailscale/connmark policy rules. These current observations do
+not establish uninterrupted all-caller exclusion or mark/source ownership.
+An isolated packet-path regression now includes the same IPv4/IPv6 CONNMARK
+save/restore masks; the selected IPv4 route and nine denials, including an
+IPv6 host OUTPUT drop, still pass. It does not reproduce the full live
+Docker/Tailscale rule order or continuous host coverage.
 
 `gateway_window_custody.py` adds a fixed-path selection adapter for a future
 isolated root invocation using the existing `TrustedInstallation` descriptors.

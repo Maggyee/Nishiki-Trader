@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import errno
 import importlib.util
 import json
 import os
@@ -91,6 +92,20 @@ def worker(original):
             )
         collector.ip("route", "add", "198.51.100.0/24", "via", "192.0.2.1")
         competitor.ip("route", "add", "198.51.100.0/24", "via", "203.0.113.1")
+        run(ip, "-6", "address", "add", "2001:db8:1::1/64", "dev", "wan")
+        run(
+            "/usr/bin/nsenter",
+            "-t",
+            str(peer.pid),
+            "--net",
+            ip,
+            "-6",
+            "address",
+            "add",
+            "2001:db8:1::2/64",
+            "dev",
+            "peer",
+        )
         run(
             "/usr/bin/nsenter",
             "-t",
@@ -108,6 +123,51 @@ def worker(original):
         peer.stdin.flush()
         if peer.stdout.readline().strip() != "serving":
             raise RuntimeError("fixture_peer_bind_failed")
+
+        for tool in ("/usr/sbin/iptables", "/usr/sbin/ip6tables"):
+            run(
+                tool,
+                "-t",
+                "mangle",
+                "-A",
+                "PREROUTING",
+                "-m",
+                "conntrack",
+                "--ctstate",
+                "RELATED,ESTABLISHED",
+                "-j",
+                "CONNMARK",
+                "--restore-mark",
+                "--nfmask",
+                "0xff0000",
+                "--ctmask",
+                "0xff0000",
+            )
+            run(
+                tool,
+                "-t",
+                "mangle",
+                "-A",
+                "OUTPUT",
+                "-m",
+                "conntrack",
+                "--ctstate",
+                "NEW",
+                "-m",
+                "mark",
+                "!",
+                "--mark",
+                "0x0/0xff0000",
+                "-j",
+                "CONNMARK",
+                "--save-mark",
+                "--nfmask",
+                "0xff0000",
+                "--ctmask",
+                "0xff0000",
+            )
+        if kernel.COLLECTOR_MARK & 0xFF0000 != 0x720000:
+            raise RuntimeError("fixture_mark_no_longer_matches_host_mask_review")
 
         name = kernel.TABLE
         rules = f"""table inet {name} {{
@@ -208,6 +268,15 @@ add element netdev {name} permits {{ 198.51.100.2 timeout 25000ms }}""",
         ):
             raise RuntimeError("selected_packet_did_not_cross_marked_forward_and_wan_hooks")
         denied("host_output", host, {}, chain="output", index=2)
+        ipv6_before = count("inet", name, "output", 2)
+        with socket.socket(socket.AF_INET6, socket.SOCK_DGRAM) as ipv6_host:
+            try:
+                ipv6_host.sendto(b"fixture-ipv6", ("2001:db8:1::2", 443))
+            except OSError as exc:
+                if exc.errno != errno.EPERM:
+                    raise
+        if count("inet", name, "output", 2) <= ipv6_before:
+            raise RuntimeError("host_ipv6_output_missed_blackout_drop")
         denied("other_forward", competitor, {}, index=4)
         collector.ip("address", "add", "192.0.2.99/24", "dev", "client")
         denied("wrong_child_source", collector, {"source": "192.0.2.99"})
@@ -242,7 +311,8 @@ add element netdev {name} permits {{ 198.51.100.2 timeout 25000ms }}""",
             "peer_source": result["peer"],
             "forward_mark_seen": True,
             "wan_mark_seen": True,
-            "denials": 8,
+            "connmark_compatibility_checked": True,
+            "denials": 9,
             "network_admitted": False,
             "host_firewall_modified": False,
             "external_requests": 0,
@@ -292,7 +362,8 @@ def test_real_joint_collector_veth_mark_snat_wan_packet_paths():
         "peer_source": "198.51.100.1",
         "forward_mark_seen": True,
         "wan_mark_seen": True,
-        "denials": 8,
+        "connmark_compatibility_checked": True,
+        "denials": 9,
         "network_admitted": False,
         "host_firewall_modified": False,
         "external_requests": 0,
