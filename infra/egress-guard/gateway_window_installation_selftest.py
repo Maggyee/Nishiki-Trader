@@ -13,6 +13,7 @@ from pathlib import Path
 BASE_HARNESS_PIN = "e2b0e9a59cd3805ebfac2fb4b4b2c1992e8e9d2865862cf70c3876c06e42346e"
 ENTRY_PIN = "db9bacd6778111afdc4a163f305361bef6da8fecab56d5ec724b0d1cb66cdc7a"
 SOURCES_PIN = "2c923d4b546fd0dbcbcf57fbfc4bafdb80e103611f0f38dcd9358cb6b6dea27f"
+WINDOW_INSTALLER_PIN = "6bc0a7a4bbe6915a0c3d84dfb9b4dabeea0747915a08209a5781ee0b8b028d23"
 SOURCES = (
     "gateway_window_entry.py",
     "gateway_window_sources.py",
@@ -69,14 +70,57 @@ def worker(payload):
     if base_report["status"] != "passed" or base_report["network_admitted"] is not False:
         raise RuntimeError("base_fixture_not_inactive")
 
-    for name in SOURCES:
-        base["write"](CODE / name, sources[name], 0o444)
-    document = {
-        "schema_version": "portfolio.joint_window_sources.v1",
-        "base_manifest_sha256": sha(Path("/etc/trader/egress-install.json").read_bytes()),
-        "files": {name: sha(sources[name]) for name in SOURCES},
-    }
-    base["write"](MANIFEST, (json.dumps(document, sort_keys=True) + "\n").encode(), 0o600)
+    installer = payload["window_installer"].encode()
+    bundle = base64.b64decode(payload["window_bundle"], validate=True)
+    if sha(installer) != WINDOW_INSTALLER_PIN or sha(bundle) != payload["window_bundle_sha256"]:
+        raise RuntimeError("reviewed_joint_bundle_changed")
+    package = load(installer)
+    contents = package["inspect"](bundle, payload["window_bundle_sha256"])
+    if contents["install.py"] != installer or any(
+        contents[name] != sources[name] for name in SOURCES
+    ):
+        raise RuntimeError("joint_bundle_source_mismatch")
+    staging = Path("/run/trader-egress-review")
+    installer_path = staging / "window-install.py"
+    bundle_path = staging / "window-bundle.tar"
+    base["write"](installer_path, installer, 0o444)
+    base["write"](bundle_path, bundle, 0o444)
+    install_command = (
+        "/usr/bin/python3",
+        "-I",
+        str(installer_path),
+        "apply",
+        "--bundle",
+        str(bundle_path),
+        "--sha256",
+        payload["window_bundle_sha256"],
+    )
+    wrong_pin_command = (*install_command[:-1], "0" * 64)
+    refused_pin = json.loads(base["run"](*wrong_pin_command, expected=1))
+    if (
+        refused_pin["status"] != "joint_window_bundle_operation_failed"
+        or MANIFEST.exists()
+        or (CODE / SOURCES[0]).exists()
+    ):
+        raise RuntimeError("unselected_joint_bundle_wrote_files")
+    wrong_mode_path = staging / "window-install-mode.py"
+    base["write"](wrong_mode_path, installer, 0o600)
+    wrong_mode_command = (
+        "/usr/bin/python3",
+        "-I",
+        str(wrong_mode_path),
+        *install_command[3:],
+    )
+    refused_mode = json.loads(base["run"](*wrong_mode_command, expected=1))
+    if (
+        refused_mode["status"] != "joint_window_bundle_operation_failed"
+        or MANIFEST.exists()
+        or (CODE / SOURCES[0]).exists()
+    ):
+        raise RuntimeError("unprotected_joint_installer_wrote_files")
+    installed = json.loads(base["run"](*install_command))
+    if installed["status"] != "joint_window_installed_inactive" or installed["network_admitted"]:
+        raise RuntimeError("joint_window_installation_failed")
     command = ("/usr/bin/python3", "-I", str(CODE / SOURCES[0]), "--check")
 
     def checked(expected):
@@ -87,6 +131,14 @@ def worker(payload):
             raise RuntimeError("joint_window_entry_unexpected_admission")
 
     checked("fixed_joint_window_sources_observed_unqualified")
+    original_manifest = MANIFEST.read_bytes()
+    refused = json.loads(base["run"](*install_command, expected=1))
+    if (
+        refused["status"] != "joint_window_bundle_operation_failed"
+        or MANIFEST.read_bytes() != original_manifest
+    ):
+        raise RuntimeError("joint_window_repeat_install_not_refused")
+    document = json.loads(original_manifest)
     document["files"][SOURCES[-1]] = "0" * 64
     with MANIFEST.open("w") as stream:
         json.dump(document, stream, sort_keys=True)
@@ -106,11 +158,17 @@ def worker(payload):
         "status": "passed",
         "base_checks": len(base_report["checks"]),
         "checks": [
+            "wrong_bundle_selection_refused_before_mutation",
+            "unprotected_installer_refused_before_mutation",
+            "reviewed_first_install_into_existing_base",
             "fresh_process_fixed_root_entry_remains_unqualified",
+            "repeat_install_refused_without_state_change",
             "manifest_pin_drift_refused",
             "source_mode_drift_refused",
         ],
         "base_manifest_sha256": document["base_manifest_sha256"],
+        "window_bundle_sha256": payload["window_bundle_sha256"],
+        "window_installer_sha256": WINDOW_INSTALLER_PIN,
         "source_sha256": {name: sha(raw) for name, raw in sources.items()},
         "host_installation_performed": False,
         "host_deployment_qualified": False,
@@ -138,10 +196,21 @@ def main(argv=None):
         base = load(base_source)
         if sha(installer) != base["INSTALLER_PIN"]:
             raise ValueError("reviewed_installer_changed")
-        package = load(installer)
-        package["build"].__globals__["__file__"] = str(directory / "package.py")
-        bundle = package["build"]()
-        package["inspect"](bundle, base["PIN"])
+        base_package = load(installer)
+        base_package["build"].__globals__["__file__"] = str(directory / "package.py")
+        bundle = base_package["build"]()
+        base_package["inspect"](bundle, base["PIN"])
+        window_installer = (directory / "gateway_window_package.py").read_bytes()
+        if sha(window_installer) != WINDOW_INSTALLER_PIN:
+            raise ValueError("reviewed_joint_installer_changed")
+        window_package = load(window_installer)
+        if tuple(window_package["FILES"]) != SOURCES:
+            raise ValueError("joint_bundle_fixed_sources_changed")
+        window_package["build"].__globals__["__file__"] = str(
+            directory / "gateway_window_package.py"
+        )
+        window_bundle = window_package["build"]()
+        window_package["inspect"](window_bundle, sha(window_bundle))
         original = base["namespaces"]()
         before = observation(base)
         payload = {
@@ -149,6 +218,9 @@ def main(argv=None):
             "base_source": base_source.decode(),
             "installer": installer.decode(),
             "bundle": base64.b64encode(bundle).decode(),
+            "window_installer": window_installer.decode(),
+            "window_bundle": base64.b64encode(window_bundle).decode(),
+            "window_bundle_sha256": sha(window_bundle),
             "sources": {name: base64.b64encode(raw).decode() for name, raw in sources.items()},
             "source_sha256": {name: sha(raw) for name, raw in sources.items()},
             "original": original,

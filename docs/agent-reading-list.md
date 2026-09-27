@@ -22,6 +22,12 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the reviewed first-install-only joint-window extension candidate and its
+isolated actual installation, read
+`docs/progress/portfolio-joint-window-extension-bundle-2026-09-27.md`.
+The local archive pins six sources and its installer, and publishes a manifest
+only in a disposable namespace. The real host extension is not installed.
+
 For the real isolated-root joint-window entry check, read
 `docs/progress/portfolio-joint-window-isolated-installation-2026-09-27.md`.
 The base installation and six fixed joint sources pass fresh-process checks

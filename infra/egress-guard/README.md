@@ -1029,20 +1029,45 @@ manifest or entry is installed on the host. See the
 The [entry review](../../docs/progress/portfolio-joint-window-entry-2026-09-27.md)
 records the remaining host authority boundary.
 
+`gateway_window_package.py` builds and inspects a deterministic, SHA256-selected
+archive of the six source files, its first-install-only `install.py`, an
+inventory and a README. `apply` requires a root-owned protected copy of the
+reviewed installer running under isolated system Python. It verifies the
+existing base installation, refuses any present joint file or manifest before
+writing, fsyncs each new 0444 source and publishes the root-owned 0600 manifest
+last. A partial write blocks retry for manual inspection. The installer does
+not change nft rules, network permissions, account state or the existing base
+manifest. Build and inspect without elevation:
+
+```bash
+/usr/bin/python3 -I infra/egress-guard/gateway_window_package.py build --output data/NEW-JOINT-WINDOW-BUNDLE.tar
+/usr/bin/python3 -I infra/egress-guard/gateway_window_package.py inspect --bundle data/NEW-JOINT-WINDOW-BUNDLE.tar --sha256 SELECTED_SHA256
+```
+
+The checkout's `apply` fails. After separate review and authorization, the
+selected `install.py` must be staged as root-owned, single-link 0444 under
+protected root-owned ancestors outside the checkout; only that protected
+file may run `apply --bundle BUNDLE --sha256 SELECTED_SHA256`. The bundle hash
+is an operator-selected pin, not publisher authentication or continuous
+attestation of a future running entry. No host extension has been installed.
+See the [extension review](../../docs/progress/portfolio-joint-window-extension-bundle-2026-09-27.md).
+
 The disposable `gateway_window_installation_selftest.py` reuses the pinned base
 installation acceptance inside fresh private mount/network/PID namespaces, then
-stages six root-owned sources and the joint manifest in that filesystem only:
+applies the separately pinned joint extension in that filesystem only:
 
 ```bash
 /usr/bin/python3 -I infra/egress-guard/gateway_window_installation_selftest.py --report data/NEW-JOINT-WINDOW-ISOLATED.json
 ```
 
-It runs the fixed `--check` from a fresh system-Python process, then verifies
-wrong manifest pins and changed source modes fail closed. Its report is
+It rejects a wrong bundle selection or installer mode before mutation, runs
+the fixed `--check` from a fresh system-Python process, refuses a repeat
+install, then verifies wrong manifest pins and changed source modes fail
+closed. Its report is
 write-once under ignored `data/`; the parent checks that host installation
-paths, account databases and caller namespaces match before and after. This is
-not a first-install-only host installer or an independent pin for the running
-entry. See the [isolated installation review](../../docs/progress/portfolio-joint-window-isolated-installation-2026-09-27.md).
+paths, account databases and caller namespaces match before and after. The
+earlier hand-staged acceptance remains historical; the new pinned report is in
+the [extension review](../../docs/progress/portfolio-joint-window-extension-bundle-2026-09-27.md).
 
 `gateway_window_witness.py` consumes a private one-shot directory before
 recording held snapshots. Its fsynced claim, optional activation intent and
