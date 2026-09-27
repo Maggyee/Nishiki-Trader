@@ -9,10 +9,10 @@ bytes. `inspect` checks the selected whole-archive SHA256, exact canonical
 tar bytes, fixed inventory and bounded regular members without extraction.
 
 The selected ignored local candidate is
-`data/joint-window-review-2026-09-27-r4.tar`, SHA256
-`b740faa26c67845b46b8fb6e95562d96eb5978198d545d7d57c90ed270961b71`.
+`data/joint-window-review-2026-09-27-r5.tar`, SHA256
+`2858888679298b9fec3321739e1eb2755c211b9d0b88226d899da283a1c7c5bf`.
 Its `install.py` SHA256 is
-`0431bae683253fd4a3c993e4e15b04fafca9229c782992493520217f042b6d46`.
+`99a322383d32e6248fb0ecf930243a111b4f07483ca18670a108eeaa6fe9f52c`.
 The installed operation requires isolated UID 0, a protected root-owned
 installer with exact selected bytes, the existing held base verifier and an
 independently selected `--base-sha256` of the existing base manifest. It checks
@@ -22,15 +22,21 @@ exclusively creates/fsyncs all six 0444 sources, then publishes the root-owned
 0600 manifest bound to the held base manifest hash. The entry file is the first partial-install
 marker; failures leave evidence and make retry fail before further writes.
 There is no activation, rule mutation, permit or venue request interface.
+The protected installer also accepts read-only `audit` with the same selected
+archive and base manifest SHA256. It loads the selected inventory adapter from
+the reviewed archive through the held base verifier and compares every installed
+joint source byte with the selected archive. The audit neither writes files nor
+attests the identity of a future process started through the installed entry.
 
 In private mount/network/PID namespaces the real base install passes its 40
-checks, then the reviewed extension passes eight checks: wrong bundle SHA256,
-wrong base manifest SHA256 and unprotected installer mode before mutation,
-first install, fresh process `--check`, repeat-install refusal without manifest
-change, wrong manifest pin and source mode drift. A re-inventoried archive with changed entry bytes is
-rejected by the fixed source pin. Every check keeps admission false. The
-ignored local report `data/joint-window-isolated-2026-09-27-r8.json` has
-SHA256 `a8ea1f5f2972bc998542817e0fa0952b272a7bb8d99d76c3c5eb1c2f26af15e2`.
+checks, then the reviewed extension passes 13 checks: wrong bundle and base
+selection, unprotected installer, absent-install audit, first install, selected
+source audit, fresh process `--check`, repeat-install refusal, self-consistent
+source/manifest drift and independent audit refusal, and manifest pin and source
+mode drift refused by both checks. A re-inventoried archive with changed entry
+bytes is rejected by the fixed source pin. Every check keeps admission false.
+The ignored local report `data/joint-window-isolated-2026-09-27-r10.json` has
+SHA256 `a517ecdc0cb5f3d834393d487a82675a1b3676aed94578a132e5e775020403b6`.
 The fixture base manifest SHA256 is
 `618251af135ac3f49764301f73c6ed1d176a64fbd9cbe1f3e7dc984b3091ed53`;
 it is not a host pin. A read-only host check on September 27 observed

@@ -1058,6 +1058,12 @@ The checkout's `apply` fails. After separate review and authorization, the
 selected `install.py` must be staged as root-owned, single-link 0444 under
 protected root-owned ancestors outside the checkout; only that protected
 file may run `apply --bundle BUNDLE --sha256 SELECTED_BUNDLE_SHA256 --base-sha256 SELECTED_BASE_MANIFEST_SHA256`.
+The same protected installer accepts the read-only
+`audit --bundle BUNDLE --sha256 SELECTED_BUNDLE_SHA256 --base-sha256 SELECTED_BASE_MANIFEST_SHA256`
+after installation. It compares all six installed bytes against the selected
+archive via the held base verifier, even if the joint manifest and source were
+both changed consistently. A passing audit does not attest the running entry
+process or qualify deployment.
 The base hash must be independently selected before installation and any drift
 must fail closed. The September 27 read-only host observation of
 `/etc/trader/egress-install.json` was
@@ -1077,10 +1083,10 @@ applies the separately pinned joint extension in that filesystem only:
 ```
 
 It rejects a wrong bundle selection, base manifest selection or installer mode
-before mutation, runs
-the fixed `--check` from a fresh system-Python process, refuses a repeat
-install, then verifies wrong manifest pins and changed source modes fail
-closed. Its report is
+before mutation, runs the fixed `--check` from a fresh system-Python process,
+refuses a repeat install, and verifies selected-bundle audit refusal for an
+absent installation, self-consistent source/manifest drift, wrong manifest pins
+and changed source modes. Its report is
 write-once under ignored `data/`; the parent checks that host installation
 paths, account databases and caller namespaces match before and after. The
 earlier hand-staged acceptance remains historical; the new pinned report is in

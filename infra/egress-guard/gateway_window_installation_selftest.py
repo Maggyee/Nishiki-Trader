@@ -13,7 +13,7 @@ from pathlib import Path
 BASE_HARNESS_PIN = "e2b0e9a59cd3805ebfac2fb4b4b2c1992e8e9d2865862cf70c3876c06e42346e"
 ENTRY_PIN = "db9bacd6778111afdc4a163f305361bef6da8fecab56d5ec724b0d1cb66cdc7a"
 SOURCES_PIN = "2c923d4b546fd0dbcbcf57fbfc4bafdb80e103611f0f38dcd9358cb6b6dea27f"
-WINDOW_INSTALLER_PIN = "0431bae683253fd4a3c993e4e15b04fafca9229c782992493520217f042b6d46"
+WINDOW_INSTALLER_PIN = "99a322383d32e6248fb0ecf930243a111b4f07483ca18670a108eeaa6fe9f52c"
 SOURCES = (
     "gateway_window_entry.py",
     "gateway_window_sources.py",
@@ -129,9 +129,23 @@ def worker(payload):
         or (CODE / SOURCES[0]).exists()
     ):
         raise RuntimeError("unprotected_joint_installer_wrote_files")
+    audit_command = (*install_command[:3], "audit", *install_command[4:])
+    absent_audit = json.loads(base["run"](*audit_command, expected=1))
+    if (
+        absent_audit["status"] != "joint_window_bundle_operation_failed"
+        or MANIFEST.exists()
+        or (CODE / SOURCES[0]).exists()
+    ):
+        raise RuntimeError("absent_joint_audit_wrote_files")
     installed = json.loads(base["run"](*install_command))
     if installed["status"] != "joint_window_installed_inactive" or installed["network_admitted"]:
         raise RuntimeError("joint_window_installation_failed")
+    audited = json.loads(base["run"](*audit_command))
+    if (
+        audited["status"] != "joint_window_installed_sources_observed_inactive"
+        or audited["network_admitted"]
+    ):
+        raise RuntimeError("joint_window_installed_source_audit_failed")
     command = ("/usr/bin/python3", "-I", str(CODE / SOURCES[0]), "--check")
 
     def checked(expected):
@@ -152,20 +166,46 @@ def worker(payload):
     document = json.loads(original_manifest)
     if document["base_manifest_sha256"] != base_manifest_sha256:
         raise RuntimeError("joint_window_base_manifest_selection_changed")
+    target = CODE / SOURCES[-1]
+    target.chmod(0o600)
+    target.write_bytes(sources[SOURCES[-1]] + b"\n")
+    target.chmod(0o444)
+    document["files"][SOURCES[-1]] = sha(target.read_bytes())
+    MANIFEST.write_text(json.dumps(document, sort_keys=True))
+    checked("fixed_joint_window_sources_observed_unqualified")
+    if (
+        json.loads(base["run"](*audit_command, expected=1))["status"]
+        != "joint_window_bundle_operation_failed"
+    ):
+        raise RuntimeError("joint_window_audit_accepted_reinventoried_source")
+    target.chmod(0o600)
+    target.write_bytes(sources[SOURCES[-1]])
+    target.chmod(0o444)
+    MANIFEST.write_bytes(original_manifest)
+    checked("fixed_joint_window_sources_observed_unqualified")
     document["files"][SOURCES[-1]] = "0" * 64
     with MANIFEST.open("w") as stream:
         json.dump(document, stream, sort_keys=True)
         stream.flush()
         os.fsync(stream.fileno())
     checked("joint_window_sources_missing_or_changed")
+    if (
+        json.loads(base["run"](*audit_command, expected=1))["status"]
+        != "joint_window_bundle_operation_failed"
+    ):
+        raise RuntimeError("joint_window_audit_accepted_manifest_drift")
     document["files"][SOURCES[-1]] = sha(sources[SOURCES[-1]])
     with MANIFEST.open("w") as stream:
         json.dump(document, stream, sort_keys=True)
         stream.flush()
         os.fsync(stream.fileno())
-    target = CODE / SOURCES[-1]
     target.chmod(0o600)
     checked("joint_window_sources_missing_or_changed")
+    if (
+        json.loads(base["run"](*audit_command, expected=1))["status"]
+        != "joint_window_bundle_operation_failed"
+    ):
+        raise RuntimeError("joint_window_audit_accepted_source_mode_drift")
     return {
         "schema_version": "portfolio.joint_window_installed_isolated_acceptance.v1",
         "status": "passed",
@@ -174,11 +214,16 @@ def worker(payload):
             "wrong_bundle_selection_refused_before_mutation",
             "wrong_base_manifest_selection_refused_before_mutation",
             "unprotected_installer_refused_before_mutation",
+            "audit_refuses_absent_installation_without_mutation",
             "reviewed_first_install_into_existing_base",
+            "independent_installed_source_audit_observed_inactive",
             "fresh_process_fixed_root_entry_remains_unqualified",
             "repeat_install_refused_without_state_change",
+            "self_consistent_source_drift_refused_by_selected_bundle_audit",
             "manifest_pin_drift_refused",
+            "manifest_pin_drift_refused_by_audit",
             "source_mode_drift_refused",
+            "source_mode_drift_refused_by_audit",
         ],
         "base_manifest_sha256": document["base_manifest_sha256"],
         "window_bundle_sha256": payload["window_bundle_sha256"],

@@ -43,6 +43,8 @@ Inspect and pin the complete archive and the existing base manifest independentl
 Stage its install.py at a protected root-owned 0444 path outside the checkout.
 Apply only with both reviewed SHA256 values; partial files block a second
 attempt and require manual inspection.
+The read-only audit compares installed sources with that selected archive;
+it cannot attest the process that started the joint entry.
 """
 
 
@@ -237,7 +239,7 @@ def verify_published(authority, raw):
         held.close()
 
 
-def apply(contents, base_sha256):
+def selected_base(contents, base_sha256):
     if len(base_sha256) != 64 or any(char not in "0123456789abcdef" for char in base_sha256):
         raise ValueError("joint_base_manifest_sha256_format")
     if os.getuid() != 0 or os.geteuid() != 0 or not sys.flags.isolated:
@@ -249,6 +251,36 @@ def apply(contents, base_sha256):
         authority.verify()
         if authority.manifest_sha256 != base_sha256:
             raise ValueError("joint_base_manifest_sha256_mismatch")
+        return authority
+    except BaseException:
+        authority.close()
+        raise
+
+
+def audit(contents, base_sha256):
+    authority = selected_base(contents, base_sha256)
+    try:
+        scope = {"__name__": "joint_window_selected_inventory"}
+        exec(
+            compile(
+                contents["gateway_window_sources.py"], CODE + "/gateway_window_sources.py", "exec"
+            ),
+            scope,
+        )
+        held = scope["RootSelectedWindowSources"](authority)
+        try:
+            for name in FILES:
+                if held.source(name) != contents[name]:
+                    raise ValueError("joint_installed_source_not_selected_bundle")
+        finally:
+            held.close()
+    finally:
+        authority.close()
+
+
+def apply(contents, base_sha256):
+    authority = selected_base(contents, base_sha256)
+    try:
         code_fd = authority.open_directory(CODE)
         manifest_fd = authority.open_directory(str(Path(MANIFEST).parent))
         authority.verify()
@@ -281,11 +313,11 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="action", required=True)
     commands.add_parser("build").add_argument("--output", type=Path, required=True)
-    for action in ("inspect", "apply"):
+    for action in ("inspect", "apply", "audit"):
         selected = commands.add_parser(action)
         selected.add_argument("--bundle", type=Path, required=True)
         selected.add_argument("--sha256", required=True)
-        if action == "apply":
+        if action in ("apply", "audit"):
             selected.add_argument("--base-sha256", required=True)
     args = parser.parse_args(argv)
     try:
@@ -304,6 +336,9 @@ def main(argv=None):
             if args.action == "apply":
                 apply(contents, args.base_sha256)
                 status = "joint_window_installed_inactive"
+            elif args.action == "audit":
+                audit(contents, args.base_sha256)
+                status = "joint_window_installed_sources_observed_inactive"
             else:
                 status = "joint_window_bundle_verified_inactive"
         print(

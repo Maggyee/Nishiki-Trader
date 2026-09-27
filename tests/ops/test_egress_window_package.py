@@ -122,10 +122,28 @@ def test_cli_build_inspect_and_checkout_apply_refused(package, tmp_path, capsys)
     with pytest.raises(SystemExit) as missing:
         package.main(["apply", "--bundle", str(path), "--sha256", package.digest(raw)])
     assert missing.value.code == 2
+    with pytest.raises(SystemExit) as missing:
+        package.main(["audit", "--bundle", str(path), "--sha256", package.digest(raw)])
+    assert missing.value.code == 2
     assert (
         package.main(
             [
                 "apply",
+                "--bundle",
+                str(path),
+                "--sha256",
+                package.digest(raw),
+                "--base-sha256",
+                FakeAuthority.manifest_sha256,
+            ]
+        )
+        == 1
+    )
+    assert json.loads(capsys.readouterr().out)["status"] == "joint_window_bundle_operation_failed"
+    assert (
+        package.main(
+            [
+                "audit",
                 "--bundle",
                 str(path),
                 "--sha256",
@@ -236,8 +254,9 @@ def test_first_install_publishes_manifest_last_and_rejects_second(staged, monkey
 def test_base_manifest_selection_refused_before_write(staged, monkeypatch, base_pin):
     package = staged.package
     monkeypatch.setattr(package, "write", lambda *args: pytest.fail("write before base pin"))
-    with pytest.raises(ValueError, match="joint_base_manifest_sha256"):
-        package.apply(staged.contents, base_pin)
+    for operation in (package.apply, package.audit):
+        with pytest.raises(ValueError, match="joint_base_manifest_sha256"):
+            operation(staged.contents, base_pin)
     assert not local(staged, package.MANIFEST).exists()
     assert not local(staged, package.CODE + "/" + package.FILES[0]).exists()
     assert all(authority.closed for authority in staged.authorities)
