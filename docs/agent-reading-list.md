@@ -22,6 +22,11 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the isolated veth/FORWARD-mark/SNAT/WAN packet acceptance and its host
+boundary, read `docs/progress/portfolio-joint-packet-path-acceptance-2026-09-27.md`.
+Real disposable packet and denial counters passed, but no host installation,
+continuous exclusion, full caller coverage or network admission follows.
+
 For the staged atomic joint blackout transaction in a disposable nft namespace,
 read `docs/progress/portfolio-joint-blackout-activation-2026-09-26.md`.
 The controller checks selected empty rules, consumes an intent before writing
