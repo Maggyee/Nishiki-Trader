@@ -126,6 +126,7 @@ def isolated_collector_path(base):
         Path("/proc/sys/net/ipv4/ip_forward").write_text("1\n")
         yield {
             "pid": collector.pid,
+            "peer_pid": peer.pid,
             "selection": {
                 "host_link": "gw-jc1",
                 "child_ipv4": "192.0.2.2",
@@ -185,6 +186,21 @@ table netdev {table} {{
   meta mark {selected_mark} ip saddr 198.51.100.1 ip daddr @permits tcp dport 443 accept;
   meta mark {selected_mark} counter drop;
   ether type @blackout counter drop; }}
+}}
+table ip fixture_joint_nat {{
+ chain source {{ type nat hook postrouting priority 100; policy accept;
+  oifname "wan" ip daddr 198.51.100.0/24 snat to 198.51.100.1;
+ }}
+}}
+table inet fixture_joint_trace {{
+ chain forward {{ type filter hook forward priority -309; policy accept;
+  iifname "gw-jc1" meta mark {selected_mark} counter;
+ }}
+}}
+table netdev fixture_joint_trace {{
+ chain egress {{ type filter hook egress device "wan" priority 1; policy accept;
+  meta mark {selected_mark} counter;
+ }}
 }}"""
     created = subprocess.run(
         ["/usr/sbin/nft", "-f", "-"],
@@ -303,6 +319,7 @@ with socket.socket() as client:
     finally:
         journal.close()
         holder.close()
+    permitted = isolated_permitted_packet(base, kernel, route, pins, account)
     return {
         "status": result["status"],
         "selection_sha256": result["selection_sha256"],
@@ -312,8 +329,161 @@ with socket.socket() as client:
         "source_authenticated": result["source_authenticated"],
         "complete_caller_coverage_verified": result["complete_caller_coverage_verified"],
         "collector_empty_permit_denied": True,
+        "local_permitted_packet": permitted,
         "network_admitted": False,
     }
+
+
+def isolated_permitted_packet(base, kernel, route, pins, account):
+    """Test a short local grant only after the selected witness has closed."""
+
+    def nft(script):
+        process = subprocess.run(
+            ["/usr/sbin/nft", "-f", "-"],
+            input=script.encode("ascii"),
+            capture_output=True,
+            env=ENV,
+            cwd="/",
+            timeout=3,
+            check=False,
+        )
+        if process.returncode:
+            raise RuntimeError(
+                "fixture_joint_nft_transaction_failed:" + process.stderr.decode()[-500:]
+            )
+
+    def count(family, chain):
+        rows = json.loads(
+            base["run"]("/usr/sbin/nft", "-j", "list", "table", family, "fixture_joint_trace")
+        )["nftables"]
+        rule = next(row["rule"] for row in rows if "rule" in row and row["rule"]["chain"] == chain)
+        return next(expr["counter"]["packets"] for expr in rule["expr"] if "counter" in expr)
+
+    server_source = """
+import socket
+with socket.socket() as listener:
+ listener.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
+ listener.bind(('198.51.100.2',443))
+ listener.listen(1)
+ listener.settimeout(3)
+ print('ready',flush=True)
+ with listener.accept()[0] as connection:
+  connection.settimeout(2)
+  if connection.recv(64)!=b'fixture-peer\\n': raise RuntimeError('fixture_peer_request_changed')
+  print(connection.getpeername()[0],flush=True)
+  connection.sendall(b'fixture-ok\\n')
+"""
+    peer = subprocess.Popen(
+        [
+            "/usr/bin/nsenter",
+            "-t",
+            str(route["peer_pid"]),
+            "--net",
+            "/usr/bin/python3",
+            "-I",
+            "-c",
+            server_source,
+        ],
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        env=ENV,
+        cwd="/",
+    )
+    try:
+        if peer.stdout.readline().strip() != "ready":
+            raise RuntimeError("fixture_joint_peer_not_ready")
+        for family in kernel.KINDS:
+            rows = kernel.read_table(family)["nftables"]
+            blackout = next(
+                row["set"] for row in rows if row.get("set", {}).get("name") == "blackout"
+            )
+            kernel._elements(blackout, family)
+        before_forward = count("inet", "forward")
+        before_wan = count("netdev", "egress")
+        nft(f"""add element inet {kernel.TABLE} permits {{ 198.51.100.2 timeout 5000ms }}
+add element netdev {kernel.TABLE} permits {{ 198.51.100.2 timeout 5000ms }}""")
+        try:
+            try:
+                kernel.observe(
+                    expected_static_sha256=pins,
+                    wan_interface="wan",
+                    collector=route["selection"],
+                )
+            except ValueError as exc:
+                if str(exc) != "kernel_window_set_type_or_early_permission":
+                    raise
+            else:
+                raise RuntimeError("installed_joint_observer_accepted_temporary_permit")
+            client_source = """
+import json,os,socket
+status=dict(line.split(':',1) for line in open('/proc/self/status').read().splitlines())
+if os.getuid()==0 or int(status['CapEff'],16) or status['NoNewPrivs'].strip()!='1':
+ raise RuntimeError('fixture_collector_still_privileged')
+with socket.create_connection(('198.51.100.2',443),timeout=1) as connection:
+ connection.sendall(b'fixture-peer\\n')
+ connection.settimeout(1)
+ print(json.dumps({'response':connection.recv(64).decode()}))
+"""
+            result = json.loads(
+                base["run"](
+                    "/usr/bin/nsenter",
+                    "-t",
+                    str(route["pid"]),
+                    "--net",
+                    "/usr/bin/setpriv",
+                    "--reuid",
+                    str(account["uid"]),
+                    "--regid",
+                    str(account["gid"]),
+                    "--clear-groups",
+                    "--bounding-set=-all",
+                    "--inh-caps=-all",
+                    "--ambient-caps=-all",
+                    "--no-new-privs",
+                    "/usr/bin/python3",
+                    "-I",
+                    "-c",
+                    client_source,
+                )
+            )
+            stdout, stderr = peer.communicate(timeout=3)
+            if (
+                peer.returncode
+                or stdout.strip() != "198.51.100.1"
+                or result != {"response": "fixture-ok\n"}
+            ):
+                raise RuntimeError(
+                    "installed_joint_peer_source_or_response_changed:" + stderr[-500:]
+                )
+            if (
+                count("inet", "forward") <= before_forward
+                or count("netdev", "egress") <= before_wan
+            ):
+                raise RuntimeError("installed_joint_mark_missing_at_forward_or_wan")
+        finally:
+            nft(f"""flush set inet {kernel.TABLE} permits
+flush set netdev {kernel.TABLE} permits""")
+        for family in kernel.KINDS:
+            rows = kernel.read_table(family)["nftables"]
+            if any(
+                row["set"].get("elem")
+                for row in rows
+                if row.get("set", {}).get("name") == "permits"
+            ):
+                raise RuntimeError("installed_joint_fixture_permit_not_cleared")
+        return {
+            "peer_source": "198.51.100.1",
+            "forward_mark_seen": True,
+            "wan_mark_seen": True,
+            "observer_refused_temporary_permit": True,
+            "permits_cleared": True,
+        }
+    finally:
+        if peer.poll() is None:
+            peer.kill()
+            peer.communicate(timeout=3)
 
 
 def worker(payload):
@@ -508,6 +678,7 @@ def worker(payload):
             "isolated_one_shot_blackout_and_empty_permits",
             "isolated_repeat_activation_refused_unqualified",
             "installed_selected_collector_denied_by_empty_permits",
+            "installed_selected_collector_local_permit_snat_and_wan",
         ],
         "base_manifest_sha256": document["base_manifest_sha256"],
         "window_bundle_sha256": payload["window_bundle_sha256"],

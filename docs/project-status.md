@@ -20,7 +20,10 @@
   now joins selected installed bytes to a short one-shot nft transaction and
   witness. Its [collector-aware successor](progress/portfolio-installed-joint-collector-denial-2026-09-28.md)
   denies a capability-free caller with empty permits at the selected FORWARD
-  rule, still without admission.
+  rule. Its [local-permit continuation](progress/portfolio-installed-joint-local-permit-path-2026-09-28.md)
+  tests one fixture-granted packet through marked FORWARD, SNAT and WAN with
+  the selected installed observer refusing active permits; it does not grant
+  host admission.
   The installer is staged under ephemeral `/run`; repeat installation is
   prohibited. There is still no independent startup attestation or installed
   joint nft table/activation controller. The [disposable packet-path test](progress/portfolio-joint-proxy-policy-packet-2026-09-28.md)

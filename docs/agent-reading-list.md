@@ -22,6 +22,11 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the installed-source controller joined to one locally permitted, marked
+FORWARD/SNAT/WAN packet, read
+`docs/progress/portfolio-installed-joint-local-permit-path-2026-09-28.md`.
+The temporary fixture grant is not installed authority or host admission.
+
 For the completed read-only host joint-window installation, selected hashes,
 fresh-process checks and remaining admission blockers, read
 `docs/progress/portfolio-joint-window-host-installation-2026-09-28.md`.
