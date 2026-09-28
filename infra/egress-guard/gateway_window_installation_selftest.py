@@ -18,6 +18,7 @@ BASE_HARNESS_PIN = "e2b0e9a59cd3805ebfac2fb4b4b2c1992e8e9d2865862cf70c3876c06e42
 ENTRY_PIN = "db9bacd6778111afdc4a163f305361bef6da8fecab56d5ec724b0d1cb66cdc7a"
 SOURCES_PIN = "2c923d4b546fd0dbcbcf57fbfc4bafdb80e103611f0f38dcd9358cb6b6dea27f"
 WINDOW_INSTALLER_PIN = "4ee75b36a3c902b571727a6383944861f13903ff251dbfb3442fcb6277614ce3"
+STARTUP_ENTRY = Path("/run/trader-egress-window-startup-v1/startup-check.py")
 SOURCES = (
     "gateway_window_entry.py",
     "gateway_window_sources.py",
@@ -737,6 +738,37 @@ def worker(payload):
             raise RuntimeError("joint_window_entry_unexpected_admission")
 
     checked("fixed_joint_window_sources_observed_unqualified")
+    startup_source = base64.b64decode(payload["startup_source"], validate=True)
+    if sha(startup_source) != payload["startup_sha256"]:
+        raise RuntimeError("fixture_joint_startup_source_changed")
+    STARTUP_ENTRY.parent.mkdir(mode=0o755)
+    base["write"](STARTUP_ENTRY, startup_source, 0o444)
+    startup_command = (
+        "/usr/bin/python3",
+        "-I",
+        str(STARTUP_ENTRY),
+        "--check",
+        "--base-sha256",
+        base_manifest_sha256,
+    )
+
+    def startup_checked(expected):
+        report = json.loads(base["run"](*startup_command, expected=2))
+        if report["status"] != expected or any(
+            value is not False for key, value in report.items() if key != "status"
+        ):
+            raise RuntimeError("joint_window_startup_unexpected_admission")
+
+    startup_checked("joint_window_protected_startup_observed_unqualified")
+    wrong_startup = json.loads(base["run"](*startup_command[:-1], "0" * 64, expected=2))
+    if wrong_startup["status"] != "joint_window_protected_startup_refused":
+        raise RuntimeError("joint_window_startup_wrong_base_accepted")
+    STARTUP_ENTRY.chmod(0o600)
+    try:
+        startup_checked("joint_window_protected_startup_refused")
+    finally:
+        STARTUP_ENTRY.chmod(0o444)
+    startup_checked("joint_window_protected_startup_observed_unqualified")
     with isolated_collector_path(base) as route:
         activation_probe = installed_activation_probe(base, sources, base_manifest_sha256, route)
     original_manifest = MANIFEST.read_bytes()
@@ -756,6 +788,7 @@ def worker(payload):
     document["files"][SOURCES[-1]] = sha(target.read_bytes())
     MANIFEST.write_text(json.dumps(document, sort_keys=True))
     checked("fixed_joint_window_sources_observed_unqualified")
+    startup_checked("joint_window_protected_startup_refused")
     if (
         json.loads(base["run"](*audit_command, expected=1))["status"]
         != "joint_window_bundle_operation_failed"
@@ -820,10 +853,14 @@ def worker(payload):
             "installed_selected_collector_denied_by_empty_permits",
             "installed_selected_collector_local_permit_snat_and_wan",
             "installed_selected_post_write_crash_refuses_scope_reopen",
+            "protected_startup_selects_independent_source_pins",
+            "protected_startup_rejects_wrong_base_and_reinventoried_source",
+            "protected_startup_rejects_unprotected_own_file",
         ],
         "base_manifest_sha256": document["base_manifest_sha256"],
         "window_bundle_sha256": payload["window_bundle_sha256"],
         "window_installer_sha256": WINDOW_INSTALLER_PIN,
+        "startup_sha256": payload["startup_sha256"],
         "source_sha256": {name: sha(raw) for name, raw in sources.items()},
         "activation_probe": activation_probe,
         "host_installation_performed": False,
@@ -844,6 +881,7 @@ def main(argv=None):
         directory = Path(__file__).resolve().parent
         base_source = (directory / "installation_selftest.py").read_bytes()
         installer = (directory / "package.py").read_bytes()
+        startup_source = (directory / "gateway_window_startup_check.py").read_bytes()
         sources = {name: (directory / name).read_bytes() for name in SOURCES}
         if sha(base_source) != BASE_HARNESS_PIN:
             raise ValueError("base_harness_pin_changed")
@@ -879,6 +917,8 @@ def main(argv=None):
             "window_bundle_sha256": sha(window_bundle),
             "sources": {name: base64.b64encode(raw).decode() for name, raw in sources.items()},
             "source_sha256": {name: sha(raw) for name, raw in sources.items()},
+            "startup_source": base64.b64encode(startup_source).decode(),
+            "startup_sha256": sha(startup_source),
             "original": original,
         }
         bootstrap = "import json,sys\np=json.load(sys.stdin)\ns={'__name__':'joint_window_fixture'}\nexec(compile(p['source'],'<fixture>','exec'),s)\nprint(json.dumps(s['worker'](p),sort_keys=True))\n"

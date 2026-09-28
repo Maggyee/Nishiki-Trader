@@ -26,6 +26,9 @@
   host admission. A [post-write crash check](progress/portfolio-installed-joint-post-write-crash-2026-09-28.md)
   now confirms the short private kernel lease survives its owner, while the
   consumed scope cannot be reopened; no host restart qualification follows.
+  A [read-only startup check candidate](progress/portfolio-joint-startup-check-candidate-2026-09-28.md)
+  independently pins the six installed source hashes and refuses changed
+  selection in an isolated root; protected host staging remains pending.
   The installer is staged under ephemeral `/run`; repeat installation is
   prohibited. There is still no independent startup attestation or installed
   joint nft table/activation controller. The [disposable packet-path test](progress/portfolio-joint-proxy-policy-packet-2026-09-28.md)

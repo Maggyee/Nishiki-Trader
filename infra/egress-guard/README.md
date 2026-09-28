@@ -30,6 +30,12 @@ against the existing consumed local attempt ledger. It persists at most the firs
 of future exclusion. The kernel observer and fixed source inventory are staged
 but uninstalled; synthetic guard reports never qualify actual egress or admission.
 
+`gateway_window_startup_check.py` is a separate read-only fixed-path startup
+candidate. The disposable root fixture stages it under `/run` and checks its
+six independent source pins, selected base manifest and protected file mode.
+It has no nft writer or permit interface; checkout invocation cannot qualify
+its own startup. See the [startup candidate review](../../docs/progress/portfolio-joint-startup-check-candidate-2026-09-28.md).
+
 The current disposable joint fixture completes the fixed ordered plan:
 
 ```bash

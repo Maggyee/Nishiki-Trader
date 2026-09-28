@@ -22,6 +22,10 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the separately pinned read-only startup selection candidate, read
+`docs/progress/portfolio-joint-startup-check-candidate-2026-09-28.md`.
+Its protected one-shot check does not attest other processes or activate nft.
+
 For the selected installed controller's post-nft-write crash and consumed
 scope refusal in a private namespace, read
 `docs/progress/portfolio-installed-joint-post-write-crash-2026-09-28.md`.

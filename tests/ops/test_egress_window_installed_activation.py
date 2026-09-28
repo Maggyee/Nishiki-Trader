@@ -22,8 +22,9 @@ def test_installed_sources_join_real_isolated_one_shot_activation(tmp_path, caps
     report = json.loads(report_path.read_bytes())
     status = json.loads(capsys.readouterr().out)
     assert status["report_sha256"] == module.sha(report_path.read_bytes())
-    assert status["checks"] == 21
+    assert status["checks"] == 24
     assert report["base_checks"] == 40
+    assert re.fullmatch("[0-9a-f]{64}", report["startup_sha256"])
     assert report["host_observations_unchanged"] is True
     assert report["host_installation_performed"] is False
     assert report["venue_requests_made"] == 0
