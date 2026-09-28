@@ -1,9 +1,11 @@
 # Joint-window read-only host installation
 
-Phase: operator-reviewed first installation only. This procedure publishes six
+Phase: first installation completed 2026-09-28. This procedure publishes six
 root-owned 0444 sources and one root-owned 0600 manifest alongside the existing
 base installation. It does not activate nft rules, collectors, venue access or
-trading. No host joint installation has been performed by this runbook.
+trading. Do not repeat `apply` on the installed host; the observed outcome and
+remaining blockers are in
+[the host installation record](progress/portfolio-joint-window-host-installation-2026-09-28.md).
 
 ## Selection and preflight
 
@@ -56,7 +58,8 @@ immediately before staging; changes require another independent selection.
 
 ## Protected staging and first installation
 
-Only after the independent selection and separate host installation decision,
+For an initial installation on a host where every joint path is still absent,
+only after the independent selection and separate host installation decision,
 choose a **new, empty** root-owned directory under `/run` with root-owned,
 non-group-writable ancestors. The following commands are an operator procedure,
 not an automated deployment. A failed command stops the procedure.

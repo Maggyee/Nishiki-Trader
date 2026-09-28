@@ -1039,8 +1039,9 @@ executing code. The new `gateway_window_entry.py` accepts only isolated root
 `--check`, pins the base helper and inventory adapter, and checks the held entry
 bytes through that inventory. It always exits unqualified with every admission
 flag false; there is no activation, installation or permission interface.
-The running entry itself has no independent protected pin, and no joint-window
-manifest or entry is installed on the host. See the
+The running entry itself has no independent protected pin. The joint manifest
+and entry were installed on the host September 28; this earlier source review
+predates installation. See the
 [source-inventory review](../../docs/progress/portfolio-joint-window-source-inventory-2026-09-27.md).
 The [entry review](../../docs/progress/portfolio-joint-window-entry-2026-09-27.md)
 records the remaining host authority boundary.
@@ -1084,11 +1085,13 @@ must fail closed. The September 27 read-only host observation of
 the disposable fixture uses a different base hash. Observing the host hash
 does not authorize an install. The bundle hash is an operator-selected pin,
 not publisher authentication or continuous attestation of a future running
-entry. No host extension has been installed.
+entry. The read-only extension was installed September 28, with all admission
+fields still false.
 See the [extension review](../../docs/progress/portfolio-joint-window-extension-bundle-2026-09-27.md).
 The [host first-install runbook](../../docs/runbook-joint-window-read-only-install.md)
-records independently selected SHA256 inputs, protected staging, one-time
-apply and read-only verification; it has not been executed on the host.
+records SHA256 selection, protected staging, one-time apply and read-only
+verification. It was executed once; see the
+[host installation record](../../docs/progress/portfolio-joint-window-host-installation-2026-09-28.md).
 
 The disposable `gateway_window_installation_selftest.py` reuses the pinned base
 installation acceptance inside fresh private mount/network/PID namespaces, then

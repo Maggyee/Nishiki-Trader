@@ -22,10 +22,16 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
-For the concrete, still-unexecuted protected host installation procedure and
-the two independently selected SHA256 inputs, read
-`docs/runbook-joint-window-read-only-install.md`. It stops on partial writes and
-cannot authorize a blackout, collector, venue request or trading.
+For the completed read-only host joint-window installation, selected hashes,
+fresh-process checks and remaining admission blockers, read
+`docs/progress/portfolio-joint-window-host-installation-2026-09-28.md`.
+The six sources and joint manifest are installed; nft rules and the activation
+controller remain absent, and no network access is authorized.
+
+For the protected host installation procedure and its fail-closed repeat-install
+boundary, read `docs/runbook-joint-window-read-only-install.md`. The initial
+installation completed September 28; this runbook does not authorize a second
+attempt, blackout, collector, venue request or trading.
 
 For the read-only cross-namespace Docker/PID and dual-stack route census, read
 `docs/progress/portfolio-host-namespace-inventory-2026-09-27.md`.
@@ -45,31 +51,33 @@ an independently selected base manifest hash before any writes. The isolated
 fixture publishes a manifest only in a disposable namespace. The protected
 read-only `audit` compares installed bytes against the selected archive, but
 cannot attest a running process. Protected `check-entry` runs selected entry
-bytes only in its own isolated process; the real host extension is not installed.
+bytes only in its own isolated process. This candidate was installed on the
+host September 28; the review describes its earlier staging.
 
 For the real isolated-root joint-window entry check, read
 `docs/progress/portfolio-joint-window-isolated-installation-2026-09-27.md`.
 The base installation and six fixed joint sources pass fresh-process checks
-in private namespaces; no host joint installation or independent startup
-authority follows.
+in private namespaces; the September 28 host install is documented separately
+above and does not establish independent startup authority.
 
-For the staged read-only joint-window `--check` entry and its missing installed
-trust anchor, read `docs/progress/portfolio-joint-window-entry-2026-09-27.md`.
-It pins the base helper and six-source inventory in checkout code, but has no
-protected host installation or independently pinned running entry. Every
-admission field remains false.
+For the historical staged read-only joint-window `--check` entry, read
+`docs/progress/portfolio-joint-window-entry-2026-09-27.md`.
+It pins the base helper and six-source inventory in checkout code; its original
+review predates the host installation. The installed entry still lacks an
+independently pinned startup path. Every admission field remains false.
 
 For the earlier five-file joint-window source inventory and its uninstalled
 root trust boundary, read
 `docs/progress/portfolio-joint-window-source-inventory-2026-09-27.md`.
 That review records the original five-file staged test; the read-only entry
-above now extends the inventory to six. Nothing is installed or authorized
-on the host.
+above later extended the inventory to six. Its no-install conclusion describes
+the earlier review, not the September 28 host state. No admission is authorized.
 
 For the isolated veth/FORWARD-mark/SNAT/WAN packet acceptance and its host
 boundary, read `docs/progress/portfolio-joint-packet-path-acceptance-2026-09-27.md`.
-Real disposable packet and denial counters passed, but no host installation,
-continuous exclusion, full caller coverage or network admission follows.
+Real disposable packet and denial counters passed, but no host packet-rule
+installation, continuous exclusion, full caller coverage or network admission
+follows.
 
 For the staged atomic joint blackout transaction in a disposable nft namespace,
 read `docs/progress/portfolio-joint-blackout-activation-2026-09-26.md`.

@@ -1,5 +1,9 @@
 # Joint-window extension bundle staged
 
+Historical candidate review. The selected bundle was installed on the host
+2026-09-28; see [host installation](portfolio-joint-window-host-installation-2026-09-28.md)
+for current state and remaining blockers.
+
 Date: 2026-09-27. `gateway_window_package.py` adds a fixed first-install-only
 extension for the already installed base four-file authority. `build` produces
 a deterministic uncompressed USTAR archive with exactly six joint-window
@@ -53,9 +57,11 @@ Host account/path observations and caller namespaces match before and after.
 The actual installed base helper independently returns
 `installation_verified_inactive`, exit 2, with no network admission.
 
-This package is an operator-review candidate, not a host installation or
-independent runtime attestation. Root-owned startup protection and operator
-selection of the archive and base manifest must precede applying it on the
-host. The host has no joint manifest, rules or protected entry. The extension
-alone cannot prove continuous 425-second exclusion, source/mark ownership, complete caller
-coverage, fresh provider bounds or real collection. No trading path changed.
+At the September 27 review, this package was an operator-review candidate,
+not a host installation or independent runtime attestation. Root-owned startup
+protection and selection of the archive and base manifest were prerequisites
+to applying it. The September 28 installation added the joint manifest and
+entry, but no joint nft rules or independently attested startup path. The
+extension alone cannot prove continuous 425-second exclusion, source/mark
+ownership, complete caller coverage, fresh provider bounds or real collection.
+No trading path changed.
