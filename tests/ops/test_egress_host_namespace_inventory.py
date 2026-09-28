@@ -39,12 +39,21 @@ def test_census_reconciles_docker_and_dual_stack_without_admission(inventory_mod
         elif argv[2] == module.READLINK:
             raw = "net:[100]\n" if argv[3].startswith("/proc/1/") else "net:[200]\n"
         elif argv[2] == module.NSENTER:
-            pid, family = argv[4], argv[8]
-            raw = (
-                json.dumps([{"dst": "default", "dev": "eth0"}])
-                if (pid, family) in {("1", "-4"), ("1", "-6"), ("2", "-4")}
-                else "[]"
-            )
+            pid, family, kind = argv[4], argv[8], argv[10]
+            if kind == "route":
+                raw = (
+                    json.dumps(
+                        [{"dst": "default", "dev": "eth0"}, {"dst": "10.0.0.0/8", "table": 52}]
+                    )
+                    if (pid, family) in {("1", "-4"), ("1", "-6"), ("2", "-4")}
+                    else "[]"
+                )
+            else:
+                raw = json.dumps(
+                    [{"priority": 1, "fwmark": "0x80000", "fwmask": "0xff0000", "table": "52"}]
+                    if pid == "1"
+                    else [{"priority": 32766, "table": "main"}]
+                )
         else:
             pytest.fail("unexpected command")
         return {"status": "ok", "sha256": "a" * 64, "raw": raw}
@@ -56,15 +65,24 @@ def test_census_reconciles_docker_and_dual_stack_without_admission(inventory_mod
         "docker_count": 1,
         "ipv4_default_namespaces": 2,
         "ipv6_default_namespaces": 1,
+        "ipv4_policy_rules": 2,
+        "ipv6_policy_rules": 2,
+        "marked_policy_namespaces": 1,
         "read_failures_or_churn": 0,
     }
+    assert report["schema_version"] == "portfolio.host_namespace_inventory.v2"
+    assert report["namespaces"][0]["routes"]["ipv4"][1]["dst"] == "10.0.0.0/8"
+    assert report["namespaces"][0]["policy_rules"]["ipv4"][0]["fwmark"] == "0x80000"
     assert report["docker"] == [{"id": container, "pid": 2, "ns": 200}]
     assert len(calls) == len(report["observations"])
     assert report["complete_caller_coverage_verified"] is False
     assert report["network_admitted"] is False
 
 
-def test_pid_reuse_or_unreadable_namespace_fails_closed(inventory_module, monkeypatch):
+@pytest.mark.parametrize("unreadable_kind", ["route", "rule"])
+def test_pid_reuse_or_unreadable_namespace_fails_closed(
+    inventory_module, monkeypatch, unreadable_kind
+):
     module = inventory_module
     monkeypatch.setattr(module.os, "readlink", lambda _: "net:[100]")
     links = 0
@@ -80,9 +98,9 @@ def test_pid_reuse_or_unreadable_namespace_fails_closed(inventory_module, monkey
             links += 1
             raw = "net:[999]\n" if links == 2 else "net:[100]\n"
         elif argv[2] == module.NSENTER:
-            if argv[8] == "-6":
+            if argv[8] == "-6" and argv[10] == unreadable_kind:
                 return {"status": "command_failed", "sha256": "b" * 64, "raw": ""}
-            raw = '[{"dst":"default","dev":"eth0"}]'
+            raw = '[{"dst":"default","dev":"eth0"}]' if argv[10] == "route" else "[]"
         else:
             pytest.fail("unexpected command")
         return {"status": "ok", "sha256": "a" * 64, "raw": raw}
@@ -90,9 +108,15 @@ def test_pid_reuse_or_unreadable_namespace_fails_closed(inventory_module, monkey
     monkeypatch.setattr(module, "command", command)
     report = module.inventory()
     assert "namespace_representative_changed:100" in report["blockers"]
-    assert "read_failed:namespace_100_ipv6:command_failed" in report["blockers"]
-    assert report["namespaces"][0]["defaults"]["ipv6"] is None
-    assert report["summary"]["ipv6_default_namespaces"] is None
+    if unreadable_kind == "rule":
+        assert "read_failed:namespace_100_ipv6_rules:command_failed" in report["blockers"]
+        assert report["namespaces"][0]["policy_rules"]["ipv6"] is None
+        assert report["summary"]["ipv6_policy_rules"] is None
+        assert report["summary"]["marked_policy_namespaces"] is None
+    else:
+        assert "read_failed:namespace_100_ipv6_routes:command_failed" in report["blockers"]
+        assert report["namespaces"][0]["defaults"]["ipv6"] is None
+        assert report["summary"]["ipv6_default_namespaces"] is None
     assert report["summary"]["read_failures_or_churn"] == 2
     assert report["network_admitted"] is False
 
@@ -107,6 +131,42 @@ def test_command_allowlist_and_bounded_shapes(inventory_module):
         module.namespaces('{"namespaces":[{"ns":100,"pid":1},{"ns":100,"pid":2}]}')
     with pytest.raises(ValueError, match="docker_id_list"):
         module.ids('"untrusted-id"\n')
+    with pytest.raises(ValueError, match="route_or_policy_list"):
+        module.parse_rows('["untrusted-rule"]')
+    assert not module.allowed(
+        (
+            module.SUDO,
+            "-n",
+            module.NSENTER,
+            "--target",
+            "1",
+            "--net",
+            "--",
+            module.IP,
+            "-4",
+            "-j",
+            "rule",
+            "add",
+        )
+    )
+    assert not module.allowed(
+        (
+            module.SUDO,
+            "-n",
+            module.NSENTER,
+            "--target",
+            "1",
+            "--net",
+            "--",
+            module.IP,
+            "-4",
+            "-j",
+            "route",
+            "add",
+            "table",
+            "all",
+        )
+    )
 
 
 def test_report_is_exclusive_and_private(inventory_module, tmp_path, monkeypatch, capsys):

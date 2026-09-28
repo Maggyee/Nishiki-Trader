@@ -28,15 +28,20 @@ fresh-process checks and remaining admission blockers, read
 The six sources and joint manifest are installed; nft rules and the activation
 controller remain absent, and no network access is authorized.
 
+For the current read-only route/policy census across host and Docker namespaces,
+read `docs/progress/portfolio-host-route-policy-inventory-2026-09-28.md`.
+It retains all bounded dual-stack route and policy-rule rows, but does not
+establish continuous coverage, mark ownership or provider-visible source.
+
 For the protected host installation procedure and its fail-closed repeat-install
 boundary, read `docs/runbook-joint-window-read-only-install.md`. The initial
 installation completed September 28; this runbook does not authorize a second
 attempt, blackout, collector, venue request or trading.
 
-For the read-only cross-namespace Docker/PID and dual-stack route census, read
+For the historical v1 cross-namespace Docker/PID and default-route census, read
 `docs/progress/portfolio-host-namespace-inventory-2026-09-27.md`.
-It maps 16 currently routed Docker namespaces to running containers, but
-cannot prove future caller coverage or a provider-visible source.
+It mapped 16 routed Docker namespaces to running containers at that instant;
+the newer v2 census above also retains non-default routes and policy rules.
 
 For the read-only host egress topology and the still-missing all-caller/source
 proof, read `docs/progress/portfolio-host-egress-topology-2026-09-27.md`.

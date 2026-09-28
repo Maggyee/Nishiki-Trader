@@ -1,4 +1,4 @@
-"""One-shot read-only census of current host, Docker and network namespaces.
+"""One-shot read-only route and policy census of host/Docker namespaces.
 
 The census cannot prove future callers, public source identity or continuous
 exclusion. It does not activate nft rules, contact a venue or admit collection.
@@ -42,7 +42,7 @@ def allowed(argv):
         )
     if argv[:3] == (SUDO, "-n", READLINK) and len(argv) == 4:
         return re.fullmatch(r"/proc/[1-9][0-9]*/ns/net", argv[3]) is not None
-    if argv[:4] == (SUDO, "-n", NSENTER, "--target") and len(argv) == 14:
+    if argv[:4] == (SUDO, "-n", NSENTER, "--target") and len(argv) in (12, 14):
         return (
             argv[4].isascii()
             and argv[4].isdecimal()
@@ -52,6 +52,8 @@ def allowed(argv):
             in (
                 ("-4", "-j", "route", "show", "table", "all"),
                 ("-6", "-j", "route", "show", "table", "all"),
+                ("-4", "-j", "rule", "show"),
+                ("-6", "-j", "rule", "show"),
             )
         )
     return False
@@ -146,19 +148,15 @@ def ns_link(raw):
     return int(match[1])
 
 
-def routes(raw):
+def parse_rows(raw):
     document = json.loads(raw)
     if (
         not isinstance(document, list)
         or len(document) > MAX_ROWS
         or any(not isinstance(row, dict) for row in document)
     ):
-        raise ValueError("route_list")
-    return [
-        {key: row[key] for key in ("dev", "gateway", "table") if key in row}
-        for row in document
-        if row.get("dst") == "default"
-    ]
+        raise ValueError("route_or_policy_list")
+    return document
 
 
 def inventory():
@@ -177,9 +175,9 @@ def inventory():
         for ns, pid in sorted(before.items()):
             link_cmd = (SUDO, "-n", READLINK, f"/proc/{pid}/ns/net")
             prior = observe(link_cmd, f"namespace_{ns}_before", ns_link)
-            defaults = {}
+            defaults, routing, policy = {}, {}, {}
             for family in (4, 6):
-                cmd = (
+                prefix = (
                     SUDO,
                     "-n",
                     NSENTER,
@@ -190,16 +188,37 @@ def inventory():
                     IP,
                     f"-{family}",
                     "-j",
-                    "route",
-                    "show",
-                    "table",
-                    "all",
                 )
-                defaults[f"ipv{family}"] = observe(cmd, f"namespace_{ns}_ipv{family}", routes)
+                route_rows = observe(
+                    (*prefix, "route", "show", "table", "all"),
+                    f"namespace_{ns}_ipv{family}_routes",
+                    parse_rows,
+                )
+                rule_rows = observe(
+                    (*prefix, "rule", "show"),
+                    f"namespace_{ns}_ipv{family}_rules",
+                    parse_rows,
+                )
+                routing[f"ipv{family}"] = route_rows
+                policy[f"ipv{family}"] = rule_rows
+                defaults[f"ipv{family}"] = (
+                    None
+                    if route_rows is None
+                    else [row for row in route_rows if row.get("dst") == "default"]
+                )
             after_link = observe(link_cmd, f"namespace_{ns}_after", ns_link)
             if prior != ns or after_link != ns:
                 blockers.append(f"namespace_representative_changed:{ns}")
-            rows.append({"ns": ns, "pid": pid, "host": ns == current_ns, "defaults": defaults})
+            rows.append(
+                {
+                    "ns": ns,
+                    "pid": pid,
+                    "host": ns == current_ns,
+                    "defaults": defaults,
+                    "routes": routing,
+                    "policy_rules": policy,
+                }
+            )
     docker_rows = []
     if docker_before:
         cmd = (SUDO, "-n", DOCKER, "inspect", "--format", "{{json .State.Pid}}", *docker_before)
@@ -241,6 +260,25 @@ def inventory():
             return None
         return sum(bool(row["defaults"][family]) for row in rows)
 
+    def count_rules(family):
+        if before is None or any(row["policy_rules"][family] is None for row in rows):
+            return None
+        return sum(len(row["policy_rules"][family]) for row in rows)
+
+    if before is None or any(
+        row["policy_rules"][family] is None for row in rows for family in ("ipv4", "ipv6")
+    ):
+        marked_namespaces = None
+    else:
+        marked_namespaces = sum(
+            any(
+                "fwmark" in rule
+                for family in ("ipv4", "ipv6")
+                for rule in row["policy_rules"][family]
+            )
+            for row in rows
+        )
+
     blockers.extend(
         (
             "point_in_time_not_continuous_coverage",
@@ -249,7 +287,7 @@ def inventory():
         )
     )
     return {
-        "schema_version": "portfolio.host_namespace_inventory.v1",
+        "schema_version": "portfolio.host_namespace_inventory.v2",
         "status": "read_only_snapshot_unqualified",
         "started_ns": started_ns,
         "finished_ns": time.time_ns(),
@@ -263,6 +301,9 @@ def inventory():
             "docker_count": len(docker_rows) if docker_complete else None,
             "ipv4_default_namespaces": count_defaults("ipv4"),
             "ipv6_default_namespaces": count_defaults("ipv6"),
+            "ipv4_policy_rules": count_rules("ipv4"),
+            "ipv6_policy_rules": count_rules("ipv6"),
+            "marked_policy_namespaces": marked_namespaces,
             "read_failures_or_churn": len(blockers) - 3,
         },
         "complete_caller_coverage_verified": False,
