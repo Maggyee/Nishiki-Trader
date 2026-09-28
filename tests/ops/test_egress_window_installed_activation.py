@@ -22,7 +22,7 @@ def test_installed_sources_join_real_isolated_one_shot_activation(tmp_path, caps
     report = json.loads(report_path.read_bytes())
     status = json.loads(capsys.readouterr().out)
     assert status["report_sha256"] == module.sha(report_path.read_bytes())
-    assert status["checks"] == 20
+    assert status["checks"] == 21
     assert report["base_checks"] == 40
     assert report["host_observations_unchanged"] is True
     assert report["host_installation_performed"] is False
@@ -38,6 +38,15 @@ def test_installed_sources_join_real_isolated_one_shot_activation(tmp_path, caps
         "wan_mark_seen": True,
         "observer_refused_temporary_permit": True,
         "permits_cleared": True,
+    }
+    assert activation["post_write_crash"] == {
+        "intent_durable_before_write": True,
+        "kernel_timers_remain_active": True,
+        "observations": 0,
+        "fresh_owner_refused_consumed_scope": True,
+        "permits_empty": True,
+        "collector_denied_after_owner_crash": True,
+        "network_admitted": False,
     }
     for key in (
         "activation_history_verified",

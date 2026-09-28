@@ -1130,6 +1130,11 @@ rule. Its [local-permit successor](../../docs/progress/portfolio-installed-joint
 then closes the selected witness, briefly grants a fixture-only peer and checks
 the marked FORWARD/SNAT/WAN path and post-NAT source. The installed observer
 rejects populated permits; the fixture flushes them before teardown. The
+[post-write crash continuation](../../docs/progress/portfolio-installed-joint-post-write-crash-2026-09-28.md)
+exits a separate installed-source owner after its second short nft write and
+before its first observation. Its timers persist, scope cannot be reopened and
+the collector remains denied; this is not host startup or continuous coverage.
+The
 [earlier integration](../../docs/progress/portfolio-installed-joint-activation-integration-2026-09-28.md)
 records the loopback-only stage. None proves host startup or source custody.
 

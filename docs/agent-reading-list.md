@@ -22,6 +22,12 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the selected installed controller's post-nft-write crash and consumed
+scope refusal in a private namespace, read
+`docs/progress/portfolio-installed-joint-post-write-crash-2026-09-28.md`.
+The short lease survives process exit; host startup and continuous coverage
+are still unproved.
+
 For the read-only host marked-route, assigned-source and dual-stack mangle/NAT
 inspection, read
 `docs/progress/portfolio-host-marked-route-source-review-2026-09-28.md`.

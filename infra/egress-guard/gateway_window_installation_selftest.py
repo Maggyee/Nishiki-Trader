@@ -8,6 +8,8 @@ import hashlib
 import json
 import os
 import subprocess
+import time
+import traceback
 from contextlib import contextmanager
 from pathlib import Path
 from types import SimpleNamespace
@@ -320,6 +322,9 @@ with socket.socket() as client:
         journal.close()
         holder.close()
     permitted = isolated_permitted_packet(base, kernel, route, pins, account)
+    crash = isolated_post_write_crash(
+        base, sources, kernel, route, pins, result["selection_sha256"], account, probe
+    )
     return {
         "status": result["status"],
         "selection_sha256": result["selection_sha256"],
@@ -330,6 +335,141 @@ with socket.socket() as client:
         "complete_caller_coverage_verified": result["complete_caller_coverage_verified"],
         "collector_empty_permit_denied": True,
         "local_permitted_packet": permitted,
+        "post_write_crash": crash,
+        "network_admitted": False,
+    }
+
+
+def isolated_post_write_crash(base, sources, kernel, route, pins, selection, account, probe):
+    """Kill a fresh selected owner after nft accepts its write, before observation."""
+    deadline = time.monotonic() + 12
+    while True:
+        try:
+            for family in kernel.KINDS:
+                kernel.inspect_table(
+                    kernel.read_table(family),
+                    family,
+                    expected_static_sha256=pins[family],
+                    wan_interface="wan",
+                    collector=route["selection"],
+                    chain_text=kernel.read_netdev_chain() if family == "netdev" else None,
+                    expect_inactive=True,
+                )
+            break
+        except ValueError as exc:
+            if str(exc) != "kernel_window_not_inactive" or time.monotonic() >= deadline:
+                raise
+            time.sleep(0.1)
+
+    root = Path("/run/trader-egress-review/window-crash")
+    root.mkdir(mode=0o700)
+    pid = os.fork()
+    if pid == 0:
+        try:
+            verifier = load(sources["gateway_window_entry.py"])["_load_base"]()
+            inventory = load(sources["gateway_window_sources.py"])["RootSelectedWindowSources"](
+                verifier()
+            )
+            try:
+                installed = {name: inventory.source(name) for name in SOURCES[2:]}
+                if any(installed[name] != sources[name] for name in installed):
+                    raise RuntimeError("crash_owner_installed_source_changed")
+            finally:
+                inventory.close()
+            custody = SimpleNamespace(**load(installed["gateway_window_custody.py"]))
+            witness_module = SimpleNamespace(**load(installed["gateway_window_witness.py"]))
+            activation = SimpleNamespace(**load(installed["gateway_window_activation.py"]))
+            holder = custody.RootSelectedWindowSnapshot(verifier())
+            journal = witness_module.WindowWitness(root, holder)
+
+            def crash_after_write(*args, **kwargs):
+                written = subprocess.run(*args, **kwargs)
+                if written.returncode == 0:
+                    os._exit(23)
+                return written
+
+            activation.activate(holder, journal, duration_ms=8000, runner=crash_after_write)
+        except BaseException:
+            traceback.print_exc()
+            os._exit(24)
+        os._exit(25)
+    _, status = os.waitpid(pid, 0)
+    if os.waitstatus_to_exitcode(status) != 23:
+        raise RuntimeError("installed_joint_post_write_owner_did_not_crash")
+
+    witness_module = SimpleNamespace(**load(sources["gateway_window_witness.py"]))
+    events_path = root / witness_module.SCOPE / "events.jsonl"
+    raw = events_path.read_bytes()
+    archive = witness_module.replay(raw, expected_sha256=witness_module.digest(raw))
+    intent = json.loads(raw.splitlines()[1])
+    if (
+        archive["activation_prepared"] is not True
+        or archive["observations"] != 0
+        or archive["network_admitted"] is not False
+        or intent["selection_sha256"] != selection
+        or intent["static_rules_sha256"] != pins
+        or intent["duration_ms"] != 8000
+    ):
+        raise RuntimeError("installed_joint_crash_intent_not_retained")
+    try:
+        witness_module.WindowWitness(root, object())
+    except FileExistsError:
+        pass
+    else:
+        raise RuntimeError("installed_joint_crashed_scope_reopened")
+    if events_path.read_bytes() != raw:
+        raise RuntimeError("installed_joint_crashed_scope_changed")
+    for family in kernel.KINDS:
+        rows = kernel.read_table(family)["nftables"]
+        sets = {row["set"]["name"]: row["set"] for row in rows if "set" in row}
+        kernel._elements(sets["blackout"], family)
+        if sets["permits"].get("elem"):
+            raise RuntimeError("installed_joint_crashed_scope_permit_populated")
+    observed = kernel.observe(
+        expected_static_sha256=pins, wan_interface="wan", collector=route["selection"]
+    )
+    if observed["network_admitted"] is not False:
+        raise RuntimeError("installed_joint_crash_observer_admitted_network")
+
+    def collector_drop_count():
+        rows = kernel.read_table("inet")["nftables"]
+        forward = [
+            row["rule"] for row in rows if "rule" in row and row["rule"]["chain"] == "forward"
+        ]
+        return next(expr["counter"]["packets"] for expr in forward[2]["expr"] if "counter" in expr)
+
+    before_drop = collector_drop_count()
+    result = json.loads(
+        base["run"](
+            "/usr/bin/nsenter",
+            "-t",
+            str(route["pid"]),
+            "--net",
+            "/usr/bin/setpriv",
+            "--reuid",
+            str(account["uid"]),
+            "--regid",
+            str(account["gid"]),
+            "--clear-groups",
+            "--bounding-set=-all",
+            "--inh-caps=-all",
+            "--ambient-caps=-all",
+            "--no-new-privs",
+            "/usr/bin/python3",
+            "-I",
+            "-c",
+            probe,
+        )
+    )
+    if result != {"connected": False} or collector_drop_count() <= before_drop:
+        raise RuntimeError("installed_joint_crashed_owner_collector_not_denied")
+    return {
+        "intent_durable_before_write": True,
+        "kernel_timers_remain_active": True,
+        "observations": 0,
+        "fresh_owner_refused_consumed_scope": True,
+        "permits_empty": True,
+        "collector_denied_after_owner_crash": True,
         "network_admitted": False,
     }
 
@@ -679,6 +819,7 @@ def worker(payload):
             "isolated_repeat_activation_refused_unqualified",
             "installed_selected_collector_denied_by_empty_permits",
             "installed_selected_collector_local_permit_snat_and_wan",
+            "installed_selected_post_write_crash_refuses_scope_reopen",
         ],
         "base_manifest_sha256": document["base_manifest_sha256"],
         "window_bundle_sha256": payload["window_bundle_sha256"],
