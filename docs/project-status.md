@@ -18,7 +18,9 @@
   `audit`, `check-entry` and fresh direct entry checks pass without admission.
   A [disposable installed-source integration](progress/portfolio-installed-joint-activation-integration-2026-09-28.md)
   now joins selected installed bytes to a short one-shot nft transaction and
-  witness, with empty permits and no admission.
+  witness. Its [collector-aware successor](progress/portfolio-installed-joint-collector-denial-2026-09-28.md)
+  denies a capability-free caller with empty permits at the selected FORWARD
+  rule, still without admission.
   The installer is staged under ephemeral `/run`; repeat installation is
   prohibited. There is still no independent startup attestation or installed
   joint nft table/activation controller. The [disposable packet-path test](progress/portfolio-joint-proxy-policy-packet-2026-09-28.md)

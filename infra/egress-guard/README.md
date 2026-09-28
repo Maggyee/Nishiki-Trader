@@ -1116,9 +1116,11 @@ write-once under ignored `data/`; the parent checks that host installation
 paths, account databases and caller namespaces match before and after. The
 fixture now also selects the installed sources through `TrustedInstallation`,
 performs one short isolated nft blackout with empty permits, journals one
-observation and rejects repeat activation. Its
-[integration report](../../docs/progress/portfolio-installed-joint-activation-integration-2026-09-28.md)
-records the result and remaining host boundaries.
+observation and rejects repeat activation. The
+[collector-selected successor](../../docs/progress/portfolio-installed-joint-collector-denial-2026-09-28.md)
+also checks a capability-free local caller is dropped at the selected FORWARD
+rule. The [earlier integration](../../docs/progress/portfolio-installed-joint-activation-integration-2026-09-28.md)
+records the loopback-only stage; neither proves host startup or source custody.
 
 `gateway_window_witness.py` consumes a private one-shot directory before
 recording held snapshots. Its fsynced claim, optional activation intent and

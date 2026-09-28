@@ -8,6 +8,7 @@ import hashlib
 import json
 import os
 import subprocess
+from contextlib import contextmanager
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -55,12 +56,100 @@ def observation(base):
     return result
 
 
-def installed_activation_probe(base, sources, base_manifest_sha256):
+@contextmanager
+def isolated_collector_path(base):
+    """Build only disposable collector/WAN network namespaces and local veths."""
+    if [row["ifname"] for row in json.loads(base["run"]("/usr/sbin/ip", "-j", "link", "show"))] != [
+        "lo"
+    ]:
+        raise RuntimeError("fixture_joint_network_not_empty")
+    processes = []
+    try:
+        for _ in range(2):
+            process = subprocess.Popen(
+                [
+                    "/usr/bin/unshare",
+                    "--net",
+                    "/usr/bin/python3",
+                    "-I",
+                    "-c",
+                    "import sys;print('ready',flush=True);sys.stdin.read()",
+                ],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                env=ENV,
+                cwd="/",
+            )
+            processes.append(process)
+            if process.stdout.readline().strip() != "ready":
+                raise RuntimeError("fixture_joint_network_child_failed")
+        collector, peer = processes
+        ip = "/usr/sbin/ip"
+        base["run"](ip, "link", "set", "lo", "up")
+        for local, remote, pid, host_ip, child_ip in (
+            ("gw-jc1", "client", collector.pid, "192.0.2.1/24", "192.0.2.2/24"),
+            ("wan", "peer", peer.pid, "198.51.100.1/24", "198.51.100.2/24"),
+        ):
+            base["run"](ip, "link", "add", local, "type", "veth", "peer", "name", remote)
+            base["run"](ip, "link", "set", remote, "netns", str(pid))
+            base["run"](ip, "address", "add", host_ip, "dev", local)
+            base["run"](ip, "link", "set", local, "up")
+            base["run"](
+                "/usr/bin/nsenter",
+                "-t",
+                str(pid),
+                "--net",
+                ip,
+                "address",
+                "add",
+                child_ip,
+                "dev",
+                remote,
+            )
+            base["run"](
+                "/usr/bin/nsenter", "-t", str(pid), "--net", ip, "link", "set", remote, "up"
+            )
+        base["run"](
+            "/usr/bin/nsenter",
+            "-t",
+            str(collector.pid),
+            "--net",
+            ip,
+            "route",
+            "add",
+            "198.51.100.0/24",
+            "via",
+            "192.0.2.1",
+        )
+        Path("/proc/sys/net/ipv4/ip_forward").write_text("1\n")
+        yield {
+            "pid": collector.pid,
+            "selection": {
+                "host_link": "gw-jc1",
+                "child_ipv4": "192.0.2.2",
+                "source_ipv4": "198.51.100.1",
+            },
+        }
+    finally:
+        for process in reversed(processes):
+            if process.stdin is not None and not process.stdin.closed:
+                process.stdin.close()
+            try:
+                process.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait(timeout=2)
+
+
+def installed_activation_probe(base, sources, base_manifest_sha256, route):
     """Join held installed bytes to a one-shot kernel transaction in private namespaces."""
     verifier = load(sources["gateway_window_entry.py"])["_load_base"]()
     inventory = load(sources["gateway_window_sources.py"])["RootSelectedWindowSources"](verifier())
     try:
         selected = {name: inventory.source(name) for name in SOURCES[2:]}
+        account = dict(inventory.authority.account)
         if any(selected[name] != sources[name] for name in selected):
             raise RuntimeError("installed_joint_source_selection_changed")
     finally:
@@ -74,18 +163,27 @@ def installed_activation_probe(base, sources, base_manifest_sha256):
     if any("metainfo" not in row for row in existing["nftables"]):
         raise RuntimeError("fixture_joint_nft_rules_preexisting")
     table = kernel.TABLE
+    selected_mark = f"0x{kernel.COLLECTOR_MARK:x}"
     rules = f"""table inet {table} {{
  set blackout {{ type nf_proto; flags timeout; }}
  set permits {{ type ipv4_addr; flags timeout; }}
  chain output {{ type filter hook output priority -310; policy accept;
-  oifname "lo" accept; meta nfproto @blackout counter drop; }}
+  meta mark {selected_mark} counter drop; oifname "lo" accept;
+  meta nfproto @blackout counter drop; }}
+ chain input {{ type filter hook input priority -310; policy accept;
+  iifname "gw-jc1" counter drop; }}
  chain forward {{ type filter hook forward priority -310; policy accept;
+  iifname "gw-jc1" oifname "wan" ip saddr 192.0.2.2 ip daddr @permits tcp dport 443 meta mark set {selected_mark} accept;
+  oifname "gw-jc1" iifname "wan" ip saddr @permits ip daddr 192.0.2.2 tcp sport 443 ct state established accept;
+  iifname "gw-jc1" counter drop; oifname "gw-jc1" counter drop;
   meta nfproto @blackout counter drop; }}
 }}
 table netdev {table} {{
  set blackout {{ type ether_type; flags timeout; }}
  set permits {{ type ipv4_addr; flags timeout; }}
- chain egress {{ type filter hook egress device "lo" priority 0; policy accept;
+ chain egress {{ type filter hook egress device "wan" priority 0; policy accept;
+  meta mark {selected_mark} ip saddr 198.51.100.1 ip daddr @permits tcp dport 443 accept;
+  meta mark {selected_mark} counter drop;
   ether type @blackout counter drop; }}
 }}"""
     created = subprocess.run(
@@ -108,8 +206,8 @@ table netdev {table} {{
         "base_manifest_sha256": base_manifest_sha256,
         "observer_sha256": sha(selected["gateway_window_kernel.py"]),
         **custody._identity(),
-        "wan_interface": "lo",
-        "collector": None,
+        "wan_interface": "wan",
+        "collector": route["selection"],
         "static_rules_sha256": pins,
     }
     base["write"](Path(custody.PLAN), (json.dumps(plan, sort_keys=True) + "\n").encode(), 0o600)
@@ -142,6 +240,52 @@ table netdev {table} {{
             permits = [row for row in sets if row["name"] == "permits"]
             if len(permits) != 1 or permits[0].get("elem"):
                 raise RuntimeError("installed_joint_permit_unexpectedly_populated")
+
+        def collector_drop_count():
+            rows = kernel.read_table("inet")["nftables"]
+            forward = [
+                row["rule"] for row in rows if "rule" in row and row["rule"]["chain"] == "forward"
+            ]
+            return next(
+                expr["counter"]["packets"] for expr in forward[2]["expr"] if "counter" in expr
+            )
+
+        before_drop = collector_drop_count()
+        probe = """
+import json,os,socket
+status=dict(line.split(':',1) for line in open('/proc/self/status').read().splitlines())
+if os.getuid()==0 or int(status['CapEff'],16) or status['NoNewPrivs'].strip()!='1':
+ raise RuntimeError('fixture_collector_still_privileged')
+with socket.socket() as client:
+ client.settimeout(0.6)
+ try: client.connect(('198.51.100.2',443))
+ except OSError: print(json.dumps({'connected':False}))
+ else: print(json.dumps({'connected':True}))
+"""
+        client_result = json.loads(
+            base["run"](
+                "/usr/bin/nsenter",
+                "-t",
+                str(route["pid"]),
+                "--net",
+                "/usr/bin/setpriv",
+                "--reuid",
+                str(account["uid"]),
+                "--regid",
+                str(account["gid"]),
+                "--clear-groups",
+                "--bounding-set=-all",
+                "--inh-caps=-all",
+                "--ambient-caps=-all",
+                "--no-new-privs",
+                "/usr/bin/python3",
+                "-I",
+                "-c",
+                probe,
+            )
+        )
+        if client_result != {"connected": False} or collector_drop_count() <= before_drop:
+            raise RuntimeError("installed_joint_empty_permit_did_not_drop_collector")
         original_events = journal.expected
 
         def no_second_write(*_args, **_kwargs):
@@ -167,6 +311,7 @@ table netdev {table} {{
         "activation_history_verified": result["activation_history_verified"],
         "source_authenticated": result["source_authenticated"],
         "complete_caller_coverage_verified": result["complete_caller_coverage_verified"],
+        "collector_empty_permit_denied": True,
         "network_admitted": False,
     }
 
@@ -282,7 +427,8 @@ def worker(payload):
             raise RuntimeError("joint_window_entry_unexpected_admission")
 
     checked("fixed_joint_window_sources_observed_unqualified")
-    activation_probe = installed_activation_probe(base, sources, base_manifest_sha256)
+    with isolated_collector_path(base) as route:
+        activation_probe = installed_activation_probe(base, sources, base_manifest_sha256, route)
     original_manifest = MANIFEST.read_bytes()
     refused = json.loads(base["run"](*install_command, expected=1))
     if (
@@ -361,6 +507,7 @@ def worker(payload):
             "installed_sources_selected_for_isolated_kernel_activation",
             "isolated_one_shot_blackout_and_empty_permits",
             "isolated_repeat_activation_refused_unqualified",
+            "installed_selected_collector_denied_by_empty_permits",
         ],
         "base_manifest_sha256": document["base_manifest_sha256"],
         "window_bundle_sha256": payload["window_bundle_sha256"],

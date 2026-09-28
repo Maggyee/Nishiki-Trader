@@ -34,6 +34,12 @@ isolated root, read
 This tests the held selector and witness against the installed sources; its
 self-selected short fixture cannot prove host startup or continuous exclusion.
 
+For the successor collector-aware installed-source transaction and actual
+empty-permit packet refusal, read
+`docs/progress/portfolio-installed-joint-collector-denial-2026-09-28.md`.
+The selected unprivileged fixture caller is denied in a private namespace;
+permitted source/NAT, host coverage and continuous authority remain unproved.
+
 For the current read-only route/policy census across host and Docker namespaces,
 read `docs/progress/portfolio-host-route-policy-inventory-2026-09-28.md`.
 It retains all bounded dual-stack route and policy-rule rows, but does not
