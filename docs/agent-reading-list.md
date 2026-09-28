@@ -28,6 +28,12 @@ fresh-process checks and remaining admission blockers, read
 The six sources and joint manifest are installed; nft rules and the activation
 controller remain absent, and no network access is authorized.
 
+For installed source bytes joined to an actual one-shot nft transaction in an
+isolated root, read
+`docs/progress/portfolio-installed-joint-activation-integration-2026-09-28.md`.
+This tests the held selector and witness against the installed sources; its
+self-selected short fixture cannot prove host startup or continuous exclusion.
+
 For the current read-only route/policy census across host and Docker namespaces,
 read `docs/progress/portfolio-host-route-policy-inventory-2026-09-28.md`.
 It retains all bounded dual-stack route and policy-rule rows, but does not
@@ -92,8 +98,9 @@ adds four refusal cases. No host packet-rule installation or admission follows.
 For the staged atomic joint blackout transaction in a disposable nft namespace,
 read `docs/progress/portfolio-joint-blackout-activation-2026-09-26.md`.
 The controller checks selected empty rules, consumes an intent before writing
-all four timers, and observes the result with no permits. It is uninstalled and
-cannot prove uninterrupted host exclusion or authorize network access.
+all four timers, and observes the result with no permits. Its source is now
+installed read-only; no host activation controller has been deployed, and
+it cannot prove uninterrupted host exclusion or authorize network access.
 
 For the one-shot local joint-window snapshot journal and its remaining
 continuous-activation boundary, read

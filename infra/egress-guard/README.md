@@ -1114,15 +1114,20 @@ absent installation, self-consistent source/manifest drift, wrong manifest pins
 and changed source modes. Its report is
 write-once under ignored `data/`; the parent checks that host installation
 paths, account databases and caller namespaces match before and after. The
-earlier hand-staged acceptance remains historical; the new pinned report is in
-the [extension review](../../docs/progress/portfolio-joint-window-extension-bundle-2026-09-27.md).
+fixture now also selects the installed sources through `TrustedInstallation`,
+performs one short isolated nft blackout with empty permits, journals one
+observation and rejects repeat activation. Its
+[integration report](../../docs/progress/portfolio-installed-joint-activation-integration-2026-09-28.md)
+records the result and remaining host boundaries.
 
 `gateway_window_witness.py` consumes a private one-shot directory before
 recording held snapshots. Its fsynced claim, optional activation intent and
 chained samples pin selection,
 rule digests and nonincreasing expiry; drift or an uncertain write halts the
-object and a second creation fails. No root installation or kernel activation
-is attached. Intermittent sampling cannot prove uninterrupted exclusion,
+object and a second creation fails. Its read-only source is installed, but no
+operational host controller is attached. The private fixture exercises a
+short real nft transaction. Intermittent sampling cannot prove uninterrupted
+exclusion,
 regardless of elapsed lookback; it cannot supply `guard.verify()` or authorize
 network access. See the [witness review](../../docs/progress/portfolio-joint-window-witness-2026-09-26.md).
 
@@ -1130,6 +1135,7 @@ network access. See the [witness review](../../docs/progress/portfolio-joint-win
 It requires exact selected empty rules, fsyncs one activation intent and writes
 only timed IPv4/IPv6 blackout elements. It verifies the post-write selected
 snapshot and keeps every admission field false. The five-second real nft probe
-runs only in a disposable user/network namespace; this is not installed on the
-host and is not a continuous-exclusion controller. See the
+runs only in a disposable user/network namespace; a separate installed-source
+fixture joins it to root-held selection without deploying a host controller.
+It is not a continuous-exclusion controller. See the
 [activation probe](../../docs/progress/portfolio-joint-blackout-activation-2026-09-26.md).

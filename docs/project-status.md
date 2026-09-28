@@ -9,13 +9,16 @@
   [selected kernel observer](progress/portfolio-joint-window-held-selection-2026-09-26.md),
   [one-shot witness](progress/portfolio-joint-window-witness-2026-09-26.md) and
   [isolated blackout activation](progress/portfolio-joint-blackout-activation-2026-09-26.md)
-  remain uninstalled. A [six-source inventory](progress/portfolio-joint-window-source-inventory-2026-09-27.md)
+  remain undeployed as operational controllers. A [six-source inventory](progress/portfolio-joint-window-source-inventory-2026-09-27.md)
   and [read-only `--check` entry](progress/portfolio-joint-window-entry-2026-09-27.md)
   now have a [first-install-only extension](progress/portfolio-joint-window-extension-bundle-2026-09-27.md)
   with fixed source/installer pins and [isolated installed checks](progress/portfolio-joint-window-isolated-installation-2026-09-27.md).
   The [read-only host installation](progress/portfolio-joint-window-host-installation-2026-09-28.md)
   now holds all six 0444 sources and the base-bound 0600 joint manifest; protected
   `audit`, `check-entry` and fresh direct entry checks pass without admission.
+  A [disposable installed-source integration](progress/portfolio-installed-joint-activation-integration-2026-09-28.md)
+  now joins selected installed bytes to a short one-shot nft transaction and
+  witness, with empty permits and no admission.
   The installer is staged under ephemeral `/run`; repeat installation is
   prohibited. There is still no independent startup attestation or installed
   joint nft table/activation controller. The [disposable packet-path test](progress/portfolio-joint-proxy-policy-packet-2026-09-28.md)

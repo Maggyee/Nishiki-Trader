@@ -9,6 +9,7 @@ import json
 import os
 import subprocess
 from pathlib import Path
+from types import SimpleNamespace
 
 BASE_HARNESS_PIN = "e2b0e9a59cd3805ebfac2fb4b4b2c1992e8e9d2865862cf70c3876c06e42346e"
 ENTRY_PIN = "db9bacd6778111afdc4a163f305361bef6da8fecab56d5ec724b0d1cb66cdc7a"
@@ -52,6 +53,122 @@ def observation(base):
         except FileNotFoundError:
             result["installation_paths"][path] = "missing"
     return result
+
+
+def installed_activation_probe(base, sources, base_manifest_sha256):
+    """Join held installed bytes to a one-shot kernel transaction in private namespaces."""
+    verifier = load(sources["gateway_window_entry.py"])["_load_base"]()
+    inventory = load(sources["gateway_window_sources.py"])["RootSelectedWindowSources"](verifier())
+    try:
+        selected = {name: inventory.source(name) for name in SOURCES[2:]}
+        if any(selected[name] != sources[name] for name in selected):
+            raise RuntimeError("installed_joint_source_selection_changed")
+    finally:
+        inventory.close()
+
+    kernel = SimpleNamespace(**load(selected["gateway_window_kernel.py"]))
+    custody = SimpleNamespace(**load(selected["gateway_window_custody.py"]))
+    witness_module = SimpleNamespace(**load(selected["gateway_window_witness.py"]))
+    activation = SimpleNamespace(**load(selected["gateway_window_activation.py"]))
+    existing = json.loads(base["run"]("/usr/sbin/nft", "-j", "list", "ruleset"))
+    if any("metainfo" not in row for row in existing["nftables"]):
+        raise RuntimeError("fixture_joint_nft_rules_preexisting")
+    table = kernel.TABLE
+    rules = f"""table inet {table} {{
+ set blackout {{ type nf_proto; flags timeout; }}
+ set permits {{ type ipv4_addr; flags timeout; }}
+ chain output {{ type filter hook output priority -310; policy accept;
+  oifname "lo" accept; meta nfproto @blackout counter drop; }}
+ chain forward {{ type filter hook forward priority -310; policy accept;
+  meta nfproto @blackout counter drop; }}
+}}
+table netdev {table} {{
+ set blackout {{ type ether_type; flags timeout; }}
+ set permits {{ type ipv4_addr; flags timeout; }}
+ chain egress {{ type filter hook egress device "lo" priority 0; policy accept;
+  ether type @blackout counter drop; }}
+}}"""
+    created = subprocess.run(
+        ["/usr/sbin/nft", "-f", "-"],
+        input=rules.encode(),
+        capture_output=True,
+        env=ENV,
+        cwd="/",
+        timeout=3,
+        check=False,
+    )
+    if created.returncode:
+        raise RuntimeError("fixture_joint_nft_create_failed:" + created.stderr.decode()[-500:])
+    pins = {
+        family: kernel.digest(kernel._static(kernel.read_table(family)["nftables"]))
+        for family in kernel.KINDS
+    }
+    plan = {
+        "schema_version": custody.PROFILE,
+        "base_manifest_sha256": base_manifest_sha256,
+        "observer_sha256": sha(selected["gateway_window_kernel.py"]),
+        **custody._identity(),
+        "wan_interface": "lo",
+        "collector": None,
+        "static_rules_sha256": pins,
+    }
+    base["write"](Path(custody.PLAN), (json.dumps(plan, sort_keys=True) + "\n").encode(), 0o600)
+    holder = custody.RootSelectedWindowSnapshot(verifier())
+    root = Path("/run/trader-egress-review/window-witness")
+    root.mkdir(mode=0o700)
+    journal = witness_module.WindowWitness(root, holder)
+    try:
+        result = activation.activate(holder, journal, duration_ms=10_000)
+        archived = witness_module.replay(
+            journal.expected, expected_sha256=witness_module.digest(journal.expected)
+        )
+        if (
+            result["status"] != "local_blackout_transaction_observed_unqualified"
+            or archived["activation_prepared"] is not True
+            or archived["observations"] != 1
+            or any(
+                result[field] is not False
+                for field in (
+                    "activation_history_verified",
+                    "source_authenticated",
+                    "complete_caller_coverage_verified",
+                    "network_admitted",
+                )
+            )
+        ):
+            raise RuntimeError("installed_joint_activation_unexpected_admission")
+        for family in kernel.KINDS:
+            sets = [row["set"] for row in kernel.read_table(family)["nftables"] if "set" in row]
+            permits = [row for row in sets if row["name"] == "permits"]
+            if len(permits) != 1 or permits[0].get("elem"):
+                raise RuntimeError("installed_joint_permit_unexpectedly_populated")
+        original_events = journal.expected
+
+        def no_second_write(*_args, **_kwargs):
+            raise RuntimeError("installed_joint_second_nft_write_attempted")
+
+        try:
+            activation.activate(holder, journal, duration_ms=10_000, runner=no_second_write)
+        except ValueError as exc:
+            if str(exc) != "joint_activation_root_fresh_scope_and_duration_required":
+                raise
+        else:
+            raise RuntimeError("installed_joint_repeat_activation_allowed")
+        if journal.expected != original_events:
+            raise RuntimeError("installed_joint_repeat_activation_changed_archive")
+    finally:
+        journal.close()
+        holder.close()
+    return {
+        "status": result["status"],
+        "selection_sha256": result["selection_sha256"],
+        "archive_sha256": witness_module.digest(journal.expected),
+        "observations": archived["observations"],
+        "activation_history_verified": result["activation_history_verified"],
+        "source_authenticated": result["source_authenticated"],
+        "complete_caller_coverage_verified": result["complete_caller_coverage_verified"],
+        "network_admitted": False,
+    }
 
 
 def worker(payload):
@@ -165,6 +282,7 @@ def worker(payload):
             raise RuntimeError("joint_window_entry_unexpected_admission")
 
     checked("fixed_joint_window_sources_observed_unqualified")
+    activation_probe = installed_activation_probe(base, sources, base_manifest_sha256)
     original_manifest = MANIFEST.read_bytes()
     refused = json.loads(base["run"](*install_command, expected=1))
     if (
@@ -240,11 +358,15 @@ def worker(payload):
             "manifest_pin_drift_refused_by_audit",
             "source_mode_drift_refused",
             "source_mode_drift_refused_by_audit",
+            "installed_sources_selected_for_isolated_kernel_activation",
+            "isolated_one_shot_blackout_and_empty_permits",
+            "isolated_repeat_activation_refused_unqualified",
         ],
         "base_manifest_sha256": document["base_manifest_sha256"],
         "window_bundle_sha256": payload["window_bundle_sha256"],
         "window_installer_sha256": WINDOW_INSTALLER_PIN,
         "source_sha256": {name: sha(raw) for name, raw in sources.items()},
+        "activation_probe": activation_probe,
         "host_installation_performed": False,
         "host_deployment_qualified": False,
         "network_admitted": False,
