@@ -52,6 +52,18 @@ nft transaction remained inside the new private network namespace. See the
 [isolated probe record](../../docs/progress/portfolio-joint-protected-isolated-probe-2026-09-28.md)
 and [host invocation](../../docs/progress/portfolio-joint-protected-isolated-host-probe-2026-09-28.md).
 
+`gateway_window_failclosed_selftest.py` tests a prospective persistent
+default-deny baseline in unprivileged private user/net/mount/PID namespaces.
+Local IPv4/IPv6 OUTPUT and forwarded callers remain denied after the short
+blackout lease writer exits and its lease expires. The test does not install
+policy on the host or replace the current installed source set:
+
+```bash
+/usr/bin/python3 -I infra/egress-guard/gateway_window_failclosed_selftest.py --report data/NEW-PRIVATE-FAILCLOSED.json
+```
+
+See the [private expiry experiment](../../docs/progress/portfolio-joint-failclosed-expiry-2026-09-28.md).
+
 The current disposable joint fixture completes the fixed ordered plan:
 
 ```bash

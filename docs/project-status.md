@@ -37,6 +37,9 @@
   and 26 joint checks. Its [protected host invocation](progress/portfolio-joint-protected-isolated-host-probe-2026-09-28.md)
   also observed one private activation and rejected a wrong base pin. The
   staged `/run` probe is ephemeral; no host nft table or network admission follows.
+  A separate [private default-deny expiry experiment](progress/portfolio-joint-failclosed-expiry-2026-09-28.md)
+  keeps local IPv4/IPv6 OUTPUT and forwarded callers denied after an owner
+  exits and its short lease expires. It is not installed or pinned as a host policy.
   The installer is staged under ephemeral `/run`; repeat installation is
   prohibited. There is still no operational host activation-controller lifecycle
   or installed joint nft table/controller. The [disposable packet-path test](progress/portfolio-joint-proxy-policy-packet-2026-09-28.md)

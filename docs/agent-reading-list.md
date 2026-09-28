@@ -22,6 +22,10 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the private default-deny kernel experiment surviving lease expiry and
+owner exit, read `docs/progress/portfolio-joint-failclosed-expiry-2026-09-28.md`.
+It is not part of the protected installed controller or a host firewall rule.
+
 For the protected probe staged under `/run` and invoked on the host while
 writing nft only in its own disposable network namespace, read
 `docs/progress/portfolio-joint-protected-isolated-host-probe-2026-09-28.md`.
