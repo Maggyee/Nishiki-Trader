@@ -34,10 +34,12 @@
   A [protected isolated probe candidate](progress/portfolio-joint-protected-isolated-probe-2026-09-28.md)
   now selects those installed sources and performs one five-second nft blackout
   solely in nested private namespaces; its disposable fixture passes 40 base
-  and 26 joint checks, with no host probe staging or network admission.
+  and 26 joint checks. Its [protected host invocation](progress/portfolio-joint-protected-isolated-host-probe-2026-09-28.md)
+  also observed one private activation and rejected a wrong base pin. The
+  staged `/run` probe is ephemeral; no host nft table or network admission follows.
   The installer is staged under ephemeral `/run`; repeat installation is
-  prohibited. There is still no independent activation-controller startup
-  attestation or installed joint nft table/controller. The [disposable packet-path test](progress/portfolio-joint-proxy-policy-packet-2026-09-28.md)
+  prohibited. There is still no operational host activation-controller lifecycle
+  or installed joint nft table/controller. The [disposable packet-path test](progress/portfolio-joint-proxy-policy-packet-2026-09-28.md)
   now checks the selected local FORWARD/SNAT/WAN path alongside CONNMARK,
   Tailscale policy, Docker-like NAT and 13 refusals, including existing
   direct/proxy sockets and IPv6 host OUTPUT. It does not prove continuous host

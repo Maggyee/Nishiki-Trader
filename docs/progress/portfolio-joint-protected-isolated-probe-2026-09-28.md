@@ -26,12 +26,15 @@ the fixture selected it from its own checkout, so that hash is not independent
 host startup attestation.
 
 No probe has been staged or executed against the host's installed sources by
-this report. The existing protected startup script remains a read-only check;
-there is no host joint nft controller, service or persistent activation
+this fixture report; the later
+[host invocation](portfolio-joint-protected-isolated-host-probe-2026-09-28.md)
+staged and ran the fixed probe with its nft write confined to a private
+network namespace. The existing protected startup script remains a read-only
+check; there is no host joint nft controller, service or persistent activation
 journal. A five-second private lease and one observation cannot establish
 uninterrupted 425-second exclusion. Full host/container/proxy caller coverage,
 mark and public source ownership, fresh provider bounds and trading admission
-remain blocked. Any separate host invocation must first verify the committed
+remain blocked. Any future host invocation must first verify the committed
 probe hash independently, the previously selected base/joint manifest hashes,
 the protected target path and the absence of the host joint nft table; it may
 only execute the outer probe, which creates its own private namespaces.

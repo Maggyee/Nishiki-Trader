@@ -46,8 +46,11 @@ inner process creates a five-second nft blackout only after entering new
 mount/net/PID namespaces and confirming loopback-only empty nft state. The
 disposable installation fixture stages and exercises the probe in nested
 namespaces and refuses a wrong base selection. It always exits 2 with
-network admission false. This candidate has not been staged or run against
-the host installation. See the [isolated probe record](../../docs/progress/portfolio-joint-protected-isolated-probe-2026-09-28.md).
+network admission false. The committed candidate was also staged under
+protected `/run` and invoked against the host's installed sources; its only
+nft transaction remained inside the new private network namespace. See the
+[isolated probe record](../../docs/progress/portfolio-joint-protected-isolated-probe-2026-09-28.md)
+and [host invocation](../../docs/progress/portfolio-joint-protected-isolated-host-probe-2026-09-28.md).
 
 The current disposable joint fixture completes the fixed ordered plan:
 

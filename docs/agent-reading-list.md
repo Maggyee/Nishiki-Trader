@@ -22,6 +22,11 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the protected probe staged under `/run` and invoked on the host while
+writing nft only in its own disposable network namespace, read
+`docs/progress/portfolio-joint-protected-isolated-host-probe-2026-09-28.md`.
+It does not supply a host controller or continuous exclusion.
+
 For the fixed-path controller candidate that activates a five-second nft
 blackout only in nested private namespaces, read
 `docs/progress/portfolio-joint-protected-isolated-probe-2026-09-28.md`.
