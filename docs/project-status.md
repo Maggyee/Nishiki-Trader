@@ -18,9 +18,10 @@
   `audit`, `check-entry` and fresh direct entry checks pass without admission.
   The installer is staged under ephemeral `/run`; repeat installation is
   prohibited. There is still no independent startup attestation or installed
-  joint nft table/activation controller. The [disposable veth/FORWARD-mark/SNAT/WAN test](progress/portfolio-joint-packet-path-acceptance-2026-09-27.md)
-  now checks the selected local packet path alongside CONNMARK rules and nine
-  denials, including IPv6 host OUTPUT. It does not prove continuous host
+  joint nft table/activation controller. The [disposable packet-path test](progress/portfolio-joint-proxy-policy-packet-2026-09-28.md)
+  now checks the selected local FORWARD/SNAT/WAN path alongside CONNMARK,
+  Tailscale policy, Docker-like NAT and 13 refusals, including existing
+  direct/proxy sockets and IPv6 host OUTPUT. It does not prove continuous host
   exclusion or all-caller/source authority. A [read-only host topology audit](progress/portfolio-host-egress-topology-2026-09-27.md)
   observes 16 currently routed non-host network namespaces, an IPv6 default
   route and Docker/Tailscale mark/NAT interactions; the host has no joint nft

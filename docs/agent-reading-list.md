@@ -48,6 +48,12 @@ proof, read `docs/progress/portfolio-host-egress-topology-2026-09-27.md`.
 The live snapshot includes Docker namespaces, Tailscale marks and an IPv6
 default route; it is not a continuous firewall or provider-source witness.
 
+For the disposable joint packet test with Tailscale/Docker policy shapes,
+preexisting direct/proxy sockets and 13 denials, read
+`docs/progress/portfolio-joint-proxy-policy-packet-2026-09-28.md`.
+It does not prove the running host's rule order, continuous coverage or
+provider-visible source.
+
 For the reviewed first-install-only joint-window extension candidate and its
 isolated actual installation, read
 `docs/progress/portfolio-joint-window-extension-bundle-2026-09-27.md`.
@@ -80,9 +86,8 @@ the earlier review, not the September 28 host state. No admission is authorized.
 
 For the isolated veth/FORWARD-mark/SNAT/WAN packet acceptance and its host
 boundary, read `docs/progress/portfolio-joint-packet-path-acceptance-2026-09-27.md`.
-Real disposable packet and denial counters passed, but no host packet-rule
-installation, continuous exclusion, full caller coverage or network admission
-follows.
+The earlier nine-denial fixture passed; the later proxy/policy extension above
+adds four refusal cases. No host packet-rule installation or admission follows.
 
 For the staged atomic joint blackout transaction in a disposable nft namespace,
 read `docs/progress/portfolio-joint-blackout-activation-2026-09-26.md`.

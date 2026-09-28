@@ -1021,9 +1021,12 @@ observes a dual-stack default route, 16 currently routed non-host namespaces,
 Docker NAT and Tailscale/connmark policy rules. These current observations do
 not establish uninterrupted all-caller exclusion or mark/source ownership.
 An isolated packet-path regression now includes the same IPv4/IPv6 CONNMARK
-save/restore masks; the selected IPv4 route and nine denials, including an
-IPv6 host OUTPUT drop, still pass. It does not reproduce the full live
-Docker/Tailscale rule order or continuous host coverage.
+save/restore masks, Tailscale policy mark rules, Docker-like NAT and a local
+proxy. The selected IPv4 route and 13 denials, including existing direct/proxy
+sockets and IPv6 host OUTPUT, pass. The
+[packet-path review](../../docs/progress/portfolio-joint-proxy-policy-packet-2026-09-28.md)
+records why this does not reproduce the running host's full rule order or
+continuous coverage.
 
 `gateway_window_custody.py` adds a fixed-path selection adapter for a future
 isolated root invocation using the existing `TrustedInstallation` descriptors.

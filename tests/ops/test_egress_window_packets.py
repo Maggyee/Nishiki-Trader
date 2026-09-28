@@ -14,22 +14,27 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2] / "infra/egress-guard"
 PEER_SOURCE = """
-import socket,sys
+import socket,sys,threading
 print('ready',flush=True)
 if sys.stdin.readline() != 'serve\\n': raise RuntimeError('peer_not_started')
 listener=socket.socket();listener.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
 listener.bind(('198.51.100.2',443));listener.listen(16)
 print('serving',flush=True)
+def serve(connection):
+ with connection:
+  connection.settimeout(25)
+  try:
+   while True:
+    data=b''
+    while len(data)<128 and not data.endswith(b'\\n'):
+     part=connection.recv(128-len(data))
+     if not part: return
+     data+=part
+    connection.sendall((connection.getpeername()[0]+'\\n').encode() if data == b'fixture-peer\\n' else data)
+  except OSError: pass
 while True:
  connection,_=listener.accept()
- with connection:
-  connection.settimeout(2)
-  data=b''
-  while len(data)<128 and not data.endswith(b'\\n'):
-   part=connection.recv(128-len(data))
-   if not part: break
-   data+=part
-  connection.sendall((connection.getpeername()[0]+'\\n').encode() if data == b'fixture-peer\\n' else data)
+ threading.Thread(target=serve,args=(connection,),daemon=True).start()
 """
 
 
@@ -55,7 +60,8 @@ def worker(original):
     try:
         collector = guard.Child(source)
         competitor = guard.Child(source)
-        children.extend((collector, competitor))
+        proxy = guard.Child(source, new_net=False)
+        children.extend((collector, competitor, proxy))
         peer = subprocess.Popen(
             ["/usr/bin/unshare", "--net", "/usr/bin/python3", "-I", "-c", PEER_SOURCE],
             stdin=subprocess.PIPE,
@@ -68,6 +74,8 @@ def worker(original):
         if peer.stdout.readline().strip() != "ready":
             raise RuntimeError("fixture_peer_not_ready")
         run(ip, "link", "set", "lo", "up")
+        run(ip, "link", "add", "tailscale0", "type", "dummy")
+        run(ip, "link", "set", "tailscale0", "up")
         for local, remote, pid, host_ip, child_ip in (
             ("gw-jc1", "client", collector.process.pid, "192.0.2.1/24", "192.0.2.2/24"),
             ("wan", "peer", peer.pid, "198.51.100.1/24", "198.51.100.2/24"),
@@ -92,6 +100,25 @@ def worker(original):
             )
         collector.ip("route", "add", "198.51.100.0/24", "via", "192.0.2.1")
         competitor.ip("route", "add", "198.51.100.0/24", "via", "203.0.113.1")
+        for family in ("-4", "-6"):
+            run(
+                ip,
+                family,
+                "route",
+                "add",
+                "100.64.0.0/10" if family == "-4" else "fd7a:115c:a1e0::/48",
+                "dev",
+                "tailscale0",
+                "table",
+                "52",
+            )
+            for priority, extra in (
+                (5210, ("fwmark", "0x80000/0xff0000", "table", "main")),
+                (5230, ("fwmark", "0x80000/0xff0000", "table", "default")),
+                (5250, ("fwmark", "0x80000/0xff0000", "unreachable")),
+                (5270, ("table", "52")),
+            ):
+                run(ip, family, "rule", "add", "pref", str(priority), *extra)
         run(ip, "-6", "address", "add", "2001:db8:1::1/64", "dev", "wan")
         run(
             "/usr/bin/nsenter",
@@ -123,6 +150,17 @@ def worker(original):
         peer.stdin.flush()
         if peer.stdout.readline().strip() != "serving":
             raise RuntimeError("fixture_peer_bind_failed")
+        if proxy.request({"action": "serve_proxy"}) != {"ok": True}:
+            raise RuntimeError("fixture_proxy_bind_failed")
+        host = guard.Probe()
+        for key, route in (
+            ("old_direct", {}),
+            ("old_proxy", {"proxy": "127.0.0.1"}),
+        ):
+            if host.request({"action": "open", "key": key, "address": "198.51.100.2", **route}) != {
+                "ok": True
+            }:
+                raise RuntimeError(f"fixture_preexisting_{key}_missing")
 
         for tool in ("/usr/sbin/iptables", "/usr/sbin/ip6tables"):
             run(
@@ -168,6 +206,40 @@ def worker(original):
             )
         if kernel.COLLECTOR_MARK & 0xFF0000 != 0x720000:
             raise RuntimeError("fixture_mark_no_longer_matches_host_mask_review")
+        if kernel.COLLECTOR_MARK & 0xFF0000 in {0x80000, 0x40000}:
+            raise RuntimeError("fixture_collector_mark_collides_with_tailscale")
+        selected_route = json.loads(
+            run(ip, "-4", "-j", "route", "get", "198.51.100.2", "mark", hex(kernel.COLLECTOR_MARK))
+        )
+        if len(selected_route) != 1 or selected_route[0].get("dev") != "wan":
+            raise RuntimeError("fixture_collector_mark_routed_away_from_wan")
+        run(
+            "/usr/sbin/iptables",
+            "-t",
+            "nat",
+            "-A",
+            "POSTROUTING",
+            "-s",
+            "203.0.113.0/24",
+            "!",
+            "-o",
+            "other-host",
+            "-j",
+            "MASQUERADE",
+        )
+        run(
+            "/usr/sbin/iptables",
+            "-t",
+            "nat",
+            "-A",
+            "POSTROUTING",
+            "-m",
+            "mark",
+            "--mark",
+            "0x40000/0xff0000",
+            "-j",
+            "MASQUERADE",
+        )
 
         name = kernel.TABLE
         rules = f"""table inet {name} {{
@@ -246,7 +318,6 @@ add element netdev {name} blackout {{ 0x0800 timeout 30000ms, 0x86dd timeout 300
             if result["ok"] or count(family, name, chain, index) <= before:
                 raise RuntimeError(f"{label}: expected kernel denial, got {result}")
 
-        host = guard.Probe()
         denied("empty_permit", collector, {})
         run(
             nft,
@@ -268,6 +339,28 @@ add element netdev {name} permits {{ 198.51.100.2 timeout 25000ms }}""",
         ):
             raise RuntimeError("selected_packet_did_not_cross_marked_forward_and_wan_hooks")
         denied("host_output", host, {}, chain="output", index=2)
+        denied("host_proxy", host, {"proxy": "127.0.0.1"}, chain="output", index=2)
+        denied(
+            "forwarded_proxy",
+            competitor,
+            {"proxy": "203.0.113.1"},
+            chain="output",
+            index=2,
+        )
+        denied(
+            "existing_host_socket",
+            host,
+            {"action": "send", "key": "old_direct"},
+            chain="output",
+            index=2,
+        )
+        denied(
+            "existing_proxy_socket",
+            host,
+            {"action": "send", "key": "old_proxy"},
+            chain="output",
+            index=2,
+        )
         ipv6_before = count("inet", name, "output", 2)
         with socket.socket(socket.AF_INET6, socket.SOCK_DGRAM) as ipv6_host:
             try:
@@ -312,7 +405,10 @@ add element netdev {name} permits {{ 198.51.100.2 timeout 25000ms }}""",
             "forward_mark_seen": True,
             "wan_mark_seen": True,
             "connmark_compatibility_checked": True,
-            "denials": 9,
+            "tailscale_policy_and_nat_checked": True,
+            "marked_route_reaches_wan": True,
+            "proxy_and_preexisting_sockets_checked": True,
+            "denials": 13,
             "network_admitted": False,
             "host_firewall_modified": False,
             "external_requests": 0,
@@ -363,7 +459,10 @@ def test_real_joint_collector_veth_mark_snat_wan_packet_paths():
         "forward_mark_seen": True,
         "wan_mark_seen": True,
         "connmark_compatibility_checked": True,
-        "denials": 9,
+        "tailscale_policy_and_nat_checked": True,
+        "marked_route_reaches_wan": True,
+        "proxy_and_preexisting_sockets_checked": True,
+        "denials": 13,
         "network_admitted": False,
         "host_firewall_modified": False,
         "external_requests": 0,
