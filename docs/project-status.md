@@ -37,7 +37,11 @@
   maps 16 currently routed Docker namespaces and retains their non-default
   routes and dual-stack rules; only the host has marked policy rules in this
   sample. It does not cover future containers, proxy forwarding, effective
-  mark/source ownership or continuous exclusion. The
+  mark/source ownership or continuous exclusion. A
+  [read-only marked-route/source review](progress/portfolio-host-marked-route-source-review-2026-09-28.md)
+  finds both documentation destinations locally routed via WAN with an
+  assigned source and no matching host policy mark rule; CONNMARK and NAT
+  remain active, and actual venue source/mark ownership remain unproved. The
   [authority/capacity review](progress/portfolio-post-v27-authority-capacity-review-2026-09-25.md)
   still blocks real collection: the historical pilot leaves 496 assets outside,
   two unpriced and 65 over top-book capacity. Next separately review host

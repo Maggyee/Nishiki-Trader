@@ -14,6 +14,7 @@ from unittest.mock import Mock
 import pytest
 
 SOURCE = Path(__file__).resolve().parents[2] / "infra/egress-guard/inspect_host.py"
+KERNEL_SOURCE = SOURCE.with_name("gateway_window_kernel.py")
 
 
 @pytest.fixture
@@ -24,6 +25,13 @@ def inspector():
     return module
 
 
+def test_selected_mark_matches_joint_kernel(inspector):
+    spec = importlib.util.spec_from_file_location("joint_kernel_mark_test", KERNEL_SOURCE)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    assert inspector.COLLECTOR_MARK == module.COLLECTOR_MARK
+
+
 @pytest.fixture
 def local_reads(inspector, monkeypatch):
     calls = []
@@ -32,13 +40,24 @@ def local_reads(inspector, monkeypatch):
         calls.append(argv)
         if "ruleset" in argv:
             value = {"nftables": [{"chain": {"hook": "output"}}, {"flowtable": {}}]}
+        elif argv[2] in (inspector.IPTABLES, inspector.IP6TABLES):
+            table = argv[-1]
+            value = (
+                f"*{table}\n-A POSTROUTING -j MASQUERADE\nCOMMIT\n"
+                if table == "nat"
+                else "*mangle\n-A PREROUTING -j CONNMARK --restore-mark\nCOMMIT\n"
+            )
         elif "address" in argv:
-            value = [{"ifname": "private-host-interface"}]
+            value = [
+                {"ifname": "private-host-interface", "addr_info": [{"local": "fixture-source"}]}
+            ]
+        elif "get" in argv:
+            value = [{"dev": "private-host-interface", "prefsrc": "fixture-source"}]
         elif "route" in argv:
             value = [{"dst": "default"}]
         else:
             value = []
-        return {"status": "ok", "stdout": json.dumps(value)}
+        return {"status": "ok", "stdout": value if isinstance(value, str) else json.dumps(value)}
 
     monkeypatch.setattr(inspector, "capture", capture)
     return calls
@@ -47,17 +66,70 @@ def local_reads(inspector, monkeypatch):
 def test_successful_reads_are_only_a_snapshot(inspector, local_reads, tmp_path):
     tmp_path.chmod(0o700)
     result = inspector.collect(nft_via_sudo=True, storage_root=tmp_path)
-    assert len(local_reads) == 7
+    assert len(local_reads) == 13
     assert local_reads[-1] == (inspector.SUDO, "-n", inspector.NFT, "-j", "list", "ruleset")
     assert result["summary"]["default_route_counts"] == {"ipv4": 1, "ipv6": 1}
     assert result["summary"]["nft_base_chain_count"] == 1
     assert result["summary"]["nft_flowtable_count"] == 1
+    assert result["summary"]["documentation_destination_marked_routes"] == {
+        "v4": {"device": "private-host-interface", "source_assigned_on_device": True},
+        "v6": {"device": "private-host-interface", "source_assigned_on_device": True},
+    }
+    assert result["summary"]["mangle_connmark_rule_counts"] == {"v4": 1, "v6": 1}
+    assert result["summary"]["nat_postrouting_rule_counts"] == {"v4": 1, "v6": 1}
+    assert result["summary"]["matching_policy_rule_counts"] == {"v4": 0, "v6": 0}
     assert result["storage"]["status"] == "private_directory_observed"
     assert result["storage"]["qualified"] is False
     assert result["network_admitted"] is False
     assert result["public_source_verified"] is False
     assert result["continuous_coverage_verified"] is False
     assert len(result["blockers"]) == 5
+
+
+def test_marked_policy_overlap_and_unknown_source_remain_blocked(
+    inspector, local_reads, monkeypatch
+):
+    original = inspector.capture
+
+    def capture(argv):
+        if argv == inspector.COMMANDS["rules_v4"]:
+            return {
+                "status": "ok",
+                "stdout": json.dumps([{"fwmark": "0x720000", "fwmask": "0xff0000", "table": "52"}]),
+            }
+        if argv == inspector.COMMANDS["marked_route_v6"]:
+            return {
+                "status": "ok",
+                "stdout": json.dumps([{"dev": "unassigned", "prefsrc": "unknown"}]),
+            }
+        return original(argv)
+
+    monkeypatch.setattr(inspector, "capture", capture)
+    report = inspector.collect()
+    assert "marked_policy_rule_overlap:v4" in report["blockers"]
+    assert "marked_route_source_not_assigned:v6" in report["blockers"]
+    assert report["summary"]["matching_policy_rule_counts"]["v4"] == 1
+    assert report["network_admitted"] is False
+
+
+def test_malformed_marked_route_and_partial_saved_table_are_unknown(
+    inspector, local_reads, monkeypatch
+):
+    original = inspector.capture
+
+    def capture(argv):
+        if argv == inspector.COMMANDS["marked_route_v4"]:
+            return {"status": "ok", "stdout": "[]"}
+        if argv == inspector.COMMANDS["mangle_v6"]:
+            return {"status": "ok", "stdout": "*mangle\n-A OUTPUT -j MARK --set-mark 0x1\n"}
+        return original(argv)
+
+    monkeypatch.setattr(inspector, "capture", capture)
+    report = inspector.collect()
+    assert "local_read_incomplete:marked_route_v4" in report["blockers"]
+    assert "local_read_incomplete:mangle_v6" in report["blockers"]
+    assert "marked_route_or_assigned_source_unknown:v4" in report["blockers"]
+    assert report["summary"]["mangle_connmark_rule_counts"]["v6"] is None
 
 
 @pytest.mark.parametrize(
@@ -108,6 +180,8 @@ def test_mutation_command_refused_before_process(inspector, monkeypatch):
     monkeypatch.setattr(inspector.subprocess, "run", runner)
     with pytest.raises(ValueError, match="allowlist"):
         inspector.capture((inspector.NFT, "flush", "ruleset"))
+    with pytest.raises(ValueError, match="allowlist"):
+        inspector.capture((inspector.IP, "-4", "-j", "route", "get", "1.1.1.1", "mark", "1"))
     runner.assert_not_called()
 
 

@@ -1,7 +1,8 @@
-"""Retain a private, read-only host snapshot; never grant deployment or API access.
+"""Retain a private, read-only host routing/mark snapshot; never grant API access.
 
 Run with system Python 3.10+. Only fixed local read commands are allowed. This
-snapshot cannot identify a public source after cloud NAT or prove traffic history.
+snapshot probes documentation destinations, not venue routes or live packets.
+It cannot identify a public source after cloud NAT or prove traffic history.
 """
 
 from __future__ import annotations
@@ -19,6 +20,9 @@ from pathlib import Path
 IP = "/usr/sbin/ip"
 NFT = "/usr/sbin/nft"
 SUDO = "/usr/bin/sudo"
+IPTABLES = "/usr/sbin/iptables-save"
+IP6TABLES = "/usr/sbin/ip6tables-save"
+COLLECTOR_MARK = 0x6F720002
 ENV = {"PATH": "/usr/sbin:/usr/bin:/sbin:/bin", "LC_ALL": "C"}
 LIMIT = 4 * 1024 * 1024
 COMMANDS = {
@@ -28,8 +32,67 @@ COMMANDS = {
     "routes_v6": (IP, "-6", "-j", "route", "show", "table", "all"),
     "rules_v4": (IP, "-4", "-j", "rule", "show"),
     "rules_v6": (IP, "-6", "-j", "rule", "show"),
+    "marked_route_v4": (
+        IP,
+        "-4",
+        "-j",
+        "route",
+        "get",
+        "198.51.100.2",
+        "mark",
+        hex(COLLECTOR_MARK),
+    ),
+    "marked_route_v6": (IP, "-6", "-j", "route", "get", "2001:db8::2", "mark", hex(COLLECTOR_MARK)),
+    "mangle_v4": (SUDO, "-n", IPTABLES, "-t", "mangle"),
+    "mangle_v6": (SUDO, "-n", IP6TABLES, "-t", "mangle"),
+    "nat_v4": (SUDO, "-n", IPTABLES, "-t", "nat"),
+    "nat_v6": (SUDO, "-n", IP6TABLES, "-t", "nat"),
     "nft": (NFT, "-j", "list", "ruleset"),
 }
+
+
+def marked_route_summary(route, addresses):
+    if not isinstance(route, list) or len(route) != 1 or not isinstance(route[0], dict):
+        raise ValueError("marked route shape unknown")
+    row = route[0]
+    device, source = row.get("dev"), row.get("prefsrc")
+    if not isinstance(device, str) or not device or not isinstance(source, str) or not source:
+        raise ValueError("marked route device or source unknown")
+    assigned = any(
+        interface.get("ifname") == device
+        and isinstance(interface.get("addr_info"), list)
+        and any(
+            isinstance(item, dict) and item.get("local") == source
+            for item in interface["addr_info"]
+        )
+        for interface in addresses
+    )
+    return {"device": device, "source_assigned_on_device": assigned}
+
+
+def matching_policy_rules(rules):
+    matches = 0
+    for row in rules:
+        if "fwmark" not in row:
+            continue
+        mark = row["fwmark"]
+        mask = row.get("fwmask", "0xffffffff")
+        if not isinstance(mark, str) or not isinstance(mask, str):
+            raise ValueError("policy mark unknown")
+        try:
+            matches += (COLLECTOR_MARK & int(mask, 0)) == (int(mark, 0) & int(mask, 0))
+        except ValueError as exc:
+            raise ValueError("policy mark unknown") from exc
+    return matches
+
+
+def saved_table(raw, table):
+    if not isinstance(raw, str):
+        raise ValueError("saved table unavailable")
+    lines = [line for line in raw.splitlines() if line and not line.startswith("#")]
+    if not lines or lines[0] != f"*{table}" or lines[-1] != "COMMIT" or lines.count("COMMIT") != 1:
+        raise ValueError("saved table incomplete")
+    return lines
 
 
 def capture(argv):
@@ -119,6 +182,9 @@ def collect(*, nft_via_sudo=False, storage_root=None):
         if row["status"] != "ok":
             continue
         try:
+            if name.startswith(("mangle_", "nat_")):
+                parsed[name] = saved_table(row["stdout"], name.split("_", 1)[0])
+                continue
             value = json.loads(row["stdout"])
             if name == "nft":
                 valid = isinstance(value, dict) and isinstance(value.get("nftables"), list)
@@ -128,6 +194,8 @@ def collect(*, nft_via_sudo=False, storage_root=None):
                 items = value if valid else []
             if not valid or not all(isinstance(item, dict) for item in items):
                 raise ValueError("unexpected local JSON shape")
+            if name.startswith("marked_route_") and len(value) != 1:
+                raise ValueError("marked route count unknown")
             parsed[name] = value
         except (ValueError, TypeError):
             row["status"] = "invalid_json"
@@ -146,6 +214,31 @@ def collect(*, nft_via_sudo=False, storage_root=None):
     if storage["status"] != "private_directory_observed":
         blockers.append(f"storage:{storage['status']}")
     nft = parsed.get("nft", {}).get("nftables", [])
+    marked_routes = {}
+    policy_matches = {}
+    for family in ("v4", "v6"):
+        route, addresses = parsed.get(f"marked_route_{family}"), parsed.get("addresses")
+        try:
+            marked_routes[family] = (
+                marked_route_summary(route, addresses)
+                if route is not None and addresses is not None
+                else None
+            )
+        except ValueError:
+            marked_routes[family] = None
+        if marked_routes[family] is None:
+            blockers.append(f"marked_route_or_assigned_source_unknown:{family}")
+        elif not marked_routes[family]["source_assigned_on_device"]:
+            blockers.append(f"marked_route_source_not_assigned:{family}")
+        rules = parsed.get(f"rules_{family}")
+        try:
+            policy_matches[family] = matching_policy_rules(rules) if rules is not None else None
+        except ValueError:
+            policy_matches[family] = None
+        if policy_matches[family] is None:
+            blockers.append(f"marked_policy_rule_unknown:{family}")
+        elif policy_matches[family]:
+            blockers.append(f"marked_policy_rule_overlap:{family}")
     summary = {
         "interface_count": len(parsed["links"]) if "links" in parsed else None,
         "default_route_counts": {
@@ -161,6 +254,21 @@ def collect(*, nft_via_sudo=False, storage_root=None):
         else None,
         "nft_flowtable_count": sum("flowtable" in row for row in nft) if "nft" in parsed else None,
         "storage_status": storage["status"],
+        "selected_mark": hex(COLLECTOR_MARK),
+        "documentation_destination_marked_routes": marked_routes,
+        "matching_policy_rule_counts": policy_matches,
+        "mangle_connmark_rule_counts": {
+            family: sum("-j CONNMARK" in line for line in parsed[f"mangle_{family}"])
+            if f"mangle_{family}" in parsed
+            else None
+            for family in ("v4", "v6")
+        },
+        "nat_postrouting_rule_counts": {
+            family: sum(line.startswith("-A POSTROUTING ") for line in parsed[f"nat_{family}"])
+            if f"nat_{family}" in parsed
+            else None
+            for family in ("v4", "v6")
+        },
     }
     return {
         "schema_version": "portfolio.egress_host_snapshot.v1",
@@ -210,11 +318,18 @@ def main(argv=None):
         print(json.dumps({"status": "snapshot_failed", "network_admitted": False}))
         return 1
     # Host addresses, full rules and command stderr stay in the private local report.
+    public_summary = dict(report["summary"])
+    public_summary["documentation_destination_marked_routes"] = {
+        family: {"source_assigned_on_device": row["source_assigned_on_device"]}
+        if row is not None
+        else None
+        for family, row in report["summary"]["documentation_destination_marked_routes"].items()
+    }
     print(
         json.dumps(
             {
                 "status": report["status"],
-                "summary": report["summary"],
+                "summary": public_summary,
                 "blockers": report["blockers"],
                 "report_sha256": hashlib.sha256(raw).hexdigest(),
                 "network_admitted": False,

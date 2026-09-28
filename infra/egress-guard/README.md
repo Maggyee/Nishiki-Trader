@@ -16,6 +16,13 @@ provider-visible source. See the
 [host route/policy inventory](../../docs/progress/portfolio-host-route-policy-inventory-2026-09-28.md)
 and its [earlier v1 census](../../docs/progress/portfolio-host-namespace-inventory-2026-09-27.md).
 
+`inspect_host.py` now also retains fixed marked `ip route get` lookups for
+IPv4/IPv6 documentation destinations, assigned local source checks and both
+families' `iptables-save` mangle/NAT views. Its write-once private report
+captures original local output; the console omits interfaces and addresses.
+This does not establish a venue route, public source or mark ownership. See
+the [host marked-route review](../../docs/progress/portfolio-host-marked-route-source-review-2026-09-28.md).
+
 The prospective [joint first-operation window](../../docs/progress/portfolio-prospective-joint-window-2026-09-26.md)
 checks a held guard's fixed boot/manifest/binding and elapsed exclusion window
 against the existing consumed local attempt ledger. It persists at most the first
