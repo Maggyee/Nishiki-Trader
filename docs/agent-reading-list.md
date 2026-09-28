@@ -22,6 +22,11 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the offline installed-gateway source/egress consistency adapter and its
+unfulfilled host/provenance boundary, read
+`docs/progress/portfolio-source-egress-offline-adapter-2026-09-28.md`.
+It does not certify a provider-visible source or all-caller traffic.
+
 For the private default-deny kernel experiment surviving lease expiry and
 owner exit, read `docs/progress/portfolio-joint-failclosed-expiry-2026-09-28.md`.
 It is not part of the protected installed controller or a host firewall rule.

@@ -44,6 +44,11 @@
   installed or independently pinned as a host policy. The observer also checks
   exact lease element values and waits for both sets to empty before accepting
   its private expiry result.
+  An [offline source/egress adapter](progress/portfolio-source-egress-offline-adapter-2026-09-28.md)
+  now checks held gateway bytes, fixed REST/account/market endpoint and UID/source
+  bindings, real joint-attempt replay and a minimum local guard horizon. All
+  authority and admission flags remain false: route observations, other callers
+  and provider-visible public source still lack independently installed proof.
   The installer is staged under ephemeral `/run`; repeat installation is
   prohibited. There is still no operational host activation-controller lifecycle
   or installed joint nft table/controller. The [disposable packet-path test](progress/portfolio-joint-proxy-policy-packet-2026-09-28.md)
