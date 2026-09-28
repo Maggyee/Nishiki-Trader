@@ -22,6 +22,11 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the protected one-shot read-only startup check actually staged and run
+on the host, read
+`docs/progress/portfolio-joint-startup-read-only-host-check-2026-09-28.md`.
+It attests only its own selected process and is not an activation controller.
+
 For the separately pinned read-only startup selection candidate, read
 `docs/progress/portfolio-joint-startup-check-candidate-2026-09-28.md`.
 Its protected one-shot check does not attest other processes or activate nft.

@@ -34,7 +34,10 @@ but uninstalled; synthetic guard reports never qualify actual egress or admissio
 candidate. The disposable root fixture stages it under `/run` and checks its
 six independent source pins, selected base manifest and protected file mode.
 It has no nft writer or permit interface; checkout invocation cannot qualify
-its own startup. See the [startup candidate review](../../docs/progress/portfolio-joint-startup-check-candidate-2026-09-28.md).
+its own startup. The committed script was subsequently staged and checked
+read-only on the host at its protected `/run` path, still exiting 2 without
+admission. See the [host check](../../docs/progress/portfolio-joint-startup-read-only-host-check-2026-09-28.md)
+and [candidate review](../../docs/progress/portfolio-joint-startup-check-candidate-2026-09-28.md).
 
 The current disposable joint fixture completes the fixed ordered plan:
 

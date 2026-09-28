@@ -26,12 +26,14 @@
   host admission. A [post-write crash check](progress/portfolio-installed-joint-post-write-crash-2026-09-28.md)
   now confirms the short private kernel lease survives its owner, while the
   consumed scope cannot be reopened; no host restart qualification follows.
-  A [read-only startup check candidate](progress/portfolio-joint-startup-check-candidate-2026-09-28.md)
-  independently pins the six installed source hashes and refuses changed
-  selection in an isolated root; protected host staging remains pending.
+  A [separately pinned, protected read-only startup check](progress/portfolio-joint-startup-read-only-host-check-2026-09-28.md)
+  now selects all six installed sources in one host process and exits 2
+  unqualified; its isolated counterpart rejects wrong base selection,
+  unprotected mode and reinventoried source drift. It is staged only under
+  `/run`, with no service, nft writer or other-process startup attestation.
   The installer is staged under ephemeral `/run`; repeat installation is
-  prohibited. There is still no independent startup attestation or installed
-  joint nft table/activation controller. The [disposable packet-path test](progress/portfolio-joint-proxy-policy-packet-2026-09-28.md)
+  prohibited. There is still no independent activation-controller startup
+  attestation or installed joint nft table/controller. The [disposable packet-path test](progress/portfolio-joint-proxy-policy-packet-2026-09-28.md)
   now checks the selected local FORWARD/SNAT/WAN path alongside CONNMARK,
   Tailscale policy, Docker-like NAT and 13 refusals, including existing
   direct/proxy sockets and IPv6 host OUTPUT. It does not prove continuous host
