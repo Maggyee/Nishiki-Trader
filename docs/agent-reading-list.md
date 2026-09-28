@@ -22,6 +22,11 @@ Read these before any non-trivial work:
 
 ## Read When Relevant
 
+For the fixed-path controller candidate that activates a five-second nft
+blackout only in nested private namespaces, read
+`docs/progress/portfolio-joint-protected-isolated-probe-2026-09-28.md`.
+The fixture does not stage a host controller or establish continuous exclusion.
+
 For the protected one-shot read-only startup check actually staged and run
 on the host, read
 `docs/progress/portfolio-joint-startup-read-only-host-check-2026-09-28.md`.

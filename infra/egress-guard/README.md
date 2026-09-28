@@ -39,6 +39,16 @@ read-only on the host at its protected `/run` path, still exiting 2 without
 admission. See the [host check](../../docs/progress/portfolio-joint-startup-read-only-host-check-2026-09-28.md)
 and [candidate review](../../docs/progress/portfolio-joint-startup-check-candidate-2026-09-28.md).
 
+`gateway_window_isolated_probe.py` is a fixed protected-path candidate for a
+one-shot private activation. The outer process verifies its own protected path,
+the staged read-only startup check and installed six-source selection; the
+inner process creates a five-second nft blackout only after entering new
+mount/net/PID namespaces and confirming loopback-only empty nft state. The
+disposable installation fixture stages and exercises the probe in nested
+namespaces and refuses a wrong base selection. It always exits 2 with
+network admission false. This candidate has not been staged or run against
+the host installation. See the [isolated probe record](../../docs/progress/portfolio-joint-protected-isolated-probe-2026-09-28.md).
+
 The current disposable joint fixture completes the fixed ordered plan:
 
 ```bash

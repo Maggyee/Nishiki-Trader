@@ -19,6 +19,7 @@ ENTRY_PIN = "db9bacd6778111afdc4a163f305361bef6da8fecab56d5ec724b0d1cb66cdc7a"
 SOURCES_PIN = "2c923d4b546fd0dbcbcf57fbfc4bafdb80e103611f0f38dcd9358cb6b6dea27f"
 WINDOW_INSTALLER_PIN = "4ee75b36a3c902b571727a6383944861f13903ff251dbfb3442fcb6277614ce3"
 STARTUP_ENTRY = Path("/run/trader-egress-window-startup-v1/startup-check.py")
+PROBE_ENTRY = Path("/run/trader-egress-window-probe-v1/probe.py")
 SOURCES = (
     "gateway_window_entry.py",
     "gateway_window_sources.py",
@@ -769,6 +770,38 @@ def worker(payload):
     finally:
         STARTUP_ENTRY.chmod(0o444)
     startup_checked("joint_window_protected_startup_observed_unqualified")
+    probe_source = base64.b64decode(payload["probe_source"], validate=True)
+    if sha(probe_source) != payload["probe_sha256"]:
+        raise RuntimeError("fixture_joint_isolated_probe_source_changed")
+    PROBE_ENTRY.parent.mkdir(mode=0o755)
+    base["write"](PROBE_ENTRY, probe_source, 0o444)
+    probe_command = (
+        "/usr/bin/python3",
+        "-I",
+        str(PROBE_ENTRY),
+        "--probe",
+        "--base-sha256",
+        base_manifest_sha256,
+        "--joint-sha256",
+        sha(MANIFEST.read_bytes()),
+    )
+    isolated_controller = json.loads(base["run"](*probe_command, expected=2))
+    if (
+        isolated_controller.get("status") != "joint_protected_isolated_activation_unqualified"
+        or isolated_controller.get("startup_sha256") != payload["startup_sha256"]
+        or isolated_controller.get("observations") != 1
+        or isolated_controller.get("host_firewall_modified") is not False
+        or isolated_controller.get("network_admitted") is not False
+    ):
+        raise RuntimeError("fixture_joint_protected_isolated_controller_not_selected")
+    wrong_probe = json.loads(
+        base["run"](*probe_command[:-3], "0" * 64, *probe_command[-2:], expected=2)
+    )
+    if wrong_probe != {
+        "status": "joint_protected_isolated_probe_refused",
+        "network_admitted": False,
+    }:
+        raise RuntimeError("fixture_joint_probe_accepted_unselected_base")
     with isolated_collector_path(base) as route:
         activation_probe = installed_activation_probe(base, sources, base_manifest_sha256, route)
     original_manifest = MANIFEST.read_bytes()
@@ -856,11 +889,15 @@ def worker(payload):
             "protected_startup_selects_independent_source_pins",
             "protected_startup_rejects_wrong_base_and_reinventoried_source",
             "protected_startup_rejects_unprotected_own_file",
+            "protected_controller_activates_only_in_nested_private_namespaces",
+            "protected_controller_wrong_base_refused_without_activation",
         ],
         "base_manifest_sha256": document["base_manifest_sha256"],
         "window_bundle_sha256": payload["window_bundle_sha256"],
         "window_installer_sha256": WINDOW_INSTALLER_PIN,
         "startup_sha256": payload["startup_sha256"],
+        "probe_sha256": payload["probe_sha256"],
+        "isolated_controller": isolated_controller,
         "source_sha256": {name: sha(raw) for name, raw in sources.items()},
         "activation_probe": activation_probe,
         "host_installation_performed": False,
@@ -882,6 +919,7 @@ def main(argv=None):
         base_source = (directory / "installation_selftest.py").read_bytes()
         installer = (directory / "package.py").read_bytes()
         startup_source = (directory / "gateway_window_startup_check.py").read_bytes()
+        probe_source = (directory / "gateway_window_isolated_probe.py").read_bytes()
         sources = {name: (directory / name).read_bytes() for name in SOURCES}
         if sha(base_source) != BASE_HARNESS_PIN:
             raise ValueError("base_harness_pin_changed")
@@ -919,6 +957,8 @@ def main(argv=None):
             "source_sha256": {name: sha(raw) for name, raw in sources.items()},
             "startup_source": base64.b64encode(startup_source).decode(),
             "startup_sha256": sha(startup_source),
+            "probe_source": base64.b64encode(probe_source).decode(),
+            "probe_sha256": sha(probe_source),
             "original": original,
         }
         bootstrap = "import json,sys\np=json.load(sys.stdin)\ns={'__name__':'joint_window_fixture'}\nexec(compile(p['source'],'<fixture>','exec'),s)\nprint(json.dumps(s['worker'](p),sort_keys=True))\n"

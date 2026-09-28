@@ -31,6 +31,10 @@
   unqualified; its isolated counterpart rejects wrong base selection,
   unprotected mode and reinventoried source drift. It is staged only under
   `/run`, with no service, nft writer or other-process startup attestation.
+  A [protected isolated probe candidate](progress/portfolio-joint-protected-isolated-probe-2026-09-28.md)
+  now selects those installed sources and performs one five-second nft blackout
+  solely in nested private namespaces; its disposable fixture passes 40 base
+  and 26 joint checks, with no host probe staging or network admission.
   The installer is staged under ephemeral `/run`; repeat installation is
   prohibited. There is still no independent activation-controller startup
   attestation or installed joint nft table/controller. The [disposable packet-path test](progress/portfolio-joint-proxy-policy-packet-2026-09-28.md)
