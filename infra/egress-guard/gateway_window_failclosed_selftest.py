@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import errno
 import hashlib
 import json
 import os
+import re
 import signal
+import socket
 import subprocess
 import sys
 import time
@@ -77,6 +80,112 @@ def _empty_private_root(original):
         raise ValueError("private_failclosed_empty_network_required")
 
 
+def _inspect_rules(doc, family, *, chain_text=None):
+    if family not in KINDS or not isinstance(doc, dict) or set(doc) != {"nftables"}:
+        raise ValueError("private_failclosed_table_invalid")
+    rows = [row for row in doc["nftables"] if "metainfo" not in row]
+    if not rows or any(not isinstance(row, dict) or len(row) != 1 for row in rows):
+        raise ValueError("private_failclosed_table_rows_invalid")
+    selected = {kind: [] for kind in ("table", "set", "chain", "rule")}
+    for row in rows:
+        kind, entry = next(iter(row.items()))
+        if (
+            kind not in selected
+            or not isinstance(entry, dict)
+            or entry.get("family") != family
+            or entry.get("name" if kind == "table" else "table") != TABLE
+        ):
+            raise ValueError("private_failclosed_foreign_rule")
+        selected[kind].append(entry)
+    chains = ("output", "forward") if family == "inet" else ("egress",)
+    if (
+        len(selected["table"]) != 1
+        or len(selected["set"]) != 1
+        or len(selected["chain"]) != len(chains)
+        or len(selected["rule"]) != (5 if family == "inet" else 2)
+        or selected["set"][0].get("name") != "blackout"
+        or selected["set"][0].get("type") != ("nf_proto" if family == "inet" else "ether_type")
+        or selected["set"][0].get("flags") != ["timeout"]
+    ):
+        raise ValueError("private_failclosed_table_structure_changed")
+    for name in chains:
+        matches = [chain for chain in selected["chain"] if chain.get("name") == name]
+        if (
+            len(matches) != 1
+            or matches[0].get("type") != "filter"
+            or matches[0].get("hook") != name
+            or matches[0].get("prio") != (-310 if family == "inet" else 0)
+            or matches[0].get("policy") != "drop"
+        ):
+            raise ValueError("private_failclosed_default_drop_changed")
+    if family == "netdev" and (
+        not isinstance(chain_text, str)
+        or not chain_text.startswith(f"table netdev {TABLE} {{\n")
+        or len(re.findall(r"type filter hook", chain_text)) != 1
+        or re.search(
+            r'type filter hook egress device "wan" priority (?:filter|0); policy drop;',
+            chain_text,
+        )
+        is None
+    ):
+        raise ValueError("private_failclosed_wan_device_changed")
+
+    def match(left, right):
+        return {"match": {"op": "==", "left": left, "right": right}}
+
+    counted_drop = [{"counter": {}}, {"drop": None}]
+    lease = (
+        match({"meta": {"key": "nfproto"}}, "@blackout")
+        if family == "inet"
+        else match({"payload": {"protocol": "ether", "field": "type"}}, "@blackout")
+    )
+    expected = (
+        {
+            "output": [
+                [match({"meta": {"key": "oifname"}}, "lo"), {"accept": None}],
+                [lease, *counted_drop],
+                counted_drop,
+            ],
+            "forward": [[lease, *counted_drop], counted_drop],
+        }
+        if family == "inet"
+        else {"egress": [[lease, *counted_drop], counted_drop]}
+    )
+    for name, expressions in expected.items():
+        rules = [row["expr"] for row in selected["rule"] if row.get("chain") == name]
+        for rule in rules:
+            for item in rule:
+                if "counter" in item:
+                    item["counter"].pop("packets", None)
+                    item["counter"].pop("bytes", None)
+        if rules != expressions:
+            raise ValueError("private_failclosed_drop_or_bypass_changed")
+
+
+def _blackout_elements(row, family):
+    elements = row.get("elem", [])
+    if not isinstance(elements, list) or len(elements) > 2:
+        raise ValueError("private_failclosed_blackout_elements_invalid")
+    permitted = {"ipv4", "ipv6"} if family == "inet" else {"ip", "ip6"}
+    seen = set()
+    for item in elements:
+        if not isinstance(item, dict) or set(item) != {"elem"}:
+            raise ValueError("private_failclosed_blackout_elements_invalid")
+        element = item["elem"]
+        if not isinstance(element, dict) or set(element) != {"val", "timeout", "expires"}:
+            raise ValueError("private_failclosed_blackout_elements_invalid")
+        if (
+            element["val"] not in permitted
+            or element["val"] in seen
+            or type(element["timeout"]) is not int
+            or type(element["expires"]) is not int
+            or not 0 <= element["expires"] <= element["timeout"]
+        ):
+            raise ValueError("private_failclosed_blackout_elements_invalid")
+        seen.add(element["val"])
+    return len(seen)
+
+
 def _state():
     tables = {
         family: json.loads(_run(NFT, "-j", "list", "table", family, TABLE)) for family in KINDS
@@ -85,6 +194,13 @@ def _state():
     active = {}
     fallback = {}
     for family, doc in tables.items():
+        _inspect_rules(
+            json.loads(json.dumps(doc)),
+            family,
+            chain_text=_run(NFT, "list", "chain", "netdev", TABLE, "egress").decode("ascii")
+            if family == "netdev"
+            else None,
+        )
         rows = []
         for item in doc["nftables"]:
             if "metainfo" in item:
@@ -94,7 +210,7 @@ def _state():
             value.pop("handle", None)
             if kind == "set":
                 if value["name"] == "blackout":
-                    active[family] = len(value.get("elem", []))
+                    active[family] = _blackout_elements(value, family)
                 value.pop("elem", None)
             for expression in value.get("expr", []):
                 if "counter" in expression:
@@ -113,6 +229,52 @@ def _connect(address, *, pid=None):
     if pid is not None:
         command = ("/usr/bin/nsenter", "-t", str(pid), "--net", *command)
     return json.loads(_run(*command))["connected"]
+
+
+def _raw_wan_frame(peer_pid, ether_type):
+    peer = json.loads(
+        _run(
+            "/usr/bin/nsenter",
+            "-t",
+            str(peer_pid),
+            "--net",
+            IP,
+            "-j",
+            "link",
+            "show",
+            "dev",
+            "peer",
+        )
+    )[0]
+    wan = json.loads(_run(IP, "-j", "link", "show", "dev", "wan"))[0]
+    source = bytes.fromhex(wan["address"].replace(":", ""))
+    destination = bytes.fromhex(peer["address"].replace(":", ""))
+    payload = bytes([0x45 if ether_type == 0x0800 else 0x60]) + b"\x00" * 47
+    frame = destination + source + ether_type.to_bytes(2, "big") + payload
+    with socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.htons(ether_type)) as sock:
+        sock.bind(("wan", 0))
+        try:
+            sent = sock.send(frame)
+        except OSError as exc:
+            # A netdev egress drop can surface as ENOBUFS; verify its counter below.
+            if exc.errno != errno.ENOBUFS:
+                raise
+        else:
+            if sent != len(frame):
+                raise ValueError("private_failclosed_raw_frame_short_send")
+
+
+def _remove_bypass(family, chain):
+    selected = json.loads(_run(NFT, "-j", "list", "chain", family, TABLE, chain))
+    bypass = next(
+        row["rule"]
+        for row in selected["nftables"]
+        if "rule" in row
+        and len(row["rule"]["expr"]) == 2
+        and "counter" in row["rule"]["expr"][0]
+        and row["rule"]["expr"][1] == {"accept": None}
+    )
+    _run(NFT, "delete", "rule", family, TABLE, chain, "handle", str(bypass["handle"]))
 
 
 def _worker(original):
@@ -287,6 +449,59 @@ def _worker(original):
             for key in (("inet", "output"), ("inet", "forward"))
         ):
             raise ValueError("private_failclosed_default_drop_not_reached")
+        raw_before = counters_after.get(("netdev", "egress"), 0)
+        _raw_wan_frame(peer.pid, 0x0800)
+        _raw_wan_frame(peer.pid, 0x86DD)
+        _, _, raw_after = _state()
+        if raw_after.get(("netdev", "egress"), 0) < raw_before + 2:
+            raise ValueError("private_failclosed_wan_raw_drop_not_reached")
+        _run(NFT, "insert", "rule", "inet", TABLE, "output", "counter", "accept")
+        try:
+            _state()
+        except ValueError as exc:
+            if (
+                str(exc) != "private_failclosed_table_structure_changed"
+                and str(exc) != "private_failclosed_drop_or_bypass_changed"
+            ):
+                raise
+        else:
+            raise ValueError("private_failclosed_inet_bypass_accepted")
+        _remove_bypass("inet", "output")
+        _run(NFT, "insert", "rule", "netdev", TABLE, "egress", "counter", "accept")
+        try:
+            _state()
+        except ValueError as exc:
+            if (
+                str(exc) != "private_failclosed_table_structure_changed"
+                and str(exc) != "private_failclosed_drop_or_bypass_changed"
+            ):
+                raise
+        else:
+            raise ValueError("private_failclosed_netdev_bypass_accepted")
+        _remove_bypass("netdev", "egress")
+        restored, empty, _ = _state()
+        if restored != baseline or empty != {"inet": 0, "netdev": 0}:
+            raise ValueError("private_failclosed_negative_test_not_restored")
+        inet = json.loads(_run(NFT, "-j", "list", "table", "inet", TABLE))
+        next(row["chain"] for row in inet["nftables"] if "chain" in row)["policy"] = "accept"
+        try:
+            _inspect_rules(inet, "inet")
+        except ValueError as exc:
+            if str(exc) != "private_failclosed_default_drop_changed":
+                raise
+        else:
+            raise ValueError("private_failclosed_policy_drift_accepted")
+        netdev = json.loads(_run(NFT, "-j", "list", "table", "netdev", TABLE))
+        chain_text = _run(NFT, "list", "chain", "netdev", TABLE, "egress").decode("ascii")
+        try:
+            _inspect_rules(
+                netdev, "netdev", chain_text=chain_text.replace('device "wan"', 'device "lo"')
+            )
+        except ValueError as exc:
+            if str(exc) != "private_failclosed_wan_device_changed":
+                raise
+        else:
+            raise ValueError("private_failclosed_device_drift_accepted")
         return {
             "status": "private_failclosed_expiry_observed_unqualified",
             "reachable_before_baseline": 4,
@@ -294,6 +509,9 @@ def _worker(original):
             "denied_after_expiry": 4,
             "owner_exited_before_expiry": True,
             "permanent_rules_unchanged": True,
+            "wan_raw_fallback_drops": 2,
+            "bypass_rules_refused": True,
+            "policy_and_device_drift_refused": True,
             "network_admitted": False,
             "host_firewall_modified": False,
         }
@@ -360,6 +578,7 @@ def main(argv=None):
         or report.get("network_admitted") is not False
     ):
         raise RuntimeError("private_failclosed_report_invalid")
+    report["harness_sha256"] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
     raw = (json.dumps(report, sort_keys=True, indent=2) + "\n").encode()
     fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
     with os.fdopen(fd, "wb") as stream:

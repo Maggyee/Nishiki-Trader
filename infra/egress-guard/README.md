@@ -55,8 +55,11 @@ and [host invocation](../../docs/progress/portfolio-joint-protected-isolated-hos
 `gateway_window_failclosed_selftest.py` tests a prospective persistent
 default-deny baseline in unprivileged private user/net/mount/PID namespaces.
 Local IPv4/IPv6 OUTPUT and forwarded callers remain denied after the short
-blackout lease writer exits and its lease expires. The test does not install
-policy on the host or replace the current installed source set:
+blackout lease writer exits and its lease expires. The observer checks the
+fixed hook/rule semantics, rejects bypass and device drift, and proves the
+netdev WAN fallback with private AF_PACKET frames. It checks exact lease
+elements and waits for both sets to empty after expiry. The test does not
+install policy on the host or replace the current installed source set:
 
 ```bash
 /usr/bin/python3 -I infra/egress-guard/gateway_window_failclosed_selftest.py --report data/NEW-PRIVATE-FAILCLOSED.json

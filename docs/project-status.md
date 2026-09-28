@@ -39,7 +39,11 @@
   staged `/run` probe is ephemeral; no host nft table or network admission follows.
   A separate [private default-deny expiry experiment](progress/portfolio-joint-failclosed-expiry-2026-09-28.md)
   keeps local IPv4/IPv6 OUTPUT and forwarded callers denied after an owner
-  exits and its short lease expires. It is not installed or pinned as a host policy.
+  exits and its short lease expires. A direct WAN raw-frame check now hits the
+  netdev fallback, and bypass/policy/device drift is rejected; it is still not
+  installed or independently pinned as a host policy. The observer also checks
+  exact lease element values and waits for both sets to empty before accepting
+  its private expiry result.
   The installer is staged under ephemeral `/run`; repeat installation is
   prohibited. There is still no operational host activation-controller lifecycle
   or installed joint nft table/controller. The [disposable packet-path test](progress/portfolio-joint-proxy-policy-packet-2026-09-28.md)
