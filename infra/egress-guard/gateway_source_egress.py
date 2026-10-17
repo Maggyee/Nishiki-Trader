@@ -9,8 +9,10 @@ from __future__ import annotations
 
 import hashlib
 import ipaddress
+import json
 import os
 import re
+import subprocess
 
 from apps.strategies_nautilus import portfolio_egress_ledger as attempts
 from apps.strategies_nautilus.portfolio_joint_admission import ENDPOINTS
@@ -21,6 +23,10 @@ HORIZON = 125 * SECOND
 ROLES = frozenset(ENDPOINTS)
 SOURCE_FILE = "gateway_joint_ipc.py"
 HEX = re.compile(r"[0-9a-f]{64}\Z")
+IP = "/usr/sbin/ip"
+ENV = {"PATH": "/usr/sbin:/usr/bin:/sbin:/bin", "LC_ALL": "C"}
+ROUTE_LIMIT = 65536
+MARK = 0x6F720002
 
 
 def _pin(value):
@@ -67,6 +73,74 @@ def _binding(row, role, uid):
         raise ValueError("source_egress_binding_changed")
 
 
+def _unique_pairs(items):
+    result = {}
+    for name, value in items:
+        if name in result:
+            raise ValueError("source_egress_duplicate_kernel_field")
+        result[name] = value
+    return result
+
+
+def _read_ip(argv):
+    result = subprocess.run(
+        argv, stdin=subprocess.DEVNULL, capture_output=True,
+        cwd="/", env=ENV, timeout=3, check=False,
+    )
+    if result.returncode or not 0 < len(result.stdout) <= ROUTE_LIMIT:
+        raise ValueError("source_egress_local_route_unavailable")
+    return json.loads(result.stdout, object_pairs_hook=_unique_pairs)
+
+
+def observe_local_routes(bindings, uid):
+    """Inspect hypothetical marked local OUTPUT routes; no packet is sent.
+
+    This cannot inspect collector FORWARD/SNAT, a remote public source, or a
+    different network namespace. Refuse when this process is not in the
+    selected collector namespace; do not replace that check with nsenter.
+    """
+    if os.geteuid() != 0 or os.getuid() != 0:
+        raise ValueError("source_egress_root_reader_required")
+    namespace = os.readlink("/proc/self/ns/net")
+    if any(row["network_namespace"] != namespace for row in bindings.values()):
+        raise ValueError("source_egress_reader_namespace_mismatch")
+    addresses = _read_ip((IP, "-j", "address", "show"))
+    if not isinstance(addresses, list) or not all(isinstance(row, dict) for row in addresses):
+        raise ValueError("source_egress_address_inventory_invalid")
+    observed = {}
+    for role in sorted(ROLES):
+        binding = bindings[role]
+        destination = binding["destination_ip"]
+        route = _read_ip((
+            IP, f"-{binding['address_family']}", "-j", "route", "get",
+            destination, "mark", hex(MARK), "uid", str(uid),
+        ))
+        if not isinstance(route, list) or len(route) != 1 or not isinstance(route[0], dict):
+            raise ValueError("source_egress_route_ambiguous")
+        row = route[0]
+        device, source = row.get("dev"), row.get("prefsrc", row.get("src"))
+        if (
+            row.get("dst") != destination
+            or not isinstance(device, str)
+            or not device
+            or source != binding["local_source_ip"]
+            or not any(
+                interface.get("ifname") == device
+                and isinstance(interface.get("addr_info"), list)
+                and any(
+                    isinstance(item, dict) and item.get("local") == source
+                    for item in interface["addr_info"]
+                )
+                for interface in addresses
+            )
+        ):
+            raise ValueError("source_egress_local_route_or_assigned_source_changed")
+        observed[role] = (device, source)
+    if os.readlink("/proc/self/ns/net") != namespace:
+        raise ValueError("source_egress_reader_namespace_changed")
+    return observed
+
+
 class OfflineSourceEgress:
     """Hold one source selection; refuse drift and incomplete local history.
 
@@ -92,6 +166,12 @@ class OfflineSourceEgress:
             raise ValueError("source_egress_installed_gateway_source_required")
         base = _pin(self.authority.manifest_sha256)
         gateway = _pin(self.sources.manifest_sha256)
+        if (
+            not isinstance(self.authority.account, dict)
+            or type(self.authority.account.get("uid")) is not int
+            or self.authority.account["uid"] != self.uid
+        ):
+            raise ValueError("source_egress_installed_uid_mismatch")
         if not isinstance(self.bindings, dict) or set(self.bindings) != ROLES:
             raise ValueError("source_egress_three_roles_required")
         for role in ROLES:
@@ -107,18 +187,13 @@ class OfflineSourceEgress:
             {role: dict(row) for role, row in self.bindings.items()},
         )
 
-    def review(self, *, observed, ledger_raw, ledger_sha256, binding_sha256, now_ns):
+    def review(self, *, ledger_raw, ledger_sha256, binding_sha256, now_ns):
         if self.closed or os.getpid() != self.owner:
             raise ValueError("source_egress_closed_or_foreign_owner")
         try:
             if self._select() != self.selected:
                 raise ValueError("source_egress_selection_drift")
-            if not isinstance(observed, dict) or set(observed) != ROLES:
-                raise ValueError("source_egress_observations_incomplete")
-            for role in ROLES:
-                _binding(observed[role], role, self.uid)
-                if observed[role] != self.selected[3][role]:
-                    raise ValueError("source_egress_route_or_source_drift")
+            observed = observe_local_routes(self.selected[3], self.uid)
             _pin(binding_sha256)
             _pin(ledger_sha256)
             report = attempts.replay(
@@ -162,7 +237,11 @@ class OfflineSourceEgress:
                 or now_ns + HORIZON > window["exclusive_through_monotonic_ns"]
             ):
                 raise ValueError("source_egress_exclusion_gap_or_expiry")
-            if self._select() != self.selected or self.guard.verify() != window:
+            if (
+                self._select() != self.selected
+                or observe_local_routes(self.selected[3], self.uid) != observed
+                or self.guard.verify() != window
+            ):
                 raise ValueError("source_egress_observation_drift")
             return {
                 "status": "offline_local_consistency_only",
@@ -171,6 +250,7 @@ class OfflineSourceEgress:
                 "gateway_source_sha256": self.selected[2],
                 "attempt_ledger_sha256": ledger_sha256,
                 "counts": report["counts"],
+                "local_marked_routes_observed": True,
                 "source_authenticated": False,
                 "complete_caller_coverage_verified": False,
                 "provider_usage_qualified": False,
