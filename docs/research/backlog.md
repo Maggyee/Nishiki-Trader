@@ -12,6 +12,15 @@ entry.
 
 ---
 
+## B9 — Delta-neutral funding carry — PRIORITY 1 (proposed 2026-10-18)
+
+- **Family**: `funding_carry` (new).
+- **Mechanism**: hold long spot + equal-notional short USD-M perp and collect
+  funding. Never tested as a held return (v50/v51 used funding as a timing
+  signal; legacy `curve_carry` was long/flat BTC).
+- **Draft pre-registration**: [round-2026-10.md](round-2026-10.md).
+- **Constraint**: trading it needs new ADRs (perp hedge leg, two-leg intent).
+
 ## B1 — Multi-factor ML on the archived point-in-time panel (W4 restart) — TRIED
 
 Tried as v49 (panel ridge): development rejected. Panel files deleted 2026-10-18 (W10).

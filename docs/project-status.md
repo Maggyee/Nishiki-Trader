@@ -19,14 +19,14 @@ protocols (v49–v53) were rejected. Their shadow collection was stopped on
 
 Immediate focus:
 
-1. Choose the next research direction with the operator before writing code.
+1. Operator review of the [2026-10 research round draft](research/round-2026-10.md)
+   (goal: profit; B9 funding carry first, then B6; stop rule if both fail).
 
 ## Next Steps
 
-1. New research: one pre-registered protocol at a time under ADR-014 Gates v2,
-   drawn from untried entries in [backlog](research/backlog.md) (B4 two-sided
-   regime, B5 event/calendar, B6 OI/taker flow). Use Binance Vision data; the
-   W10 factor panel files were deleted on 2026-10-18.
+1. After approval: build `apps/research/` (≤ 800 lines), then run B9 and B6
+   one at a time under Gates v2, Binance Vision data only. If both fail, the
+   project enters maintenance mode.
 2. Only when a candidate passes: resume the Phase 3 canary per
    [runbook](runbook-first-testnet-canary.md) for that identity. Generate a new
    testnet Ed25519 API key first; the old key pair was deleted on 2026-10-18.
