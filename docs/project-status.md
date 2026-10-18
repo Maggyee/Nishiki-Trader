@@ -39,9 +39,6 @@ Immediate focus:
   will not complete, and their forward data was deleted on 2026-10-18.
 - Real-account testnet joint collection and the egress-guard chain are archived; do not resume without a strategy that needs them.
 - Online CI not enabled: credential lacks `workflow` scope; template in `infra/ci/`.
-- Known issue, operator decision: a SELL signal on a spot CASH account with no
-  holdings halts a Nautilus backtest (pre-existing). Fixing it means treating
-  sell as flat on spot, which also changes testnet behaviour.
 - Redis transport (ADR-010) and automated Postgres mirror (ADR-011) remain Draft.
 
 ## Running on the host
@@ -52,6 +49,9 @@ Immediate focus:
 
 ## Latest Verification
 
+- 2026-10-18 spot sell = flat (operator-approved): on CASH accounts a sell signal
+  only closes a long, also on the Spot testnet; MARGIN unchanged. Closes now
+  return order ids (same-bar suppression). Codex-reviewed; 722 passed.
 - 2026-10-18 notional sizing (`--trade-notional`): Codex review found three
   issues, all fixed with regression tests; `uv run pytest` 719 passed, 12 skipped.
 - 2026-10-18 learning simulation: 10 Nautilus backtests and a BTC paper session

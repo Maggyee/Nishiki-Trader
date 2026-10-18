@@ -193,6 +193,80 @@ def test_cash_account_backtest_records_spot_execution_assumptions(
     params = result.manifest.strategies[0].params
     assert params["account_type"] == "CASH"
     assert params["oms_type"] == "NETTING"
+    # The fixture's final sell signal must not short spot and halt the engine.
+    assert result.manifest.totals.iterations == 10
+
+
+def test_two_same_bar_spot_sells_close_once(
+    tmp_path, btcusdt_instrument, bar_type, catalog_path, make_payload
+):
+    store = SignalStore(tmp_path / "double-sell.db")
+    for signal_id, minute, side in (("open", 2, "buy"), ("sell-a", 5, "sell"), ("sell-b", 5, "sell")):
+        store.write(
+            SignalEvent.model_validate(
+                make_payload(
+                    signal_id=signal_id,
+                    ts_event=BASE_TS_NS + minute * ONE_MIN_NS,
+                    side=side,
+                    ttl_seconds=900,
+                )
+            )
+        )
+    config = _build_config(
+        output_root=tmp_path / "double-sell",
+        catalog_path=catalog_path,
+        instrument_id=btcusdt_instrument.id.value,
+        bar_type=bar_type,
+        signal_store_path=tmp_path / "double-sell.db",
+        account_type=AccountType.CASH,
+    )
+    result = run_backtest(config)
+
+    lineage = pd.read_parquet(result.output_dir / "signal_lineage.parquet").set_index("signal_id")
+    assert lineage.loc["sell-a", "order_ids"] != ""
+    assert lineage.loc["sell-b", "reason"] == "suppressed_after_same_bar_order_submission"
+    orders = pd.read_parquet(result.output_dir / "orders.parquet")
+    assert len(orders) == 2  # one buy, one close; no second close to be rejected
+
+
+@pytest.mark.parametrize(
+    ("account_type", "sell_decision"),
+    [(AccountType.CASH, "target_flat"), (AccountType.MARGIN, "target_short")],
+)
+def test_sell_signal_closes_on_spot_and_shorts_on_margin(
+    tmp_path, btcusdt_instrument, bar_type, catalog_path, make_payload, account_type, sell_decision
+):
+    store = SignalStore(tmp_path / "buy-sell.db")
+    for signal_id, minute, side in (("open", 2, "buy"), ("sell", 5, "sell")):
+        store.write(
+            SignalEvent.model_validate(
+                make_payload(
+                    signal_id=signal_id,
+                    ts_event=BASE_TS_NS + minute * ONE_MIN_NS,
+                    side=side,
+                    ttl_seconds=900,
+                )
+            )
+        )
+    config = _build_config(
+        output_root=tmp_path / f"sell-{account_type.name}",
+        catalog_path=catalog_path,
+        instrument_id=btcusdt_instrument.id.value,
+        bar_type=bar_type,
+        signal_store_path=tmp_path / "buy-sell.db",
+        account_type=account_type,
+    )
+    result = run_backtest(config)
+
+    assert result.manifest.totals.iterations == 10
+    lineage = pd.read_parquet(result.output_dir / "signal_lineage.parquet").set_index("signal_id")
+    assert lineage.loc["sell", "decision"] == sell_decision
+    sides = pd.read_parquet(result.output_dir / "fills.parquet")["order_side"].astype(str)
+    if account_type == AccountType.CASH:
+        assert lineage.loc["sell", "reason"] == "spot_cash_account_sell_as_flat"
+        assert list(sides) == ["BUY", "SELL"]  # the long is closed, nothing is shorted
+    else:
+        assert lineage.loc["sell", "order_ids"] != ""  # margin still opens the short
 
 
 def test_trade_notional_sizes_each_order_from_the_latest_close(

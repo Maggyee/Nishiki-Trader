@@ -29,6 +29,10 @@ long is a no-op; a `target_long` while short closes the short first
 (`close_all_positions`) and then sends the new BUY. This keeps state
 recoverable when signals repeat without forcing the strategy to track its
 own position book in parallel with `self.portfolio`.
+
+On a CASH (spot) account a `sell` signal is evaluated as `flat`: spot cannot
+short, so it only closes a long. Doing this before the decision keeps the
+kill-switch rule that closing is never blocked.
 """
 
 from __future__ import annotations
@@ -219,8 +223,12 @@ class BaselineNautilusStrategy(Strategy):
                     )
                 )
                 continue
+            spot_note = None
+            if event.side == "sell" and self._is_cash_account():
+                event = event.model_copy(update={"side": "flat", "score": 0.0})
+                spot_note = "spot_cash_account_sell_as_flat"
             intent = self._baseline.decide(event, now_ns=bar_ns)
-            lineage_reason = intent.reason
+            lineage_reason = intent.reason or spot_note
             if (
                 submitted_order_this_bar
                 and intent.action != "skip"
@@ -304,10 +312,27 @@ class BaselineNautilusStrategy(Strategy):
         if action == "target_flat":
             if self.portfolio.is_flat(self._params.instrument_id):
                 return []
-            self.close_all_positions(self._params.instrument_id, tags=tags)
-            return []
+            return self._close_positions(tags)
 
         raise ValueError(f"unknown OrderIntent.action={action!r}")
+
+    def _close_positions(self, tags: list[str]) -> list[str]:
+        """Close open positions and return the closing orders' client ids.
+
+        Returning the ids makes a close count as this bar's submission, so a
+        second same-bar close is suppressed instead of sent and rejected.
+        """
+        instrument_id = self._params.instrument_id
+        before = {
+            o.client_order_id
+            for o in self.cache.orders(instrument_id=instrument_id, strategy_id=self.id)
+        }
+        self.close_all_positions(instrument_id, tags=tags)
+        return sorted(
+            o.client_order_id.value
+            for o in self.cache.orders(instrument_id=instrument_id, strategy_id=self.id)
+            if o.client_order_id not in before
+        )
 
     def _order_quantity(
         self, instrument: Instrument, quantity: Decimal, side: OrderSide
@@ -320,6 +345,10 @@ class BaselineNautilusStrategy(Strategy):
         if quantity < instrument.size_increment.as_decimal():
             return None
         return instrument.make_qty(quantity, round_down=True)
+
+    def _is_cash_account(self) -> bool:
+        account = self.portfolio.account(self._params.instrument_id.venue)
+        return account is not None and account.type == AccountType.CASH
 
     def _affordable_buy_quantity(self, instrument: Instrument) -> Decimal:
         """Cash accounts: the most the free quote balance buys after the taker fee."""
