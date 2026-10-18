@@ -25,8 +25,8 @@ Immediate focus:
 
 1. New research: one pre-registered protocol at a time under ADR-014 Gates v2,
    drawn from untried entries in [backlog](research/backlog.md) (B4 two-sided
-   regime, B5 event/calendar, B6 OI/taker flow, B7 vol-targeted overlay).
-   Reuse the archived factor panel (W10) before adding providers.
+   regime, B5 event/calendar, B6 OI/taker flow). Use Binance Vision data; the
+   W10 factor panel files were deleted on 2026-10-18.
 2. Only when a candidate passes: resume the Phase 3 canary per
    [runbook](runbook-first-testnet-canary.md) for that identity. Generate a new
    testnet Ed25519 API key first; the old key pair was deleted on 2026-10-18.

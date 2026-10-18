@@ -12,7 +12,9 @@ entry.
 
 ---
 
-## B1 — Multi-factor ML on the archived point-in-time panel (W4 restart) — PRIORITY 1
+## B1 — Multi-factor ML on the archived point-in-time panel (W4 restart) — TRIED
+
+Tried as v49 (panel ridge): development rejected. Panel files deleted 2026-10-18 (W10).
 
 - **Family**: `multifactor_ml` (new; supersedes `linear_ml`).
 - **Mechanism**: cross-factor conditional expectation of daily/4h BTC returns,
@@ -34,7 +36,9 @@ entry.
   benchmark-relative and bootstrap gates, the ML layer stays empty; do not
   fall back to single-factor scans.
 
-## B2 — Funding-rate mechanisms (crypto-native carry/positioning) — PRIORITY 2
+## B2 — Funding-rate mechanisms (crypto-native carry/positioning) — TRIED
+
+Tried as v50 (provider blocked) and v51 (development rejected).
 
 - **Family**: `crypto_derivatives_structure` (open; v45/v46/v48 are members —
   the only crypto-native family with a confirmed survivor).
@@ -51,7 +55,9 @@ entry.
   explicitly.
 - **Power**: 8h series 2020–2025 ≈ 6,570 observations.
 
-## B3 — Cross-sectional relative value across top-N liquid perps — PRIORITY 3
+## B3 — Cross-sectional relative value across top-N liquid perps — TRIED
+
+Tried as v52 (development rejected) and v53 (confirmation rejected).
 
 - **Family**: `cross_sectional_relative` (open — nothing in protocols v2–v48
   is cross-sectional; v41's single ETH/BTC ratio rule is not a portfolio. The
@@ -116,7 +122,9 @@ entry.
   need a pre-registered adjusted window, not a waiver).
 - **Directional capability**: two-sided.
 
-## B7 — Volatility-targeted sizing overlay on the shadow portfolio — PRIORITY 7
+## B7 — Volatility-targeted sizing overlay on the shadow portfolio — MOOT
+
+Moot since 2026-10-18: the shadow portfolio it would size was closed.
 
 - **Family**: `portfolio_overlay` (new; not an alpha identity).
 - **Mechanism**: not a new signal — scale the shadow portfolio's target
@@ -127,7 +135,9 @@ entry.
   tradable source; success = higher portfolio-level risk-adjusted numbers on
   the same signals in shadow replay.
 
-## B8 — Stablecoin liquidity expansion (existing forward candidate) — HELD
+## B8 — Stablecoin liquidity expansion (existing forward candidate) — CLOSED
+
+Closed 2026-10-18: the v12 forward data was deleted; a retry needs a new identity.
 
 - **Family**: `stablecoin_liquidity` (open; v12 forward contract active).
 - **Status**: already registered as `forward_data_candidate` with 0/180 days

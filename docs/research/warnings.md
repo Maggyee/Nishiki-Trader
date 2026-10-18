@@ -131,6 +131,11 @@ reuse cost is zero provider risk; its value compounds across studies.
   snapshotted panel (ADR-014 §7, backlog B1) before hunting new providers.
 - MUST NOT: open a new scraping provider for a factor class the panel already
   covers, without stating why the archived series is insufficient.
+- **2026-10-18 update**: the panel files (`data/research-v*/factors/`) were
+  deleted with the local research data. Only the code that built them survives
+  (tag `archive/pre-slim-2026-10-17`). Rebuilding the Cboe/Treasury part means
+  refetching current-history CSVs (W6 applies); Binance Vision series remain
+  refetchable at zero provider risk and are the default data source now.
 
 ---
 
