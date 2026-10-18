@@ -111,6 +111,11 @@ def test_monthly_range_requires_complete_calendar_months(start, end, tmp_path):
         ("BNBUSDT", "BNB", 3),
         ("XRPUSDT", "XRP", 1),
         ("ADAUSDT", "ADA", 1),
+        ("LTCUSDT", "LTC", 3),
+        ("LINKUSDT", "LINK", 2),
+        ("TRXUSDT", "TRX", 1),
+        ("ETCUSDT", "ETC", 2),
+        ("XLMUSDT", "XLM", 0),
     ],
 )
 def test_binance_spot_instrument_supports_locked_universe(

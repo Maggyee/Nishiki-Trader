@@ -426,6 +426,11 @@ def _binance_spot_instrument(*, symbol: str, venue_name: str) -> CurrencyPair:
         "BNBUSDT": ("BNB", 2, "0.01", 3, "0.001", "1000000.000"),
         "XRPUSDT": ("XRP", 4, "0.0001", 1, "0.1", "100000000.0"),
         "ADAUSDT": ("ADA", 4, "0.0001", 1, "0.1", "100000000.0"),
+        "LTCUSDT": ("LTC", 2, "0.01", 3, "0.001", "90000.000"),
+        "LINKUSDT": ("LINK", 3, "0.001", 2, "0.01", "90000.00"),
+        "TRXUSDT": ("TRX", 4, "0.0001", 1, "0.1", "9000000.0"),
+        "ETCUSDT": ("ETC", 2, "0.01", 2, "0.01", "90000.00"),
+        "XLMUSDT": ("XLM", 4, "0.0001", 0, "1", "9000000"),
     }
     if symbol not in specs or venue_name != "BINANCE":
         raise ValueError(f"supported Binance Spot symbols: {', '.join(sorted(specs))}")
