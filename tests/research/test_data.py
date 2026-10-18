@@ -87,3 +87,18 @@ def test_fetch_verifies_checksum_records_manifest_and_tolerates_daily_gaps(
             root=tmp_path,
             get=lambda url: b"0" * 64 if url.endswith(".CHECKSUM") else payload,
         )
+
+
+def test_parse_funding_assigns_midnight_settlement_to_the_previous_day() -> None:
+    csv = (
+        "calc_time,funding_interval_hours,last_funding_rate\n"
+        "1577923200000,8,0.0001\n"  # 2020-01-02 00:00 -> held over 2020-01-01
+        "1577952000003,8,0.0002\n"  # 2020-01-02 08:00 (+3 ms) -> 2020-01-02
+        "1577980800000,8,0.0003\n"  # 2020-01-02 16:00 -> 2020-01-02
+    )
+    frame = data.parse_funding(pd.read_csv(io.StringIO(csv), header=None, dtype=str))
+
+    assert frame["funding_rate"].round(6).to_dict() == {
+        pd.Timestamp("2020-01-01", tz="UTC"): 0.0001,
+        pd.Timestamp("2020-01-02", tz="UTC"): 0.0005,
+    }

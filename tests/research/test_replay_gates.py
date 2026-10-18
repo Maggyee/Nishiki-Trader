@@ -115,3 +115,24 @@ def test_gates_read_two_of_three_years_and_compare_to_benchmark() -> None:
     assert verdict["checks"]["years_breadth"]
     assert not verdict["checks"]["benchmark_relative"]
     assert not verdict["pass"]
+
+
+def test_funding_is_paid_by_longs_and_received_by_shorts() -> None:
+    days = _days(3)
+    closes = pd.DataFrame({"L": [100.0] * 3, "S": [100.0] * 3}, index=days)
+    weights = pd.DataFrame({"L": [0.5] * 3, "S": [-0.5] * 3}, index=days)
+    funding = pd.DataFrame({"L": [0.001] * 3, "S": [0.001] * 3}, index=days)
+
+    def pnl(asset: str) -> float:
+        return replay.run(
+            weights[[asset]],
+            closes[[asset]],
+            start="2020-01-02",
+            end="2020-01-03",
+            notional=1000.0,
+            costs_bps={"base": 0.0, "stress": 0.0},
+            funding=funding,
+        )["base_net_pnl"]
+
+    assert pnl("L") == pytest.approx(-1.0)  # 2 days x 0.5 x 1000 x 0.1%
+    assert pnl("S") == pytest.approx(1.0)

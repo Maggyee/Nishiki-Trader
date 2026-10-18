@@ -15,13 +15,23 @@ import pandas as pd
 
 
 def window_arrays(
-    weights: pd.DataFrame, closes: pd.DataFrame, start: str, end: str
+    weights: pd.DataFrame,
+    closes: pd.DataFrame,
+    start: str,
+    end: str,
+    funding: pd.DataFrame | None = None,
 ) -> tuple[pd.DatetimeIndex, np.ndarray, np.ndarray]:
-    """Days in the window, held weights (days x assets) and daily returns."""
+    """Days in the window, held weights (days x assets) and daily returns.
+
+    With ``funding`` (summed perp funding rate per holding day), returns are
+    net of funding: longs pay positive funding and shorts receive it.
+    """
     closes = closes[weights.columns].sort_index()
     calendar = pd.date_range(closes.index.min(), closes.index.max(), freq="D", tz="UTC")
     filled = closes.reindex(calendar).ffill()
     returns = filled.pct_change(fill_method=None).fillna(0.0)
+    if funding is not None:
+        returns = returns - funding.reindex(index=calendar, columns=weights.columns).fillna(0.0)
     decided = weights.reindex(calendar).ffill().fillna(0.0)
     held = decided.shift(1).fillna(0.0)  # weight decided at t-1 earns day t
     days = calendar[
@@ -74,9 +84,10 @@ def run(
     end: str,
     notional: float,
     costs_bps: dict[str, float],
+    funding: pd.DataFrame | None = None,
 ) -> dict[str, object]:
     """Replay one candidate over one window and return the gate inputs."""
-    days, held, returns = window_arrays(weights, closes, start, end)
+    days, held, returns = window_arrays(weights, closes, start, end, funding)
     base_cost = costs_bps["base"] / 1e4
     base = daily_pnl(held, returns, notional, base_cost)
     stress = daily_pnl(held, returns, notional, costs_bps["stress"] / 1e4)

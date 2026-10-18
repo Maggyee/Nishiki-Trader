@@ -85,6 +85,9 @@ def run_stage(
     symbols = contract["data"]["symbols"]
     frames = data.load_frames(_datasets(contract), symbols, root=root)
     closes = pd.DataFrame({s: frames[module.PRICE_DATASET][s]["close"] for s in symbols})
+    funding = None
+    if "um_funding" in frames:  # perp venue: returns are net of funding
+        funding = pd.DataFrame({s: frames["um_funding"][s]["funding_rate"] for s in symbols})
     notional = float(contract["notional_usdt"])
     costs = contract["cost_scenarios_bps_per_fill"]
     candidates: dict[str, dict] = {}
@@ -95,13 +98,10 @@ def run_stage(
         start, end = (candidate.get("windows") or contract["windows"])[stage]
         data.periods("daily", start, end)  # refuses the sealed blind
         weights = module.target_weights(frames, key, candidate["params"])
-        result = replay.run(
-            weights, closes, start=start, end=end, notional=notional, costs_bps=costs
-        )
-        repeat = replay.run(
-            weights, closes, start=start, end=end, notional=notional, costs_bps=costs
-        )
-        days, held, returns = replay.window_arrays(weights, closes, start, end)
+        run_args = {"start": start, "end": end, "notional": notional, "costs_bps": costs}
+        result = replay.run(weights, closes, funding=funding, **run_args)
+        repeat = replay.run(weights, closes, funding=funding, **run_args)
+        days, held, returns = replay.window_arrays(weights, closes, start, end, funding)
         null = gates.shift_null(
             held,
             returns,

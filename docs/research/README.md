@@ -38,7 +38,8 @@
   missed development on p (0.115) after costs ate 62% of gross; OI squeeze lost.
 - **Round 2026-10b (v56–v59)**: taker persistence, deleveraging rebound and
   10-coin taker rotation failed development; turn of month passed development
-  (p 0.010) and failed confirmation (p 0.224, unstable day pattern).
+  (p 0.010) and failed confirmation (p 0.224, unstable day pattern). A cost study
+  showed lower fees raise net PnL but not timing significance (p barely moves).
 
 ## Gates-v1 survivors (shadow stopped 2026-10-18)
 

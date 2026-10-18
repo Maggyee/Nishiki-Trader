@@ -20,7 +20,8 @@ protocols (v49–v53) were rejected. Their shadow collection was stopped on
 Immediate focus:
 
 1. Operator decision: rounds [2026-10](research/round-2026-10.md) and
-   [2026-10b](research/round-2026-10b.md) rejected all seven identities (v54–v59).
+   [2026-10b](research/round-2026-10b.md) rejected all seven identities (v54–v59);
+   lower costs do not rescue them (cost study in 2026-10b).
 
 ## Next Steps
 

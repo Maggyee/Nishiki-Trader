@@ -37,7 +37,14 @@ DATASETS = {
         "{symbol}-metrics-{period}.zip",
         "daily",
     ),
+    "um_funding": (
+        "futures/um/monthly/fundingRate/{symbol}",
+        "{symbol}-fundingRate-{period}.zip",
+        "monthly",
+    ),
 }
+# Archives that may legitimately miss periods (daily gaps, months before a listing).
+GAP_TOLERANT = {"um_metrics_daily", "um_funding"}
 KLINE_COLUMNS = [
     "open_time",
     "open",
@@ -102,8 +109,8 @@ def fetch(
         try:
             payload = get(url)
         except urllib.error.HTTPError as exc:
-            if exc.code == 404 and kind == "daily":
-                return relative, None  # daily archives have occasional gaps
+            if exc.code == 404 and dataset in GAP_TOLERANT:
+                return relative, None
             raise
         expected = get(f"{url}.CHECKSUM").decode().split()[0]
         actual = hashlib.sha256(payload).hexdigest()
@@ -167,13 +174,32 @@ def parse_metrics(raw: pd.DataFrame) -> pd.DataFrame:
     return out.groupby(out.index.floor("D")).last()
 
 
+def parse_funding(raw: pd.DataFrame) -> pd.DataFrame:
+    """USD-M funding settlements -> summed rate per holding day.
+
+    A settlement at 00:00 belongs to the day before it: a position held over
+    day t pays the 08:00 and 16:00 settlements of t and the 00:00 one of t+1.
+    """
+    frame = raw.copy()
+    frame.columns = frame.iloc[0]
+    frame = frame.iloc[1:]
+    stamps = pd.DatetimeIndex(
+        pd.to_datetime(frame["calc_time"].astype("int64"), unit="ms", utc=True)
+    )
+    stamps = stamps.round("h")
+    day = (stamps - pd.Timedelta(milliseconds=1)).floor("D")
+    rates = pd.Series(frame["last_funding_rate"].astype(float).to_numpy(), index=day)
+    return rates.groupby(level=0).sum().to_frame("funding_rate")
+
+
 def load(dataset: str, symbol: str, *, root: Path = DATA_ROOT) -> pd.DataFrame:
     """All cached files of one dataset/symbol as one sorted, de-duplicated frame."""
     directory, _, _ = DATASETS[dataset]
     files = sorted((root / "raw" / directory.format(symbol=symbol)).glob("*.zip"))
     if not files:
         raise FileNotFoundError(f"no cached {dataset} files for {symbol}; run fetch first")
-    parse = parse_metrics if dataset == "um_metrics_daily" else parse_klines
+    parsers = {"um_metrics_daily": parse_metrics, "um_funding": parse_funding}
+    parse = parsers.get(dataset, parse_klines)
     frame = pd.concat([parse(_read_zip_csv(path)) for path in files])
     frame = frame[~frame.index.duplicated(keep="last")].sort_index()
     if frame.index.max().date() >= BLIND_START:
