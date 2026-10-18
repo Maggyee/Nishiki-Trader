@@ -1,0 +1,117 @@
+{
+  "schema_version": "research.result.v1",
+  "protocol": 55,
+  "stage": "development",
+  "contract": "docs/research/contracts/v55-flow.json",
+  "contract_sha256": "ea9e434b20af2256a884063930bbb2d006c0ed944f2351f4f7c7ee4b7f70660a",
+  "data_manifest_sha256": "830263cc030a3a94b9de86b4f2403ed68eb70b62cc46ac69e0d0969cfda4792d",
+  "generated_at": "2026-10-18T05:58:56+00:00",
+  "candidates": {
+    "taker_continuation": {
+      "source": "rule_crypto_taker_flow_v1",
+      "model_version": "crypto-btc-um-takershare24h-z90-1-continuation-v1",
+      "window": [
+        "2020-01-01",
+        "2022-12-31"
+      ],
+      "metrics": {
+        "days": 1096,
+        "gross_net_pnl": 9008.56807762937,
+        "base_net_pnl": 3416.56807762937,
+        "stress_net_pnl": 2018.5680776293702,
+        "base_return_pct": 34.1656807762937,
+        "positive_months": 21,
+        "months_total": 36,
+        "positive_years": 2,
+        "years_total": 3,
+        "closed_positions": 233,
+        "leave_best_base_net_pnl": 1932.9154167533388,
+        "benchmark_pnl": 76.98251361497704,
+        "time_in_market": 0.32025547445255476,
+        "gross_exposure_mean": 0.32025547445255476,
+        "net_exposure_mean": 0.004562043795620438,
+        "max_drawdown_usdt": 5235.712866853473,
+        "max_drawdown_pct": 52.357128668534735,
+        "long_only_leg_base_net_pnl": 2669.193095607746,
+        "daily_base_pnl_sha256": "9a1abec940b39da9207ea8a4b083b6a6ef46b1d7a27c57d87a1677ce4ce1271e"
+      },
+      "null": {
+        "trials": 5000,
+        "seed": 20261018,
+        "p_value": 0.11517696460707859,
+        "null_base_mean": -5609.719835883865,
+        "null_base_p90": 4049.8169151020807,
+        "null_months_positive_median": 15.0
+      },
+      "gates": {
+        "checks": {
+          "base_net_pnl_positive": true,
+          "stress_net_pnl_positive": true,
+          "years_breadth": true,
+          "months_breadth": true,
+          "activity_floor": true,
+          "leave_best_positive": true,
+          "benchmark_relative": true,
+          "null_p_value": false,
+          "duplicate_replay_identical": true
+        },
+        "years_needed": 2,
+        "months_threshold": 15.0,
+        "pass": false
+      }
+    },
+    "oi_squeeze": {
+      "source": "rule_crypto_oi_squeeze_v1",
+      "model_version": "crypto-btc-oi3d-5pct-price-divergence-hold3d-v1",
+      "window": [
+        "2022-01-01",
+        "2023-12-31"
+      ],
+      "metrics": {
+        "days": 730,
+        "gross_net_pnl": -3431.0991430184126,
+        "base_net_pnl": -5207.099143018411,
+        "stress_net_pnl": -5651.099143018411,
+        "base_return_pct": -52.07099143018411,
+        "positive_months": 10,
+        "months_total": 24,
+        "positive_years": 0,
+        "years_total": 2,
+        "closed_positions": 74,
+        "leave_best_base_net_pnl": -6229.659330254167,
+        "benchmark_pnl": -106.66581571465935,
+        "time_in_market": 0.32054794520547947,
+        "gross_exposure_mean": 0.32054794520547947,
+        "net_exposure_mean": -0.049315068493150684,
+        "max_drawdown_usdt": 10618.655513911031,
+        "max_drawdown_pct": 106.18655513911031,
+        "long_only_leg_base_net_pnl": -5346.2647885706665,
+        "daily_base_pnl_sha256": "d943b9d3069ada3af830ff823e4b36ddf6e8605213e3cff6b1af0163edc480ce"
+      },
+      "null": {
+        "trials": 5000,
+        "seed": 20261018,
+        "p_value": 0.760247950409918,
+        "null_base_mean": -1899.5341822423927,
+        "null_base_p90": 4119.775917196913,
+        "null_months_positive_median": 11.0
+      },
+      "gates": {
+        "checks": {
+          "base_net_pnl_positive": false,
+          "stress_net_pnl_positive": false,
+          "years_breadth": false,
+          "months_breadth": false,
+          "activity_floor": true,
+          "leave_best_positive": false,
+          "benchmark_relative": false,
+          "null_p_value": false,
+          "duplicate_replay_identical": true
+        },
+        "years_needed": 2,
+        "months_threshold": 11.0,
+        "pass": false
+      }
+    }
+  }
+}

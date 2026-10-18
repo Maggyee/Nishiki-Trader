@@ -20,7 +20,7 @@
 
 ## What was learned (v2–v53, 2026-05..09)
 
-- 52 protocols, 154 identities, 116 opened for PnL, 36 blocked by data providers.
+- 54 protocols, 157 identities, 119 opened for PnL, 36 blocked by data providers.
 - **Gates v1 (v2–v48)** left ten survivors, run as paper shadows until 2026-10-18. All ten are
   long BTC when an external index is calm. Eight share one family
   (`external_index_relief`, now saturated). Confirmation PnL is +13.7 to
@@ -31,6 +31,10 @@
   (provider), v51 funding states (development), v52 cross-sectional (development),
   v53 cross-sectional momentum (confirmation).
 - The reusable asset is the point-in-time factor panel (W10), not the rules.
+- **Round 2026-10 (v54–v55)**, with the shared harness `apps/research/`: multi-coin
+  trend with inverse-vol passed development (p 0.016) but failed confirmation
+  (p 0.295; shorts lost in five of six years). BTC taker-flow continuation
+  missed development on p (0.115) after costs ate 62% of gross; OI squeeze lost.
 
 ## Gates-v1 survivors (shadow stopped 2026-10-18)
 

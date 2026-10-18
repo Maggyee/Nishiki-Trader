@@ -19,15 +19,14 @@ protocols (v49–v53) were rejected. Their shadow collection was stopped on
 
 Immediate focus:
 
-1. [Research round 2026-10](research/round-2026-10.md): v54 multi-coin trend with
-   inverse-vol allocation, then v55 BTC order flow. Simulation only (replay,
-   Nautilus backtest, local paper).
+1. Operator decision after [round 2026-10](research/round-2026-10.md): all three
+   identities rejected (v54 trend failed confirmation, v55 flow failed development).
 
 ## Next Steps
 
-1. Build `apps/research/` (≤ 800 lines), run v54 then v55 development and,
-   for passes only, confirmation. A pass goes to a Nautilus backtest and a
-   local paper session for learning, not to promotion.
+1. Next research protocol, if any: freeze a contract under
+   `docs/research/contracts/` and run it with `apps/research/` (one module per
+   mechanism). Options and lessons in [round 2026-10](research/round-2026-10.md).
 2. Only when a candidate passes: resume the Phase 3 canary per
    [runbook](runbook-first-testnet-canary.md) for that identity. Generate a new
    testnet Ed25519 API key first; the old key pair was deleted on 2026-10-18.
@@ -50,6 +49,9 @@ Immediate focus:
 
 ## Latest Verification
 
+- 2026-10-18 research round: `apps/research/` + Codex-written mechanism modules
+  (cross-checked against an independent reference: identical weights);
+  `uv run pytest` 684 passed, 12 skipped; results in `docs/research/results/`.
 - 2026-10-18 slim-down (tracked files 1703 → 198): `uv run pytest` 684 passed,
   12 skipped (Postgres tests need `TRADER_TEST_POSTGRES_DSN`); `ruff check apps tests
   notebooks infra` clean; frontend `npm run typecheck` and `npm run build` pass.

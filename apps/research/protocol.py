@@ -150,6 +150,8 @@ def _update_registry(path: Path, protocol: int, stage: str, candidates: dict[str
             continue
         if row["outcome"] == "not_opened":
             registry["totals"]["unique_identities_pnl_opened"] += 1
+        if stage == "confirmation":
+            registry["totals"]["confirmation_opened"] += 1
         row["outcome"] = f"{stage}_{'passed' if result['gates']['pass'] else 'rejected'}"
     registry["as_of"] = datetime.now(UTC).date().isoformat()
     path.write_text(json.dumps(registry, indent=2, ensure_ascii=False) + "\n")
