@@ -8,7 +8,6 @@ tests/
 ├── bridge/               # Phase 1
 ├── strategies_nautilus/  # Phase 1
 ├── ops/                  # Phase 1
-├── strategies_freqtrade/ # Phase 2
 ├── agents/               # Phase 4
 └── mcp_server/           # Phase 4
 ```
@@ -44,7 +43,7 @@ npm run build
 | 高 | bridge | SignalEvent schema / ttl 过期 / 重复 signal_id / ts_event ns 转换 / 未授权 source |
 | 高 | strategies_nautilus | 风控拦截 / 降级行为 / 单日 5% 停机 |
 | 中 | ops | 应急脚本 dry-run / 二次确认参数 / dashboard snapshot 只读汇总 |
-| 中 | strategies_freqtrade | freqai 输出能转成合法 SignalEvent |
+| 中 | strategies_freqtrade | 新 exporter 的输出能转成合法 SignalEvent（目前无 exporter） |
 | 低 | agents | deterministic review agent，验证 AgentAdvice 不进 signals 表 |
 | 低 | mcp_server | 工具白名单 / 审计日志 |
 | 低 | frontend | 只读 dashboard build / snapshot contract display |

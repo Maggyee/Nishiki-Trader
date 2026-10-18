@@ -13,7 +13,6 @@ jobs:
       - run: pip install uv==0.8.15
       - run: uv sync --locked
       - run: uv run ruff check apps tests notebooks
-      - run: uv run python -m apps.ops.research_family_registry --check
       - run: uv run pytest -m 'not network and not postgres'
   frontend:
     runs-on: ubuntu-latest

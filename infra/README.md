@@ -2,7 +2,7 @@
 
 基础设施配置。
 
-**当前 Phase**：3 entry。`docker-compose.yml` 启用观测栈
+**当前 Phase**：5 entry（只读监控）。`docker-compose.yml` 启用观测栈
 （prometheus + grafana + loki + promtail + node_exporter），其余服务仍占位。
 
 ## 服务激活时间表（摘自 ADR-001 §6，含观测栈提前启用补丁）
@@ -36,8 +36,10 @@ heartbeat / alerts / manifest / sidecar 数据，被监控对象已齐；
 | `watchdog/` | Phase 3 testnet heartbeat watchdog（不读凭证，超时调用 emergency flatten） | 3 |
 | `postgres/` | `init.sql`（启 Timescale + pgvector + 占位 schema + trader_ro） | 3 entry |
 | `n8n/workflows/` | 工作流 JSON | 占位（未启用） |
-| `research-v6/` | 一次性、无凭据、无 timer 的 bookDepth provider 资格镜像 | Phase 2 research gate |
-| `egress-guard/` | 普通用户运行的隔离网络命名空间出口验收；不部署主机规则 | Phase 5 entry，离线验收 |
+| `ci/` | GitHub Actions 模板（凭证缺 `workflow` scope，未启用） | — |
+
+研究采集模板 `research-v*/` 和出口验收 `egress-guard/` 已于 2026-10-17 归档
+（tag `archive/pre-slim-2026-10-17`）。
 
 ## 部署
 

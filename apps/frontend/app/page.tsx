@@ -6,8 +6,6 @@ import {
   type PaperBundle,
   type Phase6Snapshot,
   type ReferenceLink,
-  type ResearchV5CollectorStatus,
-  type ResearchV5CollectorStream,
   type SignalReasonCount,
   type SnapshotInputItem,
   type SignalSummary,
@@ -71,7 +69,6 @@ const COPY = {
       evidenceSubtitle: "read-only snapshot totals",
       runtimeHealth: "Runtime Health",
       runtimeSubtitle: "textfile collector snapshot",
-      researchV5Collector: "Protocol v5 Collector",
       signalSummary: "Signals & Rejections",
       phase6Gates: "Phase 6 Gates",
       agentAdviceQueue: "AgentAdvice Queue",
@@ -122,59 +119,6 @@ const COPY = {
         attention: "attention",
         disconnected: "disconnected",
         unknown: "unknown",
-      },
-    },
-    collector: {
-      subtitle: "daily archive collector · read-only",
-      noStreams: "No collector stream report is attached.",
-      lastRun: "Latest run / data date",
-      streams: "Four streams",
-      storage: "Snapshot / Parquet",
-      nextRetry: "Next retry",
-      archivedAt: "Archived at",
-      archiveReason: "Reason",
-      valid: "valid",
-      failed: "failed",
-      conflicts: "conflicts",
-      markers: "comparison markers",
-      service: "Service",
-      result: "result",
-      exit: "exit",
-      failureType: "Failure type",
-      desiredState: "Desired state",
-      snapshotWrite: "Snapshot write",
-      written: "written",
-      notWritten: "not written",
-      error: "Error",
-      deployment: "Deployment",
-      commit: "commit",
-      image: "image",
-      nextAction: "Next action",
-      reportAge: "report age",
-      complete: "complete",
-      incomplete: "incomplete",
-      actions: {
-        attach_collector_status_artifact: "attach collector status artifact",
-        await_scheduled_retry: "await scheduled retry",
-        review_incomplete_batch: "review incomplete batch",
-        capture_first_scheduled_batch: "capture first scheduled batch",
-        review_timer_state: "review timer state",
-        stop_result_comparison: "stop result comparison",
-        monitor_next_daily_batch: "monitor next daily batch",
-        retain_archived_evidence: "retain archived evidence",
-        complete_collector_archive: "complete collector archive",
-      },
-      archiveReasons: {
-        rejected_candidates_and_persistent_provider_instability:
-          "rejected candidates and persistent provider instability",
-      },
-      failures: {
-        http_404_not_published: "HTTP 404 · archive not published",
-        checksum_failure: "checksum failure",
-        timeout: "timeout",
-        validation_failure: "validation failure",
-        collector_error: "collector error",
-        missing_stream_evidence: "missing stream evidence",
       },
     },
     signal: {
@@ -361,9 +305,6 @@ const COPY = {
       "Review blockers exist in attached evidence.": "Review blockers exist in attached evidence.",
       "AgentAdvice database could not be read.": "AgentAdvice database could not be read.",
       "Observability textfiles need review.": "Observability textfiles need review.",
-      "Research v5 collector evidence breached its passive contract.":
-        "Research v5 collector evidence breached its passive contract.",
-      "Research v5 collector needs review.": "Research v5 collector needs review.",
       "Live gate state is not explicitly blocked.":
         "Live gate state is not explicitly blocked.",
       "Live trading is blocked by ADR gates.": "Live trading is blocked by ADR gates.",
@@ -388,7 +329,6 @@ const COPY = {
       "Review AgentAdvice queue": "Review AgentAdvice queue",
       "Respect paused continuity": "Respect paused continuity",
       "Use promotion review for policy changes": "Use promotion review for policy changes",
-      "Review Research v5 collector": "Review Research v5 collector",
     },
   },
   "zh-CN": {
@@ -432,7 +372,6 @@ const COPY = {
       evidenceSubtitle: "只读快照汇总",
       runtimeHealth: "运行健康",
       runtimeSubtitle: "textfile collector 快照",
-      researchV5Collector: "Protocol v5 采集监控",
       signalSummary: "信号与拒绝",
       phase6Gates: "Phase 6 闸门",
       agentAdviceQueue: "AgentAdvice 队列",
@@ -483,59 +422,6 @@ const COPY = {
         attention: "需关注",
         disconnected: "已断开",
         unknown: "未知",
-      },
-    },
-    collector: {
-      subtitle: "每日归档采集器 · 只读",
-      noStreams: "当前未附加采集流报告。",
-      lastRun: "最近运行 / 数据日期",
-      streams: "四路采集",
-      storage: "快照 / Parquet",
-      nextRetry: "下次重试",
-      archivedAt: "归档时间",
-      archiveReason: "原因",
-      valid: "成功",
-      failed: "失败",
-      conflicts: "冲突",
-      markers: "比较阻塞标记",
-      service: "服务",
-      result: "结果",
-      exit: "退出码",
-      failureType: "失败类型",
-      desiredState: "目标状态",
-      snapshotWrite: "快照写入",
-      written: "已写入",
-      notWritten: "未写入",
-      error: "错误",
-      deployment: "部署身份",
-      commit: "commit",
-      image: "镜像",
-      nextAction: "下一步",
-      reportAge: "报告年龄",
-      complete: "完整",
-      incomplete: "不完整",
-      actions: {
-        attach_collector_status_artifact: "附加采集器状态 artifact",
-        await_scheduled_retry: "等待计划内重试",
-        review_incomplete_batch: "复核不完整批次",
-        capture_first_scheduled_batch: "捕获首个计划批次",
-        review_timer_state: "复核 timer 状态",
-        stop_result_comparison: "停止结果比较",
-        monitor_next_daily_batch: "监控下一日批次",
-        retain_archived_evidence: "保留归档证据",
-        complete_collector_archive: "完成采集器归档",
-      },
-      archiveReasons: {
-        rejected_candidates_and_persistent_provider_instability:
-          "候选已拒绝且供应商持续不稳定",
-      },
-      failures: {
-        http_404_not_published: "HTTP 404 · 归档尚未发布",
-        checksum_failure: "校验和失败",
-        timeout: "超时",
-        validation_failure: "验证失败",
-        collector_error: "采集器错误",
-        missing_stream_evidence: "缺少流证据",
       },
     },
     signal: {
@@ -722,9 +608,6 @@ const COPY = {
       "Review blockers exist in attached evidence.": "附加证据中存在需要审阅的阻塞项。",
       "AgentAdvice database could not be read.": "无法读取 AgentAdvice 数据库。",
       "Observability textfiles need review.": "观测 textfile 需要审阅。",
-      "Research v5 collector evidence breached its passive contract.":
-        "Protocol v5 采集证据违反了只读契约。",
-      "Research v5 collector needs review.": "Protocol v5 采集器需要复核。",
       "Live gate state is not explicitly blocked.": "实盘闸门未明确处于阻塞状态。",
       "Live trading is blocked by ADR gates.": "实盘交易被 ADR gate 阻塞。",
       "Live trading gate is not explicitly blocked in project status.":
@@ -747,7 +630,6 @@ const COPY = {
       "Review AgentAdvice queue": "审阅 AgentAdvice 队列",
       "Respect paused continuity": "尊重已暂停的连续性",
       "Use promotion review for policy changes": "策略变更使用 promotion review",
-      "Review Research v5 collector": "复核 Protocol v5 采集器",
     },
   },
 } as const;
@@ -767,7 +649,6 @@ export default async function DashboardPage({
   const paperBundles = snapshot.paper_bundles ?? [];
   const testnetBundles = snapshot.testnet_bundles ?? [];
   const observability = snapshot.observability ?? {};
-  const researchV5Collector = snapshot.research_v5_collector ?? {};
   const signalSummary = snapshot.signal_summary ?? {};
   const phase6 = snapshot.phase6 ?? {};
   const referenceLinks = snapshot.reference_links ?? [];
@@ -783,12 +664,6 @@ export default async function DashboardPage({
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(380px,0.55fr)]">
           <div className="grid gap-4">
             <StatusGrid snapshot={snapshot} language={language} copy={copy} />
-            <ShadowPortfolioPanel snapshot={snapshot} language={language} />
-            <ResearchV5CollectorPanel
-              collector={researchV5Collector}
-              language={language}
-              copy={copy}
-            />
             <Phase6GatePanel phase6={phase6} language={language} copy={copy} />
             <RuntimeHealthPanel observability={observability} language={language} copy={copy} />
             <SignalSummaryPanel signalSummary={signalSummary} language={language} copy={copy} />
@@ -1238,154 +1113,6 @@ function RuntimeStatePill({ state, copy }: { state: string | undefined; copy: Co
     <span className="runtime-state-pill" data-state={normalized}>
       {labels[normalized] ?? normalized}
     </span>
-  );
-}
-
-function ShadowPortfolioPanel({ snapshot, language }: { snapshot: DashboardSnapshot; language: Language }) {
-  const portfolio = snapshot.research_portfolio;
-  const zh = language === "zh-CN";
-  return <section className="panel">
-    <div className="section-head"><h2>{zh ? "研究影子采集状态" : "Research shadow collection"}</h2>
-      <span>{portfolio?.state ?? "not_attached"}</span></div>
-    <p className="px-4 py-2 text-xs text-slate-400">{zh
-      ? "仅观察：合格天数不等于运行次数；信号不等于持仓。实盘与 testnet 仍阻断。"
-      : "Observation only: qualified days are not run counts; signals are not holdings. Live/testnet remain blocked."}</p>
-    {!portfolio?.attached && <p className="px-4 py-2">{zh ? "未附加当前组合快照" : "Current portfolio snapshot not attached"}</p>}
-    {portfolio?.errors?.map(error => <p className="px-4 py-2 text-amber-400" key={error}>{error}</p>)}
-    <div className="overflow-x-auto"><table className="w-full text-left text-xs">
-      <thead><tr>{(zh ? ["协议", "合格天数", "最新观察日", "最后合格时间", "可审阅", "阻断项"]
-        : ["Protocol", "Qualified days", "Latest observation", "Last qualified", "Review eligible", "Blockers"])
-        .map(label => <th className="p-3" key={label}>{label}</th>)}</tr></thead>
-      <tbody>{portfolio?.candidates?.map(row => <tr key={row.protocol} className="border-t border-slate-800">
-        <td className="p-3">{row.protocol}</td><td className="p-3">{row.qualified_days}/{row.gate_days}</td>
-        <td className="p-3">{row.last_observation_date ?? "unknown"}</td>
-        <td className="p-3">{row.last_qualified_at ?? "unknown"}</td>
-        <td className="p-3">{String(row.review_eligible)}</td>
-        <td className="p-3">{row.anomaly_blockers.join("; ") || "—"}</td>
-      </tr>)}</tbody></table></div>
-  </section>;
-}
-
-function ResearchV5CollectorPanel({
-  collector,
-  language,
-  copy,
-}: {
-  collector: ResearchV5CollectorStatus;
-  language: Language;
-  copy: Copy;
-}) {
-  const lastRun = collector.last_run ?? {};
-  const storage = collector.storage ?? {};
-  const service = collector.service ?? {};
-  const timer = collector.timer ?? {};
-  const archive = collector.archive ?? {};
-  const deployment = collector.deployment ?? {};
-  const streams = lastRun.streams ?? [];
-  const validCount = lastRun.valid_snapshot_count ?? streams.filter((stream) => stream.status === "success").length;
-  const failedCount = lastRun.failed_snapshot_count ?? streams.filter((stream) => stream.status !== "success").length;
-  const state = normalizeCollectorState(collector.state);
-  const archived = state === "archived";
-
-  return (
-    <section className="panel">
-      <div className="section-head">
-        <h2>{copy.sections.researchV5Collector}</h2>
-        <span>
-          {copy.collector.subtitle} · <StatusPill value={state} copy={copy} />
-        </span>
-      </div>
-      <div className="runtime-facts">
-        <RuntimeFact
-          label={copy.collector.lastRun}
-          value={lastRun.data_date ?? copy.common.nA}
-          detail={service.finished_at ?? copy.collector.noStreams}
-          tone={collectorTone(state)}
-        />
-        <RuntimeFact
-          label={copy.collector.streams}
-          value={`${formatCount(validCount, language)} / ${formatCount(streams.length || 4, language)}`}
-          detail={`${copy.collector.valid} ${formatCount(validCount, language)} · ${copy.collector.failed} ${formatCount(
-            failedCount,
-            language,
-          )}`}
-          tone={failedCount ? "amber" : streams.length ? "green" : "blue"}
-        />
-        <RuntimeFact
-          label={copy.collector.storage}
-          value={`${formatCount(storage.snapshot_count, language)} / ${formatCount(
-            storage.normalized_parquet_count,
-            language,
-          )}`}
-          detail={`${copy.collector.conflicts} ${formatCount(
-            storage.vintage_conflict_count,
-            language,
-          )} · ${copy.collector.markers} ${formatCount(storage.comparison_marker_count, language)}`}
-          tone={(storage.vintage_conflict_count ?? 0) || (storage.comparison_marker_count ?? 0) ? "red" : "green"}
-        />
-        <RuntimeFact
-          label={archived ? copy.collector.archivedAt : copy.collector.nextRetry}
-          value={archived ? archive.archived_at ?? copy.common.nA : timer.next_trigger_at ?? copy.common.nA}
-          detail={archived
-            ? `${copy.collector.archiveReason}: ${localizeCollectorArchiveReason(archive.reason, copy)} · ${copy.collector.nextAction}: ${localizeCollectorAction(collector.next_action, copy)}`
-            : `${copy.collector.nextAction}: ${localizeCollectorAction(collector.next_action, copy)}`}
-          tone={state === "breach" ? "red" : state === "attention" ? "amber" : "blue"}
-        />
-      </div>
-      <div className="runtime-run-list">
-        {streams.length ? (
-          streams.map((stream) => (
-            <ResearchV5CollectorStreamRow
-              copy={copy}
-              key={`${stream.kind ?? "unknown"}-${stream.asset ?? "unknown"}`}
-              stream={stream}
-            />
-          ))
-        ) : (
-          <div className="runtime-empty">{copy.collector.noStreams}</div>
-        )}
-      </div>
-      <div className="runtime-summary">
-        <span>
-          {copy.collector.service}: {service.active ?? copy.common.unknown} · {copy.collector.result}: {service.result ?? copy.common.unknown} · {copy.collector.exit}: {service.exit_status ?? copy.common.nA}
-        </span>
-        <span>
-          {copy.collector.deployment}: {copy.collector.commit} {formatFingerprint(deployment.git_commit, copy)} · {copy.collector.image} {formatFingerprint(deployment.image_id, copy)}
-        </span>
-      </div>
-    </section>
-  );
-}
-
-function ResearchV5CollectorStreamRow({
-  stream,
-  copy,
-}: {
-  stream: ResearchV5CollectorStream;
-  copy: Copy;
-}) {
-  const status = stream.status ?? "unknown";
-  return (
-    <div className="runtime-run" data-state={collectorStreamState(status)}>
-      <div className="runtime-run-head">
-        <strong>{stream.kind ?? copy.common.unknown} / {stream.asset ?? copy.common.unknown}</strong>
-        <StatusPill value={status} copy={copy} />
-      </div>
-      <div className="runtime-run-grid">
-        <span>
-          {copy.collector.failureType}: {localizeCollectorFailure(stream.failure_type, copy)}
-        </span>
-        <span>
-          {copy.collector.desiredState}: {stream.desired_state ?? copy.common.nA}
-        </span>
-        <span>
-          {copy.collector.snapshotWrite}: {stream.snapshot_written ? copy.collector.written : copy.collector.notWritten}
-        </span>
-        <span>
-          {copy.collector.error}: {stream.error ?? copy.signal.noReasons}
-        </span>
-      </div>
-    </div>
   );
 }
 
@@ -2023,36 +1750,6 @@ function normalizeRuntimeState(value: string | undefined): "healthy" | "stale" |
   return "unknown";
 }
 
-function normalizeCollectorState(value: string | undefined): "healthy" | "archived" | "attention" | "breach" | "not_attached" | "unknown" {
-  if (value === "healthy" || value === "archived" || value === "attention" || value === "breach" || value === "not_attached") {
-    return value;
-  }
-  return "unknown";
-}
-
-function collectorTone(value: ReturnType<typeof normalizeCollectorState>): "green" | "blue" | "amber" | "red" {
-  if (value === "healthy") {
-    return "green";
-  }
-  if (value === "breach") {
-    return "red";
-  }
-  return value === "attention" ? "amber" : "blue";
-}
-
-function collectorStreamState(value: string): "healthy" | "attention" | "disconnected" | "unknown" {
-  if (value === "success") {
-    return "healthy";
-  }
-  if (value === "failed") {
-    return "attention";
-  }
-  if (value === "missing") {
-    return "disconnected";
-  }
-  return "unknown";
-}
-
 function normalizeChecklist(value: string | undefined): string {
   return value ?? "unknown";
 }
@@ -2080,30 +1777,6 @@ function localizeStatus(value: string | undefined | null, copy: Copy): string {
   return labels[value] ?? localizeKnown(value, copy);
 }
 
-function localizeCollectorAction(value: string | undefined, copy: Copy): string {
-  if (!value) {
-    return copy.common.unknown;
-  }
-  const labels = copy.collector.actions as Record<string, string>;
-  return labels[value] ?? value;
-}
-
-function localizeCollectorArchiveReason(value: string | null | undefined, copy: Copy): string {
-  if (!value) {
-    return copy.common.unknown;
-  }
-  const labels = copy.collector.archiveReasons as Record<string, string>;
-  return labels[value] ?? value;
-}
-
-function localizeCollectorFailure(value: string | null | undefined, copy: Copy): string {
-  if (!value) {
-    return copy.signal.noReasons;
-  }
-  const labels = copy.collector.failures as Record<string, string>;
-  return labels[value] ?? value;
-}
-
 function totalBlockers(counts: Record<string, number>): number {
   return (
     (counts.boundary_open_count ?? 0) +
@@ -2111,9 +1784,7 @@ function totalBlockers(counts: Record<string, number>): number {
     (counts.paper_review_blockers ?? 0) +
     (counts.paper_promotion_blockers ?? 0) +
     (counts.testnet_review_blockers ?? 0) +
-    (counts.observability_issue_count ?? 0) +
-    (counts.research_v5_collector_issue_count ?? 0) +
-    (counts.research_portfolio_issue_count ?? 0)
+    (counts.observability_issue_count ?? 0)
   );
 }
 

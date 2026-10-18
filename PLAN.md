@@ -6,7 +6,7 @@
 第一阶段目标不是实盘赚钱，而是建立可重复的数据、回测、评估、复盘闭环。所有策略和 Agent 建议必须先变成结构化信号，再经过 NautilusTrader 回测和硬风控验证。
 
 ## Architecture
-- 自有代码统一放 `/home/nishiki/projects/trader/apps/`（按 ADR-001 §5 目录结构），不要直接改两个上游仓库。
+- 自有代码统一放 `apps/`（按 ADR-001 §5 目录结构），不要直接改两个上游仓库。
 - 数据层：Binance 历史/实时数据落到 Nautilus `ParquetDataCatalog`；策略元数据、回测结果、Agent 建议先用 SQLite，后期再迁到 Postgres/Timescale。
 - 研究层：Freqtrade/FreqAI 用于快速实验特征、模型和策略假设，输出标准化 `SignalEvent`，不直接管理实盘仓位。
 - 交易层：NautilusTrader Strategy 读取市场数据和外部信号，生成订单意图；订单必须经过 Nautilus `RiskEngine` 和自定义硬风控后进入 `ExecutionEngine`。

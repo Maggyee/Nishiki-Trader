@@ -1,414 +1,66 @@
 # strategies_nautilus
 
-NautilusTrader 上的自定义 Strategy / Actor / 风控扩展。
+NautilusTrader 上的自定义 Strategy、runner 和风控扩展。这是唯一的执行路径。
 
-**当前 Phase**：3 entry（testnet guard rails / emergency flatten）。
+- **当前 Phase**：3 runtime 已建成（testnet canary 已暂停），Phase 6 启动守卫按设计会拒绝启动。
+- **边界**：只消费 `SignalEvent v1`。订单必须经过 Nautilus `RiskEngine` 和
+  ADR-008 硬风控（单日亏损停机、连续亏损暂停、信号过期拦截）。LLM 不进入这条路径。
+- **下一步入口**：等有候选策略通过 Gates v2 后，按 `docs/runbook-first-testnet-canary.md`
+  用 `runners/testnet_runner.py` 重启 canary。
+- **已归档**：`portfolio_*` 多资产执行、testnet session 与 joint/egress 模块
+  （tag `archive/pre-slim-2026-10-17`，见 `docs/history.md`）。
 
-## 职责
+## 文件
 
-- 订阅 `bridge.SignalEvent`，生成订单意图
-- 调用 NautilusTrader `RiskEngine` / `ExecutionEngine`
-- 实现 ADR-002 §4.1 策略侧规则（schema / venue / ttl / confidence / source 校验）
-- 实现 ADR-002 §4.2 风控侧规则（单日 5% 亏损停机、连续亏损暂停、信号过期拦截）
-- 实现 ADR-002 §4.3 降级行为（信号源挂掉 / Redis 挂掉 / 信号格式错误）
+| 文件 | 用途 |
+|---|---|
+| `signal_consumer.py` | 从 `bridge.store` 读取并校验 SignalEvent（ADR-002 §4.1） |
+| `baseline_strategy.py` | 纯 Python 的 signal → order intent 决策层 |
+| `baseline_nautilus_strategy.py` | Nautilus Strategy 适配 |
+| `result_schema.py` | ADR-004 bundle schema |
+| `runners/backtest_runner.py` | catalog + SignalStore 回测，输出到 `data/backtests/<run_id>/` |
+| `runners/paper_runner.py`、`wall_clock_bar_feed.py` | 本地模拟 paper（不连交易所），支持断点续跑 |
+| `runners/testnet_runner.py`、`binance_testnet_exchange.py` | Binance Spot testnet 长跑，触发阈值时自动应急平仓 |
+| `runners/emergency_flatten.py` | ADR-008 应急平仓 |
+| `runners/first_testnet_canary.py`、`promotion_review*.py` | canary 升档闸门与审查材料 |
+| `runners/report_paper_bundle.py`、`report_testnet_bundle.py` | bundle 被动审查 |
+| `runners/live_startup_guard.py` | Phase 6 启动前拒绝合约（只读证据，阻塞时 exit 2） |
+| `runners/live_telemetry.py`、`textfile_metrics.py`、`sidecar_writer.py` | 心跳、Prometheus textfile、sidecar |
+| `runners/compare_backtests.py` | 两次回测的确定性对比 |
 
-## 当前入口
-
-`portfolio_joint_egress.py` 将完整本地 TLS 联合采集接入独立持久化尝试账本：
-20 项操作、16 GET / 448 已知权重，失败不退款，准备和结果绑定原始联合日志前缀。
-发送前重查账本与计数器时效，行情连接和控制帧的实际费用仍未知。
-普通项目进程验收已完成；另有已安装专用 UID 的固定多操作 IPC 验收，
-实际采集器与网关 TLS/WS 套接字的衔接仍待完成。
-见 [联合采集记账验收](../../docs/progress/portfolio-joint-egress-accounting-2026-09-17.md)。
-
-`portfolio_egress_ledger.py` 保存本地 REST/账户/行情操作的准备与结果记录，
-在准备落盘前后检查借用的绑定对象，检测漂移后终止；失败/不确定尝试不退还。
-这是本地记账组件，调用者标签未经认证，检查间隔的流量覆盖仍未知，不提供
-发送许可。隔离单请求网关已有验收；多操作集成仍待完成。见
-[本地出口尝试账本](../../docs/progress/portfolio-egress-attempt-ledger-2026-09-17.md)。
-
-`portfolio_joint_reservation.py` 对固定最大预算执行独立离线验收：
-21 步准备、17 GET / 468 已知权重，逐步验证签名并持久化已准备消耗。
-失败、不确定结果或中断后不允许在原日志重启；不连接传输层或预留真实额度。
-见 [离线逐步预留验收](../../docs/progress/portfolio-testnet-joint-reservation-2026-09-15.md)。
-
-`portfolio_joint_attestation.py` 按独立选定的来源/网关公钥验证证据签名，
-绑定原始候选、策略、采集范围、出口地址和有效期，再重算现有额度检查。
-仅验证签发者；实际来源权威、网关覆盖和额度预留仍未获验证。
-见 [联合证据签名验收](../../docs/progress/portfolio-testnet-joint-attestation-2026-09-15.md)。
-
-`portfolio_joint_admission.py` 实现离线首请求容量检查：原始限额重解析、
-时钟/窗口与计数回退拒绝、完整区间用量上界和保守连接合计。候选出口记录
-尚无可信认证器，计算余量不授予网络准入。下一步接口与边界见
-[联合准入检查](../../docs/progress/portfolio-testnet-joint-admission-review-2026-09-14.md)。
-
-`portfolio_joint_tls_transport.py` 将本机 TLS/Upgrade 来源记录接入联合采集，
-`portfolio_joint_tls_evidence.py` 从原始接收块重建并绑定账户/行情消息；
-`portfolio_ws_frames.py` 支持有界文本分片、ping/pong 和关闭握手。
-该独立 profile 仍只连接回环测试对端；签名、账户及报价映射复用 Nautilus。
-见 [联合 TLS 传输验收](../../docs/progress/portfolio-testnet-joint-tls-transport-2026-09-14.md)。
-
-`portfolio_tls_provenance.py` 在固定本机 TLS 对端上保存实际证书校验信息、
-原始 HTTP/WS Upgrade 响应及失败记录；独立 CLI 可按原始哈希离线回放。
-它只验收握手，不处理 WS 数据帧或连接交易所。见
-[TLS 来源证据验收](../../docs/progress/portfolio-testnet-tls-provenance-2026-09-14.md)。
-
-`portfolio_rate_evidence.py` 离线解析原始 REST 响应头及 WS API 额度字段，
-区分额度定义、已用计数、账户/IP 范围和缺失的连接使用量；解析成功不授予网络准入。
-独立测试网采集草案、468 权重预算及出口/握手证据缺口见
-[额度证据与采集合同](../../docs/progress/portfolio-testnet-joint-capture-contract-2026-09-14.md)。
-
-`portfolio_joint_routes.py` 将所选初始原始字节、本次账户/元数据/盘口绑定为
-固定路由；`portfolio_joint_transport.py` 在显式本机回环对端上验收原生 WS、
-Ed25519 签名、发送前预算和失败关闭，不支持交易所采集。见
-[联合传输验收](../../docs/progress/portfolio-testnet-joint-transport-2026-09-14.md)。
-
-`portfolio_joint_observation.py` 实现合成数据专用的联合日志：共享账户/行情
-缓冲、持久化处理时间、各币种独立深度与全账户区间。原生回放不产生准入资格；
-首轮实现见
-[联合日志验收](../../docs/progress/portfolio-testnet-joint-observation-acceptance-2026-09-14.md)。
-
-`portfolio_observation_plan.py` 从已重放的证据计算完整资产/路由排除项、
-BTC/ETH/BNB 三枢纽试验范围和账户前后观察的 REST/WS 预算。它是离线规划器，
-不是估值准入或网络执行器；历史设计及后续入口见
-[联合观察设计](../../docs/progress/portfolio-testnet-joint-observation-design-2026-09-13.md)。
-
-`portfolio_market_depth.py` 默认是独立的 BTCUSDT 快照/增量重建核心，另支持显式币种参数；
-`portfolio_market_depth_archive.py` 保存原始字节、验证归档并重放原生 QuoteTick。
-核心和归档默认保持 v1；显式 `revision=2` 将首条有效更新按 `L+1` 衔接，
-对应独立 profile 和合同哈希，不迁移旧归档。
-不连接策略或执行引擎，不赋予估值/基线/下单资格。有限深度、时钟、缺口与
-严格首段衔接的验收及后续入口见
-[公开深度验收](../../docs/progress/portfolio-testnet-public-depth-2026-09-13.md)。
-
-Phase 2 baseline backtest runner:
+## 常用命令
 
 ```bash
+# 回测（先用 apps.ops.backfill_bars 准备 data/catalog）
 uv run python -m apps.strategies_nautilus.runners.backtest_runner \
-  --catalog-path data/catalog \
-  --instrument-id BTCUSDT.BINANCE \
+  --catalog-path data/catalog --instrument-id BTCUSDT.BINANCE \
   --bar-type BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL \
   --signal-store-path data/bridge/signals.db \
-  --signal-source manual_research \
-  --signal-model-version binance-fixture-v1 \
-  --trade-size 0.001 \
-  --starting-balance 100000
-```
+  --signal-source manual_research --signal-model-version binance-fixture-v1 \
+  --trade-size 0.001 --starting-balance 100000
 
-The runner loads bars and instruments through NautilusTrader
-`ParquetDataCatalog`, loads signals through `SignalStore.replay(**filter)`,
-and writes the ADR-004 bundle under `data/backtests/<run_id>/`.
-
-Phase 2 simulated paper runner:
-
-```bash
+# 模拟 paper（kind="paper"，写入 data/paper/<run_id>/）
 uv run python -m apps.strategies_nautilus.runners.paper_runner \
-  --catalog-path data/catalog \
-  --instrument-id BTCUSDT.BINANCE \
+  --catalog-path data/catalog --instrument-id BTCUSDT.BINANCE \
   --bar-type BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL \
   --signal-store-path data/bridge/signals.db \
-  --signal-source freqai_linear_v1 \
-  --signal-model-version linear-mom-train20240105 \
-  --trade-size 0.001 \
-  --starting-balance 100000 \
-  --policy-position-pct-multiplier 0.2 \
-  --policy-dry-run \
-  --heartbeat-interval-seconds 30 \
-  --poll-interval-seconds 60 \
-  --poll-batch-size 1
-```
+  --signal-source <source> --signal-model-version <version> \
+  --trade-size 0.001 --starting-balance 100000 \
+  --policy-position-pct-multiplier 0.2 --policy-dry-run
 
-The paper runner writes a `kind="paper"` bundle under `data/paper/<run_id>/`.
-It is local simulation only: no exchange keys, no exchange adapter, no live
-orders. Catalog polling is processed through an event-time cursor, with
-runtime heartbeats in `logs/heartbeat.jsonl`, poll/data-gap records in
-`logs/runtime.log`, and restart metadata in `run_manifest.json.runtime`.
-Use `--previous-run-id <run_id> --restart-reason <reason>` to start a new
-session from the previous bundle's processed cursor.
+uv run python -m apps.strategies_nautilus.runners.report_paper_bundle --json data/paper/<run_id>
 
-Paper bundle review summary:
-
-```bash
-uv run python -m apps.strategies_nautilus.runners.report_paper_bundle \
-  --json \
-  data/paper/<run_id>
-```
-
-The report CLI reads the manifest and sidecar Parquet files, summarizes
-lineage decisions, risk blockers, policy state, PnL, and missing promotion
-metrics, and prints whether the bundle is reviewable. It does not promote
-sources or mutate policy.
-
-Phase 3 guarded testnet runner:
-
-```bash
+# testnet（需要 testnet 凭证；重启时传 --previous-run-id/--restart-reason 做对账）
 uv run python -m apps.strategies_nautilus.runners.testnet_runner \
-  --mode testnet \
-  --kind testnet \
-  --allow-real-credentials \
-  --source freqai_linear_v1 \
-  --model-version linear-mom-train20240105 \
-  --policy-position-pct-multiplier 0.2 \
-  --long-run \
-  --instrument-id BTCUSDT.BINANCE \
-  --starting-balance 100000 \
-  --max-run-seconds 3600
-```
+  --mode testnet --kind testnet --allow-real-credentials \
+  --source <source> --model-version <version> \
+  --policy-position-pct-multiplier 0.2 --long-run \
+  --instrument-id BTCUSDT.BINANCE --starting-balance 100000 --max-run-seconds 3600
 
-The long-running shell reuses the Phase 3b Binance Spot testnet connection
-guard, writes `data/testnet/<run_id>/run_manifest.json` plus runtime logs, and
-auto-invokes the ADR-008 emergency flatten path when the 5% daily-loss,
-exchange-error burst, or WS-reconnect burst thresholds fire. It writes only
-the credential source and API key prefix to disk.
-
-Phase 6 passive live startup guard:
-
-```bash
-uv run python -m apps.strategies_nautilus.runners.live_startup_guard \
-  --mode live \
-  --kind live \
-  --allow-live-credentials \
-  --source freqai_linear_v1 \
-  --model-version linear-mom-train20240105 \
-  --policy-position-pct-multiplier 0.1 \
-  --starting-capital-usdt 100 \
-  --live-readiness-report-path docs/retros/<phase6-live-readiness>.json \
-  --live-promotion-review-path docs/retros/<live-canary-promotion-review>.md \
-  --first-live-day-runbook-path docs/runbook-first-live-day.md \
-  --markdown
-```
-
-The guard is a refusal contract for a future live runner. It reads only local
-evidence paths and git state, returns exit code 2 when blocked, and does not
-read live credential values, build a Nautilus node, connect to Binance, mutate
-`SourcePolicy`, write `SignalEvent`, or place orders. Current repo evidence is
-expected to block because Phase 6 is not open.
-
-For a restart, pass `--previous-run-id <run_id> --restart-reason <reason>`;
-the runner compares the previous bundle's open orders / positions with
-exchange REST state before building a new node. Drift writes
-`restart_drift_detected` to `logs/alerts.log` and exits 3. The external
-heartbeat watchdog entrypoint is `python -m infra.watchdog.watchdog`.
-
-For the local BTCUSDT fixture, build `data/catalog/` first with:
-
-```bash
-uv run python -m apps.ops.backfill_bars \
-  --download \
-  --symbol BTCUSDT \
-  --interval 1m \
-  --date 2024-01-01 \
-  --catalog-path data/catalog \
-  --seed-demo-signals \
-  --signal-store-path data/bridge/signals.db
-```
-
-Replay comparison:
-
-```bash
 uv run python -m apps.strategies_nautilus.runners.compare_backtests \
-  data/backtests/<run-a> \
-  data/backtests/<run-b>
+  data/backtests/<run-a> data/backtests/<run-b>
 ```
 
-The comparison ignores `run_id`, `started_at`, `finished_at`, and
-`elapsed_seconds`, then compares the normalized manifest plus `fills.parquet`
-byte-for-byte.
-
-## 文件布局
-
-```text
-strategies_nautilus/
-├── __init__.py
-├── signal_consumer.py    # 从 bridge.store 读 SignalEvent
-├── baseline_strategy.py  # 纯 Python signal -> order intent 决策层
-├── baseline_nautilus_strategy.py
-├── result_schema.py
-└── runners/
-    ├── backtest_runner.py
-    ├── paper_runner.py
-    ├── report_paper_bundle.py
-    ├── live_startup_guard.py
-    └── compare_backtests.py
-```
+外部心跳 watchdog 的入口是 `python -m infra.watchdog.watchdog`。
 
 测试：`tests/strategies_nautilus/`
-
-## 边界
-
-`portfolio_preflight.py` 是离线组合订单资金/风控预检查，不维护订单账本、
-不撮合、不下单；现由独立的合成输入验收 runner 调用。它要求已对账的账户快照，覆盖挂单预留、
-部分成交/待撤单、组合敞口及损失阈值；快照检查不等于原子资金预留。
-`select_funded_batch` 在此基础上按减仓优先、事件时间、固定策略顺序选择可负担
-订单，并保留跳过原因；不缩量、不预支卖单收入、不排队重试。详见
-[v2 接纳规则](../../docs/progress/portfolio-funded-admission-2026-09-09.md)。
-`portfolio_simulation.py` 已接入 Nautilus 原生模拟订单、持仓及账户，完成预留、
-部分/延迟成交、撤单确认、策略热重启和风控锁存验收。只接受测试 SignalEvent 身份；
-冷启动缺少原生状态时拒绝恢复。现有 paper/testnet/live runner 未接入。
-
-```bash
-.venv/bin/python -m apps.strategies_nautilus.runners.portfolio_simulation_acceptance
-```
-
-`portfolio_venue.py` 将本地保存的 Binance exchangeInfo、commission、myFilters
-响应转换为预检查规则，覆盖价格区间、订单名额和资产上限。现有只收 USDT 手续费
-假设不支持 BTC 买入扣费或 BNB 扣费，适配层会明确拒绝，不自动缩量。
-独立验收模式 `--fee-mode received_asset` 已通过 Nautilus 原生 BTC 买入手续费、
-净持仓和 8 位账务精度验证，交易数量步长仍不变。`portfolio_inventory.py` 报告
-步长余数；默认 `exact_v1` 完整平仓数量不合规时仍拒绝。显式 `whole_steps_v1`
-离线退出策略只提出整步长卖出数量，再执行完整预检查；余量留在原策略原生持仓，
-计入权益并阻止超额再买入。不会归集、核销或自动重试。BNB 仍不支持。
-
-```bash
-.venv/bin/python -m apps.strategies_nautilus.runners.portfolio_simulation_acceptance --fee-mode received_asset
-.venv/bin/python -m apps.strategies_nautilus.runners.portfolio_simulation_acceptance --fee-mode received_asset --exit-policy whole_steps_v1
-```
-
-`portfolio_account_collector.py` 提供显式签名 GET 只读采集接口，支持只读 key，
-不自动加载凭证。`portfolio_account.py` 精确比较总额/可用/锁定余额、全订单历史、
-逐笔成交和手续费；REST 相符仍不代表实时账户版本原子一致。
-`portfolio_recovery.py` 在显式原生持久化模式下，用 Nautilus 事件重建新进程的
-账户、订单和持仓，保留余量、去重与风控锁存；未知提交、待撤单及对账差异均阻断。
-
-```bash
-.venv/bin/python -m apps.strategies_nautilus.runners.portfolio_recovery_acceptance
-```
-
-该验收会终止首个进程并在第二个进程继续原生挂单，仅使用合成账户观察；不恢复
-模拟交易所的完整市场队列，不构成真实账户或实盘恢复验收。详见
-[账户对账与进程恢复](../../docs/progress/portfolio-account-recovery-2026-09-09.md)。
-`portfolio_stream.py` 现提供来源绑定、订阅代次、持久化事件链与 REST 核对凭据；
-新事件、断线或过期会使旧凭据失效。`portfolio_adapter_recovery.py` 用真实 Nautilus
-Binance 转换器及原生对账引擎验证合成订单恢复，拒绝推断成交、执行客户端与交易命令。
-这些恢复验证只使用合成账户，也未接入进程恢复或现有 runner。
-本地回执无法证明交易所用户流全局无丢包。详见
-[来源、用户流及适配器验收](../../docs/progress/portfolio-source-stream-adapter-2026-09-10.md)。
-`portfolio_user_stream.py` 现通过 Nautilus 原生签名与 Rust WebSocket I/O 实现
-只读签名订阅，保留完整事件信封，按真实连接状态验证核对凭据，断线后要求重新订阅。
-配套 `BinanceAccountReadOnlyHttpClient` 限定账户 GET 路径并避开签名 URL 调试日志。
-真实网络收发已在本机 WebSocket 服务验收，尚未连接 Binance 私有账户。
-调用示例和清理约定见
-[原生只读传输验收](../../docs/progress/portfolio-readonly-transport-2026-09-10.md)。
-`portfolio_adapter_checkpoint.py` 现提供隔离的数字订单号检查点恢复：原生事件重建后，
-应用 Binance 原始成交报告，再精确检查账户余额、锁定金额、手续费和持仓归属。
-三进程验收验证突然退出、恢复和幂等重放；原检查点、策略状态及风险锁存保持不变。
-它不启动策略，不认定停机风险历史完整，也不允许数字检查点进入默认 UUID 模拟恢复。
-
-```bash
-.venv/bin/python -m apps.strategies_nautilus.runners.portfolio_adapter_checkpoint_acceptance
-```
-
-见[适配器检查点恢复验收](../../docs/progress/portfolio-adapter-checkpoint-2026-09-10.md)。
-`portfolio_downtime_risk.py` 将停机期原生账户快照和买一报价绑定到恢复前后检查点，
-只读识别日内 5% 越线及规划风险阈值，不会因恢复时回升而清除记录或已有锁存。
-当前按 ADR-015 检查日亏损 min(25 USDT, 日初权益 × 5%)；历史报告保留旧规则差异。
-组合预检查和模拟策略共用 `portfolio_risk_policy.py` 的计算；规划默认 v3，v1/v2 显式复现。
-旧配置检查点不能恢复为新规则，实际账户基线与运行时策略仍需独立验收。
-采样无法证明完整覆盖，跨 UTC 日缺少新基线时拒绝审核；结果永远不放行交易。
-见[停机风险审核](../../docs/progress/portfolio-downtime-risk-2026-09-10.md)。
-绑定用户流的账户采集现将每页原始 REST 响应刷盘，并记录采集 ID 和完成标记。
-`portfolio_account_archive.py` 按指定归档哈希、来源和独立基线离线重放采集器，
-复核权限、UID、分页和前后账户一致性；旧哈希日志及中断采集不能补充认定为完整证据。
-历史结果没有可复用的连接核对凭据，详见
-[账户原始响应归档与重放](../../docs/progress/portfolio-account-archive-2026-09-10.md)。
-同一用户流日志现只允许一轮在途账户采集；并发调用在请求前拒绝，取消/超时/失败
-写入中止记录后释放，写盘失败则保持阻断。整轮异步采集有 60 秒总时限，逐次检查
-时钟和来源，详见[采集中断恢复](../../docs/progress/portfolio-collection-lifecycle-2026-09-10.md)。
-`portfolio_testnet_credentials.py` 支持显式 env 中的测试网 API Key 与 Ed25519
-私钥文件路径，校验权限和 PKCS#8 格式；HTTP 使用独立 Ed25519 签名入口，WS
-使用原生 PEM 识别。配置格式与首次签名读取见
-[Ed25519 测试网接入](../../docs/progress/portfolio-testnet-ed25519-2026-09-11.md)。
-`portfolio_testnet_observation.py` 提供单独的全账户观察模式，保留全部资产和账户级
-挂单，不调用测试网不支持的 `/sapi`，权限证明继续为未知，不能生成严格恢复凭据。
-真实签名 WS 订阅、显式重连和四轮 502 资产观察的归档重放已通过；期间没有业务事件，
-不能证明全局连续性或真实适配器进程恢复。见
-[测试网全账户观察](../../docs/progress/portfolio-testnet-observation-2026-09-11.md)。
-下一入口为独立核验预期 UID 和完整账户基线、权限证据及测试网重置语义，验证真实
-来源、账户/行情归档、资金流和 UTC 日初基线及策略风险政策；部署前还需明确余量入场政策。
-详见[原生手续费验收](../../docs/progress/portfolio-base-fee-acceptance-2026-09-09.md)及
-[残余库存退出验收](../../docs/progress/portfolio-residual-exit-2026-09-09.md)。
-
-- 不直接接交易所 API（用 nautilus 的 binance adapter）
-- 不绕过 `RiskEngine`
-- 不修改 `nautilus_trader/` 上游源码
-- Phase 1–5 都是 backtest / dry-run / testnet；真实账户只在 Phase 6 接入
-
-
-只读测试网全账户复核入口：`apps.ops.portfolio_testnet_account_review`。
-它重放指定归档、比较全部资产/挂单/账户字段，并可使用指定的 testnet exchangeInfo
-在独立进程中验证完整 Nautilus 余额映射。不会默认猜测未知币种精度或省略资产。
-详细输出以 0600 权限独占创建；相等结果和 CLI exit 0 均不代表恢复或交易许可。
-实现与私有证据引用见
-[全账户映射验收](../../docs/progress/portfolio-testnet-account-mapping-2026-09-11.md)。
-
-
-测试网观察准入与估值入口：`apps.ops.portfolio_testnet_admission`。
-它验证初始账户原始记录、归档和行情快照的关联，记录完整观察起点，计算直接或两跳
-USDT 参考估值，并生成固定 0.0001 BTC / 10 测试 USDT 的订单验收草案。
-缺价资产保持未知，参考小计不会变成完整权益；日初权益、日亏损和风险上限在未合格
-时保持空值。此入口没有执行引擎或下单能力。见
-[准入及基线规则](../../docs/decisions/016-testnet-observation-admission.md)和
-[本次验收](../../docs/progress/portfolio-testnet-admission-2026-09-11.md)。
-
-独立测试网工程检查：`apps.ops.portfolio_testnet_capabilities` 使用现有 Ed25519
-配置，读取完整账户、手续费、myFilters 和有效价格参考。可显式添加
-`--validate-order` 调用不进入撮合引擎的 `/api/v3/order/test`；固定
-0.0001 BTC、最多 10 测试 USDT，要求本次费率全部为零。
-原始账户与校验响应独占写入 0600 本地文件，stdout 只输出脱敏诊断。
-`portfolio_testnet_session.py` 保存独立会话规则和校验边界；尚无原生会话账本
-或撮合订单 runner，CLI 成功不能放开实盘/组合准入。说明见
-[ADR-017](../../docs/decisions/017-testnet-engineering-session.md)。
-
-ADR-017 原生会话账本与恢复：`portfolio_session_ledger.py` 在提交前独占、原子
-持久化订单初始化、一次买入额度和撤单意图；持仓归属只从原生成交推导。
-`portfolio_session_recovery.py` 用 Binance 原生报告核对完整账户；
-`portfolio_session_account.py` 在离线会话中按未成交数量计算原生 CASH 冻结。
-`python -m apps.strategies_nautilus.runners.portfolio_session_acceptance` 运行
-两组三进程崩溃/重放测试，使用 502 资产合成账户，无凭证或网络请求。
-活跃订单缺少 Submitted 记录时继续阻断；实际适配器发送前落盘和事件回调
-尚未接入，不能启动撮合或实盘。见
-[会话账本与恢复验收](../../docs/progress/portfolio-testnet-session-recovery-2026-09-11.md)。
-
-ADR-017 异步原生桥接：`portfolio_session_bridge.py` 已把专用 fixture Strategy、
-RiskEngine、原生执行队列和 Binance 报文处理接通。Submitted/PendingCancel
-及单次发送记录先写盘；超时保留未知状态，部分/迟到/重复成交由原生引擎记账。
-`runners/portfolio_session_bridge_acceptance.py` 验证 502 资产和两组跨进程崩溃恢复。
-当前仅 TestClock + 内存 HTTP 接收端，不加载 Key、不联网。下一入口是专用真实
-测试网运行配置、固定会话路径、签名账户对账与来源绑定的回调；详见
-[桥接验收报告](../../docs/progress/portfolio-testnet-session-bridge-2026-09-11.md)。
-
-真实测试网只读启动：`portfolio_session_transport.py` 提供固定账户会话锁及
-来源绑定的原订单 GET 对账；`portfolio_session_bootstrap.py` 用 LiveClock 建立
-完整原生账户，保留全部资产。真实 502 资产的首次启动和另一进程签名恢复已通过。
-当前 profile 禁止订单；探针文件不激活或消耗限定撮合额度。下一入口是单独的
-限额写入客户端、真实时钟策略/风控联动和定时撤单，不能直接移除探针限制。
-详见[真实账户启动报告](../../docs/progress/portfolio-testnet-session-transport-2026-09-11.md)。
-
-The bounded ADR-017 matching profile is `portfolio_session_runtime.py`, operated
-by `apps.ops.portfolio_session_run --execute` from clean pushed code. It uses one
-fixed testnet scope, native risk/strategy/execution, durable single-attempt requests
-and timed cancellation. `--recover` is signed GET-only original-ID reconciliation.
-See `docs/progress/portfolio-testnet-session-runtime-2026-09-11.md` for limitations;
-never delete activation or state to repeat a BUY. Production remains blocked.
-
-`apps.ops.portfolio_session_run --recover-cancel` adds explicit signed recovery
-followed only by an original active order's unused cancellation. A terminal order
-returns without modifying the fixed checkpoint. Old cancellation intents/attempts
-and all BUY allowances stay consumed; new orders remain forbidden. Implementation:
-`portfolio_session_cancel_recovery.py`; acceptance/boundaries are documented in
-`docs/progress/portfolio-testnet-cancel-recovery-2026-09-11.md`.
-
-`apps.ops.portfolio_session_run --status` inspects the fixed local checkpoint with
-no credentials, network or writes. It reports original order IDs, consumed attempts,
-recorded ownership and the shared 24-hour history bound. It grants no action and
-never equates an old terminal record with current venue confirmation. See the
-[fixed-session recovery runbook](../../docs/runbook-testnet-session-recovery.md).
-
-`apps.ops.portfolio_session_archive` reviews explicitly pinned historical session
-archives in a fresh standalone process, including after the collection window
-expires. `portfolio_session_archive.py` validates the full archive chain, original
-checkpoint/collection binding, exact GET receipts and original evidence seal before
-native historical reconciliation. Only a new private diagnostic report is written;
-no credentials, network, live fence, session writer or execution permission. See
-[historical session replay](../../docs/progress/portfolio-testnet-session-archive-2026-09-13.md)
-and the [fixed-session recovery runbook](../../docs/runbook-testnet-session-recovery.md).

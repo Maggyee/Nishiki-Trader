@@ -2,9 +2,8 @@
 
 > 救火手册。Phase 0 内容很少；每个 Phase 完成时回来补对应章节。
 
-ADR-017 固定工程会话的未知订单、撤单和余量处理，使用
-[固定会话恢复手册](runbook-testnet-session-recovery.md)。该范围保留全账户原有资产，
-不能套用下列通用全账户清理或旧 runner 重启流程。
+ADR-017 固定工程会话（2026-09-11，额度已用完）的恢复手册已归档在
+tag `archive/pre-slim-2026-10-17`（`docs/runbook-testnet-session-recovery.md`）。
 
 ## 紧急停机 / 平仓
 
