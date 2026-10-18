@@ -1465,7 +1465,7 @@
           "source": "rule_crypto_taker_persist_v1",
           "model_version": "crypto-btc-um-takershare24h-z90-1-2d-hold3d-long-v1",
           "family": "microstructure_flow",
-          "outcome": "not_opened"
+          "outcome": "development_rejected"
         }
       ]
     },
@@ -1479,7 +1479,7 @@
           "source": "rule_crypto_deleveraging_rebound_v1",
           "model_version": "crypto-btc-eth-oi1d-ret1d-q20-90d-hold3d-long-v1",
           "family": "microstructure_flow",
-          "outcome": "not_opened"
+          "outcome": "development_rejected"
         }
       ]
     },
@@ -1493,7 +1493,7 @@
           "source": "rule_crypto_xs_taker_flow_v1",
           "model_version": "crypto-xs-takershare7d-z90-top3-bottom3-weekly-v1",
           "family": "cross_sectional_relative",
-          "outcome": "not_opened"
+          "outcome": "development_rejected"
         }
       ]
     },
@@ -1507,7 +1507,7 @@
           "source": "rule_crypto_turn_of_month_v1",
           "model_version": "crypto-10coin-tom-last1-first3-v1",
           "family": "event_calendar",
-          "outcome": "not_opened"
+          "outcome": "confirmation_rejected"
         }
       ]
     }
@@ -1647,9 +1647,9 @@
     "legacy_candidate_count": 16,
     "candidate_rows": 164,
     "unique_identities": 161,
-    "unique_identities_pnl_opened": 119,
+    "unique_identities_pnl_opened": 123,
     "unique_identities_provider_blocked": 36,
     "survivors_paper_shadow": 10,
-    "confirmation_opened": 24
+    "confirmation_opened": 25
   }
 }

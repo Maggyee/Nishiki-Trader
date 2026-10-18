@@ -1,0 +1,64 @@
+{
+  "schema_version": "research.result.v1",
+  "protocol": 57,
+  "stage": "development",
+  "contract": "docs/research/contracts/v57-deleveraging-rebound.json",
+  "contract_sha256": "6a79244fb8ff4144fc519ed5c6a15affb80b5f48456772a2603fd02e0d81328e",
+  "data_manifest_sha256": "0b46f94078416b40fc3fcf0de8a8ced0abc5e64db97724619b7a2a9fa1e7dc19",
+  "generated_at": "2026-10-18T08:00:42+00:00",
+  "candidates": {
+    "deleveraging_rebound": {
+      "source": "rule_crypto_deleveraging_rebound_v1",
+      "model_version": "crypto-btc-eth-oi1d-ret1d-q20-90d-hold3d-long-v1",
+      "window": [
+        "2022-01-01",
+        "2023-12-31"
+      ],
+      "metrics": {
+        "days": 730,
+        "gross_net_pnl": 2978.07403935783,
+        "base_net_pnl": 2138.07403935783,
+        "stress_net_pnl": 1928.0740393578296,
+        "base_return_pct": 21.3807403935783,
+        "positive_months": 10,
+        "months_total": 24,
+        "positive_years": 1,
+        "years_total": 2,
+        "closed_positions": 70,
+        "leave_best_base_net_pnl": 1206.3656671856859,
+        "benchmark_pnl": 175.52684246295325,
+        "time_in_market": 0.2273972602739726,
+        "gross_exposure_mean": 0.15205479452054796,
+        "net_exposure_mean": 0.15205479452054796,
+        "max_drawdown_usdt": 3113.3362515252097,
+        "max_drawdown_pct": 31.133362515252095,
+        "long_only_leg_base_net_pnl": 2138.07403935783,
+        "daily_base_pnl_sha256": "dcdf9fa7908db04f475a9546b93cda2eff030d3705def5271bfe3645ccc0704d"
+      },
+      "null": {
+        "trials": 5000,
+        "seed": 20261018,
+        "p_value": 0.10497900419916016,
+        "null_base_mean": -699.0167887764123,
+        "null_base_p90": 2194.6963653166727,
+        "null_months_positive_median": 11.0
+      },
+      "gates": {
+        "checks": {
+          "base_net_pnl_positive": true,
+          "stress_net_pnl_positive": true,
+          "years_breadth": false,
+          "months_breadth": false,
+          "activity_floor": true,
+          "leave_best_positive": true,
+          "benchmark_relative": true,
+          "null_p_value": false,
+          "duplicate_replay_identical": true
+        },
+        "years_needed": 2,
+        "months_threshold": 11.0,
+        "pass": false
+      }
+    }
+  }
+}

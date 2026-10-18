@@ -1,0 +1,64 @@
+{
+  "schema_version": "research.result.v1",
+  "protocol": 59,
+  "stage": "confirmation",
+  "contract": "docs/research/contracts/v59-turn-of-month.json",
+  "contract_sha256": "3f5feae3fd0d289b151e4561bde2d4865f4f27e5682afc3c03968dc35d54dfac",
+  "data_manifest_sha256": "f078f2d4eb1d54164c22469f32c1513bfceaf77f280a99f291a4575a76a74236",
+  "generated_at": "2026-10-18T08:01:20+00:00",
+  "candidates": {
+    "turn_of_month": {
+      "source": "rule_crypto_turn_of_month_v1",
+      "model_version": "crypto-10coin-tom-last1-first3-v1",
+      "window": [
+        "2023-01-01",
+        "2025-12-31"
+      ],
+      "metrics": {
+        "days": 1096,
+        "gross_net_pnl": 2577.498189446577,
+        "base_net_pnl": 1713.498189446577,
+        "stress_net_pnl": 1497.4981894465764,
+        "base_return_pct": 17.13498189446577,
+        "positive_months": 20,
+        "months_total": 36,
+        "positive_years": 2,
+        "years_total": 3,
+        "closed_positions": 360,
+        "leave_best_base_net_pnl": 676.9849121946554,
+        "benchmark_pnl": 1682.2995412149767,
+        "time_in_market": 0.09854014598540146,
+        "gross_exposure_mean": 0.09854014598540144,
+        "net_exposure_mean": 0.09854014598540144,
+        "max_drawdown_usdt": 3068.5034985693655,
+        "max_drawdown_pct": 30.685034985693655,
+        "long_only_leg_base_net_pnl": 1713.498189446577,
+        "daily_base_pnl_sha256": "26954217fe274360f67a5ca022f27bc80a7f806f7de32e483699b8a077a73528"
+      },
+      "null": {
+        "trials": 5000,
+        "seed": 20261018,
+        "p_value": 0.22375524895020996,
+        "null_base_mean": 808.4685327672295,
+        "null_base_p90": 2367.306063255698,
+        "null_months_positive_median": 18.0
+      },
+      "gates": {
+        "checks": {
+          "base_net_pnl_positive": true,
+          "stress_net_pnl_positive": true,
+          "years_breadth": true,
+          "months_breadth": true,
+          "activity_floor": true,
+          "leave_best_positive": true,
+          "benchmark_relative": true,
+          "null_p_value": false,
+          "duplicate_replay_identical": true
+        },
+        "years_needed": 2,
+        "months_threshold": 18.0,
+        "pass": false
+      }
+    }
+  }
+}

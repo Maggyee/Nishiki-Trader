@@ -19,13 +19,13 @@ protocols (v49–v53) were rejected. Their shadow collection was stopped on
 
 Immediate focus:
 
-1. [Round 2026-10b](research/round-2026-10b.md) frozen: v56–v59, one identity each.
-   Round 2026-10 rejected all three identities; its learning simulation is done.
+1. Operator decision: rounds [2026-10](research/round-2026-10.md) and
+   [2026-10b](research/round-2026-10b.md) rejected all seven identities (v54–v59).
 
 ## Next Steps
 
-1. Implement v56–v59 mechanisms (Codex), cross-check against reference code, run
-   development, then confirmation for passes only. v56/v57 confirmation is binding.
+1. Any further protocol: freeze a contract in `docs/research/contracts/`, one
+   mechanism module, cross-check, run with `apps/research/`. Lessons in both rounds.
 2. Only when a candidate passes: resume the Phase 3 canary per
    [runbook](runbook-first-testnet-canary.md) for that identity. Generate a new
    testnet Ed25519 API key first; the old key pair was deleted on 2026-10-18.
