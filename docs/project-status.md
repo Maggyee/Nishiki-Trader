@@ -31,9 +31,8 @@ Immediate focus:
    regime, B5 event/calendar, B6 OI/taker flow, B7 vol-targeted overlay).
    Reuse the archived factor panel (W10) before adding providers.
 3. Only when a candidate passes: resume the Phase 3 canary per
-   [runbook](runbook-first-testnet-canary.md) for that identity.
-4. Operator decision: `data/` holds ~15 GB of egress/joint-window evidence no
-   longer read by main; prune or move it when convenient.
+   [runbook](runbook-first-testnet-canary.md) for that identity. Generate a new
+   testnet Ed25519 API key first; the old key pair was deleted on 2026-10-18.
 
 ## Blocked / Deferred
 
@@ -49,7 +48,8 @@ Immediate focus:
 - User crontab runs ten shadow collectors (protocols 8, 16, 18, 22, 34, 36,
   40, 42, 46, 48) from the pinned clone
   `data/collector-deployments/1727408c…` (its own git repo, unaffected by
-  main). Status: `data/research-v{N}-forward/status.json` (N < 40) or
+  main code) using main's `.venv/bin/python`; keep that interpreter's
+  dependencies compatible. Status: `data/research-v{N}-forward/status.json` (N < 40) or
   `data/research-v{N}/shadow/status.json`. Redeploy only from the archive tag.
 - systemd `nishiki-research-v2/v5-collector` timers are installed but disabled.
 
@@ -60,6 +60,8 @@ Immediate focus:
   notebooks infra` clean; frontend `npm run typecheck` and `npm run build` pass.
 - 2026-10-18 dashboard: Phase 6 panel now mirrors each report's own verdict instead of
   re-verifying it (~1.1k backend + ~2.6k test lines removed).
+- 2026-10-18 local cleanup: removed ~15 GB of untracked egress/joint/testnet-observation
+  evidence, `scratch/` and the repo-root key pair; `data/` is now 444 MB.
 - Shadow collectors unaffected: they import from the pinned clone, not from main.
 
 ## References
