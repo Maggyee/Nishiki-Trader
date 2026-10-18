@@ -1,0 +1,53 @@
+{
+  "schema_version": "research.contract.v1",
+  "protocol": 55,
+  "frozen_at": "2026-10-18",
+  "family": "microstructure_flow",
+  "mechanism": "BTC USD-M perp order-flow: (F1) 24h taker-buy share z-score continuation; (F2) open-interest build-up against price as a squeeze setup",
+  "orthogonality": "Driven by crypto-native positioning and aggressive flow, two-sided, and active in both calm and volatile regimes; the closed survivors were long BTC in calm external regimes. Legacy flow rejects were weekly rotation rules, and v6 book depth was provider-blocked, so the mechanism is untested rather than falsified.",
+  "directional_capability": "two_sided",
+  "weekend_coverage": "Binance USD-M klines and metrics are 24/7; no signal vacuum.",
+  "mechanism_module": "apps.strategies_freqtrade.research.flow_imbalance",
+  "limitations": "PnL uses USD-M close-to-close returns without funding cash flows; funding is reported as a sensitivity only if a candidate passes development.",
+  "data": {
+    "datasets": ["um_klines_1d", "um_metrics_daily"],
+    "symbols": ["BTCUSDT"],
+    "fetch_start_month": "2019-09",
+    "fetch_end_month": "2025-12",
+    "metrics_fetch_start_date": "2021-12-01"
+  },
+  "candidates": {
+    "taker_continuation": {
+      "source": "rule_crypto_taker_flow_v1",
+      "model_version": "crypto-btc-um-takershare24h-z90-1-continuation-v1",
+      "params": {"baseline_days": 90, "z_threshold": 1.0},
+      "windows": {
+        "development": ["2020-01-01", "2022-12-31"],
+        "confirmation": ["2023-01-01", "2025-12-31"]
+      }
+    },
+    "oi_squeeze": {
+      "source": "rule_crypto_oi_squeeze_v1",
+      "model_version": "crypto-btc-oi3d-5pct-price-divergence-hold3d-v1",
+      "params": {"lookback_days": 3, "oi_change_min": 0.05, "hold_days": 3},
+      "windows": {
+        "development": ["2022-01-01", "2023-12-31"],
+        "confirmation": ["2024-01-01", "2025-12-31"]
+      }
+    }
+  },
+  "notional_usdt": 10000.0,
+  "cost_scenarios_bps_per_fill": {"base": 12.0, "stress": 15.0},
+  "null": {"kind": "circular_shift_per_asset", "trials": 5000, "seed": 20261018},
+  "gates": {
+    "base_net_pnl_gt": 0.0,
+    "stress_net_pnl_gt": 0.0,
+    "positive_years_fraction_at_least": 0.6667,
+    "months_breadth_rule": "adaptive_null_median",
+    "closed_positions_at_least": 60,
+    "leave_best_base_net_pnl_gt": 0.0,
+    "benchmark_relative": true,
+    "p_value_max": 0.10
+  },
+  "reported_not_gated": ["long_only_leg", "max_drawdown", "time_in_market"]
+}

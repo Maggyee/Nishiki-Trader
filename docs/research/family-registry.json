@@ -1,6 +1,6 @@
 {
   "schema_version": "research.mechanism_family_registry.v1",
-  "as_of": "2026-08-27",
+  "as_of": "2026-10-18",
   "adr": "docs/decisions/014-research-program-v2.md",
   "families": {
     "attention_sentiment": {
@@ -32,11 +32,11 @@
       "status": "open"
     },
     "external_index_relief": {
-      "rationale": "Short-window decline/relief/expansion conditions on non-crypto external index levels (implied vol, implied correlation, strategy/buywrite indices, Treasury yields and their volatility, financial-stress composites) mapped to long/flat BTC. Produced all ten paper_shadow survivors and dozens of rejects; marginal members add correlated beta, not new alpha (ADR-014 \u00a73.3). Family-mining evidence: v35's primary VIX1Y failed confirmation while its dev-passed sibling VIX6M was re-registered by v42 and confirmed; VXN was confirmed twice under two near-identical rules (v18 OHLC, v40 diff5).",
+      "rationale": "Short-window decline/relief/expansion conditions on non-crypto external index levels (implied vol, implied correlation, strategy/buywrite indices, Treasury yields and their volatility, financial-stress composites) mapped to long/flat BTC. Produced all ten paper_shadow survivors and dozens of rejects; marginal members add correlated beta, not new alpha (ADR-014 §3.3). Family-mining evidence: v35's primary VIX1Y failed confirmation while its dev-passed sibling VIX6M was re-registered by v42 and confirmed; VXN was confirmed twice under two near-identical rules (v18 OHLC, v40 diff5).",
       "status": "saturated"
     },
     "linear_ml": {
-      "rationale": "Single-model linear momentum (freqai_linear_v1 lineage) demoted after 152-day paper evidence showed no post-cost edge; superseded by multifactor_ml (ADR-014 \u00a77).",
+      "rationale": "Single-model linear momentum (freqai_linear_v1 lineage) demoted after 152-day paper evidence showed no post-cost edge; superseded by multifactor_ml (ADR-014 §7).",
       "status": "deprioritized"
     },
     "macro_liquidity_flows": {
@@ -48,15 +48,19 @@
       "status": "open"
     },
     "multifactor_ml": {
-      "rationale": "ADR-014 \u00a77 ML restart: regularized multi-factor models over the archived point-in-time panel (backlog B1). Supersedes linear_ml. First member: protocol v49 panel ridge.",
+      "rationale": "ADR-014 §7 ML restart: regularized multi-factor models over the archived point-in-time panel (backlog B1). Supersedes linear_ml. First member: protocol v49 panel ridge.",
       "status": "open"
     },
     "portfolio_overlay": {
-      "rationale": "Vol-targeted sizing and allocation overlays evaluated at shadow portfolio level (ADR-014 \u00a76, backlog B7); not a tradable alpha identity.",
+      "rationale": "Vol-targeted sizing and allocation overlays evaluated at shadow portfolio level (ADR-014 §6, backlog B7); not a tradable alpha identity.",
       "status": "planned"
     },
     "stablecoin_liquidity": {
       "rationale": "Stablecoin supply expansion as crypto liquidity impulse. v11 flagged insufficient evidence (7 positions); v12 holds an active forward-only data contract. Do not re-propose as new (see backlog B8).",
+      "status": "open"
+    },
+    "time_series_trend": {
+      "rationale": "Per-asset time-series trend across a multi-coin universe with risk allocation, two-sided. Differs from crypto_price_ta rejects (single-rule long/flat BTC) by universe breadth, short side and inverse-vol allocation. First member: protocol v54.",
       "status": "open"
     },
     "two_sided_regime": {
@@ -1307,7 +1311,7 @@
     {
       "protocol": 49,
       "default_family": "multifactor_ml",
-      "mechanism": "Ridge regression over the archived 17-factor point-in-time panel plus two BTC-native features; monthly-refit expanding walk-forward (ADR-014 \u00a77 / B1)",
+      "mechanism": "Ridge regression over the archived 17-factor point-in-time panel plus two BTC-native features; monthly-refit expanding walk-forward (ADR-014 §7 / B1)",
       "candidates": [
         {
           "key": "panel_ridge",
@@ -1349,7 +1353,7 @@
     {
       "protocol": 51,
       "default_family": "crypto_derivatives_structure",
-      "mechanism": "BTC settled funding-rate positioning states \u2014 provider-corrected recovery of v50 with 2020-01 archive start (ADR-014 B2, v17->v18 pattern)",
+      "mechanism": "BTC settled funding-rate positioning states — provider-corrected recovery of v50 with 2020-01 archive start (ADR-014 B2, v17->v18 pattern)",
       "candidates": [
         {
           "key": "fund_below_baseline_3d",
@@ -1405,7 +1409,7 @@
     {
       "protocol": 53,
       "default_family": "cross_sectional_relative",
-      "mechanism": "30d cross-sectional momentum re-test under the accepted ADR-014 \u00a711 class-adaptive breadth gate; unchanged v52 rule content, new identity; conditional re-test (v52 development window already opened; 2023-2025 confirmation never fetched)",
+      "mechanism": "30d cross-sectional momentum re-test under the accepted ADR-014 §11 class-adaptive breadth gate; unchanged v52 rule content, new identity; conditional re-test (v52 development window already opened; 2023-2025 confirmation never fetched)",
       "candidates": [
         {
           "key": "xs_mom_30d",
@@ -1413,6 +1417,41 @@
           "model_version": "crypto-xs-mom30d-top3-bottom3-weekly-v2",
           "family": "cross_sectional_relative",
           "outcome": "confirmation_rejected"
+        }
+      ]
+    },
+    {
+      "protocol": 54,
+      "default_family": "time_series_trend",
+      "mechanism": "Sign of 20/60/120-day returns per coin, inverse-vol allocation over 10 coins, weekly, two-sided, gross <= 1",
+      "candidates": [
+        {
+          "key": "tsmom_vol",
+          "source": "rule_crypto_tsmom_vol_v1",
+          "model_version": "crypto-tsmom-20-60-120-invvol30-weekly-v1",
+          "family": "time_series_trend",
+          "outcome": "not_opened"
+        }
+      ]
+    },
+    {
+      "protocol": 55,
+      "default_family": "microstructure_flow",
+      "mechanism": "BTC USD-M taker-buy share z-score continuation (F1) and OI build-up vs price squeeze (F2)",
+      "candidates": [
+        {
+          "key": "taker_continuation",
+          "source": "rule_crypto_taker_flow_v1",
+          "model_version": "crypto-btc-um-takershare24h-z90-1-continuation-v1",
+          "family": "microstructure_flow",
+          "outcome": "not_opened"
+        },
+        {
+          "key": "oi_squeeze",
+          "source": "rule_crypto_oi_squeeze_v1",
+          "model_version": "crypto-btc-oi3d-5pct-price-divergence-hold3d-v1",
+          "family": "microstructure_flow",
+          "outcome": "not_opened"
         }
       ]
     }
@@ -1548,10 +1587,10 @@
     }
   ],
   "totals": {
-    "protocol_count": 52,
+    "protocol_count": 54,
     "legacy_candidate_count": 16,
-    "candidate_rows": 157,
-    "unique_identities": 154,
+    "candidate_rows": 160,
+    "unique_identities": 157,
     "unique_identities_pnl_opened": 116,
     "unique_identities_provider_blocked": 36,
     "survivors_paper_shadow": 10,

@@ -12,13 +12,16 @@ entry.
 
 ---
 
-## B9 — Delta-neutral funding carry — PRIORITY 1 (proposed 2026-10-18)
+## B10 — Multi-asset time-series trend with inverse-vol allocation — FROZEN as v54
+
+- **Family**: `time_series_trend` (new). See [round-2026-10.md](round-2026-10.md).
+
+## B9 — Delta-neutral funding carry — DEFERRED (operator, 2026-10-18)
 
 - **Family**: `funding_carry` (new).
 - **Mechanism**: hold long spot + equal-notional short USD-M perp and collect
   funding. Never tested as a held return (v50/v51 used funding as a timing
   signal; legacy `curve_carry` was long/flat BTC).
-- **Draft pre-registration**: [round-2026-10.md](round-2026-10.md).
 - **Constraint**: trading it needs new ADRs (perp hedge leg, two-leg intent).
 
 ## B1 — Multi-factor ML on the archived point-in-time panel (W4 restart) — TRIED
@@ -118,7 +121,9 @@ Tried as v52 (development rejected) and v53 (confirmation rejected).
 - **Note**: fee-dominated by design risk — run the base/stress cost scenarios
   first on paper napkin math before freezing a protocol.
 
-## B6 — Open interest / taker-flow imbalance — PRIORITY 6
+## B6 — Open interest / taker-flow imbalance — FROZEN as v55
+
+See [round-2026-10.md](round-2026-10.md).
 
 - **Family**: `microstructure_flow` (open; v6 book-depth was provider-blocked,
   which does not condemn the family).

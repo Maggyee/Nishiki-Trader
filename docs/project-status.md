@@ -19,14 +19,15 @@ protocols (v49–v53) were rejected. Their shadow collection was stopped on
 
 Immediate focus:
 
-1. Operator review of the [2026-10 research round draft](research/round-2026-10.md)
-   (goal: profit; B9 funding carry first, then B6; stop rule if both fail).
+1. [Research round 2026-10](research/round-2026-10.md): v54 multi-coin trend with
+   inverse-vol allocation, then v55 BTC order flow. Simulation only (replay,
+   Nautilus backtest, local paper).
 
 ## Next Steps
 
-1. After approval: build `apps/research/` (≤ 800 lines), then run B9 and B6
-   one at a time under Gates v2, Binance Vision data only. If both fail, the
-   project enters maintenance mode.
+1. Build `apps/research/` (≤ 800 lines), run v54 then v55 development and,
+   for passes only, confirmation. A pass goes to a Nautilus backtest and a
+   local paper session for learning, not to promotion.
 2. Only when a candidate passes: resume the Phase 3 canary per
    [runbook](runbook-first-testnet-canary.md) for that identity. Generate a new
    testnet Ed25519 API key first; the old key pair was deleted on 2026-10-18.
