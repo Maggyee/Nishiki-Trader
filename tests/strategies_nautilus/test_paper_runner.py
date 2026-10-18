@@ -106,12 +106,13 @@ def _signal(
     model_version: str = "2026-05-14",
     ttl_seconds: int = 900,
     confidence: float = 0.70,
+    symbol: str = "BTCUSDT",
 ) -> SignalEvent:
     return SignalEvent.model_validate(
         {
             "schema_version": "signal.v1",
             "signal_id": signal_id,
-            "symbol": "BTCUSDT",
+            "symbol": symbol,
             "venue": "BINANCE",
             "ts_event": ts_event,
             "horizon": "15m",
@@ -506,6 +507,37 @@ def test_unauthorized_source_blocks_paper_order(tmp_path, btcusdt_instrument, ba
     assert lineage.loc[0, "decision"] == "skip"
     assert lineage.loc[0, "reason"].startswith("reject_unauthorized_source")
     assert pd.read_parquet(result.output_dir / "fills.parquet").empty
+
+
+def test_signal_for_another_instrument_never_trades_this_one(
+    tmp_path, btcusdt_instrument, bar_type
+):
+    catalog_path = _write_catalog(tmp_path, btcusdt_instrument, bar_type, [100, 101, 102])
+    signal_store_path = _write_signals(
+        tmp_path,
+        [
+            _signal(signal_id="paper-eth", ts_event=BASE_TS_NS + ONE_MIN_NS, symbol="ETHUSDT"),
+            _signal(signal_id="paper-btc", ts_event=BASE_TS_NS + 2 * ONE_MIN_NS),
+        ],
+    )
+
+    result = run_paper_session(
+        _config(
+            tmp_path=tmp_path,
+            catalog_path=catalog_path,
+            bar_type=bar_type,
+            signal_store_path=signal_store_path,
+        )
+    )
+
+    lineage = pd.read_parquet(result.output_dir / "signal_lineage.parquet").set_index("signal_id")
+    assert lineage.loc["paper-eth", "decision"] == "skip"
+    assert lineage.loc["paper-eth", "reason"] == (
+        "instrument_mismatch:ETHUSDT.BINANCE!=BTCUSDT.BINANCE"
+    )
+    assert lineage.loc["paper-eth", "order_ids"] == ""
+    assert lineage.loc["paper-btc", "decision"] == "target_long"
+    assert len(pd.read_parquet(result.output_dir / "fills.parquet")) == 1
 
 
 def test_kill_switch_blocks_new_paper_opens(tmp_path, btcusdt_instrument, bar_type):

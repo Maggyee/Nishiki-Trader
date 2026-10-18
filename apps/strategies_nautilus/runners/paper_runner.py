@@ -437,6 +437,7 @@ def _step_one_bar(
         intent = _decide_with_paper_guards(
             baseline=state.baseline,
             event=event,
+            instrument_id=config.instrument_id,
             now_ns=bar_ts,
             max_signal_lag_seconds=config.max_signal_lag_seconds,
             data_gap_reason=_data_gap_reason_for_signal(
@@ -829,10 +830,22 @@ def _decide_with_paper_guards(
     *,
     baseline: BaselineSignalStrategy,
     event: SignalEvent,
+    instrument_id: str,
     now_ns: int,
     max_signal_lag_seconds: int,
     data_gap_reason: str | None = None,
 ) -> OrderIntent:
+    # Same rule as BaselineNautilusStrategy: a signal for another instrument
+    # in the same source/model stream must never trade this one.
+    event_instrument = f"{event.symbol}.{event.venue}"
+    if event_instrument != instrument_id:
+        return OrderIntent(
+            signal_id=event.signal_id,
+            instrument_id=event_instrument,
+            action="skip",
+            target_position_pct=0.0,
+            reason=f"instrument_mismatch:{event_instrument}!={instrument_id}",
+        )
     intent = baseline.decide(event, now_ns=now_ns)
     if intent.action == "skip" or event.side == "flat":
         return intent
