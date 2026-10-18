@@ -28,42 +28,6 @@ DEFAULT_OBSERVABILITY_STALE_AFTER_SECONDS = 120.0
 DEFAULT_SNAPSHOT_WARNING_AFTER_SECONDS = 15 * 60.0
 DEFAULT_SNAPSHOT_STALE_AFTER_SECONDS = 60 * 60.0
 SNAPSHOT_SCHEMA_VERSION = "dashboard.snapshot.v1"
-_PHASE6_READINESS_BOUNDARY_KEYS = (
-    "starts_runtime",
-    "loads_exchange_credentials",
-    "mutates_source_policy",
-    "writes_signal_event",
-    "places_orders",
-    "authorizes_live_trading",
-)
-_PHASE6_STARTUP_GUARD_BOUNDARY_KEYS = (
-    "starts_runtime",
-    "loads_exchange_credentials",
-    "reads_exchange_credential_values",
-    "builds_nautilus_node",
-    "connects_exchange",
-    "mutates_source_policy",
-    "writes_signal_event",
-    "places_orders",
-    "authorizes_live_trading",
-)
-_PHASE6_STARTUP_RUNTIME_FIELDS = {
-    "mode": "live",
-    "kind": "live",
-    "runtime_mode": "live",
-    "runtime_data_mode": "exchange_ws",
-    "runtime_order_mode": "exchange_live",
-}
-_PHASE6_REQUIRED_LIVE_CREDENTIAL_ENV_NAMES = (
-    "BINANCE_LIVE_API_KEY",
-    "BINANCE_LIVE_API_SECRET",
-)
-_PHASE6_MIN_LIVE_CANARY_CAPITAL_USDT = 100.0
-_PHASE6_MAX_LIVE_CANARY_CAPITAL_USDT = 500.0
-_PHASE6_REQUIRED_TESTNET_CONTINUITY_DAYS = 14
-_PHASE6_MAX_LIVE_CANARY_POLICY_MULTIPLIER = 0.1
-_PHASE6_GIT_COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
-_PHASE6_SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
 _STATUS_FIELD_RE = re.compile(
     r"^- \*\*(?P<key>Last updated|Current phase|Current objective)\*\*:\s*(?P<value>.+)$",
@@ -303,12 +267,6 @@ def render_markdown_snapshot(snapshot: dict[str, Any]) -> str:
             f"blockers={_join_or_none(report.get('blockers') or [])}, "
             f"path=`{report.get('path') or 'not attached'}`"
         )
-        for item in report.get("evidence") or []:
-            lines.append(
-                "  - evidence: "
-                f"{item.get('label')} status=`{item.get('status')}`, "
-                f"sha256=`{item.get('sha256') or item.get('expected_sha256') or 'none'}`"
-            )
 
     lines.extend(["", "## Operator Next Steps", ""])
     for item in status.get("sections", {}).get("next_steps", []):
@@ -1616,7 +1574,6 @@ def _phase6_snapshot(
         authorization_field="live_trading_authorized",
         generated_at_ns=generated_at_ns,
     )
-    _phase6_apply_cross_report_blockers(readiness, startup_guard)
     reports = [readiness, startup_guard]
     blocker_count = sum(len(report.get("blockers") or []) for report in reports)
     missing_count = sum(1 for report in reports if report.get("status") == "missing")
@@ -1653,766 +1610,89 @@ def _phase6_report_snapshot(
     authorization_field: str,
     generated_at_ns: int,
 ) -> dict[str, Any]:
+    # Mirror the report's own verdict. The authoritative checks run in
+    # apps.ops.live_readiness and runners.live_startup_guard, not here.
+    report: dict[str, Any] = {
+        "label": label,
+        "path": str(path) if path is not None else None,
+        "attached": path is not None,
+        "exists": False,
+        "schema_version": None,
+        "status": "missing",
+        "gate_field": gate_field,
+        "gate_met": False,
+        "authorization_field": authorization_field,
+        "authorizes_live_trading": False,
+        "source": None,
+        "model_version": None,
+        "recommendation": None,
+        "generated_at_ns": None,
+        "report_age_seconds": None,
+        "report_sha256": None,
+        "blockers": [],
+        "checks": [],
+    }
     if path is None:
-        return {
-            "label": label,
-            "path": None,
-            "attached": False,
-            "exists": False,
-            "schema_version": None,
-            "status": "missing",
-            "gate_field": gate_field,
-            "gate_met": False,
-            "authorization_field": authorization_field,
-            "authorizes_live_trading": False,
-            "source": None,
-            "model_version": None,
-            "recommendation": None,
-            "generated_at_ns": None,
-            "report_age_seconds": None,
-            "report_sha256": None,
-            "blockers": [f"{gate_field}_report_not_attached"],
-            "checks": [],
-            "evidence": [],
-        }
+        report["blockers"] = [f"{gate_field}_report_not_attached"]
+        return report
     if not path.exists():
-        return {
-            "label": label,
-            "path": str(path),
-            "attached": True,
-            "exists": False,
-            "schema_version": None,
-            "status": "missing",
-            "gate_field": gate_field,
-            "gate_met": False,
-            "authorization_field": authorization_field,
-            "authorizes_live_trading": False,
-            "source": None,
-            "model_version": None,
-            "recommendation": None,
-            "generated_at_ns": None,
-            "report_age_seconds": None,
-            "report_sha256": None,
-            "blockers": [f"{gate_field}_report_not_found"],
-            "checks": [],
-            "evidence": [],
-        }
+        report["blockers"] = [f"{gate_field}_report_not_found"]
+        return report
+
     raw = path.read_bytes()
-    report_sha256 = hashlib.sha256(raw).hexdigest()
+    report["exists"] = True
+    report["report_sha256"] = hashlib.sha256(raw).hexdigest()
     try:
         payload = json.loads(
             raw.decode("utf-8"),
             parse_constant=_reject_non_standard_json_constant,
         )
-    except (UnicodeDecodeError, ValueError, json.JSONDecodeError) as exc:
-        return {
-            "label": label,
-            "path": str(path),
-            "attached": True,
-            "exists": True,
-            "schema_version": None,
-            "status": "invalid",
-            "gate_field": gate_field,
-            "gate_met": False,
-            "authorization_field": authorization_field,
-            "authorizes_live_trading": False,
-            "source": None,
-            "model_version": None,
-            "recommendation": None,
-            "generated_at_ns": None,
-            "report_age_seconds": None,
-            "report_sha256": report_sha256,
-            "blockers": [f"invalid_json:{exc.__class__.__name__}"],
-            "checks": [],
-            "evidence": [],
-        }
+    except ValueError as exc:
+        report["status"] = "invalid"
+        report["blockers"] = [f"invalid_json:{exc.__class__.__name__}"]
+        return report
     if not isinstance(payload, dict):
-        return {
-            "label": label,
-            "path": str(path),
-            "attached": True,
-            "exists": True,
-            "schema_version": None,
-            "status": "invalid",
-            "gate_field": gate_field,
-            "gate_met": False,
-            "authorization_field": authorization_field,
-            "authorizes_live_trading": False,
-            "source": None,
-            "model_version": None,
-            "recommendation": None,
-            "generated_at_ns": None,
-            "report_age_seconds": None,
-            "report_sha256": report_sha256,
-            "blockers": [f"invalid_report_object:{type(payload).__name__}"],
-            "checks": [],
-            "evidence": [],
-        }
+        report["status"] = "invalid"
+        report["blockers"] = [f"invalid_report_object:{type(payload).__name__}"]
+        return report
 
-    blockers = [str(item) for item in payload.get("blockers") or []]
     schema_version = payload.get("schema_version")
     gate_met = payload.get(gate_field) is True
     authorizes_live_trading = payload.get(authorization_field) is True
     report_generated_at_ns = _phase6_report_generated_at_ns(
         payload.get("generated_at_ns")
     )
-    report_age_seconds = (
-        (generated_at_ns - report_generated_at_ns) / 1_000_000_000
-        if report_generated_at_ns is not None
-        else None
-    )
-    raw_checks = payload.get("checks")
-    checks = _compact_phase6_checks(raw_checks or [])
-    evidence = _phase6_report_evidence(payload=payload, expected_schema=expected_schema)
+    blockers = [str(item) for item in payload.get("blockers") or []]
     if schema_version != expected_schema:
         blockers.append(f"unexpected_schema_version:{schema_version}")
     if authorizes_live_trading:
         blockers.append(f"{authorization_field}_must_remain_false")
-    if gate_met:
-        blockers.extend(
-            _phase6_generated_at_blockers(
-                payload.get("generated_at_ns"),
-                report_generated_at_ns=report_generated_at_ns,
-                snapshot_generated_at_ns=generated_at_ns,
-            )
-        )
-        blockers.extend(
-            _phase6_boundary_blockers(
-                payload.get("boundaries"),
-                expected_schema=expected_schema,
-            )
-        )
-        blockers.extend(
-            _phase6_source_model_blockers(
-                payload,
-                expected_schema=expected_schema,
-            )
-        )
-        blockers.extend(
-            _phase6_readiness_scope_blockers(
-                payload,
-                expected_schema=expected_schema,
-            )
-        )
-        blockers.extend(
-            _phase6_readiness_git_blockers(
-                payload,
-                expected_schema=expected_schema,
-            )
-        )
-        blockers.extend(
-            _phase6_readiness_continuity_blockers(
-                payload,
-                expected_schema=expected_schema,
-            )
-        )
-        blockers.extend(
-            _phase6_startup_runtime_blockers(
-                payload,
-                expected_schema=expected_schema,
-            )
-        )
-        blockers.extend(
-            _phase6_startup_git_blockers(
-                payload,
-                expected_schema=expected_schema,
-            )
-        )
-        blockers.extend(
-            _phase6_startup_scope_blockers(
-                payload,
-                expected_schema=expected_schema,
-            )
-        )
-        blockers.extend(
-            _phase6_startup_source_policy_blockers(
-                payload,
-                expected_schema=expected_schema,
-            )
-        )
-        blockers.extend(_phase6_check_blockers(raw_checks))
-        blockers.extend(
-            f"evidence:{item['label']}"
-            for item in evidence
-            if item.get("status") != "ok"
-        )
-    status = "ok" if gate_met and not blockers else "blocked"
-    return {
-        "label": label,
-        "path": str(path),
-        "attached": True,
-        "exists": True,
-        "schema_version": schema_version,
-        "status": status,
-        "gate_field": gate_field,
-        "gate_met": gate_met,
-        "authorization_field": authorization_field,
-        "authorizes_live_trading": authorizes_live_trading,
-        "source": _phase6_text(payload.get("source")),
-        "model_version": _phase6_text(payload.get("model_version")),
-        "recommendation": payload.get("recommendation"),
-        "generated_at_ns": report_generated_at_ns,
-        "report_age_seconds": report_age_seconds,
-        "report_sha256": report_sha256,
-        "blockers": sorted(dict.fromkeys(blockers)),
-        "checks": checks,
-        "evidence": evidence,
-    }
-
-
-def _phase6_apply_cross_report_blockers(
-    readiness: dict[str, Any],
-    startup_guard: dict[str, Any],
-) -> None:
-    if startup_guard.get("gate_met") is not True:
-        return
-    if readiness.get("attached") is not True or readiness.get("exists") is not True:
-        return
-    if readiness.get("schema_version") != "phase6.live_readiness.v1":
-        return
-
-    blockers: list[str] = []
-    readiness_source = _phase6_text(readiness.get("source"))
-    startup_source = _phase6_text(startup_guard.get("source"))
-    readiness_model = _phase6_text(readiness.get("model_version"))
-    startup_model = _phase6_text(startup_guard.get("model_version"))
-    if readiness_source and startup_source and readiness_source != startup_source:
-        blockers.append("cross_report:source")
-    if readiness_model and startup_model and readiness_model != startup_model:
-        blockers.append("cross_report:model_version")
-
-    attached_readiness_sha = _phase6_sha256(readiness.get("report_sha256"))
-    startup_readiness_sha = _phase6_evidence_sha256(
-        startup_guard,
-        label="Readiness report artifact",
-    )
-    if attached_readiness_sha and startup_readiness_sha:
-        if attached_readiness_sha != startup_readiness_sha:
-            blockers.append("cross_report:readiness_sha256")
-    else:
-        blockers.append("cross_report:readiness_sha256")
-
-    if not blockers:
-        return
-
-    startup_guard["blockers"] = sorted(
-        dict.fromkeys([*(startup_guard.get("blockers") or []), *blockers])
-    )
-    startup_guard["status"] = "blocked"
-
-
-def _phase6_evidence_sha256(
-    report: dict[str, Any],
-    *,
-    label: str,
-) -> str | None:
-    evidence = report.get("evidence")
-    if not isinstance(evidence, list):
-        return None
-    for item in evidence:
-        if isinstance(item, dict) and item.get("label") == label:
-            return _phase6_sha256(item.get("sha256"))
-    return None
-
-
-def _phase6_report_evidence(
-    *,
-    payload: dict[str, Any],
-    expected_schema: str,
-) -> list[dict[str, str | None]]:
-    if expected_schema == "phase6.live_readiness.v1":
-        return [
-            _artifact_evidence_item(
-                payload.get("project_status"),
-                label="Project status artifact",
-            ),
-            _artifact_evidence_item(
-                payload.get("live_risk_adr"),
-                label="Readiness live-risk ADR artifact",
-            ),
-            _continuity_artifacts_evidence_item(
-                payload.get("continuity_artifacts"),
-                label="Continuity bundle artifacts",
-            ),
-            _promotion_review_evidence_item(
-                payload.get("live_promotion_review"),
-                label="Promotion review artifact",
-            )
-        ]
-    if expected_schema != "phase6.live_startup_guard.v1":
-        return []
-
-    evidence = payload.get("evidence") if isinstance(payload, dict) else None
-    evidence = evidence if isinstance(evidence, dict) else {}
-    live_risk_adr_gate = evidence.get("live_risk_adr")
-    readiness_gate = evidence.get("live_readiness_report")
-    readiness_gate = readiness_gate if isinstance(readiness_gate, dict) else {}
-    startup_promotion_gate = evidence.get("live_promotion_review")
-    first_live_day_runbook_gate = evidence.get("first_live_day_runbook")
-    readiness_promotion_gate = readiness_gate.get("live_promotion_review")
-    readiness_promotion_gate = (
-        readiness_promotion_gate if isinstance(readiness_promotion_gate, dict) else {}
-    )
-    readiness_sha = _phase6_sha256(readiness_promotion_gate.get("sha256"))
-    expected_sha = _phase6_sha256(
-        readiness_gate.get("expected_live_promotion_review_sha256")
-    )
-    sha_matches = bool(readiness_sha and expected_sha and readiness_sha == expected_sha)
-    return [
-        _accepted_artifact_evidence_item(
-            live_risk_adr_gate,
-            label="Live-risk ADR artifact",
-        ),
-        _readiness_report_artifact_evidence_item(
-            readiness_gate,
-            label="Readiness report artifact",
-        ),
-        _readiness_live_risk_adr_match_item(readiness_gate),
-        _startup_continuity_artifact_verification_item(readiness_gate),
-        _promotion_review_evidence_item(
-            startup_promotion_gate,
-            label="Startup promotion review artifact",
-        ),
+    if report_generated_at_ns is None:
+        blockers.append("generated_at_ns_invalid")
+    elif report_generated_at_ns > generated_at_ns:
+        blockers.append("generated_at_ns_in_future")
+    raw_checks = payload.get("checks")
+    blockers.extend(_phase6_check_blockers(raw_checks))
+    report.update(
         {
-            "label": "Readiness promotion SHA-256 match",
-            "status": "ok" if sha_matches else "blocked",
-            "detail": (
-                "Readiness report and startup artifact fingerprints match."
-                if sha_matches
-                else "Readiness report fingerprint does not match the startup artifact."
+            "schema_version": schema_version,
+            "status": "ok" if gate_met and not blockers else "blocked",
+            "gate_met": gate_met,
+            "authorizes_live_trading": authorizes_live_trading,
+            "source": _phase6_text(payload.get("source")),
+            "model_version": _phase6_text(payload.get("model_version")),
+            "recommendation": payload.get("recommendation"),
+            "generated_at_ns": report_generated_at_ns,
+            "report_age_seconds": (
+                (generated_at_ns - report_generated_at_ns) / 1_000_000_000
+                if report_generated_at_ns is not None
+                else None
             ),
-            "path": None,
-            "sha256": readiness_sha,
-            "expected_sha256": expected_sha,
-        },
-        _accepted_artifact_evidence_item(
-            first_live_day_runbook_gate,
-            label="First live day runbook artifact",
-        ),
-        _readiness_freshness_evidence_item(readiness_gate),
-        _readiness_git_evidence_item(readiness_gate),
-        _readiness_project_status_match_item(readiness_gate),
-    ]
-
-
-def _artifact_evidence_item(
-    gate: Any,
-    *,
-    label: str,
-) -> dict[str, str | None]:
-    if not isinstance(gate, dict):
-        return {
-            "label": label,
-            "status": "missing",
-            "detail": "Artifact evidence is not recorded in this report.",
-            "path": None,
-            "sha256": None,
+            "blockers": sorted(dict.fromkeys(blockers)),
+            "checks": _compact_phase6_checks(raw_checks or []),
         }
-    sha256 = _phase6_sha256(gate.get("sha256"))
-    path = _phase6_text(gate.get("path"))
-    status = "ok" if sha256 else "blocked"
-    return {
-        "label": label,
-        "status": status,
-        "detail": (
-            "Artifact fingerprint is recorded."
-            if status == "ok"
-            else "Artifact fingerprint is not recorded."
-        ),
-        "path": path,
-        "sha256": sha256,
-    }
-
-
-def _accepted_artifact_evidence_item(
-    gate: Any,
-    *,
-    label: str,
-) -> dict[str, str | None]:
-    if not isinstance(gate, dict):
-        return {
-            "label": label,
-            "status": "missing",
-            "detail": "Artifact evidence is not recorded in this report.",
-            "path": None,
-            "sha256": None,
-        }
-    sha256 = _phase6_sha256(gate.get("sha256"))
-    path = _phase6_text(gate.get("path"))
-    accepted = gate.get("accepted") is True
-    blocker = _phase6_text(gate.get("blocker"))
-    document_status = _phase6_text(gate.get("status"))
-    status = "ok" if accepted and sha256 else "blocked"
-    if status == "ok":
-        detail = "Artifact is accepted and fingerprinted."
-    elif not sha256:
-        detail = "Artifact fingerprint is not recorded."
-    else:
-        detail = blocker or (
-            f"Artifact status is {document_status}."
-            if document_status
-            else "Artifact is not accepted."
-        )
-    return {
-        "label": label,
-        "status": status,
-        "detail": detail,
-        "path": path,
-        "sha256": sha256,
-    }
-
-
-def _readiness_report_artifact_evidence_item(
-    gate: Any,
-    *,
-    label: str,
-) -> dict[str, str | None]:
-    if not isinstance(gate, dict):
-        return {
-            "label": label,
-            "status": "missing",
-            "detail": "Readiness report evidence is not recorded in this report.",
-            "path": None,
-            "sha256": None,
-        }
-    sha256 = _phase6_sha256(gate.get("sha256"))
-    path = _phase6_text(gate.get("path"))
-    accepted = gate.get("accepted") is True
-    blocker = _phase6_text(gate.get("blocker"))
-    status = "ok" if accepted and sha256 else "blocked"
-    if status == "ok":
-        detail = "Readiness report gate is accepted and fingerprinted."
-    elif not sha256:
-        detail = "Artifact fingerprint is not recorded."
-    else:
-        detail = blocker or "Readiness report gate is not accepted."
-    return {
-        "label": label,
-        "status": status,
-        "detail": detail,
-        "path": path,
-        "sha256": sha256,
-    }
-
-
-def _continuity_artifacts_evidence_item(
-    artifacts: Any,
-    *,
-    label: str,
-) -> dict[str, str | None]:
-    if not isinstance(artifacts, list) or not artifacts:
-        return {
-            "label": label,
-            "status": "missing",
-            "detail": "Continuity bundle artifact fingerprints are not recorded.",
-            "path": None,
-            "sha256": None,
-        }
-    missing = [
-        item
-        for item in artifacts
-        if not isinstance(item, dict) or not _phase6_sha256(item.get("sha256"))
-    ]
-    first_path = next(
-        (
-            _phase6_text(item.get("manifest_path"))
-            for item in artifacts
-            if isinstance(item, dict) and item.get("manifest_path")
-        ),
-        None,
     )
-    status = "ok" if not missing else "blocked"
-    return {
-        "label": label,
-        "status": status,
-        "detail": (
-            f"{len(artifacts)} continuity bundle manifest fingerprints recorded."
-            if status == "ok"
-            else "One or more continuity bundle fingerprints are missing."
-        ),
-        "path": first_path,
-        "sha256": _phase6_sha256(artifacts[0].get("sha256"))
-        if isinstance(artifacts[0], dict)
-        else None,
-    }
-
-
-def _readiness_live_risk_adr_match_item(
-    readiness_gate: Any,
-) -> dict[str, str | None]:
-    if not isinstance(readiness_gate, dict):
-        return {
-            "label": "Readiness live-risk ADR SHA-256 match",
-            "status": "missing",
-            "detail": "Readiness report gate evidence is not recorded.",
-            "path": None,
-            "sha256": None,
-            "expected_sha256": None,
-        }
-
-    live_risk_adr = readiness_gate.get("live_risk_adr")
-    live_risk_adr = live_risk_adr if isinstance(live_risk_adr, dict) else {}
-    readiness_sha = _phase6_sha256(live_risk_adr.get("sha256"))
-    expected_sha = _phase6_sha256(readiness_gate.get("expected_live_risk_adr_sha256"))
-    sha_matches = bool(readiness_sha and expected_sha and readiness_sha == expected_sha)
-    return {
-        "label": "Readiness live-risk ADR SHA-256 match",
-        "status": "ok" if sha_matches else "blocked",
-        "detail": (
-            "Readiness report and startup ADR artifact fingerprints match."
-            if sha_matches
-            else "Readiness report ADR fingerprint does not match the startup artifact."
-        ),
-        "path": _phase6_text(live_risk_adr.get("path")),
-        "sha256": readiness_sha,
-        "expected_sha256": expected_sha,
-    }
-
-
-def _startup_continuity_artifact_verification_item(
-    readiness_gate: Any,
-) -> dict[str, str | None]:
-    if not isinstance(readiness_gate, dict):
-        return {
-            "label": "Startup continuity artifact verification",
-            "status": "missing",
-            "detail": "Readiness report gate evidence is not recorded.",
-            "path": None,
-            "sha256": None,
-        }
-
-    artifacts = readiness_gate.get("continuity_artifacts")
-    problems = readiness_gate.get("continuity_artifact_problems")
-    first_path = None
-    first_sha256 = None
-    if isinstance(artifacts, list):
-        first_path = next(
-            (
-                _phase6_text(item.get("manifest_path"))
-                for item in artifacts
-                if isinstance(item, dict) and item.get("manifest_path")
-            ),
-            None,
-        )
-        first_sha256 = (
-            _phase6_sha256(artifacts[0].get("sha256"))
-            if artifacts and isinstance(artifacts[0], dict)
-            else None
-        )
-    if not isinstance(problems, list):
-        return {
-            "label": "Startup continuity artifact verification",
-            "status": "missing",
-            "detail": "Startup guard did not record continuity artifact verification.",
-            "path": first_path,
-            "sha256": first_sha256,
-        }
-    if problems:
-        return {
-            "label": "Startup continuity artifact verification",
-            "status": "blocked",
-            "detail": "Startup guard reported: " + _join_or_none(problems),
-            "path": first_path,
-            "sha256": first_sha256,
-        }
-    if not isinstance(artifacts, list) or not artifacts:
-        return {
-            "label": "Startup continuity artifact verification",
-            "status": "blocked",
-            "detail": "Startup guard did not record continuity artifact inputs.",
-            "path": None,
-            "sha256": None,
-        }
-    missing_fingerprints = [
-        item
-        for item in artifacts
-        if not isinstance(item, dict) or not _phase6_sha256(item.get("sha256"))
-    ]
-    if missing_fingerprints:
-        return {
-            "label": "Startup continuity artifact verification",
-            "status": "blocked",
-            "detail": "Startup guard did not record valid continuity artifact fingerprints.",
-            "path": first_path,
-            "sha256": first_sha256,
-        }
-    return {
-        "label": "Startup continuity artifact verification",
-        "status": "ok",
-        "detail": f"{len(artifacts)} continuity bundle manifest bytes verified.",
-        "path": first_path,
-        "sha256": first_sha256,
-    }
-
-
-def _readiness_freshness_evidence_item(
-    readiness_gate: Any,
-) -> dict[str, str | None]:
-    if not isinstance(readiness_gate, dict):
-        return {
-            "label": "Readiness freshness window",
-            "status": "missing",
-            "detail": "Readiness report gate evidence is not recorded.",
-            "path": None,
-            "sha256": None,
-        }
-
-    freshness = readiness_gate.get("freshness")
-    if not isinstance(freshness, dict):
-        return {
-            "label": "Readiness freshness window",
-            "status": "missing",
-            "detail": "Startup guard did not record readiness freshness evidence.",
-            "path": _phase6_text(readiness_gate.get("path")),
-            "sha256": _phase6_sha256(readiness_gate.get("sha256")),
-        }
-
-    problems = freshness.get("problems")
-    problems = problems if isinstance(problems, list) else []
-    fresh = freshness.get("fresh") is True and not problems
-    age = _optional_str(freshness.get("age_seconds"))
-    max_age = _optional_str(freshness.get("max_age_seconds"))
-    return {
-        "label": "Readiness freshness window",
-        "status": "ok" if fresh else "blocked",
-        "detail": (
-            f"Readiness report age {age}s is within max {max_age}s."
-            if fresh
-            else "Startup guard reported: " + _join_or_none(problems)
-        ),
-        "path": _phase6_text(readiness_gate.get("path")),
-        "sha256": _phase6_sha256(readiness_gate.get("sha256")),
-    }
-
-
-def _readiness_git_evidence_item(
-    readiness_gate: Any,
-) -> dict[str, str | None]:
-    if not isinstance(readiness_gate, dict):
-        return {
-            "label": "Readiness git commit match",
-            "status": "missing",
-            "detail": "Readiness report gate evidence is not recorded.",
-            "path": None,
-            "sha256": None,
-        }
-
-    readiness_git = readiness_gate.get("readiness_git")
-    if not isinstance(readiness_git, dict):
-        return {
-            "label": "Readiness git commit match",
-            "status": "missing",
-            "detail": "Startup guard did not record readiness git evidence.",
-            "path": _phase6_text(readiness_gate.get("path")),
-            "sha256": None,
-        }
-
-    readiness_commit = _phase6_git_commit(readiness_git.get("commit"))
-    expected_commit = _phase6_git_commit(readiness_gate.get("expected_git_commit"))
-    readiness_dirty = readiness_git.get("dirty")
-    if readiness_dirty is not False:
-        return {
-            "label": "Readiness git commit match",
-            "status": "blocked",
-            "detail": "Readiness report git evidence is dirty.",
-            "path": _phase6_text(readiness_gate.get("path")),
-            "sha256": None,
-        }
-    if not readiness_commit or not expected_commit:
-        return {
-            "label": "Readiness git commit match",
-            "status": "blocked",
-            "detail": "Startup guard did not record both git commits.",
-            "path": _phase6_text(readiness_gate.get("path")),
-            "sha256": None,
-        }
-    if readiness_commit != expected_commit:
-        return {
-            "label": "Readiness git commit match",
-            "status": "blocked",
-            "detail": "Readiness report git commit does not match startup preflight.",
-            "path": _phase6_text(readiness_gate.get("path")),
-            "sha256": None,
-        }
-    return {
-        "label": "Readiness git commit match",
-        "status": "ok",
-        "detail": "Readiness report git commit matches startup preflight and is clean.",
-        "path": _phase6_text(readiness_gate.get("path")),
-        "sha256": None,
-    }
-
-
-def _readiness_project_status_match_item(
-    readiness_gate: Any,
-) -> dict[str, str | None]:
-    label = "Readiness project-status SHA-256 match"
-    if not isinstance(readiness_gate, dict):
-        return {
-            "label": label,
-            "status": "missing",
-            "detail": "Readiness report gate evidence is not recorded.",
-            "path": None,
-            "sha256": None,
-            "expected_sha256": None,
-        }
-
-    project_status = readiness_gate.get("project_status")
-    project_status = project_status if isinstance(project_status, dict) else {}
-    readiness_sha = _phase6_sha256(project_status.get("sha256"))
-    expected_sha = _phase6_sha256(
-        readiness_gate.get("expected_project_status_sha256")
-    )
-    sha_matches = bool(readiness_sha and expected_sha and readiness_sha == expected_sha)
-    return {
-        "label": label,
-        "status": "ok" if sha_matches else "blocked",
-        "detail": (
-            "Readiness report and startup project-status artifact fingerprints match."
-            if sha_matches
-            else "Readiness report project-status fingerprint does not match the startup artifact."
-        ),
-        "path": _phase6_text(project_status.get("path")),
-        "sha256": readiness_sha,
-        "expected_sha256": expected_sha,
-    }
-
-
-def _promotion_review_evidence_item(
-    gate: Any,
-    *,
-    label: str,
-) -> dict[str, str | None]:
-    if not isinstance(gate, dict):
-        return {
-            "label": label,
-            "status": "missing",
-            "detail": "Promotion review evidence is not recorded in this artifact.",
-            "path": None,
-            "sha256": None,
-        }
-    accepted = gate.get("accepted") is True
-    sha256 = _phase6_sha256(gate.get("sha256"))
-    path = _phase6_text(gate.get("path"))
-    blocker = _phase6_text(gate.get("blocker"))
-    status = "ok" if accepted and sha256 else "blocked"
-    return {
-        "label": label,
-        "status": status,
-        "detail": (
-            "Promotion review artifact is accepted and fingerprinted."
-            if status == "ok"
-            else blocker or "Promotion review artifact is missing its fingerprint."
-        ),
-        "path": path,
-        "sha256": sha256,
-    }
-
-
-def _optional_str(value: Any) -> str | None:
-    if value is None:
-        return None
-    return str(value)
+    return report
 
 
 def _phase6_text(value: Any) -> str | None:
@@ -2420,20 +1700,6 @@ def _phase6_text(value: Any) -> str | None:
         return None
     stripped = value.strip()
     return stripped if stripped else None
-
-
-def _phase6_sha256(value: Any) -> str | None:
-    text = _phase6_text(value)
-    if text is None:
-        return None
-    return text if _PHASE6_SHA256_RE.fullmatch(text) else None
-
-
-def _phase6_git_commit(value: Any) -> str | None:
-    text = _phase6_text(value)
-    if text is None:
-        return None
-    return text if _PHASE6_GIT_COMMIT_RE.fullmatch(text) else None
 
 
 def _compact_phase6_checks(checks: Sequence[Any]) -> list[dict[str, str]]:
@@ -2454,335 +1720,15 @@ def _compact_phase6_checks(checks: Sequence[Any]) -> list[dict[str, str]]:
 def _phase6_check_blockers(checks: Any) -> list[str]:
     if not isinstance(checks, list):
         return []
-    blockers: list[str] = []
-    for check in checks:
-        if not isinstance(check, dict):
-            continue
-        status = str(check.get("status") or "unknown")
-        if status == "ok":
-            continue
-        blockers.append(f"check:{check.get('name') or 'unknown'}")
-    return blockers
-
-
-def _phase6_boundary_blockers(
-    boundaries: Any,
-    *,
-    expected_schema: str,
-) -> list[str]:
-    if expected_schema == "phase6.live_readiness.v1":
-        required_keys = _PHASE6_READINESS_BOUNDARY_KEYS
-    elif expected_schema == "phase6.live_startup_guard.v1":
-        required_keys = _PHASE6_STARTUP_GUARD_BOUNDARY_KEYS
-    else:
-        return []
-
-    if not isinstance(boundaries, dict):
-        return ["boundary:missing"]
-
-    blockers = [
-        f"boundary:{key}"
-        for key in required_keys
-        if boundaries.get(key) is not False
+    return [
+        f"check:{check.get('name') or 'unknown'}"
+        for check in checks
+        if isinstance(check, dict) and str(check.get("status") or "unknown") != "ok"
     ]
-    blockers.extend(
-        f"boundary:{key}"
-        for key, value in boundaries.items()
-        if key not in required_keys and value is True
-    )
-    return sorted(dict.fromkeys(blockers))
-
-
-def _phase6_source_model_blockers(
-    payload: dict[str, Any],
-    *,
-    expected_schema: str,
-) -> list[str]:
-    if expected_schema not in {
-        "phase6.live_readiness.v1",
-        "phase6.live_startup_guard.v1",
-    }:
-        return []
-
-    blockers: list[str] = []
-    if not _phase6_non_empty_string(payload.get("source")):
-        blockers.append("source_model:source")
-    if not _phase6_non_empty_string(payload.get("model_version")):
-        blockers.append("source_model:model_version")
-    return blockers
-
-
-def _phase6_readiness_scope_blockers(
-    payload: dict[str, Any],
-    *,
-    expected_schema: str,
-) -> list[str]:
-    if expected_schema != "phase6.live_readiness.v1":
-        return []
-    return _phase6_live_canary_scope_blockers(payload)
-
-
-def _phase6_live_canary_scope_blockers(payload: dict[str, Any]) -> list[str]:
-    blockers: list[str] = []
-    capital_plan = payload.get("capital_plan")
-    if not isinstance(capital_plan, dict):
-        blockers.append("capital_plan:missing")
-    else:
-        starting_capital = _phase6_float(capital_plan.get("starting_capital_usdt"))
-        if capital_plan.get("within_live_canary_range") is not True:
-            blockers.append("capital_plan:outside_live_canary_range")
-        if starting_capital is None:
-            blockers.append("capital_plan:starting_capital_usdt")
-        elif not (
-            _PHASE6_MIN_LIVE_CANARY_CAPITAL_USDT
-            <= starting_capital
-            <= _PHASE6_MAX_LIVE_CANARY_CAPITAL_USDT
-        ):
-            blockers.append("capital_plan:outside_live_canary_range")
-
-    market_scope = payload.get("market_scope")
-    if not isinstance(market_scope, dict):
-        blockers.append("market_scope:missing")
-    else:
-        max_leverage = _phase6_float(market_scope.get("max_leverage"))
-        if market_scope.get("spot_only_no_margin_no_leverage") is not True:
-            blockers.append("market_scope:not_spot_only_no_margin_no_leverage")
-        if market_scope.get("market_type") != "spot":
-            blockers.append("market_scope:market_type")
-        if market_scope.get("margin_enabled") is not False:
-            blockers.append("market_scope:margin_enabled")
-        if max_leverage != 1.0:
-            blockers.append("market_scope:max_leverage")
-
-    return sorted(dict.fromkeys(blockers))
-
-
-def _phase6_startup_scope_blockers(
-    payload: dict[str, Any],
-    *,
-    expected_schema: str,
-) -> list[str]:
-    if expected_schema != "phase6.live_startup_guard.v1":
-        return []
-    return _phase6_live_canary_scope_blockers(payload)
-
-
-def _phase6_readiness_git_blockers(
-    payload: dict[str, Any],
-    *,
-    expected_schema: str,
-) -> list[str]:
-    if expected_schema != "phase6.live_readiness.v1":
-        return []
-    return _phase6_clean_git_blockers(payload)
-
-
-def _phase6_clean_git_blockers(
-    payload: dict[str, Any],
-    *,
-    expected_commit: str | None = None,
-) -> list[str]:
-    git = payload.get("git")
-    if not isinstance(git, dict):
-        return ["git:missing"]
-
-    blockers: list[str] = []
-    commit = git.get("commit")
-    if not isinstance(commit, str) or not commit:
-        blockers.append("git:commit_missing")
-    elif _PHASE6_GIT_COMMIT_RE.fullmatch(commit) is None:
-        blockers.append("git:commit_invalid")
-    elif expected_commit and commit != expected_commit:
-        blockers.append("git:commit_mismatch")
-    if git.get("dirty") is not False:
-        blockers.append("git:dirty")
-    return sorted(dict.fromkeys(blockers))
-
-
-def _phase6_startup_git_blockers(
-    payload: dict[str, Any],
-    *,
-    expected_schema: str,
-) -> list[str]:
-    if expected_schema != "phase6.live_startup_guard.v1":
-        return []
-
-    evidence = payload.get("evidence")
-    evidence = evidence if isinstance(evidence, dict) else {}
-    readiness_gate = evidence.get("live_readiness_report")
-    readiness_gate = readiness_gate if isinstance(readiness_gate, dict) else {}
-    expected_commit = _phase6_git_commit(readiness_gate.get("expected_git_commit"))
-    return _phase6_clean_git_blockers(payload, expected_commit=expected_commit)
-
-
-def _phase6_readiness_continuity_blockers(
-    payload: dict[str, Any],
-    *,
-    expected_schema: str,
-) -> list[str]:
-    if expected_schema != "phase6.live_readiness.v1":
-        return []
-
-    summary = payload.get("continuity_summary")
-    if not isinstance(summary, dict):
-        return ["continuity_summary:missing"]
-
-    blockers: list[str] = []
-    if summary.get("required_gate_met") is not True:
-        blockers.append("continuity_summary:required_gate_not_met")
-
-    required_days = _phase6_int(summary.get("required_consecutive_days"))
-    current_streak_days = _phase6_int(
-        summary.get("current_qualified_streak_days")
-    )
-    if (
-        required_days is None
-        or required_days < _PHASE6_REQUIRED_TESTNET_CONTINUITY_DAYS
-    ):
-        blockers.append("continuity_summary:required_consecutive_days")
-    if current_streak_days is None:
-        blockers.append("continuity_summary:current_qualified_streak_days")
-    elif required_days is not None and current_streak_days < required_days:
-        blockers.append("continuity_summary:streak_below_required")
-
-    kill_switch_alerts = _phase6_int(summary.get("kill_switch_alerts"))
-    if kill_switch_alerts != 0:
-        blockers.append("continuity_summary:kill_switch_alerts")
-
-    emergency_flatten_alerts = _phase6_int(
-        summary.get("emergency_flatten_completed_alerts")
-    )
-    if emergency_flatten_alerts != 0:
-        blockers.append("continuity_summary:emergency_flatten_completed_alerts")
-
-    restart_drift_days = summary.get("restart_drift_days")
-    if not isinstance(restart_drift_days, list) or restart_drift_days:
-        blockers.append("continuity_summary:restart_drift_days")
-
-    return sorted(dict.fromkeys(blockers))
-
-
-def _phase6_startup_runtime_blockers(
-    payload: dict[str, Any],
-    *,
-    expected_schema: str,
-) -> list[str]:
-    if expected_schema != "phase6.live_startup_guard.v1":
-        return []
-
-    blockers = [
-        f"runtime:{key}"
-        for key, expected_value in _PHASE6_STARTUP_RUNTIME_FIELDS.items()
-        if payload.get(key) != expected_value
-    ]
-
-    credential_boundary = payload.get("credential_boundary")
-    if not isinstance(credential_boundary, dict):
-        blockers.append("credential_boundary:missing")
-        return sorted(dict.fromkeys(blockers))
-
-    if not _phase6_contains_required_names(
-        credential_boundary.get("credential_env_names")
-    ):
-        blockers.append("credential_boundary:credential_env_names")
-    if not _phase6_contains_required_names(
-        credential_boundary.get("required_credential_env_names")
-    ):
-        blockers.append("credential_boundary:required_credential_env_names")
-    if credential_boundary.get("values_inspected") is not False:
-        blockers.append("credential_boundary:values_inspected")
-    if credential_boundary.get("key_prefix_recorded") is not False:
-        blockers.append("credential_boundary:key_prefix_recorded")
-    if _phase6_int(credential_boundary.get("invalid_credential_env_name_count")) != 0:
-        blockers.append("credential_boundary:invalid_credential_env_name_count")
-    if _phase6_int(credential_boundary.get("unknown_credential_env_name_count")) != 0:
-        blockers.append("credential_boundary:unknown_credential_env_name_count")
-
-    return sorted(dict.fromkeys(blockers))
-
-
-def _phase6_startup_source_policy_blockers(
-    payload: dict[str, Any],
-    *,
-    expected_schema: str,
-) -> list[str]:
-    if expected_schema != "phase6.live_startup_guard.v1":
-        return []
-
-    source_policy = payload.get("source_policy")
-    if not isinstance(source_policy, dict):
-        return ["source_policy:missing"]
-
-    blockers: list[str] = []
-    if source_policy.get("dry_run") is not False:
-        blockers.append("source_policy:dry_run")
-    if source_policy.get("within_live_canary_bounds") is not True:
-        blockers.append("source_policy:outside_live_canary_bounds")
-
-    position_pct_multiplier = _phase6_float(
-        source_policy.get("position_pct_multiplier")
-    )
-    if position_pct_multiplier is None or not (
-        0.0
-        <= position_pct_multiplier
-        <= _PHASE6_MAX_LIVE_CANARY_POLICY_MULTIPLIER
-    ):
-        blockers.append("source_policy:position_pct_multiplier")
-
-    max_live_canary_multiplier = _phase6_float(
-        source_policy.get("max_live_canary_multiplier")
-    )
-    if max_live_canary_multiplier != _PHASE6_MAX_LIVE_CANARY_POLICY_MULTIPLIER:
-        blockers.append("source_policy:max_live_canary_multiplier")
-
-    return sorted(dict.fromkeys(blockers))
 
 
 def _reject_non_standard_json_constant(value: str) -> None:
     raise ValueError(f"non-standard JSON constant: {value}")
-
-
-def _phase6_float(value: Any) -> float | None:
-    if isinstance(value, bool):
-        return None
-    try:
-        parsed = float(value)
-    except (TypeError, ValueError):
-        return None
-    if not math.isfinite(parsed):
-        return None
-    return parsed
-
-
-def _phase6_int(value: Any) -> int | None:
-    if isinstance(value, bool):
-        return None
-    if isinstance(value, int):
-        return value
-    if isinstance(value, float):
-        if not math.isfinite(value) or not value.is_integer():
-            return None
-        return int(value)
-    if isinstance(value, str):
-        stripped = value.strip()
-        if not stripped:
-            return None
-        try:
-            return int(stripped, 10)
-        except ValueError:
-            return None
-    return None
-
-
-def _phase6_contains_required_names(value: Any) -> bool:
-    if not isinstance(value, list):
-        return False
-    names = {item for item in value if isinstance(item, str)}
-    return all(name in names for name in _PHASE6_REQUIRED_LIVE_CREDENTIAL_ENV_NAMES)
-
-
-def _phase6_non_empty_string(value: Any) -> bool:
-    return isinstance(value, str) and bool(value.strip())
 
 
 def _phase6_report_generated_at_ns(value: Any) -> int | None:
@@ -2797,21 +1743,6 @@ def _phase6_report_generated_at_ns(value: Any) -> int | None:
     except ValueError:
         return None
     return generated_at_ns if generated_at_ns >= 0 else None
-
-
-def _phase6_generated_at_blockers(
-    value: Any,
-    *,
-    report_generated_at_ns: int | None,
-    snapshot_generated_at_ns: int,
-) -> list[str]:
-    if value is None:
-        return ["generated_at_ns_missing"]
-    if report_generated_at_ns is None:
-        return ["generated_at_ns_invalid"]
-    if report_generated_at_ns > snapshot_generated_at_ns:
-        return ["generated_at_ns_in_future"]
-    return []
 
 
 def _phase6_summary_lines(reports: Sequence[dict[str, Any]]) -> list[str]:

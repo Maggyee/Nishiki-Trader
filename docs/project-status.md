@@ -58,6 +58,8 @@ Immediate focus:
 - 2026-10-18 slim-down (tracked files 1703 → 198): `uv run pytest` 684 passed,
   12 skipped (Postgres tests need `TRADER_TEST_POSTGRES_DSN`); `ruff check apps tests
   notebooks infra` clean; frontend `npm run typecheck` and `npm run build` pass.
+- 2026-10-18 dashboard: Phase 6 panel now mirrors each report's own verdict instead of
+  re-verifying it (~1.1k backend + ~2.6k test lines removed).
 - Shadow collectors unaffected: they import from the pinned clone, not from main.
 
 ## References

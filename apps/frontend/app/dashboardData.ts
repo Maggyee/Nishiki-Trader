@@ -153,14 +153,6 @@ export type Phase6GateReport = {
   model_version?: string | null;
   recommendation?: string | null;
   blockers?: string[];
-  evidence?: Array<{
-    label?: string;
-    status?: string;
-    detail?: string | null;
-    path?: string | null;
-    sha256?: string | null;
-    expected_sha256?: string | null;
-  }>;
   checks?: Array<{
     name?: string;
     status?: string;
@@ -381,7 +373,6 @@ function fallbackSnapshot(snapshotPath: string, error: unknown): DashboardSnapsh
           model_version: null,
           recommendation: null,
           blockers: ["readiness_gate_met_report_not_attached"],
-          evidence: [],
           checks: [],
         },
         {
@@ -399,7 +390,6 @@ function fallbackSnapshot(snapshotPath: string, error: unknown): DashboardSnapsh
           model_version: null,
           recommendation: null,
           blockers: ["startup_allowed_report_not_attached"],
-          evidence: [],
           checks: [],
         },
       ],
