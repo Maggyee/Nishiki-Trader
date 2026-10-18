@@ -20,7 +20,7 @@ protocols (v49–v53) were rejected. Their shadow collection was stopped on
 Immediate focus:
 
 1. Operator decision after [round 2026-10](research/round-2026-10.md): all three
-   identities rejected (v54 trend failed confirmation, v55 flow failed development).
+   identities rejected. Learning simulation of v54 (backtest + local paper) done.
 
 ## Next Steps
 
@@ -49,6 +49,9 @@ Immediate focus:
 
 ## Latest Verification
 
+- 2026-10-18 learning simulation: 10 Nautilus backtests and a BTC paper session
+  match the research holdings; paper-runner instrument-mismatch bug fixed
+  (regression test); `uv run pytest` 712 passed, 12 skipped.
 - 2026-10-18 research round: `apps/research/` + Codex-written mechanism modules
   (cross-checked against an independent reference: identical weights);
   `uv run pytest` 684 passed, 12 skipped; results in `docs/research/results/`.
