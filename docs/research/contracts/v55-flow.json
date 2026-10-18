@@ -12,7 +12,7 @@
   "data": {
     "datasets": ["um_klines_1d", "um_metrics_daily"],
     "symbols": ["BTCUSDT"],
-    "fetch_start_month": "2019-09",
+    "fetch_start_month": "2020-01",
     "fetch_end_month": "2025-12",
     "metrics_fetch_start_date": "2021-12-01"
   },
@@ -49,5 +49,13 @@
     "benchmark_relative": true,
     "p_value_max": 0.10
   },
-  "reported_not_gated": ["long_only_leg", "max_drawdown", "time_in_market"]
+  "reported_not_gated": ["long_only_leg", "max_drawdown", "time_in_market"],
+  "amendments": [
+    {
+      "date": "2026-10-18",
+      "before_pnl": true,
+      "change": "data.fetch_start_month 2019-09 -> 2020-01",
+      "reason": "Binance Vision USD-M klines start at 2020-01 (2019 monthly and daily files return 404). Rules, windows and gates unchanged; taker_continuation cannot trade before its 90-day baseline completes on 2020-03-31."
+    }
+  ]
 }
