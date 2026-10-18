@@ -84,6 +84,7 @@ class BacktestRunnerConfig:
     repo_root: Path | None = None
     account_type: AccountType = AccountType.MARGIN
     oms_type: OmsType = OmsType.NETTING
+    trade_notional: Decimal | None = None
 
 
 @dataclass
@@ -202,6 +203,7 @@ def run_backtest(config: BacktestRunnerConfig) -> RunResult:
             signals=inputs.signals,
             baseline_config=config.baseline_config,
             trade_size=config.trade_size,
+            trade_notional=config.trade_notional,
             equity_currency=config.base_currency,
             lineage=lineage,
         )
@@ -877,6 +879,9 @@ def _build_manifest(
                         "max_position_pct": config.baseline_config.max_position_pct,
                         "daily_drawdown_stop_pct": config.baseline_config.daily_drawdown_stop_pct,
                         "trade_size": str(config.trade_size),
+                        "trade_notional": (
+                            None if config.trade_notional is None else str(config.trade_notional)
+                        ),
                         "seed": config.seed,
                         "account_type": config.account_type.name,
                         "oms_type": config.oms_type.name,
@@ -1002,7 +1007,13 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         help="Mark the policy as dry-run: lineage only, no order submission.",
     )
     parser.add_argument("--venue", default="BINANCE")
-    parser.add_argument("--trade-size", type=Decimal, required=True)
+    sizing = parser.add_mutually_exclusive_group(required=True)
+    sizing.add_argument("--trade-size", type=Decimal, help="Fixed order quantity.")
+    sizing.add_argument(
+        "--trade-notional",
+        type=Decimal,
+        help="Order value in quote currency; quantity = notional / latest bar close.",
+    )
     parser.add_argument("--starting-balance", type=Decimal, required=True)
     parser.add_argument("--base-currency", default="USDT")
     parser.add_argument(
@@ -1061,7 +1072,8 @@ def _config_from_args(args: argparse.Namespace) -> BacktestRunnerConfig:
             max_position_pct=args.max_position_pct,
             daily_drawdown_stop_pct=args.daily_drawdown_stop_pct,
         ),
-        trade_size=args.trade_size,
+        trade_size=args.trade_size if args.trade_size is not None else Decimal(0),
+        trade_notional=_positive_notional(getattr(args, "trade_notional", None)),
         starting_balance=Money(args.starting_balance, currency),
         base_currency=currency,
         signal_filter=signal_filter,
@@ -1077,6 +1089,12 @@ def _config_from_args(args: argparse.Namespace) -> BacktestRunnerConfig:
             else AccountType.MARGIN
         ),
     )
+
+
+def _positive_notional(value: Decimal | None) -> Decimal | None:
+    if value is not None and value <= 0:
+        raise ValueError(f"--trade-notional must be positive, got {value}")
+    return value
 
 
 def _policies_from_args(args: argparse.Namespace) -> dict[tuple[str, str], SourcePolicy]:

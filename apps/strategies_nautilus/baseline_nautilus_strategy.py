@@ -39,9 +39,10 @@ from decimal import Decimal
 from typing import Protocol
 
 from nautilus_trader.model.data import Bar, BarType
-from nautilus_trader.model.enums import OrderSide
+from nautilus_trader.model.enums import AccountType, OrderSide
 from nautilus_trader.model.identifiers import InstrumentId
-from nautilus_trader.model.objects import Currency
+from nautilus_trader.model.instruments import Instrument
+from nautilus_trader.model.objects import Currency, Quantity
 from nautilus_trader.trading.strategy import Strategy
 
 from apps.bridge.signal_event import SignalEvent
@@ -162,6 +163,9 @@ class BaselineNautilusStrategyParams:
     baseline_config: BaselineStrategyConfig
     trade_size: Decimal
     equity_currency: Currency
+    # When set, each order is sized as trade_notional / latest bar close
+    # (quote currency) instead of the fixed trade_size quantity.
+    trade_notional: Decimal | None = None
     signals: list[SignalEvent] = field(default_factory=list)
     signal_source: SignalSource | None = None
     lineage: list[LineageRecord] = field(default_factory=list)
@@ -179,6 +183,7 @@ class BaselineNautilusStrategy(Strategy):
         self.lineage = params.lineage  # shared with runner
         self._current_day: date | None = None
         self._day_open_equity: float | None = None
+        self._last_close: Decimal | None = None
 
     @property
     def instrument_id(self) -> InstrumentId:
@@ -189,6 +194,8 @@ class BaselineNautilusStrategy(Strategy):
 
     def on_bar(self, bar: Bar) -> None:
         bar_ns = int(bar.ts_event)
+        if self._params.trade_notional is not None:
+            self._last_close = bar.close.as_decimal()
         self._update_daily_risk_state(bar_ns)
         submitted_order_this_bar = False
         for event in self._signal_source.pop_due(bar_ns):
@@ -260,12 +267,15 @@ class BaselineNautilusStrategy(Strategy):
                 return []
             if self.portfolio.is_net_long(self._params.instrument_id):
                 return []
+            order_qty = self._order_quantity(instrument, quantity, OrderSide.BUY)
+            if order_qty is None:
+                return []
             if self.portfolio.is_net_short(self._params.instrument_id):
                 self.close_all_positions(self._params.instrument_id, tags=tags)
             order = self.order_factory.market(
                 instrument_id=self._params.instrument_id,
                 order_side=OrderSide.BUY,
-                quantity=instrument.make_qty(quantity),
+                quantity=order_qty,
                 tags=tags,
             )
             self.submit_order(order)
@@ -277,12 +287,15 @@ class BaselineNautilusStrategy(Strategy):
                 return []
             if self.portfolio.is_net_short(self._params.instrument_id):
                 return []
+            order_qty = self._order_quantity(instrument, quantity, OrderSide.SELL)
+            if order_qty is None:
+                return []
             if self.portfolio.is_net_long(self._params.instrument_id):
                 self.close_all_positions(self._params.instrument_id, tags=tags)
             order = self.order_factory.market(
                 instrument_id=self._params.instrument_id,
                 order_side=OrderSide.SELL,
-                quantity=instrument.make_qty(quantity),
+                quantity=order_qty,
                 tags=tags,
             )
             self.submit_order(order)
@@ -296,12 +309,39 @@ class BaselineNautilusStrategy(Strategy):
 
         raise ValueError(f"unknown OrderIntent.action={action!r}")
 
+    def _order_quantity(
+        self, instrument: Instrument, quantity: Decimal, side: OrderSide
+    ) -> Quantity | None:
+        if self._params.trade_notional is None:
+            return instrument.make_qty(quantity)
+        if side == OrderSide.BUY:
+            quantity = min(quantity, self._affordable_buy_quantity(instrument))
+        # Below one lot: place nothing rather than let make_qty round to zero.
+        if quantity < instrument.size_increment.as_decimal():
+            return None
+        return instrument.make_qty(quantity, round_down=True)
+
+    def _affordable_buy_quantity(self, instrument: Instrument) -> Decimal:
+        """Cash accounts: the most the free quote balance buys after the taker fee."""
+        account = self.portfolio.account(self._params.instrument_id.venue)
+        if account is None or account.type != AccountType.CASH:
+            return Decimal("Infinity")
+        free = account.balance_free(instrument.quote_currency)
+        if free is None or self._last_close is None:
+            return Decimal(0)
+        return free.as_decimal() / (self._last_close * (1 + instrument.taker_fee))
+
     def _scaled_trade_size(self, intent: OrderIntent) -> Decimal:
         max_position_pct = Decimal(str(self._params.baseline_config.max_position_pct))
         target_position_pct = Decimal(str(abs(intent.target_position_pct)))
         if max_position_pct <= 0 or target_position_pct <= 0:
             return Decimal(0)
-        return self._params.trade_size * target_position_pct / max_position_pct
+        base_size = self._params.trade_size
+        if self._params.trade_notional is not None:
+            if self._last_close is None or self._last_close <= 0:
+                return Decimal(0)
+            base_size = self._params.trade_notional / self._last_close
+        return base_size * target_position_pct / max_position_pct
 
     def _update_daily_risk_state(self, now_ns: int) -> None:
         current_day = datetime.fromtimestamp(now_ns / 1_000_000_000, tz=UTC).date()

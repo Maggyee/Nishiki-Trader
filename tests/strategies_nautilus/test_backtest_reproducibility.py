@@ -11,6 +11,7 @@ excluded by ADR-004 §2.4.
 
 from __future__ import annotations
 
+import dataclasses
 import filecmp
 import json
 from decimal import Decimal
@@ -39,6 +40,8 @@ from apps.strategies_nautilus.baseline_strategy import BaselineStrategyConfig
 from apps.strategies_nautilus.runners.backtest_runner import (
     BacktestRunnerConfig,
     SidecarSchemaError,
+    _build_arg_parser,
+    _config_from_args,
     main,
     run_backtest,
     validate_sidecar,
@@ -190,6 +193,148 @@ def test_cash_account_backtest_records_spot_execution_assumptions(
     params = result.manifest.strategies[0].params
     assert params["account_type"] == "CASH"
     assert params["oms_type"] == "NETTING"
+
+
+def test_trade_notional_sizes_each_order_from_the_latest_close(
+    tmp_path, btcusdt_instrument, bar_type, signal_store_path, catalog_path
+):
+    config = _build_config(
+        output_root=tmp_path / "notional-backtests",
+        catalog_path=catalog_path,
+        instrument_id=btcusdt_instrument.id.value,
+        bar_type=bar_type,
+        signal_store_path=signal_store_path,
+    )
+    result = run_backtest(dataclasses.replace(config, trade_notional=Decimal("1000")))
+
+    fills = pd.read_parquet(result.output_dir / "fills.parquet")
+    # The buy signal is decided on the bar that closes at 50,300; notional
+    # sizing rounds down so the order never exceeds the requested value.
+    expected = btcusdt_instrument.make_qty(Decimal("1000") / Decimal("50300"), round_down=True)
+    assert Decimal(str(fills.iloc[0]["last_qty"])) == expected.as_decimal()
+    assert result.manifest.strategies[0].params["trade_notional"] == "1000"
+
+
+def test_trade_notional_never_spends_more_than_the_cash_balance(
+    tmp_path, btcusdt_instrument, bar_type, catalog_path, make_payload
+):
+    store = SignalStore(tmp_path / "buy-flat.db")
+    for signal_id, minute, side in (("cash-buy", 2, "buy"), ("cash-flat", 5, "flat")):
+        store.write(
+            SignalEvent.model_validate(
+                make_payload(
+                    signal_id=signal_id,
+                    ts_event=BASE_TS_NS + minute * ONE_MIN_NS,
+                    side=side,
+                    ttl_seconds=900,
+                )
+            )
+        )
+    config = _build_config(
+        output_root=tmp_path / "notional-cash",
+        catalog_path=catalog_path,
+        instrument_id=btcusdt_instrument.id.value,
+        bar_type=bar_type,
+        signal_store_path=tmp_path / "buy-flat.db",
+        account_type=AccountType.CASH,
+    )
+    result = run_backtest(
+        dataclasses.replace(
+            config, starting_balance=Money(1_000, USDT), trade_notional=Decimal("1000")
+        )
+    )
+
+    assert result.manifest.totals.iterations == 10
+    fills = pd.read_parquet(result.output_dir / "fills.parquet")
+    buy = fills.iloc[0]
+    cost = Decimal(str(buy["last_qty"])) * Decimal(str(buy["last_px"]).split()[0])
+    assert cost * (1 + btcusdt_instrument.taker_fee) <= Decimal("1000")
+    assert len(fills) == 2  # bought within the balance, then closed by the flat signal
+
+
+def test_trade_notional_below_one_lot_submits_no_order(
+    tmp_path, btcusdt_instrument, bar_type, signal_store_path, catalog_path
+):
+    config = _build_config(
+        output_root=tmp_path / "notional-tiny",
+        catalog_path=catalog_path,
+        instrument_id=btcusdt_instrument.id.value,
+        bar_type=bar_type,
+        signal_store_path=signal_store_path,
+    )
+    result = run_backtest(dataclasses.replace(config, trade_notional=Decimal("0.01")))
+
+    assert result.manifest.totals.iterations == 10
+    assert pd.read_parquet(result.output_dir / "fills.parquet").empty
+
+
+def test_repeated_buy_while_long_stays_a_no_op_before_sizing(
+    tmp_path, btcusdt_instrument, bar_type, catalog_path, make_payload
+):
+    # A second source whose policy shrinks orders below one lot re-sends a buy
+    # while the book is already long: it must stay a no-op, not reach make_qty.
+    store = SignalStore(tmp_path / "two-sources.db")
+    for signal_id, minute, source in (("open", 2, "freqai_v1"), ("repeat", 3, "freqai_tiny")):
+        store.write(
+            SignalEvent.model_validate(
+                make_payload(
+                    signal_id=signal_id,
+                    ts_event=BASE_TS_NS + minute * ONE_MIN_NS,
+                    source=source,
+                    ttl_seconds=900,
+                )
+            )
+        )
+    config = _build_config(
+        output_root=tmp_path / "repeat-buy",
+        catalog_path=catalog_path,
+        instrument_id=btcusdt_instrument.id.value,
+        bar_type=bar_type,
+        signal_store_path=tmp_path / "two-sources.db",
+    )
+    baseline = dataclasses.replace(
+        config.baseline_config,
+        auth=Authorization(
+            allowed_sources=frozenset({"freqai_v1", "freqai_tiny"}),
+            allowed_model_versions=frozenset({"2026-05-14"}),
+            policies={
+                ("freqai_tiny", "2026-05-14"): SourcePolicy(position_pct_multiplier=0.0001)
+            },
+        ),
+    )
+    result = run_backtest(dataclasses.replace(config, baseline_config=baseline, signal_filter={}))
+
+    assert result.manifest.totals.iterations == 10
+    fills = pd.read_parquet(result.output_dir / "fills.parquet")
+    assert (fills["order_side"].astype(str) == "BUY").sum() == 1
+    lineage = pd.read_parquet(result.output_dir / "signal_lineage.parquet").set_index("signal_id")
+    assert lineage.loc["repeat", "order_ids"] == ""
+
+
+@pytest.mark.parametrize(
+    ("sizing", "error"),
+    [
+        ([], SystemExit),
+        (["--trade-size", "0.001", "--trade-notional", "1000"], SystemExit),
+        (["--trade-notional", "0"], ValueError),
+    ],
+)
+def test_cli_requires_exactly_one_positive_sizing_mode(sizing, error):
+    argv = [
+        "--instrument-id",
+        "BTCUSDT.BINANCE",
+        "--bar-type",
+        "BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL",
+        "--signal-source",
+        "freqai_v1",
+        "--signal-model-version",
+        "2026-05-14",
+        "--starting-balance",
+        "10000",
+        *sizing,
+    ]
+    with pytest.raises(error):
+        _config_from_args(_build_arg_parser().parse_args(argv))
 
 
 def test_run_backtest_writes_manifest_and_parquet(
