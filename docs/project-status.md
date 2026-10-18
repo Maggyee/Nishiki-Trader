@@ -36,18 +36,16 @@ Immediate focus:
 - Live trading: blocked. ADR-013 and the first-live-day runbook are Draft; strict streak remains 0/14.
 - Testnet canary paused since 2026-07-29 (`freqai_linear_v1` demoted to `paper_simulated`).
 - The ten Gates-v1 survivors are closed unvalidated: their 2026-09..2027-01 blind
-  will not complete. Partial forward data (to 2026-10-17) stays in `data/research-*`;
-  keep it sealed if any of those protocols is ever revived.
+  will not complete, and their forward data was deleted on 2026-10-18.
 - Real-account testnet joint collection and the egress-guard chain are archived; do not resume without a strategy that needs them.
 - Online CI not enabled: credential lacks `workflow` scope; template in `infra/ci/`.
 - Redis transport (ADR-010) and automated Postgres mirror (ADR-011) remain Draft.
 
 ## Running on the host
 
-- Nothing from this repo is scheduled. The ten shadow crons were removed on
-  2026-10-18; the removed lines are in `data/collector-deployments/crontab-removed-2026-10-18.txt`.
-- Root-owned leftovers, all disabled: systemd `nishiki-research-v2/v5-collector`
-  units, `/opt/nishiki-trader*`, `/var/lib/nishiki-trader`, `/etc/nishiki-trader`.
+- Nothing. Shadow crons, the systemd research collectors, their `/opt`,
+  `/var/lib` and `/etc` deployments, and all local research data were removed
+  on 2026-10-18. Only code survives, in tag `archive/pre-slim-2026-10-17`.
 
 ## Latest Verification
 
@@ -56,8 +54,9 @@ Immediate focus:
   notebooks infra` clean; frontend `npm run typecheck` and `npm run build` pass.
 - 2026-10-18 dashboard: Phase 6 panel now mirrors each report's own verdict instead of
   re-verifying it (~1.1k backend + ~2.6k test lines removed).
-- 2026-10-18 local cleanup: removed ~15 GB of untracked egress/joint/testnet-observation
-  evidence, `scratch/` and the repo-root key pair; `data/` is now 444 MB.
+- 2026-10-18 local cleanup: removed ~15 GB of egress/joint evidence, research
+  shadow data, `scratch/`, the testnet key pair and its env file; `data/` is
+  now only `frontend/` and `observability/`.
 
 ## References
 

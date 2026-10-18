@@ -45,11 +45,9 @@
 | 46 | `crypto-btc-prem-diff5-negative-lag1d-v1` | crypto_derivatives_structure |
 | 48 | `crypto-btc-basis-below-ma10-lag1d-v1` | crypto_derivatives_structure |
 
-They ran daily as paper shadows from the pinned clone
-`data/collector-deployments/1727408c3b2e960e5b2d544117ee820fcf0375fe` until the
-crons were removed on 2026-10-18. The 2026-09..2027-01 blind will not complete,
-so none of them is a candidate. Forward data to 2026-10-17 stays in
-`data/research-*`; it was a pipeline check, not performance evidence (W5).
+They ran daily as paper shadows from a clone pinned at commit `1727408c` until
+2026-10-18, when the crons and all collected forward data were removed. The
+2026-09..2027-01 blind will not complete, so none of them is a candidate.
 
 ## Archived code
 
@@ -62,6 +60,6 @@ tag `archive/pre-slim-2026-10-17`:
 - `infra/research-v*/` — collector deployment templates.
 - `docs/progress/phase-2-research-*` and the research retros in `docs/retros/` — per-protocol records.
 
-Read single files with `git show archive/pre-slim-2026-10-17:<path>`. To
-revive a shadow collector, work from the archive tag or the pinned clone, not
-from main.
+Read single files with `git show archive/pre-slim-2026-10-17:<path>`. Reviving
+a shadow collector means redeploying from the archive tag (or commit `1727408c`)
+and starting its forward collection from scratch.
