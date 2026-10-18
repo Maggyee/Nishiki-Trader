@@ -19,7 +19,7 @@
 ## What was learned (v2–v53, 2026-05..09)
 
 - 52 protocols, 154 identities, 116 opened for PnL, 36 blocked by data providers.
-- **Gates v1 (v2–v48)** left ten survivors, now in paper shadow. All ten are
+- **Gates v1 (v2–v48)** left ten survivors, run as paper shadows until 2026-10-18. All ten are
   long BTC when an external index is calm. Eight share one family
   (`external_index_relief`, now saturated). Confirmation PnL is +13.7 to
   +70.7 USDT over three years at 0.001 BTC, and buy-and-hold made +71.0.
@@ -30,7 +30,7 @@
   v53 cross-sectional momentum (confirmation).
 - The reusable asset is the point-in-time factor panel (W10), not the rules.
 
-## Paper-shadow survivors (still collecting)
+## Gates-v1 survivors (shadow stopped 2026-10-18)
 
 | Protocol | Model version | Family |
 |---|---|---|
@@ -45,11 +45,11 @@
 | 46 | `crypto-btc-prem-diff5-negative-lag1d-v1` | crypto_derivatives_structure |
 | 48 | `crypto-btc-basis-below-ma10-lag1d-v1` | crypto_derivatives_structure |
 
-The user crontab runs them daily from the pinned clone
-`data/collector-deployments/1727408c3b2e960e5b2d544117ee820fcf0375fe`. That
-clone has its own git repository and imports nothing from main. Forward
-collection is a pipeline check, not performance evidence (W5). The
-2026-09..2027-01 blind stays sealed until it closes.
+They ran daily as paper shadows from the pinned clone
+`data/collector-deployments/1727408c3b2e960e5b2d544117ee820fcf0375fe` until the
+crons were removed on 2026-10-18. The 2026-09..2027-01 blind will not complete,
+so none of them is a candidate. Forward data to 2026-10-17 stays in
+`data/research-*`; it was a pipeline check, not performance evidence (W5).
 
 ## Archived code
 
@@ -63,5 +63,5 @@ tag `archive/pre-slim-2026-10-17`:
 - `docs/progress/phase-2-research-*` and the research retros in `docs/retros/` — per-protocol records.
 
 Read single files with `git show archive/pre-slim-2026-10-17:<path>`. To
-redeploy or change a shadow collector, work from the archive tag or the pinned
-clone, not from main.
+revive a shadow collector, work from the archive tag or the pinned clone, not
+from main.

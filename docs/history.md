@@ -22,6 +22,7 @@ archived. Full detail for everything before 2026-10-17 is in tag
 | 2026-09-11 | One Binance Spot testnet BUY (0.0001 BTC LIMIT at 76,908.15) was accepted and canceled after 2.0 s with no fill. All 502 assets reconciled. The one-BUY allowance is consumed |
 | 2026-09-13..28 | Joint account+market collection and egress-guard chain (details below). Never authorized to collect for real |
 | 2026-10-17 | Shadow cron migrated to this host; repository slim-down |
+| 2026-10-18 | Shadow crons removed (survivors closed unvalidated); ~15 GB of egress/joint evidence deleted |
 
 ## Testnet engineering session (ADR-015..017)
 

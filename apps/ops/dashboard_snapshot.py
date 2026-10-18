@@ -88,7 +88,7 @@ _SOURCE_REFERENCE_LINKS = (
         "label": "Research program summary",
         "kind": "progress",
         "path": "docs/research/README.md",
-        "detail": "Research conclusions, running shadow collectors, and archive pointers.",
+        "detail": "Research conclusions, closed shadow survivors, and archive pointers.",
     },
     {
         "group": "ops",

@@ -1,6 +1,6 @@
 # Project Status
 
-- **Last updated**: 2026-10-17
+- **Last updated**: 2026-10-18
 - **Current phase**: Phase 5 entry — read-only monitoring. Live trading still blocked.
 - **Current objective**: Find one strategy with benchmark-relative alpha. Until
   one exists, engineering only maintains the core path (bridge → Nautilus →
@@ -14,23 +14,20 @@ Rewrite this file in place and keep it under ~80 lines. History is in
 
 No strategy has alpha. Ten Gates-v1 survivors are statistically consistent
 with luck and express one trade (long BTC in calm regimes); all five Gates-v2
-protocols (v49–v53) were rejected. See [research summary](research/README.md).
+protocols (v49–v53) were rejected. Their shadow collection was stopped on
+2026-10-18. See [research summary](research/README.md).
 
 Immediate focus:
 
-1. Let the ten shadow collectors accumulate forward observations. Do not read
-   the sealed 2026-09..2027-01 blind for PnL before it closes.
-2. Choose the next research direction with the operator before writing code.
+1. Choose the next research direction with the operator before writing code.
 
 ## Next Steps
 
-1. After the blind closes (2027-02), run one portfolio-level review of the ten
-   shadows: benchmark-relative, correlation-aware, per W1–W8.
-2. New research: one pre-registered protocol at a time under ADR-014 Gates v2,
+1. New research: one pre-registered protocol at a time under ADR-014 Gates v2,
    drawn from untried entries in [backlog](research/backlog.md) (B4 two-sided
    regime, B5 event/calendar, B6 OI/taker flow, B7 vol-targeted overlay).
    Reuse the archived factor panel (W10) before adding providers.
-3. Only when a candidate passes: resume the Phase 3 canary per
+2. Only when a candidate passes: resume the Phase 3 canary per
    [runbook](runbook-first-testnet-canary.md) for that identity. Generate a new
    testnet Ed25519 API key first; the old key pair was deleted on 2026-10-18.
 
@@ -38,20 +35,19 @@ Immediate focus:
 
 - Live trading: blocked. ADR-013 and the first-live-day runbook are Draft; strict streak remains 0/14.
 - Testnet canary paused since 2026-07-29 (`freqai_linear_v1` demoted to `paper_simulated`).
-- The 2026-09..2027-01 future blind stays sealed for PnL.
+- The ten Gates-v1 survivors are closed unvalidated: their 2026-09..2027-01 blind
+  will not complete. Partial forward data (to 2026-10-17) stays in `data/research-*`;
+  keep it sealed if any of those protocols is ever revived.
 - Real-account testnet joint collection and the egress-guard chain are archived; do not resume without a strategy that needs them.
 - Online CI not enabled: credential lacks `workflow` scope; template in `infra/ci/`.
 - Redis transport (ADR-010) and automated Postgres mirror (ADR-011) remain Draft.
 
 ## Running on the host
 
-- User crontab runs ten shadow collectors (protocols 8, 16, 18, 22, 34, 36,
-  40, 42, 46, 48) from the pinned clone
-  `data/collector-deployments/1727408c…` (its own git repo, unaffected by
-  main code) using main's `.venv/bin/python`; keep that interpreter's
-  dependencies compatible. Status: `data/research-v{N}-forward/status.json` (N < 40) or
-  `data/research-v{N}/shadow/status.json`. Redeploy only from the archive tag.
-- systemd `nishiki-research-v2/v5-collector` timers are installed but disabled.
+- Nothing from this repo is scheduled. The ten shadow crons were removed on
+  2026-10-18; the removed lines are in `data/collector-deployments/crontab-removed-2026-10-18.txt`.
+- Root-owned leftovers, all disabled: systemd `nishiki-research-v2/v5-collector`
+  units, `/opt/nishiki-trader*`, `/var/lib/nishiki-trader`, `/etc/nishiki-trader`.
 
 ## Latest Verification
 
@@ -62,7 +58,6 @@ Immediate focus:
   re-verifying it (~1.1k backend + ~2.6k test lines removed).
 - 2026-10-18 local cleanup: removed ~15 GB of untracked egress/joint/testnet-observation
   evidence, `scratch/` and the repo-root key pair; `data/` is now 444 MB.
-- Shadow collectors unaffected: they import from the pinned clone, not from main.
 
 ## References
 
