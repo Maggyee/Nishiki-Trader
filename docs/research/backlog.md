@@ -108,7 +108,7 @@ Tried as v52 (development rejected) and v53 (confirmation rejected).
   (W2/W3); propose genuinely different conditioning (e.g., crypto-native
   states from B2) first.
 
-## B5 — Event/calendar structure — PRIORITY 5
+## B5 — Event/calendar structure — FROZEN as v59 (turn of month)
 
 - **Family**: `event_calendar` (new).
 - **Mechanism**: deterministic clock effects — funding settlement times

@@ -1,0 +1,68 @@
+{
+  "schema_version": "research.contract.v1",
+  "frozen_at": "2026-10-18",
+  "protocol": 59,
+  "family": "event_calendar",
+  "mechanism": "Turn of month: hold the v54 10-coin universe, equal weight, over the first 3 days of each month (entered at the previous month's last close)",
+  "orthogonality": "Clock-driven, independent of price and flow states; tests recurring month-start buying (salary, DCA and fund flows).",
+  "directional_capability": "long_flat",
+  "weekend_coverage": "Calendar days on a 24/7 market; no signal vacuum.",
+  "cost_napkin": "4 fills x 12 bps a month at gross 1 is about 2.9% a year; the effect must beat that plus exposure (~10%) x buy-and-hold.",
+  "mechanism_module": "apps.strategies_freqtrade.research.calendar_effects",
+  "data": {
+    "dataset": "spot_klines_1d",
+    "symbols": [
+      "BTCUSDT",
+      "ETHUSDT",
+      "BNBUSDT",
+      "XRPUSDT",
+      "ADAUSDT",
+      "LTCUSDT",
+      "LINKUSDT",
+      "TRXUSDT",
+      "ETCUSDT",
+      "XLMUSDT"
+    ],
+    "fetch_start_month": "2019-06",
+    "fetch_end_month": "2025-12"
+  },
+  "candidates": {
+    "turn_of_month": {
+      "source": "rule_crypto_turn_of_month_v1",
+      "model_version": "crypto-10coin-tom-last1-first3-v1",
+      "params": {
+        "days_after_month_end": 3
+      }
+    }
+  },
+  "windows": {
+    "development": [
+      "2020-01-01",
+      "2022-12-31"
+    ],
+    "confirmation": [
+      "2023-01-01",
+      "2025-12-31"
+    ]
+  },
+  "notional_usdt": 10000.0,
+  "cost_scenarios_bps_per_fill": {
+    "base": 12.0,
+    "stress": 15.0
+  },
+  "null": {
+    "kind": "circular_shift_per_asset",
+    "trials": 5000,
+    "seed": 20261018
+  },
+  "gates": {
+    "base_net_pnl_gt": 0.0,
+    "stress_net_pnl_gt": 0.0,
+    "positive_years_fraction_at_least": 0.6667,
+    "months_breadth_rule": "adaptive_null_median",
+    "closed_positions_at_least": 60,
+    "leave_best_base_net_pnl_gt": 0.0,
+    "benchmark_relative": true,
+    "p_value_max": 0.1
+  }
+}

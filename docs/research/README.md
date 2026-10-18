@@ -14,6 +14,7 @@
 | [warnings.md](warnings.md) | W1–W10 program warnings. Mandatory for research, gating and promotion work |
 | [backlog.md](backlog.md) | Ranked mechanism ideas. B1–B3 have been tried (v49–v53) |
 | [round-2026-10.md](round-2026-10.md) | Current round: v54 trend + inverse-vol, v55 order flow; how stages run |
+| [round-2026-10b.md](round-2026-10b.md) | Next round: v56 taker persist, v57 deleveraging rebound, v58 xs taker rotation, v59 turn of month |
 | [contracts/](contracts/) | Frozen protocol contracts (v54+) |
 | [family-registry.json](family-registry.json) | Every protocol, identity, family and outcome through v53 |
 | [meta-analysis-v2.md](meta-analysis-v2.md) | Buy-and-hold benchmark, random-timing null, program multiplicity |

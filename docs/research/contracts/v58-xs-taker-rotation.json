@@ -1,0 +1,71 @@
+{
+  "schema_version": "research.contract.v1",
+  "frozen_at": "2026-10-18",
+  "protocol": 58,
+  "family": "cross_sectional_relative",
+  "mechanism": "Weekly dollar-neutral rotation across the v54 10-coin universe: long the 3 coins with the highest 7-day taker-buy share z-score (vs their own trailing 90 days), short the 3 lowest",
+  "orthogonality": "Market-neutral; ranks on order-flow pressure, not price momentum, reversal or low volatility (v52/v53).",
+  "directional_capability": "two_sided",
+  "weekend_coverage": "Binance spot klines are 24/7; no signal vacuum.",
+  "mechanism_module": "apps.strategies_freqtrade.research.xs_flow_rotation",
+  "data": {
+    "dataset": "spot_klines_1d",
+    "symbols": [
+      "BTCUSDT",
+      "ETHUSDT",
+      "BNBUSDT",
+      "XRPUSDT",
+      "ADAUSDT",
+      "LTCUSDT",
+      "LINKUSDT",
+      "TRXUSDT",
+      "ETCUSDT",
+      "XLMUSDT"
+    ],
+    "fetch_start_month": "2019-06",
+    "fetch_end_month": "2025-12"
+  },
+  "candidates": {
+    "xs_taker_rotation": {
+      "source": "rule_crypto_xs_taker_flow_v1",
+      "model_version": "crypto-xs-takershare7d-z90-top3-bottom3-weekly-v1",
+      "params": {
+        "window_days": 7,
+        "baseline_days": 90,
+        "legs_per_side": 3,
+        "min_universe": 6,
+        "rebalance_weekday": 6
+      }
+    }
+  },
+  "windows": {
+    "development": [
+      "2020-01-01",
+      "2022-12-31"
+    ],
+    "confirmation": [
+      "2023-01-01",
+      "2025-12-31"
+    ]
+  },
+  "notional_usdt": 10000.0,
+  "cost_scenarios_bps_per_fill": {
+    "base": 12.0,
+    "stress": 15.0
+  },
+  "null": {
+    "kind": "circular_shift_per_asset",
+    "trials": 5000,
+    "seed": 20261018
+  },
+  "gates": {
+    "base_net_pnl_gt": 0.0,
+    "stress_net_pnl_gt": 0.0,
+    "positive_years_fraction_at_least": 0.6667,
+    "months_breadth_rule": "adaptive_null_median",
+    "closed_positions_at_least": 60,
+    "leave_best_base_net_pnl_gt": 0.0,
+    "benchmark_relative": true,
+    "p_value_max": 0.1
+  }
+}

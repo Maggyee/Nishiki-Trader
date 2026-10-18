@@ -1,0 +1,68 @@
+{
+  "schema_version": "research.contract.v1",
+  "frozen_at": "2026-10-18",
+  "protocol": 57,
+  "family": "microstructure_flow",
+  "mechanism": "Deleveraging flush: 1-day open-interest change and 1-day return both at or below their trailing-90-day 20th percentile -> long 3 days, BTC and ETH perps",
+  "orthogonality": "Bets on forced-seller exhaustion after liquidation cascades, a state the closed survivors never traded; differs from v55 oi_squeeze (OI build-up against price, rejected).",
+  "directional_capability": "long_flat",
+  "weekend_coverage": "Binance USD-M klines and metrics are 24/7; no signal vacuum.",
+  "knowledge_disclosure": "v55 oi_squeeze development (2022-2023) was opened and lost; v57 conditions on the opposite OI state. The 2024-2025 confirmation is binding.",
+  "mechanism_module": "apps.strategies_freqtrade.research.flow_imbalance",
+  "limitations": "PnL uses USD-M close-to-close returns without funding cash flows.",
+  "data": {
+    "datasets": [
+      "um_klines_1d",
+      "um_metrics_daily"
+    ],
+    "symbols": [
+      "BTCUSDT",
+      "ETHUSDT"
+    ],
+    "fetch_start_month": "2020-01",
+    "fetch_end_month": "2025-12",
+    "metrics_fetch_start_date": "2021-09-01"
+  },
+  "candidates": {
+    "deleveraging_rebound": {
+      "source": "rule_crypto_deleveraging_rebound_v1",
+      "model_version": "crypto-btc-eth-oi1d-ret1d-q20-90d-hold3d-long-v1",
+      "params": {
+        "baseline_days": 90,
+        "quantile": 0.2,
+        "hold_days": 3,
+        "weight_per_symbol": 0.5
+      }
+    }
+  },
+  "windows": {
+    "development": [
+      "2022-01-01",
+      "2023-12-31"
+    ],
+    "confirmation": [
+      "2024-01-01",
+      "2025-12-31"
+    ]
+  },
+  "notional_usdt": 10000.0,
+  "cost_scenarios_bps_per_fill": {
+    "base": 12.0,
+    "stress": 15.0
+  },
+  "null": {
+    "kind": "circular_shift_per_asset",
+    "trials": 5000,
+    "seed": 20261018
+  },
+  "gates": {
+    "base_net_pnl_gt": 0.0,
+    "stress_net_pnl_gt": 0.0,
+    "positive_years_fraction_at_least": 0.6667,
+    "months_breadth_rule": "adaptive_null_median",
+    "closed_positions_at_least": 60,
+    "leave_best_base_net_pnl_gt": 0.0,
+    "benchmark_relative": true,
+    "p_value_max": 0.1
+  }
+}

@@ -1454,6 +1454,62 @@
           "outcome": "development_rejected"
         }
       ]
+    },
+    {
+      "protocol": 56,
+      "default_family": "microstructure_flow",
+      "mechanism": "BTC USD-M 24h taker-buy share z-score above +1 on two consecutive days -> long for 3 days",
+      "candidates": [
+        {
+          "key": "taker_persist_long",
+          "source": "rule_crypto_taker_persist_v1",
+          "model_version": "crypto-btc-um-takershare24h-z90-1-2d-hold3d-long-v1",
+          "family": "microstructure_flow",
+          "outcome": "not_opened"
+        }
+      ]
+    },
+    {
+      "protocol": 57,
+      "default_family": "microstructure_flow",
+      "mechanism": "Deleveraging flush: 1-day open-interest change and 1-day return both at or below their trailing-90-day 20th percentile -> long 3 days, BTC and ETH perps",
+      "candidates": [
+        {
+          "key": "deleveraging_rebound",
+          "source": "rule_crypto_deleveraging_rebound_v1",
+          "model_version": "crypto-btc-eth-oi1d-ret1d-q20-90d-hold3d-long-v1",
+          "family": "microstructure_flow",
+          "outcome": "not_opened"
+        }
+      ]
+    },
+    {
+      "protocol": 58,
+      "default_family": "cross_sectional_relative",
+      "mechanism": "Weekly dollar-neutral rotation across the v54 10-coin universe: long the 3 coins with the highest 7-day taker-buy share z-score (vs their own trailing 90 days), short the 3 lowest",
+      "candidates": [
+        {
+          "key": "xs_taker_rotation",
+          "source": "rule_crypto_xs_taker_flow_v1",
+          "model_version": "crypto-xs-takershare7d-z90-top3-bottom3-weekly-v1",
+          "family": "cross_sectional_relative",
+          "outcome": "not_opened"
+        }
+      ]
+    },
+    {
+      "protocol": 59,
+      "default_family": "event_calendar",
+      "mechanism": "Turn of month: hold the v54 10-coin universe, equal weight, over the first 3 days of each month (entered at the previous month's last close)",
+      "candidates": [
+        {
+          "key": "turn_of_month",
+          "source": "rule_crypto_turn_of_month_v1",
+          "model_version": "crypto-10coin-tom-last1-first3-v1",
+          "family": "event_calendar",
+          "outcome": "not_opened"
+        }
+      ]
     }
   ],
   "legacy_candidates": [
@@ -1587,10 +1643,10 @@
     }
   ],
   "totals": {
-    "protocol_count": 54,
+    "protocol_count": 58,
     "legacy_candidate_count": 16,
-    "candidate_rows": 160,
-    "unique_identities": 157,
+    "candidate_rows": 164,
+    "unique_identities": 161,
     "unique_identities_pnl_opened": 119,
     "unique_identities_provider_blocked": 36,
     "survivors_paper_shadow": 10,

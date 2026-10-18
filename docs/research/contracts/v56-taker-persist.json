@@ -1,0 +1,64 @@
+{
+  "schema_version": "research.contract.v1",
+  "frozen_at": "2026-10-18",
+  "protocol": 56,
+  "family": "microstructure_flow",
+  "mechanism": "BTC USD-M 24h taker-buy share z-score above +1 on two consecutive days -> long for 3 days",
+  "orthogonality": "Crypto-native aggressive-flow persistence, active in calm and volatile regimes; the closed survivors were long BTC in calm external regimes.",
+  "directional_capability": "long_flat",
+  "weekend_coverage": "Binance USD-M klines are 24/7; no signal vacuum.",
+  "knowledge_disclosure": "Designed after v55 taker_continuation development (2020-2022: +9,009 gross, costs 62%, long-only leg positive). Development is therefore not independent; the never-opened 2023-2025 confirmation is the binding test.",
+  "mechanism_module": "apps.strategies_freqtrade.research.flow_imbalance",
+  "data": {
+    "datasets": [
+      "um_klines_1d"
+    ],
+    "symbols": [
+      "BTCUSDT"
+    ],
+    "fetch_start_month": "2020-01",
+    "fetch_end_month": "2025-12"
+  },
+  "candidates": {
+    "taker_persist_long": {
+      "source": "rule_crypto_taker_persist_v1",
+      "model_version": "crypto-btc-um-takershare24h-z90-1-2d-hold3d-long-v1",
+      "params": {
+        "baseline_days": 90,
+        "z_threshold": 1.0,
+        "persist_days": 2,
+        "hold_days": 3
+      }
+    }
+  },
+  "windows": {
+    "development": [
+      "2020-01-01",
+      "2022-12-31"
+    ],
+    "confirmation": [
+      "2023-01-01",
+      "2025-12-31"
+    ]
+  },
+  "notional_usdt": 10000.0,
+  "cost_scenarios_bps_per_fill": {
+    "base": 12.0,
+    "stress": 15.0
+  },
+  "null": {
+    "kind": "circular_shift_per_asset",
+    "trials": 5000,
+    "seed": 20261018
+  },
+  "gates": {
+    "base_net_pnl_gt": 0.0,
+    "stress_net_pnl_gt": 0.0,
+    "positive_years_fraction_at_least": 0.6667,
+    "months_breadth_rule": "adaptive_null_median",
+    "closed_positions_at_least": 60,
+    "leave_best_base_net_pnl_gt": 0.0,
+    "benchmark_relative": true,
+    "p_value_max": 0.1
+  }
+}
