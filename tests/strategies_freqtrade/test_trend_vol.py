@@ -164,3 +164,21 @@ def test_empty_history_stays_utc_and_float() -> None:
 def test_unknown_candidate_raises() -> None:
     with pytest.raises(ValueError, match="Unknown candidate"):
         trend_vol.target_weights({}, "unknown", PARAMS)
+
+
+def test_sma_filter_holds_only_above_the_average_without_look_ahead() -> None:
+    index = pd.date_range("2020-01-01", periods=6, freq="D", tz="UTC")
+    a = pd.DataFrame({"close": [10.0, 10.0, 10.0, 13.0, 9.0, 12.0]}, index=index)
+    b = pd.DataFrame({"close": [5.0, 6.0, 7.0]}, index=index[3:])
+    params = {"sma_days": 3, "weight_per_symbol": 0.5}
+    frames = {trend_vol.PRICE_DATASET: {"A": a, "B": b}}
+
+    weights = trend_vol.target_weights(frames, "sma_filter", params)
+
+    # A: SMA3 is NaN, NaN, 10, 11, 10.67, 11.33 -> above on rows 3 and 5 only.
+    assert weights["A"].tolist() == [0.0, 0.0, 0.0, 0.5, 0.0, 0.5]
+    # B starts on row 3; its first SMA3 exists on row 5 (6 < 7 is above).
+    assert weights["B"].tolist() == [0.0, 0.0, 0.0, 0.0, 0.0, 0.5]
+    a.loc[index[5], "close"] = 1.0
+    changed = trend_vol.target_weights(frames, "sma_filter", params)
+    pd.testing.assert_frame_equal(changed.iloc[:5], weights.iloc[:5])

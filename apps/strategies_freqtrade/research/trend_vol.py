@@ -1,4 +1,4 @@
-"""Daily research targets for the frozen v54 trend and inverse-vol rule."""
+"""Daily research targets: the frozen v54 trend rule and the ADR-019 SMA filter."""
 
 from __future__ import annotations
 
@@ -12,6 +12,8 @@ def target_weights(
     frames: dict[str, dict[str, pd.DataFrame]], candidate: str, params: dict
 ) -> pd.DataFrame:
     """Decide at each close, rebalancing only on the configured weekday."""
+    if candidate == "sma_filter":
+        return _sma_filter(frames[PRICE_DATASET], params)
     if candidate != "tsmom_vol":
         raise ValueError(f"Unknown candidate: {candidate}")
 
@@ -38,3 +40,13 @@ def target_weights(
     weights = weights.mul(scale, axis=0)
     weights.loc[weights.index.weekday != params["rebalance_weekday"], :] = np.nan
     return weights.ffill().fillna(0.0)
+
+
+def _sma_filter(prices: dict[str, pd.DataFrame], params: dict) -> pd.DataFrame:
+    """Hold each symbol at a fixed weight while its close is above its SMA."""
+    held = {}
+    for symbol, frame in prices.items():
+        close = frame["close"].astype(float)
+        sma = close.rolling(params["sma_days"]).mean()
+        held[symbol] = (close > sma).astype(float) * params["weight_per_symbol"]
+    return pd.DataFrame(held).sort_index().fillna(0.0)
