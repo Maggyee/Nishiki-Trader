@@ -1521,7 +1521,7 @@
           "source": "rule_crypto_cascade_rebound_v1",
           "model_version": "crypto-10coin-spot1m-ret60-oi60-q005-30d-hold4h-lag1-long-v1",
           "family": "microstructure_flow",
-          "outcome": "not_opened"
+          "outcome": "development_rejected"
         }
       ]
     }
@@ -1661,7 +1661,7 @@
     "legacy_candidate_count": 16,
     "candidate_rows": 165,
     "unique_identities": 162,
-    "unique_identities_pnl_opened": 123,
+    "unique_identities_pnl_opened": 124,
     "unique_identities_provider_blocked": 36,
     "survivors_paper_shadow": 10,
     "confirmation_opened": 25

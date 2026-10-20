@@ -1,0 +1,70 @@
+{
+  "schema_version": "research.result.v1",
+  "protocol": 60,
+  "stage": "development",
+  "bar": "1min",
+  "execution_lag_bars": 1,
+  "null_shift_unit": "day",
+  "contract": "docs/research/contracts/v60-cascade-rebound.json",
+  "contract_sha256": "81a14674e1f4e233c38c59b54e027055dcafc72a67cd9ef3c53995feff438686",
+  "data_manifest_sha256": "e402ef0bf86eaab91e286b511b5386dc28d0f5f2e899a344411acbe2e0e34fdc",
+  "generated_at": "2026-10-20T11:25:26+00:00",
+  "candidates": {
+    "cascade_rebound": {
+      "source": "rule_crypto_cascade_rebound_v1",
+      "model_version": "crypto-10coin-spot1m-ret60-oi60-q005-30d-hold4h-lag1-long-v1",
+      "window": [
+        "2022-01-01",
+        "2023-12-31"
+      ],
+      "metrics": {
+        "bars": 1051200,
+        "days": 730,
+        "active_days": 250,
+        "gross_net_pnl": 1559.5341533003937,
+        "base_net_pnl": 124.33415330039406,
+        "stress_net_pnl": -832.4658466996063,
+        "base_return_pct": 1.2433415330039406,
+        "positive_months": 11,
+        "months_total": 24,
+        "positive_years": 1,
+        "years_total": 2,
+        "closed_positions": 598,
+        "leave_best_base_net_pnl": -214.64111971289543,
+        "benchmark_pnl": 36.79159405362556,
+        "time_in_market": 0.06681221461187214,
+        "gross_exposure_mean": 0.013767123287671233,
+        "net_exposure_mean": 0.013767123287671233,
+        "max_drawdown_usdt": 2147.8794079022637,
+        "max_drawdown_pct": 21.478794079022638,
+        "long_only_leg_base_net_pnl": 124.33415330039406,
+        "base_pnl_sha256": "6079534acb411ab02554f155a421165ffd271efe5c587f6ab0ba96fb056d03b9"
+      },
+      "null": {
+        "trials": 5000,
+        "seed": 20261018,
+        "p_value": 0.0001999600079984003,
+        "null_base_mean": -1357.9994682559695,
+        "null_base_p90": -846.7526045885763,
+        "null_months_positive_median": 5.0
+      },
+      "gates": {
+        "checks": {
+          "base_net_pnl_positive": true,
+          "stress_net_pnl_positive": false,
+          "years_breadth": false,
+          "months_breadth": true,
+          "activity_floor": true,
+          "leave_best_positive": false,
+          "benchmark_relative": true,
+          "null_p_value": true,
+          "active_days_floor": true,
+          "duplicate_replay_identical": true
+        },
+        "years_needed": 2,
+        "months_threshold": 5.0,
+        "pass": false
+      }
+    }
+  }
+}
