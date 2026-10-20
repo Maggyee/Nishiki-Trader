@@ -18,6 +18,7 @@ package for every protocol; mechanisms live one module each under
 | `data.py` | Fetch + SHA256 check against `.CHECKSUM`, manifest, parsers for klines (1d, 1m), metrics (daily, 5m) and funding; parsed archives cached as parquet under `data/research/parsed/v{N}/` |
 | `replay.py` | Constant-notional replay on any bar: costs, execution lag, funding per settlement, episodes, benchmark, drawdown, long-only leg |
 | `gates.py` | Circular-shift timing null (shift by bar or by whole day) and Gates v2 checks |
+| `beta.py` | ADR-019 beta admission: compounding equity with units held between rebalances, against buy-and-hold |
 | `protocol.py` | CLI: `fetch <contract>`, `run <contract> --stage development\|confirmation` |
 
 A mechanism module exposes `PRICE_DATASET` and

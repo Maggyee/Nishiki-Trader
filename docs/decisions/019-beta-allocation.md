@@ -74,9 +74,46 @@ Both are reported whatever the outcome.
 - ADR-015 limits apply at every stage. A live drawdown beyond the historical
   maximum drawdown triggers a stop and an operator review.
 
-## 5. Historical comparison
+## 5. Historical comparison (2026-10-20)
 
-Pending; filled in by the comparison commit.
+Run with `uv run python -m apps.research.beta` after the code was committed and
+Codex-reviewed (a709c85). File: [results/beta-2026-10.json](../research/results/beta-2026-10.json).
+Starting equity 10,000 USDT, 12 bps per unit traded.
+
+| | Final equity | CAGR | Max drawdown | 2022 | Admission |
+|---|---|---|---|---|---|
+| **B1** v54 long/flat, 10 coins | 116,360 | 50.5% | 54.4% | −19% | not admitted: drawdown above 52.1% (2/3 of 78.1%) |
+| 10-coin buy-and-hold | 154,129 | 57.8% | 78.1% | −65% | |
+| **B2** BTC/ETH above SMA200 | 130,291 | 53.4% | 50.5% | −8% | **admitted** (all five) |
+| BTC/ETH buy-and-hold | 174,062 | 61.0% | 77.8% | −67% | |
+
+- 2020–25 contains one of the strongest bull runs on record; CAGRs are not
+  expectations. What carries over is the shape: B2 gave up some upside (2020
+  +152% against +382%) and avoided most of 2022.
+- B2's largest drawdown (−51%, 2021-05-11 to 07-23) came from the May 2021 crash,
+  while both coins were still above their averages. The filter protects against
+  long bear markets, not fast crashes.
+- B1 missed by 2.3 points and is not rescued.
+
+### Sizing under ADR-015 (exploratory, after admission)
+
+At full exposure B2 had 70 days with a daily loss of 5% or more (about 11 a
+year), each of which stops trading under ADR-001 and ADR-015. Holding units
+without rebalancing also lets exposure drift up in rallies, so a reduced
+exposure needs a scheduled reset. With weekly rebalancing to a fraction of the
+B2 target, against buy-and-hold scaled and rebalanced the same way:
+
+| Exposure | Days ≤ −5% | Worst day | Max drawdown | CAGR | 2022 |
+|---|---|---|---|---|---|
+| B2 × 1.0 | 68 | −22.1% | 49% | 51% | −8% |
+| B2 × 0.5 | 10 | −11.0% | 27% | 27% | −4% |
+| **B2 × 0.4** | 4 | −8.8% | 22% | 22% | −3% |
+| B2 × 0.3 | 3 | −6.6% | 17% | 16% | −2% |
+| Buy-and-hold × 0.4 | 7 | | 41% | 28% | −31% |
+| Buy-and-hold × 0.3 | 3 | | 32% | 21% | −23% |
+
+Proposed for paper (operator decision): B2 at 40% exposure (20% per coin),
+rebalanced weekly and on every signal change, as `rule_beta_sma200_v1`.
 
 ## 6. What this ADR does not do
 

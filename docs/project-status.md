@@ -12,28 +12,20 @@ Rewrite this file in place and keep it under ~80 lines. History is in
 
 ## Current Focus
 
-No strategy has alpha. Ten Gates-v1 survivors are statistically consistent
-with luck and express one trade (long BTC in calm regimes); all five Gates-v2
-protocols (v49–v53) were rejected. Their shadow collection was stopped on
-2026-10-18. See [research summary](research/README.md).
-
-Daily rounds [2026-10](research/round-2026-10.md) and
-[2026-10b](research/round-2026-10b.md) rejected all seven identities (v54–v59);
-lower costs do not rescue them. On 2026-10-18 the operator chose intraday
-research: minute data, holds of at least four hours,
-[ADR-018](decisions/018-intraday-research.md). The first intraday protocol, v60
-cascade rebound ([round 2026-10c](research/round-2026-10c.md)), beat random
-timing (p 0.0002) but its edge is about one round trip of costs: rejected.
-v61 laggard catch-up ([round 2026-10d](research/round-2026-10d.md)) lost after
-costs. Per the stopping rule set before v61 was frozen, the alpha search stopped
-on 2026-10-20.
+No strategy has alpha: 60 protocols and 163 identities, none passed (ten
+Gates-v1 survivors were luck; v49–v61 rejected, including two intraday protocols
+under [ADR-018](decisions/018-intraday-research.md) whose edges were at most one
+round trip of costs). Per the stopping rule set before v61 was frozen, the alpha
+search stopped on 2026-10-20. Rounds: [summary](research/README.md).
 
 ## Next Steps
 
-1. Move to a beta-with-risk-control allocation (stopping rule). First an ADR,
-   for operator approval, letting a declared beta strategy into paper and
-   testnet, judged against buy-and-hold on return and drawdown. Any future
-   alpha protocol: freeze
+1. Beta allocation track, [ADR-019](decisions/019-beta-allocation.md) (Draft):
+   B2 (BTC/ETH held above their 200-day average) passed the admission criteria
+   fixed beforehand; B1 (v54 long/flat) missed on drawdown. Operator: accept
+   ADR-019 and the proposed sizing (B2 at 40% exposure, weekly rebalance). Then
+   paper-runner sell = close, local paper ≥ 4 weeks, Spot testnet ≥ 14 days.
+   Any future alpha protocol: freeze
    a contract in `docs/research/contracts/`, one mechanism module, cross-check,
    run with `apps/research/`. Lessons in both daily rounds.
 2. Only when a candidate passes: resume the Phase 3 canary per
@@ -58,10 +50,10 @@ on 2026-10-20.
 
 ## Latest Verification
 
+- 2026-10-20 beta evaluation (`apps/research/beta.py`, Codex-reviewed before the
+  run; fee-reserve and coverage findings fixed): `uv run pytest` 871 passed, 12 skipped.
 - 2026-10-20 v60/v61: mechanism weights identical to an independent reference on
   every minute (2.2M and 3.2M × 10 coins); development results immutable.
-- 2026-10-20 intraday harness (Codex-written, reviewed): daily null p-values equal
-  the old algorithm; real 1m fetch verified; `uv run pytest` 835 passed, 12 skipped.
 - 2026-10-18 Nautilus: spot sell = flat on CASH accounts, `--trade-notional`,
   learning simulation matching research holdings; Codex-reviewed with regression tests.
 - 2026-10-18 slim-down (tracked files 1703 → 198), local cleanup and dashboard trim;
@@ -72,7 +64,7 @@ on 2026-10-20.
 - Agents: [AGENTS.md](../AGENTS.md). Decisions: [ADR index](decisions/README.md).
 - Research: [summary](research/README.md), [warnings](research/warnings.md),
   [backlog](research/backlog.md), [ADR-014](decisions/014-research-program-v2.md),
-  [ADR-018](decisions/018-intraday-research.md).
+  [ADR-018](decisions/018-intraday-research.md), [ADR-019](decisions/019-beta-allocation.md).
 - Risk and testnet: [ADR-008](decisions/008-phase3-risk-runbook.md),
   [ADR-015](decisions/015-portfolio-risk-policy.md),
   [canary evidence](progress/phase-3-testnet-canary-evidence.md),

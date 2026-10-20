@@ -1,0 +1,118 @@
+{
+  "schema_version": "research.beta.v1",
+  "adr": "019",
+  "window": [
+    "2020-01-01",
+    "2025-12-31"
+  ],
+  "start_equity_usdt": 10000.0,
+  "costs_bps_per_unit_traded": {
+    "base": 12.0,
+    "stress": 20.0
+  },
+  "generated_at": "2026-10-20T12:51:52+00:00",
+  "candidates": {
+    "B1_v54_long_flat": {
+      "universe": [
+        "BTCUSDT",
+        "ETHUSDT",
+        "BNBUSDT",
+        "XRPUSDT",
+        "ADAUSDT",
+        "LTCUSDT",
+        "LINKUSDT",
+        "TRXUSDT",
+        "ETCUSDT",
+        "XLMUSDT"
+      ],
+      "candidate": {
+        "final_equity": 116360.27566473448,
+        "cagr": 0.5054788575416516,
+        "max_drawdown": 0.5440527707337834,
+        "cagr_over_max_drawdown": 0.9290989490962323,
+        "yearly_return": {
+          "2020": 1.2929549723548153,
+          "2021": 1.9207070099984844,
+          "2022": -0.19029230068349523,
+          "2023": 0.3271804698545959,
+          "2024": 0.626526910532347,
+          "2025": -0.005964904414497596
+        },
+        "trades": 2014,
+        "time_in_market": 0.9229014598540146
+      },
+      "candidate_stress_final_equity": 110870.88092657179,
+      "benchmark_buy_and_hold": {
+        "final_equity": 154128.8589997282,
+        "cagr": 0.5777051420916368,
+        "max_drawdown": 0.7810274590272042,
+        "cagr_over_max_drawdown": 0.7396732796196281,
+        "yearly_return": {
+          "2020": 2.4171539281954573,
+          "2021": 3.343798992264264,
+          "2022": -0.6471832086965255,
+          "2023": 0.7706090883005283,
+          "2024": 0.8468957668872048,
+          "2025": -0.10001477460862052
+        }
+      },
+      "admission": {
+        "checks": {
+          "drawdown_at_most_two_thirds": false,
+          "cagr_over_drawdown_at_least_benchmark": true,
+          "loss_2022_at_most_half": true,
+          "cagr_at_least_half": true,
+          "stress_total_return_positive": true
+        },
+        "admitted": false
+      }
+    },
+    "B2_btc_eth_sma200": {
+      "universe": [
+        "BTCUSDT",
+        "ETHUSDT"
+      ],
+      "candidate": {
+        "final_equity": 130291.28617573102,
+        "cagr": 0.5341281312947508,
+        "max_drawdown": 0.505325254226372,
+        "cagr_over_max_drawdown": 1.0569986891165266,
+        "yearly_return": {
+          "2020": 1.5224757922090535,
+          "2021": 1.1191282155123417,
+          "2022": -0.08073612471314395,
+          "2023": 0.7149134157699881,
+          "2024": 0.6518327140227853,
+          "2025": -0.06398528648896751
+        },
+        "trades": 142,
+        "time_in_market": 0.6970802919708029
+      },
+      "candidate_stress_final_equity": 125365.68109459436,
+      "benchmark_buy_and_hold": {
+        "final_equity": 174062.24439213978,
+        "cagr": 0.6100200555671094,
+        "max_drawdown": 0.7779937574232326,
+        "cagr_over_max_drawdown": 0.7840937664943953,
+        "yearly_return": {
+          "2020": 3.8182733583895523,
+          "2021": 2.5789848982993426,
+          "2022": -0.6685791916084364,
+          "2023": 1.0378626015924666,
+          "2024": 0.6516584763115254,
+          "2025": -0.09514632280088053
+        }
+      },
+      "admission": {
+        "checks": {
+          "drawdown_at_most_two_thirds": true,
+          "cagr_over_drawdown_at_least_benchmark": true,
+          "loss_2022_at_most_half": true,
+          "cagr_at_least_half": true,
+          "stress_total_return_positive": true
+        },
+        "admitted": true
+      }
+    }
+  }
+}
