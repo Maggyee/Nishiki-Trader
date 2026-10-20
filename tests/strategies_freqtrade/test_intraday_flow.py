@@ -263,3 +263,251 @@ def test_empty_history_stays_utc_and_float(empty_universe: bool) -> None:
 def test_unknown_candidate_raises() -> None:
     with pytest.raises(ValueError, match="Unknown candidate"):
         intraday_flow.target_weights({}, "unknown", {})
+
+
+LAGGARD_PARAMS = {
+    "return_window_minutes": 60,
+    "baseline_days": 1,
+    "quantile": 0.995,
+    "min_baseline_fraction": 0.5,
+    "legs": 3,
+    "min_universe": 6,
+    "gross_weight": 1.0,
+    "hold_minutes": 240,
+}
+
+
+def _laggard_frames(surges: tuple[int, ...] = (), periods: int = 2 * DAY) -> dict:
+    index = pd.date_range("2024-01-01", periods=periods, freq="min", tz="UTC")
+    # Deliberately neither alphabetical nor BTC-first, to exercise tie ordering.
+    symbols = (
+        "XRPUSDT",
+        "BTCUSDT",
+        "ETHUSDT",
+        "BNBUSDT",
+        "ADAUSDT",
+        "LTCUSDT",
+        "LINKUSDT",
+        "TRXUSDT",
+        "ETCUSDT",
+        "XLMUSDT",
+    )
+    prices = {
+        symbol: pd.DataFrame({"close": np.full(periods, 100.0)}, index=index) for symbol in symbols
+    }
+    # Sixty +100% returns set the prior-day upper 0.5% tail to +100%.
+    prices["BTCUSDT"].iloc[120:180, 0] = 200.0
+    prices["BTCUSDT"].iloc[list(surges), 0] = 200.0
+    return {"spot_klines_1m": prices}
+
+
+def _laggard_weights(frames: dict, **params) -> pd.DataFrame:
+    return intraday_flow.target_weights(frames, "laggard_catchup", LAGGARD_PARAMS | params)
+
+
+@pytest.mark.parametrize("reenter", [False, True])
+def test_laggard_legs_stay_fixed_for_four_hours_and_retriggers_are_ignored(reenter):
+    row = DAY + 120
+    surges = (row, row + 40, row + 240) if reenter else (row, row + 40)
+    frames = _laggard_frames(surges)
+    prices = frames["spot_klines_1m"]
+    first = ["ETHUSDT", "BNBUSDT", "ADAUSDT"]
+    later = ["XRPUSDT", "LTCUSDT", "LINKUSDT"]
+    for symbol, level in zip(first, [70.0, 80.0, 90.0], strict=True):
+        prices[symbol].iloc[row, 0] = level
+    for symbol, level in zip(later, [60.0, 70.0, 80.0], strict=True):
+        prices[symbol].iloc[[row + 40, row + 240], 0] = level
+    weights = _laggard_weights(frames)
+    expected = pd.DataFrame(0.0, index=weights.index, columns=weights.columns)
+    expected.loc[weights.index[row : row + 240], first] = 1 / 3
+    if reenter:
+        expected.loc[weights.index[row + 240 : row + 480], later] = 1 / 3
+    pd.testing.assert_frame_equal(weights, expected)
+
+
+def test_laggard_upper_threshold_uses_only_previous_days() -> None:
+    frames = _laggard_frames((DAY + 400,))
+    frames["spot_klines_1m"]["BTCUSDT"].iloc[DAY + 10 : DAY + 70, 0] = 400.0
+    gross = _laggard_weights(frames).sum(axis=1)
+    assert gross.iloc[DAY + 10] == 1.0
+    assert gross.iloc[DAY + 250] == 0.0
+    # Today's +300% surge cannot raise today's prior-day threshold of +100%.
+    assert gross.iloc[DAY + 400] == 1.0
+
+
+def test_laggard_baseline_discards_days_outside_calendar_window() -> None:
+    row = 2 * DAY
+    frames = _laggard_frames((row,), periods=3 * DAY)
+    frames["spot_klines_1m"]["BTCUSDT"].iloc[row, 0] = 150.0
+    # Day two's returns are all zero; day one's +100% tail is no longer included.
+    assert _laggard_weights(frames).iloc[row].sum() == 1.0
+
+
+@pytest.mark.parametrize(("level", "expected"), [(125.0, 0.0), (137.5, 1.0), (150.0, 1.0)])
+def test_laggard_upper_quantile_is_linear_and_equality_triggers(level, expected):
+    frames = _laggard_frames(periods=70)
+    prices = frames["spot_klines_1m"]
+    index = pd.date_range("2024-01-01 22:55", periods=70, freq="min", tz="UTC")
+    for frame in prices.values():
+        frame.index = index
+    prices["BTCUSDT"].iloc[60:65, 0] = [50.0, 75.0, 100.0, 125.0, 150.0]
+    prices["BTCUSDT"].iloc[65, 0] = level
+    # Five prior-day values [-.5, -.25, 0, .25, .5], whose q=.875 is .375.
+    weights = _laggard_weights(frames, quantile=0.875, min_baseline_fraction=5 / DAY)
+    assert weights.iloc[65].sum() == expected
+    assert (weights.iloc[:65] == 0.0).all().all()
+
+
+@pytest.mark.parametrize(("count", "expected"), [(1380, 1.0), (1381, 0.0)])
+def test_laggard_minimum_baseline_finite_count_includes_exact_boundary(count, expected):
+    row = DAY + 120
+    weights = _laggard_weights(_laggard_frames((row,)), min_baseline_fraction=count / DAY)
+    assert weights.iloc[row].sum() == expected
+
+
+def test_laggard_baseline_count_uses_only_finite_btc_returns() -> None:
+    row = DAY + 120
+    frames = _laggard_frames((row,))
+    frames["spot_klines_1m"]["BTCUSDT"].iloc[300, 0] = np.nan
+    # One missing close removes two returns, leaving 1378 finite baseline rows.
+    assert _laggard_weights(frames, min_baseline_fraction=1379 / DAY).iloc[row].sum() == 0.0
+
+
+def test_laggard_does_not_require_altcoin_baseline_histories() -> None:
+    row = DAY + 120
+    frames = _laggard_frames((row,))
+    for symbol, frame in frames["spot_klines_1m"].items():
+        if symbol != "BTCUSDT":
+            frames["spot_klines_1m"][symbol] = frame.iloc[DAY:]
+    assert _laggard_weights(frames).iloc[row].sum() == 1.0
+
+
+def test_laggard_frozen_baseline_waits_for_half_of_thirty_days_of_finite_returns() -> None:
+    frames = _laggard_frames(periods=17 * DAY)
+    frames["spot_klines_1m"]["BTCUSDT"].iloc[:, 0] = 100.0
+    gross = _laggard_weights(frames, baseline_days=30).sum(axis=1)
+    assert (gross.iloc[: 16 * DAY] == 0.0).all()
+    assert (gross.iloc[16 * DAY :] == 1.0).all()
+
+
+def test_laggard_rank_ties_use_symbol_names_independent_of_input_order() -> None:
+    row = DAY + 120
+    frames = _laggard_frames((row,))
+    prices = frames["spot_klines_1m"]
+    for symbol, level in {
+        "ADAUSDT": 70.0,
+        "XRPUSDT": 80.0,
+        "ETHUSDT": 80.0,
+        "BNBUSDT": 80.0,
+    }.items():
+        prices[symbol].iloc[row, 0] = level
+    weights = _laggard_weights(frames)
+    assert set(weights.columns[weights.iloc[row] > 0.0]) == {"ADAUSDT", "BNBUSDT", "ETHUSDT"}
+    reversed_frames = {"spot_klines_1m": dict(reversed(list(prices.items())))}
+    pd.testing.assert_frame_equal(
+        weights.sort_index(axis=1), _laggard_weights(reversed_frames).sort_index(axis=1)
+    )
+
+
+@pytest.mark.parametrize(("valid_alts", "expected"), [(5, 0.0), (6, 1.0)])
+def test_laggard_requires_minimum_finite_non_btc_universe(valid_alts, expected):
+    row = DAY + 120
+    frames = _laggard_frames((row,))
+    alts = [symbol for symbol in frames["spot_klines_1m"] if symbol != "BTCUSDT"]
+    for symbol in alts[valid_alts:]:
+        frames["spot_klines_1m"][symbol].iloc[row, 0] = np.inf
+    assert _laggard_weights(frames).iloc[row].sum() == expected
+
+
+def test_laggard_insufficient_universe_does_not_start_a_hold_and_next_row_can_trigger() -> None:
+    row = DAY + 120
+    frames = _laggard_frames((row, row + 1))
+    for symbol in ["ADAUSDT", "BNBUSDT", "ETHUSDT", "XRPUSDT"]:
+        frames["spot_klines_1m"][symbol].iloc[row, 0] = np.nan
+    weights = _laggard_weights(frames)
+    assert weights.iloc[row].sum() == 0.0
+    assert (weights.iloc[row + 1 : row + 241].sum(axis=1) == 1.0).all()
+    assert weights.iloc[row + 241].sum() == 0.0
+
+
+@pytest.mark.parametrize("symbol", ["BTCUSDT", "ADAUSDT"])
+@pytest.mark.parametrize("missing_offset", [0, 30, 60])
+def test_laggard_missing_minutes_invalidate_only_return_endpoints(symbol, missing_offset):
+    row = DAY + 120
+    frames = _laggard_frames((row,))
+    prices = frames["spot_klines_1m"]
+    prices["ADAUSDT"].iloc[row, 0] = 50.0
+    index = prices["BTCUSDT"].index
+    prices[symbol] = prices[symbol].drop(index[row - missing_offset])
+    weights = _laggard_weights(frames)
+    pd.testing.assert_index_equal(weights.index, index)
+    invalid_endpoint = missing_offset in (0, 60)
+    if symbol == "BTCUSDT" and invalid_endpoint:
+        assert weights.iloc[row].sum() == 0.0
+    else:
+        assert weights.iloc[row].sum() == 1.0
+        assert weights.iloc[row]["ADAUSDT"] == (0.0 if invalid_endpoint else 1 / 3)
+
+
+def test_laggard_nonfinite_current_btc_return_does_not_trigger() -> None:
+    row = DAY + 120
+    frames = _laggard_frames((row,))
+    frames["spot_klines_1m"]["BTCUSDT"].iloc[row, 0] = np.inf
+    assert _laggard_weights(frames).iloc[row].sum() == 0.0
+
+
+def test_laggard_output_uses_btc_grid_and_holds_legs_even_when_their_prices_disappear() -> None:
+    row = DAY + 120
+    frames = _laggard_frames((row,))
+    prices = frames["spot_klines_1m"]
+    index = prices["BTCUSDT"].index
+    prices["BTCUSDT"] = prices["BTCUSDT"].drop(index[row + 20])
+    prices["ADAUSDT"] = prices["ADAUSDT"].iloc[: row + 1]
+    extra = pd.DatetimeIndex([index[0] - MINUTE, index[-1] + MINUTE])
+    prices["ETHUSDT"] = prices["ETHUSDT"].reindex(index.union(extra), fill_value=100.0)
+    prices["XLMUSDT"] = prices["XLMUSDT"].iloc[:0]
+    weights = _laggard_weights(frames)
+    pd.testing.assert_index_equal(weights.index, index)
+    assert weights.columns.tolist() == list(prices)
+    assert weights.dtypes.eq("float64").all()
+    assert not weights.isna().any().any()
+    assert (weights >= 0.0).all().all()
+    assert (weights["BTCUSDT"] == 0.0).all()
+    assert (weights["XLMUSDT"] == 0.0).all()
+    assert (weights["ADAUSDT"].iloc[row : row + 240] == 1 / 3).all()
+    assert (weights.sum(axis=1) <= 1.0).all()
+    assert weights.iloc[row + 240].sum() == 0.0
+
+
+@pytest.mark.parametrize("cutoff", [DAY + 119, DAY + 160, 2 * DAY + 100])
+def test_laggard_future_perturbations_and_truncation_leave_past_targets_unchanged(cutoff):
+    frames = _laggard_frames((DAY + 120, DAY + 400, 2 * DAY + 120), periods=3 * DAY)
+    originals = {
+        symbol: frame.copy(deep=True) for symbol, frame in frames["spot_klines_1m"].items()
+    }
+    weights = _laggard_weights(frames)
+    t = weights.index[cutoff]
+    changed = {"spot_klines_1m": {}}
+    truncated = {"spot_klines_1m": {}}
+    for number, (symbol, frame) in enumerate(frames["spot_klines_1m"].items()):
+        altered = frame.copy(deep=True)
+        future = altered.index > t
+        altered.loc[future, "close"] *= (
+            1.0 + (number + 1) * np.arange(1, int(future.sum()) + 1) / 1000
+        )
+        changed["spot_klines_1m"][symbol] = altered
+        truncated["spot_klines_1m"][symbol] = frame.loc[:t]
+    pd.testing.assert_frame_equal(weights.loc[:t], _laggard_weights(changed).loc[:t])
+    pd.testing.assert_frame_equal(weights.loc[:t], _laggard_weights(truncated))
+    for symbol, frame in frames["spot_klines_1m"].items():
+        pd.testing.assert_frame_equal(frame, originals[symbol])
+
+
+def test_laggard_empty_btc_history_returns_empty_utc_grid_with_all_columns() -> None:
+    frames = _laggard_frames()
+    frames["spot_klines_1m"]["BTCUSDT"] = frames["spot_klines_1m"]["BTCUSDT"].iloc[:0]
+    weights = _laggard_weights(frames)
+    assert weights.empty
+    assert str(weights.index.tz) == "UTC"
+    assert weights.columns.tolist() == list(frames["spot_klines_1m"])
+    assert weights.dtypes.eq("float64").all()
