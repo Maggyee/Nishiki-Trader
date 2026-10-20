@@ -1524,6 +1524,20 @@
           "outcome": "development_rejected"
         }
       ]
+    },
+    {
+      "protocol": 61,
+      "default_family": "cross_sectional_relative",
+      "mechanism": "BTC-led catch-up: when BTC's 60-minute spot return is at or above its trailing-30-day 99.5th percentile (thresholds fixed per UTC day), buy the 3 of the other 9 coins with the lowest 60-minute return, equal weight, for 4 hours",
+      "candidates": [
+        {
+          "key": "laggard_catchup",
+          "source": "rule_crypto_btc_laggard_catchup_v1",
+          "model_version": "crypto-btc-ret60-q995-30d-laggard3of9-hold4h-lag1-long-v1",
+          "family": "cross_sectional_relative",
+          "outcome": "not_opened"
+        }
+      ]
     }
   ],
   "legacy_candidates": [
@@ -1657,10 +1671,10 @@
     }
   ],
   "totals": {
-    "protocol_count": 59,
+    "protocol_count": 60,
     "legacy_candidate_count": 16,
-    "candidate_rows": 165,
-    "unique_identities": 162,
+    "candidate_rows": 166,
+    "unique_identities": 163,
     "unique_identities_pnl_opened": 124,
     "unique_identities_provider_blocked": 36,
     "survivors_paper_shadow": 10,

@@ -1,0 +1,90 @@
+{
+  "schema_version": "research.contract.v1",
+  "frozen_at": "2026-10-20",
+  "protocol": 61,
+  "family": "cross_sectional_relative",
+  "mechanism": "BTC-led catch-up: when BTC's 60-minute spot return is at or above its trailing-30-day 99.5th percentile (thresholds fixed per UTC day), buy the 3 of the other 9 coins with the lowest 60-minute return, equal weight, for 4 hours",
+  "orthogonality": "Bets on slow diffusion of a BTC move into less liquid coins, a relative state no survivor traded. Differs from v58 (weekly taker-flow ranks, rejected) and v52/v53 (multi-day momentum, rejected): event-triggered by a BTC move and held for hours.",
+  "directional_capability": "long_flat",
+  "weekend_coverage": "Binance spot klines are 24/7; no signal vacuum.",
+  "knowledge_disclosure": "Designed after v60 (round 2026-10c), whose development window used 2022-2023 spot 1m prices of the same coins for downside cascades; no BTC-surge or laggard statistic was computed. Only 2025 BTC 1m move sizes were looked at otherwise. Operator rule set before freezing: if v61 fails, alpha search stops and the project moves to a beta-with-risk-control allocation.",
+  "cost_napkin": "Two fills of 12 bps per trade: 0.24% per 4-hour hold at gross 1; the laggards must out-earn that plus their drift.",
+  "mechanism_module": "apps.strategies_freqtrade.research.intraday_flow",
+  "semantics": [
+    "Grid: the full 1-minute UTC grid from the first to the last BTCUSDT spot kline; every symbol's close is reindexed to it, NaN where the minute is missing (no fill).",
+    "r60[s][t] = close[s][t] / close[s][t-60] - 1 on grid rows; NaN if either is missing.",
+    "BTC threshold for UTC day D: numpy linear quantile(quantile) of the finite BTCUSDT r60 values on rows in [D - baseline_days, D). If there are fewer than min_baseline_fraction x baseline_days x 1440 finite values, no trigger on day D.",
+    "Trigger at row t in day D: BTCUSDT r60[t] >= threshold(D), finite.",
+    "Legs: among the non-BTC symbols with finite r60[t], if there are at least min_universe of them, the legs symbols with the lowest r60[t], ties ordered by (r60, symbol name); otherwise no trade and no hold starts.",
+    "Hold: a trade at t sets gross_weight / legs on each leg on rows t .. t + hold_minutes - 1, legs fixed during the hold; triggers inside an open hold are ignored; the next trigger may fire from row t + hold_minutes. BTCUSDT weight is always 0.",
+    "Output: weights on the grid, one column per symbol, 0 elsewhere, no NaN, sum of absolute weights <= 1."
+  ],
+  "limitations": "Spot fills at the minute close one bar after the decision (ADR-018 2.3); slippage only through the cost scenarios, although laggard coins are the less liquid ones.",
+  "bar": "1min",
+  "execution_lag_bars": 1,
+  "data": {
+    "dataset": "spot_klines_1m",
+    "symbols": [
+      "BTCUSDT",
+      "ETHUSDT",
+      "BNBUSDT",
+      "XRPUSDT",
+      "ADAUSDT",
+      "LTCUSDT",
+      "LINKUSDT",
+      "TRXUSDT",
+      "ETCUSDT",
+      "XLMUSDT"
+    ],
+    "fetch_start_month": "2019-11",
+    "fetch_end_month": "2025-12"
+  },
+  "candidates": {
+    "laggard_catchup": {
+      "source": "rule_crypto_btc_laggard_catchup_v1",
+      "model_version": "crypto-btc-ret60-q995-30d-laggard3of9-hold4h-lag1-long-v1",
+      "params": {
+        "return_window_minutes": 60,
+        "baseline_days": 30,
+        "quantile": 0.995,
+        "min_baseline_fraction": 0.5,
+        "legs": 3,
+        "min_universe": 6,
+        "gross_weight": 1.0,
+        "hold_minutes": 240
+      }
+    }
+  },
+  "windows": {
+    "development": [
+      "2020-01-01",
+      "2022-12-31"
+    ],
+    "confirmation": [
+      "2023-01-01",
+      "2025-12-31"
+    ]
+  },
+  "notional_usdt": 10000.0,
+  "cost_scenarios_bps_per_fill": {
+    "base": 12.0,
+    "stress": 20.0
+  },
+  "null": {
+    "kind": "circular_shift_per_asset",
+    "shift_unit": "day",
+    "trials": 5000,
+    "seed": 20261018
+  },
+  "gates": {
+    "base_net_pnl_gt": 0.0,
+    "stress_net_pnl_gt": 0.0,
+    "positive_years_fraction_at_least": 0.6667,
+    "months_breadth_rule": "adaptive_null_median",
+    "closed_positions_at_least": 60,
+    "active_days_at_least": 60,
+    "leave_best_base_net_pnl_gt": 0.0,
+    "benchmark_relative": true,
+    "p_value_max": 0.1
+  }
+}
