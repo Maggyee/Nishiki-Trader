@@ -24,8 +24,10 @@ search stopped on 2026-10-20. Rounds: [summary](research/README.md).
    2026-10-20): B2, BTC/ETH held above their 200-day average at 40% exposure,
    rebalanced weekly. Nautilus equity-fraction sizing with weekly reset is built
    and its backtest matches `apps/research/beta.py` (final equity within 2%,
-   identical holding days). Next: forward test (operator choices pending: daily
-   signal job, testnet key, local paper vs testnet first).
+   identical holding days). Forward test on the Spot testnet for ≥ 4 weeks
+   ([runbook](runbook-beta-testnet.md)): sizing from allocated capital, daily
+   signals from `beta_signals.py`. Waiting on the operator: register the
+   testnet public key, install the cron job, confirm the promotion record.
    Any future alpha protocol: freeze
    a contract in `docs/research/contracts/`, one mechanism module, cross-check,
    run with `apps/research/`. Lessons in both daily rounds.
