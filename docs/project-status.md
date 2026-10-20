@@ -24,12 +24,16 @@ research: minute data, holds of at least four hours,
 [ADR-018](decisions/018-intraday-research.md). The first intraday protocol, v60
 cascade rebound ([round 2026-10c](research/round-2026-10c.md)), beat random
 timing (p 0.0002) but its edge is about one round trip of costs: rejected.
+v61 laggard catch-up ([round 2026-10d](research/round-2026-10d.md)) lost after
+costs. Per the stopping rule set before v61 was frozen, the alpha search stopped
+on 2026-10-20.
 
 ## Next Steps
 
-1. Operator decision on the next step: another intraday hypothesis (BTC-led
-   altcoin catch-up was proposed), a beta-with-risk-control allocation, or a
-   pause. Any protocol: freeze
+1. Move to a beta-with-risk-control allocation (stopping rule). First an ADR,
+   for operator approval, letting a declared beta strategy into paper and
+   testnet, judged against buy-and-hold on return and drawdown. Any future
+   alpha protocol: freeze
    a contract in `docs/research/contracts/`, one mechanism module, cross-check,
    run with `apps/research/`. Lessons in both daily rounds.
 2. Only when a candidate passes: resume the Phase 3 canary per
@@ -54,8 +58,8 @@ timing (p 0.0002) but its edge is about one round trip of costs: rejected.
 
 ## Latest Verification
 
-- 2026-10-20 v60: mechanism weights identical to an independent reference on
-  2,191,680 minutes × 10 coins; development run 6.5 min; result immutable.
+- 2026-10-20 v60/v61: mechanism weights identical to an independent reference on
+  every minute (2.2M and 3.2M × 10 coins); development results immutable.
 - 2026-10-20 intraday harness (Codex-written, reviewed): daily null p-values equal
   the old algorithm; real 1m fetch verified; `uv run pytest` 835 passed, 12 skipped.
 - 2026-10-18 Nautilus: spot sell = flat on CASH accounts, `--trade-notional`,

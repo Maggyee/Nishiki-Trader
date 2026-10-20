@@ -1535,7 +1535,7 @@
           "source": "rule_crypto_btc_laggard_catchup_v1",
           "model_version": "crypto-btc-ret60-q995-30d-laggard3of9-hold4h-lag1-long-v1",
           "family": "cross_sectional_relative",
-          "outcome": "not_opened"
+          "outcome": "development_rejected"
         }
       ]
     }
@@ -1675,7 +1675,7 @@
     "legacy_candidate_count": 16,
     "candidate_rows": 166,
     "unique_identities": 163,
-    "unique_identities_pnl_opened": 124,
+    "unique_identities_pnl_opened": 125,
     "unique_identities_provider_blocked": 36,
     "survivors_paper_shadow": 10,
     "confirmation_opened": 25

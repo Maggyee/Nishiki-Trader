@@ -23,7 +23,7 @@
 
 ## What was learned (v2–v53, 2026-05..09)
 
-- 59 protocols, 162 identities, 124 opened for PnL, 36 blocked by data providers (through v60).
+- 60 protocols, 163 identities, 125 opened for PnL, 36 blocked by data providers (through v61).
 - **Gates v1 (v2–v48)** left ten survivors, run as paper shadows until 2026-10-18. All ten are
   long BTC when an external index is calm. Eight share one family
   (`external_index_relief`, now saturated). Confirmation PnL is +13.7 to
@@ -46,6 +46,10 @@
   price and open-interest cascade beat random timing (p 0.0002) but earned about
   one round trip of costs (gross +1,560, base +124, stress −832) and lost in
   2022; rejected in development.
+- **Round 2026-10d (v61, intraday)**: buying the coins that lagged a BTC surge
+  earned about 0.14% gross per trade against a 0.24% round trip (base −4,083);
+  rejected in development. Per the stopping rule set before the freeze, the
+  alpha search stopped on 2026-10-20.
 
 ## Gates-v1 survivors (shadow stopped 2026-10-18)
 

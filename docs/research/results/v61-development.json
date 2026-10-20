@@ -1,0 +1,70 @@
+{
+  "schema_version": "research.result.v1",
+  "protocol": 61,
+  "stage": "development",
+  "bar": "1min",
+  "execution_lag_bars": 1,
+  "null_shift_unit": "day",
+  "contract": "docs/research/contracts/v61-laggard-catchup.json",
+  "contract_sha256": "6958137564c0d0676c42d503c39c3a5c435b8d14e738919b1b4854e81d2163f8",
+  "data_manifest_sha256": "f710c1d0be5f1fc52ff35867c8614f070749cde2e239bdff67b82c7d4a0e1b5e",
+  "generated_at": "2026-10-20T11:52:49+00:00",
+  "candidates": {
+    "laggard_catchup": {
+      "source": "rule_crypto_btc_laggard_catchup_v1",
+      "model_version": "crypto-btc-ret60-q995-30d-laggard3of9-hold4h-lag1-long-v1",
+      "window": [
+        "2020-01-01",
+        "2022-12-31"
+      ],
+      "metrics": {
+        "bars": 1578240,
+        "days": 1096,
+        "active_days": 343,
+        "gross_net_pnl": 5877.359725637292,
+        "base_net_pnl": -4082.640274362707,
+        "stress_net_pnl": -10722.64027436271,
+        "base_return_pct": -40.826402743627064,
+        "positive_months": 18,
+        "months_total": 36,
+        "positive_years": 1,
+        "years_total": 3,
+        "closed_positions": 1245,
+        "leave_best_base_net_pnl": -4873.349165514251,
+        "benchmark_pnl": 2280.6991183228574,
+        "time_in_market": 0.06371654501216545,
+        "gross_exposure_mean": 0.06371654501216545,
+        "net_exposure_mean": 0.06371654501216545,
+        "max_drawdown_usdt": 8725.563462512131,
+        "max_drawdown_pct": 87.25563462512132,
+        "long_only_leg_base_net_pnl": -4082.640274362707,
+        "base_pnl_sha256": "3481e44ef0a85fa9a344d8ccac3f8ddfcd3295e03f9403818ec07a70b202f117"
+      },
+      "null": {
+        "trials": 5000,
+        "seed": 20261018,
+        "p_value": 0.07518496300739852,
+        "null_base_mean": -7890.257130359769,
+        "null_base_p90": -4462.690056061107,
+        "null_months_positive_median": 10.0
+      },
+      "gates": {
+        "checks": {
+          "base_net_pnl_positive": false,
+          "stress_net_pnl_positive": false,
+          "years_breadth": false,
+          "months_breadth": true,
+          "activity_floor": true,
+          "leave_best_positive": false,
+          "benchmark_relative": false,
+          "null_p_value": true,
+          "active_days_floor": true,
+          "duplicate_replay_identical": true
+        },
+        "years_needed": 2,
+        "months_threshold": 10.0,
+        "pass": false
+      }
+    }
+  }
+}
