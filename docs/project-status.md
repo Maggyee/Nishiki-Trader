@@ -21,12 +21,15 @@ Daily rounds [2026-10](research/round-2026-10.md) and
 [2026-10b](research/round-2026-10b.md) rejected all seven identities (v54–v59);
 lower costs do not rescue them. On 2026-10-18 the operator chose intraday
 research: minute data, holds of at least four hours,
-[ADR-018](decisions/018-intraday-research.md) (Accepted 2026-10-20).
+[ADR-018](decisions/018-intraday-research.md). The first intraday protocol, v60
+cascade rebound ([round 2026-10c](research/round-2026-10c.md)), beat random
+timing (p 0.0002) but its edge is about one round trip of costs: rejected.
 
 ## Next Steps
 
-1. Operator approval of the first intraday round (≤ 3 identities), then per
-   protocol: freeze
+1. Operator decision on the next step: another intraday hypothesis (BTC-led
+   altcoin catch-up was proposed), a beta-with-risk-control allocation, or a
+   pause. Any protocol: freeze
    a contract in `docs/research/contracts/`, one mechanism module, cross-check,
    run with `apps/research/`. Lessons in both daily rounds.
 2. Only when a candidate passes: resume the Phase 3 canary per
@@ -51,21 +54,14 @@ research: minute data, holds of at least four hours,
 
 ## Latest Verification
 
-- 2026-10-20 intraday harness (Codex-written, reviewed): 1m klines, 5m metrics,
-  parquet cache, bar-level replay with execution lag, per-settlement funding,
-  day-unit null. Daily null p-values equal the old algorithm; a real 2025 BTC 1m
-  fetch verified checksums, no missing minutes, cache 4.8 s → 0.14 s; null
-  ~0.12 s/trial at 3 years × 10 assets. `uv run pytest` 800 passed, 12 skipped.
-- 2026-10-18 Nautilus: spot sell = flat on CASH accounts, notional sizing
-  (`--trade-notional`), learning simulation matching research holdings,
-  paper-runner instrument-mismatch fix; all Codex-reviewed with regression tests.
-- 2026-10-18 research round: `apps/research/` + Codex-written mechanism modules
-  (cross-checked against an independent reference: identical weights);
-  `uv run pytest` 684 passed, 12 skipped; results in `docs/research/results/`.
-- 2026-10-18 slim-down (tracked files 1703 → 198): `uv run pytest` 684 passed,
-  12 skipped (Postgres tests need `TRADER_TEST_POSTGRES_DSN`); `ruff check apps tests
-  notebooks infra` clean; frontend `npm run typecheck` and `npm run build` pass.
-- 2026-10-18 local cleanup and dashboard trim: see `git log` and [history](history.md).
+- 2026-10-20 v60: mechanism weights identical to an independent reference on
+  2,191,680 minutes × 10 coins; development run 6.5 min; result immutable.
+- 2026-10-20 intraday harness (Codex-written, reviewed): daily null p-values equal
+  the old algorithm; real 1m fetch verified; `uv run pytest` 835 passed, 12 skipped.
+- 2026-10-18 Nautilus: spot sell = flat on CASH accounts, `--trade-notional`,
+  learning simulation matching research holdings; Codex-reviewed with regression tests.
+- 2026-10-18 slim-down (tracked files 1703 → 198), local cleanup and dashboard trim;
+  frontend `npm run typecheck` and `npm run build` pass. Details in `git log`.
 
 ## References
 

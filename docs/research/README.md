@@ -22,7 +22,7 @@
 
 ## What was learned (v2–v53, 2026-05..09)
 
-- 58 protocols, 161 identities, 123 opened for PnL, 36 blocked by data providers.
+- 59 protocols, 162 identities, 124 opened for PnL, 36 blocked by data providers (through v60).
 - **Gates v1 (v2–v48)** left ten survivors, run as paper shadows until 2026-10-18. All ten are
   long BTC when an external index is calm. Eight share one family
   (`external_index_relief`, now saturated). Confirmation PnL is +13.7 to
@@ -41,6 +41,10 @@
   10-coin taker rotation failed development; turn of month passed development
   (p 0.010) and failed confirmation (p 0.224, unstable day pattern). A cost study
   showed lower fees raise net PnL but not timing significance (p barely moves).
+- **Round 2026-10c (v60, intraday, ADR-018)**: buying spot after a 60-minute
+  price and open-interest cascade beat random timing (p 0.0002) but earned about
+  one round trip of costs (gross +1,560, base +124, stress −832) and lost in
+  2022; rejected in development.
 
 ## Gates-v1 survivors (shadow stopped 2026-10-18)
 
