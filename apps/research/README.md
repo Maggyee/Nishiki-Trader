@@ -6,7 +6,7 @@ package for every protocol; mechanisms live one module each under
 
 - **Current phase**: 2 (research). Daily rounds 2026-10/10b rejected v54–v59.
   Intraday support (1m klines, 5m metrics, bar-level replay) is built;
-  intraday rules are [ADR-018](../../docs/decisions/018-intraday-research.md) (Draft).
+  intraday rules are [ADR-018](../../docs/decisions/018-intraday-research.md).
 - **Boundaries**: reads Binance Vision public archives only; writes
   `data/research/` (cache, gitignored) and `docs/research/results/`. Never
   writes `SignalEvent`, never touches `SourcePolicy`, never reads dates from

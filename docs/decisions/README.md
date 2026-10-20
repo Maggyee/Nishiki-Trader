@@ -22,7 +22,7 @@ new one.
 | [015](015-portfolio-risk-policy.md) | Unified portfolio risk policy | Accepted (planning) |
 | [016](016-testnet-observation-admission.md) | Testnet observation admission | Accepted (read-only); implementation archived |
 | [017](017-testnet-engineering-session.md) | Testnet engineering session | Accepted; one-shot scope consumed 2026-09-11 |
-| [018](018-intraday-research.md) | Intraday research protocols (minute data, hour-scale holds) | Draft |
+| [018](018-intraday-research.md) | Intraday research protocols (minute data, hour-scale holds) | Accepted |
 
 ## Paths that moved on 2026-10-17
 

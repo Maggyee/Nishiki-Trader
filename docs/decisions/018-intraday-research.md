@@ -1,12 +1,12 @@
 # ADR-018: Intraday research protocols (minute data, hour-scale holds)
 
-- **Status**: Draft. Awaiting operator acceptance; no intraday protocol may be
-  frozen before then.
+- **Status**: Accepted 2026-10-20 by the operator ("4小时，按你说的来算": a
+  four-hour minimum holding period; the cost levels as drafted).
 - **Date**: 2026-10-18
 - **Authority**: After rounds 2026-10 and 2026-10b, the operator chose to look for
   alpha in minute-level data ("b，如果找分钟级的数据需要怎么做", then "可以，先做1和2，
-  ADR也起草"). Harness support (data layer, bar-level replay and null) is
-  implemented with this draft; the rules below take effect only on acceptance.
+  ADR也起草"). Harness support (data layer, bar-level replay and null) was
+  implemented with the draft.
 - **Extends**: ADR-014 (Gates v2 and §11 adaptive breadth). Every ADR-014 rule and
   warning W1–W10 applies unless this ADR says otherwise.
 
@@ -38,9 +38,11 @@
 
 ## 2. Decision
 
-2.1 **Scope.** Signals may use 1-minute klines and 5-minute metrics. The declared
-holding horizon must be at least one hour; sub-hour holds and maker-fill
-assumptions are out of scope. The replay bar is declared in the contract
+2.1 **Scope.** Signals may use 1-minute klines and 5-minute metrics. Every
+position is held at least four hours by construction (a minimum hold in the
+mechanism, covered by its tests); sub-hour holds and maker-fill assumptions are
+out of scope. Four hours rather than one: the median BTC move over one hour
+(0.20%) is about one round trip of costs, over four hours (0.41%) about twice. The replay bar is declared in the contract
 (`"bar"`: `1min`, `5min`, `15min` or `1h`).
 
 2.2 **No look-ahead.** Kline rows are indexed by bar open time; the decision for
@@ -83,7 +85,7 @@ family and needs the W2 justification; its result is read in light of W3.
 next-bar fills must match the research replay, as the daily learning simulation
 did. The order path, SignalEvent v1 and risk controls are unchanged.
 
-## 3. Harness support (implemented with this draft)
+## 3. Harness support
 
 `apps/research/`: datasets `spot_klines_1m`, `um_klines_1m`, `um_metrics_5m`;
 a versioned parquet cache of parsed archives; contract fields `bar`,
@@ -98,8 +100,9 @@ Daily contracts replay exactly as before.
   path.
 - Does not add services, databases or downloads beyond the public archives.
 
-## 5. Open questions for the operator
+## 5. Operator decisions (2026-10-20)
 
-1. Accept the cost levels in 2.4 (spot stress 20 bps is above the daily 15 bps).
-2. Accept the one-hour minimum horizon in 2.1 (stricter: four hours).
-3. The first round's mechanisms, proposed separately before any freeze.
+1. Minimum holding period four hours (2.1); the draft proposed one.
+2. Cost levels in 2.4 accepted as drafted.
+3. The first round's mechanisms are proposed separately and need approval
+   before any freeze.

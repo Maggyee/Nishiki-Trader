@@ -20,16 +20,16 @@ protocols (v49–v53) were rejected. Their shadow collection was stopped on
 Daily rounds [2026-10](research/round-2026-10.md) and
 [2026-10b](research/round-2026-10b.md) rejected all seven identities (v54–v59);
 lower costs do not rescue them. On 2026-10-18 the operator chose intraday
-research: minute data, hour-scale holds,
-[ADR-018](decisions/018-intraday-research.md) (Draft).
+research: minute data, holds of at least four hours,
+[ADR-018](decisions/018-intraday-research.md) (Accepted 2026-10-20).
 
 ## Next Steps
 
-1. Operator: accept or amend ADR-018 (costs §2.4, minimum horizon §2.1).
-2. Then propose the first intraday round (≤ 3 identities). Each protocol: freeze
+1. Operator approval of the first intraday round (≤ 3 identities), then per
+   protocol: freeze
    a contract in `docs/research/contracts/`, one mechanism module, cross-check,
    run with `apps/research/`. Lessons in both daily rounds.
-3. Only when a candidate passes: resume the Phase 3 canary per
+2. Only when a candidate passes: resume the Phase 3 canary per
    [runbook](runbook-first-testnet-canary.md) for that identity. Generate a new
    testnet Ed25519 API key first; the old key pair was deleted on 2026-10-18.
 
