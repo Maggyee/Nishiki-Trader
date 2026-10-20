@@ -30,6 +30,7 @@ from apps.strategies_nautilus.baseline_nautilus_strategy import (
     BaselineNautilusStrategyParams,
     LineageRecord,
     SignalStorePollingSource,
+    _validate_equity_sizing,
 )
 from apps.strategies_nautilus.baseline_strategy import BaselineStrategyConfig
 from apps.strategies_nautilus.runners.live_telemetry import (
@@ -63,6 +64,9 @@ class FirstCanaryStrategySpec:
     daily_drawdown_stop_pct: float = 0.05
     min_confidence_override: float | None = None
     initial_cursor_ns: int | None = None
+    target_equity_fraction: Decimal | None = None
+    rebalance_weekday: int | None = None
+    allocated_capital: Decimal | None = None
 
     def __post_init__(self) -> None:
         if not self.source:
@@ -74,7 +78,12 @@ class FirstCanaryStrategySpec:
                 "ADR-008 §6.6 caps testnet position_pct_multiplier at 0.2, "
                 f"got {self.position_pct_multiplier}"
             )
-        if self.trade_size <= 0:
+        _validate_equity_sizing(
+            self.target_equity_fraction, None, self.rebalance_weekday, self.allocated_capital
+        )
+        if not self.trade_size.is_finite() or self.trade_size < 0:
+            raise ValueError("trade_size must be finite and non-negative")
+        if self.trade_size == 0 and self.target_equity_fraction is None:
             raise ValueError("trade_size must be positive")
 
     def build_authorization(self) -> Authorization:
@@ -184,6 +193,9 @@ def build_register_strategies(
                 equity_currency=base_currency,
                 signal_source=source,
                 lineage=lineage,
+                target_equity_fraction=spec.target_equity_fraction,
+                rebalance_weekday=spec.rebalance_weekday,
+                allocated_capital=spec.allocated_capital,
             )
         )
         sink(node, strategy)

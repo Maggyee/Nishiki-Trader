@@ -7,6 +7,8 @@ freqtrade / FreqAI 的自定义策略和研究信号 exporter。
   `apps/strategies_freqtrade/research/`），结论见 `docs/research/README.md`。
 - **边界**：只输出 `SignalEvent v1`（`apps/bridge/`），不下单，不接真实订单 API，
   策略代码里不调 LLM。freqtrade 只用于快筛；决定上线的回测在 Nautilus 里跑。
+- **ADR-019 beta 信号**：`beta_signals.py` 每天 UTC 0 点后从 Binance 公开行情拉 BTC/ETH 日线，
+  按 200 日均线生成 `rule_beta_sma200_v1` 信号（与回测同一规则和编码），写入 signal store。
 - **下一步入口**：下一个预注册协议（ADR-014 Gates v2）的 exporter 放在
   `research/<mechanism>_signals.py`，一个机制对应一个模块，不按版本复制文件。
 

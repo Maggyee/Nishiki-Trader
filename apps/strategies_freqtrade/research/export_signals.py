@@ -30,6 +30,7 @@ def weights_to_signals(
     horizon: str = "7d",
     ttl_seconds: int = 8 * 86_400,
     confidence: float = 0.75,
+    metadata: dict | None = None,
 ) -> list[SignalEvent]:
     """Emit each selected row at the next UTC midnight, including refreshes."""
     events: list[SignalEvent] = []
@@ -55,7 +56,8 @@ def weights_to_signals(
                     source=source,
                     model_version=model_version,
                     ttl_seconds=ttl_seconds,
-                    metadata={"weight": weight, "learning_simulation": True},
+                    metadata={"weight": weight}
+                    | ({"learning_simulation": True} if metadata is None else metadata),
                 )
             )
     return events

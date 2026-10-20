@@ -44,6 +44,7 @@ from typing import Protocol
 
 from nautilus_trader.model.data import Bar, BarType
 from nautilus_trader.model.enums import AccountType, OrderSide
+from nautilus_trader.model.events import OrderFilled
 from nautilus_trader.model.identifiers import InstrumentId
 from nautilus_trader.model.instruments import Instrument
 from nautilus_trader.model.objects import Currency, Quantity
@@ -175,10 +176,14 @@ class BaselineNautilusStrategyParams:
     lineage: list[LineageRecord] = field(default_factory=list)
     target_equity_fraction: Decimal | None = None
     rebalance_weekday: int | None = None
+    allocated_capital: Decimal | None = None
 
     def __post_init__(self) -> None:
         _validate_equity_sizing(
-            self.target_equity_fraction, self.trade_notional, self.rebalance_weekday
+            self.target_equity_fraction,
+            self.trade_notional,
+            self.rebalance_weekday,
+            self.allocated_capital,
         )
 
 
@@ -198,10 +203,37 @@ class BaselineNautilusStrategy(Strategy):
         self._last_signal: SignalEvent | None = None
         self._rebalance_intent: OrderIntent | None = None
         self._next_rebalance_ns: int | None = None
+        self._sleeve_cash: Decimal | None = None
+        self._warned_commission_currency = False
 
     @property
     def instrument_id(self) -> InstrumentId:
         return self._params.instrument_id
+
+    @property
+    def sleeve_cash(self) -> Decimal | None:
+        """Quote cash in the allocation; None until its first bar or if disabled."""
+        return self._sleeve_cash
+
+    @property
+    def sleeve_equity(self) -> Decimal | None:
+        """Allocation marked at the latest bar close, including this strategy's holdings."""
+        if self._sleeve_cash is None or self._last_close is None:
+            return None
+        return self._sleeve_cash + self._net_position() * self._last_close
+
+    def _net_position(self) -> Decimal:
+        if self._params.allocated_capital is None:
+            return self.portfolio.net_position(self.instrument_id)
+        return sum(
+            (
+                position.signed_decimal_qty()
+                for position in self.cache.positions_open(
+                    instrument_id=self.instrument_id, strategy_id=self.id
+                )
+            ),
+            Decimal(0),
+        )
 
     def on_start(self) -> None:
         self.subscribe_bars(self._params.bar_type)
@@ -213,6 +245,10 @@ class BaselineNautilusStrategy(Strategy):
             or self._params.target_equity_fraction is not None
         ):
             self._last_close = bar.close.as_decimal()
+        if self._params.allocated_capital is not None and self._sleeve_cash is None:
+            self._sleeve_cash = (
+                self._params.allocated_capital - self._net_position() * self._last_close
+            )
         self._update_daily_risk_state(bar_ns)
         submitted_order_this_bar = False
         for event in self._signal_source.pop_due(bar_ns):
@@ -270,6 +306,31 @@ class BaselineNautilusStrategy(Strategy):
             )
         self._rebalance(bar_ns, submitted_order_this_bar)
 
+    def on_order_filled(self, event: OrderFilled) -> None:
+        # Fills before the first bar form part of the opening position, marked
+        # at that first close. After initialization, book each fill at its price.
+        if (
+            self._sleeve_cash is None
+            or event.strategy_id != self.id
+            or event.instrument_id != self.instrument_id
+        ):
+            return
+        price = event.last_px.as_decimal()
+        value = event.last_qty.as_decimal() * price
+        self._sleeve_cash += value if event.order_side == OrderSide.SELL else -value
+        instrument = self.cache.instrument(self.instrument_id)
+        commission = event.commission
+        if commission.currency == instrument.quote_currency:
+            self._sleeve_cash -= commission.as_decimal()
+        elif commission.currency == instrument.base_currency:
+            self._sleeve_cash -= commission.as_decimal() * price
+        elif not self._warned_commission_currency:
+            self.log.warning(
+                f"Sleeve ignores commission in {commission.currency}: "
+                f"no conversion to {instrument.quote_currency}"
+            )
+            self._warned_commission_currency = True
+
     def _apply_intent(self, intent: OrderIntent) -> list[str]:
         action = intent.action
         if action == "skip":
@@ -287,19 +348,17 @@ class BaselineNautilusStrategy(Strategy):
         tags = [_signal_tag(intent.signal_id)]
 
         if action == "target_long":
-            if self._params.target_equity_fraction is not None and self.portfolio.is_net_long(
-                self._params.instrument_id
-            ):
+            if self._params.target_equity_fraction is not None and self._net_position() > 0:
                 return []
             quantity = self._scaled_trade_size(intent)
             if quantity <= 0:
                 return []
-            if self.portfolio.is_net_long(self._params.instrument_id):
+            if self._net_position() > 0:
                 return []
             order_qty = self._order_quantity(instrument, quantity, OrderSide.BUY)
             if order_qty is None:
                 return []
-            if self.portfolio.is_net_short(self._params.instrument_id):
+            if self._net_position() < 0:
                 self.close_all_positions(self._params.instrument_id, tags=tags)
             order = self.order_factory.market(
                 instrument_id=self._params.instrument_id,
@@ -314,12 +373,12 @@ class BaselineNautilusStrategy(Strategy):
             quantity = self._scaled_trade_size(intent)
             if quantity <= 0:
                 return []
-            if self.portfolio.is_net_short(self._params.instrument_id):
+            if self._net_position() < 0:
                 return []
             order_qty = self._order_quantity(instrument, quantity, OrderSide.SELL)
             if order_qty is None:
                 return []
-            if self.portfolio.is_net_long(self._params.instrument_id):
+            if self._net_position() > 0:
                 self.close_all_positions(self._params.instrument_id, tags=tags)
             order = self.order_factory.market(
                 instrument_id=self._params.instrument_id,
@@ -331,7 +390,7 @@ class BaselineNautilusStrategy(Strategy):
             return [order.client_order_id.value]
 
         if action == "target_flat":
-            if self.portfolio.is_flat(self._params.instrument_id):
+            if self._net_position() == 0:
                 return []
             return self._close_positions(tags)
 
@@ -362,6 +421,13 @@ class BaselineNautilusStrategy(Strategy):
             return instrument.make_qty(quantity)
         if side == OrderSide.BUY:
             quantity = min(quantity, self._affordable_buy_quantity(instrument))
+            if self._params.allocated_capital is not None:
+                if self._sleeve_cash is None or self._last_close is None or self._last_close <= 0:
+                    return None
+                quantity = min(
+                    quantity,
+                    self._sleeve_cash / (self._last_close * (1 + instrument.taker_fee)),
+                )
         # Below one lot: place nothing rather than let make_qty round to zero.
         if quantity < instrument.size_increment.as_decimal():
             return None
@@ -405,6 +471,9 @@ class BaselineNautilusStrategy(Strategy):
         return base_size * target_position_pct / max_position_pct
 
     def _sizing_equity(self, instrument: Instrument) -> Decimal:
+        if self._params.allocated_capital is not None:
+            equity = self.sleeve_equity
+            return equity if equity is not None else Decimal(0)
         account = self.portfolio.account(self._params.instrument_id.venue)
         if account is None:
             return Decimal(0)
@@ -439,7 +508,7 @@ class BaselineNautilusStrategy(Strategy):
             self._next_rebalance_ns + ((bar_ns - self._next_rebalance_ns) // week_ns) * week_ns
         )
         self._next_rebalance_ns = boundary_ns + week_ns
-        if submitted_order_this_bar or not self.portfolio.is_net_long(self.instrument_id):
+        if submitted_order_this_bar or self._net_position() <= 0:
             return
         intent = self._rebalance_intent
         if intent is not None and intent.dry_run:
@@ -460,7 +529,7 @@ class BaselineNautilusStrategy(Strategy):
         desired = (self._scaled_trade_size(intent) / increment).to_integral_value(
             rounding=ROUND_DOWN
         ) * increment
-        difference = desired - self.portfolio.net_position(self.instrument_id)
+        difference = desired - self._net_position()
         side = OrderSide.BUY if difference > 0 else OrderSide.SELL
         if side == OrderSide.BUY and self._baseline.kill_switch_engaged:
             return
@@ -540,7 +609,10 @@ def _signal_tag(signal_id: str) -> str:
 
 
 def _validate_equity_sizing(
-    fraction: Decimal | None, notional: Decimal | None, weekday: int | None
+    fraction: Decimal | None,
+    notional: Decimal | None,
+    weekday: int | None,
+    allocated_capital: Decimal | None = None,
 ) -> None:
     if fraction is not None:
         if not fraction.is_finite() or not 0 < fraction <= 1:
@@ -552,3 +624,8 @@ def _validate_equity_sizing(
             raise ValueError("rebalance_weekday requires target_equity_fraction")
         if type(weekday) is not int or not 0 <= weekday <= 6:
             raise ValueError("rebalance_weekday must be an integer in [0, 6]")
+    if allocated_capital is not None:
+        if fraction is None:
+            raise ValueError("allocated_capital requires target_equity_fraction")
+        if not allocated_capital.is_finite() or allocated_capital <= 0:
+            raise ValueError("allocated_capital must be finite and positive")

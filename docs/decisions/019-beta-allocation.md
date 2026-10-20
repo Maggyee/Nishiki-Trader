@@ -67,11 +67,20 @@ Both are reported whatever the outcome.
 
 ## 4. Paper and testnet requirements
 
-- The paper runner treats sell signals on spot as closes, as the Nautilus
-  strategy already does on CASH accounts (gap noted 2026-10-18).
-- Local paper for at least four weeks, holdings matching the daily replay.
-- Spot testnet with a new Ed25519 key for at least 14 days without manual
-  intervention (ADR-001 stage 0) before any real-money decision.
+Amended 2026-10-20 by the operator ("按你说的做"): the forward test runs on the
+Spot testnet instead of the local paper runner. The paper runner is a separate
+simulator without equity-fraction sizing, so it would not test the code that
+trades; the testnet runs the same `BaselineNautilusStrategy` as live would.
+
+- Spot testnet with a new Ed25519 key for at least four weeks, holdings matching
+  the daily signals, including at least 14 consecutive days without manual
+  intervention (ADR-001 stage 0), before any real-money decision.
+- The strategy sizes from capital allocated to it and keeps its own ledger,
+  because the testnet faucet account holds unrelated pre-funded assets.
+- Signals come from `apps/strategies_freqtrade/beta_signals.py`, run daily after
+  00:00 UTC; it applies the same rule and encoding as the backtest.
+- The ADR-007 promotion record required by the testnet startup guard cites this
+  ADR, because `promotion_review` only accepts paper or testnet bundles.
 - ADR-015 limits apply at every stage. A live drawdown beyond the historical
   maximum drawdown triggers a stop and an operator review.
 

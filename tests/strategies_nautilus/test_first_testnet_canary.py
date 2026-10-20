@@ -146,3 +146,54 @@ def test_register_strategies_invokes_default_sink_through_trader(tmp_path: Path)
     fake_node.trader.add_strategy.assert_called_once()
     submitted = fake_node.trader.add_strategy.call_args.args[0]
     assert submitted.__class__.__name__ == "BaselineNautilusStrategy"
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"target_equity_fraction": Decimal(0)},
+        {"target_equity_fraction": Decimal("1.1")},
+        {"target_equity_fraction": Decimal("NaN")},
+        {"target_equity_fraction": Decimal("Infinity")},
+        {"rebalance_weekday": 6},
+        {"target_equity_fraction": Decimal(".4"), "rebalance_weekday": -1},
+        {"target_equity_fraction": Decimal(".4"), "rebalance_weekday": 7},
+        {"target_equity_fraction": Decimal(".4"), "rebalance_weekday": True},
+        {"target_equity_fraction": Decimal(".4"), "rebalance_weekday": 2.5},
+        {"allocated_capital": Decimal(1000)},
+        {"target_equity_fraction": Decimal(".4"), "allocated_capital": Decimal(0)},
+        {"target_equity_fraction": Decimal(".4"), "allocated_capital": Decimal(-1)},
+        {"target_equity_fraction": Decimal(".4"), "allocated_capital": Decimal("NaN")},
+        {"target_equity_fraction": Decimal(".4"), "allocated_capital": Decimal("Infinity")},
+        {"target_equity_fraction": Decimal(".4"), "trade_size": Decimal(-1)},
+        {"target_equity_fraction": Decimal(".4"), "trade_size": Decimal("NaN")},
+        {"target_equity_fraction": Decimal(".4"), "trade_size": Decimal("Infinity")},
+    ],
+)
+def test_spec_validates_fraction_sizing(changes):
+    with pytest.raises(ValueError):
+        FirstCanaryStrategySpec(**{**VALID_SPEC_KWARGS, **changes})
+
+
+@pytest.mark.parametrize("allocated_capital", [None, Decimal(1000)])
+def test_register_passes_fraction_sleeve_and_weekday(tmp_path, allocated_capital):
+    spec = FirstCanaryStrategySpec(**{
+        **VALID_SPEC_KWARGS,
+        "signal_store_path": tmp_path / "signals.db",
+        "trade_size": Decimal(0),
+        "target_equity_fraction": Decimal(".4"),
+        "rebalance_weekday": 6,
+        "allocated_capital": allocated_capital,
+    })
+    strategies = []
+    register = build_register_strategies(
+        spec, lineage=[], clock_ns=lambda: 0,
+        strategy_sink=lambda node, strategy: strategies.append(strategy),
+    )
+    register(MagicMock())
+    params = strategies[0]._params
+    assert params.trade_size == 0
+    assert params.target_equity_fraction == Decimal(".4")
+    assert params.rebalance_weekday == 6
+    assert params.allocated_capital == allocated_capital
+    assert spec.build_authorization().policies[(spec.source, spec.model_version)].position_pct_multiplier == .1
