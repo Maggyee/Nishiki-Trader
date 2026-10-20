@@ -14,5 +14,8 @@ change it, needs one here.
 - **Next entrypoint**: generate a new record with
   `uv run python -m apps.strategies_nautilus.runners.promotion_review --help`
   and `--output-markdown docs/retros/<UTC date>-<source>-<model>-<decision>-<target_stage>.md`.
+- **Exception**: ADR-019 beta-track records are written by hand, citing the
+  ADR, because `promotion_review` only accepts paper or testnet bundles and the
+  operator chose testnet over local paper (2026-10-20).
 - **Archived**: the 175 research-protocol retros (v2–v53) are in tag
   `archive/pre-slim-2026-10-17`; conclusions are in `docs/research/README.md`.
