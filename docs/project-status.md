@@ -26,8 +26,9 @@ search stopped on 2026-10-20. Rounds: [summary](research/README.md).
    and its backtest matches `apps/research/beta.py` (final equity within 2%,
    identical holding days). Forward test on the Spot testnet for ≥ 4 weeks
    ([runbook](runbook-beta-testnet.md)): sizing from allocated capital, daily
-   signals from `beta_signals.py`. Waiting on the operator: register the
-   testnet public key, install the cron job, confirm the promotion record.
+   signals from `beta_signals.py`. Running since 2026-10-20 14:08 UTC (tmux
+   `beta-btc`, `beta-eth`; started by the agent at the operator's request,
+   testnet only); first fills about 400 USDT each. Ends about 2026-11-24.
    Any future alpha protocol: freeze
    a contract in `docs/research/contracts/`, one mechanism module, cross-check,
    run with `apps/research/`. Lessons in both daily rounds.
@@ -47,9 +48,11 @@ search stopped on 2026-10-20. Rounds: [summary](research/README.md).
 
 ## Running on the host
 
-- Nothing. Shadow crons, the systemd research collectors, their `/opt`,
-  `/var/lib` and `/etc` deployments, and all local research data were removed
-  on 2026-10-18. Only code survives, in tag `archive/pre-slim-2026-10-17`.
+- B2 testnet runners (tmux `beta-btc` run `20261020-140724Z-8081d675`,
+  `beta-eth` run `20261020-140819Z-cf725204`), logs in `data/beta/<coin>/`.
+- Crontab: `beta_signals` at 00:05, 00:35 and 02:05 UTC (`data/beta/signals.log`).
+- Testnet key: `~/.config/trader/binance_testnet.env` (0600, never printed).
+- Earlier shadow crons and collectors were removed on 2026-10-18.
 
 ## Latest Verification
 
