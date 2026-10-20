@@ -20,11 +20,11 @@ search stopped on 2026-10-20. Rounds: [summary](research/README.md).
 
 ## Next Steps
 
-1. Beta allocation track, [ADR-019](decisions/019-beta-allocation.md) (Draft):
-   B2 (BTC/ETH held above their 200-day average) passed the admission criteria
-   fixed beforehand; B1 (v54 long/flat) missed on drawdown. Operator: accept
-   ADR-019 and the proposed sizing (B2 at 40% exposure, weekly rebalance). Then
-   paper-runner sell = close, local paper ≥ 4 weeks, Spot testnet ≥ 14 days.
+1. Beta allocation track, [ADR-019](decisions/019-beta-allocation.md) (Accepted
+   2026-10-20): B2, BTC/ETH held above their 200-day average at 40% exposure,
+   rebalanced weekly. Next: Nautilus sizing as a fraction of equity with weekly
+   rebalance, paper-runner sell = close, a Nautilus backtest matching
+   `apps/research/beta.py`, then local paper ≥ 4 weeks and Spot testnet ≥ 14 days.
    Any future alpha protocol: freeze
    a contract in `docs/research/contracts/`, one mechanism module, cross-check,
    run with `apps/research/`. Lessons in both daily rounds.

@@ -1,7 +1,8 @@
 # ADR-019: Beta allocation track (market exposure with risk control)
 
-- **Status**: Draft, awaiting operator acceptance. The admission criteria in §3
-  were committed before the historical comparison in §5 was run.
+- **Status**: Accepted 2026-10-20 by the operator ("批准"), including the sizing
+  proposed in §5: B2 at 40% exposure, rebalanced weekly. The admission criteria
+  in §3 were committed before the historical comparison in §5 was run.
 - **Date**: 2026-10-20
 - **Authority**: The stopping rule set before v61 was frozen ("if v61 fails,
   the alpha search stops and the project moves to a beta-with-risk-control
@@ -112,8 +113,8 @@ B2 target, against buy-and-hold scaled and rebalanced the same way:
 | Buy-and-hold × 0.4 | 7 | | 41% | 28% | −31% |
 | Buy-and-hold × 0.3 | 3 | | 32% | 21% | −23% |
 
-Proposed for paper (operator decision): B2 at 40% exposure (20% per coin),
-rebalanced weekly and on every signal change, as `rule_beta_sma200_v1`.
+Accepted for paper: B2 at 40% exposure (20% per coin), rebalanced weekly and on
+every signal change, as `rule_beta_sma200_v1`.
 
 ## 6. What this ADR does not do
 

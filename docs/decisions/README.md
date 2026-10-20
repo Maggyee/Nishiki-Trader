@@ -23,7 +23,7 @@ new one.
 | [016](016-testnet-observation-admission.md) | Testnet observation admission | Accepted (read-only); implementation archived |
 | [017](017-testnet-engineering-session.md) | Testnet engineering session | Accepted; one-shot scope consumed 2026-09-11 |
 | [018](018-intraday-research.md) | Intraday research protocols (minute data, hour-scale holds) | Accepted |
-| [019](019-beta-allocation.md) | Beta allocation track (market exposure with risk control) | Draft |
+| [019](019-beta-allocation.md) | Beta allocation track (market exposure with risk control) | Accepted |
 
 ## Paths that moved on 2026-10-17
 
