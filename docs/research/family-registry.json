@@ -1,6 +1,6 @@
 {
   "schema_version": "research.mechanism_family_registry.v1",
-  "as_of": "2026-10-18",
+  "as_of": "2026-10-20",
   "adr": "docs/decisions/014-research-program-v2.md",
   "families": {
     "attention_sentiment": {
@@ -1510,6 +1510,20 @@
           "outcome": "confirmation_rejected"
         }
       ]
+    },
+    {
+      "protocol": 60,
+      "default_family": "microstructure_flow",
+      "mechanism": "Liquidation cascade: 60-minute spot return and 60-minute USD-M open-interest change both at or below their trailing-30-day 0.5th percentile (thresholds fixed per UTC day) -> long spot for 4 hours, 10 coins",
+      "candidates": [
+        {
+          "key": "cascade_rebound",
+          "source": "rule_crypto_cascade_rebound_v1",
+          "model_version": "crypto-10coin-spot1m-ret60-oi60-q005-30d-hold4h-lag1-long-v1",
+          "family": "microstructure_flow",
+          "outcome": "not_opened"
+        }
+      ]
     }
   ],
   "legacy_candidates": [
@@ -1643,10 +1657,10 @@
     }
   ],
   "totals": {
-    "protocol_count": 58,
+    "protocol_count": 59,
     "legacy_candidate_count": 16,
-    "candidate_rows": 164,
-    "unique_identities": 161,
+    "candidate_rows": 165,
+    "unique_identities": 162,
     "unique_identities_pnl_opened": 123,
     "unique_identities_provider_blocked": 36,
     "survivors_paper_shadow": 10,

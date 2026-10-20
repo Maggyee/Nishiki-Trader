@@ -1,0 +1,94 @@
+{
+  "schema_version": "research.contract.v1",
+  "frozen_at": "2026-10-20",
+  "protocol": 60,
+  "family": "microstructure_flow",
+  "mechanism": "Liquidation cascade: 60-minute spot return and 60-minute USD-M open-interest change both at or below their trailing-30-day 0.5th percentile (thresholds fixed per UTC day) -> long spot for 4 hours, 10 coins",
+  "orthogonality": "Bets on forced-seller exhaustion within hours of a long liquidation cascade, a state the closed survivors never traded. Intraday version of v57: cascades last minutes to hours, which daily bars dilute.",
+  "directional_capability": "long_flat",
+  "weekend_coverage": "Binance spot klines and USD-M metrics are 24/7; no signal vacuum. Missing metrics files suppress triggers.",
+  "knowledge_disclosure": "Designed after v57 (daily deleveraging rebound, same family) was opened on 2022-2023 and missed on p (0.105) with 2023 negative, and after the cost study. Only 2025 BTC 1m move sizes were looked at (ADR-018), no strategy PnL. The 2024-2025 confirmation is binding; per W3 a development pass alone means little.",
+  "cost_napkin": "Two fills of 12 bps per trade: 0.24% per 4-hour hold; the median 4-hour BTC move in 2025 was 0.41%.",
+  "mechanism_module": "apps.strategies_freqtrade.research.intraday_flow",
+  "semantics": [
+    "Per symbol, a full 1-minute UTC grid from the first to the last spot kline; close is the spot close of that minute, NaN if the minute is missing (no fill).",
+    "r60[t] = close[t] / close[t-60] - 1 on grid rows; NaN if either is missing.",
+    "Row t is decided at T = t + 1 minute. oi_asof(x) = open_interest of the last metrics observation stamped <= x; NaN if that stamp is older than x - oi_max_staleness_minutes or the value is missing or <= 0. doi60[t] = oi_asof(T) / oi_asof(T - 60 minutes) - 1.",
+    "Thresholds for UTC day D: numpy linear quantile(quantile) of the finite r60 values and, separately, of the finite doi60 values on rows in [D - baseline_days, D). If either series has fewer than min_baseline_fraction x baseline_days x 1440 finite values there, no trigger on day D.",
+    "Trigger at row t in day D: r60[t] <= r60 threshold(D) and doi60[t] <= doi60 threshold(D), both finite.",
+    "Hold: a trigger at t sets weight_per_symbol on rows t .. t + hold_minutes - 1; triggers inside an open hold are ignored; the next trigger may fire from row t + hold_minutes.",
+    "Output: weights on the union minute grid, one column per symbol, 0 elsewhere, no NaN, sum of absolute weights <= 1."
+  ],
+  "limitations": "Spot fills at the minute close one bar after the decision (ADR-018 2.3); slippage only through the cost scenarios. Open interest is the perp market's; the trade is spot.",
+  "bar": "1min",
+  "execution_lag_bars": 1,
+  "data": {
+    "datasets": [
+      "spot_klines_1m",
+      "um_metrics_5m"
+    ],
+    "symbols": [
+      "BTCUSDT",
+      "ETHUSDT",
+      "BNBUSDT",
+      "XRPUSDT",
+      "ADAUSDT",
+      "LTCUSDT",
+      "LINKUSDT",
+      "TRXUSDT",
+      "ETCUSDT",
+      "XLMUSDT"
+    ],
+    "fetch_start_month": "2021-11",
+    "fetch_end_month": "2025-12",
+    "metrics_fetch_start_date": "2021-12-01"
+  },
+  "candidates": {
+    "cascade_rebound": {
+      "source": "rule_crypto_cascade_rebound_v1",
+      "model_version": "crypto-10coin-spot1m-ret60-oi60-q005-30d-hold4h-lag1-long-v1",
+      "params": {
+        "return_window_minutes": 60,
+        "oi_window_minutes": 60,
+        "oi_max_staleness_minutes": 10,
+        "baseline_days": 30,
+        "quantile": 0.005,
+        "min_baseline_fraction": 0.5,
+        "hold_minutes": 240,
+        "weight_per_symbol": 0.1
+      }
+    }
+  },
+  "windows": {
+    "development": [
+      "2022-01-01",
+      "2023-12-31"
+    ],
+    "confirmation": [
+      "2024-01-01",
+      "2025-12-31"
+    ]
+  },
+  "notional_usdt": 10000.0,
+  "cost_scenarios_bps_per_fill": {
+    "base": 12.0,
+    "stress": 20.0
+  },
+  "null": {
+    "kind": "circular_shift_per_asset",
+    "shift_unit": "day",
+    "trials": 5000,
+    "seed": 20261018
+  },
+  "gates": {
+    "base_net_pnl_gt": 0.0,
+    "stress_net_pnl_gt": 0.0,
+    "positive_years_fraction_at_least": 0.6667,
+    "months_breadth_rule": "adaptive_null_median",
+    "closed_positions_at_least": 60,
+    "active_days_at_least": 60,
+    "leave_best_base_net_pnl_gt": 0.0,
+    "benchmark_relative": true,
+    "p_value_max": 0.1
+  }
+}
