@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+import tempfile
 import urllib.error
 import urllib.request
 import zipfile
@@ -23,6 +24,8 @@ import pandas as pd
 BASE_URL = "https://data.binance.vision/data"
 DATA_ROOT = Path("data/research")
 BLIND_START = date(2026, 9, 1)
+# Bump whenever any parser changes so cached frames cannot retain old semantics.
+PARSE_VERSION = 1
 
 # dataset -> (url directory template, file name template, period kind)
 DATASETS = {
@@ -32,7 +35,18 @@ DATASETS = {
         "{symbol}-1d-{period}.zip",
         "monthly",
     ),
+    "spot_klines_1m": ("spot/monthly/klines/{symbol}/1m", "{symbol}-1m-{period}.zip", "monthly"),
+    "um_klines_1m": (
+        "futures/um/monthly/klines/{symbol}/1m",
+        "{symbol}-1m-{period}.zip",
+        "monthly",
+    ),
     "um_metrics_daily": (
+        "futures/um/daily/metrics/{symbol}",
+        "{symbol}-metrics-{period}.zip",
+        "daily",
+    ),
+    "um_metrics_5m": (
         "futures/um/daily/metrics/{symbol}",
         "{symbol}-metrics-{period}.zip",
         "daily",
@@ -44,7 +58,8 @@ DATASETS = {
     ),
 }
 # Archives that may legitimately miss periods (daily gaps, months before a listing).
-GAP_TOLERANT = {"um_metrics_daily", "um_funding"}
+GAP_TOLERANT = {"um_metrics_daily", "um_metrics_5m", "um_funding"}
+KLINE_BARS = {"spot_klines_1m": "1min", "um_klines_1m": "1min"}
 KLINE_COLUMNS = [
     "open_time",
     "open",
@@ -142,8 +157,8 @@ def _read_zip_csv(path: Path) -> pd.DataFrame:
         return pd.read_csv(io.BytesIO(archive.read(name)), header=None, dtype=str)
 
 
-def parse_klines(raw: pd.DataFrame) -> pd.DataFrame:
-    """Binance kline CSV (with or without header) -> daily frame on a UTC index."""
+def parse_klines(raw: pd.DataFrame, bar: str = "1D") -> pd.DataFrame:
+    """Binance kline CSV (with or without header) -> bar-open UTC index."""
     frame = raw.iloc[:, : len(KLINE_COLUMNS)].copy()
     frame.columns = KLINE_COLUMNS
     frame["open_time"] = pd.to_numeric(frame["open_time"], errors="coerce")
@@ -153,7 +168,7 @@ def parse_klines(raw: pd.DataFrame) -> pd.DataFrame:
     stamps = pd.to_datetime(
         frame["open_time"].where(~unit_us, frame["open_time"] // 1000), unit="ms"
     )
-    frame.index = pd.DatetimeIndex(stamps, tz="UTC").floor("D")
+    frame.index = pd.DatetimeIndex(stamps, tz="UTC").floor(bar)
     columns = [c for c in KLINE_COLUMNS if c not in ("open_time", "close_time", "ignore")]
     return frame[columns].astype(float)
 
@@ -174,12 +189,24 @@ def parse_metrics(raw: pd.DataFrame) -> pd.DataFrame:
     return out.groupby(out.index.floor("D")).last()
 
 
-def parse_funding(raw: pd.DataFrame) -> pd.DataFrame:
-    """USD-M funding settlements -> summed rate per holding day.
+def parse_metrics_5m(raw: pd.DataFrame) -> pd.DataFrame:
+    """Keep every metrics observation at its UTC publication timestamp."""
+    frame = raw.copy()
+    frame.columns = frame.iloc[0]
+    frame = frame.iloc[1:]
+    stamps = pd.DatetimeIndex(pd.to_datetime(frame["create_time"], utc=True))
+    out = pd.DataFrame(
+        {
+            "open_interest": frame["sum_open_interest"].astype(float).to_numpy(),
+            "open_interest_value": frame["sum_open_interest_value"].astype(float).to_numpy(),
+        },
+        index=stamps,
+    )
+    return out[~out.index.duplicated(keep="last")].sort_index()
 
-    A settlement at 00:00 belongs to the day before it: a position held over
-    day t pays the 08:00 and 16:00 settlements of t and the 00:00 one of t+1.
-    """
+
+def parse_funding(raw: pd.DataFrame) -> pd.DataFrame:
+    """USD-M funding settlements, summed at each rounded UTC hour."""
     frame = raw.copy()
     frame.columns = frame.iloc[0]
     frame = frame.iloc[1:]
@@ -187,8 +214,7 @@ def parse_funding(raw: pd.DataFrame) -> pd.DataFrame:
         pd.to_datetime(frame["calc_time"].astype("int64"), unit="ms", utc=True)
     )
     stamps = stamps.round("h")
-    day = (stamps - pd.Timedelta(milliseconds=1)).floor("D")
-    rates = pd.Series(frame["last_funding_rate"].astype(float).to_numpy(), index=day)
+    rates = pd.Series(frame["last_funding_rate"].astype(float).to_numpy(), index=stamps)
     return rates.groupby(level=0).sum().to_frame("funding_rate")
 
 
@@ -198,9 +224,32 @@ def load(dataset: str, symbol: str, *, root: Path = DATA_ROOT) -> pd.DataFrame:
     files = sorted((root / "raw" / directory.format(symbol=symbol)).glob("*.zip"))
     if not files:
         raise FileNotFoundError(f"no cached {dataset} files for {symbol}; run fetch first")
-    parsers = {"um_metrics_daily": parse_metrics, "um_funding": parse_funding}
-    parse = parsers.get(dataset, parse_klines)
-    frame = pd.concat([parse(_read_zip_csv(path)) for path in files])
+    parsers = {
+        "um_metrics_daily": parse_metrics,
+        "um_metrics_5m": parse_metrics_5m,
+        "um_funding": parse_funding,
+    }
+    parsed = []
+    for path in files:
+        cache = root / "parsed" / f"v{PARSE_VERSION}" / dataset / f"{path.stem}.parquet"
+        if cache.exists():
+            part = pd.read_parquet(cache)
+        else:
+            raw = _read_zip_csv(path)
+            parse = parsers.get(dataset)
+            part = parse(raw) if parse else parse_klines(raw, bar=KLINE_BARS.get(dataset, "1D"))
+            cache.parent.mkdir(parents=True, exist_ok=True)
+            with tempfile.NamedTemporaryFile(
+                dir=cache.parent, suffix=".parquet", delete=False
+            ) as tmp:
+                temporary = Path(tmp.name)
+            try:
+                part.to_parquet(temporary)
+                temporary.replace(cache)
+            finally:
+                temporary.unlink(missing_ok=True)
+        parsed.append(part)
+    frame = pd.concat(parsed)
     frame = frame[~frame.index.duplicated(keep="last")].sort_index()
     if frame.index.max().date() >= BLIND_START:
         raise BlindWindowError(f"cached {dataset} {symbol} reaches the sealed blind")

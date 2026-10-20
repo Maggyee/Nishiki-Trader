@@ -1,6 +1,6 @@
 # Project Status
 
-- **Last updated**: 2026-10-18
+- **Last updated**: 2026-10-20
 - **Current phase**: Phase 5 entry — read-only monitoring. Live trading still blocked.
 - **Current objective**: Find one strategy with benchmark-relative alpha. Until
   one exists, engineering only maintains the core path (bridge → Nautilus →
@@ -17,17 +17,19 @@ with luck and express one trade (long BTC in calm regimes); all five Gates-v2
 protocols (v49–v53) were rejected. Their shadow collection was stopped on
 2026-10-18. See [research summary](research/README.md).
 
-Immediate focus:
-
-1. Operator decision: rounds [2026-10](research/round-2026-10.md) and
-   [2026-10b](research/round-2026-10b.md) rejected all seven identities (v54–v59);
-   lower costs do not rescue them (cost study in 2026-10b).
+Daily rounds [2026-10](research/round-2026-10.md) and
+[2026-10b](research/round-2026-10b.md) rejected all seven identities (v54–v59);
+lower costs do not rescue them. On 2026-10-18 the operator chose intraday
+research: minute data, hour-scale holds,
+[ADR-018](decisions/018-intraday-research.md) (Draft).
 
 ## Next Steps
 
-1. Any further protocol: freeze a contract in `docs/research/contracts/`, one
-   mechanism module, cross-check, run with `apps/research/`. Lessons in both rounds.
-2. Only when a candidate passes: resume the Phase 3 canary per
+1. Operator: accept or amend ADR-018 (costs §2.4, minimum horizon §2.1).
+2. Then propose the first intraday round (≤ 3 identities). Each protocol: freeze
+   a contract in `docs/research/contracts/`, one mechanism module, cross-check,
+   run with `apps/research/`. Lessons in both daily rounds.
+3. Only when a candidate passes: resume the Phase 3 canary per
    [runbook](runbook-first-testnet-canary.md) for that identity. Generate a new
    testnet Ed25519 API key first; the old key pair was deleted on 2026-10-18.
 
@@ -49,31 +51,28 @@ Immediate focus:
 
 ## Latest Verification
 
-- 2026-10-18 spot sell = flat (operator-approved): on CASH accounts a sell signal
-  only closes a long, also on the Spot testnet; MARGIN unchanged. Closes now
-  return order ids (same-bar suppression). Codex-reviewed; 722 passed.
-- 2026-10-18 notional sizing (`--trade-notional`): Codex review found three
-  issues, all fixed with regression tests; `uv run pytest` 719 passed, 12 skipped.
-- 2026-10-18 learning simulation: 10 Nautilus backtests and a BTC paper session
-  match the research holdings; paper-runner instrument-mismatch bug fixed
-  (regression test); `uv run pytest` 712 passed, 12 skipped.
+- 2026-10-20 intraday harness (Codex-written, reviewed): 1m klines, 5m metrics,
+  parquet cache, bar-level replay with execution lag, per-settlement funding,
+  day-unit null. Daily null p-values equal the old algorithm; a real 2025 BTC 1m
+  fetch verified checksums, no missing minutes, cache 4.8 s → 0.14 s; null
+  ~0.12 s/trial at 3 years × 10 assets. `uv run pytest` 800 passed, 12 skipped.
+- 2026-10-18 Nautilus: spot sell = flat on CASH accounts, notional sizing
+  (`--trade-notional`), learning simulation matching research holdings,
+  paper-runner instrument-mismatch fix; all Codex-reviewed with regression tests.
 - 2026-10-18 research round: `apps/research/` + Codex-written mechanism modules
   (cross-checked against an independent reference: identical weights);
   `uv run pytest` 684 passed, 12 skipped; results in `docs/research/results/`.
 - 2026-10-18 slim-down (tracked files 1703 → 198): `uv run pytest` 684 passed,
   12 skipped (Postgres tests need `TRADER_TEST_POSTGRES_DSN`); `ruff check apps tests
   notebooks infra` clean; frontend `npm run typecheck` and `npm run build` pass.
-- 2026-10-18 dashboard: Phase 6 panel now mirrors each report's own verdict instead of
-  re-verifying it (~1.1k backend + ~2.6k test lines removed).
-- 2026-10-18 local cleanup: removed ~15 GB of egress/joint evidence, research
-  shadow data, `scratch/`, the testnet key pair and its env file; `data/` is
-  now only `frontend/` and `observability/`.
+- 2026-10-18 local cleanup and dashboard trim: see `git log` and [history](history.md).
 
 ## References
 
 - Agents: [AGENTS.md](../AGENTS.md). Decisions: [ADR index](decisions/README.md).
 - Research: [summary](research/README.md), [warnings](research/warnings.md),
-  [backlog](research/backlog.md), [ADR-014](decisions/014-research-program-v2.md).
+  [backlog](research/backlog.md), [ADR-014](decisions/014-research-program-v2.md),
+  [ADR-018](decisions/018-intraday-research.md).
 - Risk and testnet: [ADR-008](decisions/008-phase3-risk-runbook.md),
   [ADR-015](decisions/015-portfolio-risk-policy.md),
   [canary evidence](progress/phase-3-testnet-canary-evidence.md),

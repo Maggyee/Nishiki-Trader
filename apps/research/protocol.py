@@ -70,6 +70,18 @@ def run_stage(
     registry_path: Path = REGISTRY_PATH,
 ) -> dict:
     contract, contract_sha = load_contract(contract_path)
+    bar = contract.get("bar", "1D")
+    lag = contract.get("execution_lag_bars", 0)
+    null_shift_unit = contract["null"].get("shift_unit", "bar")
+    if null_shift_unit not in {"bar", "day"}:
+        raise ValueError("null shift_unit must be 'bar' or 'day'")
+    shift_unit = 1
+    if null_shift_unit == "day":
+        duration = pd.Timedelta(bar)
+        day = pd.Timedelta("1D")
+        if duration <= pd.Timedelta(0) or day % duration:
+            raise ValueError("bar must divide one day into an integer number of bars")
+        shift_unit = day // duration
     tag = f"v{contract['protocol']}"
     out_path = results_dir / f"{tag}-{stage}.json"
     if out_path.exists():
@@ -98,10 +110,19 @@ def run_stage(
         start, end = (candidate.get("windows") or contract["windows"])[stage]
         data.periods("daily", start, end)  # refuses the sealed blind
         weights = module.target_weights(frames, key, candidate["params"])
-        run_args = {"start": start, "end": end, "notional": notional, "costs_bps": costs}
+        run_args = {
+            "start": start,
+            "end": end,
+            "notional": notional,
+            "costs_bps": costs,
+            "bar": bar,
+            "lag": lag,
+        }
         result = replay.run(weights, closes, funding=funding, **run_args)
         repeat = replay.run(weights, closes, funding=funding, **run_args)
-        days, held, returns = replay.window_arrays(weights, closes, start, end, funding)
+        days, held, returns = replay.window_arrays(
+            weights, closes, start, end, funding, bar=bar, lag=lag
+        )
         null = gates.shift_null(
             held,
             returns,
@@ -111,9 +132,10 @@ def run_stage(
             cost=costs["base"] / 1e4,
             trials=int(contract["null"]["trials"]),
             seed=int(contract["null"]["seed"]),
+            shift_unit=shift_unit,
         )
         verdict = gates.apply_gates(contract["gates"], result, null)
-        identical = repeat["daily_base_pnl_sha256"] == result["daily_base_pnl_sha256"]
+        identical = repeat["base_pnl_sha256"] == result["base_pnl_sha256"]
         verdict["checks"]["duplicate_replay_identical"] = identical
         verdict["pass"] = verdict["pass"] and identical
         candidates[key] = {
@@ -129,6 +151,9 @@ def run_stage(
         "schema_version": "research.result.v1",
         "protocol": contract["protocol"],
         "stage": stage,
+        "bar": bar,
+        "execution_lag_bars": lag,
+        "null_shift_unit": null_shift_unit,
         "contract": str(contract_path),
         "contract_sha256": contract_sha,
         "data_manifest_sha256": _manifest_digest(root, contract),

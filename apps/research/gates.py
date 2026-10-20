@@ -7,8 +7,6 @@ import math
 import numpy as np
 import pandas as pd
 
-from apps.research.replay import daily_pnl
-
 
 def shift_null(
     held: np.ndarray,
@@ -20,6 +18,7 @@ def shift_null(
     cost: float,
     trials: int,
     seed: int,
+    shift_unit: int = 1,
 ) -> dict[str, float]:
     """Circularly shift each asset's held weights against its returns.
 
@@ -28,18 +27,33 @@ def shift_null(
     the null's median count of positive months (ADR-014 §11).
     """
     rng = np.random.default_rng(seed)
-    n_days, n_assets = held.shape
+    n_rows, n_assets = held.shape
+    if shift_unit < 1 or n_rows // shift_unit < 2:
+        raise ValueError("null requires at least two shift units")
     month_codes = days.tz_localize(None).to_period("M").asi8
     month_starts = np.flatnonzero(np.r_[True, np.diff(month_codes) != 0])
     totals = np.empty(trials)
     positive_months = np.empty(trials)
-    rows = np.arange(n_days)[:, None]
+    # Contiguous asset series avoid strided reads in every Monte Carlo trial.
+    asset_weights = np.ascontiguousarray(held.T)
+    asset_returns = np.ascontiguousarray(returns.T)
+    traded = np.empty(n_rows)
     for trial in range(trials):
-        shifts = rng.integers(1, n_days, size=n_assets)
-        shifted = held[(rows - shifts[None, :]) % n_days, np.arange(n_assets)]
-        pnl = daily_pnl(shifted, returns, notional, cost)
-        totals[trial] = pnl.sum()
-        positive_months[trial] = (np.add.reduceat(pnl, month_starts) > 0).sum()
+        shifts = rng.integers(1, n_rows // shift_unit, size=n_assets) * shift_unit
+        months = np.zeros(len(month_starts))
+        for asset, shift in enumerate(shifts):
+            shifted = np.roll(asset_weights[asset], shift)
+            np.subtract(shifted[1:], shifted[:-1], out=traded[1:])
+            traded[0] = shifted[0]
+            np.abs(traded, out=traded)
+            traded[-1] += abs(shifted[-1])
+            pnl = shifted * asset_returns[asset]
+            np.multiply(traded, cost, out=traded)
+            pnl -= traded
+            pnl *= notional
+            months += np.add.reduceat(pnl, month_starts)
+        totals[trial] = months.sum()
+        positive_months[trial] = (months > 0).sum()
     exceed = int((totals >= observed_base).sum())
     return {
         "trials": trials,
@@ -70,6 +84,8 @@ def apply_gates(gates: dict[str, object], result: dict, null: dict[str, float]) 
         ),
         "null_p_value": null["p_value"] <= gates["p_value_max"],
     }
+    if "active_days_at_least" in gates:
+        checks["active_days_floor"] = result["active_days"] >= gates["active_days_at_least"]
     return {
         "checks": checks,
         "years_needed": years_needed,
