@@ -107,3 +107,19 @@ def test_admission_criteria() -> None:
     bad_2022 = good | {"yearly_return": {2022: -0.36}}
     assert not beta.admit(bad_2022, bench, 20_000.0)["checks"]["loss_2022_at_most_half"]
     assert not beta.admit(good, bench, stress_final=9_000.0)["admitted"]
+
+
+def test_weekly_reset_stops_partial_exposure_from_drifting() -> None:
+    closes = _closes(A=[100.0, 200.0, 200.0, 200.0, 200.0, 100.0, 100.0])
+    half = pd.DataFrame({"A": [0.5]}, index=closes.index[:1])
+    args = {"cost": 0.0, "start": "2020-01-01", "end": "2020-01-07"}
+    assert closes.index[4].weekday() == 6  # 2020-01-05 is a Sunday
+
+    drift = beta.simulate(half, closes, **args)
+    weekly = beta.simulate(half, closes, rebalance_weekday=6, **args)
+
+    # A doubles on day 2: 10,000 of A and 5,000 cash. Unreset, A is 2/3 of the book
+    # when it halves (-> 10,000); reset to half on Sunday it holds 7,500 (-> 11,250).
+    assert drift["equity"].iloc[-1] == pytest.approx(10_000.0)
+    assert weekly["equity"].iloc[-1] == pytest.approx(11_250.0)
+    assert (drift["trades"], weekly["trades"]) == (1, 2)

@@ -1005,3 +1005,519 @@ def test_empty_policies_omitted_or_empty_list(
     result = run_backtest(config)
     policies = result.manifest.strategies[0].params.get("policies", [])
     assert policies == []
+
+
+def _fraction_backtest(
+    tmp_path,
+    instrument,
+    bar_type,
+    make_payload,
+    *,
+    prices=(50_000, 50_000, 100_000, 100_000),
+    times=None,
+    events=(("entry", 0, "buy"),),
+    fraction=Decimal("0.4"),
+    weekday=6,
+    policies=None,
+):
+    """Small synthetic CASH catalog spanning a weekly boundary."""
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    index = pd.DatetimeIndex(
+        times
+        or [
+            "2026-01-01T00:00:00Z",
+            "2026-01-04T23:59:00Z",
+            "2026-01-05T00:00:00Z",
+            "2026-01-05T00:01:00Z",
+        ]
+    )
+    frame = pd.DataFrame(
+        {"open": prices, "high": prices, "low": prices, "close": prices, "volume": 100.0},
+        index=index,
+    )
+    catalog_path = tmp_path / "catalog"
+    catalog = ParquetDataCatalog(str(catalog_path.resolve()))
+    catalog.write_data([instrument])
+    catalog.write_data(BarDataWrangler(bar_type, instrument).process(frame))
+    store_path = tmp_path / "signals.db"
+    store = SignalStore(store_path)
+    for signal_id, row, side, *source in events:
+        store.write(
+            SignalEvent.model_validate(
+                make_payload(
+                    signal_id=signal_id,
+                    ts_event=index[row].value,
+                    side=side,
+                    source=source[0] if source else "freqai_v1",
+                )
+            )
+        )
+    config = _build_config(
+        output_root=tmp_path / "runs",
+        catalog_path=catalog_path,
+        instrument_id=instrument.id.value,
+        bar_type=bar_type,
+        signal_store_path=store_path,
+        account_type=AccountType.CASH,
+        policies=policies,
+    )
+    if policies:
+        config.baseline_config = dataclasses.replace(
+            config.baseline_config,
+            auth=dataclasses.replace(
+                config.baseline_config.auth,
+                allowed_sources=config.baseline_config.auth.allowed_sources
+                | frozenset(source for source, _ in policies),
+            ),
+        )
+    return run_backtest(
+        dataclasses.replace(
+        config,
+        starting_balance=Money(10_000, USDT),
+        signal_filter={},
+        target_equity_fraction=fraction,
+            rebalance_weekday=weekday,
+        )
+    )
+
+
+@pytest.mark.parametrize(("fraction", "multiplier"), [("1", 1.0), ("0.4", 1.0), ("0.4", 0.5)])
+def test_equity_fraction_entry_reserves_cash_fees_and_scales_policy(
+    tmp_path,
+    btcusdt_instrument,
+    bar_type,
+    make_payload,
+    fraction,
+    multiplier,
+):
+    result = _fraction_backtest(
+        tmp_path,
+        btcusdt_instrument,
+        bar_type,
+        make_payload,
+        fraction=Decimal(fraction),
+        weekday=None,
+        events=(("entry", 0, "buy"), ("repeat", 1, "buy"), ("close", 3, "sell")),
+        policies={("freqai_v1", "2026-05-14"): SourcePolicy(position_pct_multiplier=multiplier)},
+    )
+    fills = pd.read_parquet(result.output_dir / "fills.parquet")
+    desired = Decimal(fraction) * Decimal(str(multiplier)) * Decimal(10000) / Decimal(50000)
+    affordable = Decimal(10000) / (Decimal(50000) * (1 + btcusdt_instrument.taker_fee))
+    expected = btcusdt_instrument.make_qty(min(desired, affordable), round_down=True).as_decimal()
+    assert Decimal(str(fills.iloc[0]["last_qty"])) == expected
+    assert len(fills) == 2  # repeated buy is idempotent; spot sell closes
+    assert expected * Decimal(50000) * (1 + btcusdt_instrument.taker_fee) <= Decimal(10000)
+    assert result.manifest.totals.iterations == 4
+    assert result.manifest.strategies[0].params["target_equity_fraction"] == fraction
+
+
+@pytest.mark.parametrize(("boundary_price", "side"), [(100_000, "SELL"), (25_000, "BUY")])
+def test_weekly_equity_rebalance_trades_only_the_difference_and_writes_lineage(
+    tmp_path,
+    btcusdt_instrument,
+    bar_type,
+    make_payload,
+    boundary_price,
+    side,
+):
+    result = _fraction_backtest(
+        tmp_path,
+        btcusdt_instrument,
+        bar_type,
+        make_payload,
+        prices=(50_000, 50_000, boundary_price, boundary_price * 2),
+    )
+    orders = pd.read_parquet(result.output_dir / "orders.parquet")
+    fills = pd.read_parquet(result.output_dir / "fills.parquet")
+    lineage = pd.read_parquet(result.output_dir / "signal_lineage.parquet")
+    rebalance = lineage[lineage["decision"] == "rebalance"]
+    assert len(rebalance) == 1  # Monday's following minute is not a second boundary.
+    record = rebalance.iloc[0]
+    assert record["signal_id"] == "rebalance:2026-01-05T00:00:00+00:00"
+    assert record["source"] == "freqai_v1"
+    assert record["model_version"] == "2026-05-14"
+    rebalance_orders = orders[orders["signal_id"] == record["signal_id"]]
+    assert len(rebalance_orders) == 1
+    order = rebalance_orders.iloc[0]
+    assert order["side"] == side
+    assert bool(order["is_reduce_only"]) == (side == "SELL")
+    assert record["order_ids"] == order["client_order_id"]
+    assert record["signal_id"] in str(order["tags"])
+    assert record["fill_ids"]
+    bought = Decimal(str(fills.iloc[0]["last_qty"]))
+    cash = Decimal(10000) - bought * Decimal(50000) * (1 + btcusdt_instrument.taker_fee)
+    equity = cash + bought * Decimal(boundary_price)
+    desired = btcusdt_instrument.make_qty(
+        Decimal("0.4") * equity / Decimal(boundary_price),
+        round_down=True,
+    ).as_decimal()
+    assert Decimal(str(order["quantity"])) == abs(desired - bought)
+    params = result.manifest.strategies[0].params
+    assert params["rebalance_weekday"] == 6
+    assert params["trade_notional"] is None
+
+
+def test_rebalance_uses_the_latest_policy_multiplier(
+    tmp_path,
+    btcusdt_instrument,
+    bar_type,
+    make_payload,
+):
+    policy = SourcePolicy(position_pct_multiplier=0.5)
+    result = _fraction_backtest(
+        tmp_path,
+        btcusdt_instrument,
+        bar_type,
+        make_payload,
+        events=(("entry", 0, "buy"), ("repeat", 1, "buy", "freqai_half")),
+        policies={("freqai_half", "2026-05-14"): policy},
+    )
+    orders = pd.read_parquet(result.output_dir / "orders.parquet")
+    rebalanced = orders[orders["signal_id"].str.startswith("rebalance:")].iloc[0]
+    # Repeated buy leaves .08 BTC in place; weekly sizing uses the new half policy.
+    assert rebalanced["quantity"] == pytest.approx(0.08 - 0.027992)
+    lineage = pd.read_parquet(result.output_dir / "signal_lineage.parquet").set_index("signal_id")
+    assert lineage.loc["repeat", "order_ids"] == ""
+    assert lineage.loc[rebalanced["signal_id"], "source"] == "freqai_half"
+
+
+def test_rebalance_boundary_is_the_end_of_the_selected_utc_weekday(
+    tmp_path,
+    btcusdt_instrument,
+    bar_type,
+    make_payload,
+):
+    result = _fraction_backtest(
+        tmp_path,
+        btcusdt_instrument,
+        bar_type,
+        make_payload,
+        weekday=0,
+        times=[
+            "2026-01-01T00:00:00Z",
+            "2026-01-05T23:59:00Z",
+            "2026-01-06T00:00:00Z",
+            "2026-01-06T00:01:00Z",
+        ],
+    )
+    lineage = pd.read_parquet(result.output_dir / "signal_lineage.parquet")
+    assert lineage[lineage["decision"] == "rebalance"]["signal_id"].tolist() == [
+        "rebalance:2026-01-06T00:00:00+00:00"
+    ]
+
+
+@pytest.mark.parametrize("events", [(), (("entry", 0, "buy"), ("close", 1, "flat"))])
+def test_rebalance_consumes_flat_boundaries_without_orders(
+    tmp_path,
+    btcusdt_instrument,
+    bar_type,
+    make_payload,
+    events,
+):
+    result = _fraction_backtest(
+        tmp_path,
+        btcusdt_instrument,
+        bar_type,
+        make_payload,
+        events=events,
+    )
+    lineage = pd.read_parquet(result.output_dir / "signal_lineage.parquet")
+    assert not (lineage["decision"] == "rebalance").any()
+
+
+def test_signal_order_on_boundary_suppresses_rebalance_and_consumes_boundary(
+    tmp_path,
+    btcusdt_instrument,
+    bar_type,
+    make_payload,
+):
+    result = _fraction_backtest(
+        tmp_path,
+        btcusdt_instrument,
+        bar_type,
+        make_payload,
+        events=(("entry", 0, "buy"), ("close", 2, "flat"), ("reentry", 3, "buy")),
+    )
+    lineage = pd.read_parquet(result.output_dir / "signal_lineage.parquet")
+    assert not (lineage["decision"] == "rebalance").any()
+    assert lineage.set_index("signal_id").loc["close", "order_ids"]
+
+
+@pytest.mark.parametrize("fraction", [Decimal("0.4"), Decimal("0.000000001")])
+def test_fraction_rebalance_skips_tiny_difference_or_tiny_entry(
+    tmp_path,
+    btcusdt_instrument,
+    bar_type,
+    make_payload,
+    fraction,
+):
+    result = _fraction_backtest(
+        tmp_path,
+        btcusdt_instrument,
+        bar_type,
+        make_payload,
+        prices=(50_000, 50_000, 50_000, 50_000),
+        fraction=fraction,
+    )
+    lineage = pd.read_parquet(result.output_dir / "signal_lineage.parquet")
+    assert not (lineage["decision"] == "rebalance").any()
+    if fraction < Decimal("0.000001"):
+        assert result.manifest.totals.orders == 0
+
+
+def test_fraction_dry_run_cannot_submit_rebalance_orders(
+    tmp_path,
+    btcusdt_instrument,
+    bar_type,
+    make_payload,
+):
+    result = _fraction_backtest(
+        tmp_path,
+        btcusdt_instrument,
+        bar_type,
+        make_payload,
+        policies={("freqai_v1", "2026-05-14"): SourcePolicy(dry_run=True)},
+    )
+    assert result.manifest.totals.orders == 0
+
+
+def test_equity_fraction_replay_is_reproducible(
+    tmp_path,
+    btcusdt_instrument,
+    bar_type,
+    make_payload,
+):
+    runs = [
+        _fraction_backtest(tmp_path / name, btcusdt_instrument, bar_type, make_payload)
+        for name in ("first", "second")
+    ]
+    for filename in ("fills.parquet", "signal_lineage.parquet"):
+        assert filecmp.cmp(
+            runs[0].output_dir / filename, runs[1].output_dir / filename, shallow=False
+        )
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"target_equity_fraction": Decimal("0")},
+        {"target_equity_fraction": Decimal("-0.1")},
+        {"target_equity_fraction": Decimal("1.01")},
+        {"target_equity_fraction": Decimal("NaN")},
+        {"target_equity_fraction": Decimal("Infinity")},
+        {"target_equity_fraction": Decimal("0.4"), "trade_notional": Decimal("100")},
+        {"rebalance_weekday": 6},
+        {"target_equity_fraction": Decimal("0.4"), "rebalance_weekday": -1},
+        {"target_equity_fraction": Decimal("0.4"), "rebalance_weekday": 7},
+        {"target_equity_fraction": Decimal("0.4"), "rebalance_weekday": 2.5},
+    ],
+)
+def test_equity_fraction_params_validate(btcusdt_instrument, bar_type, config, changes):
+    baseline = BaselineStrategyConfig(venue="BINANCE", auth=config.auth)
+    with pytest.raises(ValueError):
+        BaselineNautilusStrategyParams(
+            instrument_id=btcusdt_instrument.id,
+            bar_type=bar_type,
+            baseline_config=baseline,
+            trade_size=Decimal("0.001"),
+            equity_currency=USDT,
+            **changes,
+        )
+
+
+@pytest.mark.parametrize(
+    ("sizing", "error"),
+    [
+        (["--target-equity-fraction", "0"], ValueError),
+        (["--target-equity-fraction", "1.1"], ValueError),
+        (["--target-equity-fraction", "NaN"], ValueError),
+        (["--target-equity-fraction", ".4", "--trade-notional", "1000"], SystemExit),
+        (["--target-equity-fraction", ".4", "--trade-size", ".001"], SystemExit),
+        (["--trade-size", ".001", "--rebalance-weekday", "6"], ValueError),
+        (["--target-equity-fraction", ".4", "--rebalance-weekday", "7"], ValueError),
+        (["--target-equity-fraction", ".4", "--rebalance-weekday", "-1"], ValueError),
+    ],
+)
+def test_equity_fraction_cli_validate(sizing, error):
+    argv = [
+        "--instrument-id",
+        "BTCUSDT.BINANCE",
+        "--bar-type",
+        "BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL",
+        "--signal-source",
+        "freqai_v1",
+        "--signal-model-version",
+        "2026-05-14",
+        "--starting-balance",
+        "10000",
+        *sizing,
+    ]
+    with pytest.raises(error):
+        _config_from_args(_build_arg_parser().parse_args(argv))
+
+
+def test_equity_fraction_cli_config():
+    args = _build_arg_parser().parse_args(
+        [
+            "--instrument-id",
+            "BTCUSDT.BINANCE",
+            "--bar-type",
+            "BTCUSDT.BINANCE-1-MINUTE-LAST-EXTERNAL",
+            "--signal-source",
+            "freqai_v1",
+            "--signal-model-version",
+            "2026-05-14",
+            "--starting-balance",
+            "10000",
+            "--target-equity-fraction",
+            ".4",
+            "--rebalance-weekday",
+            "6",
+            "--account-type",
+            "cash",
+        ]
+    )
+    config = _config_from_args(args)
+    assert config.target_equity_fraction == Decimal(".4")
+    assert config.rebalance_weekday == 6
+    assert config.trade_size == 0
+    assert config.trade_notional is None
+
+
+@pytest.mark.parametrize(("price", "expected_rebalances"), [(25_000, 0), (100_000, 1)])
+def test_weekly_kill_switch_blocks_buys_and_allows_reductions(
+    tmp_path,
+    btcusdt_instrument,
+    bar_type,
+    make_payload,
+    monkeypatch,
+    price,
+    expected_rebalances,
+):
+    update = BaselineNautilusStrategy._update_daily_risk_state
+    boundary_ns = pd.Timestamp("2026-01-05T00:00:00Z").value
+
+    def with_loss(strategy, now_ns):
+        update(strategy, now_ns)
+        if now_ns >= boundary_ns:
+            strategy._baseline.on_account_update(equity_open=10000.0, equity_now=9000.0)
+
+    monkeypatch.setattr(BaselineNautilusStrategy, "_update_daily_risk_state", with_loss)
+    result = _fraction_backtest(
+        tmp_path,
+        btcusdt_instrument,
+        bar_type,
+        make_payload,
+        prices=(50_000, 50_000, price, price),
+    )
+    lineage = pd.read_parquet(result.output_dir / "signal_lineage.parquet")
+    assert (lineage["decision"] == "rebalance").sum() == expected_rebalances
+
+
+def test_new_dry_run_signal_while_long_suppresses_weekly_rebalance(
+    tmp_path,
+    btcusdt_instrument,
+    bar_type,
+    make_payload,
+):
+    result = _fraction_backtest(
+        tmp_path,
+        btcusdt_instrument,
+        bar_type,
+        make_payload,
+        events=(("entry", 0, "buy"), ("dry", 1, "buy", "freqai_dry")),
+        policies={("freqai_dry", "2026-05-14"): SourcePolicy(dry_run=True)},
+    )
+    lineage = pd.read_parquet(result.output_dir / "signal_lineage.parquet")
+    assert not (lineage["decision"] == "rebalance").any()
+    assert lineage.set_index("signal_id").loc["dry", "order_ids"] == ""
+
+
+@pytest.mark.parametrize(
+    ("times", "expected_boundary"),
+    [
+        (
+            [
+                "2026-01-05T00:00:00Z",
+                "2026-01-05T00:01:00Z",
+                "2026-01-12T00:00:00Z",
+                "2026-01-12T00:01:00Z",
+            ],
+            "2026-01-12T00:00:00+00:00",
+        ),
+        (
+            [
+                "2026-01-01T00:00:00Z",
+                "2026-01-04T23:59:00Z",
+                "2026-01-19T12:00:00Z",
+                "2026-01-19T12:01:00Z",
+            ],
+            "2026-01-19T00:00:00+00:00",
+        ),
+    ],
+)
+def test_weekly_schedule_starts_at_first_bar_and_consumes_latest_missed_boundary(
+    tmp_path,
+    btcusdt_instrument,
+    bar_type,
+    make_payload,
+    times,
+    expected_boundary,
+):
+    result = _fraction_backtest(
+        tmp_path,
+        btcusdt_instrument,
+        bar_type,
+        make_payload,
+        times=times,
+        prices=(50_000, 50_000, 100_000, 100_000),
+    )
+    lineage = pd.read_parquet(result.output_dir / "signal_lineage.parquet")
+    assert lineage[lineage["decision"] == "rebalance"]["signal_id"].tolist() == [
+        f"rebalance:{expected_boundary}"
+    ]
+
+
+@pytest.mark.parametrize("account_type", [None, AccountType.CASH, AccountType.MARGIN])
+def test_fraction_sizing_equity_uses_total_balances_and_handles_missing_accounts(
+    btcusdt_instrument,
+    bar_type,
+    config,
+    monkeypatch,
+    account_type,
+):
+    instrument = btcusdt_instrument
+    account = (
+        None
+        if account_type is None
+        else SimpleNamespace(
+            type=account_type,
+            balance_total=lambda currency: Money(
+                5000 if currency == USDT else 0.1,
+                currency,
+            ),
+        )
+    )
+    monkeypatch.setattr(
+        BaselineNautilusStrategy,
+        "portfolio",
+        SimpleNamespace(account=lambda venue: account),
+    )
+    strategy = BaselineNautilusStrategy(
+        BaselineNautilusStrategyParams(
+            instrument_id=instrument.id,
+            bar_type=bar_type,
+            baseline_config=BaselineStrategyConfig(venue="BINANCE", auth=config.auth),
+            trade_size=Decimal(0),
+            equity_currency=USDT,
+            target_equity_fraction=Decimal(".4"),
+        )
+    )
+    strategy._last_close = Decimal(50000)
+    monkeypatch.setattr(strategy, "_current_equity", lambda: 12345.0)
+    expected = {
+        None: Decimal(0),
+        AccountType.CASH: Decimal(10000),
+        AccountType.MARGIN: Decimal(12345),
+    }
+    assert strategy._sizing_equity(instrument) == expected[account_type]

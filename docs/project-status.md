@@ -22,9 +22,10 @@ search stopped on 2026-10-20. Rounds: [summary](research/README.md).
 
 1. Beta allocation track, [ADR-019](decisions/019-beta-allocation.md) (Accepted
    2026-10-20): B2, BTC/ETH held above their 200-day average at 40% exposure,
-   rebalanced weekly. Next: Nautilus sizing as a fraction of equity with weekly
-   rebalance, paper-runner sell = close, a Nautilus backtest matching
-   `apps/research/beta.py`, then local paper ≥ 4 weeks and Spot testnet ≥ 14 days.
+   rebalanced weekly. Nautilus equity-fraction sizing with weekly reset is built
+   and its backtest matches `apps/research/beta.py` (final equity within 2%,
+   identical holding days). Next: forward test (operator choices pending: daily
+   signal job, testnet key, local paper vs testnet first).
    Any future alpha protocol: freeze
    a contract in `docs/research/contracts/`, one mechanism module, cross-check,
    run with `apps/research/`. Lessons in both daily rounds.
@@ -50,6 +51,8 @@ search stopped on 2026-10-20. Rounds: [summary](research/README.md).
 
 ## Latest Verification
 
+- 2026-10-20 Nautilus `--target-equity-fraction`/`--rebalance-weekday` (Codex-written,
+  reviewed); B2 backtest vs reference in ADR-019 §5. `uv run pytest` 913 passed, 12 skipped.
 - 2026-10-20 beta evaluation (`apps/research/beta.py`, Codex-reviewed before the
   run; fee-reserve and coverage findings fixed): `uv run pytest` 871 passed, 12 skipped.
 - 2026-10-20 v60/v61: mechanism weights identical to an independent reference on

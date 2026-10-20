@@ -7,6 +7,7 @@ NautilusTrader 上的自定义 Strategy、runner 和风控扩展。这是唯一�
   ADR-008 硬风控（单日亏损停机、连续亏损暂停、信号过期拦截）。LLM 不进入这条路径。
 - **现货语义**：现金账户（现货，含 Spot testnet）上 `sell` 信号按 `flat` 处理，只平多不开空；
   保证金账户不变。仓位可用 `--trade-size`（固定数量）或 `--trade-notional`（固定金额）。
+  回测也支持 `--target-equity-fraction`（权益比例），配合 `--rebalance-weekday`（0–6）在该 UTC 星期结束时每周再平衡。
 - **下一步入口**：等有候选策略通过 Gates v2 后，按 `docs/runbook-first-testnet-canary.md`
   用 `runners/testnet_runner.py` 重启 canary。
 - **已归档**：`portfolio_*` 多资产执行、testnet session 与 joint/egress 模块

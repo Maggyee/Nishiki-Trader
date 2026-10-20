@@ -42,8 +42,13 @@ def simulate(
     equity: float = EQUITY,
     start: str = START,
     end: str = END,
+    rebalance_weekday: int | None = None,
 ) -> dict[str, object]:
-    """Daily equity of a long/flat book that trades only when its target changes."""
+    """Daily equity of a long/flat book that trades when its target changes.
+
+    With ``rebalance_weekday`` it also resets to the target at that weekday's
+    close, so a partial exposure cannot drift up in a rally (ADR-019 §5).
+    """
     first, last = pd.Timestamp(start, tz="UTC"), pd.Timestamp(end, tz="UTC")
     days = pd.date_range(first, last, freq="D")
     raw = closes[weights.columns].reindex(days)
@@ -62,7 +67,8 @@ def simulate(
         prices = px[row]
         value = cash + units @ prices
         wanted = target[row]
-        if previous is None or not np.array_equal(wanted, previous):
+        scheduled = rebalance_weekday is not None and days[row].weekday() == rebalance_weekday
+        if previous is None or scheduled or not np.array_equal(wanted, previous):
             # Size from equity net of this rebalance's fees so cash never goes
             # negative; the fixed point converges in a few steps for small costs.
             fee = 0.0

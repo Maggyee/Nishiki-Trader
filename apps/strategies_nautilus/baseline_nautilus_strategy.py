@@ -38,8 +38,8 @@ kill-switch rule that closing is never blocked.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import UTC, date, datetime
-from decimal import Decimal
+from datetime import UTC, date, datetime, timedelta
+from decimal import ROUND_DOWN, Decimal
 from typing import Protocol
 
 from nautilus_trader.model.data import Bar, BarType
@@ -173,6 +173,13 @@ class BaselineNautilusStrategyParams:
     signals: list[SignalEvent] = field(default_factory=list)
     signal_source: SignalSource | None = None
     lineage: list[LineageRecord] = field(default_factory=list)
+    target_equity_fraction: Decimal | None = None
+    rebalance_weekday: int | None = None
+
+    def __post_init__(self) -> None:
+        _validate_equity_sizing(
+            self.target_equity_fraction, self.trade_notional, self.rebalance_weekday
+        )
 
 
 class BaselineNautilusStrategy(Strategy):
@@ -188,6 +195,9 @@ class BaselineNautilusStrategy(Strategy):
         self._current_day: date | None = None
         self._day_open_equity: float | None = None
         self._last_close: Decimal | None = None
+        self._last_signal: SignalEvent | None = None
+        self._rebalance_intent: OrderIntent | None = None
+        self._next_rebalance_ns: int | None = None
 
     @property
     def instrument_id(self) -> InstrumentId:
@@ -198,7 +208,10 @@ class BaselineNautilusStrategy(Strategy):
 
     def on_bar(self, bar: Bar) -> None:
         bar_ns = int(bar.ts_event)
-        if self._params.trade_notional is not None:
+        if (
+            self._params.trade_notional is not None
+            or self._params.target_equity_fraction is not None
+        ):
             self._last_close = bar.close.as_decimal()
         self._update_daily_risk_state(bar_ns)
         submitted_order_this_bar = False
@@ -223,6 +236,7 @@ class BaselineNautilusStrategy(Strategy):
                     )
                 )
                 continue
+            self._last_signal = event
             spot_note = None
             if event.side == "sell" and self._is_cash_account():
                 event = event.model_copy(update={"side": "flat", "score": 0.0})
@@ -237,6 +251,8 @@ class BaselineNautilusStrategy(Strategy):
                 client_order_ids = []
                 lineage_reason = "suppressed_after_same_bar_order_submission"
             else:
+                if intent.action != "skip":
+                    self._rebalance_intent = intent
                 client_order_ids = self._apply_intent(intent)
                 if client_order_ids:
                     submitted_order_this_bar = True
@@ -252,6 +268,7 @@ class BaselineNautilusStrategy(Strategy):
                     ts_decision=bar_ns,
                 )
             )
+        self._rebalance(bar_ns, submitted_order_this_bar)
 
     def _apply_intent(self, intent: OrderIntent) -> list[str]:
         action = intent.action
@@ -270,6 +287,10 @@ class BaselineNautilusStrategy(Strategy):
         tags = [_signal_tag(intent.signal_id)]
 
         if action == "target_long":
+            if self._params.target_equity_fraction is not None and self.portfolio.is_net_long(
+                self._params.instrument_id
+            ):
+                return []
             quantity = self._scaled_trade_size(intent)
             if quantity <= 0:
                 return []
@@ -337,7 +358,7 @@ class BaselineNautilusStrategy(Strategy):
     def _order_quantity(
         self, instrument: Instrument, quantity: Decimal, side: OrderSide
     ) -> Quantity | None:
-        if self._params.trade_notional is None:
+        if self._params.trade_notional is None and self._params.target_equity_fraction is None:
             return instrument.make_qty(quantity)
         if side == OrderSide.BUY:
             quantity = min(quantity, self._affordable_buy_quantity(instrument))
@@ -366,11 +387,113 @@ class BaselineNautilusStrategy(Strategy):
         if max_position_pct <= 0 or target_position_pct <= 0:
             return Decimal(0)
         base_size = self._params.trade_size
-        if self._params.trade_notional is not None:
+        if self._params.target_equity_fraction is not None:
+            if self._last_close is None or self._last_close <= 0:
+                return Decimal(0)
+            instrument = self.cache.instrument(self._params.instrument_id)
+            if instrument is None:
+                return Decimal(0)
+            base_size = (
+                self._params.target_equity_fraction
+                * self._sizing_equity(instrument)
+                / self._last_close
+            )
+        elif self._params.trade_notional is not None:
             if self._last_close is None or self._last_close <= 0:
                 return Decimal(0)
             base_size = self._params.trade_notional / self._last_close
         return base_size * target_position_pct / max_position_pct
+
+    def _sizing_equity(self, instrument: Instrument) -> Decimal:
+        account = self.portfolio.account(self._params.instrument_id.venue)
+        if account is None:
+            return Decimal(0)
+        if account.type != AccountType.CASH:
+            equity = self._current_equity()
+            return Decimal(str(equity)) if equity is not None else Decimal(0)
+        quote = account.balance_total(instrument.quote_currency)
+        base = account.balance_total(instrument.base_currency)
+        return (quote.as_decimal() if quote is not None else Decimal(0)) + (
+            base.as_decimal() * self._last_close
+            if base is not None and self._last_close is not None
+            else Decimal(0)
+        )
+
+    def _rebalance(self, bar_ns: int, submitted_order_this_bar: bool) -> None:
+        weekday = self._params.rebalance_weekday
+        if weekday is None:
+            return
+        week_ns = 7 * 24 * 60 * 60 * 1_000_000_000
+        if self._next_rebalance_ns is None:
+            day = datetime.fromtimestamp(bar_ns // 1_000_000_000, tz=UTC).replace(
+                hour=0, minute=0, second=0, microsecond=0
+            )
+            boundary = day + timedelta(days=(weekday + 1 - day.weekday()) % 7)
+            self._next_rebalance_ns = int(boundary.timestamp()) * 1_000_000_000
+            if self._next_rebalance_ns < bar_ns:
+                self._next_rebalance_ns += week_ns
+        if bar_ns < self._next_rebalance_ns:
+            return
+        # A gap spanning several weeks causes one reset at the latest boundary.
+        boundary_ns = (
+            self._next_rebalance_ns + ((bar_ns - self._next_rebalance_ns) // week_ns) * week_ns
+        )
+        self._next_rebalance_ns = boundary_ns + week_ns
+        if submitted_order_this_bar or not self.portfolio.is_net_long(self.instrument_id):
+            return
+        intent = self._rebalance_intent
+        if intent is not None and intent.dry_run:
+            return
+        instrument = self.cache.instrument(self.instrument_id)
+        if instrument is None or self._last_close is None or self._last_close <= 0:
+            return
+        boundary_iso = datetime.fromtimestamp(boundary_ns // 1_000_000_000, tz=UTC).isoformat()
+        signal_id = f"rebalance:{boundary_iso}"
+        if intent is None:
+            intent = OrderIntent(
+                signal_id,
+                str(self.instrument_id),
+                "target_long",
+                self._params.baseline_config.max_position_pct,
+            )
+        increment = instrument.size_increment.as_decimal()
+        desired = (self._scaled_trade_size(intent) / increment).to_integral_value(
+            rounding=ROUND_DOWN
+        ) * increment
+        difference = desired - self.portfolio.net_position(self.instrument_id)
+        side = OrderSide.BUY if difference > 0 else OrderSide.SELL
+        if side == OrderSide.BUY and self._baseline.kill_switch_engaged:
+            return
+        quantity = self._order_quantity(instrument, abs(difference), side)
+        if quantity is None:
+            return
+        if (
+            instrument.min_notional is not None
+            and quantity.as_decimal() * self._last_close < instrument.min_notional.as_decimal()
+        ):
+            return
+        order = self.order_factory.market(
+            instrument_id=self.instrument_id,
+            order_side=side,
+            quantity=quantity,
+            reduce_only=side == OrderSide.SELL,
+            tags=[signal_id, _signal_tag(signal_id)],
+        )
+        self.submit_order(order)
+        self.lineage.append(
+            LineageRecord(
+                signal_id=signal_id,
+                source=self._last_signal.source if self._last_signal is not None else "",
+                model_version=(
+                    self._last_signal.model_version if self._last_signal is not None else ""
+                ),
+                ts_event=boundary_ns,
+                decision="rebalance",
+                reason=None,
+                client_order_ids=[order.client_order_id.value],
+                ts_decision=bar_ns,
+            )
+        )
 
     def _update_daily_risk_state(self, now_ns: int) -> None:
         current_day = datetime.fromtimestamp(now_ns / 1_000_000_000, tz=UTC).date()
@@ -414,3 +537,18 @@ __all__ = [
 
 def _signal_tag(signal_id: str) -> str:
     return f"{SIGNAL_TAG_PREFIX}{signal_id}"
+
+
+def _validate_equity_sizing(
+    fraction: Decimal | None, notional: Decimal | None, weekday: int | None
+) -> None:
+    if fraction is not None:
+        if not fraction.is_finite() or not 0 < fraction <= 1:
+            raise ValueError("target_equity_fraction must be in (0, 1]")
+        if notional is not None:
+            raise ValueError("target_equity_fraction and trade_notional are mutually exclusive")
+    if weekday is not None:
+        if fraction is None:
+            raise ValueError("rebalance_weekday requires target_equity_fraction")
+        if type(weekday) is not int or not 0 <= weekday <= 6:
+            raise ValueError("rebalance_weekday must be an integer in [0, 6]")

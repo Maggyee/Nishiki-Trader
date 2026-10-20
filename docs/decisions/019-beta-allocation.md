@@ -116,6 +116,23 @@ B2 target, against buy-and-hold scaled and rebalanced the same way:
 Accepted for paper: B2 at 40% exposure (20% per coin), rebalanced weekly and on
 every signal change, as `rule_beta_sma200_v1`.
 
+### Nautilus verification (2026-10-20)
+
+`BaselineNautilusStrategy` sizes a position as a fraction of marked equity and
+resets it weekly (`--target-equity-fraction 0.4 --rebalance-weekday 6`). One run
+per coin, 10,000 USDT each, 1-hour bars, Binance taker fee 0.1%, against
+`apps.research.beta.simulate` with the same settings:
+
+| Coin | Nautilus final | Reference final | Max drawdown (Nautilus / ref) | Days held |
+|---|---|---|---|---|
+| BTC | 24,324 | 24,369 (−0.18%) | 33.1% / 31.4% | 1,396 / 1,396 |
+| ETH | 40,417 | 41,263 (−2.05%) | 31.6% / 32.7% | 1,366 / 1,366 |
+
+Daily equity differs by 0.8–0.9% at the median (fills one hour after the daily
+close, lot rounding, skipped sub-10-USDT resets). Two such sleeves of half the
+capital each behave like one account at 20% per coin (max drawdown 22.5% against
+21.9%), so one runner per coin is an acceptable deployment.
+
 ## 6. What this ADR does not do
 
 - Does not change ADR-014 or reopen any rejected identity.

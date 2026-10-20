@@ -52,6 +52,7 @@ from apps.strategies_nautilus.baseline_nautilus_strategy import (
     BaselineNautilusStrategy,
     BaselineNautilusStrategyParams,
     LineageRecord,
+    _validate_equity_sizing,
 )
 from apps.strategies_nautilus.baseline_strategy import BaselineStrategyConfig
 from apps.strategies_nautilus.result_schema import (
@@ -85,6 +86,13 @@ class BacktestRunnerConfig:
     account_type: AccountType = AccountType.MARGIN
     oms_type: OmsType = OmsType.NETTING
     trade_notional: Decimal | None = None
+    target_equity_fraction: Decimal | None = None
+    rebalance_weekday: int | None = None
+
+    def __post_init__(self) -> None:
+        _validate_equity_sizing(
+            self.target_equity_fraction, self.trade_notional, self.rebalance_weekday
+        )
 
 
 @dataclass
@@ -204,6 +212,8 @@ def run_backtest(config: BacktestRunnerConfig) -> RunResult:
             baseline_config=config.baseline_config,
             trade_size=config.trade_size,
             trade_notional=config.trade_notional,
+            target_equity_fraction=config.target_equity_fraction,
+            rebalance_weekday=config.rebalance_weekday,
             equity_currency=config.base_currency,
             lineage=lineage,
         )
@@ -882,6 +892,12 @@ def _build_manifest(
                         "trade_notional": (
                             None if config.trade_notional is None else str(config.trade_notional)
                         ),
+                        "target_equity_fraction": (
+                            None
+                            if config.target_equity_fraction is None
+                            else str(config.target_equity_fraction)
+                        ),
+                        "rebalance_weekday": config.rebalance_weekday,
                         "seed": config.seed,
                         "account_type": config.account_type.name,
                         "oms_type": config.oms_type.name,
@@ -1014,6 +1030,16 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         type=Decimal,
         help="Order value in quote currency; quantity = notional / latest bar close.",
     )
+    sizing.add_argument(
+        "--target-equity-fraction",
+        type=Decimal,
+        help="Target quantity as a fraction of marked equity, in (0, 1].",
+    )
+    parser.add_argument(
+        "--rebalance-weekday",
+        type=int,
+        help="Reset the equity-fraction target after this UTC weekday (0=Monday, 6=Sunday).",
+    )
     parser.add_argument("--starting-balance", type=Decimal, required=True)
     parser.add_argument("--base-currency", default="USDT")
     parser.add_argument(
@@ -1074,6 +1100,8 @@ def _config_from_args(args: argparse.Namespace) -> BacktestRunnerConfig:
         ),
         trade_size=args.trade_size if args.trade_size is not None else Decimal(0),
         trade_notional=_positive_notional(getattr(args, "trade_notional", None)),
+        target_equity_fraction=getattr(args, "target_equity_fraction", None),
+        rebalance_weekday=getattr(args, "rebalance_weekday", None),
         starting_balance=Money(args.starting_balance, currency),
         base_currency=currency,
         signal_filter=signal_filter,
