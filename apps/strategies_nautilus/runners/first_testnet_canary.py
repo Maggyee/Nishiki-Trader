@@ -67,6 +67,7 @@ class FirstCanaryStrategySpec:
     target_equity_fraction: Decimal | None = None
     rebalance_weekday: int | None = None
     allocated_capital: Decimal | None = None
+    rebalance_max_bar_move: Decimal | None = None
 
     def __post_init__(self) -> None:
         if not self.source:
@@ -79,7 +80,11 @@ class FirstCanaryStrategySpec:
                 f"got {self.position_pct_multiplier}"
             )
         _validate_equity_sizing(
-            self.target_equity_fraction, None, self.rebalance_weekday, self.allocated_capital
+            self.target_equity_fraction,
+            None,
+            self.rebalance_weekday,
+            self.allocated_capital,
+            self.rebalance_max_bar_move,
         )
         if not self.trade_size.is_finite() or self.trade_size < 0:
             raise ValueError("trade_size must be finite and non-negative")
@@ -196,6 +201,7 @@ def build_register_strategies(
                 target_equity_fraction=spec.target_equity_fraction,
                 rebalance_weekday=spec.rebalance_weekday,
                 allocated_capital=spec.allocated_capital,
+                rebalance_max_bar_move=spec.rebalance_max_bar_move,
             )
         )
         sink(node, strategy)
@@ -218,6 +224,11 @@ def build_live_telemetry_reader(
     same instance the strategy advances on each ``on_bar`` tick. Use
     ``testnet_runner.main(..., telemetry_reader=reader)``; the runner calls
     ``reader.bind_node(node)`` after ``node.build()``.
+
+    With ``spec.allocated_capital`` the reader reports the strategy's own
+    sleeve equity instead of the account's: runners sharing one account would
+    otherwise book each other's purchases as daily loss. ``starting_balance``
+    must then equal the allocation, so the daily loss limit is a share of it.
     """
 
     if exchange_error_counter is not None and exchange_error_log_paths:
@@ -231,6 +242,14 @@ def build_live_telemetry_reader(
 
     instrument_id = InstrumentId.from_str(spec.instrument_id_str)
     bar_type = BarType.from_str(spec.bar_type_str)
+    equity_reader = None
+    if spec.allocated_capital is not None:
+        if Decimal(str(starting_balance)) != spec.allocated_capital:
+            raise ValueError(
+                f"starting_balance {starting_balance} must equal allocated_capital "
+                f"{spec.allocated_capital}"
+            )
+        equity_reader = _sleeve_equity_reader(instrument_id)
     counter = exchange_error_counter
     if counter is None and exchange_error_log_paths:
         counter = NautilusLogErrorCounter(exchange_error_log_paths)
@@ -241,7 +260,22 @@ def build_live_telemetry_reader(
         starting_balance=starting_balance,
         signal_source=signal_source,
         exchange_error_counter=counter,
+        equity_reader=equity_reader,
     )
+
+
+def _sleeve_equity_reader(instrument_id: Any) -> Callable[[Any], float | None]:
+    def read(node: Any) -> float | None:
+        for strategy in node.trader.strategies():
+            if (
+                isinstance(strategy, BaselineNautilusStrategy)
+                and strategy.instrument_id == instrument_id
+            ):
+                equity = strategy.sleeve_equity
+                return float(equity) if equity is not None else None
+        return None
+
+    return read
 
 
 def build_sidecar_recording(

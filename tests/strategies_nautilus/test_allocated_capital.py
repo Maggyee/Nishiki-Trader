@@ -1,4 +1,4 @@
-"""Synthetic engine tests for the strategy's quote-currency capital sleeve."""
+"""Synthetic engine tests for the strategy's quote-currency capital sleeve and its guards."""
 
 from dataclasses import replace
 from decimal import Decimal
@@ -59,16 +59,18 @@ def sleeve_run(make_payload):
         trade_size=Decimal(0),
         trade_notional=None,
         restored=(),
-    ):
-        instrument = TestInstrumentProvider.btcusdt_binance()
-        bar_type = BarType.from_str(f"{instrument.id}-1-MINUTE-LAST-EXTERNAL")
-        times = pd.DatetimeIndex([
+        times=(
             "2026-01-01T00:00:00Z",
             "2026-01-05T00:00:00Z",
             "2026-01-12T00:00:00Z",
             "2026-01-13T00:00:00Z",
             "2026-01-13T00:01:00Z",
-        ][:len(prices)])
+        ),
+        max_move=None,
+    ):
+        instrument = TestInstrumentProvider.btcusdt_binance()
+        bar_type = BarType.from_str(f"{instrument.id}-1-MINUTE-LAST-EXTERNAL")
+        times = pd.DatetimeIndex(list(times)[:len(prices)])
         signals = [
             SignalEvent.model_validate(make_payload(
                 signal_id=signal_id, ts_event=times[row].value, side=side
@@ -93,6 +95,7 @@ def sleeve_run(make_payload):
             target_equity_fraction=fraction,
             rebalance_weekday=weekday,
             allocated_capital=allocated,
+            rebalance_max_bar_move=max_move,
             signals=signals,
         )
         engine = BacktestEngine(config=BacktestEngineConfig(
@@ -323,3 +326,57 @@ def test_close_then_reentry_sizes_from_realized_sleeve_cash(sleeve_run):
     assert strategy.fills[2][0].last_qty == expected
     assert len(strategy.fills) == 4
     assert strategy.sleeve_cash == strategy.sleeve_equity
+
+
+def test_sleeve_daily_stop_ignores_other_strategies_cash(sleeve_run, monkeypatch):
+    run, _, instrument = sleeve_run()
+    strategy = BaselineNautilusStrategy(replace(run._params, signals=[], rebalance_weekday=None))
+    account = {"equity": 10_000}
+    monkeypatch.setattr(
+        BaselineNautilusStrategy, "portfolio",
+        SimpleNamespace(
+            account=lambda venue: None,
+            equity=lambda **kwargs: {USDT: Money(account["equity"], USDT)},
+        ),
+    )
+    monkeypatch.setattr(
+        BaselineNautilusStrategy, "cache", SimpleNamespace(positions_open=lambda **kwargs: []),
+    )
+    price = instrument.make_price(50_000)
+    strategy.on_bar(SimpleNamespace(ts_event=0, close=price))
+    account["equity"] = 9_000  # another runner on the account spends a tenth of it
+    strategy.on_bar(SimpleNamespace(ts_event=60_000_000_000, close=price))
+    assert not strategy._baseline.kill_switch_engaged
+    strategy._sleeve_cash -= Decimal(60)  # the sleeve itself loses 6% of 1,000
+    strategy.on_bar(SimpleNamespace(ts_event=120_000_000_000, close=price))
+    assert strategy._baseline.kill_switch_engaged
+
+
+@pytest.mark.parametrize("max_move", [None, Decimal(".05")])
+def test_rebalance_waits_out_a_price_spike(sleeve_run, max_move):
+    # Sunday's boundary lands on a one-minute spike to 40k that reverts to 60k.
+    strategy, _, _ = sleeve_run(
+        events=(("entry", 0, "buy"),),
+        prices=(50_000, 60_000, 40_000, 60_000, 60_000),
+        times=(
+            "2026-01-01T00:00:00Z",
+            "2026-01-04T23:59:00Z",
+            "2026-01-05T00:00:00Z",
+            "2026-01-05T00:01:00Z",
+            "2026-01-05T00:02:00Z",
+        ),
+        max_move=max_move,
+    )
+    rebalance = [row for row in strategy.lineage if row.decision == "rebalance"]
+    assert len(rebalance) == 1
+    assert rebalance[0].signal_id == "rebalance:2026-01-05T00:00:00+00:00"
+    fill = strategy.fills[1][0]
+    if max_move is None:
+        assert rebalance[0].ts_decision == pd.Timestamp("2026-01-05T00:00:00Z").value
+        assert (fill.order_side, fill.last_px.as_decimal()) == (OrderSide.BUY, 40_000)
+    else:
+        # .008 BTC after the spike: equity 599.6 + 480, target .4 of it at 60k.
+        assert rebalance[0].ts_decision == pd.Timestamp("2026-01-05T00:02:00Z").value
+        assert (fill.order_side, fill.last_px.as_decimal()) == (OrderSide.SELL, 60_000)
+        assert fill.last_qty.as_decimal() == Decimal(".008") - Decimal(".007197")
+    assert len(strategy.fills) == 2

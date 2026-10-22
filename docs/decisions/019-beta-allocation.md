@@ -83,6 +83,10 @@ trades; the testnet runs the same `BaselineNautilusStrategy` as live would.
   ADR, because `promotion_review` only accepts paper or testnet bundles.
 - ADR-015 limits apply at every stage. A live drawdown beyond the historical
   maximum drawdown triggers a stop and an operator review.
+- Amended 2026-10-22 (operator, after day one): runners sharing one account judge
+  daily loss on their own sleeve. On the account they booked each other's
+  ~400 USDT purchase as loss (−400 against a −500 limit). A weekly rebalance waits
+  while the minute close moved more than 5%; a testnet BTC minute printed −20%.
 
 ## 5. Historical comparison (2026-10-20)
 

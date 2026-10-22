@@ -8,6 +8,8 @@ NautilusTrader 上的自定义 Strategy、runner 和风控扩展。这是唯一�
 - **现货语义**：现金账户（现货，含 Spot testnet）上 `sell` 信号按 `flat` 处理，只平多不开空；
   保证金账户不变。仓位可用 `--trade-size`（固定数量）或 `--trade-notional`（固定金额）。
   回测也支持 `--target-equity-fraction`（权益比例），配合 `--rebalance-weekday`（0–6）在该 UTC 星期结束时每周再平衡。
+  testnet 设 `allocated_capital` 时策略只按自己那份资金记账，单日止损和运行器的单日亏损也按这份算
+  （多个运行器共用一个账户）；`rebalance_max_bar_move` 让周调仓在单根 K 线跳价过大时顺延。
 - **下一步入口**：等有候选策略通过 Gates v2 后，按 `docs/runbook-first-testnet-canary.md`
   用 `runners/testnet_runner.py` 重启 canary。
 - **已归档**：`portfolio_*` 多资产执行、testnet session 与 joint/egress 模块

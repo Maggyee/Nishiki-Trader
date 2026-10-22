@@ -118,6 +118,9 @@ class LiveTelemetryReader:
     exchange_error_counter : optional callable returning a cumulative
         exchange/runtime error count for this run. The production launcher uses
         :class:`NautilusLogErrorCounter` over the redirected Nautilus logs.
+    equity_reader : optional callable reading this runner's own equity from
+        the node (``None`` until known) in place of the venue's portfolio
+        equity; used when several runners share one account.
     """
 
     venue: Venue
@@ -126,6 +129,7 @@ class LiveTelemetryReader:
     starting_balance: float
     signal_source: SignalStorePollingSource | None = None
     exchange_error_counter: ExchangeErrorCounter | None = None
+    equity_reader: Callable[[Any], float | None] | None = None
     _node_holder: dict[str, Any] = field(default_factory=dict, repr=False)
     _day_anchor_total: float | None = field(default=None, repr=False)
     _day_anchor_date: date | None = field(default=None, repr=False)
@@ -183,6 +187,9 @@ class LiveTelemetryReader:
         )
 
     def _read_account_total(self, node: Any) -> float:
+        if self.equity_reader is not None:
+            equity = self.equity_reader(node)
+            return self.starting_balance if equity is None else float(equity)
         equity_by_currency = node.portfolio.equity(venue=self.venue)
         if not equity_by_currency:
             return self.starting_balance

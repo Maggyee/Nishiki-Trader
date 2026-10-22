@@ -177,6 +177,9 @@ class BaselineNautilusStrategyParams:
     target_equity_fraction: Decimal | None = None
     rebalance_weekday: int | None = None
     allocated_capital: Decimal | None = None
+    # When set, a due weekly rebalance waits while the bar close moved more than
+    # this fraction from the previous close (testnet order books print spikes).
+    rebalance_max_bar_move: Decimal | None = None
 
     def __post_init__(self) -> None:
         _validate_equity_sizing(
@@ -184,6 +187,7 @@ class BaselineNautilusStrategyParams:
             self.trade_notional,
             self.rebalance_weekday,
             self.allocated_capital,
+            self.rebalance_max_bar_move,
         )
 
 
@@ -200,6 +204,7 @@ class BaselineNautilusStrategy(Strategy):
         self._current_day: date | None = None
         self._day_open_equity: float | None = None
         self._last_close: Decimal | None = None
+        self._previous_close: Decimal | None = None
         self._last_signal: SignalEvent | None = None
         self._rebalance_intent: OrderIntent | None = None
         self._next_rebalance_ns: int | None = None
@@ -244,6 +249,7 @@ class BaselineNautilusStrategy(Strategy):
             self._params.trade_notional is not None
             or self._params.target_equity_fraction is not None
         ):
+            self._previous_close = self._last_close
             self._last_close = bar.close.as_decimal()
         if self._params.allocated_capital is not None and self._sleeve_cash is None:
             self._sleeve_cash = (
@@ -503,6 +509,12 @@ class BaselineNautilusStrategy(Strategy):
                 self._next_rebalance_ns += week_ns
         if bar_ns < self._next_rebalance_ns:
             return
+        move = self._bar_move()
+        limit = self._params.rebalance_max_bar_move
+        if limit is not None and move is not None and move > limit:
+            # The boundary stays due: retry on the next bar.
+            self.log.warning(f"Rebalance deferred: bar close moved {move:.2%} > {limit:.2%}")
+            return
         # A gap spanning several weeks causes one reset at the latest boundary.
         boundary_ns = (
             self._next_rebalance_ns + ((bar_ns - self._next_rebalance_ns) // week_ns) * week_ns
@@ -564,6 +576,11 @@ class BaselineNautilusStrategy(Strategy):
             )
         )
 
+    def _bar_move(self) -> Decimal | None:
+        if self._previous_close is None or self._previous_close <= 0 or self._last_close is None:
+            return None
+        return abs(self._last_close / self._previous_close - 1)
+
     def _update_daily_risk_state(self, now_ns: int) -> None:
         current_day = datetime.fromtimestamp(now_ns / 1_000_000_000, tz=UTC).date()
         equity = self._current_equity()
@@ -578,6 +595,10 @@ class BaselineNautilusStrategy(Strategy):
             )
 
     def _current_equity(self) -> float | None:
+        if self._params.allocated_capital is not None:
+            # Strategies sharing one account must not count each other's cash.
+            equity = self.sleeve_equity
+            return float(equity) if equity is not None else None
         equities = self.portfolio.equity(venue=self._params.instrument_id.venue)
         if not equities:
             return None
@@ -613,6 +634,7 @@ def _validate_equity_sizing(
     notional: Decimal | None,
     weekday: int | None,
     allocated_capital: Decimal | None = None,
+    max_bar_move: Decimal | None = None,
 ) -> None:
     if fraction is not None:
         if not fraction.is_finite() or not 0 < fraction <= 1:
@@ -629,3 +651,8 @@ def _validate_equity_sizing(
             raise ValueError("allocated_capital requires target_equity_fraction")
         if not allocated_capital.is_finite() or allocated_capital <= 0:
             raise ValueError("allocated_capital must be finite and positive")
+    if max_bar_move is not None:
+        if weekday is None:
+            raise ValueError("rebalance_max_bar_move requires rebalance_weekday")
+        if not max_bar_move.is_finite() or not 0 < max_bar_move < 1:
+            raise ValueError("rebalance_max_bar_move must be in (0, 1)")

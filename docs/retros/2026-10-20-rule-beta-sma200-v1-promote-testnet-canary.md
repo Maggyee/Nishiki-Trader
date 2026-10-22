@@ -39,3 +39,5 @@ The gates are ADR-019 §3 (beta track, no alpha claim), not ADR-014.
 - The runner's auto-flatten triggers stay armed (daily loss 5% of 10,000 USDT, exchange
   error and reconnect bursts). A drawdown beyond the historical maximum stops the test
   for an operator review.
+- Amended 2026-10-22 (operator): daily loss is judged per runner on its own 5,000 USDT
+  sleeve (5% = 250 USDT), because both runners share one account; see ADR-019 §4.

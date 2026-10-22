@@ -168,6 +168,12 @@ def test_register_strategies_invokes_default_sink_through_trader(tmp_path: Path)
         {"target_equity_fraction": Decimal(".4"), "trade_size": Decimal(-1)},
         {"target_equity_fraction": Decimal(".4"), "trade_size": Decimal("NaN")},
         {"target_equity_fraction": Decimal(".4"), "trade_size": Decimal("Infinity")},
+        {"target_equity_fraction": Decimal(".4"), "rebalance_max_bar_move": Decimal(".05")},
+        *(
+            {"target_equity_fraction": Decimal(".4"), "rebalance_weekday": 6,
+             "rebalance_max_bar_move": Decimal(move)}
+            for move in ("0", "1", "-.05", "NaN")
+        ),
     ],
 )
 def test_spec_validates_fraction_sizing(changes):
@@ -184,6 +190,7 @@ def test_register_passes_fraction_sleeve_and_weekday(tmp_path, allocated_capital
         "target_equity_fraction": Decimal(".4"),
         "rebalance_weekday": 6,
         "allocated_capital": allocated_capital,
+        "rebalance_max_bar_move": Decimal(".05"),
     })
     strategies = []
     register = build_register_strategies(
@@ -196,4 +203,5 @@ def test_register_passes_fraction_sleeve_and_weekday(tmp_path, allocated_capital
     assert params.target_equity_fraction == Decimal(".4")
     assert params.rebalance_weekday == 6
     assert params.allocated_capital == allocated_capital
+    assert params.rebalance_max_bar_move == Decimal(".05")
     assert spec.build_authorization().policies[(spec.source, spec.model_version)].position_pct_multiplier == .1

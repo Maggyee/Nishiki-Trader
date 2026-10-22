@@ -928,3 +928,62 @@ def test_run_long_running_testnet_calls_reader_bind_node_after_build(
     assert result.stop_reason == "max_duration"
     assert len(bind_calls) == 1
     assert bind_calls[0] is holder["node"]
+
+
+# ---------------------------------------------------------------------------
+# Sleeve equity for runners sharing one account
+# ---------------------------------------------------------------------------
+
+SLEEVE_SPEC_KWARGS = {
+    **VALID_SPEC_KWARGS,
+    "trade_size": Decimal(0),
+    "target_equity_fraction": Decimal("0.4"),
+    "rebalance_weekday": 6,
+    "allocated_capital": Decimal(5000),
+}
+
+
+def test_sleeve_reader_requires_starting_balance_equal_to_allocation() -> None:
+    with pytest.raises(ValueError, match="must equal allocated_capital"):
+        build_live_telemetry_reader(
+            FirstCanaryStrategySpec(**SLEEVE_SPEC_KWARGS), starting_balance=10000.0
+        )
+
+
+def test_sleeve_reader_reports_strategy_sleeve_not_shared_account(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    spec = FirstCanaryStrategySpec(
+        **{**SLEEVE_SPEC_KWARGS, "signal_store_path": tmp_path / "signals.db"}
+    )
+    strategies: list[Any] = []
+    build_register_strategies(
+        spec, lineage=[], clock_ns=lambda: 0,
+        strategy_sink=lambda node, strategy: strategies.append(strategy),
+    )(MagicMock())
+    sleeve = iter([None, Decimal(5000), Decimal("4990.5")])
+    monkeypatch.setattr(
+        type(strategies[0]), "sleeve_equity", property(lambda self: next(sleeve))
+    )
+    reader = build_live_telemetry_reader(spec, starting_balance=5000.0)
+    reader._clock = lambda: datetime(2026, 10, 22, 12, 0, 0, tzinfo=UTC)
+    # The other runner's purchases move the shared account; the sleeve does not see them.
+    node = _FakeNode(equity_map={reader.base_currency: _FakeMoney(9200.0)})
+    node.trader = MagicMock(strategies=lambda: [MagicMock(), strategies[0]])
+    reader.bind_node(node)
+
+    samples = [reader() for _ in range(3)]
+
+    assert [s.account_total_usdt for s in samples] == [5000.0, 5000.0, 4990.5]
+    assert [s.daily_pnl for s in samples] == [0.0, 0.0, -9.5]
+
+
+def test_sleeve_reader_falls_back_when_strategy_is_missing() -> None:
+    reader = build_live_telemetry_reader(
+        FirstCanaryStrategySpec(**SLEEVE_SPEC_KWARGS), starting_balance=5000.0
+    )
+    node = _FakeNode(equity_map={reader.base_currency: _FakeMoney(9200.0)})
+    node.trader = MagicMock(strategies=lambda: [])
+    reader.bind_node(node)
+
+    assert reader().account_total_usdt == 5000.0

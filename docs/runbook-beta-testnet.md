@@ -29,7 +29,10 @@ uv run python infra/launchers/beta-sma200-testnet.py BTCUSDT \
 
 The launcher (gitignored) sets sizing to 0.4 of 5,000 USDT allocated per coin,
 scaled by the testnet multiplier 0.2: about 400 USDT per position. It picks up
-today's signal at once and rebalances after each Sunday.
+today's signal at once and rebalances after each Sunday, waiting out any minute
+whose close moved more than 5%. Each runner's daily loss limit is 5% of its own
+5,000 USDT sleeve; heartbeat `account_total_usdt` is that sleeve's equity, not
+the shared account.
 
 ## Daily check
 
