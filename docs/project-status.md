@@ -1,6 +1,6 @@
 # Project Status
 
-- **Last updated**: 2026-10-20
+- **Last updated**: 2026-10-22
 - **Current phase**: Phase 5 entry — read-only monitoring. Live trading still blocked.
 - **Current objective**: Find one strategy with benchmark-relative alpha. Until
   one exists, engineering only maintains the core path (bridge → Nautilus →
@@ -26,9 +26,11 @@ search stopped on 2026-10-20. Rounds: [summary](research/README.md).
    and its backtest matches `apps/research/beta.py` (final equity within 2%,
    identical holding days). Forward test on the Spot testnet for ≥ 4 weeks
    ([runbook](runbook-beta-testnet.md)): sizing from allocated capital, daily
-   signals from `beta_signals.py`. Running since 2026-10-20 14:08 UTC (tmux
-   `beta-btc`, `beta-eth`; started by the agent at the operator's request,
-   testnet only); first fills about 400 USDT each. Ends about 2026-11-24.
+   signals from `beta_signals.py`. Restarted 2026-10-22 08:30 UTC by the agent at
+   the operator's request (testnet only) after fixing shared-account risk: daily
+   loss per 5,000 USDT sleeve, spike-deferred weekly rebalance, distinct trader
+   tags. Fills about 400 USDT each. The four weeks and 14-day clock count from
+   the restart: earliest 2026-11-19, runs end about 2026-11-26.
    Any future alpha protocol: freeze
    a contract in `docs/research/contracts/`, one mechanism module, cross-check,
    run with `apps/research/`. Lessons in both daily rounds.
@@ -48,22 +50,21 @@ search stopped on 2026-10-20. Rounds: [summary](research/README.md).
 
 ## Running on the host
 
-- B2 testnet runners (tmux `beta-btc` run `20261020-140724Z-8081d675`,
-  `beta-eth` run `20261020-140819Z-cf725204`), logs in `data/beta/<coin>/`.
+- B2 testnet runners (tmux `beta-btc` run `20261022-083013Z-bf14be51`,
+  `beta-eth` run `20261022-083109Z-f7d8a605`), logs in `data/beta/<coin>/`.
+  First runs (2026-10-20..22) stopped flat; their equal order-id tags made the
+  ETH run record the BTC closing fill, so trust exchange balances for them.
 - Crontab: `beta_signals` at 00:05, 00:35 and 02:05 UTC (`data/beta/signals.log`).
 - Testnet key: `~/.config/trader/binance_testnet.env` (0600, never printed).
-- Earlier shadow crons and collectors were removed on 2026-10-18.
 
 ## Latest Verification
 
-- 2026-10-20 Nautilus `--target-equity-fraction`/`--rebalance-weekday` (Codex-written,
-  reviewed); B2 backtest vs reference in ADR-019 §5. `uv run pytest` 913 passed, 12 skipped.
-- 2026-10-20 beta evaluation (`apps/research/beta.py`, Codex-reviewed before the
-  run; fee-reserve and coverage findings fixed): `uv run pytest` 871 passed, 12 skipped.
+- 2026-10-22 sleeve-based daily loss (runner and strategy stop) and spike guard for
+  the weekly rebalance, with regression tests: `uv run pytest` 969 passed, 12 skipped.
+- 2026-10-20 beta evaluation and Nautilus equity-fraction sizing, both Codex-reviewed;
+  B2 backtest vs reference in ADR-019 §5.
 - 2026-10-20 v60/v61: mechanism weights identical to an independent reference on
   every minute (2.2M and 3.2M × 10 coins); development results immutable.
-- 2026-10-18 Nautilus: spot sell = flat on CASH accounts, `--trade-notional`,
-  learning simulation matching research holdings; Codex-reviewed with regression tests.
 - 2026-10-18 slim-down (tracked files 1703 → 198), local cleanup and dashboard trim;
   frontend `npm run typecheck` and `npm run build` pass. Details in `git log`.
 

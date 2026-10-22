@@ -51,3 +51,8 @@ the shared account.
   testnet), then start again. Count every such intervention against the 14-day
   no-intervention requirement.
 - Testnet resets wipe balances; record the date and restart.
+- Keep the two trader ids' tags distinct (`BETABTC-001`, `BETAETH-002`). Client
+  order ids embed only that tag, and both runners see the account's whole order
+  stream: equal tags let one runner adopt the other's order.
+- Before restarting, move `runner.*` logs in `data/beta/<coin>/` aside under
+  the old run id; the start command overwrites them.
